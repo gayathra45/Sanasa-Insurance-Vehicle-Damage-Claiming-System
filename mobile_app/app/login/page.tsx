@@ -53,7 +53,7 @@ export default function MobileLogin() {
 
       if (data.role === "policy_holder") {
         await AsyncStorage.setItem("logged_in_user", JSON.stringify(data.user));
-        router.replace("/Policy Holder/page");
+        router.replace("/PolicyHolder/page");
       } else if (data.role === "insurance_agent") {
         await AsyncStorage.setItem("logged_in_agent", JSON.stringify(data.agent));
         router.replace("/Agent/Dashboard/page");
