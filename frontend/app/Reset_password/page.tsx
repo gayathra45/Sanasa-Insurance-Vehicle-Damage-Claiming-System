@@ -286,9 +286,7 @@ export default function ResetPassword() {
                   <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
                     NIC or Mobile Number
                   </label>
-                  <span className="text-[11px] text-white/60 block select-none ml-1 -mt-1.5 leading-normal">
-                    Policy Holders/Agents: Use NIC · Office Staff/Admins: Use Mobile
-                  </span>
+
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
@@ -306,9 +304,7 @@ export default function ResetPassword() {
                   <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
                     Registered Email Address
                   </label>
-                  <span className="text-[11px] text-white/60 block select-none ml-1 -mt-1.5 leading-normal">
-                    Enter your registered email address
-                  </span>
+
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

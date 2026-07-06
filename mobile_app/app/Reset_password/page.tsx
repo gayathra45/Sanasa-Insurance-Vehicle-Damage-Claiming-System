@@ -242,9 +242,6 @@ export default function MobileResetPassword() {
                 {/* NIC or Mobile */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>NIC or Mobile Number *</Text>
-                  <Text style={styles.subtext}>
-                    Policy Holders/Agents: Use NIC · Staff/Admins: Use Mobile
-                  </Text>
                   <View style={styles.inputWrapper}>
                     <Ionicons name="person-outline" size={20} color="#64748b" style={styles.inputIcon} />
                     <TextInput style={styles.textInput} placeholder="Enter your NIC or Mobile number" placeholderTextColor="#94a3b8"
@@ -255,9 +252,6 @@ export default function MobileResetPassword() {
                 {/* Email */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Email *</Text>
-                  <Text style={styles.subtext}>
-                    Enter your registered email address
-                  </Text>
                   <View style={styles.inputWrapper}>
                     <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
                     <TextInput style={styles.textInput} placeholder="Enter your registered email" placeholderTextColor="#94a3b8"
