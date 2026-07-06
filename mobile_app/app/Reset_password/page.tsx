@@ -254,7 +254,7 @@ export default function MobileResetPassword() {
 
                 {/* Email */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Registered Email *</Text>
+                  <Text style={styles.label}>Email *</Text>
                   <Text style={styles.subtext}>
                     Enter your registered email address
                   </Text>
