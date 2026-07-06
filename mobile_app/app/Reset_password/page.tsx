@@ -17,7 +17,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { API_BASE_URL } from "../config";
 
 type Stage = 1 | 2 | 3 | 4; // 1=request, 2=otp, 3=set-password, 4=success
-type Role = "policy_holder" | "insurance_agent";
 
 const API = `${API_BASE_URL}/api/signup`;
 
@@ -25,13 +24,12 @@ export default function MobileResetPassword() {
   const { height } = useWindowDimensions();
 
   const [stage, setStage] = useState<Stage>(1);
-  const [activeRole, setActiveRole] = useState<Role>("policy_holder");
   const [alert, setAlert] = useState<{ title: string; message: string } | null>(null);
 
   const showAlert = (title: string, message: string) => setAlert({ title, message });
 
   // Stage 1 inputs
-  const [nic, setNic] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [email, setEmail] = useState("");
   const [sentEmail, setSentEmail] = useState("");
   const [devOtp, setDevOtp] = useState("");
@@ -92,14 +90,9 @@ export default function MobileResetPassword() {
     }
   };
 
-  const rolesList: { id: Role; label: string }[] = [
-    { id: "policy_holder", label: "Policy Holder" },
-    { id: "insurance_agent", label: "Insurance Agent" },
-  ];
-
   // ── HANDLER: Send OTP ─────────────────────────────────────────────────────
   const handleSendOtp = async () => {
-    if (!nic.trim()) { showAlert("Required", "Please enter your NIC number."); return; }
+    if (!loginId.trim()) { showAlert("Required", "Please enter your NIC or Mobile number."); return; }
     if (!email.trim()) { showAlert("Required", "Please enter your registered email."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       showAlert("Invalid Email", "Please enter a valid email address.");
@@ -111,7 +104,7 @@ export default function MobileResetPassword() {
       const res = await fetch(`${API}/reset-password/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nic: nic.trim(), email: email.trim(), role: activeRole }),
+        body: JSON.stringify({ loginId: loginId.trim(), email: email.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to send OTP.");
@@ -135,7 +128,7 @@ export default function MobileResetPassword() {
       const res = await fetch(`${API}/reset-password/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nic: nic.trim(), email: sentEmail, role: activeRole }),
+        body: JSON.stringify({ loginId: loginId.trim(), email: sentEmail }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to resend OTP.");
@@ -161,7 +154,7 @@ export default function MobileResetPassword() {
       const res = await fetch(`${API}/reset-password/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: sentEmail, otp, role: activeRole }),
+        body: JSON.stringify({ email: sentEmail, otp }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Verification failed.");
@@ -246,33 +239,25 @@ export default function MobileResetPassword() {
             {/* ── STAGE 1: Enter details ── */}
             {stage === 1 && (
               <View style={styles.form}>
-                {/* Role tabs */}
-                <View style={styles.rolesRow}>
-                  {rolesList.map((role) => {
-                    const active = activeRole === role.id;
-                    return (
-                      <TouchableOpacity key={role.id} activeOpacity={0.7}
-                        onPress={() => { setActiveRole(role.id); setNic(""); setEmail(""); }}
-                        style={[styles.roleBtn, active && styles.roleBtnActive]}>
-                        <Text style={[styles.roleBtnText, active && styles.roleBtnTextActive]}>{role.label}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {/* NIC */}
+                {/* NIC or Mobile */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>National Identity Card (NIC) *</Text>
+                  <Text style={styles.label}>NIC or Mobile Number *</Text>
+                  <Text style={styles.subtext}>
+                    Policy Holders/Agents: Use NIC · Staff/Admins: Use Mobile
+                  </Text>
                   <View style={styles.inputWrapper}>
-                    <Ionicons name="id-card-outline" size={20} color="#64748b" style={styles.inputIcon} />
-                    <TextInput style={styles.textInput} placeholder="Enter your NIC" placeholderTextColor="#94a3b8"
-                      value={nic} onChangeText={setNic} autoCapitalize="none" autoCorrect={false} />
+                    <Ionicons name="person-outline" size={20} color="#64748b" style={styles.inputIcon} />
+                    <TextInput style={styles.textInput} placeholder="Enter your NIC or Mobile number" placeholderTextColor="#94a3b8"
+                      value={loginId} onChangeText={setLoginId} autoCapitalize="none" autoCorrect={false} />
                   </View>
                 </View>
 
                 {/* Email */}
                 <View style={styles.inputGroup}>
                   <Text style={styles.label}>Registered Email *</Text>
+                  <Text style={styles.subtext}>
+                    Enter your registered email address
+                  </Text>
                   <View style={styles.inputWrapper}>
                     <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
                     <TextInput style={styles.textInput} placeholder="Enter your registered email" placeholderTextColor="#94a3b8"
@@ -493,7 +478,7 @@ const styles = StyleSheet.create({
   headerSubtitle: { fontSize: 13, color: "rgba(255,255,255,0.65)", textAlign: "center", lineHeight: 18, maxWidth: 300 },
   card: {
     width: "100%", maxWidth: 400,
-    backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 36,
+    backgroundColor: "rgba(15, 45, 53, 0.75)", borderRadius: 36,
     borderWidth: 1.2, borderColor: "rgba(255,255,255,0.18)", padding: 24,
     shadowColor: "#000", shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.3, shadowRadius: 16, elevation: 8,
@@ -512,6 +497,13 @@ const styles = StyleSheet.create({
   roleBtnTextActive: { color: "#ffffff", fontWeight: "800" },
   inputGroup: { gap: 8 },
   label: { color: "#fff", fontSize: 13.5, fontWeight: "600", marginLeft: 4 },
+  subtext: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 11,
+    fontWeight: "400",
+    marginLeft: 4,
+    marginTop: -4,
+  },
   inputWrapper: {
     flexDirection: "row", alignItems: "center", backgroundColor: "#fff",
     borderRadius: 18, height: 50, paddingHorizontal: 14,
