@@ -230,16 +230,62 @@ async function findUserByRole(role, cleanNic, cleanMobile, cleanEmail) {
 // ─── ROUTE 1: Send 6-digit OTP to user's email ───────────────────────────────
 router.post("/reset-password/send-otp", async (req, res) => {
   try {
-    const { nic, mobile, email, role } = req.body;
+    const { email, nic, mobile, loginId } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required." });
 
     const cleanEmail = email.trim().toLowerCase();
-    const cleanNic = nic ? nic.trim() : "";
-    const cleanMobile = mobile ? mobile.replace(/[-+()\s]/g, "") : "";
-    const userRole = role || "policy_holder";
+    const cleanInput = (loginId || nic || mobile || "").trim();
 
-    const { user, userName, error: findError } = await findUserByRole(userRole, cleanNic, cleanMobile, cleanEmail);
-    if (findError || !user) return res.status(400).json({ error: findError || "User not found." });
+    if (!cleanInput) {
+      return res.status(400).json({ error: "NIC or Mobile number is required." });
+    }
+
+    // Look up in parallel across all collections
+    const [dbUser, dbAgent, dbStaff, dbAdmin] = await Promise.all([
+      User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } }),
+      Agent.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } }),
+      OfficeStaff.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } }),
+      Admin.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } }),
+    ]);
+
+    let user = null;
+    let userName = "";
+
+    if (dbUser) {
+      if (dbUser.nic === cleanInput) {
+        user = dbUser;
+        userName = dbUser.firstName;
+      } else {
+        return res.status(400).json({ error: "Invalid NIC number for this email." });
+      }
+    } else if (dbAgent) {
+      if (dbAgent.nic === cleanInput) {
+        user = dbAgent;
+        userName = dbAgent.name;
+      } else {
+        return res.status(400).json({ error: "Invalid NIC number for this email." });
+      }
+    } else if (dbStaff) {
+      const cleanMobile = cleanInput.replace(/[-+()\s]/g, "");
+      if (dbStaff.mobile === cleanMobile) {
+        user = dbStaff;
+        userName = dbStaff.name;
+      } else {
+        return res.status(400).json({ error: "Invalid Mobile number for this email." });
+      }
+    } else if (dbAdmin) {
+      const cleanMobile = cleanInput.replace(/[-+()\s]/g, "");
+      if (dbAdmin.mobile === cleanMobile) {
+        user = dbAdmin;
+        userName = dbAdmin.name;
+      } else {
+        return res.status(400).json({ error: "Invalid Mobile number for this email." });
+      }
+    }
+
+    if (!user) {
+      return res.status(400).json({ error: "No registered account found with that email address." });
+    }
 
     // Rate limiting: 1 OTP per 60 seconds
     if (user.resetOtpRequestedAt) {
@@ -309,19 +355,18 @@ router.post("/reset-password/send-otp", async (req, res) => {
 // ─── ROUTE 2: Verify OTP → issue session token ────────────────────────────────
 router.post("/reset-password/verify-otp", async (req, res) => {
   try {
-    const { email, otp, role } = req.body;
+    const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ error: "Email and OTP code are required." });
 
     const cleanEmail = email.trim().toLowerCase();
     const otpHash = crypto.createHash("sha256").update(otp.trim()).digest("hex");
-    const cleanRole = role || "policy_holder";
 
     let user;
     const emailQuery = { email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } };
-    if (cleanRole === "policy_holder") user = await User.findOne(emailQuery);
-    else if (cleanRole === "insurance_agent") user = await Agent.findOne(emailQuery);
-    else if (cleanRole === "office_staff") user = await OfficeStaff.findOne(emailQuery);
-    else if (cleanRole === "admin") user = await Admin.findOne(emailQuery);
+    user = await User.findOne(emailQuery);
+    if (!user) user = await Agent.findOne(emailQuery);
+    if (!user) user = await OfficeStaff.findOne(emailQuery);
+    if (!user) user = await Admin.findOne(emailQuery);
 
     if (!user || !user.resetOtp) {
       return res.status(400).json({ error: "No OTP request found. Please request a new code." });
