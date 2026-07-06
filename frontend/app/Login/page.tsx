@@ -126,9 +126,7 @@ export default function Login() {
               <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
                 Password
               </label>
-              <span className="text-[11px] text-white/60 block select-none ml-1 -mt-1.5 leading-normal">
-                Enter your registered password
-              </span>
+
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
                   {/* Custom Lock SVG Icon */}
