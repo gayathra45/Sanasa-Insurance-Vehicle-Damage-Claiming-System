@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import LoginFooter from "@/app/Components/Login/Footer";
+import { API_URL } from "@/app/config";
 
 // Province and Cities Sri Lanka Data
 const provincesData = [
@@ -33,6 +34,12 @@ export default function SignUp() {
   const [city, setCity] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  // Bank Account Fields
+  const [bankName, setBankName] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountHolderName, setAccountHolderName] = useState("");
 
   // UI state
   const [showPassword, setShowPassword] = useState(false);
@@ -95,6 +102,13 @@ export default function SignUp() {
           setCity(data.city || "");
           setPassword(data.password || "");
           setConfirmPassword(data.password || "");
+          
+          if (data.bankDetails) {
+            setBankName(data.bankDetails.bankName || "");
+            setBranchName(data.bankDetails.branchName || "");
+            setAccountNumber(data.bankDetails.accountNumber || "");
+            setAccountHolderName(data.bankDetails.accountHolderName || "");
+          }
         } catch (err) {
           console.error("Error loading personal details:", err);
         }
@@ -108,6 +122,11 @@ export default function SignUp() {
 
     if (!firstName || !lastName || !nic || !mobile || !email || !dob || !address || !province || !city || !password || !confirmPassword) {
       setValidationError("Please fill out all required fields marked with *");
+      return;
+    }
+
+    if (!bankName || !branchName || !accountNumber || !accountHolderName) {
+      setValidationError("Please fill out all required bank details fields.");
       return;
     }
 
@@ -150,7 +169,7 @@ export default function SignUp() {
 
     // Check database if NIC or Email is already registered
     try {
-      const res = await fetch(`http://localhost:5000/api/signup/check?email=${encodeURIComponent(email)}&nic=${encodeURIComponent(cleanNic)}`);
+      const res = await fetch(`${API_URL}/signup/check?email=${encodeURIComponent(email)}&nic=${encodeURIComponent(cleanNic)}`);
       if (!res.ok) {
         throw new Error("Failed to verify credentials with the database.");
       }
@@ -170,7 +189,24 @@ export default function SignUp() {
     
     // Save state to sessionStorage
     if (typeof window !== "undefined") {
-      const personalData = { firstName, lastName, nic: cleanNic, mobile: cleanMobile, email, dob, address, province, city, password };
+      const personalData = {
+        firstName,
+        lastName,
+        nic: cleanNic,
+        mobile: cleanMobile,
+        email,
+        dob,
+        address,
+        province,
+        city,
+        password,
+        bankDetails: {
+          bankName,
+          branchName,
+          accountNumber,
+          accountHolderName
+        }
+      };
       sessionStorage.setItem("signup_personal_details", JSON.stringify(personalData));
     }
     
@@ -545,6 +581,83 @@ export default function SignUp() {
                   </div>
                 </div>
 
+                {/* Bank Account Details Section */}
+                <div className="flex flex-col gap-6 md:col-span-2 border-t border-white/15 pt-6 mt-4">
+                  <div className="flex items-center gap-3 pb-2">
+                    <div className="w-10 h-10 rounded-2xl bg-orange-500/20 flex items-center justify-center border border-orange-400/40 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.25)]">
+                      {/* Bank Card SVG Icon */}
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                      </svg>
+                    </div>
+                    <h2 className="text-white text-2xl font-bold tracking-wide select-none">
+                      Bank Details (For Payouts)
+                    </h2>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Bank Name */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
+                        Bank Name <span className="text-red-500 font-bold">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                        placeholder="e.g. Bank of Ceylon"
+                      />
+                    </div>
+
+                    {/* Branch Name */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
+                        Branch Name <span className="text-red-500 font-bold">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={branchName}
+                        onChange={(e) => setBranchName(e.target.value)}
+                        className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                        placeholder="e.g. Galle Fort"
+                      />
+                    </div>
+
+                    {/* Account Number */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
+                        Account Number <span className="text-red-500 font-bold">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                        className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                        placeholder="e.g. 84110295"
+                      />
+                    </div>
+
+                    {/* Account Holder Name */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
+                        Account Holder Name <span className="text-red-500 font-bold">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={accountHolderName}
+                        onChange={(e) => setAccountHolderName(e.target.value)}
+                        className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                        placeholder="e.g. A. H. Amal Perera"
+                      />
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
 
@@ -555,28 +668,18 @@ export default function SignUp() {
               <button
                 type="button"
                 onClick={handleBackStep}
-                className="bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold py-1.5 pl-2 pr-6 rounded-full flex items-center gap-3 shadow-lg hover:shadow-orange-500/35 transition-all duration-300 active:scale-95 cursor-pointer border-none outline-none select-none"
+                className="bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-base cursor-pointer select-none outline-none border-none"
               >
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-[#ff9800]" fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-                  </svg>
-                </div>
-                <span className="text-base font-semibold">Back to login</span>
+                Back to Login
               </button>
 
               {/* Next button */}
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold py-1.5 pl-6 pr-2 rounded-full flex items-center gap-3 shadow-lg hover:shadow-orange-500/35 transition-all duration-300 active:scale-95 cursor-pointer border-none outline-none select-none"
+                className="bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-base cursor-pointer select-none outline-none border-none"
               >
-                <span className="text-base font-semibold">Next</span>
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-[#ff9800]" fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                  </svg>
-                </div>
+                Next
               </button>
 
             </div>
