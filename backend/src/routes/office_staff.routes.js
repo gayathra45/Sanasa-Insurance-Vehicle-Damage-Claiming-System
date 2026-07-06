@@ -135,7 +135,10 @@ router.get("/policy-holders", async (req, res) => {
     if (!branch) {
       return res.status(400).json({ error: "Branch query parameter is required." });
     }
-    const policyHolders = await User.find({ branch: branch.trim(), status: "Approved" }, { password: 0 }).sort({ createdAt: -1 });
+    const policyHolders = await User.find(
+      { branch: branch.trim(), status: "Approved" },
+      { password: 0, documents: 0 }
+    ).sort({ createdAt: -1 });
     res.json({ policyHolders });
   } catch (err) {
     console.error("Fetch office staff policy holders error:", err);
@@ -165,7 +168,10 @@ router.get("/registrations", async (req, res) => {
     if (!branch) {
       return res.status(400).json({ error: "Branch query parameter is required." });
     }
-    const registrations = await User.find({ branch: branch.trim(), status: { $ne: "Approved" } }, { password: 0 }).sort({ createdAt: -1 });
+    const registrations = await User.find(
+      { branch: branch.trim(), status: { $ne: "Approved" } },
+      { password: 0, documents: 0 }
+    ).sort({ createdAt: -1 });
     res.json({ registrations });
   } catch (err) {
     console.error("Fetch office staff registrations error:", err);
@@ -299,6 +305,190 @@ router.post("/agents", async (req, res) => {
     res.status(201).json({ message: "Agent registered successfully", agent: agentObj });
   } catch (err) {
     console.error("Create agent API error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// DELETE agent: /api/office-staff/agents/:id
+router.delete("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedAgent = await Agent.findByIdAndDelete(id);
+    if (!deletedAgent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+    res.json({ message: "Agent removed successfully." });
+  } catch (err) {
+    console.error("Delete agent error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PATCH update agent: /api/office-staff/agents/:id
+router.patch("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      email,
+      nic,
+      dob,
+      address,
+      password,
+      phone,
+      city,
+      province,
+      bankName,
+      bankBranch,
+      accountNumber,
+      accountType,
+      accountHolderName,
+      nicFront,
+      nicBack,
+      birthCertificate,
+      policeReport
+    } = req.body;
+
+    const agent = await Agent.findById(id);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    if (name !== undefined) agent.name = name.trim();
+    if (email !== undefined) agent.email = email.trim().toLowerCase();
+    if (nic !== undefined) agent.nic = nic.trim().toUpperCase();
+    if (dob !== undefined) agent.dob = dob.trim();
+    if (address !== undefined) agent.address = address.trim();
+    if (phone !== undefined) agent.phone = phone.trim();
+    if (city !== undefined) agent.city = city.trim();
+    if (province !== undefined) agent.province = province.trim();
+    if (bankName !== undefined) agent.bankName = bankName.trim();
+    if (bankBranch !== undefined) agent.bankBranch = bankBranch.trim();
+    if (accountNumber !== undefined) agent.accountNumber = accountNumber.trim();
+    if (accountType !== undefined) agent.accountType = accountType.trim();
+    if (accountHolderName !== undefined) agent.accountHolderName = accountHolderName.trim();
+    
+    if (nicFront !== undefined) {
+      agent.nicFront = nicFront ? await uploadToCloudinary(nicFront, "agents/documents") : "";
+    }
+    if (nicBack !== undefined) {
+      agent.nicBack = nicBack ? await uploadToCloudinary(nicBack, "agents/documents") : "";
+    }
+    if (birthCertificate !== undefined) {
+      agent.birthCertificate = birthCertificate ? await uploadToCloudinary(birthCertificate, "agents/documents") : "";
+    }
+    if (policeReport !== undefined) {
+      agent.policeReport = policeReport ? await uploadToCloudinary(policeReport, "agents/documents") : "";
+    }
+
+    if (password) {
+      agent.password = hashPassword(password);
+    }
+
+    await agent.save();
+
+    const agentObj = agent.toObject();
+    delete agentObj.password;
+
+    res.json({ message: "Agent updated successfully", agent: agentObj });
+  } catch (err) {
+    console.error("Update agent error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET pending vehicles for office staff: /api/office-staff/pending-vehicles
+router.get("/pending-vehicles", async (req, res) => {
+  try {
+    const { branch } = req.query;
+    if (!branch) {
+      return res.status(400).json({ error: "Branch query parameter is required." });
+    }
+
+    const users = await User.find({
+      branch: branch.trim(),
+      $or: [
+        { "vehicles.status": "Pending" },
+        { "vehicles.status": null },
+        { "vehicles.status": { $exists: false } },
+        { "vehicles": { $elemMatch: { status: { $exists: false } } } }
+      ]
+    }, { password: 0, documents: 0, bankDetails: 0 });
+
+    const pendingVehiclesList = [];
+    users.forEach(user => {
+      user.vehicles.forEach(vehicle => {
+        if (!vehicle.status || vehicle.status === "Pending") {
+          pendingVehiclesList.push({
+            user: {
+              _id: user._id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              nic: user.nic,
+              email: user.email,
+              mobile: user.mobile,
+              dob: user.dob,
+              address: user.address,
+              province: user.province,
+              city: user.city,
+              branch: user.branch,
+              status: user.status,
+              createdAt: user.createdAt,
+              referenceNumber: user.referenceNumber,
+              vehicles: user.vehicles
+            },
+            vehicle
+          });
+        }
+      });
+    });
+
+    res.json({ pendingVehicles: pendingVehiclesList });
+  } catch (err) {
+    console.error("Fetch pending vehicles error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PATCH verify vehicle: /api/office-staff/vehicles/verify
+router.patch("/vehicles/verify", async (req, res) => {
+  try {
+    const { nic, numberPlate, action } = req.body; // action: "Approve" or "Reject"
+    if (!nic || !numberPlate || !action) {
+      return res.status(400).json({ error: "NIC, numberPlate, and action are required." });
+    }
+
+    if (!["Approve", "Reject"].includes(action)) {
+      return res.status(400).json({ error: "Invalid action. Must be Approve or Reject." });
+    }
+
+    const user = await User.findOne({ nic: nic.trim() });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    const vehicle = user.vehicles.find(
+      v => v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()
+    );
+
+    if (!vehicle) {
+      return res.status(404).json({ error: "Vehicle not found." });
+    }
+
+    if (action === "Approve") {
+      vehicle.status = "Approved";
+    } else {
+      vehicle.status = "Rejected";
+    }
+
+    await user.save();
+
+    res.json({
+      message: `Vehicle successfully ${action === "Approve" ? "approved" : "rejected"}.`,
+      vehicle
+    });
+  } catch (err) {
+    console.error("Verify vehicle error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });

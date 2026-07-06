@@ -6,11 +6,8 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import Footer from "@/app/Components/Login/Footer";
 
-type Role = "policy_holder" | "insurance_agent" | "office_staff" | "admin";
-
 export default function Login() {
   const router = useRouter();
-  const [activeRole, setActiveRole] = useState<Role>("policy_holder");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,96 +20,38 @@ export default function Login() {
 
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (activeRole !== "policy_holder") {
-      if (activeRole === "admin") {
-        try {
-          const response = await fetch("http://localhost:5000/api/admin/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: loginId, password })
-          });
-          const data = await response.json();
-          if (!response.ok) {
-            alert(data.error || "Admin login failed.");
-            return;
-          }
-          sessionStorage.setItem("logged_in_admin", JSON.stringify(data.admin));
-          router.push("/Admin/Dashboard");
-        } catch (err) {
-          console.error("Admin login failed", err);
-          alert("Unable to connect to the server.");
-        }
-        return;
-      }
-
-      if (activeRole === "office_staff") {
-        try {
-          const response = await fetch("http://localhost:5000/api/office-staff/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: loginId, password })
-          });
-          const data = await response.json();
-          if (!response.ok) {
-            alert(data.error || "Office staff login failed.");
-            return;
-          }
-          sessionStorage.setItem("logged_in_staff", JSON.stringify(data.staff));
-          router.push("/Office_Staff/Dashboard");
-        } catch (err) {
-          console.error("Office staff login failed", err);
-          alert("Unable to connect to the server.");
-        }
-        return;
-      }
-
-      if (activeRole === "insurance_agent") {
-        try {
-          const response = await fetch("http://localhost:5000/api/agent/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: loginId, password })
-          });
-          const data = await response.json();
-          if (!response.ok) {
-            alert(data.error || "Agent login failed.");
-            return;
-          }
-          sessionStorage.setItem("logged_in_agent", JSON.stringify(data.agent));
-          router.push("/Agent/Dashboard");
-        } catch (err) {
-          console.error("Agent login failed", err);
-          alert("Unable to connect to the server.");
-        }
-        return;
-      }
-    }
-
     try {
-      const response = await fetch("http://localhost:5000/api/policy-holder/login", {
+      const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nic: loginId, password })
+        body: JSON.stringify({ loginId, password })
       });
       const data = await response.json();
       if (!response.ok) {
         alert(data.error || "Login failed.");
         return;
       }
-      sessionStorage.setItem("logged_in_user", JSON.stringify(data.user));
-      router.push("/Policy_Holder/Home");
+
+      if (data.role === "policy_holder") {
+        sessionStorage.setItem("logged_in_user", JSON.stringify(data.user));
+        router.push("/Policy_Holder/Home");
+      } else if (data.role === "insurance_agent") {
+        sessionStorage.setItem("logged_in_agent", JSON.stringify(data.agent));
+        router.push("/Agent/Dashboard");
+      } else if (data.role === "office_staff") {
+        sessionStorage.setItem("logged_in_staff", JSON.stringify(data.staff));
+        router.push("/Office_Staff/Dashboard");
+      } else if (data.role === "admin") {
+        sessionStorage.setItem("logged_in_admin", JSON.stringify(data.admin));
+        router.push("/Admin/Dashboard");
+      } else {
+        alert("Unknown user role returned from server.");
+      }
     } catch (err) {
       console.error("Login request failed", err);
       alert("Unable to connect to the server.");
     }
   };
-
-  const rolesList: { id: Role; label: string }[] = [
-    { id: "policy_holder", label: "Policy Holder" },
-    { id: "insurance_agent", label: "Insurance Agent" },
-    { id: "office_staff", label: "Office Staff" },
-    { id: "admin", label: "Admin" },
-  ];
 
   return (
     <div className="min-h-screen w-full flex flex-col">
@@ -132,7 +71,7 @@ export default function Login() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-300/15 blur-[120px] pointer-events-none" />
 
       {/* Main Container */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-12 flex flex-col lg:flex-row items-center justify-around gap-12 lg:gap-6">
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pt-12 pb-32 md:pb-40 flex flex-col lg:flex-row items-center justify-around gap-12 lg:gap-6">
         
         {/* Left Side: Large Title */}
         <div className="flex flex-col items-center lg:items-start text-center lg:text-left text-white max-w-md">
@@ -146,82 +85,37 @@ export default function Login() {
           
           <form onSubmit={handleConfirm} className="flex flex-col gap-6">
             
-            {/* 2x2 Grid of Roles */}
-            <div className="grid grid-cols-2 gap-4">
-              {rolesList.map((role) => {
-                const isSelected = activeRole === role.id;
-                return (
-                  <button
-                    key={role.id}
-                    type="button"
-                    onClick={() => setActiveRole(role.id)}
-                    className={`
-                      w-full py-3 px-3 text-center rounded-2xl cursor-pointer select-none text-sm md:text-base font-semibold
-                      transition-all duration-300 ease-out border outline-none
-                      ${
-                        isSelected
-                          ? "bg-black/35 border-white text-white scale-[1.02] shadow-[0_0_15px_rgba(255,255,255,0.15)] font-bold"
-                          : "bg-white/5 border-white/35 text-white/90 hover:bg-white/15 hover:border-white/60 active:scale-95"
-                      }
-                    `}
-                  >
-                    {role.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Dynamic NIC / Gmail Input Field */}
+            {/* Unified NIC / Email Input Field */}
             <div className="flex flex-col gap-2">
               <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
-                {activeRole === "policy_holder" ? "National Identity Card (NIC)" : "Gmail / Email"}
+                NIC or Email Address
               </label>
+              <span className="text-[11px] text-white/60 block select-none ml-1 -mt-1.5 leading-normal">
+                Policy Holders: Use NIC or Email · Agents/Staff/Admins: Use Email
+              </span>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
-                  {activeRole === "policy_holder" ? (
-                    /* Custom ID Card / NIC Icon */
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 9h3m-3 3h3m-3 3h3M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
-                      />
-                    </svg>
-                  ) : (
-                    /* Mail Icon */
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
-                      />
-                    </svg>
-                  )}
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                    />
+                  </svg>
                 </span>
                 <input
-                  type={activeRole === "policy_holder" ? "text" : "email"}
+                  type="text"
                   required
                   value={loginId}
                   onChange={(e) => setLoginId(e.target.value)}
                   className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                  placeholder={activeRole === "policy_holder" ? "Enter your NIC" : "Enter your Gmail address"}
+                  placeholder="Enter your NIC or Email address"
                 />
               </div>
             </div>
@@ -231,6 +125,9 @@ export default function Login() {
               <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
                 Password
               </label>
+              <span className="text-[11px] text-white/60 block select-none ml-1 -mt-1.5 leading-normal">
+                Enter your registered password
+              </span>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
                   {/* Custom Lock SVG Icon */}
@@ -313,16 +210,12 @@ export default function Login() {
 
           {/* Footer Links */}
           <div className="flex justify-between items-center w-full border-t border-white/10 pt-6 text-sm text-white/85 font-medium select-none">
-            {activeRole === "policy_holder" ? (
-              <Link
-                href="/SignUp"
-                className="hover:text-white hover:underline transition-all cursor-pointer"
-              >
-                Create an Account
-              </Link>
-            ) : (
-              <div />
-            )}
+            <Link
+              href="/SignUp"
+              className="hover:text-white hover:underline transition-all cursor-pointer"
+            >
+              Create an Account
+            </Link>
             <Link
               href="/Reset_password"
               className="hover:text-white hover:underline transition-all cursor-pointer"

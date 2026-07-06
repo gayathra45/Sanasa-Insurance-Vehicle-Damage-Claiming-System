@@ -13,6 +13,8 @@ import newClaimRouter from "./src/routes/new_claim.routes.js";
 import adminRouter from "./src/routes/admin.routes.js";
 import officeStaffRouter from "./src/routes/office_staff.routes.js";
 import agentRouter from "./src/routes/agent.routes.js";
+import authRouter from "./src/routes/auth.routes.js";
+
 
 const app = express();
 const __dirname = path.resolve();
@@ -39,6 +41,8 @@ app.use("/api/policy-holder", newClaimRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/office-staff", officeStaffRouter);
 app.use("/api/agent", agentRouter);
+app.use("/api/auth", authRouter);
+
 
 
 
