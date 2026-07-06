@@ -19,10 +19,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../config";
 
-type Role = "policy_holder" | "insurance_agent";
-
 export default function MobileLogin() {
-  const [activeRole, setActiveRole] = useState<Role>("policy_holder");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -37,50 +34,31 @@ export default function MobileLogin() {
 
   const handleLogin = async () => {
     if (!loginId.trim() || !password) {
-      const fieldName = activeRole === "policy_holder" ? "NIC" : "Gmail";
-      showAlert("Validation Error", `Please fill out both ${fieldName} and Password fields.`);
+      showAlert("Validation Error", "Please fill out both NIC/Email and Password fields.");
       return;
-    }
-    if (activeRole !== "policy_holder") {
-      const isGmail = loginId.trim().toLowerCase().endsWith("@gmail.com");
-      if (!isGmail) {
-        showAlert("Validation Error", "Please enter a valid Gmail address.");
-        return;
-      }
     }
 
     setLoggingIn(true);
     try {
-      // ── Policy Holder ──────────────────────────────────────────
-      if (activeRole === "policy_holder") {
-        const res = await fetch(`${API_BASE_URL}/api/policy-holder/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ nic: loginId.trim(), password }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          showAlert("Login Failed", data.error || "Invalid NIC or Password.");
-          return;
-        }
-        await AsyncStorage.setItem("logged_in_user", JSON.stringify(data.user));
-        router.replace("/PolicyHolder/page" as any);
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ loginId: loginId.trim(), password, device: "Mobile App" }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showAlert("Login Failed", data.error || "Invalid credentials.");
+        return;
+      }
 
-      // ── Insurance Agent ────────────────────────────────────────
-      } else if (activeRole === "insurance_agent") {
-        const res = await fetch(`${API_BASE_URL}/api/agent/login`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: loginId.trim(), password }),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          showAlert("Login Failed", data.error || "Invalid credentials.");
-          return;
-        }
+      if (data.role === "policy_holder") {
+        await AsyncStorage.setItem("logged_in_user", JSON.stringify(data.user));
+        router.replace("/Policy Holder/page");
+      } else if (data.role === "insurance_agent") {
         await AsyncStorage.setItem("logged_in_agent", JSON.stringify(data.agent));
         router.replace("/Agent/Dashboard/page");
-
+      } else {
+        showAlert("Access Denied", "Only Policy Holders and Agents can log in via this mobile app.");
       }
     } catch (e) {
       showAlert("Network Error", "Could not connect to server. Please check your connection.");
@@ -89,11 +67,6 @@ export default function MobileLogin() {
       setLoggingIn(false);
     }
   };
-
-  const rolesList: { id: Role; label: string }[] = [
-    { id: "policy_holder", label: "Policy Holder" },
-    { id: "insurance_agent", label: "Insurance Agent" },
-  ];
 
   const isSmallScreen = width < 380;
 
@@ -137,55 +110,25 @@ export default function MobileLogin() {
           <View style={[styles.glassCard, { maxWidth: width > 500 ? 460 : "100%" }]}>
             <Text style={styles.cardTitle}>Login</Text>
 
-            {/* Roles Selection Grid */}
-            <View style={styles.rolesGrid}>
-              {rolesList.map((role) => {
-                const isSelected = activeRole === role.id;
-                return (
-                  <TouchableOpacity
-                    key={role.id}
-                    activeOpacity={0.7}
-                    onPress={() => setActiveRole(role.id)}
-                    style={[
-                      styles.roleButton,
-                      isSelected && styles.roleButtonActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.roleButtonText,
-                        isSelected && styles.roleButtonTextActive,
-                        isSmallScreen && { fontSize: 11 }
-                      ]}
-                    >
-                      {role.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-
             {/* Inputs Section */}
             <View style={styles.inputsSection}>
-              {/* Dynamic Input (NIC / Gmail) */}
+              {/* Dynamic Input (NIC / Email) */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>
-                  {activeRole === "policy_holder" ? "National Identity Card (NIC)" : "Gmail / Email"}
-                </Text>
+                <Text style={styles.label}>NIC or Email Address</Text>
                 <View style={styles.inputWrapper}>
                   <Ionicons
-                    name={activeRole === "policy_holder" ? "id-card-outline" : "mail-outline"}
+                    name="person-outline"
                     size={20}
                     color="#64748b"
                     style={styles.inputIcon}
                   />
                   <TextInput
                     style={styles.textInput}
-                    placeholder={activeRole === "policy_holder" ? "Enter your NIC" : "Enter your Gmail address"}
+                    placeholder="Enter your NIC or Email"
                     placeholderTextColor="#94a3b8"
                     value={loginId}
                     onChangeText={setLoginId}
-                    keyboardType={activeRole === "policy_holder" ? "default" : "email-address"}
+                    keyboardType="email-address"
                     autoCapitalize="none"
                     autoCorrect={false}
                   />
@@ -238,13 +181,9 @@ export default function MobileLogin() {
 
             {/* Bottom Navigation Links */}
             <View style={styles.footerLinks}>
-              {activeRole === "policy_holder" ? (
-                <TouchableOpacity activeOpacity={0.7} onPress={() => router.push("/Signup/page")}>
-                  <Text style={styles.linkText}>Create an Account</Text>
-                </TouchableOpacity>
-              ) : (
-                <View />
-              )}
+              <TouchableOpacity activeOpacity={0.7} onPress={() => router.push("/Signup/page")}>
+                <Text style={styles.linkText}>Create an Account</Text>
+              </TouchableOpacity>
               <TouchableOpacity activeOpacity={0.7} onPress={() => router.push("/Reset_password/page")}>
                 <Text style={styles.linkText}>Reset Password</Text>
               </TouchableOpacity>
@@ -320,7 +259,7 @@ const styles = StyleSheet.create({
   },
   glassCard: {
     width: "100%",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "rgba(15, 45, 53, 0.75)",
     borderRadius: 36,
     borderWidth: 1.2,
     borderColor: "rgba(255, 255, 255, 0.18)",
@@ -388,6 +327,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 4,
     letterSpacing: 0.3,
+  },
+  subtext: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 11,
+    fontWeight: "400",
+    marginLeft: 4,
+    marginTop: -4,
   },
   inputWrapper: {
     flexDirection: "row",
