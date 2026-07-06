@@ -115,9 +115,6 @@ export default function MobileLogin() {
               {/* Dynamic Input (NIC / Email) */}
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>NIC or Email Address</Text>
-                <Text style={styles.subtext}>
-                  Policy Holders: Use NIC or Email · Agents: Use Email
-                </Text>
                 <View style={styles.inputWrapper}>
                   <Ionicons
                     name="person-outline"
@@ -141,7 +138,6 @@ export default function MobileLogin() {
               {/* Password input */}
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>Password</Text>
-                <Text style={styles.subtext}>Enter your registered password</Text>
                 <View style={styles.inputWrapper}>
                   <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.inputIcon} />
                   <TextInput
@@ -263,7 +259,7 @@ const styles = StyleSheet.create({
   },
   glassCard: {
     width: "100%",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "rgba(15, 45, 53, 0.75)",
     borderRadius: 36,
     borderWidth: 1.2,
     borderColor: "rgba(255, 255, 255, 0.18)",
