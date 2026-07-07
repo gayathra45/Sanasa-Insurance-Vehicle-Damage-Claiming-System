@@ -34,7 +34,9 @@ export default function OfficeStaffContact() {
             <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-xl max-w-md w-full text-center flex flex-col items-center gap-6">
               <div className="w-20 h-20 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-inner select-none">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-10 h-10 animate-pulse">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.06 7.1l5.83-5.83a2.5 2.5 0 013.28 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L3 20h18L12 2Z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 14h10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 10h6" />
                 </svg>
               </div>
 
