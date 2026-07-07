@@ -18,6 +18,7 @@ interface Claim {
   description?: string;
   location?: string;
   officer?: string;
+  paymentReceipt?: string;
   documentsRequested?: boolean;
   requestedDocuments?: string[];
   documentRequestTo?: string;
@@ -145,6 +146,7 @@ function TrackClaimsContent() {
                   description: claim.description,
                   location: claim.location,
                   officer: claim.assignedAgentName || claim.assignedAgent || "Not Assigned",
+                  paymentReceipt: claim.paymentReceipt || "",
                   documentsRequested: claim.documentsRequested || false,
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
@@ -232,6 +234,7 @@ function TrackClaimsContent() {
             description: data.claim.description,
             location: data.claim.location,
             officer: data.claim.assignedAgentName || data.claim.assignedAgent || "Not Assigned",
+            paymentReceipt: data.claim.paymentReceipt || "",
             documentsRequested: data.claim.documentsRequested || false,
             requestedDocuments: data.claim.requestedDocuments || [],
             currentStep: data.claim.currentStep || 1,
@@ -394,6 +397,34 @@ function TrackClaimsContent() {
               
               {/* Progress wizard */}
               {renderClaimProgress(trackedClaim.status, trackedClaim.currentStep)}
+
+              {/* Payment Receipt Notification Banner */}
+              {trackedClaim.paymentReceipt && (
+                <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-[15px] font-extrabold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
+                      <p className="text-emerald-700 text-xs font-semibold mt-0.5">The branch office has submitted the transaction bank receipt.</p>
+                    </div>
+                  </div>
+                  <a
+                    href={trackedClaim.paymentReceipt.startsWith("http") || trackedClaim.paymentReceipt.startsWith("data:") ? trackedClaim.paymentReceipt : `${API_URL.replace("/api", "")}/uploads/${trackedClaim.paymentReceipt}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    View Receipt
+                  </a>
+                </div>
+              )}
 
               {/* 2-Column Info Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-8 px-2 border-b border-slate-100 pb-8">
