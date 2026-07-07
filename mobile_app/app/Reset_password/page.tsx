@@ -14,10 +14,9 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 
 type Stage = 1 | 2 | 3 | 4; // 1=request, 2=otp, 3=set-password, 4=success
-type Role = "policy_holder" | "insurance_agent";
 
 const API = `${API_BASE_URL}/api/signup`;
 
@@ -25,13 +24,12 @@ export default function MobileResetPassword() {
   const { height } = useWindowDimensions();
 
   const [stage, setStage] = useState<Stage>(1);
-  const [activeRole, setActiveRole] = useState<Role>("policy_holder");
   const [alert, setAlert] = useState<{ title: string; message: string } | null>(null);
 
   const showAlert = (title: string, message: string) => setAlert({ title, message });
 
   // Stage 1 inputs
-  const [nic, setNic] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [email, setEmail] = useState("");
   const [sentEmail, setSentEmail] = useState("");
   const [devOtp, setDevOtp] = useState("");
@@ -50,6 +48,7 @@ export default function MobileResetPassword() {
 
   // UI
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
 
   // OTP countdown timer
   useEffect(() => {
@@ -59,6 +58,16 @@ export default function MobileResetPassword() {
     }
     return () => clearInterval(timer);
   }, [stage, timerSeconds]);
+
+  // Success redirect countdown timer
+  useEffect(() => {
+    if (stage === 4 && redirectCountdown > 0) {
+      const t = setTimeout(() => setRedirectCountdown((p) => p - 1), 1000);
+      return () => clearTimeout(t);
+    } else if (stage === 4 && redirectCountdown === 0) {
+      router.push("/login/page");
+    }
+  }, [stage, redirectCountdown]);
 
   // OTP digit handler
   const handleOtpChange = (idx: number, val: string) => {
@@ -81,14 +90,9 @@ export default function MobileResetPassword() {
     }
   };
 
-  const rolesList: { id: Role; label: string }[] = [
-    { id: "policy_holder", label: "Policy Holder" },
-    { id: "insurance_agent", label: "Insurance Agent" },
-  ];
-
   // ── HANDLER: Send OTP ─────────────────────────────────────────────────────
   const handleSendOtp = async () => {
-    if (!nic.trim()) { showAlert("Required", "Please enter your NIC number."); return; }
+    if (!loginId.trim()) { showAlert("Required", "Please enter your NIC or Mobile number."); return; }
     if (!email.trim()) { showAlert("Required", "Please enter your registered email."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       showAlert("Invalid Email", "Please enter a valid email address.");
@@ -100,7 +104,7 @@ export default function MobileResetPassword() {
       const res = await fetch(`${API}/reset-password/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nic: nic.trim(), email: email.trim(), role: activeRole }),
+        body: JSON.stringify({ loginId: loginId.trim(), email: email.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to send OTP.");
@@ -124,7 +128,7 @@ export default function MobileResetPassword() {
       const res = await fetch(`${API}/reset-password/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nic: nic.trim(), email: sentEmail, role: activeRole }),
+        body: JSON.stringify({ loginId: loginId.trim(), email: sentEmail }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to resend OTP.");
@@ -150,7 +154,7 @@ export default function MobileResetPassword() {
       const res = await fetch(`${API}/reset-password/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: sentEmail, otp, role: activeRole }),
+        body: JSON.stringify({ email: sentEmail, otp }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Verification failed.");
@@ -235,33 +239,19 @@ export default function MobileResetPassword() {
             {/* ── STAGE 1: Enter details ── */}
             {stage === 1 && (
               <View style={styles.form}>
-                {/* Role tabs */}
-                <View style={styles.rolesRow}>
-                  {rolesList.map((role) => {
-                    const active = activeRole === role.id;
-                    return (
-                      <TouchableOpacity key={role.id} activeOpacity={0.7}
-                        onPress={() => { setActiveRole(role.id); setNic(""); setEmail(""); }}
-                        style={[styles.roleBtn, active && styles.roleBtnActive]}>
-                        <Text style={[styles.roleBtnText, active && styles.roleBtnTextActive]}>{role.label}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {/* NIC */}
+                {/* NIC or Mobile */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>National Identity Card (NIC) *</Text>
+                  <Text style={styles.label}>NIC or Mobile Number *</Text>
                   <View style={styles.inputWrapper}>
-                    <Ionicons name="id-card-outline" size={20} color="#64748b" style={styles.inputIcon} />
-                    <TextInput style={styles.textInput} placeholder="Enter your NIC" placeholderTextColor="#94a3b8"
-                      value={nic} onChangeText={setNic} autoCapitalize="none" autoCorrect={false} />
+                    <Ionicons name="person-outline" size={20} color="#64748b" style={styles.inputIcon} />
+                    <TextInput style={styles.textInput} placeholder="Enter your NIC or Mobile number" placeholderTextColor="#94a3b8"
+                      value={loginId} onChangeText={setLoginId} autoCapitalize="none" autoCorrect={false} />
                   </View>
                 </View>
 
                 {/* Email */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.label}>Registered Email *</Text>
+                  <Text style={styles.label}>Email *</Text>
                   <View style={styles.inputWrapper}>
                     <Ionicons name="mail-outline" size={20} color="#64748b" style={styles.inputIcon} />
                     <TextInput style={styles.textInput} placeholder="Enter your registered email" placeholderTextColor="#94a3b8"
@@ -399,18 +389,33 @@ export default function MobileResetPassword() {
 
             {/* ── STAGE 4: Success ── */}
             {stage === 4 && (
-              <View style={[styles.form, { alignItems: "center", gap: 20, paddingVertical: 16 }]}>
-                <View style={[styles.iconCircle, { width: 80, height: 80, borderRadius: 40, borderColor: "rgba(255,152,0,0.4)" }]}>
-                  <Ionicons name="checkmark-outline" size={42} color="#ff9800" />
+              <View style={[styles.form, { alignItems: "center", gap: 16, paddingVertical: 16 }]}>
+                {/* Glowing Checkmark Icon */}
+                <View style={[styles.iconCircle, { width: 88, height: 88, borderRadius: 44, borderColor: "#ff9800", backgroundColor: "rgba(255,152,0,0.15)" }]}>
+                  <Ionicons name="checkmark-done-outline" size={46} color="#ff9800" />
                 </View>
-                <Text style={[styles.label, { fontSize: 22, fontWeight: "bold", textAlign: "center" }]}>
+                
+                <Text style={[styles.label, { fontSize: 24, fontWeight: "bold", textAlign: "center", color: "#ffffff" }]}>
                   Password Updated!
                 </Text>
-                <Text style={[styles.subtitleSmall, { textAlign: "center", paddingHorizontal: 12 }]}>
+                
+                <Text style={[styles.subtitleSmall, { textAlign: "center", paddingHorizontal: 12, color: "rgba(255,255,255,0.75)", lineHeight: 18 }]}>
                   Your password has been successfully changed. You can now log in with your new password.
                 </Text>
-                <TouchableOpacity activeOpacity={0.8} style={styles.primaryBtn} onPress={() => router.push("/login/page")}>
-                  <Text style={styles.primaryBtnText}>Go to Login</Text>
+
+                {/* Progress bar and countdown */}
+                <View style={{ alignItems: "center", width: "100%", marginTop: 12 }}>
+                  <View style={{ width: 180, height: 6, backgroundColor: "rgba(255,255,255,0.12)", borderRadius: 3, overflow: "hidden" }}>
+                    <View style={{ height: "100%", backgroundColor: "#ff9800", borderRadius: 3, width: `${(redirectCountdown / 3) * 100}%` }} />
+                  </View>
+                  <Text style={[styles.subtitleSmall, { marginTop: 10, color: "rgba(255,255,255,0.5)", fontWeight: "500" }]}>
+                    Redirecting to login in <Text style={{ color: "#ff9800", fontWeight: "bold" }}>{redirectCountdown}s</Text>
+                  </Text>
+                </View>
+
+                {/* Manual Go to Login Button */}
+                <TouchableOpacity activeOpacity={0.8} style={[styles.primaryBtn, { width: "100%", marginTop: 16 }]} onPress={() => router.push("/login/page")}>
+                  <Text style={styles.primaryBtnText}>Go to Login Now</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -467,7 +472,7 @@ const styles = StyleSheet.create({
   headerSubtitle: { fontSize: 13, color: "rgba(255,255,255,0.65)", textAlign: "center", lineHeight: 18, maxWidth: 300 },
   card: {
     width: "100%", maxWidth: 400,
-    backgroundColor: "rgba(255,255,255,0.08)", borderRadius: 36,
+    backgroundColor: "rgba(15, 45, 53, 0.75)", borderRadius: 36,
     borderWidth: 1.2, borderColor: "rgba(255,255,255,0.18)", padding: 24,
     shadowColor: "#000", shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.3, shadowRadius: 16, elevation: 8,
@@ -486,6 +491,13 @@ const styles = StyleSheet.create({
   roleBtnTextActive: { color: "#ffffff", fontWeight: "800" },
   inputGroup: { gap: 8 },
   label: { color: "#fff", fontSize: 13.5, fontWeight: "600", marginLeft: 4 },
+  subtext: {
+    color: "rgba(255, 255, 255, 0.6)",
+    fontSize: 11,
+    fontWeight: "400",
+    marginLeft: 4,
+    marginTop: -4,
+  },
   inputWrapper: {
     flexDirection: "row", alignItems: "center", backgroundColor: "#fff",
     borderRadius: 18, height: 50, paddingHorizontal: 14,

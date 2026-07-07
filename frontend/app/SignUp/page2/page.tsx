@@ -34,100 +34,114 @@ export default function SignUpPage2() {
       const savedVehicleReg = sessionStorage.getItem("signup_vehicle_reg_uploaded");
       const savedRevenueLicense = sessionStorage.getItem("signup_revenue_license_uploaded");
 
+      const savedFrontName = sessionStorage.getItem("signup_nic_front_name") || "nic_front.png";
+      const savedBackName = sessionStorage.getItem("signup_nic_back_name") || "nic_back.png";
+      const savedVehicleRegName = sessionStorage.getItem("signup_vehicle_reg_name") || "vehicle_reg.png";
+      const savedRevenueLicenseName = sessionStorage.getItem("signup_revenue_license_name") || "revenue_license.png";
+
       if (savedFront) {
-        setNicFront(new File([], savedFront));
+        setNicFront(new File([], savedFrontName));
         setNicFrontStatus("done");
         setNicFrontProgress(100);
       }
       if (savedBack) {
-        setNicBack(new File([], savedBack));
+        setNicBack(new File([], savedBackName));
         setNicBackStatus("done");
         setNicBackProgress(100);
       }
       if (savedVehicleReg) {
-        setVehicleReg(new File([], savedVehicleReg));
+        setVehicleReg(new File([], savedVehicleRegName));
         setVehicleRegStatus("done");
         setVehicleRegProgress(100);
       }
       if (savedRevenueLicense) {
-        setRevenueLicense(new File([], savedRevenueLicense));
+        setRevenueLicense(new File([], savedRevenueLicenseName));
         setRevenueLicenseStatus("done");
         setRevenueLicenseProgress(100);
       }
     }
   }, []);
 
-  // Simulating File Upload Progress
+  // Simulating File Upload Progress & converting to base64
   const simulateUpload = (type: "front" | "back" | "vehicleReg" | "revenueLicense", file: File) => {
-    if (type === "front") {
-      setNicFront(file);
-      setNicFrontStatus("uploading");
-      setNicFrontProgress(0);
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 15;
-        if (progress >= 100) {
-          progress = 100;
-          setNicFrontStatus("done");
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem("signup_nic_front_uploaded", file.name);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      if (type === "front") {
+        setNicFront(file);
+        setNicFrontStatus("uploading");
+        setNicFrontProgress(0);
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 25;
+          if (progress >= 100) {
+            progress = 100;
+            setNicFrontStatus("done");
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("signup_nic_front_uploaded", base64String);
+              sessionStorage.setItem("signup_nic_front_name", file.name);
+            }
+            clearInterval(interval);
           }
-          clearInterval(interval);
-        }
-        setNicFrontProgress(progress);
-      }, 150);
-    } else if (type === "back") {
-      setNicBack(file);
-      setNicBackStatus("uploading");
-      setNicBackProgress(0);
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 15;
-        if (progress >= 100) {
-          progress = 100;
-          setNicBackStatus("done");
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem("signup_nic_back_uploaded", file.name);
+          setNicFrontProgress(progress);
+        }, 100);
+      } else if (type === "back") {
+        setNicBack(file);
+        setNicBackStatus("uploading");
+        setNicBackProgress(0);
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 25;
+          if (progress >= 100) {
+            progress = 100;
+            setNicBackStatus("done");
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("signup_nic_back_uploaded", base64String);
+              sessionStorage.setItem("signup_nic_back_name", file.name);
+            }
+            clearInterval(interval);
           }
-          clearInterval(interval);
-        }
-        setNicBackProgress(progress);
-      }, 150);
-    } else if (type === "vehicleReg") {
-      setVehicleReg(file);
-      setVehicleRegStatus("uploading");
-      setVehicleRegProgress(0);
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 15;
-        if (progress >= 100) {
-          progress = 100;
-          setVehicleRegStatus("done");
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem("signup_vehicle_reg_uploaded", file.name);
+          setNicBackProgress(progress);
+        }, 100);
+      } else if (type === "vehicleReg") {
+        setVehicleReg(file);
+        setVehicleRegStatus("uploading");
+        setVehicleRegProgress(0);
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 25;
+          if (progress >= 100) {
+            progress = 100;
+            setVehicleRegStatus("done");
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("signup_vehicle_reg_uploaded", base64String);
+              sessionStorage.setItem("signup_vehicle_reg_name", file.name);
+            }
+            clearInterval(interval);
           }
-          clearInterval(interval);
-        }
-        setVehicleRegProgress(progress);
-      }, 150);
-    } else if (type === "revenueLicense") {
-      setRevenueLicense(file);
-      setRevenueLicenseStatus("uploading");
-      setRevenueLicenseProgress(0);
-      let progress = 0;
-      const interval = setInterval(() => {
-        progress += 15;
-        if (progress >= 100) {
-          progress = 100;
-          setRevenueLicenseStatus("done");
-          if (typeof window !== "undefined") {
-            sessionStorage.setItem("signup_revenue_license_uploaded", file.name);
+          setVehicleRegProgress(progress);
+        }, 100);
+      } else if (type === "revenueLicense") {
+        setRevenueLicense(file);
+        setRevenueLicenseStatus("uploading");
+        setRevenueLicenseProgress(0);
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 25;
+          if (progress >= 100) {
+            progress = 100;
+            setRevenueLicenseStatus("done");
+            if (typeof window !== "undefined") {
+              sessionStorage.setItem("signup_revenue_license_uploaded", base64String);
+              sessionStorage.setItem("signup_revenue_license_name", file.name);
+            }
+            clearInterval(interval);
           }
-          clearInterval(interval);
-        }
-        setRevenueLicenseProgress(progress);
-      }, 150);
-    }
+          setRevenueLicenseProgress(progress);
+        }, 100);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -634,28 +648,18 @@ export default function SignUpPage2() {
               <button
                 type="button"
                 onClick={handleBackStep}
-                className="bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold py-1.5 pl-2 pr-6 rounded-full flex items-center gap-3 shadow-lg hover:shadow-orange-500/35 transition-all duration-300 active:scale-95 cursor-pointer border-none outline-none select-none"
+                className="bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-base cursor-pointer select-none outline-none border-none"
               >
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-[#ff9800]" fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-                  </svg>
-                </div>
-                <span className="text-base font-semibold">Back</span>
+                Back
               </button>
 
               {/* Next button */}
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold py-1.5 pl-6 pr-2 rounded-full flex items-center gap-3 shadow-lg hover:shadow-orange-500/35 transition-all duration-300 active:scale-95 cursor-pointer border-none outline-none select-none"
+                className="bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-base cursor-pointer select-none outline-none border-none"
               >
-                <span className="text-base font-semibold">Next</span>
-                <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center flex-shrink-0">
-                  <svg className="w-4 h-4 text-[#ff9800]" fill="none" stroke="currentColor" strokeWidth="3.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                  </svg>
-                </div>
+                Next
               </button>
 
             </div>

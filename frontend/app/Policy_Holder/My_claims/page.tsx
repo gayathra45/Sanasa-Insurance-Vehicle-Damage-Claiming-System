@@ -6,6 +6,14 @@ import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
 
+interface AdditionalDoc {
+  name: string;
+  url: string;
+  uploadedAt: string;
+  uploadedBy?: string;
+  _id?: string;
+}
+
 interface Claim {
   claimNumber: string;
   vehiclePlate: string;
@@ -18,10 +26,22 @@ interface Claim {
   location?: string;
   createdAt?: string;
   officer?: string;
+  paymentReceipt?: string;
   documentsRequested?: boolean;
   requestedDocuments?: string[];
+  documentRequestTo?: string;
   currentStep?: number;
-  messages?: { sender: string; message: string; sentAt: string }[];
+  messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
+  accidentPhotos?: {
+    front?: string[];
+    rear?: string[];
+    side?: string[];
+  };
+  drivingLicense?: {
+    front?: string[];
+    rear?: string[];
+  };
+  additionalDocuments?: AdditionalDoc[];
 }
 
 export default function MyClaims() {
@@ -29,110 +49,63 @@ export default function MyClaims() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "Review" | "Approved" | "Rejected" | "Completed">("All");
+  const [isCancellingClaim, setIsCancellingClaim] = useState(false);
 
+  const handleCancelClaim = async (claimNumber: string) => {
+    const confirmCancel = window.confirm("Are you sure you want to cancel and delete this claim? This action cannot be undone.");
+    if (!confirmCancel) return;
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const fetchClaims = async () => {
-        setIsLoading(true);
-        let userNic = "";
-        
-        // 1. Get Logged In User NIC
-        const userStr = sessionStorage.getItem("logged_in_user");
-        if (userStr) {
-          try {
-            const user = JSON.parse(userStr);
-            if (user.nic) {
-              userNic = user.nic;
-            }
-          } catch (err) {
-            console.error("Error parsing logged_in_user session", err);
-          }
-        }
+    setIsCancellingClaim(true);
+    try {
+      const res = await fetch(`${API_URL}/policy-holder/delete-claim/${encodeURIComponent(claimNumber)}`, {
+        method: "DELETE"
+      });
 
-        let databaseClaims: Claim[] = [];
-
-        // 2. Fetch Claims from MongoDB API (if NIC exists)
-        if (userNic) {
-          try {
-            const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(userNic)}`);
-            if (res.ok) {
-              const data = await res.json();
-              if (Array.isArray(data.claims)) {
-                databaseClaims = data.claims.map((claim: any) => ({
-                  claimNumber: claim.claimNumber,
-                  vehiclePlate: claim.vehiclePlate,
-                  incidentDate: formatDateString(claim.incidentDate),
-                  incidentTime: claim.incidentTime,
-                  damageType: claim.damageType,
-                  amount: claim.amount ? `Rs. ${Number(claim.amount).toLocaleString()}` : "Pending",
-                  status: claim.status || "Pending",
-                  description: claim.description,
-                  location: claim.location,
-                  officer: "Not Assigned",
-                  documentsRequested: claim.documentsRequested || false,
-                  requestedDocuments: claim.requestedDocuments || [],
-                  currentStep: claim.currentStep || 1,
-                  messages: claim.messages || []
-                }));
-              }
-            }
-          } catch (err) {
-            console.error("Error fetching claims from backend API", err);
-          }
-        }
-
-        // 3. Fallback to check if a claim was recently submitted in current session
-        let localClaims: Claim[] = [];
-        try {
-          const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-          if (lastSubmitted) {
-            const parsed = JSON.parse(lastSubmitted);
-            // Verify if it is already in database claims to prevent duplication
-            const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
-            if (!exists) {
-              localClaims.push({
-                claimNumber: parsed.claimNumber,
-                vehiclePlate: parsed.vehiclePlate,
-                incidentDate: formatDateString(parsed.incidentDate),
-                incidentTime: parsed.incidentTime,
-                damageType: parsed.damageType,
-                amount: "Pending",
-                status: "Pending",
-                description: parsed.description,
-                location: parsed.location,
-                officer: "Not Assigned",
-                documentsRequested: false,
-                requestedDocuments: [],
-                currentStep: 1,
-                messages: []
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Error parsing local claim draft", err);
-        }
-
-        // 4. Combine recently submitted claims with database claims
-        setClaims([...localClaims, ...databaseClaims]);
-        setIsLoading(false);
-      };
-
-      fetchClaims();
+      if (res.ok) {
+        alert("Claim cancelled and deleted successfully!");
+        setSelectedClaim(null);
+        fetchClaims(true); // Refresh claims list
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to cancel claim.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while trying to cancel the claim.");
+    } finally {
+      setIsCancellingClaim(false);
     }
-  }, []);
+  };
 
-  // Lock background scroll when modal is open
-  useEffect(() => {
-    if (selectedClaim) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
+  const getUserRequestedDocs = (claim: Claim): string[] => {
+    const getRecipientForDoc = (name: string) => {
+      const msg = [...(claim.messages || [])]
+        .reverse()
+        .find(m => m.message.includes(`Requested: ${name}`));
+      if (msg) {
+        if (msg.message.includes("[Document Request to Agent]")) return "Agent";
+        if (msg.message.includes("[Document Request to User]")) return "User";
+      }
+      return claim.documentRequestTo || "User";
     };
-  }, [selectedClaim]);
+    return (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+  };
+
+  const getDocRequestNote = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.message) {
+      const idx = msg.message.indexOf("Message:");
+      if (idx !== -1) {
+        return msg.message.substring(idx + 8).trim();
+      }
+    }
+    return "";
+  };
 
   // Format YYYY-MM-DD to "DD MMM YYYY" (e.g. "12 Jan 2026")
   const formatDateString = (dateStr: string) => {
@@ -146,6 +119,163 @@ export default function MyClaims() {
       return dateStr;
     }
   };
+
+  const formatDateTimeString = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()} ${hours}:${minutes}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const getDocRequestTime = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.sentAt) {
+      return formatDateTimeString(msg.sentAt);
+    }
+    return "";
+  };
+
+  const getDocRequestSender = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "Office Staff";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    return msg ? (msg.sender || "Office Staff") : "Office Staff";
+  };
+
+
+  const fetchClaims = async (showLoading = true) => {
+    if (typeof window === "undefined") return;
+    if (showLoading) setIsLoading(true);
+    let userNic = "";
+    
+    // 1. Get Logged In User
+    const userStr = sessionStorage.getItem("logged_in_user");
+    if (userStr) {
+      try {
+        const parsedUser = JSON.parse(userStr);
+        setUser(parsedUser);
+        if (parsedUser.nic) {
+          userNic = parsedUser.nic;
+        }
+      } catch (err) {
+        console.error("Error parsing logged_in_user session", err);
+      }
+    }
+
+    let databaseClaims: Claim[] = [];
+
+    // 2. Fetch Claims from MongoDB API (if NIC exists)
+    if (userNic) {
+      try {
+        const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(userNic)}&includeDocs=true`, {
+          cache: "no-store"
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.claims)) {
+            databaseClaims = data.claims.map((claim: any) => ({
+              claimNumber: claim.claimNumber,
+              vehiclePlate: claim.vehiclePlate,
+              incidentDate: formatDateString(claim.incidentDate),
+              incidentTime: claim.incidentTime,
+              damageType: claim.damageType,
+              amount: claim.amount ? `Rs. ${Number(claim.amount).toLocaleString()}` : "Pending",
+              status: claim.status || "Pending",
+              description: claim.description,
+              location: claim.location,
+              officer: claim.assignedAgentName || claim.assignedAgent || "Not Assigned",
+              paymentReceipt: claim.paymentReceipt || "",
+              documentsRequested: claim.documentsRequested || false,
+              requestedDocuments: claim.requestedDocuments || [],
+              currentStep: claim.currentStep || 1,
+              messages: claim.messages || [],
+              accidentPhotos: claim.accidentPhotos || {},
+              drivingLicense: claim.drivingLicense || {},
+              additionalDocuments: claim.additionalDocuments || [],
+              createdAt: claim.createdAt || claim.incidentDate
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching claims from backend API", err);
+      }
+    }
+
+    // 3. Fallback to check if a claim was recently submitted in current session
+    let localClaims: Claim[] = [];
+    try {
+      const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
+      if (lastSubmitted) {
+        const parsed = JSON.parse(lastSubmitted);
+        // Verify if it is already in database claims to prevent duplication
+        const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
+        if (!exists) {
+          localClaims.push({
+            claimNumber: parsed.claimNumber,
+            vehiclePlate: parsed.vehiclePlate,
+            incidentDate: formatDateString(parsed.incidentDate),
+            incidentTime: parsed.incidentTime,
+            damageType: parsed.damageType,
+            amount: "Pending",
+            status: "Pending",
+            description: parsed.description,
+            location: parsed.location,
+            officer: "Not Assigned",
+            documentsRequested: false,
+            requestedDocuments: [],
+            currentStep: 1,
+            messages: [],
+            accidentPhotos: {},
+            drivingLicense: {},
+            additionalDocuments: [],
+            createdAt: parsed.createdAt || parsed.incidentDate || new Date().toISOString()
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error parsing local claim draft", err);
+    }
+
+    // 4. Combine recently submitted claims with database claims
+    setClaims([...localClaims, ...databaseClaims]);
+    if (showLoading) setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchClaims(true);
+  }, []);
+
+  // Poll database claims periodically in the background
+  useEffect(() => {
+    if (selectedClaim !== null) return;
+    const pollInterval = setInterval(() => {
+      fetchClaims(false);
+    }, 7000);
+    return () => clearInterval(pollInterval);
+  }, [selectedClaim]);
+
+  // Lock background scroll when modal is open
+  useEffect(() => {
+    if (selectedClaim) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedClaim]);
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
@@ -192,17 +322,73 @@ export default function MyClaims() {
     return cleaned;
   };
 
-  // Filter claims based on search query
-  const filteredClaims = claims.filter(
-    (claim) =>
+  // Calculate statistics for the Policy Holder
+  const currentYear = new Date().getFullYear();
+  const claimsThisYear = claims.filter(c => {
+    const dateStr = c.createdAt || c.incidentDate;
+    if (!dateStr) return false;
+    try {
+      const d = new Date(dateStr);
+      return !isNaN(d.getTime()) && d.getFullYear() === currentYear;
+    } catch {
+      return false;
+    }
+  });
+
+  const totalClaimsThisYear = claimsThisYear.length;
+  const pendingClaimsThisYear = claimsThisYear.filter(c => {
+    const s = c.status.toLowerCase();
+    return s.includes("pending") || s.includes("progress");
+  }).length;
+  const completedClaimsThisYear = claimsThisYear.filter(c => {
+    const s = c.status.toLowerCase();
+    return s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
+  }).length;
+
+  const totalUploads = claims.reduce((acc, c) => {
+    let count = 0;
+    if (c.drivingLicense?.front && c.drivingLicense.front.length > 0) count++;
+    if (c.drivingLicense?.rear && c.drivingLicense.rear.length > 0) count++;
+    if (c.accidentPhotos?.front) count += c.accidentPhotos.front.length;
+    if (c.accidentPhotos?.rear) count += c.accidentPhotos.rear.length;
+    if (c.accidentPhotos?.side) count += c.accidentPhotos.side.length;
+    if (c.additionalDocuments) {
+      count += c.additionalDocuments.length;
+    }
+    return acc + count;
+  }, 0);
+  const totalChats = claims.reduce((acc, c) => acc + (c.messages?.length || 0), 0);
+
+  // Filter claims based on status filter and search query
+  const filteredClaims = claims.filter((claim) => {
+    let matchesStatus = false;
+    const s = claim.status.toLowerCase();
+    if (statusFilter === "All") {
+      matchesStatus = true;
+    } else if (statusFilter === "Completed") {
+      matchesStatus = s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
+    } else if (statusFilter === "Pending") {
+      matchesStatus = s.includes("pending") || s.includes("progress");
+    } else if (statusFilter === "Review") {
+      matchesStatus = s.includes("review") || s.includes("submit");
+    } else if (statusFilter === "Approved") {
+      matchesStatus = s.includes("approved") || s.includes("active") || s.includes("done");
+    } else if (statusFilter === "Rejected") {
+      matchesStatus = s.includes("rejected");
+    }
+
+    const matchesSearch =
       claim.claimNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       claim.vehiclePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
       claim.damageType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      claim.status.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      claim.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (claim.location && claim.location.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return matchesStatus && matchesSearch;
+  });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans relative">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative">
       <PolicyHolderNavbar />
 
       {/* Styled curved header matching the mockup exactly */}
@@ -226,77 +412,225 @@ export default function MyClaims() {
       </div>
 
       {/* Main Table Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 flex flex-col gap-8">
         
-        {/* Search Bar matching screenshot */}
-        <div className="flex justify-start mb-8 select-none">
-          <div className="relative w-full max-w-[280px]">
-            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
+        {/* Top Overview Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 select-none">
+          
+          {/* Card 1: Profile & Status */}
+          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] hover:border-slate-350 transition-all duration-200">
+            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Profile & Status</span>
+            <div className="flex items-center gap-3.5 mt-3">
+              <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-bold shrink-0">
+                <svg className="w-6 h-6 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="overflow-hidden">
+                <span className="block font-black text-slate-800 text-base truncate">
+                  {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.name || "Policy Holder")}
+                </span>
+                <span className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">NIC: {user?.nic || "N/A"}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Performance Summary */}
+          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] hover:border-slate-350 transition-all duration-200">
+            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Performance Summary</span>
+
+            <div className="grid grid-cols-3 gap-3 text-center mt-3">
+              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-2.5 flex flex-col justify-center">
+                <span className="text-xl font-black text-slate-800">{totalClaimsThisYear}</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Claims</span>
+              </div>
+              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-2.5 flex flex-col justify-center">
+                <span className="text-xl font-black text-slate-800">{pendingClaimsThisYear}</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Pending</span>
+              </div>
+              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-2.5 flex flex-col justify-center">
+                <span className="text-xl font-black text-slate-800">{completedClaimsThisYear}</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Completed</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Quick Guidelines */}
+          <div className="bg-slate-900 border border-slate-800 rounded-[28px] p-6 shadow-md text-white flex flex-col justify-between min-h-[140px] hover:border-slate-800 transition-all duration-200">
+            <span className="text-[10px] text-cyan-400 font-extrabold uppercase tracking-wider block flex items-center gap-1.5">
+              <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              Quick Guidelines
+            </span>
+            <p className="text-slate-300 text-xs font-semibold leading-relaxed mt-3.5">
+              Use the status tabs to filter your claims. Click "View" to check live assessment tracking, view officer details, and read message logs.
+            </p>
+          </div>
+
+        </div>
+
+        {/* Search & Filter row */}
+        <div className="bg-white border border-slate-200 rounded-[24px] p-5 flex flex-col lg:flex-row gap-4 items-center justify-between shadow-sm select-none">
+          
+          {/* Status Tabs */}
+          <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-full lg:w-auto">
+            {(["All", "Pending", "Review", "Approved", "Rejected", "Completed"] as const).map(tab => (
+              <button
+                key={tab}
+                type="button"
+                onClick={() => setStatusFilter(tab)}
+                className={`px-4 py-2 rounded-lg text-xs font-black transition-all border-none outline-none cursor-pointer ${
+                  statusFilter === tab
+                    ? "bg-[#0f2d4a] text-white shadow-sm"
+                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
+                }`}
+              >
+                {tab} ({
+                  tab === "All"
+                    ? claims.length
+                    : tab === "Completed"
+                    ? claims.filter(c => {
+                        const s = c.status.toLowerCase();
+                        return s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
+                      }).length
+                    : tab === "Pending"
+                    ? claims.filter(c => {
+                        const s = c.status.toLowerCase();
+                        return s.includes("pending") || s.includes("progress");
+                      }).length
+                    : tab === "Review"
+                    ? claims.filter(c => {
+                        const s = c.status.toLowerCase();
+                        return s.includes("review") || s.includes("submit");
+                      }).length
+                    : tab === "Approved"
+                    ? claims.filter(c => {
+                        const s = c.status.toLowerCase();
+                        return s.includes("approved") || s.includes("active") || s.includes("done");
+                      }).length
+                    : claims.filter(c => c.status.toLowerCase().includes(tab.toLowerCase())).length
+                })
+              </button>
+            ))}
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative w-full lg:w-80">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637z" />
               </svg>
             </span>
             <input
               type="text"
-              placeholder=""
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-[#f1f5f9] text-slate-800 rounded-full py-2.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-300 font-medium"
+              placeholder="Search ID, vehicle, type, or status..."
+              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 text-slate-700 placeholder:text-slate-400 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] focus:border-transparent transition-all bg-slate-50 focus:bg-white"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Table Container Card */}
-        <div className="bg-white border border-slate-200 rounded-[30px] shadow-sm overflow-hidden mb-10">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className="bg-[#e2e8f0]/60">
-                <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4.5 text-left text-base font-extrabold text-slate-800 whitespace-nowrap">Claim ID</th>
-                  <th className="px-6 py-4.5 text-left text-base font-extrabold text-slate-800 whitespace-nowrap">Vehicle</th>
-                  <th className="px-6 py-4.5 text-left text-base font-extrabold text-slate-800 whitespace-nowrap">Date</th>
-                  <th className="px-6 py-4.5 text-left text-base font-extrabold text-slate-800 whitespace-nowrap">Type</th>
-                  <th className="px-6 py-4.5 text-left text-base font-extrabold text-slate-800 whitespace-nowrap">Amount</th>
-                  <th className="px-6 py-4.5 text-left text-base font-extrabold text-slate-800 whitespace-nowrap">Status</th>
-                  <th className="px-6 py-4.5 text-left text-base font-extrabold text-slate-800 whitespace-nowrap">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-slate-500 font-bold">
-                      Loading your claims...
-                    </td>
-                  </tr>
-                ) : filteredClaims.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-slate-500 font-bold">
-                      No claims found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredClaims.map((claim) => (
-                    <tr key={claim.claimNumber} className="hover:bg-slate-50/40 transition-colors">
-                      <td className="px-6 py-4.5 text-sm font-extrabold text-slate-800 whitespace-nowrap">{claim.claimNumber}</td>
-                      <td className="px-6 py-4.5 text-sm font-extrabold text-slate-800 whitespace-nowrap">{formatNumberPlate(claim.vehiclePlate)}</td>
-                      <td className="px-6 py-4.5 text-sm font-extrabold text-slate-800 whitespace-nowrap">{claim.incidentDate}</td>
-                      <td className="px-6 py-4.5 text-sm font-extrabold text-slate-800 whitespace-nowrap">{claim.damageType}</td>
-                      <td className="px-6 py-4.5 text-sm font-extrabold text-slate-800 whitespace-nowrap">{claim.amount}</td>
-                      <td className="px-6 py-4.5 text-sm font-extrabold text-slate-800 whitespace-nowrap">{getStatusBadge(claim.status)}</td>
-                      <td className="px-6 py-4.5 text-sm whitespace-nowrap">
-                        <button
-                          onClick={() => setSelectedClaim(claim)}
-                          className="border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold py-1 px-4.5 rounded-lg transition-all shadow-sm cursor-pointer"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        {/* Modern Card Grid list */}
+        <div className="flex flex-col gap-6">
+          
+          {/* Grid Table Header (Desktop Only) */}
+          <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] items-center gap-4 px-5 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
+            <div>Claim Info</div>
+            <div>Vehicle No</div>
+            <div>Date</div>
+            <div>Damage Type</div>
+            <div className="text-center">Amount</div>
+            <div className="text-center">Status</div>
+            <div className="text-right">Actions</div>
+          </div>
+
+          {/* List Cards */}
+          <div className="flex flex-col gap-3.5">
+            {isLoading ? (
+              <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#0284c7]"></div>
+                <span className="mt-3 text-slate-400 text-sm font-bold">Loading your claims dossier...</span>
+              </div>
+            ) : filteredClaims.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
+                <h3 className="font-extrabold text-slate-700 text-lg">No Claims Found</h3>
+                <p className="text-slate-400 text-xs font-semibold mt-1.5 max-w-sm leading-relaxed">
+                  We couldn't find any claims matching the selected filters or search queries.
+                </p>
+              </div>
+            ) : (
+              filteredClaims.map((claim) => {
+                const s = claim.status.toLowerCase();
+                const isUrgent = s.includes("pending") || s.includes("progress") || s.includes("review") || s.includes("submit");
+                return (
+                  <div
+                    key={claim.claimNumber}
+                    onClick={() => setSelectedClaim(claim)}
+                    className={`bg-white border border-slate-200 hover:border-[#0f2d4a] rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${
+                      isUrgent ? "border-l-4 border-l-[#0f2d4a]" : "border-l-4 border-l-slate-300"
+                    }`}
+                  >
+                    {/* Claim Info */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="font-black text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
+                      {claim.createdAt && (
+                        <span className="text-[10px] text-slate-400 font-bold mt-1 block">Registered: {formatDateString(claim.createdAt)}</span>
+                      )}
+                    </div>
+
+                    {/* Vehicle Plate */}
+                    <div className="text-xs md:text-sm font-bold text-slate-800">
+                      {formatNumberPlate(claim.vehiclePlate)}
+                    </div>
+
+                    {/* Incident Date */}
+                    <div className="text-xs md:text-sm font-semibold text-slate-700">
+                      {claim.incidentDate}
+                    </div>
+
+                    {/* Damage Type */}
+                    <div className="text-xs md:text-sm font-semibold text-slate-700 truncate" title={claim.damageType}>
+                      {claim.damageType}
+                    </div>
+
+                    {/* Amount */}
+                    <div className="text-xs md:text-sm font-bold text-slate-700 text-center">
+                      {claim.amount}
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="flex flex-col items-center min-w-0">
+                      {getStatusBadge(claim.status)}
+                    </div>
+
+                    {/* Action */}
+                    <div className="text-left md:text-right" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedClaim(claim)}
+                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                      >
+                        Details
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -402,32 +736,60 @@ export default function MyClaims() {
                 {/* Dynamic Tracker Wizard */}
                 {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
 
+                {/* Payment Receipt Notification Banner */}
+                {selectedClaim.paymentReceipt && (
+                  <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="text-[15px] font-extrabold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
+                        <p className="text-emerald-700 text-xs font-semibold mt-0.5">The branch office has submitted the transaction bank receipt.</p>
+                      </div>
+                    </div>
+                    <a
+                      href={selectedClaim.paymentReceipt.startsWith("http") || selectedClaim.paymentReceipt.startsWith("data:") ? selectedClaim.paymentReceipt : `${API_URL.replace("/api", "")}/uploads/${selectedClaim.paymentReceipt}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      View Receipt
+                    </a>
+                  </div>
+                )}
+
                 {/* 2-Column Grid matching mockup inline labels */}
                 <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-6 px-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold">Vehicle:</span>
+                    <span className="text-slate-400 font-bold w-28 shrink-0">Vehicle:</span>
                     <span className="font-extrabold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold">Type:</span>
+                    <span className="text-slate-400 font-bold w-28 shrink-0">Type:</span>
                     <span className="font-extrabold text-slate-800">{selectedClaim.damageType}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold">Est. Amount:</span>
+                    <span className="text-slate-400 font-bold w-28 shrink-0">Est. Amount:</span>
                     <span className="font-extrabold text-slate-800">
                       {selectedClaim.amount.startsWith("Rs.") ? "LKR " + selectedClaim.amount.substring(4) : selectedClaim.amount}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold">Date:</span>
+                    <span className="text-slate-400 font-bold w-28 shrink-0">Date:</span>
                     <span className="font-extrabold text-slate-800">{selectedClaim.incidentDate}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold">Officer:</span>
+                    <span className="text-slate-400 font-bold w-28 shrink-0">Officer:</span>
                     <span className="font-extrabold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold">Location:</span>
+                    <span className="text-slate-400 font-bold w-28 shrink-0">Location:</span>
                     <span className="font-extrabold text-slate-800">{selectedClaim.location || "N/A"}</span>
                   </div>
                 </div>
@@ -441,61 +803,95 @@ export default function MyClaims() {
                     </p>
                   </div>
                 )}
+                {/* Messages & Notifications Section */}
+                <div className="px-2 mt-4 mb-2">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
+                  {(() => {
+                    const filteredMessages = (selectedClaim.messages || []).filter((msg: any) => msg.recipient !== "Agent");
+                    if (filteredMessages.length > 0) {
+                      return (
+                        <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
+                          {filteredMessages.map((msg: any, index: number) => (
+                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1 shadow-sm">
+                              <div className="flex justify-between items-center text-[11px] select-none">
+                                <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
+                                <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
+                              </div>
+                              <p className="text-slate-700 text-xs font-semibold leading-relaxed m-0">
+                                {msg.message}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <p className="text-slate-500 text-xs italic font-medium bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
+                          No notifications or messages have been sent for this claim.
+                        </p>
+                      );
+                    }
+                  })()}
+                </div>
 
                 {/* Warning Alert Box matching mockup */}
-                {selectedClaim.documentsRequested && (
-                  <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2">
+                {selectedClaim.documentsRequested && getUserRequestedDocs(selectedClaim).length > 0 && (
+                  <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2 mt-4">
                     <h4 className="text-[#9c3535] font-extrabold text-sm mb-1.5">Documents Requested</h4>
                     <p className="text-[#aa4f4f] text-[13px] font-semibold leading-relaxed mb-3">
                       The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
                     </p>
-                    <ul className="list-none flex flex-col gap-2 mb-4 pl-1">
-                      {(selectedClaim.requestedDocuments && selectedClaim.requestedDocuments.length > 0
-                        ? selectedClaim.requestedDocuments
-                        : ["Police Report", "Repair Estimate"]
-                      ).map((doc) => (
-                        <li key={doc} className="flex items-center gap-2 text-[#aa4f4f] font-bold text-xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0" />
-                          <span>{doc}</span>
-                        </li>
-                      ))}
+                    <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
+                      {getUserRequestedDocs(selectedClaim).map((doc) => {
+                        const note = getDocRequestNote(selectedClaim, doc);
+                        const reqTime = getDocRequestTime(selectedClaim, doc);
+                        return (
+                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
+                              <span className="font-extrabold">{doc}</span>
+                              {reqTime && (
+                                <span className="text-red-600 font-extrabold">
+                                  (Requested: {reqTime} by {getDocRequestSender(selectedClaim, doc)})
+                                </span>
+                              )}
+                              {note && (
+                                <span className="col-span-1 sm:col-span-2 text-[11px] font-medium text-slate-500 italic mt-0.5 pl-0.5">
+                                  Note: "{note}"
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
                     </ul>
                     <Link
-                      href="/Policy_Holder/Documents"
+                      href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
                       className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
                       Go to Documents
                     </Link>
                   </div>
                 )}
-
-                {/* Messages & Notifications Section */}
-                <div className="px-2 mt-4 mb-2">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
-                  {selectedClaim.messages && selectedClaim.messages.length > 0 ? (
-                    <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
-                      {selectedClaim.messages.map((msg: any, index: number) => (
-                        <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1 shadow-sm">
-                          <div className="flex justify-between items-center text-[11px] select-none">
-                            <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
-                            <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
-                          </div>
-                          <p className="text-slate-700 text-xs font-semibold leading-relaxed m-0">
-                            {msg.message}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-slate-500 text-xs italic font-medium bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
-                      No notifications or messages have been sent for this claim.
-                    </p>
-                  )}
-                </div>
               </div>
 
               {/* Modal Footer */}
-              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
+              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-shrink-0">
+                {selectedClaim.currentStep && selectedClaim.currentStep < 2 && (!selectedClaim.officer || selectedClaim.officer === "Not Assigned") && selectedClaim.status !== "Cancelled" ? (
+                  <button
+                    onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
+                    disabled={isCancellingClaim}
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-2.5 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    {isCancellingClaim ? "Cancelling Claim..." : "Cancel Claim"}
+                  </button>
+                ) : (
+                  <div /> // Spacer to align Close button to the right
+                )}
+
                 <button
                   onClick={() => setSelectedClaim(null)}
                   className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"

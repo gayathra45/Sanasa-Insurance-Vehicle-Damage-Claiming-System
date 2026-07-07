@@ -17,15 +17,20 @@ import {
   TextInput,
   Modal,
   KeyboardAvoidingView,
+  Linking,
+  Image,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
+import * as ImagePicker from "expo-image-picker";
+import * as Location from "expo-location";
+import { WebView } from "react-native-webview";
 import AgentNavbar from "../../Components/Agent/page";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "../../_config";
 
-const { width: SCREEN_W } = Dimensions.get("window");
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
 // ─── Interfaces ────────────────────────────────────────────────────────────────
 interface Claim {
@@ -45,6 +50,22 @@ interface Claim {
   amount: number | null;
   currentStep: number;
   createdAt: string;
+  inspectionReport?: string;
+  inspectionSubmitted?: boolean;
+  paymentReceipt?: string;
+  additionalDocuments?: { name: string; url: string; uploadedAt: string; uploadedBy?: string }[];
+  requestedDocuments?: string[];
+  documentRequestTo?: string;
+  messages?: { sender: string; message: string; sentAt: string }[];
+  accidentPhotos?: {
+    front: string[];
+    rear: string[];
+    side: string[];
+  };
+  drivingLicense?: {
+    front: string[];
+    rear: string[];
+  };
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
@@ -54,6 +75,17 @@ function getSeverity(damageType: string): "Urgent" | "Medium" | "Low" {
   if (t.includes("accident") || t.includes("crash")) return "Medium";
   return "Low";
 }
+
+const formatNumberPlate = (plate: string): string => {
+  if (!plate) return "";
+  const cleaned = plate.trim();
+  if (cleaned.includes("-")) return cleaned.toUpperCase();
+  const lastNumbersMatch = cleaned.match(/^(.*[A-Za-z]+)(\d+)$/);
+  if (lastNumbersMatch) {
+    return `${lastNumbersMatch[1].trim().toUpperCase()}-${lastNumbersMatch[2]}`;
+  }
+  return cleaned.toUpperCase();
+};
 
 function formatDate(dateStr?: string) {
   if (!dateStr) return "";
@@ -65,6 +97,177 @@ function formatDate(dateStr?: string) {
   } catch { return dateStr; }
 }
 
+const parseInspectionReport = (reportText?: string | null) => {
+  if (!reportText) return null;
+  
+  if (!reportText.includes("[1. VEHICLE CONDITION DETAILS]")) {
+    return { isRaw: true, rawText: reportText };
+  }
+
+  try {
+    const lines = reportText.split("\n");
+    let odometer = "";
+    let fuelLevel = "";
+    let recommendedAction = "";
+    let estimatedCost = "";
+    let preExistingDamage = "";
+    let physicalInspectionNotes = "";
+    const checklist: { [key: string]: string } = {};
+
+    let currentSection = "";
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      if (!trimmed) return;
+
+      if (trimmed.startsWith("• Odometer:")) {
+        odometer = trimmed.replace("• Odometer:", "").trim();
+      } else if (trimmed.startsWith("• Fuel Level:")) {
+        fuelLevel = trimmed.replace("• Fuel Level:", "").trim();
+      } else if (trimmed.startsWith("• Recommended Action:")) {
+        recommendedAction = trimmed.replace("• Recommended Action:", "").trim();
+      } else if (trimmed.startsWith("• Estimated Cost:")) {
+        estimatedCost = trimmed.replace("• Estimated Cost:", "").trim();
+      } else if (trimmed.includes("[3. PRE-EXISTING DAMAGE NOTES]")) {
+        currentSection = "pre-existing";
+      } else if (trimmed.includes("[4. PHYSICAL INSPECTION NOTES]")) {
+        currentSection = "physical-notes";
+      } else if (trimmed.includes("==================================") || trimmed.includes("VEHICLE CLAIM INSPECTION")) {
+        // skip
+      } else if (trimmed.includes("[2. COMPONENT DAMAGE CHECKLIST]")) {
+        currentSection = "checklist";
+      } else if (currentSection === "checklist" && trimmed.startsWith("• ")) {
+        const parts = trimmed.substring(2).split(":");
+        if (parts.length >= 2) {
+          const compName = parts[0].trim();
+          const compVal = parts[1].replace("[", "").replace("]", "").trim();
+          checklist[compName] = compVal;
+        }
+      } else if (currentSection === "pre-existing") {
+        if (!trimmed.startsWith("[")) {
+          preExistingDamage += (preExistingDamage ? "\n" : "") + trimmed;
+        }
+      } else if (currentSection === "physical-notes") {
+        if (!trimmed.startsWith("[")) {
+          physicalInspectionNotes += (physicalInspectionNotes ? "\n" : "") + trimmed;
+        }
+      }
+    });
+
+    return {
+      isRaw: false,
+      odometer,
+      fuelLevel,
+      recommendedAction,
+      estimatedCost,
+      checklist,
+      preExistingDamage: preExistingDamage || "None reported.",
+      physicalInspectionNotes: physicalInspectionNotes || "None reported."
+    };
+  } catch (err) {
+    console.error("Error parsing report:", err);
+    return { isRaw: true, rawText: reportText };
+  }
+};
+
+const renderParsedInspection = (reportText?: string | null) => {
+  const parsed = parseInspectionReport(reportText);
+  if (!parsed) return null;
+
+  if (parsed.isRaw) {
+    return (
+      <View style={{ backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 10, padding: 10 }}>
+        <Text style={{
+          fontSize: 11,
+          fontWeight: "600",
+          color: "#334155",
+          fontFamily: Platform.OS === "ios" ? "Courier" : "monospace",
+          lineHeight: 16,
+        }}>
+          {parsed.rawText}
+        </Text>
+      </View>
+    );
+  }
+
+  const renderBadge = (val: string) => {
+    let bg = "#f1f5f9";
+    let color = "#475569";
+    let border = "#e2e8f0";
+
+    if (val === "None") {
+      bg = "#ecfdf5";
+      color = "#047857";
+      border = "#a7f3d0";
+    } else if (val === "Minor") {
+      bg = "#fffbeb";
+      color = "#b45309";
+      border = "#fde68a";
+    } else if (val === "Major") {
+      bg = "#fef2f2";
+      color = "#b91c1c";
+      border = "#fecaca";
+    }
+
+    return (
+      <View style={{ backgroundColor: bg, borderColor: border, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 12 }}>
+        <Text style={{ fontSize: 9, fontWeight: "900", color: color, textTransform: "uppercase" }}>{val}</Text>
+      </View>
+    );
+  };
+
+  return (
+    <View style={{ gap: 12 }}>
+      {/* 2-column Grid for stats */}
+      <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", rowGap: 8 }}>
+        <View style={{ width: "48%", backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, padding: 10, gap: 2 }}>
+          <Text style={{ fontSize: 8.5, fontWeight: "800", color: "#94a3b8" }}>MILEAGE</Text>
+          <Text style={{ fontSize: 11.5, fontWeight: "900", color: "#1e3a8a" }}>{parsed.odometer}</Text>
+        </View>
+        <View style={{ width: "48%", backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, padding: 10, gap: 2 }}>
+          <Text style={{ fontSize: 8.5, fontWeight: "800", color: "#94a3b8" }}>FUEL LEVEL</Text>
+          <Text style={{ fontSize: 11.5, fontWeight: "900", color: "#b45309" }}>{parsed.fuelLevel}</Text>
+        </View>
+        <View style={{ width: "48%", backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, padding: 10, gap: 2 }}>
+          <Text style={{ fontSize: 8.5, fontWeight: "800", color: "#94a3b8" }}>EST. REPAIR COST</Text>
+          <Text style={{ fontSize: 11.5, fontWeight: "900", color: "#16a34a" }}>{parsed.estimatedCost}</Text>
+        </View>
+        <View style={{ width: "48%", backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, padding: 10, gap: 2 }}>
+          <Text style={{ fontSize: 8.5, fontWeight: "800", color: "#94a3b8" }}>RECOMMENDATION</Text>
+          <Text style={{ fontSize: 10.5, fontWeight: "900", color: "#334155" }} numberOfLines={1}>{parsed.recommendedAction}</Text>
+        </View>
+      </View>
+
+      {/* Component Damage Checklist */}
+      <View style={{ backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12, padding: 12, gap: 8 }}>
+        <Text style={{ fontSize: 9.5, fontWeight: "900", color: "#1e3a8a", borderBottomWidth: 1, borderBottomColor: "#f1f5f9", paddingBottom: 6 }}>
+          COMPONENT CHECKLIST
+        </Text>
+        {Object.entries(parsed.checklist || {}).map(([key, value]) => (
+          <View key={key} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: "#f8fafc" }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#475569" }}>{key}</Text>
+            {renderBadge(value)}
+          </View>
+        ))}
+      </View>
+
+      {/* Pre-Existing Notes */}
+      {parsed.preExistingDamage && parsed.preExistingDamage !== "None reported." && (
+        <View style={{ backgroundColor: "#fffbeb", borderLeftWidth: 3, borderLeftColor: "#f59e0b", padding: 10, borderRadius: 8, gap: 2 }}>
+          <Text style={{ fontSize: 9, fontWeight: "800", color: "#b45309" }}>PRE-EXISTING DAMAGE NOTES</Text>
+          <Text style={{ fontSize: 11.5, fontWeight: "600", color: "#451a03" }}>{parsed.preExistingDamage}</Text>
+        </View>
+      )}
+
+      {/* General Notes */}
+      <View style={{ backgroundColor: "#f8fafc", borderWidth: 1, borderColor: "#e2e8f0", padding: 10, borderRadius: 8, gap: 2 }}>
+        <Text style={{ fontSize: 9, fontWeight: "800", color: "#64748b" }}>PHYSICAL INSPECTION NOTES</Text>
+        <Text style={{ fontSize: 11.5, fontWeight: "600", color: "#334155" }}>{parsed.physicalInspectionNotes}</Text>
+      </View>
+    </View>
+  );
+};
+
 // ─── Quick Actions for agent ──────────────────────────────────────────────────
 const QUICK_ACTIONS = [
   { label: "New Claims",   icon: "alert-circle-outline",   color: "#dc2626" },
@@ -74,18 +277,1079 @@ const QUICK_ACTIONS = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AgentDashboard() {
+  const { claimId, step } = useLocalSearchParams<{ claimId?: string; step?: string }>();
   const [agentName, setAgentName]     = useState("");
   const [agentEmail, setAgentEmail]   = useState("");
   const [claims, setClaims]           = useState<Claim[]>([]);
   const [loading, setLoading]         = useState(true);
   const [refreshing, setRefreshing]   = useState(false);
-  const [activeTab, setActiveTab]     = useState<"home" | "claims" | "activity">("home");
+  const [activeTab, setActiveTab]     = useState<"home" | "claims" | "activity">("claims");
 
   // Detail modal
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [assessmentAmount, setAssessmentAmount] = useState("");
   const [savingAssessment, setSavingAssessment] = useState(false);
   const [customAlert, setCustomAlert] = useState<{ title: string; message: string } | null>(null);
+  const [inspectionReportText, setInspectionReportText] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+  const [isAcceptingClaim, setIsAcceptingClaim] = useState(false);
+  const [decisionCommentText, setDecisionCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  // ── Step-by-Step Inspection Wizard States ──────────────────────────────────
+  const [activeInspectionStep, setActiveInspectionStep] = useState(1);
+  const [agentLocation, setAgentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [incidentCoords, setIncidentCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [isLocatingAgent, setIsLocatingAgent] = useState(false);
+  const [isGeocodingClaim, setIsGeocodingClaim] = useState(false);
+  const [inspectionPhotos, setInspectionPhotos] = useState<{ uri: string; base64: string }[]>([]);
+
+  // Detailed vehicle inspection report fields
+  const [odometer, setOdometer] = useState("");
+  const [fuelLevel, setFuelLevel] = useState("1/2");
+  const [preExistingDamage, setPreExistingDamage] = useState("");
+  const [recommendedAction, setRecommendedAction] = useState("Repairable (Minor)");
+  
+  // Damage checklist fields
+  const [frontBumperDmg, setFrontBumperDmg] = useState("None");
+  const [rearBumperDmg, setRearBumperDmg] = useState("None");
+  const [leftSideDmg, setLeftSideDmg] = useState("None");
+  const [rightSideDmg, setRightSideDmg] = useState("None");
+  const [engineDmg, setEngineDmg] = useState("None");
+  const [glassDmg, setGlassDmg] = useState("None");
+  const [wheelsDmg, setWheelsDmg] = useState("None");
+
+  const closeDetailModal = () => {
+    if (activeInspectionStep === 5) {
+      setActiveTab("activity");
+    }
+    setSelectedClaim(null);
+  };
+
+  // Synchronize wizard activeInspectionStep on claim selection
+  useEffect(() => {
+    if (selectedClaim) {
+      if (step === "4") {
+        setActiveInspectionStep(4);
+      } else if (selectedClaim.currentStep === 2) {
+        setActiveInspectionStep(1);
+      } else if (selectedClaim.currentStep === 3) {
+        if (selectedClaim.inspectionSubmitted) {
+          setActiveInspectionStep(5);
+        } else {
+          setActiveInspectionStep(2);
+        }
+      } else if (selectedClaim.currentStep >= 4) {
+        setActiveInspectionStep(5);
+      }
+      setInspectionReportText(selectedClaim.inspectionReport || "");
+      setAssessmentAmount(selectedClaim.amount ? selectedClaim.amount.toString() : "");
+      setInspectionPhotos([]);
+      setOdometer("");
+      setFuelLevel("1/2");
+      setPreExistingDamage("");
+      setRecommendedAction("Repairable (Minor)");
+      setFrontBumperDmg("None");
+      setRearBumperDmg("None");
+      setLeftSideDmg("None");
+      setRightSideDmg("None");
+      setEngineDmg("None");
+      setGlassDmg("None");
+      setWheelsDmg("None");
+    } else {
+      setActiveInspectionStep(1);
+      setAgentLocation(null);
+      setIncidentCoords(null);
+      setInspectionPhotos([]);
+    }
+  }, [selectedClaim, step]);
+
+  // Pending Requests Modal State
+  const [showPendingRequestsModal, setShowPendingRequestsModal] = useState(false);
+  const [availability, setAvailability] = useState<"Active" | "Offline">("Active");
+
+  const fetchAvailability = async (email: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/agent/availability?email=${encodeURIComponent(email)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.availability) {
+          setAvailability(data.availability);
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching availability:", e);
+    }
+  };
+
+  const toggleAvailability = async (status: "Active" | "Offline") => {
+    try {
+      setAvailability(status);
+      const res = await fetch(`${API_BASE_URL}/api/agent/availability`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: agentEmail, availability: status })
+      });
+      if (!res.ok) throw new Error("Failed to update availability");
+    } catch (e) {
+      console.error("Error updating availability:", e);
+      showAlert("Error", "Failed to update availability status. Please try again.");
+    }
+  };
+
+  // Category popup states
+  const [activePopupCategory, setActivePopupCategory] = useState<"urgent" | "assigned" | "completed" | null>(null);
+  const [popupSearchQuery, setPopupSearchQuery] = useState("");
+
+  // Agent Document Upload Redesign States & Handlers
+  const [isAgentUploading, setIsAgentUploading] = useState(false);
+  const [agentUploadFileBase64, setAgentUploadFileBase64] = useState<string | null>(null);
+  const [agentUploadFileName, setAgentUploadFileName] = useState("");
+  const [agentUploadDocName, setAgentUploadDocName] = useState("Repair Estimate");
+
+  const getRecipientForDoc = (claim: Claim, name: string) => {
+    const msg = [...(claim.messages || [])]
+      .reverse()
+      .find(m => m.message && typeof m.message === "string" && m.message.includes(`Requested: ${name}`));
+    if (msg && msg.message) {
+      if (msg.message.includes("[Document Request to Agent]")) return "Agent";
+      if (msg.message.includes("[Document Request to User]")) return "User";
+    }
+    return claim.documentRequestTo || "User";
+  };
+
+  const getDocDetails = (claim: Claim, name: string, status: "Pending" | "Submitted") => {
+    let requestedAt = "";
+    let submittedAt = "";
+
+    const msg = [...(claim.messages || [])]
+      .reverse()
+      .find(m => m.message && typeof m.message === "string" && m.message.includes(`Requested: ${name}`));
+    if (msg) {
+      requestedAt = formatDate(msg.sentAt);
+    } else {
+      requestedAt = formatDate(claim.createdAt);
+    }
+
+    if (status === "Submitted") {
+      const doc = (claim.additionalDocuments || []).find(
+        d => d.name.trim().toLowerCase() === name.trim().toLowerCase()
+      );
+      if (doc && doc.uploadedAt) {
+        submittedAt = formatDate(doc.uploadedAt);
+      }
+    }
+
+    return { requestedAt, submittedAt };
+  };
+
+  // ── Geocode Claim Location ──────────────────────────────────────────────────
+  const geocodeClaimLocation = async (locationStr: string) => {
+    setIsGeocodingClaim(true);
+    try {
+      const query = encodeURIComponent(locationStr + ", Sri Lanka");
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.length > 0) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          setIncidentCoords({ latitude: lat, longitude: lon });
+          setIsGeocodingClaim(false);
+          return { latitude: lat, longitude: lon };
+        }
+      }
+      const fallback = { latitude: 6.0535, longitude: 80.2210 };
+      setIncidentCoords(fallback);
+      setIsGeocodingClaim(false);
+      return fallback;
+    } catch (e) {
+      console.warn("Geocoding failed, using fallback:", e);
+      const fallback = { latitude: 6.9271, longitude: 79.8612 };
+      setIncidentCoords(fallback);
+      setIsGeocodingClaim(false);
+      return fallback;
+    }
+  };
+
+  // ── Get Agent GPS Location ──────────────────────────────────────────────────
+  const getAgentGPSLocation = async () => {
+    setIsLocatingAgent(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        showAlert("Permission Denied", "Enable location permissions to calculate navigation routes.");
+        setIsLocatingAgent(false);
+        return null;
+      }
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      const coords = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+      setAgentLocation(coords);
+      setIsLocatingAgent(false);
+      return coords;
+    } catch (e) {
+      console.error("GPS retrieval error:", e);
+      const coords = { latitude: 6.915, longitude: 79.860 };
+      setAgentLocation(coords);
+      setIsLocatingAgent(false);
+      return coords;
+    }
+  };
+
+  // ── Launch Media / Camera Picker ────────────────────────────────────────────
+  const handleSnapInspectionPhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      showAlert("Permission Required", "Camera access is needed to snap inspection photos.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.6,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      const prefix = "data:image/jpeg;base64,";
+      const base64Data = asset.base64 ? `${prefix}${asset.base64}` : "";
+      setInspectionPhotos(prev => [...prev, { uri: asset.uri, base64: base64Data }]);
+    }
+  };
+
+  const handlePickInspectionPhoto = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      showAlert("Permission Required", "Library access is needed to select inspection photos.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      quality: 0.6,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      const prefix = "data:image/jpeg;base64,";
+      const base64Data = asset.base64 ? `${prefix}${asset.base64}` : "";
+      setInspectionPhotos(prev => [...prev, { uri: asset.uri, base64: base64Data }]);
+    }
+  };
+
+  const removeInspectionPhoto = (idx: number) => {
+    setInspectionPhotos(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // ── Submit Physical Inspection Report (Step 4 -> Step 5 Done) ───────────────
+  const handleSubmitInspectionWizard = async () => {
+    if (!selectedClaim) return;
+    if (!odometer.trim()) {
+      showAlert("Validation Error", "Please enter the vehicle's odometer reading.");
+      return;
+    }
+    if (!inspectionReportText.trim()) {
+      showAlert("Validation Error", "Please write physical inspection notes.");
+      return;
+    }
+    if (!assessmentAmount.trim()) {
+      showAlert("Validation Error", "Please enter an estimated assessment amount.");
+      return;
+    }
+
+    const formattedReport = `
+==================================================
+           VEHICLE CLAIM INSPECTION REPORT
+==================================================
+[1. VEHICLE CONDITION DETAILS]
+• Odometer: ${odometer.trim()} km
+• Fuel Level: ${fuelLevel}
+• Recommended Action: ${recommendedAction}
+• Estimated Cost: LKR ${Number(assessmentAmount).toLocaleString()}
+
+[2. COMPONENT DAMAGE CHECKLIST]
+• Front Bumper: [${frontBumperDmg}]
+• Rear Bumper: [${rearBumperDmg}]
+• Left Side Panels: [${leftSideDmg}]
+• Right Side Panels: [${rightSideDmg}]
+• Engine Compartment: [${engineDmg}]
+• Glass & Windshield: [${glassDmg}]
+• Wheels & Tires: [${wheelsDmg}]
+
+[3. PRE-EXISTING DAMAGE NOTES]
+${preExistingDamage.trim() || "None reported."}
+
+[4. PHYSICAL INSPECTION NOTES]
+${inspectionReportText.trim()}
+==================================================
+    `.trim();
+
+    setIsSubmittingReport(true);
+    try {
+      const statusRes = await fetch(`${API_BASE_URL}/api/agent/claims/${selectedClaim._id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inspectionReport: formattedReport,
+          inspectionSubmitted: true,
+          amount: Number(assessmentAmount),
+          status: "In Progress"
+        }),
+      });
+
+      if (!statusRes.ok) throw new Error("Failed to submit assessment report");
+
+      // Document uploads should be isolated in try-catch to prevent upload network/Cloudinary timeouts from blocking inspection finalization
+      if (inspectionPhotos.length > 0) {
+        for (let i = 0; i < inspectionPhotos.length; i++) {
+          const photo = inspectionPhotos[i];
+          const docName = `Inspection Photo #${i + 1}`;
+          try {
+            await fetch(`${API_BASE_URL}/api/policy-holder/update-claim/${selectedClaim.claimNumber}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                uploadedDocuments: [
+                  {
+                    documentName: docName,
+                    fileData: photo.base64,
+                    uploadedBy: "Agent"
+                  }
+                ]
+              })
+            });
+          } catch (uploadErr) {
+            console.warn("Failed to upload photo:", docName, uploadErr);
+          }
+        }
+      }
+
+      // Transition UI to Done state immediately
+      setActiveInspectionStep(5);
+      showAlert("Success", "Inspection completed! Details updated to office staff.");
+
+      // Run background refreshes without blocking UI
+      try {
+        await fetchClaims(agentEmail);
+        const listRes = await fetch(`${API_BASE_URL}/api/agent/claims?email=${encodeURIComponent(agentEmail)}`);
+        if (listRes.ok) {
+          const data = await listRes.json();
+          const freshClaim = data.find((c: Claim) => c._id === selectedClaim._id);
+          if (freshClaim) {
+            setSelectedClaim(freshClaim);
+          }
+        }
+      } catch (refreshErr) {
+        console.warn("Background refresh failed:", refreshErr);
+      }
+    } catch (e) {
+      console.error(e);
+      showAlert("Error", "Failed to finalize claim inspection. Please try again.");
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
+  // ── Stepper UI Progress Render ──────────────────────────────────────────────
+  const renderWizardProgress = () => {
+    const steps = [
+      { num: 1, label: "Review" },
+      { num: 2, label: "Accepted" },
+      { num: 3, label: "Route Map" },
+      { num: 4, label: "Inspect" },
+      { num: 5, label: "Done" },
+    ];
+    return (
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingTop: 10, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: "#f1f5f9", backgroundColor: "#f8fafc" }}>
+        {steps.map((st, idx) => {
+          const isDone = activeInspectionStep > st.num;
+          const isActive = activeInspectionStep === st.num;
+          return (
+            <React.Fragment key={st.num}>
+              <View style={{ alignItems: "center", flex: 1 }}>
+                <View style={{
+                  width: 28, height: 28, borderRadius: 14,
+                  backgroundColor: isDone ? "#16a34a" : (isActive ? "#0284c7" : "#e2e8f0"),
+                  justifyContent: "center", alignItems: "center",
+                  borderWidth: isActive ? 2 : 0, borderColor: "#0284c7"
+                }}>
+                  {isDone ? (
+                    <Ionicons name="checkmark" size={14} color="#fff" />
+                  ) : (
+                    <Text style={{ color: isActive ? "#fff" : "#64748b", fontSize: 11, fontWeight: "900" }}>{st.num}</Text>
+                  )}
+                </View>
+                <Text style={{ fontSize: 9, fontWeight: "800", color: isActive ? "#0284c7" : "#64748b", marginTop: 4, textTransform: "uppercase" }}>{st.label}</Text>
+              </View>
+              {idx < steps.length - 1 && (
+                <View style={{ height: 2, flex: 1, backgroundColor: isDone ? "#16a34a" : "#e2e8f0", marginHorizontal: -10, marginTop: -10 }} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </View>
+    );
+  };
+
+  // ── Wizard Step 2 Popup ─────────────────────────────────────────────────────
+  const renderStep2Popup = () => {
+    if (!selectedClaim) return null;
+    return (
+      <ScrollView contentContainerStyle={{ padding: 24, alignItems: "center", justifyContent: "center", gap: 20 }}>
+        <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: "rgba(2, 132, 199, 0.08)", justifyContent: "center", alignItems: "center" }}>
+          <View style={{ width: 70, height: 70, borderRadius: 35, backgroundColor: "rgba(2, 132, 199, 0.15)", justifyContent: "center", alignItems: "center" }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#0284c7", justifyContent: "center", alignItems: "center", shadowColor: "#0284c7", shadowOpacity: 0.4, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }}>
+              <Ionicons name="navigate" size={22} color="#fff" />
+            </View>
+          </View>
+        </View>
+
+        <View style={{ alignItems: "center", gap: 6 }}>
+          <Text style={{ fontSize: 18, fontWeight: "900", color: "#0f172a", textAlign: "center" }}>Start Physical Inspection</Text>
+          <Text style={{ fontSize: 12.5, fontWeight: "600", color: "#64748b", textAlign: "center", maxWidth: 280, lineHeight: 18 }}>
+            Assignment accepted. Proceed to map routing to find the fastest path to the incident scene.
+          </Text>
+        </View>
+
+        <View style={{ width: "100%", backgroundColor: "#f8fafc", borderWidth: 1.5, borderColor: "#e2e8f0", borderRadius: 16, padding: 16, gap: 10 }}>
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+            <Ionicons name="location-sharp" size={18} color="#dc2626" />
+            <Text style={{ fontSize: 13, fontWeight: "800", color: "#334155", flex: 1 }} numberOfLines={2}>
+              {selectedClaim.location}
+            </Text>
+          </View>
+          <View style={{ height: 1, backgroundColor: "#e2e8f0" }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>DAMAGE TYPE</Text>
+            <Text style={{ fontSize: 12, fontWeight: "800", color: "#0f172a" }}>{selectedClaim.damageType}</Text>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>PLATE NUMBER</Text>
+            <Text style={{ fontSize: 12, fontWeight: "800", color: "#0f172a" }}>{formatNumberPlate(selectedClaim.vehiclePlate)}</Text>
+          </View>
+        </View>
+
+        <View style={{ width: "100%", gap: 10, marginTop: 10 }}>
+          <View style={{ flexDirection: "row", width: "100%", gap: 10 }}>
+            <TouchableOpacity
+              style={{ width: 46, height: 46, borderRadius: 12, borderWidth: 1.5, borderColor: "#cbd5e1", alignItems: "center", justifyContent: "center", backgroundColor: "#f8fafc" }}
+              onPress={() => {
+                setSelectedClaim(null);
+                router.push({
+                  pathname: "/Agent/MapRoute/page",
+                  params: {
+                    claimId: selectedClaim.claimNumber,
+                    location: selectedClaim.location,
+                    branch: selectedClaim.branch || "Galle",
+                    userNic: selectedClaim.userNic,
+                    vehiclePlate: selectedClaim.vehiclePlate,
+                    damageType: selectedClaim.damageType,
+                    fromPage: "Dashboard",
+                  },
+                });
+              }}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="call-outline" size={20} color="#475569" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{ flex: 1, height: 46, borderRadius: 12, backgroundColor: "#0284c7", flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 }}
+              onPress={async () => {
+                setSelectedClaim(null);
+                router.push({
+                  pathname: "/Agent/MapRoute/page",
+                  params: {
+                    claimId: selectedClaim.claimNumber,
+                    location: selectedClaim.location,
+                    branch: selectedClaim.branch || "Galle",
+                    userNic: selectedClaim.userNic,
+                    vehiclePlate: selectedClaim.vehiclePlate,
+                    damageType: selectedClaim.damageType,
+                    fromPage: "Dashboard",
+                  },
+                });
+              }}
+              activeOpacity={0.8}
+            >
+              <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800" }}>Start Navigation Route</Text>
+              <Ionicons name="arrow-forward" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={{ width: "100%", height: 42, borderRadius: 12, backgroundColor: "#f1f5f9", borderWidth: 1, borderColor: "#cbd5e1", justifyContent: "center", alignItems: "center" }}
+            onPress={() => setActiveInspectionStep(1)}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: "#475569", fontSize: 13, fontWeight: "800" }}>Review Details Again</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  };
+
+  // ── Wizard Step 3 Map Navigation ────────────────────────────────────────────
+  const renderStep3Map = () => {
+    if (!selectedClaim) return null;
+
+    return (
+      <ScrollView contentContainerStyle={{ padding: 24, alignItems: "center", justifyContent: "center", gap: 20 }}>
+        <View style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: "rgba(2, 132, 199, 0.08)", justifyContent: "center", alignItems: "center" }}>
+          <View style={{ width: 70, height: 70, borderRadius: 35, backgroundColor: "rgba(2, 132, 199, 0.15)", justifyContent: "center", alignItems: "center" }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#0284c7", justifyContent: "center", alignItems: "center", shadowColor: "#0284c7", shadowOpacity: 0.4, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }}>
+              <Ionicons name="map" size={22} color="#fff" />
+            </View>
+          </View>
+        </View>
+
+        <View style={{ alignItems: "center", gap: 6 }}>
+          <Text style={{ fontSize: 18, fontWeight: "900", color: "#0f172a", textAlign: "center" }}>Route Navigation</Text>
+          <Text style={{ fontSize: 12.5, fontWeight: "600", color: "#64748b", textAlign: "center", maxWidth: 280, lineHeight: 18 }}>
+            Click Start to launch full-screen map routing with GPS tracking and branch/policyholder call lines.
+          </Text>
+        </View>
+
+        <View style={{ width: "100%", backgroundColor: "#f8fafc", borderWidth: 1.5, borderColor: "#e2e8f0", borderRadius: 16, padding: 16, gap: 10 }}>
+          <View style={{ flexDirection: "row", gap: 10, alignItems: "center" }}>
+            <Ionicons name="location-sharp" size={18} color="#dc2626" />
+            <Text style={{ fontSize: 13, fontWeight: "800", color: "#334155", flex: 1 }} numberOfLines={2}>
+              {selectedClaim.location}
+            </Text>
+          </View>
+          <View style={{ height: 1, backgroundColor: "#e2e8f0" }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>ESTIMATED DISTANCE</Text>
+            <Text style={{ fontSize: 12.5, fontWeight: "800", color: "#0f172a" }}>12.8 km</Text>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>ESTIMATED TRAVEL TIME</Text>
+            <Text style={{ fontSize: 12.5, fontWeight: "800", color: "#0284c7" }}>22 mins</Text>
+          </View>
+        </View>
+
+        <View style={{ width: "100%", gap: 10, marginTop: 10 }}>
+          <TouchableOpacity
+            style={{ width: "100%", height: 46, borderRadius: 12, backgroundColor: "#0284c7", flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 }}
+            onPress={() => {
+              setSelectedClaim(null);
+              router.push({
+                pathname: "/Agent/MapRoute/page",
+                params: {
+                  claimId: selectedClaim.claimNumber,
+                  location: selectedClaim.location,
+                  branch: selectedClaim.branch || "Galle",
+                  userNic: selectedClaim.userNic,
+                  vehiclePlate: selectedClaim.vehiclePlate,
+                  damageType: selectedClaim.damageType,
+                  fromPage: "Dashboard",
+                },
+              });
+            }}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800" }}>Start</Text>
+            <Ionicons name="navigate" size={16} color="#fff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{ width: "100%", height: 42, borderRadius: 12, backgroundColor: "#f8fafc", borderWidth: 1, borderColor: "#cbd5e1", justifyContent: "center", alignItems: "center" }}
+            onPress={() => setActiveInspectionStep(2)}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: "#475569", fontSize: 13, fontWeight: "800" }}>Back</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  };
+
+  // ── Wizard Step 4 Physical Inspection Form ──────────────────────────────────
+  const renderStep4InspectionForm = () => {
+    if (!selectedClaim) return null;
+
+    const checklistItems = [
+      { key: "frontBumper", label: "Front Bumper Damage", val: frontBumperDmg, setVal: setFrontBumperDmg },
+      { key: "rearBumper", label: "Rear Bumper Damage", val: rearBumperDmg, setVal: setRearBumperDmg },
+      { key: "leftSide", label: "Left Panels Damage", val: leftSideDmg, setVal: setLeftSideDmg },
+      { key: "rightSide", label: "Right Panels Damage", val: rightSideDmg, setVal: setRightSideDmg },
+      { key: "engine", label: "Engine Compartment", val: engineDmg, setVal: setEngineDmg },
+      { key: "glass", label: "Glass & Windshield", val: glassDmg, setVal: setGlassDmg },
+      { key: "wheels", label: "Wheels & Tires", val: wheelsDmg, setVal: setWheelsDmg },
+    ];
+
+    return (
+      <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }} showsVerticalScrollIndicator={false}>
+        <View style={{ gap: 4 }}>
+          <Text style={{ fontSize: 16, fontWeight: "900", color: "#0f172a" }}>Physical Damage Findings</Text>
+          <Text style={{ fontSize: 12, fontWeight: "600", color: "#64748b", lineHeight: 16 }}>
+            Record complete vehicle status, components condition, and attach on-site damage reports.
+          </Text>
+        </View>
+
+        {/* Vehicle General Details */}
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontSize: 12.5, color: "#475569", fontWeight: "700" }}>Vehicle Odometer Mileage *</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", borderWidth: 1.5, borderColor: "#e2e8f0", borderRadius: 12, height: 46, backgroundColor: "#ffffff" }}>
+            <TextInput
+              style={{ flex: 1, paddingHorizontal: 12, color: "#0f172a", fontSize: 13.5, fontWeight: "700" }}
+              placeholder="e.g. 45280"
+              placeholderTextColor="#94a3b8"
+              keyboardType="numeric"
+              value={odometer}
+              onChangeText={setOdometer}
+            />
+            <Text style={{ fontSize: 13, fontWeight: "700", color: "#64748b", paddingRight: 12 }}>km</Text>
+          </View>
+        </View>
+
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontSize: 12.5, color: "#475569", fontWeight: "700" }}>Fuel Level</Text>
+          <View style={{ flexDirection: "row", gap: 6 }}>
+            {["Empty", "1/4", "1/2", "3/4", "Full"].map((lvl) => (
+              <TouchableOpacity
+                key={lvl}
+                style={{
+                  flex: 1,
+                  height: 36,
+                  borderRadius: 8,
+                  borderWidth: 1.5,
+                  borderColor: fuelLevel === lvl ? "#0284c7" : "#e2e8f0",
+                  backgroundColor: fuelLevel === lvl ? "#0284c7" : "#ffffff",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onPress={() => setFuelLevel(lvl)}
+              >
+                <Text style={{ fontSize: 11, fontWeight: "800", color: fuelLevel === lvl ? "#ffffff" : "#475569" }}>
+                  {lvl}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Component damage checklist */}
+        <View style={{ gap: 4, marginTop: 4 }}>
+          <Text style={{ fontSize: 12.5, color: "#475569", fontWeight: "700" }}>Component Damage Checklist</Text>
+          <View style={{ borderWidth: 1.5, borderColor: "#e2e8f0", borderRadius: 16, backgroundColor: "#f8fafc", paddingHorizontal: 14, paddingVertical: 6 }}>
+            {checklistItems.map((item) => (
+              <View key={item.key} style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: "#e2e8f0" }}>
+                <Text style={{ fontSize: 12.5, fontWeight: "700", color: "#334155", flex: 1 }}>{item.label}</Text>
+                <View style={{ flexDirection: "row", gap: 6 }}>
+                  {["None", "Minor", "Major"].map((level) => {
+                    const isSelected = item.val === level;
+                    let selectedBg = "#f1f5f9";
+                    let selectedBorder = "#cbd5e1";
+                    let selectedText = "#64748b";
+
+                    if (isSelected) {
+                      if (level === "None") {
+                        selectedBg = "#f0fdf4";
+                        selectedBorder = "#16a34a";
+                        selectedText = "#16a34a";
+                      } else if (level === "Minor") {
+                        selectedBg = "#fffbeb";
+                        selectedBorder = "#d97706";
+                        selectedText = "#d97706";
+                      } else if (level === "Major") {
+                        selectedBg = "#fef2f2";
+                        selectedBorder = "#dc2626";
+                        selectedText = "#dc2626";
+                      }
+                    }
+
+                    return (
+                      <TouchableOpacity
+                        key={level}
+                        style={{
+                          paddingVertical: 4,
+                          paddingHorizontal: 8,
+                          borderRadius: 8,
+                          borderWidth: 1.5,
+                          borderColor: isSelected ? selectedBorder : "#e2e8f0",
+                          backgroundColor: isSelected ? selectedBg : "#ffffff",
+                        }}
+                        onPress={() => item.setVal(level)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={{ fontSize: 10, fontWeight: "800", color: isSelected ? selectedText : "#94a3b8" }}>
+                          {level}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontSize: 12.5, color: "#475569", fontWeight: "700" }}>Recommended Action</Text>
+          <View style={{ flexDirection: "row", gap: 6, flexWrap: "wrap" }}>
+            {["Repairable (Minor)", "Repairable (Major)", "Replacement Required", "Total Loss / Write-off"].map((act) => (
+              <TouchableOpacity
+                key={act}
+                style={{
+                  width: "48%",
+                  height: 38,
+                  borderRadius: 8,
+                  borderWidth: 1.5,
+                  borderColor: recommendedAction === act ? "#0284c7" : "#e2e8f0",
+                  backgroundColor: recommendedAction === act ? "#0284c7" : "#ffffff",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+                onPress={() => setRecommendedAction(act)}
+              >
+                <Text style={{ fontSize: 10, fontWeight: "800", color: recommendedAction === act ? "#ffffff" : "#475569", textAlign: "center" }}>
+                  {act}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontSize: 12.5, color: "#475569", fontWeight: "700" }}>Pre-Existing Damages Notes</Text>
+          <TextInput
+            style={{
+              height: 48,
+              padding: 10,
+              borderWidth: 1.5,
+              borderColor: '#e2e8f0',
+              borderRadius: 12,
+              color: '#0f172a',
+              fontSize: 13,
+              fontWeight: "600",
+              backgroundColor: '#ffffff'
+            }}
+            placeholder="Write details of older scratches, rust or dents..."
+            placeholderTextColor="#94a3b8"
+            value={preExistingDamage}
+            onChangeText={setPreExistingDamage}
+          />
+        </View>
+
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontSize: 12.5, color: "#475569", fontWeight: "700" }}>Estimated Repair / Parts Cost *</Text>
+          <View style={[styles.modalAssessInput, { borderRadius: 12, height: 46 }]}>
+            <Text style={styles.modalAssessCurrency}>LKR</Text>
+            <TextInput
+              style={styles.modalAssessField}
+              placeholder="e.g. 75,000"
+              placeholderTextColor="#94a3b8"
+              keyboardType="numeric"
+              value={assessmentAmount}
+              onChangeText={setAssessmentAmount}
+            />
+          </View>
+        </View>
+
+        <View style={{ gap: 6 }}>
+          <Text style={{ fontSize: 12.5, color: "#475569", fontWeight: "700" }}>Detailed Inspection Notes & Remarks *</Text>
+          <TextInput
+            style={{
+              height: 80,
+              textAlignVertical: 'top',
+              padding: 12,
+              borderWidth: 1.5,
+              borderColor: '#e2e8f0',
+              borderRadius: 12,
+              color: '#0f172a',
+              fontSize: 13,
+              fontWeight: "600",
+              backgroundColor: '#ffffff'
+            }}
+            placeholder="Write physical inspection notes regarding damage severity, recommended repairs, or findings..."
+            placeholderTextColor="#94a3b8"
+            multiline
+            numberOfLines={3}
+            value={inspectionReportText}
+            onChangeText={setInspectionReportText}
+          />
+        </View>
+
+        <View style={{ gap: 8 }}>
+          <Text style={{ fontSize: 12.5, color: "#475569", fontWeight: "700" }}>Attach Inspection Photos *</Text>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <TouchableOpacity
+              style={{ flex: 1, height: 74, borderRadius: 12, borderStyle: "dashed", borderWidth: 1.5, borderColor: "#0284c7", backgroundColor: "rgba(2, 132, 199, 0.03)", justifyContent: "center", alignItems: "center", gap: 4 }}
+              onPress={handleSnapInspectionPhoto}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="camera" size={22} color="#0284c7" />
+              <Text style={{ fontSize: 10.5, fontWeight: "800", color: "#0284c7" }}>Camera</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{ flex: 1, height: 74, borderRadius: 12, borderStyle: "dashed", borderWidth: 1.5, borderColor: "#64748b", backgroundColor: "rgba(100, 116, 139, 0.03)", justifyContent: "center", alignItems: "center", gap: 4 }}
+              onPress={handlePickInspectionPhoto}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="images" size={22} color="#64748b" />
+              <Text style={{ fontSize: 10.5, fontWeight: "800", color: "#64748b" }}>Gallery</Text>
+            </TouchableOpacity>
+          </View>
+
+          {inspectionPhotos.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingTop: 10 }}>
+              {inspectionPhotos.map((photo, index) => (
+                <View key={index} style={{ width: 80, height: 80, borderRadius: 10, overflow: "hidden", position: "relative", borderWidth: 1, borderColor: "#cbd5e1" }}>
+                  <Image source={{ uri: photo.uri }} style={{ width: "100%", height: "100%" }} />
+                  <TouchableOpacity
+                    style={{ position: "absolute", top: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: "rgba(220, 38, 38, 0.9)", justifyContent: "center", alignItems: "center" }}
+                    onPress={() => removeInspectionPhoto(index)}
+                  >
+                    <Ionicons name="close" size={12} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
+          )}
+        </View>
+
+        <View style={{ gap: 10, marginTop: 14 }}>
+          <TouchableOpacity
+            style={{ width: "100%", height: 46, borderRadius: 12, backgroundColor: "#16a34a", flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 }}
+            onPress={handleSubmitInspectionWizard}
+            disabled={isSubmittingReport}
+            activeOpacity={0.8}
+          >
+            {isSubmittingReport ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-done-circle" size={20} color="#fff" />
+                <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800" }}>Submit & Done</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{ width: "100%", height: 42, borderRadius: 12, backgroundColor: "#f8fafc", borderWidth: 1, borderColor: "#cbd5e1", justifyContent: "center", alignItems: "center" }}
+            onPress={() => setActiveInspectionStep(3)}
+            disabled={isSubmittingReport}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: "#64748b", fontSize: 13, fontWeight: "800" }}>Back to Map</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  };
+
+  // ── Wizard Step 5 Finished Summary ──────────────────────────────────────────
+  const renderStep5Completed = () => {
+    if (!selectedClaim) return null;
+    return (
+      <ScrollView contentContainerStyle={{ padding: 24, alignItems: "center", justifyContent: "center", gap: 20 }}>
+        <View style={{ width: 90, height: 90, borderRadius: 45, backgroundColor: "rgba(22, 163, 74, 0.08)", justifyContent: "center", alignItems: "center" }}>
+          <View style={{ width: 66, height: 66, borderRadius: 33, backgroundColor: "rgba(22, 163, 74, 0.15)", justifyContent: "center", alignItems: "center" }}>
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#16a34a", justifyContent: "center", alignItems: "center", shadowColor: "#16a34a", shadowOpacity: 0.4, shadowRadius: 6, shadowOffset: { width: 0, height: 3 } }}>
+              <Ionicons name="checkmark" size={24} color="#fff" />
+            </View>
+          </View>
+        </View>
+
+        <View style={{ alignItems: "center", gap: 6 }}>
+          <Text style={{ fontSize: 18, fontWeight: "900", color: "#0f172a", textAlign: "center" }}>Assessment Finished</Text>
+          <Text style={{ fontSize: 12.5, fontWeight: "600", color: "#64748b", textAlign: "center", maxWidth: 280, lineHeight: 18 }}>
+            Physical damage inspection has been completed and uploaded to the database.
+          </Text>
+        </View>
+
+        <View style={{ width: "100%", backgroundColor: "#f8fafc", borderWidth: 1.5, borderColor: "#e2e8f0", borderRadius: 16, padding: 16, gap: 12 }}>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>FINAL STATUS</Text>
+            <View style={{ backgroundColor: "#dcfce7", paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6 }}>
+              <Text style={{ fontSize: 10, fontWeight: "900", color: "#16a34a" }}>COMPLETED</Text>
+            </View>
+          </View>
+          <View style={{ height: 1, backgroundColor: "#e2e8f0" }} />
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>EVALUATED AMOUNT</Text>
+            <Text style={{ fontSize: 13, fontWeight: "900", color: "#16a34a" }}>
+              LKR {selectedClaim.amount ? selectedClaim.amount.toLocaleString() : assessmentAmount || "—"}
+            </Text>
+          </View>
+          <View style={{ height: 1, backgroundColor: "#e2e8f0" }} />
+          <View style={{ flexDirection: "column", gap: 6 }}>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b", marginBottom: 4 }}>INSPECTION REPORT SUMMARY</Text>
+            {renderParsedInspection(selectedClaim.inspectionReport || inspectionReportText)}
+          </View>
+        </View>
+
+        <View style={{ width: "100%", gap: 10, marginTop: 10 }}>
+          <TouchableOpacity
+            style={{ width: "100%", height: 46, borderRadius: 12, backgroundColor: "#1e3a8a", justifyContent: "center", alignItems: "center" }}
+            onPress={closeDetailModal}
+            activeOpacity={0.8}
+          >
+            <Text style={{ color: "#fff", fontSize: 14, fontWeight: "800" }}>Back to Dashboard</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  };
+
+  const handleViewDocument = (url?: string | null) => {
+    if (!url) {
+      showAlert("Error", "No document URL available.");
+      return;
+    }
+    let fullUrl = url;
+    if (!url.startsWith("http") && !url.startsWith("data:")) {
+      const cleanBase = API_BASE_URL.replace("/api", "");
+      fullUrl = `${cleanBase}/uploads/${url}`;
+    }
+    Linking.openURL(fullUrl).catch(() => {
+      showAlert("Error", "Failed to open document URL.");
+    });
+  };
+
+  const handlePickAgentDoc = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      showAlert("Permission Required", "Allow storage permissions to select images.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      const prefix = "data:image/jpeg;base64,";
+      const base64Data = asset.base64 ? `${prefix}${asset.base64}` : null;
+      
+      if (base64Data) {
+        setAgentUploadFileBase64(base64Data);
+        setAgentUploadFileName(asset.fileName || `agent_doc_${Date.now().toString().slice(-4)}.jpg`);
+      }
+    }
+  };
+
+  const handleAgentDocUploadPicker = async (docName: string, claimParam?: Claim) => {
+    const claimToUse = claimParam || selectedClaim;
+    if (!claimToUse) return;
+
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      showAlert("Permission Required", "Allow storage permissions to select images.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+      quality: 0.7,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      const prefix = "data:image/jpeg;base64,";
+      const base64Data = asset.base64 ? `${prefix}${asset.base64}` : null;
+      
+      if (base64Data) {
+        uploadAgentDocImmediate(docName, base64Data, claimToUse);
+      }
+    }
+  };
+
+  const uploadAgentDocImmediate = async (docName: string, base64Data: string, claimParam?: Claim) => {
+    const claimToUse = claimParam || selectedClaim;
+    if (!claimToUse) return;
+    setIsAgentUploading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/policy-holder/update-claim/${claimToUse.claimNumber}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadedDocuments: [
+            {
+              documentName: docName,
+              fileData: base64Data,
+              uploadedBy: "Agent"
+            }
+          ]
+        })
+      });
+
+      if (res.ok) {
+        showAlert("Success", `${docName} uploaded successfully!`);
+        await fetchClaims(agentEmail);
+        const listRes = await fetch(`${API_BASE_URL}/api/agent/claims?email=${encodeURIComponent(agentEmail)}`);
+        if (listRes.ok) {
+          const data = await listRes.json();
+          const freshClaim = data.find((c: Claim) => c._id === claimToUse._id);
+          if (freshClaim) {
+            if (selectedClaim && selectedClaim._id === claimToUse._id) {
+              setSelectedClaim(freshClaim);
+            }
+          }
+        }
+      } else {
+        const errData = await res.json();
+        showAlert("Error", errData.error || "Failed to upload document.");
+      }
+    } catch (e) {
+      showAlert("Error", "An error occurred during document upload.");
+    } finally {
+      setIsAgentUploading(false);
+    }
+  };
+
+  const handleAgentDocSubmit = async () => {
+    if (!selectedClaim || !agentUploadFileBase64) return;
+    setIsAgentUploading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/policy-holder/update-claim/${selectedClaim.claimNumber}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uploadedDocuments: [
+            {
+              documentName: agentUploadDocName,
+              fileData: agentUploadFileBase64,
+              uploadedBy: "Agent"
+            }
+          ]
+        })
+      });
+
+      if (res.ok) {
+        showAlert("Success", "Document uploaded successfully!");
+        setAgentUploadFileBase64(null);
+        setAgentUploadFileName("");
+        await fetchClaims(agentEmail);
+        const listRes = await fetch(`${API_BASE_URL}/api/agent/claims?email=${encodeURIComponent(agentEmail)}`);
+        if (listRes.ok) {
+          const data = await listRes.json();
+          const freshClaim = data.find((c: Claim) => c._id === selectedClaim._id);
+          if (freshClaim) setSelectedClaim(freshClaim);
+        }
+      } else {
+        const errData = await res.json();
+        showAlert("Error", errData.error || "Failed to upload document.");
+      }
+    } catch (e) {
+      showAlert("Error", "An error occurred during document upload.");
+    } finally {
+      setIsAgentUploading(false);
+    }
+  };
 
   // Animations
   const contentFadeAnim = useRef(new Animated.Value(0)).current;
@@ -110,6 +1374,79 @@ export default function AgentDashboard() {
     }
   }, []);
 
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const calculateUnreadCount = useCallback(async (claimsList: Claim[]) => {
+    try {
+      const storedCleared = await AsyncStorage.getItem("@sanasa_agent_cleared_notifs");
+      const cleared = storedCleared ? JSON.parse(storedCleared) : [];
+      const storedRead = await AsyncStorage.getItem("@sanasa_agent_read_notifs");
+      const read = storedRead ? JSON.parse(storedRead) : [];
+
+      let unread = 0;
+      claimsList.forEach(claim => {
+        if (claim.currentStep === 2 && claim.status !== "Approved" && claim.status !== "Rejected") {
+          const id = `${claim._id}_assignment`;
+          if (!cleared.includes(id) && !read.includes(id)) unread++;
+        }
+        if (claim.currentStep === 3 && !claim.inspectionSubmitted && claim.status !== "Approved" && claim.status !== "Rejected") {
+          const id = `${claim._id}_inspection`;
+          if (!cleared.includes(id) && !read.includes(id)) unread++;
+        }
+        if (claim.requestedDocuments && claim.requestedDocuments.length > 0) {
+          const isAgentRequest = claim.documentRequestTo === "Agent" || [...(claim.messages || [])]
+            .reverse()
+            .find(m => m.message && m.message.includes("[Document Request to Agent]"));
+          if (isAgentRequest) {
+            claim.requestedDocuments.forEach(docName => {
+              const isUploaded = (claim.additionalDocuments || []).some(
+                doc => doc.name.trim().toLowerCase() === docName.trim().toLowerCase() && doc.uploadedBy === "Agent"
+              );
+              if (!isUploaded) {
+                const id = `${claim._id}_doc_${docName.replace(/\s+/g, "_")}`;
+                if (!cleared.includes(id) && !read.includes(id)) unread++;
+              }
+            });
+          }
+        }
+        if (claim.messages && claim.messages.length > 0) {
+          const lastMsg = claim.messages[claim.messages.length - 1];
+          if (lastMsg.sender !== "Agent") {
+            const id = `${claim._id}_msg_${lastMsg.sentAt}`;
+            if (!cleared.includes(id) && !read.includes(id)) unread++;
+          }
+        }
+        if (claim.status === "Approved") {
+          const id = `${claim._id}_approved`;
+          if (!cleared.includes(id) && !read.includes(id)) unread++;
+        }
+      });
+
+      const welcomeId = "welcome_notification";
+      if (!cleared.includes(welcomeId) && !read.includes(welcomeId)) {
+        unread++;
+      }
+
+      setUnreadCount(unread);
+    } catch (e) {
+      console.error("Error calculating unread count:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (claims.length >= 0) {
+      calculateUnreadCount(claims);
+    }
+  }, [claims, calculateUnreadCount]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (agentEmail) {
+        fetchClaims(agentEmail);
+      }
+    }, [agentEmail, fetchClaims])
+  );
+
   // ── Boot ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     (async () => {
@@ -121,12 +1458,44 @@ export default function AgentDashboard() {
         if (agent.email) {
           setAgentEmail(agent.email);
           fetchClaims(agent.email);
+          fetchAvailability(agent.email);
         } else {
           setLoading(false);
         }
       } catch { router.replace("/login/page"); }
     })();
   }, []);
+
+  // Poll availability status
+  useEffect(() => {
+    if (!agentEmail) return;
+    const interval = setInterval(() => {
+      fetchAvailability(agentEmail);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [agentEmail]);
+
+  // Poll claims in background for real-time updates
+  useEffect(() => {
+    if (!agentEmail || selectedClaim !== null) return;
+    const pollInterval = setInterval(() => {
+      fetchClaims(agentEmail);
+    }, 7000);
+    return () => clearInterval(pollInterval);
+  }, [agentEmail, selectedClaim, fetchClaims]);
+
+  // Auto-open claim details when claimId is passed via params
+  useEffect(() => {
+    if (claimId && claims.length > 0) {
+      const matched = claims.find(c => c._id === claimId || c.claimNumber === claimId);
+      if (matched) {
+        setSelectedClaim(matched);
+        if (step === "4") {
+          setActiveInspectionStep(4);
+        }
+      }
+    }
+  }, [claimId, claims, step]);
 
   // ── Animations ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -152,12 +1521,13 @@ export default function AgentDashboard() {
   useEffect(() => {
     if (selectedClaim) {
       setAssessmentAmount(selectedClaim.amount ? String(selectedClaim.amount) : "");
+      setInspectionReportText(selectedClaim.inspectionReport || "");
     }
   }, [selectedClaim]);
 
   // ── Derived data ──────────────────────────────────────────────────────
   const activeClaims = claims
-    .filter(c => c.status !== "Approved" && c.status !== "Rejected")
+    .filter(c => c.status !== "Approved" && c.status !== "Rejected" && !c.inspectionSubmitted)
     .sort((a, b) => {
       const aS = getSeverity(a.damageType);
       const bS = getSeverity(b.damageType);
@@ -165,11 +1535,30 @@ export default function AgentDashboard() {
       if (aS !== "Urgent" && bS === "Urgent") return 1;
       return 0;
     });
-  const completedClaims = claims.filter(c => c.status === "Approved" || c.status === "Rejected");
+
+  const getAgentPendingRequests = (claim: Claim) => {
+    if (!claim.requestedDocuments) return [];
+    return claim.requestedDocuments.filter(name => {
+      const isUploaded = (claim.additionalDocuments || []).some(
+        doc => doc.name.trim().toLowerCase() === name.trim().toLowerCase() && doc.uploadedBy === "Agent"
+      );
+      if (isUploaded) return false;
+      return getRecipientForDoc(claim, name) === "Agent";
+    });
+  };
+
+  const claimsWithPendingAgentRequests = activeClaims.filter(
+    claim => getAgentPendingRequests(claim).length > 0
+  );
+
+  const completedClaims = claims
+    .filter(c => c.status === "Approved" || c.status === "Rejected" || c.inspectionSubmitted)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 10);
   const urgentCount   = activeClaims.filter(c => getSeverity(c.damageType) === "Urgent").length;
   const totalAssigned = activeClaims.length;
 
-  const displayClaims = activeTab === "activity" ? completedClaims : activeClaims;
+  const displayClaims = activeTab === "activity" ? completedClaims.slice(0, 3) : activeClaims;
 
   // ── Actions ───────────────────────────────────────────────────────────
   const onRefresh = useCallback(() => {
@@ -215,6 +1604,127 @@ export default function AgentDashboard() {
     }
   };
 
+  const handleSubmitDecisionComment = async () => {
+    if (!selectedClaim || !decisionCommentText.trim()) return;
+    setIsSubmittingComment(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/policy-holder/update-claim/${selectedClaim.claimNumber}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageText: decisionCommentText.trim(),
+          messageSender: "Agent",
+        }),
+      });
+
+      if (res.ok) {
+        showAlert("Success", "Comment/Note added successfully!");
+        setDecisionCommentText("");
+        await fetchClaims(agentEmail);
+        const listRes = await fetch(`${API_BASE_URL}/api/agent/claims?email=${encodeURIComponent(agentEmail)}`);
+        if (listRes.ok) {
+          const data = await listRes.json();
+          const freshClaim = data.find((c: Claim) => c._id === selectedClaim._id);
+          if (freshClaim) setSelectedClaim(freshClaim);
+        }
+      } else {
+        const errData = await res.json();
+        showAlert("Error", errData.error || "Failed to add comment.");
+      }
+    } catch (e) {
+      showAlert("Error", "An error occurred while adding the comment.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  const handleAcceptClaim = async () => {
+    if (!selectedClaim) return;
+    setIsAcceptingClaim(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/agent/claims/${selectedClaim._id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acceptClaim: true }),
+      });
+      if (!res.ok) throw new Error("Failed to accept");
+      showAlert("Success", "Claim accepted successfully! Proceed with vehicle inspection.");
+      // Refresh list
+      await fetchClaims(agentEmail);
+      // Refresh local selected claim to reflect step 3 in backend
+      const listRes = await fetch(`${API_BASE_URL}/api/agent/claims?email=${encodeURIComponent(agentEmail)}`);
+      if (listRes.ok) {
+        const data = await listRes.json();
+        const freshClaim = data.find((c: Claim) => c._id === selectedClaim._id);
+        if (freshClaim) {
+          setSelectedClaim(freshClaim);
+          setActiveInspectionStep(2); // Assignment Accepted view
+        }
+      }
+    } catch (e) {
+      showAlert("Error", "Failed to accept claim assignment. Please try again.");
+    } finally {
+      setIsAcceptingClaim(false);
+    }
+  };
+
+  const handleDeclineClaim = async () => {
+    if (!selectedClaim) return;
+    setIsAcceptingClaim(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/office-staff/claims/${selectedClaim.claimNumber}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "Rejected",
+          currentStep: 5,
+          rejectionReason: "Rejected by Agent",
+          messageText: "Claim rejected by Agent.",
+          messageRecipient: "Office Staff",
+          messageSender: "Agent"
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to reject");
+      showAlert("Success", "Claim assignment rejected successfully!");
+      setSelectedClaim(null);
+      fetchClaims(agentEmail);
+    } catch (e) {
+      showAlert("Error", "Failed to decline claim assignment. Please try again.");
+    } finally {
+      setIsAcceptingClaim(false);
+    }
+  };
+
+  const handleSubmitInspectionReport = async () => {
+    if (!selectedClaim) return;
+    if (!inspectionReportText.trim()) {
+      showAlert("Validation Error", "Please enter inspection report details.");
+      return;
+    }
+    setIsSubmittingReport(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/agent/claims/${selectedClaim._id}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inspectionReport: inspectionReportText.trim(),
+          inspectionSubmitted: true,
+          status: "In Progress"
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to submit");
+      showAlert("Success", "Inspection report submitted successfully!");
+      setSelectedClaim(null);
+      setActiveTab("activity");
+      fetchClaims(agentEmail);
+      setInspectionReportText("");
+    } catch (e) {
+      showAlert("Error", "Failed to submit inspection report. Please try again.");
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
   const showSupportAlert = () => {
     Alert.alert(
       "Sanasa Support 📞",
@@ -247,6 +1757,76 @@ export default function AgentDashboard() {
     s === "Urgent" ? "#fef2f2" : s === "Medium" ? "#fffbeb" : "#f0fdf4";
   const severityBorder = (s: "Urgent" | "Medium" | "Low") =>
     s === "Urgent" ? "#fecaca" : s === "Medium" ? "#fde68a" : "#bbf7d0";
+
+  const renderClaimProgress = (status: string, dbStep?: number) => {
+    let currentStep = dbStep || 1;
+    if (!dbStep) {
+      const s = status.toLowerCase();
+      if (s.includes("pending") || s.includes("progress")) currentStep = 3;
+      else if (s.includes("review")) currentStep = 4;
+      else if (s.includes("approved") || s.includes("done")) currentStep = 5;
+      else if (s.includes("rejected")) currentStep = 5;
+    }
+
+    // Cap at step 5 for Agent tracking
+    const displayStep = Math.min(currentStep, 5);
+    const isRejected = status.toLowerCase() === "rejected";
+
+    const steps = [
+      { num: "01", label: "Submitted" },
+      { num: "02", label: "Assigned" },
+      { num: "03", label: "Inspection" },
+      { num: "04", label: "Review" },
+      { num: "05", label: "Decision" }
+    ];
+
+    return (
+      <View style={styles.wizardContainer}>
+        {/* Grey background connection line */}
+        <View style={styles.wizardBgLine} />
+        {/* Green/Red progress connection line */}
+        <View
+          style={[
+            styles.wizardProgressLine,
+            isRejected && { backgroundColor: "#ef4444" },
+            { width: `${((displayStep - 1) / 4) * 100}%` }
+          ]}
+        />
+
+        <View style={styles.wizardStepsRow}>
+          {steps.map((step, idx) => {
+            const stepNum = idx + 1;
+            const isCompleted = stepNum < displayStep;
+            const isActive = stepNum === displayStep;
+
+            let circleStyle: any = styles.stepCircleInactive;
+            let textStyle: any = styles.stepTextInactive;
+
+            if (isCompleted) {
+              circleStyle = isRejected ? { borderColor: "#ef4444" } : styles.stepCircleCompleted;
+              textStyle = isRejected ? { color: "#ef4444" } : styles.stepTextCompleted;
+            } else if (isActive) {
+              circleStyle = isRejected ? { borderColor: "#ef4444", backgroundColor: "#fef2f2" } : styles.stepCircleActive;
+              textStyle = isRejected ? { color: "#ef4444", fontWeight: "800" } : styles.stepTextActive;
+            }
+
+            return (
+              <View key={step.num} style={styles.stepItem}>
+                <View style={[styles.stepCircle, circleStyle]}>
+                  {isCompleted ? (
+                    <Ionicons name="checkmark" size={14} color={isRejected ? "#ef4444" : "#00b050"} />
+                  ) : (
+                    <Text style={[styles.stepNumber, isActive && { color: isRejected ? "#ef4444" : "#2563eb" }]}>{step.num}</Text>
+                  )}
+                </View>
+                <Text style={[styles.stepLabel, textStyle]}>{step.label}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.root}>
@@ -282,10 +1862,17 @@ export default function AgentDashboard() {
               <Animated.View style={{ transform: [{ scale: bellScale }], marginRight: 10 }}>
                 <TouchableOpacity
                   style={styles.headerIconBtn}
-                  onPress={showSupportAlert}
+                  onPress={() => router.push("/Agent/Notifications/page")}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="headset-outline" size={21} color="#ffffff" />
+                  <Ionicons name="notifications-outline" size={21} color="#ffffff" />
+                  {unreadCount > 0 && (
+                    <View style={styles.bellBadge}>
+                      <Text style={styles.bellBadgeText}>
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </Text>
+                    </View>
+                  )}
                 </TouchableOpacity>
               </Animated.View>
 
@@ -311,87 +1898,143 @@ export default function AgentDashboard() {
               </Text>
             </View>
 
-            {/* Callout */}
-            <Animated.View style={[styles.compensationCallout, { transform: [{ scale: heroPulse }] }]}>
-              <Text style={styles.calloutTitle}>
-                Review, assess and approve assigned insurance claims on behalf of Sanasa General Insurance Company Limited.
-              </Text>
-            </Animated.View>
-
-            {/* Hero stat badges */}
-            <View style={styles.heroBadgeRow}>
-              <View style={[styles.heroBadge, { borderColor: "rgba(239,68,68,0.4)", backgroundColor: "rgba(127,29,29,0.7)" }]}>
-                <Ionicons name="alert-circle" size={22} color="#fca5a5" />
-                <View>
-                  <Text style={styles.heroBadgeLabel}>URGENT</Text>
-                  <Text style={styles.heroBadgeValue}>{urgentCount}</Text>
-                </View>
-              </View>
-              <View style={[styles.heroBadge, { borderColor: "rgba(6,182,212,0.4)", backgroundColor: "rgba(14,116,144,0.7)" }]}>
-                <Ionicons name="briefcase-outline" size={22} color="#67e8f9" />
-                <View>
-                  <Text style={[styles.heroBadgeLabel, { color: "#a5f3fc" }]}>ASSIGNED</Text>
-                  <Text style={styles.heroBadgeValue}>{totalAssigned}</Text>
-                </View>
+            {/* Availability Picker Row */}
+            <View style={styles.availabilityRow}>
+              <Text style={styles.availabilityLabel}>Status</Text>
+              <View style={styles.availabilityButtons}>
+                <TouchableOpacity
+                  onPress={() => toggleAvailability("Active")}
+                  style={[styles.availBtn, availability === "Active" ? styles.availBtnActive : styles.availBtnInactive]}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.statusDot, { backgroundColor: availability === "Active" ? "#ffffff" : "#94a3b8" }]} />
+                  <Text style={[styles.availBtnText, availability === "Active" ? styles.availBtnTextActive : styles.availBtnTextInactive]}>Active</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => toggleAvailability("Offline")}
+                  style={[styles.availBtn, availability === "Offline" ? styles.availBtnOffline : styles.availBtnInactive]}
+                  activeOpacity={0.85}
+                >
+                  <View style={[styles.statusDot, { backgroundColor: availability === "Offline" ? "#ffffff" : "#94a3b8" }]} />
+                  <Text style={[styles.availBtnText, availability === "Offline" ? styles.availBtnTextOffline : styles.availBtnTextInactive]}>Offline</Text>
+                </TouchableOpacity>
               </View>
             </View>
+
+            {/* Header Stats Row */}
+            <View style={styles.headerStatsRow}>
+              {/* Card 1: Urgent */}
+              <TouchableOpacity
+                style={[styles.headerStatCard, { borderColor: "rgba(239, 68, 68, 0.32)" }]}
+                activeOpacity={0.8}
+                onPress={() => setActivePopupCategory("urgent")}
+              >
+                <LinearGradient
+                  colors={["rgba(239, 68, 68, 0.15)", "rgba(239, 68, 68, 0.02)"]}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <View style={styles.cardHeaderRow}>
+                  <View style={[styles.glowDot, { backgroundColor: "#ef4444", shadowColor: "#ef4444" }]} />
+                  <Ionicons name="alert-circle-outline" size={14} color="#fca5a5" />
+                </View>
+                <Text style={[styles.headerStatVal, { textShadowColor: "rgba(239, 68, 68, 0.4)", textShadowRadius: 6, textShadowOffset: { width: 0, height: 0 } }]}>
+                  {urgentCount}
+                </Text>
+                <Text style={styles.headerStatLbl}>Urgent</Text>
+              </TouchableOpacity>
+
+              {/* Card 2: Assigned */}
+              <TouchableOpacity
+                style={[styles.headerStatCard, { borderColor: "rgba(6, 182, 212, 0.32)" }]}
+                activeOpacity={0.8}
+                onPress={() => setActivePopupCategory("assigned")}
+              >
+                <LinearGradient
+                  colors={["rgba(6, 182, 212, 0.15)", "rgba(6, 182, 212, 0.02)"]}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <View style={styles.cardHeaderRow}>
+                  <View style={[styles.glowDot, { backgroundColor: "#06b6d4", shadowColor: "#06b6d4" }]} />
+                  <Ionicons name="briefcase-outline" size={14} color="#67e8f9" />
+                </View>
+                <Text style={[styles.headerStatVal, { textShadowColor: "rgba(6, 182, 212, 0.4)", textShadowRadius: 6, textShadowOffset: { width: 0, height: 0 } }]}>
+                  {totalAssigned}
+                </Text>
+                <Text style={styles.headerStatLbl}>Assigned</Text>
+              </TouchableOpacity>
+
+              {/* Card 3: Completed */}
+              <TouchableOpacity
+                style={[styles.headerStatCard, { borderColor: "rgba(34, 197, 94, 0.32)" }]}
+                activeOpacity={0.8}
+                onPress={() => setActivePopupCategory("completed")}
+              >
+                <LinearGradient
+                  colors={["rgba(34, 197, 94, 0.15)", "rgba(34, 197, 94, 0.02)"]}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <View style={styles.cardHeaderRow}>
+                  <View style={[styles.glowDot, { backgroundColor: "#22c55e", shadowColor: "#22c55e" }]} />
+                  <Ionicons name="checkmark-circle-outline" size={14} color="#86efac" />
+                </View>
+                <Text style={[styles.headerStatVal, { textShadowColor: "rgba(34, 197, 94, 0.4)", textShadowRadius: 6, textShadowOffset: { width: 0, height: 0 } }]}>
+                  {completedClaims.length}
+                </Text>
+                <Text style={styles.headerStatLbl}>Completed</Text>
+              </TouchableOpacity>
+            </View>
+
           </LinearGradient>
         </Animated.View>
 
-        {/* ── STAT CARDS ── */}
-        <View style={styles.statsCardRow}>
-          <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => setActiveTab("claims")}>
-            <View style={[styles.statIconWrap, { backgroundColor: "#fff7ed" }]}>
-              <Ionicons name="alert-circle" size={20} color="#f97316" />
-            </View>
-            <Text style={styles.statNumber}>{urgentCount}</Text>
-            <Text style={styles.statLabel}>Urgent</Text>
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => setActiveTab("claims")}>
-            <View style={[styles.statIconWrap, { backgroundColor: "#ecfeff" }]}>
-              <Ionicons name="time" size={20} color="#06b6d4" />
-            </View>
-            <Text style={styles.statNumber}>{totalAssigned}</Text>
-            <Text style={styles.statLabel}>Assigned</Text>
-          </TouchableOpacity>
-
-          <View style={styles.divider} />
-
-          <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => setActiveTab("activity")}>
-            <View style={[styles.statIconWrap, { backgroundColor: "#f0fdf4" }]}>
-              <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
-            </View>
-            <Text style={styles.statNumber}>{completedClaims.length}</Text>
-            <Text style={styles.statLabel}>Completed</Text>
-          </TouchableOpacity>
-        </View>
-
         <Animated.View style={{ opacity: contentFadeAnim }}>
+
+          {/* ── PENDING DOCUMENT REQUESTS BANNER ── */}
+          {claimsWithPendingAgentRequests.length > 0 && (
+            <TouchableOpacity
+              style={styles.alertBanner}
+              activeOpacity={0.8}
+              onPress={() => setShowPendingRequestsModal(true)}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                <View style={styles.alertBannerIconBox}>
+                  <Ionicons name="warning" size={20} color="#f97316" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.alertBannerTitle}>Document Upload Required</Text>
+                  <Text style={styles.alertBannerSub}>
+                    Awaiting agent uploads for {claimsWithPendingAgentRequests.length} claim{claimsWithPendingAgentRequests.length > 1 ? "s" : ""}. Tap to view.
+                  </Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color="#94a3b8" style={{ marginLeft: 6 }} />
+            </TouchableOpacity>
+          )}
 
           {/* ── TAB SELECTOR ── */}
           <View style={styles.tabRow}>
-            {(["claims", "activity"] as const).map((tab) => (
-              <TouchableOpacity
-                key={tab}
-                style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]}
-                onPress={() => setActiveTab(tab)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.tabBtnText, activeTab === tab && styles.tabBtnTextActive]}>
-                  {tab === "claims" ? "Active Claims" : "My Activity"}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {(["claims", "activity"] as const).map((tab) => {
+              const active = tab === "claims" ? (activeTab === "claims" || activeTab === "home") : activeTab === "activity";
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  style={[styles.tabBtn, active && styles.tabBtnActive]}
+                  onPress={() => setActiveTab(tab)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.tabBtnText, active && styles.tabBtnTextActive]}>
+                    {tab === "claims" ? "Active Claims" : "My Activity"}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {/* ── CLAIMS LIST ── */}
           <View style={{ paddingHorizontal: 16, marginTop: 4 }}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
-                {activeTab === "claims" ? "Active Claims" : "Completed Claims"}
+                {activeTab === "activity" ? "Recent Completed" : "Active Claims"}
               </Text>
               <View style={styles.sectionBadge}>
                 <Text style={styles.sectionBadgeText}>{displayClaims.length}</Text>
@@ -401,12 +2044,12 @@ export default function AgentDashboard() {
             {displayClaims.length === 0 ? (
               <View style={styles.emptyCard}>
                 <Ionicons
-                  name={activeTab === "claims" ? "document-text-outline" : "checkmark-done-outline"}
+                  name={(activeTab === "claims" || activeTab === "home") ? "document-text-outline" : "checkmark-done-outline"}
                   size={34}
                   color="#cbd5e1"
                 />
                 <Text style={styles.emptyText}>
-                  {activeTab === "claims" ? "No active claims assigned." : "No completed claims yet."}
+                  {(activeTab === "claims" || activeTab === "home") ? "No active claims assigned." : "No completed claims yet."}
                 </Text>
               </View>
             ) : (
@@ -424,65 +2067,74 @@ export default function AgentDashboard() {
                       style={[
                         styles.claimCard,
                         {
-                          borderColor: isCompleted ? "#e2e8f0" : severityBorder(sev),
-                          backgroundColor: isCompleted ? "#ffffff" : severityBg(sev),
+                          backgroundColor: "#ffffff",
+                          borderColor: "#e2e8f0",
+                          borderLeftWidth: 4,
+                          borderLeftColor: isCompleted ? statusColor : "#1e3a8a",
                         },
                       ]}
                       onPress={() => setSelectedClaim(claim)}
                       activeOpacity={0.85}
                     >
-                      {/* Left strip */}
-                      <View style={[styles.claimStrip, { backgroundColor: isCompleted ? statusColor : severityColor(sev) }]} />
+                      {/* Left Side: Circular Status/Vehicle Icon Badge */}
+                      <View style={[styles.claimIconWrap, { backgroundColor: "#f0f7ff" }]}>
+                        <Ionicons
+                          name="car-sport"
+                          size={20}
+                          color={isCompleted ? statusColor : "#1e3a8a"}
+                        />
+                      </View>
 
-                      <View style={{ flex: 1, paddingLeft: 6 }}>
-                        {/* Header row */}
-                        <View style={styles.claimHeader}>
-                          <View style={styles.claimSeverityRow}>
-                            <Ionicons
-                              name={sev === "Urgent" ? "alert-circle" : sev === "Medium" ? "shield-half" : "checkmark-circle"}
-                              size={16}
-                              color={isCompleted ? statusColor : severityColor(sev)}
-                            />
-                            <Text style={[styles.claimSeverityLabel, { color: isCompleted ? statusColor : severityColor(sev) }]}>
-                              {isCompleted ? claim.status.toUpperCase() : `${sev.toUpperCase()} — ${claim.claimNumber}`}
+                      {/* Right Side: Claim Details */}
+                      <View style={{ flex: 1, marginLeft: 12, paddingRight: 8 }}>
+                        {/* Header Row: Plate Number and Status/Severity Badge */}
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                          <Text style={styles.claimPlateText}>{claim.vehiclePlate}</Text>
+                          <View style={[styles.claimBadge, { backgroundColor: "#f0f7ff", borderColor: isCompleted ? statusColor + "30" : "#dbeafe" }]}>
+                            <Text style={[styles.claimBadgeText, { color: isCompleted ? statusColor : "#1e3a8a" }]}>
+                              {isCompleted ? claim.status.toUpperCase() : sev.toUpperCase()}
                             </Text>
                           </View>
-                          {!isCompleted && (
-                            <Text style={styles.claimNumber}>{claim.claimNumber}</Text>
-                          )}
                         </View>
 
-                        {/* Details grid */}
-                        <View style={styles.claimGrid}>
-                          <View style={styles.claimGridItem}>
-                            <Text style={styles.claimGridLabel}>Vehicle</Text>
-                            <Text style={styles.claimGridValue}>{claim.vehiclePlate}</Text>
-                          </View>
-                          <View style={styles.claimGridItem}>
-                            <Text style={styles.claimGridLabel}>Damage</Text>
-                            <Text style={styles.claimGridValue}>{claim.damageType}</Text>
-                          </View>
-                          <View style={styles.claimGridItem}>
-                            <Text style={styles.claimGridLabel}>Location</Text>
-                            <Text style={styles.claimGridValue} numberOfLines={1}>{claim.location}</Text>
-                          </View>
+                        {/* Highlighted Location & Damage Type */}
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                          <Ionicons name="location" size={14} color="#f97316" />
+                          <Text style={styles.claimLocationHighlightText} numberOfLines={1}>
+                            {claim.location}
+                          </Text>
+                          <Text style={{ color: "#cbd5e1", fontWeight: "bold" }}>·</Text>
+                          <Text style={{ fontSize: 12, fontWeight: "600", color: "#64748b" }}>
+                            {claim.damageType}
+                          </Text>
                         </View>
 
-                        {/* Footer */}
-                        <View style={styles.claimFooter}>
-                          <Text style={styles.claimNic}>NIC: {claim.userNic}</Text>
-                          <TouchableOpacity
-                            style={styles.detailsBtn}
-                            onPress={() => setSelectedClaim(claim)}
-                          >
-                            <Text style={styles.detailsBtnText}>Details</Text>
-                          </TouchableOpacity>
+                        {/* Bottom Row: Claim ID */}
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: "#f1f5f9" }}>
+                          <Ionicons name="document-text-outline" size={12} color="#94a3b8" />
+                          <Text style={styles.claimNumberBottomText}>{claim.claimNumber}</Text>
                         </View>
+                      </View>
+
+                      {/* Far Right: Tap indicator arrow */}
+                      <View style={{ justifyContent: "center", alignItems: "center" }}>
+                        <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
                       </View>
                     </TouchableOpacity>
                   );
                 })}
               </View>
+            )}
+
+            {activeTab === "activity" && completedClaims.length > 0 && (
+              <TouchableOpacity
+                style={styles.viewAllBtn}
+                onPress={() => router.push("/Agent/Activity/page" as any)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.viewAllBtnText}>View All Activities</Text>
+                <Ionicons name="arrow-forward" size={16} color="#1e3a8a" />
+              </TouchableOpacity>
             )}
           </View>
 
@@ -544,67 +2196,171 @@ export default function AgentDashboard() {
         <Ionicons name="chatbubble-ellipses" size={24} color="#ffffff" />
       </TouchableOpacity>
 
-      <AgentNavbar activeTab={activeTab} onTabPress={setActiveTab} />
+      <AgentNavbar activeTab="home" />
+
+      {/* ── PENDING DOCUMENT REQUESTS DETAIL MODAL ── */}
+      <Modal
+        visible={showPendingRequestsModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowPendingRequestsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ width: "100%", maxWidth: 460, alignSelf: "center", flex: 1, justifyContent: "flex-end" }}
+          >
+            <View style={[styles.modalCard, { height: SCREEN_H * 0.75 }]}>
+              {/* Drag Handle */}
+              <View style={styles.modalDragHandle} />
+
+              {/* Premium Header */}
+              <View style={styles.premiumPopupHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                  <View style={[styles.popupHeaderIconWrap, { backgroundColor: "rgba(249, 115, 22, 0.08)", borderColor: "rgba(249, 115, 22, 0.15)" }]}>
+                    <Ionicons name="warning" size={20} color="#f97316" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.popupHeaderTitle}>Pending Agent Uploads</Text>
+                    <Text style={[styles.popupHeaderSubtext, { color: "#ea580c" }]}>
+                      {claimsWithPendingAgentRequests.length} claim{claimsWithPendingAgentRequests.length > 1 ? "s" : ""} require{claimsWithPendingAgentRequests.length === 1 ? "s" : ""} uploads
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={styles.popupCloseBtn}
+                  onPress={() => setShowPendingRequestsModal(false)}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={18} color="#475569" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
+                {claimsWithPendingAgentRequests.map((claim) => {
+                  const pendingDocs = getAgentPendingRequests(claim);
+                  return (
+                    <View key={claim._id} style={{ marginBottom: 20 }}>
+                      <Text style={{ fontSize: 13, fontWeight: "900", color: "#475569", marginBottom: 10, paddingLeft: 4, textTransform: "uppercase", letterSpacing: 0.3 }}>
+                        Claim: {claim.claimNumber} · {claim.vehiclePlate}
+                      </Text>
+                      {pendingDocs.map((docName, idx) => {
+                        const { requestedAt } = getDocDetails(claim, docName, "Pending");
+                        return (
+                          <View key={idx} style={styles.agentDocCardPending}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                              <View style={styles.agentSirenIconWrap}>
+                                <Ionicons name="document-text-outline" size={20} color="#1e3a8a" />
+                              </View>
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.agentDocTitlePending} numberOfLines={1}>{docName}</Text>
+                                <Text style={styles.agentDocSubPending}>Requested: {requestedAt}</Text>
+                              </View>
+                            </View>
+                            <TouchableOpacity
+                              style={styles.agentUploadCardBtn}
+                              onPress={() => {
+                                setShowPendingRequestsModal(false);
+                                handleAgentDocUploadPicker(docName, claim);
+                              }}
+                            >
+                              <Ionicons name="cloud-upload-outline" size={14} color="#ffffff" />
+                              <Text style={styles.agentUploadCardBtnText}>Upload</Text>
+                            </TouchableOpacity>
+                          </View>
+                        );
+                      })}
+                    </View>
+                  );
+                })}
+              </ScrollView>
+              
+              <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: "#f1f5f9" }}>
+                <TouchableOpacity
+                  style={styles.closeBtn}
+                  onPress={() => setShowPendingRequestsModal(false)}
+                >
+                  <Text style={styles.closeBtnText}>Dismiss</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
 
       {/* ── CLAIM DETAIL MODAL ── */}
       <Modal
         visible={selectedClaim !== null}
         animationType="slide"
         transparent
-        onRequestClose={() => setSelectedClaim(null)}
+        onRequestClose={closeDetailModal}
       >
         <View style={styles.modalOverlay}>
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={{ width: "100%", maxWidth: 460, alignSelf: "center" }}
+            style={{ width: "100%", maxWidth: 460, alignSelf: "center", flex: 1, justifyContent: "flex-end" }}
           >
-            <View style={styles.modalCard}>
-              {/* Modal header */}
-              <LinearGradient
-                colors={["#0f172a", "#1e293b"]}
-                style={styles.modalHeader}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.modalHeaderTitle}>Claim Details</Text>
-                  <Text style={styles.modalHeaderSub}>{selectedClaim?.claimNumber}</Text>
+            <View style={[styles.modalCard, activeInspectionStep > 1 && { height: SCREEN_H * 0.8 }]}>
+              {/* Drag Handle */}
+              <View style={styles.modalDragHandle} />
+
+              {/* Premium Header */}
+              <View style={styles.premiumPopupHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                  <View style={[styles.popupHeaderIconWrap, { backgroundColor: "rgba(30, 58, 138, 0.08)", borderColor: "rgba(30, 58, 138, 0.15)" }]}>
+                    <Ionicons name="document-text" size={20} color="#1e3a8a" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.popupHeaderTitle}>
+                      {activeInspectionStep === 1 && "Claim Details"}
+                      {activeInspectionStep === 2 && "Assignment Accepted"}
+                      {activeInspectionStep === 3 && "Navigation to Incident"}
+                      {activeInspectionStep === 4 && "Physical Inspection"}
+                      {activeInspectionStep === 5 && "Assessment Finished"}
+                    </Text>
+                    <Text style={[styles.popupHeaderSubtext, { color: "#64748b" }]}>
+                      {selectedClaim?.claimNumber}
+                    </Text>
+                  </View>
                 </View>
                 <TouchableOpacity
-                  style={styles.modalCloseBtn}
-                  onPress={() => setSelectedClaim(null)}
+                  style={styles.popupCloseBtn}
+                  onPress={closeDetailModal}
+                  activeOpacity={0.7}
                 >
-                  <Ionicons name="close" size={20} color="#ffffff" />
+                  <Ionicons name="close" size={18} color="#475569" />
                 </TouchableOpacity>
-              </LinearGradient>
+              </View>
 
-              <ScrollView
-                style={{ flex: 1 }}
-                contentContainerStyle={{ padding: 20, gap: 16 }}
-                showsVerticalScrollIndicator={false}
-              >
-                {selectedClaim && (() => {
-                  const sev = getSeverity(selectedClaim.damageType);
+              {/* Wizard Stepper Visualizer */}
+              {selectedClaim && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && renderWizardProgress()}
+
+              {/* Step specific views */}
+              {activeInspectionStep === 1 && (
+                <ScrollView
+                  style={{ flexShrink: 1 }}
+                  contentContainerStyle={{ padding: 20, gap: 16 }}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {selectedClaim && (() => {
+                    const sev = getSeverity(selectedClaim.damageType);
                   const isActive = selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected";
                   return (
                     <>
-                      {/* Severity badge */}
-                      <View style={[styles.modalSevBadge, { backgroundColor: severityBg(sev), borderColor: severityBorder(sev) }]}>
-                        <Ionicons name="alert-circle" size={18} color={severityColor(sev)} />
-                        <Text style={[styles.modalSevText, { color: severityColor(sev) }]}>
-                          {sev} Priority · {selectedClaim.status}
-                        </Text>
-                      </View>
+                      {/* Visual Stepper */}
+                      {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
 
                       {/* Info grid */}
                       <View style={styles.modalInfoGrid}>
                         {[
                           { label: "User NIC",      value: selectedClaim.userNic },
-                          { label: "Vehicle Plate",  value: selectedClaim.vehiclePlate },
+                          { label: "Vehicle Plate",  value: formatNumberPlate(selectedClaim.vehiclePlate) },
                           { label: "Damage Type",    value: selectedClaim.damageType },
                           { label: "Location",       value: selectedClaim.location },
                           { label: "Incident Date",  value: selectedClaim.incidentDate },
                           { label: "Incident Time",  value: selectedClaim.incidentTime },
-                          { label: "Assigned Agent", value: selectedClaim.assignedAgent },
-                          { label: "Submitted",      value: formatDate(selectedClaim.createdAt) },
+                          { label: "Assigned Agent", value: agentName || selectedClaim.assignedAgent },
+                          { label: "Submitted Date", value: formatDate(selectedClaim.createdAt) },
                         ].map((item, i) => (
                           <View key={i} style={styles.modalInfoItem}>
                             <Text style={styles.modalInfoLabel}>{item.label}</Text>
@@ -619,63 +2375,745 @@ export default function AgentDashboard() {
                         <Text style={styles.modalDescText}>{selectedClaim.description}</Text>
                       </View>
 
-                      {/* Assessment Amount */}
-                      {isActive && (
-                        <View style={styles.modalAssessBox}>
-                          <Text style={styles.modalAssessLabel}>Assessment Amount (LKR)</Text>
-                          <View style={styles.modalAssessInput}>
-                            <Text style={styles.modalAssessCurrency}>LKR</Text>
-                            <TextInput
-                              style={styles.modalAssessField}
-                              placeholder="Enter amount"
-                              placeholderTextColor="#94a3b8"
-                              keyboardType="numeric"
-                              value={assessmentAmount}
-                              onChangeText={setAssessmentAmount}
-                            />
-                          </View>
-                        </View>
-                      )}
+                      {/* Action forms are grouped lower down in the scroll view */}
 
-                      {/* Amount display if done */}
-                      {!isActive && (
-                        <View style={[styles.modalAssessBox, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
+                      {selectedClaim.inspectionSubmitted ? (
+                        <View style={styles.modalDescBox}>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <Text style={styles.modalDescLabel}>Inspection Report</Text>
+                            <Text style={{ fontSize: 10, fontWeight: '900', color: '#16a34a', backgroundColor: '#dcfce7', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4 }}>Submitted</Text>
+                          </View>
+                          <Text style={styles.modalDescText}>{selectedClaim.inspectionReport}</Text>
+                        </View>
+                      ) : null}
+
+                      {/* Requested Agent Documents Status Section */}
+                      {selectedClaim.requestedDocuments && selectedClaim.requestedDocuments.length > 0 && (() => {
+                        const requestedDocsList = [
+                          ...(selectedClaim.requestedDocuments || [])
+                            .filter(name => {
+                              const recipient = getRecipientForDoc(selectedClaim, name);
+                              const isUploaded = (selectedClaim.additionalDocuments || []).some(
+                                doc => doc.name.trim().toLowerCase() === name.trim().toLowerCase() && 
+                                       ((recipient === "Agent" && doc.uploadedBy === "Agent") || 
+                                        (recipient === "User" && doc.uploadedBy !== "Agent"))
+                              );
+                              return !isUploaded;
+                            })
+                            .map((name) => ({
+                              name,
+                              status: "Pending" as const,
+                              url: null,
+                              recipient: getRecipientForDoc(selectedClaim, name),
+                            })),
+                          ...(selectedClaim.additionalDocuments || []).map((doc) => ({
+                            name: doc.name,
+                            status: "Submitted" as const,
+                            url: doc.url,
+                            recipient: doc.uploadedBy === "Agent" ? "Agent" : "User",
+                          })),
+                        ];
+
+                        const agentDocs = requestedDocsList.filter((d) => d.recipient === "Agent");
+
+                        if (agentDocs.length === 0) return null;
+
+                        return (
+                          <View style={styles.modalDescBox}>
+                            <Text style={styles.modalDescLabel}>Requested Agent Documents</Text>
+                            {agentDocs.map((item, idx) => {
+                              const { requestedAt, submittedAt } = getDocDetails(selectedClaim, item.name, item.status);
+                              const isPending = item.status === "Pending";
+
+                              if (isPending) {
+                                return (
+                                  <View key={idx} style={styles.agentDocCardPending}>
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                                      <View style={styles.agentSirenIconWrap}>
+                                        <Ionicons name="document-text-outline" size={20} color="#1e3a8a" />
+                                      </View>
+                                      <View style={{ flex: 1 }}>
+                                        <Text style={styles.agentDocTitlePending} numberOfLines={1}>{item.name}</Text>
+                                        <Text style={styles.agentDocSubPending}>Requested: {requestedAt}</Text>
+                                      </View>
+                                    </View>
+                                    <TouchableOpacity
+                                      style={styles.agentUploadCardBtn}
+                                      onPress={() => handleAgentDocUploadPicker(item.name)}
+                                    >
+                                      <Ionicons name="cloud-upload-outline" size={14} color="#ffffff" />
+                                      <Text style={styles.agentUploadCardBtnText}>Upload</Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                );
+                              } else {
+                                return (
+                                  <View key={idx} style={styles.agentDocCardSubmitted}>
+                                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                                      <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#dcfce7", alignItems: "center", justifyContent: "center" }}>
+                                        <Ionicons name="checkmark-circle-outline" size={20} color="#16a34a" />
+                                      </View>
+                                      <View style={{ flex: 1 }}>
+                                        <Text style={styles.agentDocTitleSubmitted} numberOfLines={1}>{item.name}</Text>
+                                        <Text style={styles.agentDocSubSubmitted}>Uploaded: {submittedAt || "Recent"}</Text>
+                                      </View>
+                                    </View>
+                                    <TouchableOpacity
+                                      style={styles.agentDocViewBtn}
+                                      onPress={() => handleViewDocument(item.url)}
+                                    >
+                                      <Text style={styles.agentDocViewBtnText}>View</Text>
+                                    </TouchableOpacity>
+                                  </View>
+                                );
+                              }
+                            })}
+                          </View>
+                        );
+                      })()}
+
+                      {/* Uploaded Agent Documents List */}
+                      {(() => {
+                        const agentUploadedDocs = (selectedClaim.additionalDocuments || []).filter(
+                          (doc) => doc.uploadedBy === "Agent"
+                        );
+                        if (agentUploadedDocs.length === 0) return null;
+                        return (
+                          <View style={styles.modalDescBox}>
+                            <Text style={styles.modalDescLabel}>Uploaded Agent Documents</Text>
+                            {agentUploadedDocs.map((doc, idx) => {
+                              const submittedAt = formatDate(doc.uploadedAt);
+                              return (
+                                <View key={idx} style={styles.agentDocCardSubmitted}>
+                                  <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#dcfce7", alignItems: "center", justifyContent: "center" }}>
+                                      <Ionicons name="document-text-outline" size={20} color="#16a34a" />
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                      <Text style={styles.agentDocTitleSubmitted} numberOfLines={1}>{doc.name}</Text>
+                                      <Text style={styles.agentDocSubSubmitted}>Uploaded: {submittedAt || "Recent"}</Text>
+                                    </View>
+                                  </View>
+                                  <TouchableOpacity
+                                    style={styles.agentDocViewBtn}
+                                    onPress={() => handleViewDocument(doc.url)}
+                                  >
+                                    <Text style={styles.agentDocViewBtnText}>View</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              );
+                            })}
+                          </View>
+                        );
+                      })()}
+
+                      {/* Policy Holder Attachments / Photos Section */}
+                      {(() => {
+                        const attachments: { name: string; url: string }[] = [];
+                        const dlFront = selectedClaim.drivingLicense?.front?.[0];
+                        const dlRear = selectedClaim.drivingLicense?.rear?.[0];
+                        if (dlFront) attachments.push({ name: "License (Front)", url: dlFront });
+                        if (dlRear) attachments.push({ name: "License (Rear)", url: dlRear });
+                        
+                        let photoIdx = 1;
+                        const fPhotos = selectedClaim.accidentPhotos?.front || [];
+                        const rPhotos = selectedClaim.accidentPhotos?.rear || [];
+                        const sPhotos = selectedClaim.accidentPhotos?.side || [];
+                        
+                        fPhotos.forEach((url: string) => attachments.push({ name: `Accident Front #${photoIdx++}`, url }));
+                        rPhotos.forEach((url: string) => attachments.push({ name: `Accident Rear #${photoIdx++}`, url }));
+                        sPhotos.forEach((url: string) => attachments.push({ name: `Accident Side #${photoIdx++}`, url }));
+
+                        return (
+                          <View style={styles.modalDescBox}>
+                            <Text style={styles.modalDescLabel}>Policy Holder Attachments & Photos</Text>
+                            {attachments.length === 0 ? (
+                              <Text style={{ fontSize: 12, color: "#94a3b8", fontStyle: "italic", marginTop: 4 }}>
+                                No driving license or accident photos attached to this claim.
+                              </Text>
+                            ) : (
+                              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, marginTop: 10 }}>
+                                {attachments.map((item, idx) => {
+                                  let docUrl = item.url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <TouchableOpacity
+                                      key={idx}
+                                      onPress={() => handleViewDocument(docUrl)}
+                                      style={{ alignItems: "center", width: 90 }}
+                                      activeOpacity={0.7}
+                                    >
+                                      <View style={{ width: 90, height: 70, borderRadius: 10, overflow: "hidden", borderColor: "#e2e8f0", borderStyle: "solid", borderWidth: 1 }}>
+                                        <Image source={{ uri: docUrl }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                                      </View>
+                                      <Text style={{ fontSize: 9, color: "#64748b", fontWeight: "700", textAlign: "center", marginTop: 4, textTransform: "uppercase" }} numberOfLines={1}>
+                                        {item.name}
+                                      </Text>
+                                    </TouchableOpacity>
+                                  );
+                                })}
+                              </ScrollView>
+                            )}
+                          </View>
+                        );
+                      })()}
+
+                      {/* Redesigned Step-based Interactive Actions Panel */}
+                      {isActive ? (
+                        <View style={[styles.modalDescBox, { backgroundColor: "#f8fafc", borderColor: "#cbd5e1", borderLeftWidth: 4, borderLeftColor: "#1e3a8a", padding: 16 }]}>
+                          <Text style={[styles.modalDescLabel, { color: "#1e3a8a" }]}>Action Required: Step 0{selectedClaim.currentStep}</Text>
+                          
+                          {/* Step 2 Actions: Case Assignment */}
+                          {selectedClaim.currentStep === 2 && (
+                            <View style={{ gap: 8, marginTop: 4 }}>
+                              <Text style={{ fontSize: 12.5, fontWeight: "600", color: "#475569", lineHeight: 18 }}>
+                                Review and accept this case file assignment to start damage inspections.
+                              </Text>
+                              <View style={{ flexDirection: "row", gap: 10, marginTop: 6 }}>
+                                <TouchableOpacity
+                                  style={[styles.approveBtn, { backgroundColor: "#16a34a", flex: 1, borderRadius: 10, height: 38 }]}
+                                  onPress={handleAcceptClaim}
+                                  disabled={isAcceptingClaim}
+                                  activeOpacity={0.7}
+                                >
+                                  <Text style={styles.approveBtnText}>
+                                    {isAcceptingClaim ? "Accepting..." : "Accept"}
+                                  </Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[styles.approveBtn, { backgroundColor: "#dc2626", flex: 1, borderRadius: 10, height: 38 }]}
+                                  onPress={handleDeclineClaim}
+                                  disabled={isAcceptingClaim}
+                                  activeOpacity={0.7}
+                                >
+                                  <Text style={styles.approveBtnText}>
+                                    {isAcceptingClaim ? "Declining..." : "Reject"}
+                                  </Text>
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          )}
+
+                          {/* Step 3 Actions: Physical Inspection Notes */}
+                          {selectedClaim.currentStep === 3 && (
+                            <View style={{ gap: 10, marginTop: 4 }}>
+                              {!selectedClaim.inspectionSubmitted ? (
+                                <>
+                                  <Text style={{ fontSize: 12.5, fontWeight: "600", color: "#475569", lineHeight: 18 }}>
+                                    Submit physical vehicle damage findings below to advance this claim.
+                                  </Text>
+                                  <TextInput
+                                    style={{
+                                      height: 70,
+                                      textAlignVertical: 'top',
+                                      padding: 8,
+                                      borderWidth: 1,
+                                      borderColor: '#cbd5e1',
+                                      borderRadius: 10,
+                                      color: '#1e293b',
+                                      fontSize: 13,
+                                      backgroundColor: '#ffffff'
+                                    }}
+                                    placeholder="Type inspection notes..."
+                                    placeholderTextColor="#94a3b8"
+                                    multiline
+                                    numberOfLines={3}
+                                    value={inspectionReportText}
+                                    onChangeText={setInspectionReportText}
+                                  />
+                                  <TouchableOpacity
+                                    style={[styles.approveBtn, { backgroundColor: "#06b6d4", borderRadius: 10, height: 38, marginTop: 4 }]}
+                                    onPress={handleSubmitInspectionReport}
+                                    disabled={isSubmittingReport || !inspectionReportText.trim()}
+                                    activeOpacity={0.7}
+                                  >
+                                    <Text style={styles.approveBtnText}>
+                                      {isSubmittingReport ? "Submitting..." : "Submit Inspection Report"}
+                                    </Text>
+                                  </TouchableOpacity>
+                                </>
+                              ) : (
+                                <Text style={{ fontSize: 13, fontWeight: "800", color: "#16a34a" }}>
+                                  Inspection report has been submitted.
+                                </Text>
+                              )}
+                            </View>
+                          )}
+
+                          {/* Step 4 & 5 Actions: Assessment Approval */}
+                          {(selectedClaim.currentStep === 4 || selectedClaim.currentStep === 5) && (
+                            <View style={{ gap: 10, marginTop: 4 }}>
+                              <Text style={{ fontSize: 12.5, fontWeight: "600", color: "#475569", lineHeight: 18 }}>
+                                Enter estimated assessment amount (LKR) to finalize evaluated damage approval.
+                              </Text>
+                              <View style={[styles.modalAssessInput, { borderRadius: 10, height: 40 }]}>
+                                <Text style={styles.modalAssessCurrency}>LKR</Text>
+                                <TextInput
+                                  style={styles.modalAssessField}
+                                  placeholder="Enter final amount"
+                                  placeholderTextColor="#94a3b8"
+                                  keyboardType="numeric"
+                                  value={assessmentAmount}
+                                  onChangeText={setAssessmentAmount}
+                                />
+                              </View>
+                              <TouchableOpacity
+                                style={[styles.approveBtn, { backgroundColor: "#1e3a8a", borderRadius: 10, height: 40, marginTop: 4 }]}
+                                onPress={handleApproveAssessment}
+                                disabled={savingAssessment || !assessmentAmount.trim()}
+                                activeOpacity={0.7}
+                              >
+                                {savingAssessment ? (
+                                  <ActivityIndicator color="#fff" size="small" />
+                                ) : (
+                                  <>
+                                    <Ionicons name="checkmark-circle" size={16} color="#fff" />
+                                    <Text style={styles.approveBtnText}>Approve Claim & Assessment</Text>
+                                  </>
+                                )}
+                              </TouchableOpacity>
+
+                              {/* Divider Line */}
+                              <View style={{ height: 1, backgroundColor: "#cbd5e1", marginVertical: 8, opacity: 0.6 }} />
+
+                              {/* Supporting Materials Title */}
+                              <Text style={{ fontSize: 13, fontWeight: "800", color: "#1e293b", selectNone: true } as any}>
+                                Supporting Details (Decision Stage)
+                              </Text>
+
+                              {/* Upload buttons row */}
+                              <View style={{ flexDirection: "row", gap: 10 }}>
+                                <TouchableOpacity
+                                  style={{
+                                    flex: 1,
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 6,
+                                    backgroundColor: "#f1f5f9",
+                                    borderWidth: 1,
+                                    borderColor: "#cbd5e1",
+                                    borderRadius: 10,
+                                    height: 38,
+                                  }}
+                                  onPress={() => handleAgentDocUploadPicker("Decision Document")}
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons name="document-text-outline" size={16} color="#475569" />
+                                  <Text style={{ color: "#475569", fontSize: 12, fontWeight: "700" }}>Upload Doc</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                  style={{
+                                    flex: 1,
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 6,
+                                    backgroundColor: "#f1f5f9",
+                                    borderWidth: 1,
+                                    borderColor: "#cbd5e1",
+                                    borderRadius: 10,
+                                    height: 38,
+                                  }}
+                                  onPress={() => handleAgentDocUploadPicker("Decision Photo")}
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons name="camera-outline" size={16} color="#475569" />
+                                  <Text style={{ color: "#475569", fontSize: 12, fontWeight: "700" }}>Upload Photo</Text>
+                                </TouchableOpacity>
+                              </View>
+
+                              {/* Comment input area */}
+                              <View style={{ gap: 6, marginTop: 4 }}>
+                                <TextInput
+                                  style={{
+                                    height: 58,
+                                    textAlignVertical: 'top',
+                                    padding: 8,
+                                    borderWidth: 1,
+                                    borderColor: '#cbd5e1',
+                                    borderRadius: 10,
+                                    color: '#1e293b',
+                                    fontSize: 12.5,
+                                    backgroundColor: '#ffffff'
+                                  }}
+                                  placeholder="Type decision comment or note..."
+                                  placeholderTextColor="#94a3b8"
+                                  multiline
+                                  numberOfLines={2}
+                                  value={decisionCommentText}
+                                  onChangeText={setDecisionCommentText}
+                                />
+                                <TouchableOpacity
+                                  style={{
+                                    backgroundColor: "#0891b2",
+                                    borderRadius: 10,
+                                    height: 36,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexDirection: "row",
+                                    gap: 6
+                                  }}
+                                  onPress={handleSubmitDecisionComment}
+                                  disabled={isSubmittingComment || !decisionCommentText.trim()}
+                                  activeOpacity={0.7}
+                                >
+                                  {isSubmittingComment ? (
+                                    <ActivityIndicator color="#fff" size="small" />
+                                  ) : (
+                                    <>
+                                      <Ionicons name="chatbubble-ellipses-outline" size={15} color="#fff" />
+                                      <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "800" }}>
+                                        Add Comment / Note
+                                      </Text>
+                                    </>
+                                  )}
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          )}
+                        </View>
+                      ) : (
+                        <View style={[styles.modalAssessBox, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0", borderLeftWidth: 4, borderLeftColor: "#16a34a" }]}>
                           <Text style={[styles.modalAssessLabel, { color: "#166534" }]}>Final Claim Amount</Text>
-                          <Text style={[styles.modalInfoValue, { fontSize: 20, color: "#16a34a", fontWeight: "900" }]}>
+                          <Text style={[styles.modalInfoValue, { fontSize: 18, color: "#16a34a", fontWeight: "900" }]}>
                             {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Evaluated"}
                           </Text>
                         </View>
                       )}
 
-                      {/* Action buttons */}
+                      {/* Upload Document File (Step 3, 4, 5 only) */}
+                      {isActive && (selectedClaim.currentStep === 3 || selectedClaim.currentStep === 4 || selectedClaim.currentStep === 5) && (
+                        <View style={styles.modalDescBox}>
+                          <Text style={styles.modalDescLabel}>Upload Document File</Text>
+                          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 12 }}>
+                            {["Repair Estimate", "Inspection Photos", "Damage Assessment", "Other"].map((type) => {
+                              const isSelected = agentUploadDocName === type;
+                              return (
+                                <TouchableOpacity
+                                  key={type}
+                                  onPress={() => setAgentUploadDocName(type)}
+                                  style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: isSelected ? "#dbeafe" : "#f1f5f9" }}
+                                >
+                                  <Text style={{ fontSize: 10.5, fontWeight: "800", color: isSelected ? "#1e3a8a" : "#64748b" }}>
+                                    {type}
+                                  </Text>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </View>
+
+                          {agentUploadFileBase64 ? (
+                            <View style={styles.agentDocCardSubmitted}>
+                              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                                <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: "#dcfce7", alignItems: "center", justifyContent: "center" }}>
+                                  <Ionicons name="image-outline" size={20} color="#16a34a" />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                  <Text style={styles.agentDocTitleSubmitted} numberOfLines={1}>{agentUploadFileName}</Text>
+                                  <Text style={styles.agentDocSubSubmitted}>Ready ({agentUploadDocName})</Text>
+                                </View>
+                              </View>
+                              <TouchableOpacity onPress={() => { setAgentUploadFileBase64(null); setAgentUploadFileName(""); }}>
+                                <Ionicons name="trash-outline" size={18} color="#dc2626" />
+                              </TouchableOpacity>
+                            </View>
+                          ) : (
+                            <TouchableOpacity
+                              style={{ borderStyle: "dashed", borderWidth: 1.5, borderColor: "#1e3a8a", borderRadius: 12, paddingVertical: 18, alignItems: "center", justifyContent: "center", gap: 6 }}
+                              onPress={handlePickAgentDoc}
+                            >
+                              <Ionicons name="cloud-upload" size={24} color="#1e3a8a" />
+                              <Text style={{ fontSize: 12, fontWeight: "800", color: "#1e293b" }}>Select document file</Text>
+                            </TouchableOpacity>
+                          )}
+
+                          {agentUploadFileBase64 && (
+                            <TouchableOpacity
+                              style={[styles.approveBtn, { backgroundColor: "#f97316", marginTop: 10, height: 38 }]}
+                              onPress={handleAgentDocSubmit}
+                              disabled={isAgentUploading}
+                            >
+                              {isAgentUploading ? (
+                                <ActivityIndicator color="#ffffff" size="small" />
+                              ) : (
+                                <Text style={styles.approveBtnText}>Upload to Claim</Text>
+                              )}
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      )}
+
+                      {/* Modal Footer actions (Close button only) */}
                       <View style={styles.modalActions}>
-                        {isActive && (
-                          <TouchableOpacity
-                            style={[styles.approveBtn, savingAssessment && { opacity: 0.7 }]}
-                            onPress={handleApproveAssessment}
-                            disabled={savingAssessment}
-                            activeOpacity={0.8}
-                          >
-                            {savingAssessment ? (
-                              <ActivityIndicator color="#fff" size="small" />
-                            ) : (
-                              <>
-                                <Ionicons name="checkmark-circle" size={18} color="#fff" />
-                                <Text style={styles.approveBtnText}>Approve Assessment</Text>
-                              </>
-                            )}
-                          </TouchableOpacity>
-                        )}
                         <TouchableOpacity
-                          style={styles.closeBtn}
-                          onPress={() => setSelectedClaim(null)}
+                          style={[styles.closeBtn, { flex: 1, height: 40, borderRadius: 10, justifyContent: "center", alignItems: "center", backgroundColor: "#f1f5f9", borderWidth: 1, borderColor: "#cbd5e1" }]}
+                          onPress={closeDetailModal}
                         >
-                          <Text style={styles.closeBtnText}>Close</Text>
+                          <Text style={[styles.closeBtnText, { color: "#475569" }]}>Close</Text>
                         </TouchableOpacity>
                       </View>
                     </>
                   );
                 })()}
+              </ScrollView>
+              )}
+
+              {activeInspectionStep === 2 && renderStep2Popup()}
+              {activeInspectionStep === 3 && renderStep3Map()}
+              {activeInspectionStep === 4 && renderStep4InspectionForm()}
+              {activeInspectionStep === 5 && renderStep5Completed()}
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      {/* ── CATEGORY CLAIMS POPUP MODAL ── */}
+      <Modal
+        visible={activePopupCategory !== null}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setActivePopupCategory(null);
+          setPopupSearchQuery("");
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ width: "100%", maxWidth: 460, alignSelf: "center", flex: 1, justifyContent: "flex-end" }}
+          >
+            <View style={[styles.modalCard, { height: SCREEN_H * 0.75 }]}>
+              {/* Drag Handle */}
+              <View style={styles.modalDragHandle} />
+
+              {/* Premium Header */}
+              <View style={styles.premiumPopupHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                  {/* Glowing Status Icon Wrapper */}
+                  <View style={[
+                    styles.popupHeaderIconWrap,
+                    activePopupCategory === "urgent" && { backgroundColor: "rgba(239, 68, 68, 0.08)", borderColor: "rgba(239, 68, 68, 0.15)" },
+                    activePopupCategory === "assigned" && { backgroundColor: "rgba(14, 165, 233, 0.08)", borderColor: "rgba(14, 165, 233, 0.15)" },
+                    activePopupCategory === "completed" && { backgroundColor: "rgba(34, 197, 94, 0.08)", borderColor: "rgba(34, 197, 94, 0.15)" },
+                  ]}>
+                    <Ionicons
+                      name={
+                        activePopupCategory === "urgent"
+                          ? "alert-circle"
+                          : activePopupCategory === "assigned"
+                            ? "briefcase"
+                            : "checkmark-done-circle"
+                      }
+                      size={20}
+                      color={
+                        activePopupCategory === "urgent"
+                          ? "#ef4444"
+                          : activePopupCategory === "assigned"
+                            ? "#0ea5e9"
+                            : "#22c55e"
+                      }
+                    />
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.popupHeaderTitle}>
+                      {activePopupCategory === "urgent" 
+                        ? "Urgent Claims" 
+                        : activePopupCategory === "assigned"
+                          ? "Assigned Active"
+                          : "Claim History"}
+                    </Text>
+                    <Text style={[
+                      styles.popupHeaderSubtext,
+                      activePopupCategory === "urgent" && { color: "#ef4444" },
+                      activePopupCategory === "assigned" && { color: "#0ea5e9" },
+                      activePopupCategory === "completed" && { color: "#22c55e" },
+                    ]}>
+                      {(() => {
+                        if (!activePopupCategory) return "0 cases assigned";
+                        let list: Claim[] = [];
+                        if (activePopupCategory === "urgent") {
+                          list = activeClaims.filter(c => getSeverity(c.damageType) === "Urgent");
+                          return `${list.length} high priority case${list.length !== 1 ? "s" : ""} today`;
+                        } else if (activePopupCategory === "assigned") {
+                          list = activeClaims;
+                          return `${list.length} total active assignment${list.length !== 1 ? "s" : ""}`;
+                        } else if (activePopupCategory === "completed") {
+                          list = completedClaims;
+                          return `${list.length} resolved case${list.length !== 1 ? "s" : ""} logged`;
+                        }
+                        return "";
+                      })()}
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Styled Close Button */}
+                <TouchableOpacity
+                  style={styles.popupCloseBtn}
+                  onPress={() => {
+                    setActivePopupCategory(null);
+                    setPopupSearchQuery("");
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={18} color="#475569" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Search input inside modal */}
+              <View style={styles.popupSearchContainer}>
+                <Ionicons name="search" size={18} color="#64748b" style={{ marginRight: 8 }} />
+                <TextInput
+                  style={styles.popupSearchField}
+                  placeholder={`Search ${activePopupCategory || ""} claims...`}
+                  placeholderTextColor="#94a3b8"
+                  value={popupSearchQuery}
+                  onChangeText={setPopupSearchQuery}
+                />
+                {popupSearchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setPopupSearchQuery("")}>
+                    <Ionicons name="close-circle" size={16} color="#94a3b8" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Claims List */}
+              <ScrollView
+                style={{ flex: 1 }}
+                contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+                showsVerticalScrollIndicator={false}
+              >
+                {(() => {
+                  if (!activePopupCategory) return [];
+                  let list: Claim[] = [];
+                  if (activePopupCategory === "urgent") {
+                    list = activeClaims.filter(c => getSeverity(c.damageType) === "Urgent");
+                  } else if (activePopupCategory === "assigned") {
+                    list = activeClaims;
+                  } else if (activePopupCategory === "completed") {
+                    list = completedClaims;
+                  }
+
+                  return list.filter(
+                    (claim) =>
+                      claim.claimNumber.toLowerCase().includes(popupSearchQuery.toLowerCase()) ||
+                      claim.vehiclePlate.toLowerCase().includes(popupSearchQuery.toLowerCase()) ||
+                      claim.damageType.toLowerCase().includes(popupSearchQuery.toLowerCase()) ||
+                      claim.status.toLowerCase().includes(popupSearchQuery.toLowerCase())
+                  );
+                })().length === 0 ? (
+                  <View style={styles.emptyCard}>
+                    <Ionicons 
+                      name={
+                        activePopupCategory === "completed" 
+                          ? "checkmark-done-outline" 
+                          : "document-text-outline"
+                      } 
+                      size={44} 
+                      color="#cbd5e1" 
+                    />
+                    <Text style={styles.emptyText}>No matching claims found.</Text>
+                  </View>
+                ) : (
+                  (() => {
+                    if (!activePopupCategory) return [];
+                    let list: Claim[] = [];
+                    if (activePopupCategory === "urgent") {
+                      list = activeClaims.filter(c => getSeverity(c.damageType) === "Urgent");
+                    } else if (activePopupCategory === "assigned") {
+                      list = activeClaims;
+                    } else if (activePopupCategory === "completed") {
+                      list = completedClaims;
+                    }
+
+                    return list.filter(
+                      (claim) =>
+                        claim.claimNumber.toLowerCase().includes(popupSearchQuery.toLowerCase()) ||
+                        claim.vehiclePlate.toLowerCase().includes(popupSearchQuery.toLowerCase()) ||
+                        claim.damageType.toLowerCase().includes(popupSearchQuery.toLowerCase()) ||
+                        claim.status.toLowerCase().includes(popupSearchQuery.toLowerCase())
+                    );
+                  })().map((claim) => {
+                    const sev = getSeverity(claim.damageType);
+                    const isCompleted = claim.status === "Approved" || claim.status === "Rejected";
+                    const statusColor = claim.status === "Approved" ? "#16a34a"
+                      : claim.status === "Rejected" ? "#dc2626"
+                      : claim.status === "In Progress" ? "#0ea5e9" : "#f59e0b";
+                    return (
+                      <TouchableOpacity
+                        key={claim._id}
+                        style={[
+                          styles.claimCard,
+                          {
+                            backgroundColor: "#ffffff",
+                            borderColor: "#e2e8f0",
+                            borderLeftWidth: 4,
+                            borderLeftColor: isCompleted ? statusColor : "#1e3a8a",
+                            marginBottom: 10,
+                          },
+                        ]}
+                        onPress={() => {
+                          setActivePopupCategory(null);
+                          setPopupSearchQuery("");
+                          setTimeout(() => {
+                            setSelectedClaim(claim);
+                          }, 350);
+                        }}
+                        activeOpacity={0.85}
+                      >
+                        {/* Left Side: Circular Status/Vehicle Icon Badge */}
+                        <View style={[styles.claimIconWrap, { backgroundColor: "#f0f7ff" }]}>
+                          <Ionicons
+                            name="car-sport"
+                            size={20}
+                            color={isCompleted ? statusColor : "#1e3a8a"}
+                          />
+                        </View>
+
+                        {/* Right Side: Claim Details */}
+                        <View style={{ flex: 1, marginLeft: 12, paddingRight: 8 }}>
+                          {/* Header Row: Plate Number and Status/Severity Badge */}
+                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                            <Text style={styles.claimPlateText}>{claim.vehiclePlate}</Text>
+                            <View style={[styles.claimBadge, { backgroundColor: "#f0f7ff", borderColor: isCompleted ? statusColor + "30" : "#dbeafe" }]}>
+                              <Text style={[styles.claimBadgeText, { color: isCompleted ? statusColor : "#1e3a8a" }]}>
+                                {isCompleted ? claim.status.toUpperCase() : sev.toUpperCase()}
+                              </Text>
+                            </View>
+                          </View>
+
+                          {/* Highlighted Location & Damage Type */}
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
+                            <Ionicons name="location" size={14} color="#f97316" />
+                            <Text style={styles.claimLocationHighlightText} numberOfLines={1}>
+                              {claim.location}
+                            </Text>
+                            <Text style={{ color: "#cbd5e1", fontWeight: "bold" }}>·</Text>
+                            <Text style={{ fontSize: 12, fontWeight: "600", color: "#64748b" }}>
+                              {claim.damageType}
+                            </Text>
+                          </View>
+
+                          {/* Bottom Row: Claim ID */}
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: "#f1f5f9" }}>
+                            <Ionicons name="document-text-outline" size={12} color="#94a3b8" />
+                            <Text style={styles.claimNumberBottomText}>{claim.claimNumber}</Text>
+                          </View>
+                        </View>
+
+                        {/* Far Right: Tap indicator arrow */}
+                        <View style={{ justifyContent: "center", alignItems: "center" }}>
+                          <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })
+                )}
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
@@ -683,24 +3121,55 @@ export default function AgentDashboard() {
       </Modal>
 
       {/* ── CUSTOM ALERT ── */}
-      {customAlert && (
-        <View style={styles.alertOverlay}>
-          <View style={styles.alertCard}>
-            <View style={styles.alertIconCircle}>
-              <Ionicons name="information-circle-outline" size={38} color="#f97316" />
+      <Modal
+        visible={customAlert !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setCustomAlert(null)}
+      >
+        {customAlert && (() => {
+          const titleL = (customAlert.title || "").toLowerCase();
+          const msgL = (customAlert.message || "").toLowerCase();
+          const isSuccess = titleL.includes("success") || msgL.includes("success") || titleL.includes("completed") || msgL.includes("completed");
+          const isError = titleL.includes("error") || titleL.includes("denied") || titleL.includes("required") || titleL.includes("validation");
+          
+          let iconName = "information-circle-outline";
+          let iconColor = "#0284c7";
+          let circleBg = "rgba(2, 132, 199, 0.08)";
+          let circleBorder = "rgba(2, 132, 199, 0.15)";
+          
+          if (isSuccess) {
+            iconName = "checkmark-circle-outline";
+            iconColor = "#16a34a";
+            circleBg = "rgba(22, 163, 74, 0.08)";
+            circleBorder = "rgba(22, 163, 74, 0.15)";
+          } else if (isError) {
+            iconName = "alert-circle-outline";
+            iconColor = "#dc2626";
+            circleBg = "rgba(220, 38, 38, 0.08)";
+            circleBorder = "rgba(220, 38, 38, 0.15)";
+          }
+
+          return (
+            <View style={styles.alertOverlay}>
+              <View style={styles.alertCard}>
+                <View style={[styles.alertIconCircle, { backgroundColor: circleBg, borderColor: circleBorder }]}>
+                  <Ionicons name={iconName as any} size={38} color={iconColor} />
+                </View>
+                <Text style={styles.alertTitle}>{customAlert.title}</Text>
+                <Text style={styles.alertMsg}>{customAlert.message}</Text>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setCustomAlert(null)}
+                  style={styles.alertButton}
+                >
+                  <Text style={styles.alertButtonText}>OK</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-            <Text style={styles.alertTitle}>{customAlert.title}</Text>
-            <Text style={styles.alertMsg}>{customAlert.message}</Text>
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setCustomAlert(null)}
-              style={styles.alertButton}
-            >
-              <Text style={styles.alertButtonText}>OK</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+          );
+        })()}
+      </Modal>
     </View>
   );
 }
@@ -715,7 +3184,7 @@ const styles = StyleSheet.create({
   heroGradient: {
     width: "100%",
     paddingTop: Platform.OS === "ios" ? 60 : 48,
-    paddingBottom: 48,
+    paddingBottom: 42,
     paddingHorizontal: 20,
     borderBottomLeftRadius: 40,
     borderBottomRightRadius: 40,
@@ -738,6 +3207,26 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.1)",
     borderWidth: 1.5, borderColor: "rgba(255,255,255,0.15)",
     alignItems: "center", justifyContent: "center",
+    position: "relative",
+  },
+  bellBadge: {
+    position: "absolute",
+    top: -3,
+    right: -3,
+    backgroundColor: "#ef4444",
+    borderRadius: 8.5,
+    minWidth: 17,
+    height: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 2,
+    borderWidth: 1.5,
+    borderColor: "#0f172a",
+  },
+  bellBadgeText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "900",
   },
   avatarButton: {
     width: 44, height: 44, borderRadius: 22,
@@ -757,6 +3246,68 @@ const styles = StyleSheet.create({
   dotIndicator: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#22c55e", marginRight: 10 },
   subtitleText: { flex: 1, fontSize: 12, color: "#e2e8f0", fontWeight: "600", lineHeight: 18 },
   highlightOrange: { color: "#fb923c", fontWeight: "800" },
+  availabilityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    marginTop: 10,
+  },
+  availabilityLabel: {
+    fontSize: 13,
+    color: "#cbd5e1",
+    fontWeight: "700",
+    letterSpacing: 0.2,
+  },
+  availabilityButtons: {
+    flexDirection: "row",
+    backgroundColor: "rgba(15, 23, 42, 0.65)",
+    borderRadius: 20,
+    padding: 3,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.05)",
+    gap: 4,
+  },
+  availBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  availBtnActive: {
+    backgroundColor: "#10b981",
+  },
+  availBtnOffline: {
+    backgroundColor: "#ef4444",
+  },
+  availBtnInactive: {
+    backgroundColor: "transparent",
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  availBtnText: {
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  availBtnTextActive: {
+    color: "#ffffff",
+  },
+  availBtnTextOffline: {
+    color: "#ffffff",
+  },
+  availBtnTextInactive: {
+    color: "#94a3b8",
+  },
 
   /* Callout */
   compensationCallout: {
@@ -827,28 +3378,71 @@ const styles = StyleSheet.create({
   claimsList: { gap: 12 },
   claimCard: {
     flexDirection: "row",
-    borderRadius: 20, borderWidth: 1.5, overflow: "hidden",
     backgroundColor: "#ffffff",
-    shadowColor: "#0f172a", shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.04, shadowRadius: 10, elevation: 2,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
     padding: 14,
+    marginBottom: 12,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  claimStrip: { width: 4, borderRadius: 4, marginRight: 12, alignSelf: "stretch" },
-  claimHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
-  claimSeverityRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  claimSeverityLabel: { fontSize: 11.5, fontWeight: "800", textTransform: "uppercase", letterSpacing: 0.4 },
-  claimNumber: { fontSize: 11, color: "#64748b", fontWeight: "700" },
-  claimGrid: { flexDirection: "row", flexWrap: "wrap", gap: 6, marginBottom: 10 },
-  claimGridItem: { flex: 1, minWidth: "30%" },
-  claimGridLabel: { fontSize: 9.5, color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: 0.4, marginBottom: 1 },
-  claimGridValue: { fontSize: 13, color: "#0f172a", fontWeight: "700" },
-  claimFooter: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTopWidth: 1, borderTopColor: "#f1f5f9" },
-  claimNic: { fontSize: 11.5, color: "#64748b", fontWeight: "600" },
-  detailsBtn: {
-    backgroundColor: "#0f172a", borderRadius: 99,
-    paddingVertical: 5, paddingHorizontal: 14,
+  claimIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: "center",
+    justifyContent: "center",
+    alignSelf: "flex-start",
+    marginTop: 2,
   },
-  detailsBtnText: { color: "#ffffff", fontSize: 11.5, fontWeight: "800" },
+  claimPlateText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  claimBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  claimBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    letterSpacing: 0.3,
+  },
+  claimNumberText: {
+    fontSize: 12.5,
+    fontWeight: "600",
+    color: "#64748b",
+    marginTop: 2,
+  },
+  claimLocationText: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: "600",
+    maxWidth: 150,
+  },
+  claimNicText: {
+    fontSize: 11,
+    color: "#94a3b8",
+    fontWeight: "600",
+  },
+  claimLocationHighlightText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#0f172a",
+    maxWidth: 160,
+  },
+  claimNumberBottomText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#94a3b8",
+  },
 
   /* Support */
   supportCard: { borderRadius: 20, overflow: "hidden", shadowColor: "#0e7490", shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 4 },
@@ -902,6 +3496,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000", shadowOffset: { width: 0, height: -8 },
     shadowOpacity: 0.25, shadowRadius: 20, elevation: 12,
     overflow: "hidden",
+    flexShrink: 1,
   },
   modalHeader: {
     flexDirection: "row", alignItems: "center",
@@ -953,39 +3548,449 @@ const styles = StyleSheet.create({
   },
   approveBtnText: { color: "#ffffff", fontSize: 14, fontWeight: "800" },
   closeBtn: {
-    paddingHorizontal: 20, borderRadius: 16, height: 48, backgroundColor: "#f1f5f9",
-    alignItems: "center", justifyContent: "center",
+    paddingHorizontal: 20,
+    borderRadius: 16,
+    height: 48,
+    backgroundColor: "#f1f5f9",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  closeBtnText: { color: "#475569", fontSize: 14, fontWeight: "700" },
+  closeBtnText: {
+    color: "#334155",
+    fontSize: 14,
+    fontWeight: "800",
+  },
 
   /* Custom alert */
   alertOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(2,11,13,0.92)",
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
     alignItems: "center", justifyContent: "center",
     zIndex: 9999,
   },
   alertCard: {
     width: "85%", maxWidth: 340,
-    backgroundColor: "rgba(15,23,42,0.98)",
-    borderRadius: 32, borderWidth: 1.5, borderColor: "rgba(255,255,255,0.1)",
+    backgroundColor: "#ffffff",
+    borderRadius: 24, borderWidth: 1, borderColor: "#e2e8f0",
     padding: 24, alignItems: "center",
-    shadowColor: "#000", shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.5, shadowRadius: 16, elevation: 10,
+    shadowColor: "#0f172a", shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1, shadowRadius: 16, elevation: 8,
   },
   alertIconCircle: {
     width: 68, height: 68, borderRadius: 34,
-    backgroundColor: "rgba(249,115,22,0.12)",
-    borderWidth: 1, borderColor: "rgba(249,115,22,0.3)",
+    borderWidth: 1.5,
     alignItems: "center", justifyContent: "center", marginBottom: 16,
   },
-  alertTitle: { fontSize: 20, fontWeight: "bold", color: "#fff", marginBottom: 8, textAlign: "center" },
-  alertMsg: { fontSize: 13.5, color: "rgba(255,255,255,0.75)", textAlign: "center", lineHeight: 18, marginBottom: 20 },
+  alertTitle: { fontSize: 18, fontWeight: "900", color: "#0f172a", marginBottom: 8, textAlign: "center" },
+  alertMsg: { fontSize: 13, color: "#475569", textAlign: "center", lineHeight: 18, marginBottom: 20 },
   alertButton: {
-    backgroundColor: "#f97316", borderRadius: 20,
-    paddingVertical: 10, paddingHorizontal: 32,
-    shadowColor: "#f97316", shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
+    backgroundColor: "#0284c7", borderRadius: 14,
+    paddingVertical: 10, paddingHorizontal: 36,
+    shadowColor: "#0284c7", shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2, shadowRadius: 6, elevation: 3,
   },
-  alertButtonText: { color: "#fff", fontSize: 14, fontWeight: "bold" },
+  alertButtonText: { color: "#fff", fontSize: 13.5, fontWeight: "800" },
+
+  /* New Agent Document Card Redesign */
+  agentDocCardPending: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderLeftWidth: 4,
+    borderLeftColor: "#1e3a8a",
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  agentSirenIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f0f7ff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  agentDocTitlePending: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1e293b",
+  },
+  agentDocSubPending: {
+    fontSize: 10.5,
+    color: "#64748b",
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  agentUploadCardBtn: {
+    backgroundColor: "#1e3a8a",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  agentUploadCardBtnText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  agentDocCardSubmitted: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderLeftWidth: 4,
+    borderLeftColor: "#10b981",
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  agentDocTitleSubmitted: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1e293b",
+  },
+  agentDocSubSubmitted: {
+    fontSize: 10.5,
+    color: "#64748b",
+    fontWeight: "600",
+    marginTop: 2,
+  },
+  agentDocViewBtn: {
+    backgroundColor: "#f0fdf4",
+    borderWidth: 1,
+    borderColor: "#bbf7d0",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  agentDocViewBtnText: {
+    color: "#16a34a",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  /* Redesigned Pending uploads box on main screen */
+  pendingReqBox: {
+    backgroundColor: "#ffffff",
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 18,
+    marginHorizontal: 16,
+    marginBottom: 24,
+    marginTop: 10,
+    shadowColor: "#f97316",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
+    elevation: 3,
+  },
+  pendingReqHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+    paddingBottom: 10,
+  },
+  pendingReqTitle: {
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#0f172a",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  pendingReqBadge: {
+    backgroundColor: "#fff7ed",
+    borderColor: "#ffedd5",
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  pendingReqBadgeText: {
+    fontSize: 10,
+    fontWeight: "800",
+    color: "#ea580c",
+  },
+  pendingReqCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  pendingReqIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#f0f7ff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pendingReqClaimNo: {
+    fontSize: 13.5,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+  pendingReqDocBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f7ff",
+    borderWidth: 1,
+    borderColor: "#dbeafe",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  pendingReqDocBadgeText: {
+    fontSize: 10.5,
+    fontWeight: "600",
+    color: "#1e3a8a",
+  },
+  pendingReqUploadBtn: {
+    backgroundColor: "#1e3a8a",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  pendingReqUploadBtnText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  viewAllBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#f0f7ff",
+    borderWidth: 1,
+    borderColor: "#dbeafe",
+    borderRadius: 14,
+    paddingVertical: 12,
+    marginTop: 16,
+  },
+  viewAllBtnText: {
+    fontSize: 13,
+    color: "#1e3a8a",
+    fontWeight: "800",
+  },
+  /* Alert banner for pending requests notify */
+  alertBanner: {
+    backgroundColor: "#ffffff",
+    marginHorizontal: 16,
+    marginBottom: 20,
+    marginTop: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderLeftWidth: 4,
+    borderLeftColor: "#f97316",
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  alertBannerIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: "#fff7ed",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  alertBannerTitle: {
+    color: "#1e293b",
+    fontSize: 13.5,
+    fontWeight: "800",
+  },
+  alertBannerSub: {
+    color: "#64748b",
+    fontSize: 11,
+    fontWeight: "600",
+    marginTop: 3,
+    lineHeight: 15,
+  },
+  modalHeaderClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#f1f5f9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  /* Header Premium Metrics Cards */
+  headerStatsRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 10,
+    width: "100%",
+  },
+  headerStatCard: {
+    flex: 1,
+    borderRadius: 20,
+    borderWidth: 1.2,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    alignItems: "flex-start",
+    position: "relative",
+    overflow: "hidden",
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    width: "100%",
+    marginBottom: 6,
+  },
+  glowDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerStatVal: {
+    fontSize: 26,
+    fontWeight: "900",
+    color: "#ffffff",
+    letterSpacing: -0.5,
+  },
+  headerStatLbl: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: "#94a3b8",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+    marginTop: 2,
+  },
+  popupSearchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f1f5f9",
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === "ios" ? 10 : 6,
+    marginHorizontal: 16,
+    marginTop: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  popupSearchField: {
+    flex: 1,
+    color: "#0f172a",
+    fontSize: 13.5,
+    fontWeight: "600",
+  },
+  modalDragHandle: {
+    width: 40,
+    height: 4.5,
+    borderRadius: 9,
+    backgroundColor: "#e2e8f0",
+    alignSelf: "center",
+    marginTop: 10,
+    marginBottom: 2,
+  },
+  premiumPopupHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+  },
+  popupHeaderIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+  },
+  popupHeaderTitle: {
+    fontSize: 16.5,
+    fontWeight: "900",
+    color: "#0f172a",
+    letterSpacing: -0.2,
+  },
+  popupHeaderSubtext: {
+    fontSize: 11,
+    fontWeight: "700",
+    marginTop: 2,
+    letterSpacing: -0.1,
+  },
+  popupCountBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 99,
+  },
+  popupCountBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  popupCloseBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "#f1f5f9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  wizardContainer: {
+    backgroundColor: "#f8fafc", borderWidth: 1, borderColor: "#f1f5f9", borderRadius: 20,
+    paddingTop: 18, paddingBottom: 12, paddingHorizontal: 12, marginBottom: 20, position: "relative", width: "100%",
+  },
+  wizardBgLine: { position: "absolute", top: 32, left: 28, right: 28, height: 3, backgroundColor: "#e2e8f0" },
+  wizardProgressLine: { position: "absolute", top: 32, left: 28, height: 3, backgroundColor: "#00b050" },
+  wizardStepsRow: { flexDirection: "row", justifyContent: "space-between" },
+  stepItem: { flex: 1, alignItems: "center" },
+  stepCircle: { width: 28, height: 28, borderRadius: 14, borderWidth: 2, alignItems: "center", justifyContent: "center", backgroundColor: "#ffffff" },
+  stepCircleInactive: { borderColor: "#cbd5e1" },
+  stepCircleCompleted: { borderColor: "#00b050" },
+  stepCircleActive: { borderColor: "#2563eb", backgroundColor: "#eff6ff" },
+  stepNumber: { fontSize: 10.5, fontWeight: "800", color: "#64748b" },
+  stepLabel: { fontSize: 9.5, fontWeight: "700", marginTop: 6 },
+  stepTextInactive: { color: "#94a3b8" },
+  stepTextCompleted: { color: "#475569" },
+  stepTextActive: { color: "#2563eb", fontWeight: "800" },
 });

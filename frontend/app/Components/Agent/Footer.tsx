@@ -4,14 +4,14 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#ffa500] text-white pt-12 pb-6 px-6 md:px-16 w-full">
+    <footer className="bg-[#102A43] text-white pt-12 pb-6 px-6 md:px-16 w-full">
       <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between gap-8 md:gap-4">
         
         {/* Left Column - Logo */}
         <div className="flex-shrink-0 flex justify-start items-start">
           <Link href="/Agent/Home">
             <Image
-              src="/footer logo.svg"
+              src="/footer_logo.svg"
               alt="Sanasa General Insurance"
               width={150}
               height={60}

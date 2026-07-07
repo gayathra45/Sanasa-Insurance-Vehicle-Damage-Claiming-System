@@ -8,24 +8,15 @@ import nodemailer from "nodemailer";
 import { Resend } from "resend";
 import dotenv from "dotenv";
 import { uploadToCloudinary } from "../utils/upload.js";
+import { hashPassword } from "../utils/crypto.js";
+import { getNearestBranch } from "../utils/branch.js";
+import { sendEmail } from "../utils/email.js";
 dotenv.config({ override: true });
 
 const router = express.Router();
 
-function hashPassword(password) {
-  return crypto.createHash("sha256").update(password).digest("hex");
-}
 
-function getNearestBranch(city = "", province = "") {
-  const cleanCity = city.trim().toLowerCase();
 
-  if (cleanCity.includes("galle") || cleanCity.includes("hambantota")) return "Galle";
-  if (cleanCity.includes("matara")) return "Matara";
-  if (cleanCity.includes("colombo") || cleanCity.includes("gampaha") || cleanCity.includes("kalutara")) return "Colombo";
-  if (cleanCity.includes("anuradhapura") || cleanCity.includes("polonnaruwa")) return "Anuradhapura";
-  if (cleanCity.includes("embilipitiya") || cleanCity.includes("ratnapura")) return "Embilipitiya";
-  return "Galle";
-}
 
 // ─── CHECK: Email / NIC availability ─────────────────────────────────────────
 router.get("/check", async (req, res) => {
@@ -57,10 +48,14 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "Missing required signup sections." });
     }
 
-    const { firstName, lastName, nic, mobile, email, dob, address, province, city, password } = personal;
+    const { firstName, lastName, nic, mobile, email, dob, address, province, city, password, bankDetails } = personal;
 
     if (!firstName || !lastName || !nic || !mobile || !email || !dob || !address || !province || !city || !password) {
       return res.status(400).json({ error: "All personal detail fields are required." });
+    }
+
+    if (!bankDetails || !bankDetails.bankName || !bankDetails.branchName || !bankDetails.accountNumber || !bankDetails.accountHolderName) {
+      return res.status(400).json({ error: "All bank account detail fields are required." });
     }
 
     const cleanNic = nic.trim();
@@ -112,9 +107,31 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ error: "All four required verification documents must be uploaded." });
     }
 
-    const existingUser = await User.findOne({ $or: [{ email }, { nic: cleanNic }] });
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanNicCheck = cleanNic.trim().toUpperCase();
+
+    // Check if email or nic already exists in User collection
+    const existingUser = await User.findOne({ $or: [{ email: cleanEmail }, { nic: cleanNicCheck }] });
     if (existingUser) {
       return res.status(400).json({ error: "A user with this Email or NIC is already registered." });
+    }
+
+    // Check if email or nic already exists in Agent collection
+    const existingAgent = await Agent.findOne({ $or: [{ email: cleanEmail }, { nic: cleanNicCheck }] });
+    if (existingAgent) {
+      return res.status(400).json({ error: "An agent with this Email or NIC is already registered." });
+    }
+
+    // Check if email or nic already exists in Admin collection
+    const existingAdmin = await Admin.findOne({ $or: [{ email: cleanEmail }, { nic: cleanNicCheck }] });
+    if (existingAdmin) {
+      return res.status(400).json({ error: "An admin with this Email or NIC is already registered." });
+    }
+
+    // Check if email already exists in OfficeStaff collection
+    const existingOfficeStaff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (existingOfficeStaff) {
+      return res.status(400).json({ error: "An office staff account with this Email is already registered." });
     }
 
     const hashedPassword = hashPassword(password);
@@ -155,7 +172,13 @@ router.post("/", async (req, res) => {
         vehicleReg: uploadedVehicleReg,
         revenueLicense: uploadedRevenueLicense
       },
-      branch: getNearestBranch(city, province),
+      bankDetails: {
+        bankName: bankDetails.bankName,
+        branchName: bankDetails.branchName,
+        accountNumber: bankDetails.accountNumber,
+        accountHolderName: bankDetails.accountHolderName
+      },
+      branch: getNearestBranch(city),
       referenceNumber: nextRefNum,
     });
 
@@ -204,58 +227,65 @@ async function findUserByRole(role, cleanNic, cleanMobile, cleanEmail) {
   return { user: null, error: "Invalid role specified." };
 }
 
-// ─── Helper: send email via Gmail SMTP or Resend ─────────────────────────────
-async function sendEmail(toEmail, subject, htmlBody, textBody) {
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  const resendKey = process.env.RESEND_API_KEY;
-
-  const hasGmail = smtpUser && smtpPass &&
-                   !smtpUser.includes("your-gmail") &&
-                   !smtpPass.includes("your-16-char");
-  const hasResend = resendKey && !resendKey.includes("re_your");
-
-  if (hasGmail) {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com", port: 587, secure: false,
-      auth: { user: smtpUser, pass: smtpPass },
-    });
-    await transporter.sendMail({
-      from: `"Sanasa Insurance" <${smtpUser}>`,
-      to: toEmail, subject, html: htmlBody, text: textBody,
-    });
-    console.log(`✅ Email sent to ${toEmail} via Gmail SMTP`);
-    return { sent: true };
-  }
-
-  if (hasResend) {
-    const resend = new Resend(resendKey);
-    const { error } = await resend.emails.send({
-      from: "Sanasa Insurance <onboarding@resend.dev>",
-      to: [toEmail], subject, html: htmlBody, text: textBody,
-    });
-    if (error) throw new Error(error.message || "Resend failed.");
-    console.log(`✅ Email sent to ${toEmail} via Resend`);
-    return { sent: true };
-  }
-
-  console.warn("⚠️ No email credentials configured — Dev Mode.");
-  return { sent: false, error: "Email credentials not configured in backend/.env" };
-}
-
 // ─── ROUTE 1: Send 6-digit OTP to user's email ───────────────────────────────
 router.post("/reset-password/send-otp", async (req, res) => {
   try {
-    const { nic, mobile, email, role } = req.body;
+    const { email, nic, mobile, loginId } = req.body;
     if (!email) return res.status(400).json({ error: "Email is required." });
 
     const cleanEmail = email.trim().toLowerCase();
-    const cleanNic = nic ? nic.trim() : "";
-    const cleanMobile = mobile ? mobile.replace(/[-+()\s]/g, "") : "";
-    const userRole = role || "policy_holder";
+    const cleanInput = (loginId || nic || mobile || "").trim();
 
-    const { user, userName, error: findError } = await findUserByRole(userRole, cleanNic, cleanMobile, cleanEmail);
-    if (findError || !user) return res.status(400).json({ error: findError || "User not found." });
+    if (!cleanInput) {
+      return res.status(400).json({ error: "NIC or Mobile number is required." });
+    }
+
+    // Look up in parallel across all collections
+    const [dbUser, dbAgent, dbStaff, dbAdmin] = await Promise.all([
+      User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } }),
+      Agent.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } }),
+      OfficeStaff.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } }),
+      Admin.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } }),
+    ]);
+
+    let user = null;
+    let userName = "";
+
+    if (dbUser) {
+      if (dbUser.nic === cleanInput) {
+        user = dbUser;
+        userName = dbUser.firstName;
+      } else {
+        return res.status(400).json({ error: "Invalid NIC number for this email." });
+      }
+    } else if (dbAgent) {
+      if (dbAgent.nic === cleanInput) {
+        user = dbAgent;
+        userName = dbAgent.name;
+      } else {
+        return res.status(400).json({ error: "Invalid NIC number for this email." });
+      }
+    } else if (dbStaff) {
+      const cleanMobile = cleanInput.replace(/[-+()\s]/g, "");
+      if (dbStaff.mobile === cleanMobile) {
+        user = dbStaff;
+        userName = dbStaff.name;
+      } else {
+        return res.status(400).json({ error: "Invalid Mobile number for this email." });
+      }
+    } else if (dbAdmin) {
+      const cleanMobile = cleanInput.replace(/[-+()\s]/g, "");
+      if (dbAdmin.mobile === cleanMobile) {
+        user = dbAdmin;
+        userName = dbAdmin.name;
+      } else {
+        return res.status(400).json({ error: "Invalid Mobile number for this email." });
+      }
+    }
+
+    if (!user) {
+      return res.status(400).json({ error: "No registered account found with that email address." });
+    }
 
     // Rate limiting: 1 OTP per 60 seconds
     if (user.resetOtpRequestedAt) {
@@ -325,19 +355,18 @@ router.post("/reset-password/send-otp", async (req, res) => {
 // ─── ROUTE 2: Verify OTP → issue session token ────────────────────────────────
 router.post("/reset-password/verify-otp", async (req, res) => {
   try {
-    const { email, otp, role } = req.body;
+    const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ error: "Email and OTP code are required." });
 
     const cleanEmail = email.trim().toLowerCase();
     const otpHash = crypto.createHash("sha256").update(otp.trim()).digest("hex");
-    const cleanRole = role || "policy_holder";
 
     let user;
     const emailQuery = { email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } };
-    if (cleanRole === "policy_holder") user = await User.findOne(emailQuery);
-    else if (cleanRole === "insurance_agent") user = await Agent.findOne(emailQuery);
-    else if (cleanRole === "office_staff") user = await OfficeStaff.findOne(emailQuery);
-    else if (cleanRole === "admin") user = await Admin.findOne(emailQuery);
+    user = await User.findOne(emailQuery);
+    if (!user) user = await Agent.findOne(emailQuery);
+    if (!user) user = await OfficeStaff.findOne(emailQuery);
+    if (!user) user = await Admin.findOne(emailQuery);
 
     if (!user || !user.resetOtp) {
       return res.status(400).json({ error: "No OTP request found. Please request a new code." });

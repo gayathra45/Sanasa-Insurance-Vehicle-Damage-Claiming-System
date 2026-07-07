@@ -5,7 +5,7 @@ const userSchema = new mongoose.Schema({
   lastName: { type: String, required: true },
   nic: { type: String, required: true, index: true },
   mobile: { type: String, required: true },
-  email: { type: String, required: true },
+  email: { type: String, required: true, index: true },
   dob: { type: String, required: true },
   address: { type: String, required: true },
   province: { type: String, required: true },
@@ -20,7 +20,8 @@ const userSchema = new mongoose.Schema({
       model: { type: String, required: true },
       engineNumber: { type: String, required: true },
       chassisNumber: { type: String, required: true },
-      policyNumber: { type: String, required: true }
+      policyNumber: { type: String, required: true },
+      status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" }
     }
   ],
   documents: {
@@ -29,8 +30,15 @@ const userSchema = new mongoose.Schema({
     vehicleReg: { type: String },
     revenueLicense: { type: String }
   },
-  branch: { type: String, default: "Galle" },
+  branch: { type: String, default: "Galle", index: true },
+  bankDetails: {
+    bankName: { type: String, default: "" },
+    branchName: { type: String, default: "" },
+    accountNumber: { type: String, default: "" },
+    accountHolderName: { type: String, default: "" }
+  },
   referenceNumber: { type: String, required: true, unique: true },
+  status: { type: String, default: "Pending" },
   resetOtp: { type: String },
   resetOtpExpires: { type: Date },
   resetOtpRequestedAt: { type: Date },

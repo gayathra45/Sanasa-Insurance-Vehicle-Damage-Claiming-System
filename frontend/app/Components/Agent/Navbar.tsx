@@ -33,7 +33,7 @@ export default function Navbar() {
   // Check if link is active
   const isActive = (href: string) => {
     if (href === "/Agent/Home") {
-      return pathname === "/Agent/Home" || pathname === "/Agent" || pathname === "/Agent/";
+      return pathname === "/Agent/Dashboard" || pathname === "/Agent" || pathname === "/Agent/";
     }
     return pathname === href || pathname.startsWith(href + "/");
   };
@@ -55,7 +55,7 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/Agent/Home">
+            <Link href="/Agent/Dashboard">
               <Image
                 src="/logo.png"
                 alt="Sanasa General Insurance"
@@ -69,8 +69,11 @@ export default function Navbar() {
 
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center gap-8 text-base font-semibold">
-            <Link href="/Agent/Home" className={getNavLinkClass("/Agent/Home")}>
+            <Link href="/Agent/Dashboard" className={getNavLinkClass("/Agent/Home")}>
               Home
+            </Link>
+            <Link href="/Agent/Documents" className={getNavLinkClass("/Agent/Documents")}>
+              Documents
             </Link>
             <Link href="/Agent/MyActivity" className={getNavLinkClass("/Agent/MyActivity")}>
               My Activity
@@ -78,31 +81,27 @@ export default function Navbar() {
             <Link href="/Agent/Contact" className={getNavLinkClass("/Agent/Contact")}>
               Contact
             </Link>
+            <Link
+              href="/Agent/MyClaims"
+              className="bg-[#ff9800] text-white hover:bg-[#e68900] font-bold px-6 py-2 rounded-full shadow-md transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] no-underline"
+            >
+              My Claims
+            </Link>
           </div>
 
           {/* Action Items (Right) */}
           <div className="hidden md:flex items-center gap-6">
-            {/* My Claims Button */}
-            <Link href="/Agent/MyClaims">
-              <button className="bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-2.5 px-6 rounded-xl transition-all duration-200 shadow-md hover:shadow-lg transform active:scale-95 cursor-pointer">
-                My Claims
-              </button>
-            </Link>
-
             {/* Notification Bell */}
-            <Link href="/Agent/Notifications" className="text-black hover:text-[#00ddff] transition-colors p-1" aria-label="Notifications">
+            <Link href="/Agent/Notifications" className="relative text-black hover:text-[#00ddff] transition-colors p-1" aria-label="Notifications">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
                 className="w-7 h-7"
               >
-                <path
-                  fillRule="evenodd"
-                  d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.823.508 3.527 1.392 4.978.077.127.112.274.103.42-.008.147-.063.287-.156.398a1.5 1.5 0 0 1-1.093.504H5a1.5 1.5 0 0 1-1.25-.668c-.147-.23-.198-.51-.139-.783A11.962 11.962 0 0 0 5.25 9.75V9Zm.75 9.75a3 3 0 0 0 6 0v-.75h-6v.75Z"
-                  clipRule="evenodd"
-                />
+                <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
               </svg>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white" />
             </Link>
 
             {/* Profile Avatar Icon */}
@@ -147,13 +146,22 @@ export default function Navbar() {
         {isOpen && (
           <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 py-4 px-6 flex flex-col gap-4 shadow-lg z-50 animate-in fade-in slide-in-from-top-2 duration-200">
             <Link
-              href="/Agent/Home"
+              href="/Agent/Dashboard"
               onClick={() => setIsOpen(false)}
               className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Agent/Home") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
               Home
+            </Link>
+            <Link
+              href="/Agent/Documents"
+              onClick={() => setIsOpen(false)}
+              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+                isActive("/Agent/Documents") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
+              }`}
+            >
+              Documents
             </Link>
             <Link
               href="/Agent/MyActivity"
@@ -173,18 +181,26 @@ export default function Navbar() {
             >
               Contact
             </Link>
+            <Link
+              href="/Agent/MyClaims"
+              onClick={() => setIsOpen(false)}
+              className="bg-[#ff9800] text-white hover:bg-[#e68900] font-bold py-3 px-5 rounded-2xl shadow-md transition-all duration-150 text-center mx-5 cursor-pointer no-underline"
+            >
+              My Claims
+            </Link>
             <div className="h-px bg-gray-100 my-2" />
             <div className="flex items-center justify-between px-5 py-2">
-              <Link href="/Agent/MyClaims" onClick={() => setIsOpen(false)}>
-                <button className="bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold py-2 px-5 rounded-lg text-sm shadow-md cursor-pointer">
-                  My Claims
-                </button>
-              </Link>
               <div className="flex gap-4">
-                <Link href="/Agent/Notifications" onClick={() => setIsOpen(false)} className="text-black hover:text-[#00ddff] p-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                    <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.823.508 3.527 1.392 4.978.077.127.112.274.103.42-.008.147-.063.287-.156.398a1.5 1.5 0 0 1-1.093.504H5a1.5 1.5 0 0 1-1.25-.668c-.147-.23-.198-.51-.139-.783A11.962 11.962 0 0 0 5.25 9.75V9Zm.75 9.75a3 3 0 0 0 6 0v-.75h-6v.75Z" clipRule="evenodd" />
+                <Link href="/Agent/Notifications" onClick={() => setIsOpen(false)} className="relative text-black hover:text-[#00ddff] p-1">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
                   </svg>
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />
                 </Link>
                 <Link href="/Login" onClick={() => setIsOpen(false)} className="text-black hover:text-[#00ddff] p-1">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-7 h-7">

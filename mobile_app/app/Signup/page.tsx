@@ -14,10 +14,10 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 
 // Sri Lanka Provinces and Cities Data
 const provincesData = [
@@ -33,6 +33,19 @@ const provincesData = [
 ];
 
 const vehicleTypes = ["Car", "SUV", "Cab / Double Cab", "Van", "Motorbike", "Three-Wheeler", "Lorry / Truck", "Bus", "Tractor"];
+
+function vehicleIcon(type: string) {
+  const t = (type || "").toLowerCase().trim();
+  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) return "motorbike";
+  if (t.includes("van") || t.includes("minibus")) return "van-utility";
+  if (t.includes("bus")) return "bus";
+  if (t.includes("truck") || t.includes("lorry")) return "truck";
+  if (t.includes("suv")) return "car-estate";
+  if (t.includes("tuk") || t.includes("three") || t.includes("rickshaw")) return "rickshaw";
+  if (t.includes("tractor")) return "tractor";
+  if (t.includes("cab") || t.includes("pickup")) return "truck-pickup";
+  return "car-side";
+}
 
 interface Vehicle {
   numberPlate: string;
@@ -69,6 +82,12 @@ export default function MobileSignup() {
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [activeVehicleTypeIndex, setActiveVehicleTypeIndex] = useState<number | null>(null);
+
+  // STEP 1 Bank details States
+  const [bankName, setBankName] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountHolderName, setAccountHolderName] = useState("");
 
   // STEP 2 State: Vehicles Loop
   const [vehicles, setVehicles] = useState<Vehicle[]>([
@@ -249,6 +268,11 @@ export default function MobileSignup() {
         return;
       }
 
+      if (!bankName.trim() || !branchName.trim() || !accountNumber.trim() || !accountHolderName.trim()) {
+        showAlert("Validation Error", "All bank account details for settlement are required.");
+        return;
+      }
+
       const nicRegex = /^\d{8,11}[0-9vVxX]$/;
       if (!nicRegex.test(nic.trim())) {
         showAlert("Validation Error", "Invalid NIC Number (Must be 9-12 characters, ending with V or X).");
@@ -373,7 +397,13 @@ export default function MobileSignup() {
         address,
         province,
         city,
-        password
+        password,
+        bankDetails: {
+          bankName: bankName.trim(),
+          branchName: branchName.trim(),
+          accountNumber: accountNumber.trim(),
+          accountHolderName: accountHolderName.trim()
+        }
       },
       vehicles,
       documents: {
@@ -659,6 +689,34 @@ export default function MobileSignup() {
                     </TouchableOpacity>
                   </View>
                 </View>
+
+                {/* Bank Details section */}
+                <View style={{ marginTop: 24, paddingTop: 20, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.15)" }}>
+                  <View style={[styles.stepHeader, { marginBottom: 15 }]}>
+                    <Ionicons name="card-outline" size={22} color="#ff9800" />
+                    <Text style={styles.stepTitle}>Bank Details (For Payouts)</Text>
+                  </View>
+
+                  <View style={styles.inputBox}>
+                    <Text style={styles.inputLabel}>Bank Name *</Text>
+                    <TextInput style={styles.textInput} placeholder="e.g. Bank of Ceylon" placeholderTextColor="#94a3b8" value={bankName} onChangeText={setBankName} />
+                  </View>
+
+                  <View style={styles.inputBox}>
+                    <Text style={styles.inputLabel}>Branch Name *</Text>
+                    <TextInput style={styles.textInput} placeholder="e.g. Galle Fort" placeholderTextColor="#94a3b8" value={branchName} onChangeText={setBranchName} />
+                  </View>
+
+                  <View style={styles.inputBox}>
+                    <Text style={styles.inputLabel}>Account Number *</Text>
+                    <TextInput style={styles.textInput} placeholder="e.g. 84110295" placeholderTextColor="#94a3b8" value={accountNumber} onChangeText={setAccountNumber} keyboardType="numeric" />
+                  </View>
+
+                  <View style={styles.inputBox}>
+                    <Text style={styles.inputLabel}>Account Holder Name *</Text>
+                    <TextInput style={styles.textInput} placeholder="e.g. A. H. Amal Perera" placeholderTextColor="#94a3b8" value={accountHolderName} onChangeText={setAccountHolderName} />
+                  </View>
+                </View>
               </View>
             )}
 
@@ -690,10 +748,18 @@ export default function MobileSignup() {
                       <Text style={styles.inputLabel}>Vehicle Type *</Text>
                       <TouchableOpacity
                         activeOpacity={0.7}
-                        style={styles.pickerSelector}
+                        style={[styles.pickerSelector, { flexDirection: "row", alignItems: "center" }]}
                         onPress={() => setActiveVehicleTypeIndex(activeVehicleTypeIndex === idx ? null : idx)}
                       >
-                        <Text style={[styles.pickerSelectorText, veh.vehicleType ? styles.pickerSelected : null]}>
+                        {veh.vehicleType ? (
+                          <MaterialCommunityIcons
+                            name={vehicleIcon(veh.vehicleType) as any}
+                            size={20}
+                            color="#ff9800"
+                            style={{ marginRight: 10 }}
+                          />
+                        ) : null}
+                        <Text style={[{ flex: 1 }, styles.pickerSelectorText, veh.vehicleType ? styles.pickerSelected : null]}>
                           {veh.vehicleType || "Select Vehicle Type"}
                         </Text>
                         <Ionicons name="chevron-down-outline" size={20} color="#64748b" />

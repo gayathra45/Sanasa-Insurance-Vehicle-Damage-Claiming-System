@@ -2,7 +2,10 @@ import express from "express";
 import crypto from "crypto";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
+import Agent from "../models/agent.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
+import { sendEmail } from "../utils/email.js";
+import { logAgentActivity } from "../utils/activity.js";
 
 const router = express.Router();
 
@@ -30,9 +33,20 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid NIC or Password." });
     }
 
+    if (user.status === "Rejected") {
+      return res.status(400).json({ error: "Your registration has been rejected by the office staff." });
+    } else if (user.status !== "Approved") {
+      return res.status(400).json({ error: "Your account is pending approval from the office staff of your nearest branch." });
+    }
+
     // Return user details excluding password
     const userObj = user.toObject();
     delete userObj.password;
+
+    // Filter out unapproved vehicles from policy holder session
+    if (userObj.vehicles && Array.isArray(userObj.vehicles)) {
+      userObj.vehicles = userObj.vehicles.filter(v => !v.status || v.status === "Approved");
+    }
 
     res.json({ message: "Login successful", user: userObj });
   } catch (err) {
@@ -55,7 +69,22 @@ router.get("/user-claims", async (req, res) => {
       : { accidentPhotos: 0, drivingLicense: 0 };
 
     const claims = await Claim.find({ userNic: cleanNic }, projection).sort({ createdAt: -1 });
-    res.json({ claims });
+
+    // Resolve assigned agent names
+    const agentEmails = [...new Set(claims.map(c => c.assignedAgent).filter(Boolean))];
+    const agents = await Agent.find({ email: { $in: agentEmails } }, { email: 1, name: 1 });
+    const agentMap = {};
+    agents.forEach(a => {
+      agentMap[a.email.toLowerCase().trim()] = a.name;
+    });
+
+    const claimsWithAgentNames = claims.map(c => {
+      const plainObj = c.toObject();
+      plainObj.assignedAgentName = c.assignedAgent ? (agentMap[c.assignedAgent.toLowerCase().trim()] || c.assignedAgent) : "";
+      return plainObj;
+    });
+
+    res.json({ claims: claimsWithAgentNames });
   } catch (err) {
     console.error("Fetch user claims API error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
@@ -75,7 +104,15 @@ router.get("/track-claim", async (req, res) => {
       return res.status(404).json({ error: "No claim found with the provided Claim ID." });
     }
 
-    res.json({ claim });
+    const plainObj = claim.toObject();
+    if (claim.assignedAgent) {
+      const agent = await Agent.findOne({ email: claim.assignedAgent }, { name: 1 });
+      plainObj.assignedAgentName = agent ? agent.name : claim.assignedAgent;
+    } else {
+      plainObj.assignedAgentName = "";
+    }
+
+    res.json({ claim: plainObj });
   } catch (err) {
     console.error("Track claim API error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
@@ -119,16 +156,26 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
     // Process additional document uploads
     if (uploadedDocuments && Array.isArray(uploadedDocuments)) {
       for (const doc of uploadedDocuments) {
-        const { documentName, fileData } = doc;
+        const { documentName, fileData, uploadedBy } = doc;
         if (documentName && fileData) {
           const uploadedUrl = await uploadToCloudinary(fileData, "claims/additional_documents");
+          
+          const creator = uploadedBy || req.body.uploadedBy || "Policy Holder";
           
           // Add to additionalDocuments array
           claim.additionalDocuments.push({
             name: documentName,
             url: uploadedUrl,
-            uploadedAt: new Date()
+            uploadedAt: new Date(),
+            uploadedBy: creator
           });
+
+          if (creator === "Agent" && claim.assignedAgent) {
+            const userAgent = req.headers["user-agent"] || "";
+            const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+            const deviceType = isMobile ? "Mobile App" : "Web";
+            await logAgentActivity(claim.assignedAgent, "Document Uploaded", deviceType, `Uploaded document: ${documentName} for claim ${claim.claimNumber}`);
+          }
 
           // Remove uploaded document from requested list
           if (claim.requestedDocuments && Array.isArray(claim.requestedDocuments)) {
@@ -139,7 +186,7 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
 
           // Append audit message to claim history
           claim.messages.push({
-            sender: "Policy Holder",
+            sender: creator,
             message: `Uploaded requested document: ${documentName}`,
             sentAt: new Date()
           });
@@ -156,10 +203,115 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
       }
     }
 
+    claim.markModified("requestedDocuments");
+    claim.markModified("additionalDocuments");
     await claim.save();
     res.json({ message: "Claim updated successfully", claim });
   } catch (err) {
     console.error("Update claim API error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// 5. Send an email from the policy holder contact page
+router.post("/contact/email", async (req, res) => {
+  try {
+    const { name, email, nic, phone, subject, message } = req.body;
+    if (!subject || !message) {
+      return res.status(400).json({ error: "Subject and message are required." });
+    }
+
+    const recipient = "claims@sanasainsurance.lk";
+    const emailSubject = `Contact Request: ${subject}`;
+    
+    // Construct rich email body
+    const htmlBody = `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px;">
+        <h2 style="color: #004f6e; border-bottom: 2px solid #004f6e; padding-bottom: 10px;">Contact Inquiry from Policy Holder</h2>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 20px;">
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold; color: #475569; width: 120px;">Name:</td>
+            <td style="padding: 6px 0; color: #0f172a;">${name || "Anonymous Policy Holder"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold; color: #475569;">Email:</td>
+            <td style="padding: 6px 0; color: #0f172a;">${email || "Not Provided"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold; color: #475569;">NIC:</td>
+            <td style="padding: 6px 0; color: #0f172a;">${nic || "Not Provided"}</td>
+          </tr>
+          <tr>
+            <td style="padding: 6px 0; font-weight: bold; color: #475569;">Phone:</td>
+            <td style="padding: 6px 0; color: #0f172a;">${phone || "Not Provided"}</td>
+          </tr>
+        </table>
+        
+        <div style="background-color: #f8fafc; border-left: 4px solid #004f6e; padding: 15px; border-radius: 4px;">
+          <h3 style="margin-top: 0; color: #0f172a;">Message:</h3>
+          <p style="white-space: pre-wrap; color: #334155; line-height: 1.6; margin-bottom: 0;">${message}</p>
+        </div>
+        
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 10px;">
+          Sent from Sanasa Insurance Portal Contact Form
+        </p>
+      </div>
+    `;
+
+    const textBody = `
+Contact Request: ${subject}
+
+Policy Holder Details:
+- Name: ${name || "Anonymous Policy Holder"}
+- Email: ${email || "Not Provided"}
+- NIC: ${nic || "Not Provided"}
+- Phone: ${phone || "Not Provided"}
+
+Message:
+${message}
+
+--
+Sent from Sanasa Insurance Portal Contact Form
+    `;
+
+    const emailRes = await sendEmail(recipient, emailSubject, htmlBody, textBody);
+    if (emailRes.sent) {
+      res.json({ message: "Email sent successfully!" });
+    } else {
+      res.status(500).json({ error: emailRes.error || "Failed to send email." });
+    }
+  } catch (err) {
+    console.error("Contact email sending API error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// 5. Delete/Cancel claim (only allowed before agent is assigned)
+router.delete("/delete-claim/:claimNumber", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    if (!claimNumber) {
+      return res.status(400).json({ error: "Claim number is required." });
+    }
+
+    const cleanClaimNum = claimNumber.trim().toUpperCase();
+    const claim = await Claim.findOne({ claimNumber: cleanClaimNum });
+
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    // Check if an agent has already been assigned
+    if (claim.assignedAgent || claim.currentStep >= 2) {
+      return res.status(400).json({ error: "Cannot cancel this claim. An agent has already been assigned to it." });
+    }
+
+    // Update the claim status to Cancelled instead of deleting
+    claim.status = "Cancelled";
+    await claim.save();
+    res.json({ message: "Claim cancelled successfully!" });
+  } catch (err) {
+    console.error("Cancel claim API error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });

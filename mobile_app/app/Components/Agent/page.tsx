@@ -1,164 +1,292 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-  Animated,
-  Easing,
-  LayoutChangeEvent,
-} from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated, Easing, LayoutChangeEvent, Modal } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router, usePathname } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { API_BASE_URL } from "../../_config";
 
 const NAV_ITEMS = [
-  {
-    label: "Home",
-    icon: "home-outline" as const,
-    iconActive: "home" as const,
-    route: "/Agent/Dashboard/page",
-  },
-  {
-    label: "Claims",
-    icon: "document-text-outline" as const,
-    iconActive: "document-text" as const,
-    route: "/Agent/Dashboard/page",
-    isCenter: true,
-  },
-  {
-    label: "Activity",
-    icon: "bar-chart-outline" as const,
-    iconActive: "bar-chart" as const,
-    route: "/Agent/Dashboard/page",
-  },
+  { label: "Home",     icon: "home-outline" as const,          iconActive: "home" as const,          route: "/Agent/Dashboard/page" },
+  { label: "Docs",     icon: "folder-open-outline" as const,   iconActive: "folder-open" as const,   route: "/Agent/Documents/page" },
+  { label: "Claims",   icon: "document-text-outline" as const, iconActive: "document-text" as const, route: "/Agent/Claims/page", isCenter: true },
+  { label: "Contact",  icon: "headset-outline" as const,       iconActive: "headset" as const,        route: "/Agent/Contact/page" },
+  { label: "Profile",  icon: "person-outline" as const,        iconActive: "person" as const,         route: "profile" },
 ] as const;
 
 interface AgentNavbarProps {
   activeRoute?: string;
-  onTabPress?: (tab: "home" | "claims" | "activity") => void;
-  activeTab?: "home" | "claims" | "activity";
+  activeTab?: "home" | "docs" | "claims" | "contact" | "profile";
 }
 
-export default function AgentNavbar({
-  activeRoute,
-  onTabPress,
-  activeTab = "home",
-}: AgentNavbarProps) {
+export default function AgentNavbar({ activeRoute, activeTab }: AgentNavbarProps) {
   const pathname = usePathname();
-  const [navWidth, setNavWidth] = useState(0);
-  const indicatorX = useRef(new Animated.Value(0)).current;
-  const indicatorOpacity = useRef(new Animated.Value(1)).current;
+  const currentRoute = activeRoute ?? pathname;
   const centerPulse = useRef(new Animated.Value(1)).current;
 
-  const tabMap = ["home", "claims", "activity"] as const;
-  const activeIndex = tabMap.indexOf(activeTab);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
-    if (!navWidth) return;
-    const slot = navWidth / 3;
-    const isCenter = activeIndex === 1;
-    const targetX = Math.max(0, activeIndex) * slot + (slot - 34) / 2;
-    Animated.parallel([
-      Animated.timing(indicatorX, {
-        toValue: targetX,
-        duration: 260,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
-      }),
-      Animated.timing(indicatorOpacity, {
-        toValue: isCenter ? 0 : 1,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [activeIndex, navWidth]);
+    let active = true;
+    let intervalId: any = null;
+
+    const fetchUnread = async () => {
+      try {
+        const agentStr = await AsyncStorage.getItem("logged_in_agent");
+        if (!agentStr) return;
+        const agent = JSON.parse(agentStr);
+        if (!agent.email) return;
+
+        const res = await fetch(`${API_BASE_URL}/api/agent/claims?email=${encodeURIComponent(agent.email)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!Array.isArray(data)) return;
+
+        const storedCleared = await AsyncStorage.getItem("@sanasa_agent_cleared_notifs");
+        const cleared = storedCleared ? JSON.parse(storedCleared) : [];
+        const storedRead = await AsyncStorage.getItem("@sanasa_agent_read_notifs");
+        const read = storedRead ? JSON.parse(storedRead) : [];
+
+        let unread = 0;
+        data.forEach((claim: any) => {
+          if (claim.currentStep === 2 && claim.status !== "Approved" && claim.status !== "Rejected") {
+            const id = `${claim._id}_assignment`;
+            if (!cleared.includes(id) && !read.includes(id)) unread++;
+          }
+          if (claim.currentStep === 3 && !claim.inspectionSubmitted && claim.status !== "Approved" && claim.status !== "Rejected") {
+            const id = `${claim._id}_inspection`;
+            if (!cleared.includes(id) && !read.includes(id)) unread++;
+          }
+          if (claim.requestedDocuments && claim.requestedDocuments.length > 0) {
+            const isAgentRequest = claim.documentRequestTo === "Agent" || [...(claim.messages || [])]
+              .reverse()
+              .find((m: any) => m.message && m.message.includes("[Document Request to Agent]"));
+            if (isAgentRequest) {
+              claim.requestedDocuments.forEach((docName: string) => {
+                const isUploaded = (claim.additionalDocuments || []).some(
+                  (doc: any) => doc.name.trim().toLowerCase() === docName.trim().toLowerCase() && doc.uploadedBy === "Agent"
+                );
+                if (!isUploaded) {
+                  const id = `${claim._id}_doc_${docName.replace(/\s+/g, "_")}`;
+                  if (!cleared.includes(id) && !read.includes(id)) unread++;
+                }
+              });
+            }
+          }
+          if (claim.messages && claim.messages.length > 0) {
+            const lastMsg = claim.messages[claim.messages.length - 1];
+            if (lastMsg.sender !== "Agent") {
+              const id = `${claim._id}_msg_${lastMsg.sentAt}`;
+              if (!cleared.includes(id) && !read.includes(id)) unread++;
+            }
+          }
+          if (claim.status === "Approved") {
+            const id = `${claim._id}_approved`;
+            if (!cleared.includes(id) && !read.includes(id)) unread++;
+          }
+        });
+
+        const welcomeId = "welcome_notification";
+        if (!cleared.includes(welcomeId) && !read.includes(welcomeId)) {
+          unread++;
+        }
+
+        if (active) {
+          setUnreadCount(unread);
+        }
+      } catch (e) {
+        console.error("Navbar unread calculation error:", e);
+      }
+    };
+
+    fetchUnread();
+    intervalId = setInterval(fetchUnread, 10000); // refresh every 10s
+
+    return () => {
+      active = false;
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, []);
+
+  // Custom Alert State
+  const [customAlert, setCustomAlert] = useState<{
+    title: string;
+    message: string;
+    type?: "success" | "warning" | "info" | "profile";
+    agentName?: string;
+    agentEmail?: string;
+    onClose?: () => void;
+  } | null>(null);
+
+  const activeIndex = useMemo(() => {
+    if (activeTab) {
+      const tabMap = ["home", "docs", "claims", "contact", "profile"];
+      return tabMap.indexOf(activeTab);
+    }
+    return NAV_ITEMS.findIndex((item) => {
+      if (item.route === "/Agent/Dashboard/page") {
+        return currentRoute === "/Agent/Dashboard/page" || currentRoute === "/Agent/Dashboard";
+      }
+      if (item.route === "profile") {
+        return false;
+      }
+      return currentRoute === item.route || currentRoute.startsWith(item.route);
+    });
+  }, [currentRoute, activeTab]);
+
+
 
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
         Animated.timing(centerPulse, { toValue: 1.08, duration: 1000, useNativeDriver: true }),
-        Animated.timing(centerPulse, { toValue: 1,    duration: 1000, useNativeDriver: true }),
+        Animated.timing(centerPulse, { toValue: 1, duration: 1000, useNativeDriver: true }),
       ])
     ).start();
-  }, []);
+  }, [centerPulse]);
 
-  const onShellLayout = (e: LayoutChangeEvent) => {
-    setNavWidth(e.nativeEvent.layout.width);
+  const showProfileAlert = async () => {
+    try {
+      const agentStr = await AsyncStorage.getItem("logged_in_agent");
+      let name = "Agent";
+      let email = "N/A";
+      if (agentStr) {
+        const agent = JSON.parse(agentStr);
+        name = agent.name || "Agent";
+        email = agent.email || "N/A";
+      }
+      setCustomAlert({
+        title: "My Profile 👤",
+        message: "",
+        type: "profile",
+        agentName: name,
+        agentEmail: email
+      });
+    } catch (e) {
+      console.error(e);
+    }
   };
 
-  const handlePress = (tab: "home" | "claims" | "activity") => {
-    onTabPress?.(tab);
+  const handleLogout = async () => {
+    setCustomAlert(null);
+    await AsyncStorage.removeItem("logged_in_agent");
+    router.replace("/login/page");
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.shadowPad} />
-      <View style={styles.shell} onLayout={onShellLayout}>
-        <Animated.View
-          style={[
-            styles.indicator,
-            {
-              opacity: indicatorOpacity,
-              transform: [{ translateX: indicatorX }],
-            },
-          ]}
-        />
+      <View style={styles.shell}>
+      {NAV_ITEMS.map((item) => {
+        const isActive = activeTab 
+          ? (item.route !== "profile" && (
+              (activeTab === "home" && item.route === "/Agent/Dashboard/page") ||
+              (activeTab === "docs" && item.route === "/Agent/Documents/page") ||
+              (activeTab === "claims" && item.route === "/Agent/Claims/page") ||
+              (activeTab === "contact" && item.route === "/Agent/Contact/page")
+            ))
+          : item.route === "/Agent/Dashboard/page"
+            ? (currentRoute === "/Agent/Dashboard/page" || currentRoute === "/Agent/Dashboard")
+            : (currentRoute === item.route || currentRoute.startsWith(item.route));
+        const isCenter = "isCenter" in item && item.isCenter;
 
-        {/* Home */}
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={styles.navItem}
-          onPress={() => handlePress("home")}
-        >
-          <Ionicons
-            name={activeTab === "home" ? "home" : "home-outline"}
-            size={22}
-            color={activeTab === "home" ? "#f97316" : "#94a3b8"}
-          />
-          <Text style={[styles.navLabel, activeTab === "home" && styles.navLabelActive]}>
-            Home
-          </Text>
-          {activeTab === "home" && <View style={styles.activeBar} />}
-        </TouchableOpacity>
+        if (isCenter) {
+          return (
+            <TouchableOpacity
+              key={item.route}
+              activeOpacity={0.85}
+              style={styles.centerWrap}
+              onPress={() => router.push(item.route as any)}
+            >
+              <Animated.View style={[styles.centerBtn, { transform: [{ scale: centerPulse }] }]}>
+                <Ionicons name="document-text" size={26} color="#fff" />
+              </Animated.View>
+              <Text style={styles.centerLabel}>{item.label}</Text>
+            </TouchableOpacity>
+          );
+        }
 
-        {/* Center — Claims */}
-        <TouchableOpacity
-          activeOpacity={0.85}
-          style={styles.centerWrap}
-          onPress={() => handlePress("claims")}
-        >
-          <Animated.View
-            style={[
-              styles.centerBtn,
-              activeTab === "claims" && styles.centerBtnActive,
-              { transform: [{ scale: centerPulse }] },
-            ]}
+        const handleItemPress = () => {
+          if (item.route === "profile") {
+            showProfileAlert();
+          } else {
+            router.push(item.route as any);
+          }
+        };
+
+        return (
+          <TouchableOpacity
+            key={item.route}
+            activeOpacity={0.7}
+            style={styles.navItem}
+            onPress={handleItemPress}
           >
-            <Ionicons name="document-text" size={26} color="#fff" />
-          </Animated.View>
-          <Text style={[styles.centerLabel, activeTab === "claims" && styles.centerLabelActive]}>
-            Claims
-          </Text>
-        </TouchableOpacity>
-
-        {/* Activity */}
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={styles.navItem}
-          onPress={() => handlePress("activity")}
-        >
-          <Ionicons
-            name={activeTab === "activity" ? "bar-chart" : "bar-chart-outline"}
-            size={22}
-            color={activeTab === "activity" ? "#f97316" : "#94a3b8"}
-          />
-          <Text style={[styles.navLabel, activeTab === "activity" && styles.navLabelActive]}>
-            Activity
-          </Text>
-          {activeTab === "activity" && <View style={styles.activeBar} />}
-        </TouchableOpacity>
+            <View style={{ position: "relative" }}>
+              <Ionicons
+                name={(isActive ? item.iconActive : item.icon) as any}
+                size={22}
+                color={isActive ? "#f97316" : "#94a3b8"}
+              />
+              {item.label === "Home" && unreadCount > 0 && (
+                <View style={styles.unreadDotBadge} />
+              )}
+            </View>
+            <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
+              {item.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
       </View>
+
+      {/* Profile Detail Alert Modal Popup */}
+      {customAlert && (
+        <Modal
+          transparent
+          animationType="fade"
+          visible={!!customAlert}
+          onRequestClose={() => setCustomAlert(null)}
+        >
+          <View style={styles.alertOverlay}>
+            <View style={styles.alertCard}>
+              <View style={[
+                styles.alertIconCircle,
+                customAlert.type === "profile" && { backgroundColor: "rgba(249, 115, 22, 0.12)", borderColor: "rgba(249, 115, 22, 0.3)" },
+              ]}>
+                <Ionicons
+                  name="person-circle-outline"
+                  size={38}
+                  color="#f97316"
+                />
+              </View>
+              <Text style={styles.alertTitle}>{customAlert.title}</Text>
+              
+              {customAlert.type === "profile" && (
+                <View style={styles.profileDetailsBox}>
+                  <Text style={styles.profileLabel}>Name: <Text style={styles.profileValue}>{customAlert.agentName}</Text></Text>
+                  <Text style={styles.profileLabel}>Email: <Text style={styles.profileValue}>{customAlert.agentEmail}</Text></Text>
+                </View>
+              )}
+
+              <View style={styles.profileActionsRow}>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={() => setCustomAlert(null)}
+                  style={[styles.alertButton, styles.cancelBtn]}
+                >
+                  <Text style={styles.alertButtonText}>Close</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  onPress={handleLogout}
+                  style={[styles.alertButton, styles.logoutBtn]}
+                >
+                  <Text style={styles.alertButtonText}>Logout</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -197,14 +325,7 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 6,
   },
-  indicator: {
-    position: "absolute",
-    top: 6,
-    width: 34,
-    height: 4,
-    borderRadius: 999,
-    backgroundColor: "#f97316",
-  },
+
   navItem: {
     flex: 1,
     alignItems: "center",
@@ -221,14 +342,6 @@ const styles = StyleSheet.create({
   navLabelActive: {
     color: "#0f172a",
     fontWeight: "700",
-  },
-  activeBar: {
-    position: "absolute",
-    bottom: 4,
-    width: 18,
-    height: 3,
-    borderRadius: 999,
-    backgroundColor: "#f97316",
   },
   centerWrap: {
     flex: 1,
@@ -252,16 +365,109 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: "#f9fafb",
   },
-  centerBtnActive: {
-    backgroundColor: "#f97316",
-    shadowColor: "#f97316",
-  },
   centerLabel: {
     fontSize: 10.5,
     fontWeight: "700",
-    color: "#6b7280",
+    color: "#0f172a",
   },
-  centerLabelActive: {
-    color: "#f97316",
+
+  /* Alert Overlay */
+  alertOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(15, 23, 42, 0.6)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  alertCard: {
+    width: "85%",
+    maxWidth: 340,
+    backgroundColor: "#ffffff",
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 24,
+    alignItems: "center",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  alertIconCircle: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: "rgba(249, 115, 22, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(249, 115, 22, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  alertTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#0f172a",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  profileDetailsBox: {
+    width: "100%",
+    backgroundColor: "#f8fafc",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 16,
+    marginBottom: 20,
+    gap: 8,
+  },
+  profileLabel: {
+    fontSize: 13,
+    color: "#64748b",
+    fontWeight: "600",
+  },
+  profileValue: {
+    color: "#0f172a",
+    fontWeight: "bold",
+  },
+  profileActionsRow: {
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
+    justifyContent: "center",
+  },
+  alertButton: {
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    elevation: 3,
+  },
+  alertButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+  },
+  cancelBtn: {
+    backgroundColor: "#64748b",
+    shadowColor: "#64748b",
+    flex: 1,
+    alignItems: "center",
+  },
+  logoutBtn: {
+    backgroundColor: "#ef4444",
+    shadowColor: "#ef4444",
+    flex: 1,
+    alignItems: "center",
+  },
+  unreadDotBadge: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#ef4444",
+    borderWidth: 1.5,
+    borderColor: "#ffffff",
   },
 });

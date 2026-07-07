@@ -6,7 +6,7 @@ import Image from "next/image";
 
 export default function AdminFooter() {
   return (
-    <footer className="bg-[#f59e0b] w-full text-white py-12 px-6 md:px-16 select-none relative z-10">
+    <footer className="bg-[#102A43] w-full text-white py-12 px-6 md:px-16 select-none relative z-10">
       <div className="max-w-7xl mx-auto flex flex-col gap-10">
         
         {/* Top Section */}
@@ -14,9 +14,9 @@ export default function AdminFooter() {
           
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center md:items-start flex-col">
-            <div className="relative w-44 h-20 brightness-0 invert">
+            <div className="relative w-44 h-20">
               <Image
-                src="/logo.png"
+                src="/footer_logo.svg"
                 alt="Sanasa General Logo"
                 fill
                 className="object-contain"

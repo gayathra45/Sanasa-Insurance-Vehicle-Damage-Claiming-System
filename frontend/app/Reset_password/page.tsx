@@ -15,18 +15,7 @@ export default function ResetPassword() {
   const router = useRouter();
 
   const [stage, setStage] = useState<Stage>("request");
-  const [activeRole, setActiveRole] = useState<Role>("policy_holder");
-
-  const rolesList: { id: Role; label: string }[] = [
-    { id: "policy_holder", label: "Policy Holder" },
-    { id: "insurance_agent", label: "Insurance Agent" },
-    { id: "office_staff", label: "Office Staff" },
-    { id: "admin", label: "Admin" },
-  ];
-
-  // Stage: request
-  const [nic, setNic] = useState("");
-  const [mobile, setMobile] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [email, setEmail] = useState("");
   const [sentEmail, setSentEmail] = useState("");
   const [devOtp, setDevOtp] = useState("");
@@ -46,6 +35,7 @@ export default function ResetPassword() {
   // UI
   const [validationError, setValidationError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(3);
 
   // OTP countdown timer
   useEffect(() => {
@@ -56,13 +46,15 @@ export default function ResetPassword() {
     return () => clearInterval(timer);
   }, [stage, timerSeconds]);
 
-  // Auto-redirect after success
+  // Auto-redirect after success with countdown
   useEffect(() => {
-    if (stage === "success") {
-      const t = setTimeout(() => router.push("/Login"), 3000);
+    if (stage === "success" && redirectCountdown > 0) {
+      const t = setTimeout(() => setRedirectCountdown((p) => p - 1), 1000);
       return () => clearTimeout(t);
+    } else if (stage === "success" && redirectCountdown === 0) {
+      router.push("/Login");
     }
-  }, [stage, router]);
+  }, [stage, redirectCountdown, router]);
 
   // Password strength
   const getStrength = () => {
@@ -105,14 +97,11 @@ export default function ResetPassword() {
     }
   };
 
-  const isNicRole = activeRole === "policy_holder" || activeRole === "insurance_agent";
-
   // HANDLER: Send OTP
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError("");
-    if (isNicRole && !nic.trim()) { setValidationError("NIC number is required."); return; }
-    if (!isNicRole && !mobile.trim()) { setValidationError("Mobile number is required."); return; }
+    if (!loginId.trim()) { setValidationError("NIC or Mobile number is required."); return; }
     if (!email.trim()) { setValidationError("Email address is required."); return; }
 
     setIsSubmitting(true);
@@ -121,10 +110,8 @@ export default function ResetPassword() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nic: isNicRole ? nic.trim() : "",
-          mobile: !isNicRole ? mobile.trim() : "",
+          loginId: loginId.trim(),
           email: email.trim(),
-          role: activeRole,
         }),
       });
       const data = await res.json();
@@ -151,10 +138,8 @@ export default function ResetPassword() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nic: isNicRole ? nic.trim() : "",
-          mobile: !isNicRole ? mobile.trim() : "",
+          loginId: loginId.trim(),
           email: sentEmail,
-          role: activeRole,
         }),
       });
       const data = await res.json();
@@ -183,7 +168,7 @@ export default function ResetPassword() {
       const res = await fetch(`${API}/reset-password/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: sentEmail, otp, role: activeRole }),
+        body: JSON.stringify({ email: sentEmail, otp }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Verification failed.");
@@ -296,58 +281,30 @@ export default function ResetPassword() {
             {/* ── STAGE: Request ── */}
             {stage === "request" && (
               <form onSubmit={handleSendOtp} className="flex flex-col gap-5">
+                {/* NIC or Mobile */}
                 <div className="flex flex-col gap-2">
-                  <p className="text-white/70 text-sm font-medium select-none">Select your account type</p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {rolesList.map((role) => (
-                      <button key={role.id} type="button"
-                        onClick={() => { setActiveRole(role.id); setValidationError(""); setNic(""); setMobile(""); setEmail(""); }}
-                        className={`w-full py-3 px-3 text-center rounded-2xl cursor-pointer select-none text-sm font-semibold transition-all duration-300 border outline-none ${
-                          activeRole === role.id
-                            ? "bg-black/35 border-white text-white scale-[1.02] shadow-[0_0_15px_rgba(255,255,255,0.15)] font-bold"
-                            : "bg-white/5 border-white/35 text-white/90 hover:bg-white/15 hover:border-white/60 active:scale-95"
-                        }`}>
-                        {role.label}
-                      </button>
-                    ))}
+                  <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
+                    NIC or Mobile Number
+                  </label>
+
+                  <div className="relative">
+                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                      </svg>
+                    </span>
+                    <input type="text" required value={loginId} onChange={(e) => setLoginId(e.target.value)}
+                      className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                      placeholder="Enter your NIC or Mobile number" />
                   </div>
                 </div>
 
-                {/* NIC or Mobile */}
-                {isNicRole ? (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none">National Identity Card (NIC)</label>
-                    <div className="relative">
-                      <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3m-3 3h3m-3 3h3M5 5h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z" />
-                        </svg>
-                      </span>
-                      <input type="text" required value={nic} onChange={(e) => setNic(e.target.value)}
-                        className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium"
-                        placeholder="Enter your NIC number" />
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-2">
-                    <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none">Registered Mobile Number</label>
-                    <div className="relative">
-                      <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                        </svg>
-                      </span>
-                      <input type="text" required value={mobile} onChange={(e) => setMobile(e.target.value)}
-                        className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium"
-                        placeholder="Enter your mobile number" />
-                    </div>
-                  </div>
-                )}
-
                 {/* Email */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none">Registered Email Address</label>
+                  <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
+                    Registered Email Address
+                  </label>
+
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -355,7 +312,7 @@ export default function ResetPassword() {
                       </svg>
                     </span>
                     <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
                       placeholder="Enter your registered email" />
                   </div>
                 </div>
@@ -501,21 +458,50 @@ export default function ResetPassword() {
 
             {/* ── STAGE: Success ── */}
             {stage === "success" && (
-              <div className="absolute inset-0 bg-[#0e3b44]/90 backdrop-blur-lg rounded-3xl sm:rounded-[2.5rem] flex flex-col items-center justify-center p-6 text-center z-20">
-                <div className="flex flex-col items-center gap-6">
-                  <div className="w-20 h-20 bg-orange-500/20 rounded-full flex items-center justify-center border border-orange-400/40 shadow-[0_0_25px_rgba(249,115,22,0.45)] animate-[pulse_1.5s_infinite]">
-                    <svg className="w-10 h-10 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
+              <div className="absolute inset-0 bg-[#0e3b44]/95 backdrop-blur-xl rounded-3xl sm:rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center z-20 animate-fade-in">
+                <div className="flex flex-col items-center max-w-sm">
+                  {/* Glowing Checkmark Wrapper */}
+                  <div className="relative mb-6">
+                    {/* Ring Glow animation */}
+                    <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-md scale-110 animate-pulse" />
+                    <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center border-2 border-white/20 shadow-[0_0_30px_rgba(249,115,22,0.4)] relative z-10 transform scale-100 hover:scale-105 transition-transform duration-300">
+                      <svg className="w-10 h-10 text-white animate-[bounce_1s_infinite_alternate]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    </div>
                   </div>
+
                   <div>
-                    <h3 className="text-white text-3xl font-bold">Done!</h3>
-                    <p className="text-white/80 text-sm max-w-[260px] mt-2">Your password has been updated. Redirecting to Login...</p>
+                    <h3 className="text-white text-3xl font-extrabold tracking-tight drop-shadow-md">Password Updated!</h3>
+                    <p className="text-white/80 text-sm mt-3 leading-relaxed">
+                      Your password has been changed successfully. You can now access your account.
+                    </p>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-orange-400 font-semibold uppercase tracking-widest">
-                    <Spinner />
-                    Redirecting...
+
+                  {/* Countdown Progress Bar */}
+                  <div className="mt-8 flex flex-col items-center w-full px-4">
+                    <div className="w-48 bg-white/10 h-2 rounded-full overflow-hidden relative shadow-inner">
+                      <div
+                        className="bg-gradient-to-r from-orange-500 to-amber-400 h-full rounded-full transition-all duration-1000 ease-linear"
+                        style={{ width: `${(redirectCountdown / 3) * 100}%` }}
+                      />
+                    </div>
+                    <p className="text-white/60 text-xs mt-3.5 font-medium tracking-wide flex items-center gap-1.5">
+                      <Spinner />
+                      <span>Redirecting to login in <strong className="text-orange-400 font-bold">{redirectCountdown}s</strong>...</span>
+                    </p>
                   </div>
+
+                  {/* Manual Navigation Button */}
+                  <button
+                    onClick={() => router.push("/Login")}
+                    className="mt-8 w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full font-bold shadow-lg shadow-orange-500/25 active:scale-95 hover:scale-[1.03] transition-all flex items-center justify-center gap-2 border-none outline-none cursor-pointer"
+                  >
+                    <span>Go to Login</span>
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                    </svg>
+                  </button>
                 </div>
               </div>
             )}

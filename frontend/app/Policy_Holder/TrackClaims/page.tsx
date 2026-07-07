@@ -18,16 +18,92 @@ interface Claim {
   description?: string;
   location?: string;
   officer?: string;
+  paymentReceipt?: string;
   documentsRequested?: boolean;
   requestedDocuments?: string[];
+  documentRequestTo?: string;
   currentStep?: number;
-  messages?: { sender: string; message: string; sentAt: string }[];
+  messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
 }
 
 function TrackClaimsContent() {
   const searchParams = useSearchParams();
   const [claimId, setClaimId] = useState("");
   const [trackedClaim, setTrackedClaim] = useState<Claim | null>(null);
+
+  const getUserRequestedDocs = (claim: Claim): string[] => {
+    const getRecipientForDoc = (name: string) => {
+      const msg = [...(claim.messages || [])]
+        .reverse()
+        .find(m => m.message.includes(`Requested: ${name}`));
+      if (msg) {
+        if (msg.message.includes("[Document Request to Agent]")) return "Agent";
+        if (msg.message.includes("[Document Request to User]")) return "User";
+      }
+      return claim.documentRequestTo || "User";
+    };
+    return (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+  };
+
+  const getDocRequestNote = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.message) {
+      const idx = msg.message.indexOf("Message:");
+      if (idx !== -1) {
+        return msg.message.substring(idx + 8).trim();
+      }
+    }
+    return "";
+  };
+
+  // Format YYYY-MM-DD to "DD MMM YYYY" (e.g. "12 Jan 2026")
+  const formatDateString = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const formatDateTimeString = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()} ${hours}:${minutes}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const getDocRequestTime = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.sentAt) {
+      return formatDateTimeString(msg.sentAt);
+    }
+    return "";
+  };
+
+  const getDocRequestSender = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "Office Staff";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    return msg ? (msg.sender || "Office Staff") : "Office Staff";
+  };
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [claimsList, setClaimsList] = useState<Claim[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -53,7 +129,9 @@ function TrackClaimsContent() {
         let databaseClaims: Claim[] = [];
         if (userNic) {
           try {
-            const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(userNic)}`);
+            const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(userNic)}`, {
+              cache: "no-store"
+            });
             if (res.ok) {
               const data = await res.json();
               if (Array.isArray(data.claims)) {
@@ -67,7 +145,8 @@ function TrackClaimsContent() {
                   status: claim.status || "Pending",
                   description: claim.description,
                   location: claim.location,
-                  officer: "Not Assigned",
+                  officer: claim.assignedAgentName || claim.assignedAgent || "Not Assigned",
+                  paymentReceipt: claim.paymentReceipt || "",
                   documentsRequested: claim.documentsRequested || false,
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
@@ -128,18 +207,6 @@ function TrackClaimsContent() {
       loadClaims();
     }
   }, [searchParams]);
-
-  const formatDateString = (dateStr: string) => {
-    if (!dateStr) return "";
-    try {
-      const date = new Date(dateStr);
-      if (isNaN(date.getTime())) return dateStr;
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()}`;
-    } catch (e) {
-      return dateStr;
-    }
-  };
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanId = claimId.trim().toUpperCase();
@@ -150,7 +217,9 @@ function TrackClaimsContent() {
 
     try {
       // 1. Try fetching from Backend API first
-      const res = await fetch(`${API_URL}/policy-holder/track-claim?claimNumber=${encodeURIComponent(cleanId)}`);
+      const res = await fetch(`${API_URL}/policy-holder/track-claim?claimNumber=${encodeURIComponent(cleanId)}`, {
+        cache: "no-store"
+      });
       if (res.ok) {
         const data = await res.json();
         if (data.claim) {
@@ -164,7 +233,8 @@ function TrackClaimsContent() {
             status: data.claim.status || "Pending",
             description: data.claim.description,
             location: data.claim.location,
-            officer: "Not Assigned",
+            officer: data.claim.assignedAgentName || data.claim.assignedAgent || "Not Assigned",
+            paymentReceipt: data.claim.paymentReceipt || "",
             documentsRequested: data.claim.documentsRequested || false,
             requestedDocuments: data.claim.requestedDocuments || [],
             currentStep: data.claim.currentStep || 1,
@@ -328,6 +398,34 @@ function TrackClaimsContent() {
               {/* Progress wizard */}
               {renderClaimProgress(trackedClaim.status, trackedClaim.currentStep)}
 
+              {/* Payment Receipt Notification Banner */}
+              {trackedClaim.paymentReceipt && (
+                <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h4 className="text-[15px] font-extrabold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
+                      <p className="text-emerald-700 text-xs font-semibold mt-0.5">The branch office has submitted the transaction bank receipt.</p>
+                    </div>
+                  </div>
+                  <a
+                    href={trackedClaim.paymentReceipt.startsWith("http") || trackedClaim.paymentReceipt.startsWith("data:") ? trackedClaim.paymentReceipt : `${API_URL.replace("/api", "")}/uploads/${trackedClaim.paymentReceipt}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    View Receipt
+                  </a>
+                </div>
+              )}
+
               {/* 2-Column Info Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-8 px-2 border-b border-slate-100 pb-8">
                 <div className="flex items-center gap-2">
@@ -367,34 +465,6 @@ function TrackClaimsContent() {
                   </p>
                 </div>
               )}
-
-              {/* Warning Alert Box */}
-              {trackedClaim.documentsRequested && (
-                <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6">
-                  <h4 className="text-[#9c3535] font-extrabold text-sm mb-1.5">Documents Requested</h4>
-                  <p className="text-[#aa4f4f] text-[13px] font-semibold leading-relaxed mb-3">
-                    The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
-                  </p>
-                  <ul className="list-none flex flex-col gap-2 mb-4 pl-1">
-                    {(trackedClaim.requestedDocuments && trackedClaim.requestedDocuments.length > 0
-                      ? trackedClaim.requestedDocuments
-                      : ["Police Report", "Repair Estimate"]
-                    ).map((doc) => (
-                      <li key={doc} className="flex items-center gap-2 text-[#aa4f4f] font-bold text-xs">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0" />
-                        <span>{doc}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href="/Policy_Holder/Documents"
-                    className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
-                  >
-                    Go to Documents
-                  </Link>
-                </div>
-              )}
-
               {/* Messages & Notifications Section */}
               <div className="px-2 mt-6">
                 <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
@@ -419,6 +489,45 @@ function TrackClaimsContent() {
                 )}
               </div>
 
+              {/* Warning Alert Box */}
+              {trackedClaim.documentsRequested && getUserRequestedDocs(trackedClaim).length > 0 && (
+                <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mt-6">
+                  <h4 className="text-[#9c3535] font-extrabold text-sm mb-1.5">Documents Requested</h4>
+                  <p className="text-[#aa4f4f] text-[13px] font-semibold leading-relaxed mb-3">
+                    The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
+                  </p>
+                  <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
+                    {getUserRequestedDocs(trackedClaim).map((doc) => {
+                      const note = getDocRequestNote(trackedClaim, doc);
+                      const reqTime = getDocRequestTime(trackedClaim, doc);
+                      return (
+                        <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
+                            <span className="font-extrabold">{doc}</span>
+                            {reqTime && (
+                              <span className="text-red-600 font-extrabold">
+                                (Requested: {reqTime} by {getDocRequestSender(trackedClaim, doc)})
+                              </span>
+                            )}
+                            {note && (
+                              <span className="col-span-1 sm:col-span-2 text-[11px] font-medium text-slate-500 italic mt-0.5 pl-0.5">
+                                Note: "{note}"
+                              </span>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <Link
+                    href={`/Policy_Holder/Documents?uploadClaim=${trackedClaim.claimNumber}`}
+                    className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                  >
+                    Go to Documents
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         ) : searchAttempted ? (

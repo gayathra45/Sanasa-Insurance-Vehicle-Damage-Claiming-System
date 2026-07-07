@@ -2,6 +2,9 @@ import express from "express";
 import crypto from "crypto";
 import Agent from "../models/agent.model.js";
 import Claim from "../models/claim.model.js";
+import User from "../models/user.model.js";
+import { logAgentActivity } from "../utils/activity.js";
+import AgentActivity from "../models/agent_activity.model.js";
 
 const router = express.Router();
 
@@ -23,6 +26,10 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid Email or Password." });
     }
 
+    if (agent.status === "inactive") {
+      return res.status(400).json({ error: "Your account is not activated. Please check your email to set a password and activate your account." });
+    }
+
     const hashedInput = hashPassword(password);
     if (agent.password !== hashedInput) {
       return res.status(400).json({ error: "Invalid Email or Password." });
@@ -30,6 +37,11 @@ router.post("/login", async (req, res) => {
 
     const agentObj = agent.toObject();
     delete agentObj.password;
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    await logAgentActivity(cleanEmail, "Login", deviceType, `Logged in successfully via ${deviceType}`);
 
     res.json({ message: "Agent login successful", agent: agentObj });
   } catch (err) {
@@ -49,8 +61,7 @@ router.get("/claims", async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     // Fetch all claims assigned to this agent email from MongoDB (excluding heavy image/license fields)
     const claims = await Claim.find(
-      { assignedAgent: cleanEmail },
-      { accidentPhotos: 0, drivingLicense: 0 }
+      { assignedAgent: cleanEmail }
     ).sort({ createdAt: -1 });
     res.json(claims);
   } catch (err) {
@@ -59,15 +70,41 @@ router.get("/claims", async (req, res) => {
   }
 });
 
+// GET policyholder phone by NIC: /api/agent/policyholder/:nic
+router.get("/policyholder/:nic", async (req, res) => {
+  try {
+    const { nic } = req.params;
+    const user = await User.findOne({ nic: nic.trim().toUpperCase() });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+    res.json({ mobile: user.mobile });
+  } catch (err) {
+    console.error("Fetch policyholder error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 // POST update claim status/assessment: /api/agent/claims/:id/status
 router.post("/claims/:id/status", async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, amount } = req.body;
+    const { status, amount, inspectionReport, inspectionSubmitted, acceptClaim } = req.body;
 
     const updateData = {};
-    if (status) updateData.status = status;
-    if (amount !== undefined) updateData.amount = amount;
+    if (status !== undefined) updateData.status = status;
+    if (amount !== undefined) updateData.amount = amount === "" ? null : Number(amount);
+    if (inspectionReport !== undefined) updateData.inspectionReport = inspectionReport;
+    if (inspectionSubmitted !== undefined) {
+      updateData.inspectionSubmitted = inspectionSubmitted;
+      if (inspectionSubmitted) {
+        updateData.currentStep = 4;
+      }
+    }
+    if (acceptClaim) {
+      updateData.currentStep = 3;
+      updateData.status = "In Progress";
+    }
 
     const updatedClaim = await Claim.findByIdAndUpdate(
       id,
@@ -79,9 +116,151 @@ router.post("/claims/:id/status", async (req, res) => {
       return res.status(404).json({ error: "Claim not found." });
     }
 
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    if (acceptClaim) {
+      await logAgentActivity(updatedClaim.assignedAgent, "Claim Accepted", deviceType, `Accepted claim case: ${updatedClaim.claimNumber}`);
+    } else if (inspectionSubmitted) {
+      await logAgentActivity(updatedClaim.assignedAgent, "Inspection Submitted", deviceType, `Submitted physical inspection report for claim: ${updatedClaim.claimNumber}`);
+    } else if (status !== undefined) {
+      await logAgentActivity(updatedClaim.assignedAgent, "Claim Updated", deviceType, `Updated status to ${status} for claim: ${updatedClaim.claimNumber}`);
+    }
+
     res.json({ message: "Claim status updated successfully", claim: updatedClaim });
   } catch (err) {
     console.error("Update claim status error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET verify activation token: /api/agent/verify-activation?token=...
+router.get("/verify-activation", async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).json({ error: "Activation token is required." });
+    }
+
+    const agent = await Agent.findOne({
+      activationToken: token,
+      activationExpires: { $gt: new Date() },
+      status: "inactive"
+    });
+
+    if (!agent) {
+      return res.status(400).json({ error: "Invalid or expired activation link." });
+    }
+
+    res.json({ message: "Token verified successfully.", email: agent.email, name: agent.name });
+  } catch (err) {
+    console.error("Verify activation error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST activate account: /api/agent/activate
+router.post("/activate", async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ error: "Token and Password are required." });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters." });
+    }
+
+    const agent = await Agent.findOne({
+      activationToken: token,
+      activationExpires: { $gt: new Date() },
+      status: "inactive"
+    });
+
+    if (!agent) {
+      return res.status(400).json({ error: "Invalid or expired activation link." });
+    }
+
+    // Hash password and set to active
+    agent.password = hashPassword(password);
+    agent.status = "active";
+    agent.activationToken = undefined;
+    agent.activationExpires = undefined;
+
+    await agent.save();
+
+    res.json({ message: "Your agent account has been activated successfully! You can now log in." });
+  } catch (err) {
+    console.error("Activate agent error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET agent availability: /api/agent/availability?email=...
+router.get("/availability", async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ error: "Agent email is required." });
+    }
+    const agent = await Agent.findOne({ email: email.trim().toLowerCase() });
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+    res.json({ availability: agent.availability || "Active" });
+  } catch (err) {
+    console.error("Get agent availability error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST update agent availability: /api/agent/availability
+router.post("/availability", async (req, res) => {
+  try {
+    const { email, availability } = req.body;
+    if (!email || !availability) {
+      return res.status(400).json({ error: "Email and Availability are required." });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanAvail = availability.trim() === "Offline" ? "Offline" : "Active";
+    
+    const agent = await Agent.findOneAndUpdate(
+      { email: cleanEmail },
+      { availability: cleanAvail },
+      { new: true }
+    );
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    const actionLabel = cleanAvail === "Offline" ? "Go Offline" : "Go Active";
+    const detailLabel = cleanAvail === "Offline" ? "Changed status to Offline." : "Changed status to Active.";
+    await logAgentActivity(cleanEmail, actionLabel, deviceType, detailLabel);
+
+    res.json({ message: "Availability updated successfully.", availability: agent.availability });
+  } catch (err) {
+    console.error("Update agent availability error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET agent activities list: /api/agent/activities?email=...
+router.get("/activities", async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ error: "Agent email is required." });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const activities = await AgentActivity.find({ agentEmail: cleanEmail })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(activities);
+  } catch (err) {
+    console.error("Fetch agent activities error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });

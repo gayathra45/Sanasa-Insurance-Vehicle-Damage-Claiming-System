@@ -5,7 +5,6 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { API_URL } from "@/app/config";
 
 function formatNumberPlate(plate: string): string {
   if (!plate) return "";
@@ -45,6 +44,172 @@ interface Vehicle {
   policyNumber?: string;
 }
 
+function cleanCountry(country?: string): string {
+  if (!country) return "Sri Lanka";
+  const c = country.toLowerCase();
+  if (c.includes("ශ්‍රී ලංකා") || c.includes("இலங்கை") || c.includes("lanka")) {
+    return "Sri Lanka";
+  }
+  return country;
+}
+
+function formatPhotonResult(f: any): any {
+  const props = f.properties || {};
+  const coords = f.geometry?.coordinates || [0, 0];
+  
+  const parts = [];
+  if (props.name) parts.push(props.name);
+  
+  if (props.housenumber && props.street) {
+    parts.push(`${props.housenumber} ${props.street}`);
+  } else if (props.street) {
+    parts.push(props.street);
+  } else if (props.housenumber) {
+    parts.push(props.housenumber);
+  }
+  
+  if (props.locality) {
+    const loc = props.locality.split(';')[0].trim();
+    if (loc) parts.push(loc);
+  }
+  
+  if (props.district) parts.push(props.district);
+  if (props.city) parts.push(props.city);
+  if (props.county) parts.push(props.county);
+  if (props.state) parts.push(props.state);
+  if (props.postcode) parts.push(props.postcode);
+  if (props.country) {
+    parts.push(cleanCountry(props.country));
+  } else {
+    parts.push("Sri Lanka");
+  }
+
+  const displayName = parts.filter((v, i, self) => self.indexOf(v) === i).join(", ");
+  
+  return formatDisplayNameWithCategory({
+    display_name: displayName,
+    lat: coords[1].toString(),
+    lon: coords[0].toString(),
+    category_key: props.osm_key,
+    category_value: props.osm_value
+  });
+}
+
+function formatDisplayNameWithCategory(item: any): any {
+  if (!item || !item.display_name) return item;
+  
+  const key = (item.category_key || "").toLowerCase();
+  const value = (item.category_value || "").toLowerCase();
+  
+  const parts = item.display_name.split(",");
+  let firstName = parts[0]?.trim() || "";
+  const firstNameLower = firstName.toLowerCase();
+  
+  let modified = false;
+  
+  if (key === "railway" && value === "station") {
+    if (!firstNameLower.includes("station") && !firstNameLower.includes("railway")) {
+      firstName += " Railway Station";
+      modified = true;
+    }
+  } else if (key === "amenity" && value === "police") {
+    if (!firstNameLower.includes("police")) {
+      firstName += " Police Station";
+      modified = true;
+    }
+  } else if (key === "amenity" && (value === "bus_station" || value === "bus_stop")) {
+    if (!firstNameLower.includes("bus")) {
+      firstName += value === "bus_stop" ? " Bus Stop" : " Bus Station";
+      modified = true;
+    }
+  } else if (key === "amenity" && value === "hospital") {
+    if (!firstNameLower.includes("hospital")) {
+      firstName += " Hospital";
+      modified = true;
+    }
+  }
+  
+  if (modified) {
+    parts[0] = firstName;
+    item.display_name = parts.join(", ");
+  }
+  
+  return item;
+}
+
+function areCoordsClose(lat1: string, lon1: string, lat2: string, lon2: string): boolean {
+  const threshold = 0.0005; // approx 50m
+  return Math.abs(parseFloat(lat1) - parseFloat(lat2)) < threshold &&
+         Math.abs(parseFloat(lon1) - parseFloat(lon2)) < threshold;
+}
+
+function areNamesSimilar(n1: string, n2: string): boolean {
+  const name1 = n1.split(',')[0].toLowerCase().trim();
+  const name2 = n2.split(',')[0].toLowerCase().trim();
+  if (name1 === name2) return true;
+  if (name1.includes(name2) || name2.includes(name1)) {
+    return true;
+  }
+  return false;
+}
+
+function getResultScore(item: any, queryWords: string[]): number {
+  const name = item.display_name.toLowerCase();
+  const key = (item.category_key || "").toLowerCase();
+  const value = (item.category_value || "").toLowerCase();
+  
+  const firstPart = item.display_name.split(',')[0].toLowerCase();
+  const restPart = item.display_name.split(',').slice(1).join(',').toLowerCase();
+
+  let score = 0;
+
+  for (const word of queryWords) {
+    if (firstPart.includes(word)) {
+      score += 25;
+    } else if (restPart.includes(word)) {
+      score += 5;
+    }
+  }
+
+  if (queryWords.length > 0 && firstPart.includes(queryWords[0])) {
+    score += 30;
+  }
+
+  const queryStr = queryWords.join(' ');
+  if (firstPart === queryStr) {
+    score += 40;
+  }
+
+  if (queryWords.includes("railway") || queryWords.includes("train")) {
+    if (key === "railway") {
+      score += 50;
+    }
+    if (value === "station") {
+      score += 20;
+    }
+  }
+  
+  if (queryWords.includes("police")) {
+    if (value === "police" || key === "police" || name.includes("police")) {
+      score += 50;
+    }
+  }
+
+  if (queryWords.includes("bus")) {
+    if (value === "bus_station" || value === "bus_stop" || key === "bus") {
+      score += 50;
+    }
+  }
+
+  if (queryWords.includes("hospital") || queryWords.includes("clinic")) {
+    if (value === "hospital" || value === "clinic" || (key === "amenity" && value === "hospital")) {
+      score += 50;
+    }
+  }
+
+  return score;
+}
+
 export default function FileNewClaim() {
   const router = useRouter();
 
@@ -57,6 +222,56 @@ export default function FileNewClaim() {
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("Colombo, Sri Lanka");
   const [isLocating, setIsLocating] = useState(false);
+  const [latitude, setLatitude] = useState(6.9271);
+  const [longitude, setLongitude] = useState(79.8612);
+  const [initialCoords, setInitialCoords] = useState({ latitude: 6.9271, longitude: 79.8612 });
+  const [modalInitialCoords, setModalInitialCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showResultsDropdown, setShowResultsDropdown] = useState(false);
+  const [isUserTyping, setIsUserTyping] = useState(false);
+
+  // Restore draft details from sessionStorage if it exists on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const draftStr = sessionStorage.getItem("current_claim_draft");
+      if (draftStr) {
+        try {
+          const draft = JSON.parse(draftStr);
+          if (draft.selectedVehicle) setSelectedVehicle(draft.selectedVehicle);
+          if (draft.incidentDate) setIncidentDate(draft.incidentDate);
+          if (draft.incidentTime) setIncidentTime(draft.incidentTime);
+          if (draft.damageType) setDamageType(draft.damageType);
+          if (draft.description) setDescription(draft.description);
+          if (draft.address) setAddress(draft.address);
+          if (draft.latitude && draft.longitude) {
+            setLatitude(draft.latitude);
+            setLongitude(draft.longitude);
+            setInitialCoords({ latitude: draft.latitude, longitude: draft.longitude });
+          }
+        } catch (err) {
+          console.error("Error restoring draft", err);
+        }
+      }
+    }
+  }, []);
+
+  // Message listener for location select from map iframe
+  useEffect(() => {
+    const handleMapMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (data.latitude && data.longitude) {
+          setLatitude(data.latitude);
+          setLongitude(data.longitude);
+          reverseGeocode(data.latitude, data.longitude);
+        }
+      } catch (err) {}
+    };
+
+    window.addEventListener("message", handleMapMessage);
+    return () => window.removeEventListener("message", handleMapMessage);
+  }, []);
 
   // Load vehicles from sessionStorage or fetch from backend on mount
   useEffect(() => {
@@ -68,7 +283,7 @@ export default function FileNewClaim() {
           try {
             const user = JSON.parse(userStr);
             if (user.nic) {
-              const res = await fetch(`${API_URL}/policy-holder/vehicles?nic=${user.nic}`);
+              const res = await fetch(`http://localhost:5000/api/policy-holder/vehicles?nic=${user.nic}`);
               if (res.ok) {
                 const data = await res.json();
                 if (Array.isArray(data.vehicles) && data.vehicles.length > 0) {
@@ -125,6 +340,199 @@ export default function FileNewClaim() {
     "Other Accident Damage"
   ];
 
+  const reverseGeocode = async (lat: number, lon: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+        {
+          headers: {
+            "Accept-Language": "en",
+            "User-Agent": "SanasaInsuranceWebApp/1.0 (contact: support@sanasainsurance.lk)"
+          }
+        }
+      );
+      const data = await res.json();
+      if (data && data.display_name) {
+        setAddress(data.display_name);
+      } else {
+        setAddress(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+      }
+    } catch (geocodeError) {
+      console.error("Reverse geocoding failed, falling back to coordinates:", geocodeError);
+      setAddress(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+    }
+  };
+
+  const geocodeAddressForSuggestions = async (addrStr: string) => {
+    if (!addrStr || addrStr.trim() === "") return;
+    
+    const bbox = "78.5,5.5,82.5,10.5";
+    const headers = {
+      "User-Agent": "SanasaInsuranceWebApp/1.0 (contact: support@sanasainsurance.lk)"
+    };
+
+    const variations = [addrStr];
+    const qLower = addrStr.toLowerCase();
+    const queryWords = qLower.split(/\s+/).filter(w => w.length > 0);
+
+    if ((qLower.includes("railway") || qLower.includes("train") || qLower.includes("police") || qLower.includes("bus")) && !qLower.includes("station") && !qLower.includes("stand")) {
+      variations.push(addrStr + " station");
+    }
+
+    try {
+      const fetchPromises = [];
+      for (const qVar of variations) {
+        const urlNominatim = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(qVar)}&limit=20&countrycodes=lk`;
+        const urlPhoton = `https://photon.komoot.io/api/?q=${encodeURIComponent(qVar)}&limit=20&bbox=${bbox}&lang=en`;
+        
+        fetchPromises.push(
+          fetch(urlNominatim, { headers }).then(r => r.json().catch(() => [])),
+          fetch(urlPhoton).then(r => r.json().catch(() => ({ features: [] })))
+        );
+      }
+
+      const fetchResults = await Promise.all(fetchPromises);
+      let combined: any[] = [];
+
+      for (let i = 0; i < fetchResults.length; i++) {
+        const isPhotonResult = (i % 2 === 1);
+        const data = fetchResults[i];
+        if (isPhotonResult) {
+          combined = [...combined, ...(data.features || []).map(formatPhotonResult)];
+        } else {
+          combined = [...combined, ...(data || []).map((r: any) => formatDisplayNameWithCategory({
+            display_name: r.display_name,
+            lat: r.lat,
+            lon: r.lon,
+            category_key: r.class,
+            category_value: r.type
+          }))];
+        }
+      }
+
+      combined.sort((a, b) => getResultScore(b, queryWords) - getResultScore(a, queryWords));
+
+      const deduplicated: any[] = [];
+      for (const item of combined) {
+        const exists = deduplicated.some(d => 
+          (areCoordsClose(d.lat, d.lon, item.lat, item.lon) && areNamesSimilar(d.display_name, item.display_name)) ||
+          d.display_name.toLowerCase() === item.display_name.toLowerCase()
+        );
+        if (!exists) {
+          deduplicated.push(item);
+        }
+      }
+
+      if (deduplicated.length > 0) {
+        setSearchResults(deduplicated);
+        setShowResultsDropdown(true);
+      } else {
+        setSearchResults([]);
+        setShowResultsDropdown(false);
+      }
+    } catch (err) {
+      console.error("Suggestions geocoding failed:", err);
+    }
+  };
+
+  const geocodeAddress = async (addrStr: string) => {
+    if (!addrStr || addrStr.trim() === "") return;
+    setIsUserTyping(false);
+    setShowResultsDropdown(false);
+    
+    const bbox = "78.5,5.5,82.5,10.5";
+    const headers = {
+      "User-Agent": "SanasaInsuranceWebApp/1.0 (contact: support@sanasainsurance.lk)"
+    };
+
+    const variations = [addrStr];
+    const qLower = addrStr.toLowerCase();
+    const queryWords = qLower.split(/\s+/).filter(w => w.length > 0);
+
+    if ((qLower.includes("railway") || qLower.includes("train") || qLower.includes("police") || qLower.includes("bus")) && !qLower.includes("station") && !qLower.includes("stand")) {
+      variations.push(addrStr + " station");
+    }
+
+    try {
+      const fetchPromises = [];
+      for (const qVar of variations) {
+        const urlNominatim = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(qVar)}&limit=20&countrycodes=lk`;
+        const urlPhoton = `https://photon.komoot.io/api/?q=${encodeURIComponent(qVar)}&limit=20&bbox=${bbox}&lang=en`;
+        
+        fetchPromises.push(
+          fetch(urlNominatim, { headers }).then(r => r.json().catch(() => [])),
+          fetch(urlPhoton).then(r => r.json().catch(() => ({ features: [] })))
+        );
+      }
+
+      const fetchResults = await Promise.all(fetchPromises);
+      let combined: any[] = [];
+
+      for (let i = 0; i < fetchResults.length; i++) {
+        const isPhotonResult = (i % 2 === 1);
+        const data = fetchResults[i];
+        if (isPhotonResult) {
+          combined = [...combined, ...(data.features || []).map(formatPhotonResult)];
+        } else {
+          combined = [...combined, ...(data || []).map((r: any) => formatDisplayNameWithCategory({
+            display_name: r.display_name,
+            lat: r.lat,
+            lon: r.lon,
+            category_key: r.class,
+            category_value: r.type
+          }))];
+        }
+      }
+
+      combined.sort((a, b) => getResultScore(b, queryWords) - getResultScore(a, queryWords));
+
+      const deduplicated: any[] = [];
+      for (const item of combined) {
+        const exists = deduplicated.some(d => 
+          (areCoordsClose(d.lat, d.lon, item.lat, item.lon) && areNamesSimilar(d.display_name, item.display_name)) ||
+          d.display_name.toLowerCase() === item.display_name.toLowerCase()
+        );
+        if (!exists) {
+          deduplicated.push(item);
+        }
+      }
+
+      if (deduplicated.length > 0) {
+        setSearchResults(deduplicated);
+        setShowResultsDropdown(true);
+        const lat = parseFloat(deduplicated[0].lat);
+        const lon = parseFloat(deduplicated[0].lon);
+        setLatitude(lat);
+        setLongitude(lon);
+        setAddress(deduplicated[0].display_name);
+        
+        const iframe = document.getElementById("map-iframe") as HTMLIFrameElement;
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+        }
+        const modalIframe = document.getElementById("modal-map-iframe") as HTMLIFrameElement;
+        if (modalIframe && modalIframe.contentWindow) {
+          modalIframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+        }
+      }
+    } catch (err) {
+      console.error("Geocoding address failed:", err);
+    }
+  };
+
+  // Autocomplete suggestions debouncer
+  useEffect(() => {
+    if (!isUserTyping || !address || address.trim() === "" || address === "Colombo, Sri Lanka") {
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(() => {
+      geocodeAddressForSuggestions(address);
+    }, 250); // 250ms debounce
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [address, isUserTyping]);
+
   // Geolocation Handler
   const handleGPSLocation = () => {
     if (!navigator.geolocation) {
@@ -153,30 +561,23 @@ export default function FileNewClaim() {
           position = await getPosition({ enableHighAccuracy: false, timeout: 10000 });
         }
 
-        const { latitude, longitude } = position.coords;
+        const { latitude: lat, longitude: lon } = position.coords;
+        setLatitude(lat);
+        setLongitude(lon);
 
-        try {
-          // Reverse-geocoding using OpenStreetMap Nominatim API
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
-            {
-              headers: {
-                "Accept-Language": "en"
-              }
-            }
-          );
-          const data = await res.json();
-          if (data && data.display_name) {
-            setAddress(data.display_name);
-          } else {
-            setAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
-          }
-        } catch (geocodeError) {
-          console.warn("Reverse geocoding failed, falling back to coordinates:", geocodeError);
-          setAddress(`${latitude.toFixed(6)}, ${longitude.toFixed(6)}`);
+        // Update map iframe marker location
+        const iframe = document.getElementById("map-iframe") as HTMLIFrameElement;
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
         }
+        const modalIframe = document.getElementById("modal-map-iframe") as HTMLIFrameElement;
+        if (modalIframe && modalIframe.contentWindow) {
+          modalIframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+        }
+
+        await reverseGeocode(lat, lon);
       } catch (err: any) {
-        console.warn("Geolocation failed:", err);
+        console.error("Geolocation failed:", err);
         let errorMsg = "Could not retrieve your location.";
         if (err.code === 1) { // PERMISSION_DENIED
           errorMsg = "Location access was denied. Please allow location permissions in your browser settings for this website.";
@@ -224,6 +625,8 @@ export default function FileNewClaim() {
       damageType,
       description,
       address,
+      latitude,
+      longitude,
       status: "In Progress",
       createdAt: new Date().toISOString()
     };
@@ -377,25 +780,101 @@ export default function FileNewClaim() {
               Incident Location <span className="font-semibold text-2xl text-[#0d2a3a]">&gt;</span>
             </h2>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 relative">
               <label className="text-slate-800 text-sm font-semibold mb-1">
                 Enter Address or Land Mark <span className="text-red-500 ml-0.5">*</span>
               </label>
-              <div className="relative">
+              <div className="relative w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 focus-within:bg-white border border-transparent focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10 rounded-2xl pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md">
                 <input
                   type="text"
                   required
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-3.5 pl-4 pr-12 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                  onChange={(e) => {
+                    setAddress(e.target.value);
+                    setIsUserTyping(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      geocodeAddress(address);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => setShowResultsDropdown(false), 250);
+                  }}
+                  placeholder="Enter address or landmark..."
+                  className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-medium border-none"
                 />
-                <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-black">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path fillRule="evenodd" d="M11.54 22.351l.07.04.028.016a.76.76 0 00.723 0l.028-.015.071-.041a16.975 16.975 0 001.155-1.155C14.702 20.018 16 18.27 16 16c0-2.828-2.172-5-5-5S6 13.172 6 16c0 2.27 1.298 4.018 2.484 5.196.386.383.77.747 1.155 1.055l.07.04zM11 16a2 2 0 114 0 2 2 0 01-4 0z" clipRule="evenodd" />
-                    <path fillRule="evenodd" d="M12 2C8.134 2 5 5.134 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.866-3.134-7-7-7zm0 9.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" clipRule="evenodd" />
-                  </svg>
-                </span>
+                {address && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAddress("");
+                      setSearchResults([]);
+                      setShowResultsDropdown(false);
+                      setIsUserTyping(false);
+                    }}
+                    className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1 flex items-center justify-center"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => geocodeAddress(address)}
+                  className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-bold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20 whitespace-nowrap"
+                >
+                  Search
+                </button>
               </div>
+
+              {showResultsDropdown && !showMapModal && searchResults.length > 0 && (
+                <div className="absolute top-[80px] left-0 right-0 z-50 bg-white border border-slate-200/80 rounded-2xl shadow-xl max-h-[320px] overflow-y-auto mt-1.5 p-1.5 flex flex-col gap-1">
+                  {searchResults.map((result, idx) => {
+                    const parts = result.display_name.split(",");
+                    const mainTitle = parts[0]?.trim() || "";
+                    const subTitle = parts.slice(1).join(",").trim() || "";
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          const lat = parseFloat(result.lat);
+                          const lon = parseFloat(result.lon);
+                          setLatitude(lat);
+                          setLongitude(lon);
+                          setAddress(result.display_name);
+                          setIsUserTyping(false);
+                          setShowResultsDropdown(false);
+                          
+                          // Update map iframe
+                          const iframe = document.getElementById("map-iframe") as HTMLIFrameElement;
+                          if (iframe && iframe.contentWindow) {
+                            iframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+                          }
+                        }}
+                        className="text-left w-full hover:bg-slate-50 p-2.5 rounded-xl transition-all border-none bg-transparent cursor-pointer flex items-start gap-3"
+                        title={result.display_name}
+                      >
+                        <div className="mt-0.5 bg-slate-100 text-slate-500 rounded-full p-1.5 flex items-center justify-center flex-shrink-0">
+                          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex flex-col min-w-0 flex-1">
+                          <span className="font-semibold text-slate-800 text-sm truncate">{mainTitle}</span>
+                          {subTitle && (
+                            <span className="text-[11px] text-slate-500 truncate mt-0.5">{subTitle}</span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             {/* Map and GPS Retrieval */}
@@ -404,34 +883,219 @@ export default function FileNewClaim() {
               {/* Map Iframe */}
               <div className="flex-1 h-[280px] bg-slate-100 rounded-3xl overflow-hidden relative border border-slate-200/80 shadow-sm">
                 <iframe
+                  id="map-iframe"
                   width="100%"
                   height="100%"
                   className="border-none"
-                  src={`https://maps.google.com/maps?q=${encodeURIComponent(address)}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
+                  src={`/api/map?lat=${initialCoords.latitude}&lon=${initialCoords.longitude}`}
                   allowFullScreen
-                  loading="lazy"
                 ></iframe>
               </div>
 
-              {/* GPS Button */}
-              <div className="flex flex-col justify-center items-center md:w-[200px]">
+              {/* Action Buttons on the right of the Map */}
+              <div className="flex flex-row md:flex-col gap-4 justify-between items-stretch md:w-[200px]">
+                {/* Use GPS Button */}
                 <button
                   type="button"
                   onClick={handleGPSLocation}
                   disabled={isLocating}
-                  className="bg-[#00ddff] hover:bg-[#00c8e6] disabled:bg-[#a6ecf7] text-white font-bold text-[14px] leading-tight px-4 rounded-3xl shadow-sm transition-all duration-150 active:scale-[0.97] flex flex-col items-center justify-center gap-3 cursor-pointer border-none text-center h-[120px] w-full"
+                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] disabled:bg-[#0284c7]/50 text-white font-bold text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
                 >
-                  <svg className={`w-8 h-8 ${isLocating ? "animate-spin" : ""}`} fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="9" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v3m0 14v3M2 12h3m14 0h3M12 9a3 3 0 100 6 3 3 0 000-6z" />
+                  <svg className={`w-8 h-8 text-white ${isLocating ? "animate-pulse" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
                   </svg>
                   <span className="font-semibold block">
-                    Use my GPS<br />location
+                    {isLocating ? "Locating..." : "Use GPS"}
+                  </span>
+                </button>
+
+                {/* Select on Map Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setModalInitialCoords({ latitude, longitude });
+                    setShowMapModal(true);
+                  }}
+                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] text-white font-bold text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
+                >
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  <span className="font-semibold block">
+                    Select on Map
                   </span>
                 </button>
               </div>
 
             </div>
+
+            {/* Full-screen web Map Modal */}
+            {showMapModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+                <div className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-slate-100">
+                  {/* Header */}
+                  <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <h3 className="text-lg font-bold text-[#0d2a3a]">Select Location on Map</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalInitialCoords(null);
+                        setShowMapModal(false);
+                      }}
+                      className="text-slate-400 hover:text-slate-700 text-xl font-bold cursor-pointer border-none bg-transparent transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  
+                  {/* Map Frame Container (with floating overlays) */}
+                  <div className="flex-1 bg-slate-50 relative overflow-hidden">
+                    <iframe
+                      id="modal-map-iframe"
+                      width="100%"
+                      height="100%"
+                      className="border-none"
+                      src={`/api/map?lat=${modalInitialCoords?.latitude ?? latitude}&lon=${modalInitialCoords?.longitude ?? longitude}`}
+                      allowFullScreen
+                    ></iframe>
+
+                    {/* Floating Geocoding Search Panel */}
+                    <div className="absolute top-4 left-4 right-4 z-20 max-w-md bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-full pl-5 pr-1.5 py-1.5 shadow-[0_10px_25px_-5px_rgba(15,23,42,0.15)] flex items-center gap-2 transition-all">
+                      <span className="text-slate-400 flex items-center justify-center pointer-events-none">
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </span>
+                      <input
+                        type="text"
+                        value={address}
+                        onChange={(e) => {
+                          setAddress(e.target.value);
+                          setIsUserTyping(true);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            geocodeAddress(address);
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setShowResultsDropdown(false), 250);
+                        }}
+                        placeholder="Search address or landmark..."
+                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none font-medium"
+                      />
+                      {address && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddress("");
+                            setSearchResults([]);
+                            setShowResultsDropdown(false);
+                            setIsUserTyping(false);
+                          }}
+                          className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1"
+                        >
+                          ✕
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => geocodeAddress(address)}
+                        className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white p-2.5 rounded-full transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20"
+                        title="Search"
+                      >
+                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Suggestions inside map modal */}
+                    {showResultsDropdown && showMapModal && searchResults.length > 0 && (
+                      <div className="absolute top-[64px] left-4 right-4 z-30 max-w-md bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xl max-h-[300px] overflow-y-auto mt-1.5 p-1.5 flex flex-col gap-1">
+                        {searchResults.map((result, idx) => {
+                          const parts = result.display_name.split(",");
+                          const mainTitle = parts[0]?.trim() || "";
+                          const subTitle = parts.slice(1).join(",").trim() || "";
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                const lat = parseFloat(result.lat);
+                                const lon = parseFloat(result.lon);
+                                setLatitude(lat);
+                                setLongitude(lon);
+                                setAddress(result.display_name);
+                                setIsUserTyping(false);
+                                setShowResultsDropdown(false);
+                                
+                                // Update modal map iframe
+                                const modalIframe = document.getElementById("modal-map-iframe") as HTMLIFrameElement;
+                                if (modalIframe && modalIframe.contentWindow) {
+                                  modalIframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+                                }
+                              }}
+                              className="text-left w-full hover:bg-slate-50 p-2 rounded-xl transition-all border-none bg-transparent cursor-pointer flex items-start gap-3"
+                              title={result.display_name}
+                            >
+                              <div className="mt-0.5 bg-slate-100 text-slate-500 rounded-full p-1.5 flex items-center justify-center flex-shrink-0">
+                                <svg className="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
+                                </svg>
+                              </div>
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <span className="font-semibold text-slate-800 text-xs truncate">{mainTitle}</span>
+                                {subTitle && (
+                                  <span className="text-[10px] text-slate-500 truncate mt-0.5">{subTitle}</span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* Floating GPS Button */}
+                    <button
+                      type="button"
+                      onClick={handleGPSLocation}
+                      disabled={isLocating}
+                      className="absolute top-4 right-4 z-10 w-12 h-12 bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 hover:text-sky-600 rounded-2xl shadow-xl flex items-center justify-center border border-slate-200/60 cursor-pointer transition-all duration-150 active:scale-95 disabled:bg-slate-100"
+                      title="Locate Me"
+                    >
+                      <svg className={`w-6 h-6 ${isLocating ? "animate-pulse text-sky-500" : "text-slate-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <line x1="2" x2="5" y1="12" y2="12" />
+                        <line x1="19" x2="22" y1="12" y2="12" />
+                        <line x1="12" x2="12" y1="2" y2="5" />
+                        <line x1="12" x2="12" y1="19" y2="22" />
+                        <circle cx="12" cy="12" r="7" />
+                        <circle cx="12" cy="12" r="2" fill="currentColor" />
+                      </svg>
+                    </button>
+
+
+                  </div>
+
+                  {/* Footer */}
+                  <div className="px-6 py-4 border-t border-slate-100 flex justify-end items-center bg-white">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalInitialCoords(null);
+                        setShowMapModal(false);
+                      }}
+                      className="bg-[#0d2a3a] hover:bg-[#0284c7] text-white font-bold text-sm px-8 py-3.5 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
+                    >
+                      Confirm Location
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Action Button Row */}
