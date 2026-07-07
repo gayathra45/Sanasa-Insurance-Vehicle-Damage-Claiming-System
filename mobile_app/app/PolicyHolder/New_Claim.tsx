@@ -22,7 +22,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 import MapDisplay from "../Components/PolicyHolder/MapDisplay";
 import MapSelectorModal from "../Components/PolicyHolder/MapSelectorModal";
 

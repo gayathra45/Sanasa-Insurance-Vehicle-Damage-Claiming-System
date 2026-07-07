@@ -17,7 +17,7 @@ import { router } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 
 // Sri Lanka Provinces and Cities Data
 const provincesData = [

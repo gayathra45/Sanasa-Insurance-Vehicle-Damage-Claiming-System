@@ -28,7 +28,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
 import AgentNavbar from "../../Components/Agent/page";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "../../_config";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 

@@ -16,7 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router, useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 

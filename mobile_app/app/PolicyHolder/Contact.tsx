@@ -16,7 +16,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 
 export default function PolicyHolderContact() {
   const [customAlert, setCustomAlert] = useState<{

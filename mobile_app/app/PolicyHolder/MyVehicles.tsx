@@ -20,7 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useNavigation } from "expo-router";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 
 interface Vehicle {
   numberPlate: string;

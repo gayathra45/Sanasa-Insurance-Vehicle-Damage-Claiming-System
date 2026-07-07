@@ -17,7 +17,7 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import AgentNavbar from "../../Components/Agent/page";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "../../_config";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 

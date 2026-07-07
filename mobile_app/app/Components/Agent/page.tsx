@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform, Animated, Easing, L
 import { Ionicons } from "@expo/vector-icons";
 import { router, usePathname } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "../../_config";
 
 const NAV_ITEMS = [
   { label: "Home",     icon: "home-outline" as const,          iconActive: "home" as const,          route: "/Agent/Dashboard/page" },

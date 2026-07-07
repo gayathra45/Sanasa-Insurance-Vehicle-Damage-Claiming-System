@@ -14,7 +14,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 
 type Stage = 1 | 2 | 3 | 4; // 1=request, 2=otp, 3=set-password, 4=success
 

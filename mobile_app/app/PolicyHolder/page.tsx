@@ -22,7 +22,7 @@ import { router, useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
