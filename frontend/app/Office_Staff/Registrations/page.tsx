@@ -160,10 +160,26 @@ export default function RegistrationsPage() {
       <div className="flex flex-1 flex-row min-h-0">
         <OfficeStaffNavbar />
 
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Header */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px]">
-            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2">Welcome back, <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span></h1>
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+          {/* Top Header Bar */}
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
+                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+                <span className="hidden lg:inline">Welcome back, </span>
+                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">
+                  {branch} Branch
+                </span>
+              </h1>
+            </div>
+            
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
               <button className="relative p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
@@ -180,7 +196,7 @@ export default function RegistrationsPage() {
             </div>
           </header>
 
-          <main className="flex-1 p-8 bg-white overflow-y-auto">
+          <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-auto">
             {loading ? (
               <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px]">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#f59e0b]"></div>

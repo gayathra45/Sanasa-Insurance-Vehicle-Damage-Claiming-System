@@ -100,15 +100,32 @@ export default function AgentsPage() {
       <div className="flex flex-1 flex-row min-h-0">
         <OfficeStaffNavbar />
 
-        <div className="flex-1 flex flex-col min-w-0">
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px]">
-            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2"><span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span> — Insurance Agents</h1>
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+          {/* Top Header Bar */}
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
+                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">
+                  {branch} Branch
+                </span>
+                <span className="hidden lg:inline"> — Insurance Agents</span>
+              </h1>
+            </div>
+            
             <div className="text-sm font-semibold bg-slate-100 px-4 py-1.5 rounded-full text-slate-600 border border-slate-200">
               Staff Portal
             </div>
           </header>
 
-          <main className="flex-1 p-8 bg-slate-50 flex items-center justify-center">
+          <main className="flex-1 p-4 lg:p-8 bg-slate-50 flex items-center justify-center">
             {/* Centered Action Card */}
             <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-xl max-w-md w-full text-center flex flex-col items-center gap-6">
               <div className="w-20 h-20 rounded-full bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-600 shadow-inner select-none">

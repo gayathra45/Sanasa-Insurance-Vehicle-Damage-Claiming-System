@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -8,6 +8,13 @@ import Image from "next/image";
 export default function OfficeStaffNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpen = () => setIsMobileOpen(true);
+    window.addEventListener("open-mobile-menu", handleOpen);
+    return () => window.removeEventListener("open-mobile-menu", handleOpen);
+  }, []);
 
   const menuItems = [
     { name: "Home", href: "/Office_Staff/Dashboard" },
@@ -82,72 +89,168 @@ export default function OfficeStaffNavbar() {
   };
 
   return (
-    <aside className="w-[280px] bg-[#102A43] h-screen sticky top-0 flex flex-col text-white shadow-xl flex-shrink-0 select-none z-20">
-      {/* Logo Section */}
-      <div className="py-8 px-6 flex flex-col items-center border-b border-white/5">
-        <div className="relative w-44 h-16">
-          <Image
-            src="/logo.png"
-            alt="Sanasa General Insurance Logo"
-            fill
-            className="object-contain"
-            priority
-          />
-        </div>
-      </div>
-
-      {/* Menu Navigation Links */}
-      <nav className="flex-1 mt-6 flex flex-col">
-        {menuItems.map((item) => {
-          // Check if active (matches exact path or prefix path)
-          const isActive = pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href));
-          const hasChevron = ["policy holders", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
-
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group ${
-                isActive
-                  ? "bg-[#1b75e0] text-white shadow-sm font-bold"
-                  : "text-slate-100 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              {getIcon(item.name)}
-              <span>{item.name}</span>
-              {hasChevron && (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Logout Footer Section */}
-      <div className="p-6 mt-auto">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="2.5"
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-[280px] bg-[#102A43] h-screen sticky top-0 flex-col text-white shadow-xl flex-shrink-0 select-none z-20">
+        {/* Logo Section */}
+        <div className="py-8 px-6 flex flex-col items-center border-b border-white/5">
+          <div className="relative w-44 h-16">
+            <Image
+              src="/logo.png"
+              alt="Sanasa General Insurance Logo"
+              fill
+              className="object-contain"
+              priority
             />
-          </svg>
-          Logout
-        </button>
-      </div>
-    </aside>
+          </div>
+        </div>
+
+        {/* Menu Navigation Links */}
+        <nav className="flex-1 mt-6 flex flex-col">
+          {menuItems.map((item) => {
+            // Check if active (matches exact path or prefix path)
+            const isActive = pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href));
+            const hasChevron = ["policy holders", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group ${
+                  isActive
+                    ? "bg-[#1b75e0] text-white shadow-sm font-bold"
+                    : "text-slate-100 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {getIcon(item.name)}
+                <span>{item.name}</span>
+                {hasChevron && (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Logout Footer Section */}
+        <div className="p-6 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="2.5"
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
+              />
+            </svg>
+            Logout
+          </button>
+        </div>
+      </aside>
+
+
+
+      {/* Mobile Drawer */}
+      {isMobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-200"
+            onClick={() => setIsMobileOpen(false)}
+          />
+
+          {/* Drawer content */}
+          <aside className="relative w-[280px] max-w-xs bg-gradient-to-b from-[#111c2a] via-[#102a43] to-[#09111b] border-r border-white/10 h-full flex flex-col text-white shadow-2xl p-5 select-none animate-in slide-in-from-left duration-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsMobileOpen(false)}
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Logo Section */}
+            <div className="py-6 px-2 flex items-center border-b border-white/5 mb-6 mt-4">
+              <div className="relative w-36 h-12">
+                <Image
+                  src="/logo.png"
+                  alt="Sanasa General Insurance Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Menu Links */}
+            <nav className="flex-1 flex flex-col gap-1 overflow-y-auto">
+              {menuItems.map((item) => {
+                const isActive = pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href));
+                const hasChevron = ["policy holders", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={`px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl relative ${
+                      isActive
+                        ? "bg-[#1b75e0] text-white shadow-sm font-bold"
+                        : "text-slate-100 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    {isActive && <div className="absolute left-1 w-1.5 h-5 bg-[#00ddff] rounded-full" />}
+                    {getIcon(item.name)}
+                    <span>{item.name}</span>
+                    {hasChevron && (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Logout Footer */}
+            <div className="pt-6 border-t border-white/5 mt-auto">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2.5"
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
+                  />
+                </svg>
+                Logout
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+    </>
   );
 }
