@@ -5,7 +5,7 @@ Frontend start : cd .\frontend\
                  npm run dev
 
 Mobile app start : cd .\mobile_app\
-                   npm start
+                   npx expo start
                    npx expo start -c   
 
 Git branch move - git branch
