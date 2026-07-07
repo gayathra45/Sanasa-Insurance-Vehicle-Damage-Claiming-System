@@ -12,6 +12,7 @@ export default function Login() {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -21,6 +22,7 @@ export default function Login() {
 
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
@@ -29,7 +31,7 @@ export default function Login() {
       });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.error || "Login failed.");
+        setError(data.error || "Login failed.");
         return;
       }
 
@@ -46,13 +48,14 @@ export default function Login() {
         sessionStorage.setItem("logged_in_admin", JSON.stringify(data.admin));
         router.push("/Admin/Dashboard");
       } else {
-        alert("Unknown user role returned from server.");
+        setError("Unknown user role returned from server.");
       }
     } catch (err) {
       console.error("Login request failed", err);
-      alert("Unable to connect to the server.");
+      setError("Unable to connect to the server. Please verify the backend is running.");
     }
   };
+
 
   return (
     <div className="min-h-screen w-full flex flex-col">
@@ -84,6 +87,29 @@ export default function Login() {
         {/* Right Side: Glass effect Login Card */}
         <div className="w-full max-w-[500px] bg-white/10 backdrop-blur-md border border-white/20 rounded-[2.5rem] p-8 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-8 transition-all duration-500 hover:border-white/30">
           
+          {error && (
+            <div className="flex items-start gap-3 bg-red-500/15 backdrop-blur-md border border-red-500/30 text-red-100 p-4 rounded-2xl animate-fade-in shadow-[0_4px_20px_rgba(239,68,68,0.2)] relative overflow-hidden">
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 rounded-l-2xl" />
+              <span className="text-red-400 mt-0.5 shrink-0 pl-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                </svg>
+              </span>
+              <div className="flex-1 text-sm font-semibold pr-6 leading-relaxed">
+                {error}
+              </div>
+              <button
+                type="button"
+                onClick={() => setError(null)}
+                className="absolute right-3 top-3 text-red-400/80 hover:text-red-100 transition-colors focus:outline-none cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleConfirm} className="flex flex-col gap-6">
             
             {/* Unified NIC / Email Input Field */}
@@ -114,7 +140,10 @@ export default function Login() {
                   type="text"
                   required
                   value={loginId}
-                  onChange={(e) => setLoginId(e.target.value)}
+                  onChange={(e) => {
+                    setLoginId(e.target.value);
+                    if (error) setError(null);
+                  }}
                   className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
                   placeholder="Enter your NIC or Email address"
                 />
@@ -147,7 +176,10 @@ export default function Login() {
                   type={showPassword ? "text" : "password"}
                   required
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (error) setError(null);
+                  }}
                   className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
                   placeholder="Enter your password"
                 />
