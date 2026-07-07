@@ -166,7 +166,7 @@ export default function MyClaims() {
               status: claim.status || "Pending",
               description: claim.description,
               location: claim.location,
-              officer: claim.assignedAgent || "Not Assigned",
+              officer: claim.assignedAgentName || claim.assignedAgent || "Not Assigned",
               documentsRequested: claim.documentsRequested || false,
               requestedDocuments: claim.requestedDocuments || [],
               currentStep: claim.currentStep || 1,

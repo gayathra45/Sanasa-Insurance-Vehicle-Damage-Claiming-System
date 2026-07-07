@@ -2,6 +2,7 @@ import express from "express";
 import crypto from "crypto";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
+import Agent from "../models/agent.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { sendEmail } from "../utils/email.js";
 import { logAgentActivity } from "../utils/activity.js";
@@ -68,7 +69,22 @@ router.get("/user-claims", async (req, res) => {
       : { accidentPhotos: 0, drivingLicense: 0 };
 
     const claims = await Claim.find({ userNic: cleanNic }, projection).sort({ createdAt: -1 });
-    res.json({ claims });
+
+    // Resolve assigned agent names
+    const agentEmails = [...new Set(claims.map(c => c.assignedAgent).filter(Boolean))];
+    const agents = await Agent.find({ email: { $in: agentEmails } }, { email: 1, name: 1 });
+    const agentMap = {};
+    agents.forEach(a => {
+      agentMap[a.email.toLowerCase().trim()] = a.name;
+    });
+
+    const claimsWithAgentNames = claims.map(c => {
+      const plainObj = c.toObject();
+      plainObj.assignedAgentName = c.assignedAgent ? (agentMap[c.assignedAgent.toLowerCase().trim()] || c.assignedAgent) : "";
+      return plainObj;
+    });
+
+    res.json({ claims: claimsWithAgentNames });
   } catch (err) {
     console.error("Fetch user claims API error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
@@ -88,7 +104,15 @@ router.get("/track-claim", async (req, res) => {
       return res.status(404).json({ error: "No claim found with the provided Claim ID." });
     }
 
-    res.json({ claim });
+    const plainObj = claim.toObject();
+    if (claim.assignedAgent) {
+      const agent = await Agent.findOne({ email: claim.assignedAgent }, { name: 1 });
+      plainObj.assignedAgentName = agent ? agent.name : claim.assignedAgent;
+    } else {
+      plainObj.assignedAgentName = "";
+    }
+
+    res.json({ claim: plainObj });
   } catch (err) {
     console.error("Track claim API error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
