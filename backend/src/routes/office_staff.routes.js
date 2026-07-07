@@ -57,50 +57,51 @@ router.get("/dashboard-stats", async (req, res) => {
     // Common query filter by branch
     const branchFilter = { branch: branch.trim() };
 
-    // 1. KPI Counts
-    const unassignedClaimsCount = await Claim.countDocuments({
-      ...branchFilter,
-      ...dateFilter,
-      assignedAgent: ""
-    });
-
-    const newRegistrationsCount = await User.countDocuments({
-      ...branchFilter,
-      ...dateFilter,
-      status: { $nin: ["Approved", "Rejected"] }
-    });
-
-    const activeClaimsCount = await Claim.countDocuments({
-      ...branchFilter,
-      ...dateFilter,
-      status: "In Progress"
-    });
-
-    const pendingClaimsCount = await Claim.countDocuments({
-      ...branchFilter,
-      ...dateFilter,
-      status: "Pending"
-    });
-
-    // 2. Fetch Lists for Dashboard (excluding heavy image/document fields)
-    // New Claims for this branch (latest first)
-    const newClaimsList = await Claim.find(
-      {
+    // 1. KPI Counts & lists (Fetched in parallel to minimize network latency)
+    const [
+      unassignedClaimsCount,
+      newRegistrationsCount,
+      activeClaimsCount,
+      pendingClaimsCount,
+      newClaimsList,
+      newRegistrationsList
+    ] = await Promise.all([
+      Claim.countDocuments({
         ...branchFilter,
-        ...dateFilter
-      },
-      { accidentPhotos: 0, drivingLicense: 0 }
-    ).sort({ createdAt: -1 });
-
-    // New Registrations for this branch (latest first)
-    const newRegistrationsList = await User.find(
-      {
+        ...dateFilter,
+        assignedAgent: ""
+      }),
+      User.countDocuments({
         ...branchFilter,
         ...dateFilter,
         status: { $nin: ["Approved", "Rejected"] }
-      },
-      { documents: 0 }
-    ).sort({ createdAt: -1 });
+      }),
+      Claim.countDocuments({
+        ...branchFilter,
+        ...dateFilter,
+        status: "In Progress"
+      }),
+      Claim.countDocuments({
+        ...branchFilter,
+        ...dateFilter,
+        status: "Pending"
+      }),
+      Claim.find(
+        {
+          ...branchFilter,
+          ...dateFilter
+        },
+        { accidentPhotos: 0, drivingLicense: 0 }
+      ).sort({ createdAt: -1 }),
+      User.find(
+        {
+          ...branchFilter,
+          ...dateFilter,
+          status: { $nin: ["Approved", "Rejected"] }
+        },
+        { documents: 0 }
+      ).sort({ createdAt: -1 })
+    ]);
 
     res.json({
       stats: {
