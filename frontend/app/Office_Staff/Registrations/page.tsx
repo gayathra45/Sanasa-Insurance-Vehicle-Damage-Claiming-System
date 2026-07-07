@@ -1,11 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
-import { API_URL } from "@/app/config";
-
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
 
 interface Vehicle {
   numberPlate: string;
@@ -41,10 +38,8 @@ interface Registration {
   createdAt: string;
 }
 
-function RegistrationsPageContent() {
+export default function RegistrationsPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const refParam = searchParams.get("ref");
   const [branch, setBranch] = useState("");
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,7 +75,7 @@ function RegistrationsPageContent() {
 
     async function loadRegistrations() {
       try {
-        const res = await fetch(`${API_URL}/office-staff/registrations?branch=${currentBranch}`);
+        const res = await fetch(`http://localhost:5000/api/office-staff/registrations?branch=${currentBranch}`);
         if (!res.ok) {
           throw new Error("Failed to fetch registrations.");
         }
@@ -99,28 +94,9 @@ function RegistrationsPageContent() {
     }
   }, [router]);
 
-  useEffect(() => {
-    if (refParam) {
-      setSearchQuery(refParam);
-    }
-  }, [refParam]);
-
-  // Lock background scroll when any modal is open
-  useEffect(() => {
-    const isAnyModalOpen = !!selectedReg || !!previewImage;
-    if (isAnyModalOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [selectedReg, previewImage]);
-
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     try {
-      const res = await fetch(`${API_URL}/office-staff/registrations/${id}/status`, {
+      const res = await fetch(`http://localhost:5000/api/office-staff/registrations/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -184,17 +160,33 @@ function RegistrationsPageContent() {
       <div className="flex flex-1 flex-row min-h-0">
         <OfficeStaffNavbar />
 
-        <div className="flex-1 flex flex-col min-w-0">
-          {/* Header */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px]">
-            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2">Welcome back, <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span></h1>
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+          {/* Top Header Bar */}
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
+                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+                <span className="hidden lg:inline">Welcome back, </span>
+                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">
+                  {branch} Branch
+                </span>
+              </h1>
+            </div>
+            
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
-              <Link href="/Office_Staff/Notifications" className="relative p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center">
+              <button className="relative p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-slate-500 hover:text-slate-800">
                   <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.65.342 3.228.96 4.658A1.875 1.875 0 0 1 18 17.25H6a1.875 1.875 0 0 1-1.71-2.842 9.06 9.06 0 0 0 .96-4.658V9ZM12 18.75a2.25 2.25 0 0 1-2.247-2.118.75.75 0 0 1 .746-.757h3a.75.75 0 0 1 .746.757A2.25 2.25 0 0 1 12 18.75Z" clipRule="evenodd" />
                 </svg>
-              </Link>
+              </button>
               {/* User Avatar Icon */}
               <button className="relative p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-slate-500 hover:text-slate-800">
@@ -204,7 +196,7 @@ function RegistrationsPageContent() {
             </div>
           </header>
 
-          <main className="flex-1 p-8 bg-white overflow-y-auto">
+          <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-auto">
             {loading ? (
               <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px]">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#f59e0b]"></div>
@@ -463,7 +455,7 @@ function RegistrationsPageContent() {
                     const docUrl = (selectedReg.documents as any)?.[doc.key];
                     let srcUrl = docUrl || "";
                     if (srcUrl && !srcUrl.startsWith("http") && !srcUrl.startsWith("data:")) {
-                      srcUrl = `${API_URL.replace("/api", "")}/uploads/${srcUrl}`;
+                      srcUrl = `http://localhost:5000/uploads/${srcUrl}`;
                     }
                     return (
                       <div key={doc.key} className="border border-slate-200 rounded-xl p-4 flex flex-col items-center">
@@ -529,13 +521,5 @@ function RegistrationsPageContent() {
       )}
 
     </div>
-  );
-}
-
-export default function RegistrationsPage() {
-  return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Loading registrations...</div>}>
-      <RegistrationsPageContent />
-    </Suspense>
   );
 }
