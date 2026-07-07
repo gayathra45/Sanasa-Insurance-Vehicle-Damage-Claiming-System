@@ -306,9 +306,10 @@ router.delete("/delete-claim/:claimNumber", async (req, res) => {
       return res.status(400).json({ error: "Cannot cancel this claim. An agent has already been assigned to it." });
     }
 
-    // Delete the claim
-    await Claim.deleteOne({ claimNumber: cleanClaimNum });
-    res.json({ message: "Claim cancelled and deleted successfully!" });
+    // Update the claim status to Cancelled instead of deleting
+    claim.status = "Cancelled";
+    await claim.save();
+    res.json({ message: "Claim cancelled successfully!" });
   } catch (err) {
     console.error("Cancel claim API error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
