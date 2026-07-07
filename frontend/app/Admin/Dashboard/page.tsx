@@ -25,10 +25,28 @@ export default function AdminDashboard() {
         <AdminNavbar />
 
         {/* Right Main Container */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Welcome Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px]">
-            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2">Welcome back, <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">Admin Panel</span></h1>
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-admin-mobile-menu"))}
+                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              {/* Mobile page title */}
+              <h1 className="lg:hidden text-lg font-bold text-slate-800 tracking-tight">
+                Dashboard
+              </h1>
+              {/* Desktop welcome title */}
+              <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
+                <span className="hidden lg:inline">Welcome back, </span>
+                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">Admin Panel</span>
+              </h1>
+            </div>
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
               <button className="relative p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
@@ -46,7 +64,7 @@ export default function AdminDashboard() {
           </header>
 
           {/* Page Content Dashboard */}
-          <main className="flex-1 p-8 bg-white overflow-y-auto">
+          <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-auto">
             {loading ? (
               <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px]">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#f59e0b]"></div>
@@ -61,8 +79,8 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <>
-                {/* 4 Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                {/* 4 Cards Grid - Desktop view */}
+                <div className="hidden lg:grid grid-cols-4 gap-6 mb-12">
                   {/* Policy Holders Card */}
                   <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
                     <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.policyHolders}</span>
@@ -85,6 +103,69 @@ export default function AdminDashboard() {
                   <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
                     <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.pendingClaims}</span>
                     <span className="text-slate-500 font-bold text-sm mt-1">Pending Claims</span>
+                  </div>
+                </div>
+
+                {/* 4 Cards Grid - Mobile view */}
+                <div className="grid lg:hidden grid-cols-1 gap-4 mb-8">
+                  {/* Policy Holders Card */}
+                  <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                        </svg>
+                      </div>
+                      <span className="text-slate-600 font-bold text-xs">Policy Holders</span>
+                    </div>
+                    <span className="text-xl font-black text-blue-900 tracking-tight pr-1 flex-shrink-0">
+                      {stats.policyHolders}
+                    </span>
+                  </div>
+
+                  {/* Total Claims Card */}
+                  <div className="bg-gradient-to-br from-slate-50/60 to-white rounded-[20px] border border-slate-200/80 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-slate-100 rounded-xl text-slate-800 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08" />
+                        </svg>
+                      </div>
+                      <span className="text-slate-600 font-bold text-xs">Total Claims</span>
+                    </div>
+                    <span className="text-xl font-black text-slate-800 tracking-tight pr-1 flex-shrink-0">
+                      {stats.totalClaims}
+                    </span>
+                  </div>
+
+                  {/* Active Claims Card */}
+                  <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                      </div>
+                      <span className="text-slate-600 font-bold text-xs">Active Claims</span>
+                    </div>
+                    <span className="text-xl font-black text-emerald-800 tracking-tight pr-1 flex-shrink-0">
+                      {stats.activeClaims}
+                    </span>
+                  </div>
+
+                  {/* Pending Claims Card */}
+                  <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                      </div>
+                      <span className="text-slate-600 font-bold text-xs">Pending Claims</span>
+                    </div>
+                    <span className="text-xl font-black text-amber-800 tracking-tight pr-1 flex-shrink-0">
+                      {stats.pendingClaims}
+                    </span>
                   </div>
                 </div>
 
