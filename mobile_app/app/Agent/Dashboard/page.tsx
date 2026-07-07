@@ -293,6 +293,8 @@ export default function AgentDashboard() {
   const [inspectionReportText, setInspectionReportText] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
   const [isAcceptingClaim, setIsAcceptingClaim] = useState(false);
+  const [decisionCommentText, setDecisionCommentText] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   // ── Step-by-Step Inspection Wizard States ──────────────────────────────────
   const [activeInspectionStep, setActiveInspectionStep] = useState(1);
@@ -1602,6 +1604,40 @@ ${inspectionReportText.trim()}
     }
   };
 
+  const handleSubmitDecisionComment = async () => {
+    if (!selectedClaim || !decisionCommentText.trim()) return;
+    setIsSubmittingComment(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/policy-holder/update-claim/${selectedClaim.claimNumber}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageText: decisionCommentText.trim(),
+          messageSender: "Agent",
+        }),
+      });
+
+      if (res.ok) {
+        showAlert("Success", "Comment/Note added successfully!");
+        setDecisionCommentText("");
+        await fetchClaims(agentEmail);
+        const listRes = await fetch(`${API_BASE_URL}/api/agent/claims?email=${encodeURIComponent(agentEmail)}`);
+        if (listRes.ok) {
+          const data = await listRes.json();
+          const freshClaim = data.find((c: Claim) => c._id === selectedClaim._id);
+          if (freshClaim) setSelectedClaim(freshClaim);
+        }
+      } else {
+        const errData = await res.json();
+        showAlert("Error", errData.error || "Failed to add comment.");
+      }
+    } catch (e) {
+      showAlert("Error", "An error occurred while adding the comment.");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
   const handleAcceptClaim = async () => {
     if (!selectedClaim) return;
     setIsAcceptingClaim(true);
@@ -2638,6 +2674,105 @@ ${inspectionReportText.trim()}
                                   </>
                                 )}
                               </TouchableOpacity>
+
+                              {/* Divider Line */}
+                              <View style={{ height: 1, backgroundColor: "#cbd5e1", marginVertical: 8, opacity: 0.6 }} />
+
+                              {/* Supporting Materials Title */}
+                              <Text style={{ fontSize: 13, fontWeight: "800", color: "#1e293b", selectNone: true } as any}>
+                                Supporting Details (Decision Stage)
+                              </Text>
+
+                              {/* Upload buttons row */}
+                              <View style={{ flexDirection: "row", gap: 10 }}>
+                                <TouchableOpacity
+                                  style={{
+                                    flex: 1,
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 6,
+                                    backgroundColor: "#f1f5f9",
+                                    borderWidth: 1,
+                                    borderColor: "#cbd5e1",
+                                    borderRadius: 10,
+                                    height: 38,
+                                  }}
+                                  onPress={() => handleAgentDocUploadPicker("Decision Document")}
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons name="document-text-outline" size={16} color="#475569" />
+                                  <Text style={{ color: "#475569", fontSize: 12, fontWeight: "700" }}>Upload Doc</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                  style={{
+                                    flex: 1,
+                                    flexDirection: "row",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: 6,
+                                    backgroundColor: "#f1f5f9",
+                                    borderWidth: 1,
+                                    borderColor: "#cbd5e1",
+                                    borderRadius: 10,
+                                    height: 38,
+                                  }}
+                                  onPress={() => handleAgentDocUploadPicker("Decision Photo")}
+                                  activeOpacity={0.7}
+                                >
+                                  <Ionicons name="camera-outline" size={16} color="#475569" />
+                                  <Text style={{ color: "#475569", fontSize: 12, fontWeight: "700" }}>Upload Photo</Text>
+                                </TouchableOpacity>
+                              </View>
+
+                              {/* Comment input area */}
+                              <View style={{ gap: 6, marginTop: 4 }}>
+                                <TextInput
+                                  style={{
+                                    height: 58,
+                                    textAlignVertical: 'top',
+                                    padding: 8,
+                                    borderWidth: 1,
+                                    borderColor: '#cbd5e1',
+                                    borderRadius: 10,
+                                    color: '#1e293b',
+                                    fontSize: 12.5,
+                                    backgroundColor: '#ffffff'
+                                  }}
+                                  placeholder="Type decision comment or note..."
+                                  placeholderTextColor="#94a3b8"
+                                  multiline
+                                  numberOfLines={2}
+                                  value={decisionCommentText}
+                                  onChangeText={setDecisionCommentText}
+                                />
+                                <TouchableOpacity
+                                  style={{
+                                    backgroundColor: "#0891b2",
+                                    borderRadius: 10,
+                                    height: 36,
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexDirection: "row",
+                                    gap: 6
+                                  }}
+                                  onPress={handleSubmitDecisionComment}
+                                  disabled={isSubmittingComment || !decisionCommentText.trim()}
+                                  activeOpacity={0.7}
+                                >
+                                  {isSubmittingComment ? (
+                                    <ActivityIndicator color="#fff" size="small" />
+                                  ) : (
+                                    <>
+                                      <Ionicons name="chatbubble-ellipses-outline" size={15} color="#fff" />
+                                      <Text style={{ color: "#ffffff", fontSize: 12, fontWeight: "800" }}>
+                                        Add Comment / Note
+                                      </Text>
+                                    </>
+                                  )}
+                                </TouchableOpacity>
+                              </View>
                             </View>
                           )}
                         </View>
