@@ -82,7 +82,7 @@ export default function OfficeStaffNavbar() {
   };
 
   return (
-    <aside className="w-[280px] bg-[#102A43] min-h-screen flex flex-col text-white shadow-xl flex-shrink-0 select-none">
+    <aside className="w-[280px] bg-[#102A43] h-screen sticky top-0 flex flex-col text-white shadow-xl flex-shrink-0 select-none z-20">
       {/* Logo Section */}
       <div className="py-8 px-6 flex flex-col items-center border-b border-white/5">
         <div className="relative w-44 h-16">
@@ -129,7 +129,7 @@ export default function OfficeStaffNavbar() {
       <div className="p-6 mt-auto">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-white font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
+          className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

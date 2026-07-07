@@ -11,15 +11,26 @@ interface RegistrationItem {
 
 export default function OfficeStaffDashboard() {
   const [branch, setBranch] = useState("Galle");
-  const [stats] = useState({
+  const [stats, setStats] = useState({
     unassignedClaims: 0,
     newRegistrations: 0,
     activeClaims: 0,
     pendingClaims: 0,
   });
+  const [newClaims, setNewClaims] = useState<any[]>([]);
   const [newRegistrations, setNewRegistrations] = useState<RegistrationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
+
+  const checkUrgent = (claim: any) => {
+    return (
+      claim.damageType?.toLowerCase().includes("severe") ||
+      claim.description?.toLowerCase().includes("urgent") ||
+      claim.priority?.toLowerCase() === "high" ||
+      claim.priority?.toLowerCase() === "urgent"
+    );
+  };
 
   useEffect(() => {
     let currentBranch = "Galle";
@@ -45,6 +56,44 @@ export default function OfficeStaffDashboard() {
           throw new Error("Failed to load dashboard metrics.");
         }
         const data = await res.json();
+        setStats(data.stats);
+
+        // Filter: Hide claims that already have an assigned agent
+        const unassignedClaims = (data.newClaims || []).filter(
+          (c: any) => !c.assignedAgent || c.assignedAgent.trim() === ""
+        );
+
+        // Sort: Urgent claims first, then latest first
+        const sortedClaims = [...unassignedClaims].sort((a: any, b: any) => {
+          const aUrgent = checkUrgent(a);
+          const bUrgent = checkUrgent(b);
+          if (aUrgent && !bUrgent) return -1;
+          if (!aUrgent && bUrgent) return 1;
+          return 0;
+        });
+
+        // Limit to latest 5 claims
+        const latest5Claims = sortedClaims.slice(0, 5);
+
+        const formattedClaims = latest5Claims.map((claim: any) => {
+          const isUrgent = checkUrgent(claim);
+          return {
+            id: claim.claimNumber,
+            urgency: isUrgent ? "Urgent" : "Normal",
+            vehicleNo: claim.vehiclePlate,
+            vehicleModel: claim.vehiclePlate?.substring(0, 3),
+            type: claim.damageType,
+            location: claim.location,
+            time: new Date(claim.createdAt).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            rawClaim: claim,
+          };
+        });
+        setNewClaims(formattedClaims);
 
         // Format registrations list from DB
         const formattedRegs = data.newRegistrations.map((user: any) => ({
@@ -147,10 +196,83 @@ export default function OfficeStaffDashboard() {
                 </div>
 
                 {/* Columns split: New Registration only */}
+                {/* Columns split: New Claims & New Registration */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
                   
-                  {/* Column: New Registration (spans full 12 columns) */}
-                  <div className="lg:col-span-12 flex flex-col select-none">
+                  {/* Left Column: New Claims (8 cols) */}
+                  <div className="lg:col-span-8 flex flex-col select-none">
+                    <div className="flex items-center gap-2 mb-6">
+                      <h2 className="text-lg font-black text-slate-800 tracking-wide">
+                        New Claims
+                      </h2>
+                      <span className="text-lg font-black text-slate-800">&gt;</span>
+                    </div>
+
+                    {newClaims.length === 0 ? (
+                      <div className="border border-slate-200 rounded-[24px] p-8 text-center text-slate-400 font-bold">
+                        No new claims for this branch
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-6">
+                        {newClaims.map((claim, index) => {
+                          const isUrgent = claim.urgency === "Urgent";
+                          const cardBorderClass = isUrgent ? "border-red-500" : "border-blue-500";
+                          const headerTextClass = isUrgent ? "text-red-500" : "text-blue-500";
+
+                          return (
+                            <div
+                              key={index}
+                              className={`bg-white border-2 ${cardBorderClass} rounded-[24px] p-6 flex flex-col relative max-w-[560px] w-full`}
+                            >
+                              {/* Title Header */}
+                              <span className={`font-black text-base ${headerTextClass} mb-4`}>
+                                {claim.urgency} - {claim.id}
+                              </span>
+
+                              {/* Flex Container for details and buttons */}
+                              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                                
+                                {/* Claim Specifications */}
+                                <div className="flex flex-col text-slate-500 text-sm font-semibold gap-1 min-w-0 flex-1">
+                                  <div className="flex">
+                                    <span className="w-28 flex-shrink-0">Vehicle No</span>
+                                    <span>- {claim.vehicleNo}</span>
+                                  </div>
+                                  <div className="flex">
+                                    <span className="w-28 flex-shrink-0">Type</span>
+                                    <span>- {claim.type}</span>
+                                  </div>
+                                  <div className="flex">
+                                    <span className="w-28 flex-shrink-0">Location</span>
+                                    <span>- {claim.location}</span>
+                                  </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex flex-row md:flex-col gap-3 self-end md:self-auto flex-shrink-0 w-28">
+                                  <button
+                                    onClick={() => setSelectedClaim(claim.rawClaim)}
+                                    className="w-full bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-[13px] py-2.5 rounded-full transition-all tracking-wide cursor-pointer focus:outline-none shadow-sm shadow-slate-500/20 whitespace-nowrap text-center"
+                                  >
+                                    Details
+                                  </button>
+                                </div>
+
+                              </div>
+
+                              {/* Timestamp bottom-right */}
+                              <span className="text-[11px] text-slate-400 font-bold self-end mt-4">
+                                {claim.time}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: New Registration (4 cols) */}
+                  <div className="lg:col-span-4 flex flex-col select-none">
                     <div className="flex items-center gap-2 mb-6">
                       <h2 className="text-lg font-black text-slate-800 tracking-wide">
                         New Registration
@@ -163,7 +285,7 @@ export default function OfficeStaffDashboard() {
                         No new registrations for this branch
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="flex flex-col gap-4">
                         {newRegistrations.map((reg, index) => (
                           <div
                             key={index}
@@ -194,6 +316,93 @@ export default function OfficeStaffDashboard() {
           <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75 0 1.776.476 3.44 1.307 4.887L2.14 21.64a.75.75 0 0 0 .935.935l4.753-1.428A9.702 9.702 0 0 0 12 21.75c5.385 0 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-3 9.75a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm3.75 0a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm3.75 0a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" />
         </svg>
       </button>
+
+      {selectedClaim && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-[24px] border border-slate-150 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden text-slate-800 text-left">
+            {/* Header */}
+            <div className="px-6 pt-6 pb-4 flex justify-between items-center border-b border-slate-100">
+              <h3 className="text-lg font-black text-slate-800 tracking-tight">
+                Claim Details: {selectedClaim.claimNumber}
+              </h3>
+              <button
+                onClick={() => setSelectedClaim(null)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 hover:bg-slate-50 rounded-full transition-all"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 overflow-y-auto space-y-4 text-sm font-semibold text-slate-700">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Status</span>
+                  <span className="text-slate-800">{selectedClaim.status}</span>
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Urgency</span>
+                  <span className={checkUrgent(selectedClaim) ? "text-red-600 font-extrabold" : "text-slate-800"}>
+                    {checkUrgent(selectedClaim) ? "Urgent" : "Normal"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="border-t border-slate-100 my-3" />
+
+              <div className="space-y-3">
+                <div className="flex justify-between border-b border-slate-50 pb-2">
+                  <span className="text-slate-400 font-medium">Vehicle Plate</span>
+                  <span className="text-slate-800 font-bold">{selectedClaim.vehiclePlate}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-50 pb-2">
+                  <span className="text-slate-400 font-medium">Damage Type</span>
+                  <span className="text-slate-800 font-bold">{selectedClaim.damageType}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-50 pb-2">
+                  <span className="text-slate-400 font-medium">Location</span>
+                  <span className="text-slate-800 font-bold">{selectedClaim.location}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-50 pb-2">
+                  <span className="text-slate-400 font-medium">Incident Date</span>
+                  <span className="text-slate-800 font-bold">{new Date(selectedClaim.incidentDate).toLocaleDateString()}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-50 pb-2">
+                  <span className="text-slate-400 font-medium">Incident Time</span>
+                  <span className="text-slate-800 font-bold">{selectedClaim.incidentTime}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-50 pb-2">
+                  <span className="text-slate-400 font-medium">Assigned Agent</span>
+                  <span className="text-slate-800 font-bold">{selectedClaim.assignedAgent || "None assigned"}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-50 pb-2">
+                  <span className="text-slate-400 font-medium">Claim Amount</span>
+                  <span className="text-slate-800 font-bold">{selectedClaim.amount ? `Rs. ${selectedClaim.amount}` : "Pending Evaluation"}</span>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1 mt-2">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Description</span>
+                <p className="text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs leading-relaxed whitespace-pre-wrap">
+                  {selectedClaim.description || "No description provided."}
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+              <button
+                onClick={() => setSelectedClaim(null)}
+                className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all cursor-pointer shadow-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
