@@ -53,7 +53,9 @@ const PORT = process.env.PORT;
 const startServer = async () => {
   try {
     console.log("Connecting to MongoDB...");
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000
+    });
     console.log("✅ MongoDB Connected");
 
     app.listen(PORT, "0.0.0.0", () => {
