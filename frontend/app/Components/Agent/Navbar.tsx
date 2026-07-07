@@ -91,14 +91,14 @@ export default function Navbar() {
             <Link href="/Agent/Dashboard" className={getNavLinkClass("/Agent/Dashboard")}>
               Home
             </Link>
-            <Link href="/Agent/Dashboard" className="text-slate-800 hover:text-[#00ddff] font-medium px-4 py-2 transition-all duration-200">
+            <Link href="/Agent/MyActivity" className={getNavLinkClass("/Agent/MyActivity")}>
               My Activity
             </Link>
-            <Link href="/Agent/Dashboard" className="text-slate-800 hover:text-[#00ddff] font-medium px-4 py-2 transition-all duration-200">
+            <Link href="/Agent/Contact" className={getNavLinkClass("/Agent/Contact")}>
               Contact
             </Link>
             <Link
-              href="/Agent/Dashboard"
+              href="/Agent/MyClaims"
               className="bg-[#ff9800] text-white hover:bg-[#e68900] font-bold px-6 py-2 rounded-full shadow-md transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] no-underline"
             >
               My Claims
@@ -108,7 +108,7 @@ export default function Navbar() {
           {/* Action Items (Right) */}
           <div className="hidden md:flex items-center gap-6">
             {/* Notification Bell */}
-            <Link href="/Agent/Dashboard" className="relative text-black hover:text-[#00ddff] transition-colors p-1" aria-label="Notifications">
+            <Link href="/Agent/Notifications" className="relative text-black hover:text-[#00ddff] transition-colors p-1" aria-label="Notifications">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -124,8 +124,8 @@ export default function Navbar() {
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
-                className="text-black hover:text-[#00ddff] transition-colors p-1 bg-transparent border-none cursor-pointer focus:outline-none"
-                aria-label="Profile"
+                className="transition-colors duration-150 bg-transparent border-none cursor-pointer p-0 text-black hover:text-[#00ddff] focus:outline-none"
+                aria-label="User Profile"
                 aria-expanded={profileMenuOpen}
               >
                 <svg
@@ -154,7 +154,7 @@ export default function Navbar() {
                   <div className="absolute -top-2 right-4 w-4 h-4 bg-white border-l border-t border-slate-100 rotate-45" />
 
                   <Link
-                    href="/Agent/Dashboard"
+                    href="/Agent/Profile"
                     onClick={() => setProfileMenuOpen(false)}
                     className="flex items-center gap-3 px-5 py-3 text-slate-700 hover:bg-slate-50 hover:text-[#00ddff] font-semibold text-sm transition-colors no-underline"
                   >
@@ -212,21 +212,25 @@ export default function Navbar() {
               Home
             </Link>
             <Link
-              href="/Agent/Dashboard"
+              href="/Agent/MyActivity"
               onClick={() => setIsOpen(false)}
-              className="text-slate-800 hover:text-[#00ddff] hover:bg-slate-50 font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200"
+              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+                isActive("/Agent/MyActivity") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
+              }`}
             >
               My Activity
             </Link>
             <Link
-              href="/Agent/Dashboard"
+              href="/Agent/Contact"
               onClick={() => setIsOpen(false)}
-              className="text-slate-800 hover:text-[#00ddff] hover:bg-slate-50 font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200"
+              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+                isActive("/Agent/Contact") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
+              }`}
             >
               Contact
             </Link>
             <Link
-              href="/Agent/Dashboard"
+              href="/Agent/MyClaims"
               onClick={() => setIsOpen(false)}
               className="bg-[#ff9800] text-white hover:bg-[#e68900] font-bold py-3 px-5 rounded-2xl shadow-md transition-all duration-150 text-center mx-5 cursor-pointer no-underline"
             >
@@ -235,7 +239,7 @@ export default function Navbar() {
             <div className="h-px bg-gray-100 my-2" />
             <div className="flex items-center justify-between px-5 py-2">
               <div className="flex gap-4">
-                <Link href="/Agent/Dashboard" onClick={() => setIsOpen(false)} className="relative text-black hover:text-[#00ddff] p-1">
+                <Link href="/Agent/Notifications" onClick={() => setIsOpen(false)} className="relative text-black hover:text-[#00ddff] p-1">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"

@@ -1,0 +1,32 @@
+"use client";
+
+import React from "react";
+import AgentNavbar from "@/app/Components/Agent/Navbar";
+import AgentFooter from "@/app/Components/Agent/Footer";
+
+export default function AgentMyClaims() {
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+      <AgentNavbar />
+
+      <main className="flex-grow flex items-center justify-center p-8 bg-slate-50 min-h-[500px]">
+        <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-xl max-w-md w-full text-center flex flex-col items-center gap-6">
+          <div className="w-20 h-20 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-inner select-none">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-10 h-10 animate-pulse">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A9.723 9.723 0 0021.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12a9.723 9.723 0 003.06 7.1l5.83-5.83a2.5 2.5 0 013.28 0z" />
+            </svg>
+          </div>
+
+          <div>
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">My Claims</h2>
+            <p className="text-slate-500 font-semibold text-sm mt-2 leading-relaxed">
+              This page is in the development stage.
+            </p>
+          </div>
+        </div>
+      </main>
+
+      <AgentFooter />
+    </div>
+  );
+}
