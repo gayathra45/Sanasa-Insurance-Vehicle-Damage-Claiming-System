@@ -286,4 +286,33 @@ Sent from Sanasa Insurance Portal Contact Form
   }
 });
 
+// 5. Delete/Cancel claim (only allowed before agent is assigned)
+router.delete("/delete-claim/:claimNumber", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    if (!claimNumber) {
+      return res.status(400).json({ error: "Claim number is required." });
+    }
+
+    const cleanClaimNum = claimNumber.trim().toUpperCase();
+    const claim = await Claim.findOne({ claimNumber: cleanClaimNum });
+
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    // Check if an agent has already been assigned
+    if (claim.assignedAgent || claim.currentStep >= 2) {
+      return res.status(400).json({ error: "Cannot cancel this claim. An agent has already been assigned to it." });
+    }
+
+    // Delete the claim
+    await Claim.deleteOne({ claimNumber: cleanClaimNum });
+    res.json({ message: "Claim cancelled and deleted successfully!" });
+  } catch (err) {
+    console.error("Cancel claim API error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 export default router;

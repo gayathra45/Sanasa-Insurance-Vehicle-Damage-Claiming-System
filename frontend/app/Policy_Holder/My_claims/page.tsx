@@ -51,6 +51,33 @@ export default function MyClaims() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "Review" | "Approved" | "Rejected" | "Completed">("All");
+  const [isCancellingClaim, setIsCancellingClaim] = useState(false);
+
+  const handleCancelClaim = async (claimNumber: string) => {
+    const confirmCancel = window.confirm("Are you sure you want to cancel and delete this claim? This action cannot be undone.");
+    if (!confirmCancel) return;
+
+    setIsCancellingClaim(true);
+    try {
+      const res = await fetch(`${API_URL}/policy-holder/delete-claim/${encodeURIComponent(claimNumber)}`, {
+        method: "DELETE"
+      });
+
+      if (res.ok) {
+        alert("Claim cancelled and deleted successfully!");
+        setSelectedClaim(null);
+        fetchClaims(true); // Refresh claims list
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to cancel claim.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while trying to cancel the claim.");
+    } finally {
+      setIsCancellingClaim(false);
+    }
+  };
 
   const getUserRequestedDocs = (claim: Claim): string[] => {
     const getRecipientForDoc = (name: string) => {
@@ -849,7 +876,22 @@ export default function MyClaims() {
               </div>
 
               {/* Modal Footer */}
-              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
+              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-shrink-0">
+                {selectedClaim.currentStep && selectedClaim.currentStep < 2 && (!selectedClaim.officer || selectedClaim.officer === "Not Assigned") ? (
+                  <button
+                    onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
+                    disabled={isCancellingClaim}
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-2.5 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    {isCancellingClaim ? "Cancelling Claim..." : "Cancel Claim"}
+                  </button>
+                ) : (
+                  <div /> // Spacer to align Close button to the right
+                )}
+
                 <button
                   onClick={() => setSelectedClaim(null)}
                   className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"
