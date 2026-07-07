@@ -751,19 +751,19 @@ export default function AddVehiclesPage() {
                                 <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 mt-4 font-semibold text-xs text-slate-700">
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Owner Name</span>
-                                    <span className="text-slate-805 font-extrabold">{item.user.firstName} {item.user.lastName}</span>
+                                    <span className="text-slate-800 font-extrabold">{item.user.firstName} {item.user.lastName}</span>
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Owner NIC</span>
-                                    <span className="text-slate-805 font-bold font-mono">{item.user.nic}</span>
+                                    <span className="text-slate-800 font-bold font-mono">{item.user.nic}</span>
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Mobile Number</span>
-                                    <span className="text-slate-805 font-bold font-mono">{item.user.mobile}</span>
+                                    <span className="text-slate-800 font-bold font-mono">{item.user.mobile}</span>
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Branch Reference</span>
-                                    <span className="text-slate-505 font-bold">{item.user.referenceNumber}</span>
+                                    <span className="text-slate-500 font-bold">{item.user.referenceNumber}</span>
                                   </div>
                                 </div>
                               </div>
@@ -772,7 +772,7 @@ export default function AddVehiclesPage() {
                               <div className="flex items-center gap-2 border-t border-slate-100 pt-4 mt-5 select-none shrink-0 w-full justify-between">
                                 <button
                                   onClick={() => setSelectedUserForModal(item.user)}
-                                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-650 hover:text-slate-850 font-extrabold text-[11px] px-3.5 py-2.5 rounded-full transition-all active:scale-95 shadow-sm hover:scale-[1.01]"
+                                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 font-extrabold text-[11px] px-3.5 py-2.5 rounded-full transition-all active:scale-95 shadow-sm hover:scale-[1.01]"
                                 >
                                   Profile
                                 </button>
