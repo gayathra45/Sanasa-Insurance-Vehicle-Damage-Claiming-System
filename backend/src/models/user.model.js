@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
     vehicleReg: { type: String },
     revenueLicense: { type: String }
   },
-  branch: { type: String, default: "Galle" },
+  branch: { type: String, default: "Galle", index: true },
   bankDetails: {
     bankName: { type: String, default: "" },
     branchName: { type: String, default: "" },

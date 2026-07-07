@@ -8,7 +8,7 @@ const agentSchema = new mongoose.Schema({
   nic: { type: String, required: true, unique: true },
   address: { type: String, required: true },
   dob: { type: String, required: true },
-  branch: { type: String, required: true },
+  branch: { type: String, required: true, index: true },
   phone: { type: String, default: "" },
   city: { type: String, default: "" },
   province: { type: String, default: "" },
