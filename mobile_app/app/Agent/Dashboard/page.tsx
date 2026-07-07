@@ -1728,10 +1728,12 @@ ${inspectionReportText.trim()}
       const s = status.toLowerCase();
       if (s.includes("pending") || s.includes("progress")) currentStep = 3;
       else if (s.includes("review")) currentStep = 4;
-      else if (s.includes("approved") || s.includes("done")) currentStep = 6;
+      else if (s.includes("approved") || s.includes("done")) currentStep = 5;
       else if (s.includes("rejected")) currentStep = 5;
     }
 
+    // Cap at step 5 for Agent tracking
+    const displayStep = Math.min(currentStep, 5);
     const isRejected = status.toLowerCase() === "rejected";
 
     const steps = [
@@ -1739,8 +1741,7 @@ ${inspectionReportText.trim()}
       { num: "02", label: "Assigned" },
       { num: "03", label: "Inspection" },
       { num: "04", label: "Review" },
-      { num: "05", label: "Decision" },
-      { num: "06", label: "Payment" }
+      { num: "05", label: "Decision" }
     ];
 
     return (
@@ -1752,15 +1753,15 @@ ${inspectionReportText.trim()}
           style={[
             styles.wizardProgressLine,
             isRejected && { backgroundColor: "#ef4444" },
-            { width: `${((currentStep - 1) / 5) * 100}%` }
+            { width: `${((displayStep - 1) / 4) * 100}%` }
           ]}
         />
 
         <View style={styles.wizardStepsRow}>
           {steps.map((step, idx) => {
             const stepNum = idx + 1;
-            const isCompleted = stepNum < currentStep;
-            const isActive = stepNum === currentStep;
+            const isCompleted = stepNum < displayStep;
+            const isActive = stepNum === displayStep;
 
             let circleStyle: any = styles.stepCircleInactive;
             let textStyle: any = styles.stepTextInactive;
