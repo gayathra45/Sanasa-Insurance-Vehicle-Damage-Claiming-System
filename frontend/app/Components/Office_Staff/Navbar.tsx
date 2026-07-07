@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Image from "next/image";
@@ -8,18 +8,19 @@ import Image from "next/image";
 export default function OfficeStaffNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const handleLogout = () => {
-    sessionStorage.clear();
-    router.push("/Login");
-  };
+  useEffect(() => {
+    const handleOpen = () => setIsMobileOpen(true);
+    window.addEventListener("open-mobile-menu", handleOpen);
+    return () => window.removeEventListener("open-mobile-menu", handleOpen);
+  }, []);
 
   const menuItems = [
     { name: "Home", href: "/Office_Staff/Dashboard" },
     { name: "Claims", href: "/Office_Staff/Claims" },
     { name: "Registrations", href: "/Office_Staff/Registrations" },
     { name: "Policy Holders", href: "/Office_Staff/PolicyHolders" },
-    { name: "Add Vehicles", href: "/Office_Staff/AddVehicles" },
     { name: "Agents", href: "/Office_Staff/Agents" },
     { name: "Reports", href: "/Office_Staff/Reports" },
     { name: "Contact", href: "/Office_Staff/Contact" },
@@ -52,16 +53,16 @@ export default function OfficeStaffNavbar() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766v-.109A12.318 12.318 0 018.624 18c2.331 0 4.512.645 6.376 1.766zm-6.75-6a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5zm9-3a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
         );
-      case "add vehicles":
-        return (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 flex-shrink-0">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        );
       case "agents":
         return (
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 flex-shrink-0">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.03 0 1.9.693 2.166 1.638m-7.377 0A49.535 49.535 0 006 4.024m0 0c-1.13.094-1.976 1.057-1.976 2.192V16.5A2.25 2.25 0 006.25 18.75h.75m.75-12.75v12.75c0 .621.504 1.125 1.125 1.125H18" />
+          </svg>
+        );
+      case "staff":
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5 flex-shrink-0">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
           </svg>
         );
       case "reports":
@@ -82,76 +83,174 @@ export default function OfficeStaffNavbar() {
     }
   };
 
+  const handleLogout = () => {
+    sessionStorage.clear();
+    router.push("/Login");
+  };
+
   return (
-    <aside className="w-[280px] bg-[#102A43] h-screen sticky top-0 flex flex-col text-white shadow-xl flex-shrink-0 select-none z-20">
-      {/* Logo Section */}
-      <div className="py-8 px-6 flex flex-col items-center border-b border-white/5">
-        <div className="relative w-44 h-16">
-          <Image
-            src="/logo.png"
-            alt="Sanasa General Insurance Logo"
-            fill
-            className="object-contain"
-            priority
-          />
-        </div>
-      </div>
-
-      {/* Menu Navigation Links */}
-      <nav className="flex-1 mt-6 flex flex-col">
-        {menuItems.map((item) => {
-          // Check if active (matches exact path or prefix path)
-          const isActive = pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href));
-          const hasChevron = ["policy holders", "agents", "staff", "analytics & reports", "claims", "registrations", "reports", "add vehicles"].includes(item.name.toLowerCase());
-
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group relative ${
-                isActive
-                  ? "bg-[#1b75e0] text-white shadow-sm font-bold pl-5"
-                  : "text-slate-100 hover:bg-white/10 hover:text-white"
-              }`}
-            >
-              {isActive && (
-                <div className="absolute left-1.5 w-1 h-5 bg-[#00ddff] rounded-full" />
-              )}
-              {getIcon(item.name)}
-              <span>{item.name}</span>
-              {hasChevron && (
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Logout Footer Section */}
-      <div className="p-6 mt-auto">
-        <button
-          onClick={handleLogout}
-          className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            strokeWidth="2.5"
-            stroke="currentColor"
-            className="w-5 h-5"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
+    <>
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-[280px] bg-[#102A43] h-screen sticky top-0 flex-col text-white shadow-xl flex-shrink-0 select-none z-20">
+        {/* Logo Section */}
+        <div className="py-8 px-6 flex flex-col items-center border-b border-white/5">
+          <div className="relative w-44 h-16">
+            <Image
+              src="/logo.png"
+              alt="Sanasa General Insurance Logo"
+              fill
+              className="object-contain"
+              priority
             />
-          </svg>
-          Logout
-        </button>
-      </div>
-    </aside>
+          </div>
+        </div>
+
+        {/* Menu Navigation Links */}
+        <nav className="flex-1 mt-6 flex flex-col">
+          {menuItems.map((item) => {
+            // Check if active (matches exact path or prefix path)
+            const isActive = pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href));
+            const hasChevron = ["policy holders", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={`mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group ${
+                  isActive
+                    ? "bg-[#1b75e0] text-white shadow-sm font-bold"
+                    : "text-slate-100 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                {getIcon(item.name)}
+                <span>{item.name}</span>
+                {hasChevron && (
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Logout Footer Section */}
+        <div className="p-6 mt-auto">
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth="2.5"
+              stroke="currentColor"
+              className="w-5 h-5"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
+              />
+            </svg>
+            Logout
+          </button>
+        </div>
+      </aside>
+
+
+
+      {/* Mobile Drawer */}
+      {isMobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-200"
+            onClick={() => setIsMobileOpen(false)}
+          />
+
+          {/* Drawer content */}
+          <aside className="relative w-[280px] max-w-xs bg-gradient-to-b from-[#111c2a] via-[#102a43] to-[#09111b] border-r border-white/10 h-full flex flex-col text-white shadow-2xl p-5 select-none animate-in slide-in-from-left duration-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsMobileOpen(false)}
+              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Logo Section */}
+            <div className="py-6 px-2 flex items-center border-b border-white/5 mb-6 mt-4">
+              <div className="relative w-36 h-12">
+                <Image
+                  src="/logo.png"
+                  alt="Sanasa General Insurance Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </div>
+
+            {/* Menu Links */}
+            <nav className="flex-1 flex flex-col gap-1 overflow-y-auto">
+              {menuItems.map((item) => {
+                const isActive = pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href));
+                const hasChevron = ["policy holders", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => setIsMobileOpen(false)}
+                    className={`px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl relative ${
+                      isActive
+                        ? "bg-[#1b75e0] text-white shadow-sm font-bold"
+                        : "text-slate-100 hover:bg-white/10 hover:text-white"
+                    }`}
+                  >
+                    {isActive && <div className="absolute left-1 w-1.5 h-5 bg-[#00ddff] rounded-full" />}
+                    {getIcon(item.name)}
+                    <span>{item.name}</span>
+                    {hasChevron && (
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                      </svg>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Logout Footer */}
+            <div className="pt-6 border-t border-white/5 mt-auto">
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2.5"
+                  stroke="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
+                  />
+                </svg>
+                Logout
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

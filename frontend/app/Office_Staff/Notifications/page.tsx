@@ -341,11 +341,24 @@ export default function OfficeStaffNotifications() {
         <OfficeStaffNavbar />
 
         {/* Main Spacious Container */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           
           {/* Header styled matching the Portal color themes */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px]">
-            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2"><span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span> — Notifications Center</h1>
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
+                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
+              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span>
+                <span className="hidden lg:inline"> — Notifications Center</span>
+              </h1>
+            </div>
             <div className="flex items-center gap-5">
               {/* Active notifications indicator count badge */}
               <div className="text-sm font-semibold bg-slate-100 px-4 py-1.5 rounded-full select-none text-slate-600 border border-slate-200">
@@ -355,7 +368,7 @@ export default function OfficeStaffNotifications() {
           </header>
 
           {/* Main Content Area */}
-          <main className="flex-1 p-8 bg-slate-50 overflow-y-auto max-w-6xl w-full mx-auto flex flex-col gap-6">
+          <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-auto max-w-6xl w-full mx-auto flex flex-col gap-6">
             
             {/* Top controls Row */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 select-none bg-white p-5 border border-slate-200 rounded-[24px] shadow-sm">
