@@ -356,19 +356,13 @@ export default function PolicyHolderHome() {
           
           {/* Vehicles Column */}
           <div className="lg:col-span-12">
-            <div className="flex items-center gap-2 mb-6 cursor-pointer group">
+            <div className="flex items-center gap-2.5 mb-6 select-none">
+              <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
+              </svg>
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
                 My Vehicles
               </h2>
-              <svg
-                className="w-5 h-5 text-slate-500 group-hover:translate-x-1 transition-transform"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
             </div>
 
             {/* Vehicle List Grid */}

@@ -220,10 +220,14 @@ export default function AgentDashboard() {
           
           {/* My Activity Card Section */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2">
-              My Activity
-              <span className="text-slate-400 font-normal text-xl">&gt;</span>
-            </h2>
+            <div className="flex items-center gap-2.5 select-none">
+              <svg className="w-5 h-5 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-.621-.504-1.125-1.125-1.125H9.75M8.25 21h8.25a2.25 2.25 0 002.25-2.25V5.25A2.25 2.25 0 0016.5 3H7.5A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h.75z" />
+              </svg>
+              <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight">
+                My Activity
+              </h2>
+            </div>
 
             <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-[0_10px_35px_rgba(0,0,0,0.015)] flex flex-col gap-4">
               {loading ? (
