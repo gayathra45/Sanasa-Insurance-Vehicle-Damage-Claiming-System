@@ -29,6 +29,7 @@ import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
 import AgentNavbar from "../../Components/Agent/page";
 import { API_BASE_URL } from "../../_config";
+import { compressImageMobile } from "../../../utils/imageCompressor";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -508,15 +509,16 @@ export default function AgentDashboard() {
 
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
-      quality: 0.6,
-      base64: true,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      const prefix = "data:image/jpeg;base64,";
-      const base64Data = asset.base64 ? `${prefix}${asset.base64}` : "";
-      setInspectionPhotos(prev => [...prev, { uri: asset.uri, base64: base64Data }]);
+      try {
+        const asset = result.assets[0];
+        const base64Data = await compressImageMobile(asset.uri);
+        setInspectionPhotos(prev => [...prev, { uri: asset.uri, base64: base64Data }]);
+      } catch (err) {
+        showAlert("Error", "Failed to compress captured photo.");
+      }
     }
   };
 
@@ -530,15 +532,16 @@ export default function AgentDashboard() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
-      quality: 0.6,
-      base64: true,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      const prefix = "data:image/jpeg;base64,";
-      const base64Data = asset.base64 ? `${prefix}${asset.base64}` : "";
-      setInspectionPhotos(prev => [...prev, { uri: asset.uri, base64: base64Data }]);
+      try {
+        const asset = result.assets[0];
+        const base64Data = await compressImageMobile(asset.uri);
+        setInspectionPhotos(prev => [...prev, { uri: asset.uri, base64: base64Data }]);
+      } catch (err) {
+        showAlert("Error", "Failed to compress selected photo.");
+      }
     }
   };
 
@@ -1224,18 +1227,16 @@ ${inspectionReportText.trim()}
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
-      quality: 0.7,
-      base64: true,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      const prefix = "data:image/jpeg;base64,";
-      const base64Data = asset.base64 ? `${prefix}${asset.base64}` : null;
-      
-      if (base64Data) {
+      try {
+        const asset = result.assets[0];
+        const base64Data = await compressImageMobile(asset.uri);
         setAgentUploadFileBase64(base64Data);
         setAgentUploadFileName(asset.fileName || `agent_doc_${Date.now().toString().slice(-4)}.jpg`);
+      } catch (err) {
+        showAlert("Error", "Failed to compress selected image.");
       }
     }
   };
@@ -1253,17 +1254,15 @@ ${inspectionReportText.trim()}
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
-      quality: 0.7,
-      base64: true,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      const prefix = "data:image/jpeg;base64,";
-      const base64Data = asset.base64 ? `${prefix}${asset.base64}` : null;
-      
-      if (base64Data) {
+      try {
+        const asset = result.assets[0];
+        const base64Data = await compressImageMobile(asset.uri);
         uploadAgentDocImmediate(docName, base64Data, claimToUse);
+      } catch (err) {
+        showAlert("Error", "Failed to compress selected image.");
       }
     }
   };

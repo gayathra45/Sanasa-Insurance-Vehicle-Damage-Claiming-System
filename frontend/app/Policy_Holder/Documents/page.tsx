@@ -5,6 +5,7 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import { compressImage } from "../../utils/imageCompressor";
 
 interface AdditionalDoc {
   name: string;
@@ -287,14 +288,9 @@ export default function PolicyHolderDocuments() {
 
     setIsUploading(true);
 
-    // Convert selected files to base64
+    // Convert selected files to base64 with compression
     const convertToBase64 = (file: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-      });
+      return compressImage(file);
     };
 
     try {

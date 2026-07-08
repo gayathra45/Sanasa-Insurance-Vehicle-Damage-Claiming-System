@@ -23,6 +23,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import { API_BASE_URL } from "../_config";
+import { compressImageMobile } from "../../utils/imageCompressor";
 import MapDisplay from "../Components/PolicyHolder/MapDisplay";
 import MapSelectorModal from "../Components/PolicyHolder/MapSelectorModal";
 
@@ -596,17 +597,19 @@ export default function FileNewClaim() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
-      quality: 0.5,
-      base64: true,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      const base64Data = `data:image/jpeg;base64,${asset.base64}`;
-      stateSetter({
-        uri: asset.uri,
-        base64: base64Data
-      });
+      try {
+        const asset = result.assets[0];
+        const base64Data = await compressImageMobile(asset.uri);
+        stateSetter({
+          uri: asset.uri,
+          base64: base64Data
+        });
+      } catch (err) {
+        Alert.alert("Error", "Failed to compress selected image.");
+      }
     }
   };
 

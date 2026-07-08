@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
+import { compressImage } from "../../utils/imageCompressor";
 
 interface ClaimMessage {
   sender: string;
@@ -2287,12 +2288,7 @@ function OfficeStaffClaimsPageContent() {
                               
                               if (paymentReceiptFile) {
                                 const convertToBase64 = (file: File): Promise<string> => {
-                                  return new Promise((resolve, reject) => {
-                                    const reader = new FileReader();
-                                    reader.readAsDataURL(file);
-                                    reader.onload = () => resolve(reader.result as string);
-                                    reader.onerror = error => reject(error);
-                                  });
+                                  return compressImage(file);
                                 };
                                 receiptBase64 = await convertToBase64(paymentReceiptFile);
                               }

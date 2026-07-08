@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import LoginFooter from "@/app/Components/Login/Footer";
 
+import { compressImage } from "../../utils/imageCompressor";
+
 export default function SignUpPage2() {
   const router = useRouter();
   const [validationError, setValidationError] = useState("");
@@ -63,10 +65,9 @@ export default function SignUpPage2() {
   }, []);
 
   // Simulating File Upload Progress & converting to base64
-  const simulateUpload = (type: "front" | "back" | "vehicleReg" | "revenueLicense", file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
+  const simulateUpload = async (type: "front" | "back" | "vehicleReg" | "revenueLicense", file: File) => {
+    try {
+      const base64String = await compressImage(file);
       if (type === "front") {
         setNicFront(file);
         setNicFrontStatus("uploading");
@@ -140,8 +141,9 @@ export default function SignUpPage2() {
           setRevenueLicenseProgress(progress);
         }, 100);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Image compression error:", err);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent) => {

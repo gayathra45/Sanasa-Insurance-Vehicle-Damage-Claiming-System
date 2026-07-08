@@ -6,6 +6,7 @@ import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { API_URL } from "@/app/config";
+import { compressImage } from "../../../utils/imageCompressor";
 
 interface FileUploadState {
   files: File[];
@@ -115,16 +116,9 @@ export default function UploadDocumentsPage() {
       return;
     }
 
-    // Convert helper: File -> base64
+    // Convert helper: File -> base64 with compression
     const convertFilesToBase64 = async (files: File[]): Promise<string[]> => {
-      const promises = files.map((file) => {
-        return new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = (err) => reject(err);
-          reader.readAsDataURL(file);
-        });
-      });
+      const promises = files.map((file) => compressImage(file));
       return Promise.all(promises);
     };
 

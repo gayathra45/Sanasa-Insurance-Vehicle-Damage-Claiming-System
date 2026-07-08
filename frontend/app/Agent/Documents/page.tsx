@@ -5,6 +5,7 @@ import Navbar from "@/app/Components/Agent/Navbar";
 import Footer from "@/app/Components/Agent/Footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import { compressImage } from "../../utils/imageCompressor";
 
 interface AdditionalDoc {
   name: string;
@@ -276,12 +277,7 @@ export default function AgentDocuments() {
     setIsUploading(true);
 
     const convertToBase64 = (file: File): Promise<string> => {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-      });
+      return compressImage(file);
     };
 
     try {

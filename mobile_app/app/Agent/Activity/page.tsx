@@ -24,6 +24,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import AgentNavbar from "../../Components/Agent/page";
 import { API_BASE_URL } from "../../_config";
+import { compressImageMobile } from "../../../utils/imageCompressor";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -120,16 +121,13 @@ export default function AgentActivityPage() {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
-      quality: 0.6,
-      base64: true,
     });
     if (result.canceled || !result.assets || result.assets.length === 0) return;
     
     setIsUploadingDoc(true);
     try {
       const asset = result.assets[0];
-      const prefix = "data:image/jpeg;base64,";
-      const base64Data = asset.base64 ? `${prefix}${asset.base64}` : "";
+      const base64Data = await compressImageMobile(asset.uri);
       
       const res = await fetch(`${API_BASE_URL}/api/policy-holder/update-claim/${selectedClaim.claimNumber}`, {
         method: "PATCH",

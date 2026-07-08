@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Agent/Navbar";
 import Footer from "@/app/Components/Agent/Footer";
 import { API_URL } from "@/app/config";
+import { compressImage } from "../../utils/imageCompressor";
 
 interface ClaimMessage {
   sender: string;
@@ -603,12 +604,7 @@ export default function AgentMyClaims() {
     setIsAgentUploading(true);
     try {
       const convertToBase64 = (file: File): Promise<string> => {
-        return new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = error => reject(error);
-        });
+        return compressImage(file);
       };
       const base64 = await convertToBase64(agentUploadFile);
       const res = await fetch(`${API_URL}/policy-holder/update-claim/${selectedClaim.claimNumber}`, {
