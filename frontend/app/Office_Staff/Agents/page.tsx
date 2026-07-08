@@ -163,7 +163,7 @@ export default function AgentsPage() {
       {/* Modal Dialog */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up">
             {/* Modal Header */}
             <div className="bg-amber-500 px-6 py-4 flex justify-between items-center text-white select-none">
               <h2 className="font-bold text-lg">Register New Insurance Agent</h2>
