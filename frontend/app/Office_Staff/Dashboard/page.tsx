@@ -302,7 +302,7 @@ export default function OfficeStaffDashboard() {
                           return (
                             <div
                               key={index}
-                              className={`bg-white border-2 ${cardBorderClass} rounded-[24px] p-6 flex flex-col relative max-w-[560px] w-full`}
+                              className={`bg-white border-2 ${cardBorderClass} rounded-[24px] p-6 flex flex-col relative max-w-[450px] w-full`}
                             >
                               {/* Title Header */}
                               <span className={`font-black text-base ${headerTextClass} mb-4`}>
