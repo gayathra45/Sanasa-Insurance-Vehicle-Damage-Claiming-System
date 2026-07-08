@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { getNearestBranch } from "../utils/branch.js";
+import { sendEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -44,6 +45,12 @@ router.post("/new-claim", async (req, res) => {
 
     if (!userNic || !vehiclePlate || !incidentDate || !incidentTime || !damageType || !description || !location) {
       return res.status(400).json({ error: "All required claim details must be provided." });
+    }
+
+    const cleanNic = userNic.trim();
+    const user = await User.findOne({ nic: cleanNic });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder with this NIC not found." });
     }
 
     // Generate next sequential claim ID (CLM-0000-0001)
@@ -96,6 +103,103 @@ router.post("/new-claim", async (req, res) => {
     });
 
     await newClaim.save();
+
+    // Send confirmation emails
+    const branchName = getNearestBranch(location);
+    const policyHolderEmail = user.email;
+    const branchEmail = `${branchName.toLowerCase().trim()}@gmail.com`;
+
+    const policyHolderHtml = `
+      <div style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #0f2d4a; border-bottom: 2px solid #0f2d4a; padding-bottom: 10px;">Claim Submitted Successfully</h2>
+        <p>Dear ${user.firstName} ${user.lastName},</p>
+        <p>Your accident claim has been received and is currently under review by our office staff. Below are your claim details:</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee; width: 150px;">Claim Number:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; color: #0f2d4a; font-weight: bold;">${nextClaimNum}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Vehicle Plate:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${vehiclePlate}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Incident Date:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${incidentDate}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Incident Time:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${incidentTime}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Damage Type:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${damageType}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Location:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${location}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Assigned Branch:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${branchName}</td>
+          </tr>
+        </table>
+        <p>We will assign an agent to inspect the vehicle soon. You will receive updates via the Sanasa Insurance app.</p>
+        <p style="margin-top: 30px; font-size: 12px; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 10px;">
+          This is an automated notification. Please do not reply directly to this email.
+        </p>
+      </div>
+    `;
+
+    const branchHtml = `
+      <div style="font-family: sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+        <h2 style="color: #2b6cb0; border-bottom: 2px solid #2b6cb0; padding-bottom: 10px;">New Claim Submitted Alert</h2>
+        <p>Dear Office Staff,</p>
+        <p>A new claim has been submitted that falls under your branch (<strong>${branchName}</strong>). Please review the details below and assign an agent:</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee; width: 150px;">Claim Number:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; color: #2b6cb0; font-weight: bold;">${nextClaimNum}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Policy Holder:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${user.firstName} ${user.lastName} (NIC: ${cleanNic})</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Vehicle Plate:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${vehiclePlate}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Incident Date/Time:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${incidentDate} at ${incidentTime}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #eee;">Location:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${location}</td>
+          </tr>
+        </table>
+        <p>Please log in to the Sanasa Insurance Staff Portal to process this claim.</p>
+      </div>
+    `;
+
+    try {
+      await Promise.all([
+        sendEmail(
+          policyHolderEmail,
+          `Claim Submitted Successfully — ${nextClaimNum}`,
+          policyHolderHtml,
+          `Dear ${user.firstName}, your claim ${nextClaimNum} has been successfully submitted.`
+        ),
+        sendEmail(
+          branchEmail,
+          `[New Claim Alert] ${nextClaimNum} - ${branchName} Branch`,
+          branchHtml,
+          `A new claim ${nextClaimNum} has been submitted for your branch.`
+        )
+      ]);
+    } catch (emailErr) {
+      console.error("⚠️ Failed to send claim submission emails:", emailErr.message);
+    }
 
     res.status(201).json({
       message: "Claim submitted successfully",
