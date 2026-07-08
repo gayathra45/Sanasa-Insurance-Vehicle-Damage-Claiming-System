@@ -302,48 +302,49 @@ export default function OfficeStaffDashboard() {
                           return (
                             <div
                               key={index}
-                              className={`bg-white border-2 ${cardBorderClass} rounded-[24px] p-6 flex flex-col relative max-w-[450px] w-full`}
+                              className={`bg-white border-2 ${cardBorderClass} rounded-[20px] px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-6 w-full max-w-full`}
                             >
-                              {/* Title Header */}
-                              <span className={`font-black text-base ${headerTextClass} mb-4`}>
-                                {claim.urgency} - {claim.id}
-                              </span>
-
-                              {/* Flex Container for details and buttons */}
-                              <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
-                                
-                                {/* Claim Specifications */}
-                                <div className="flex flex-col text-slate-500 text-sm font-semibold gap-1 min-w-0 flex-1">
-                                  <div className="flex">
-                                    <span className="w-28 flex-shrink-0">Vehicle No</span>
-                                    <span>- {claim.vehicleNo}</span>
-                                  </div>
-                                  <div className="flex">
-                                    <span className="w-28 flex-shrink-0">Type</span>
-                                    <span>- {claim.type}</span>
-                                  </div>
-                                  <div className="flex">
-                                    <span className="w-28 flex-shrink-0">Location</span>
-                                    <span>- {claim.location}</span>
-                                  </div>
+                              {/* Left / Info Group */}
+                              <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 flex-1 min-w-0">
+                                {/* Title / Urgency */}
+                                <div className="flex-shrink-0">
+                                  <span className={`font-black text-base ${headerTextClass} block`}>
+                                    {claim.urgency}
+                                  </span>
+                                  <span className="text-[11px] font-extrabold text-slate-400 block tracking-wider uppercase">
+                                    {claim.id}
+                                  </span>
                                 </div>
 
-                                {/* Action Buttons */}
-                                <div className="flex flex-row md:flex-col gap-3 self-end md:self-auto flex-shrink-0 w-28">
-                                  <button
-                                    onClick={() => setSelectedClaim(claim.rawClaim)}
-                                    className="w-full bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-[13px] py-2.5 rounded-full transition-all tracking-wide cursor-pointer focus:outline-none shadow-sm shadow-slate-500/20 whitespace-nowrap text-center"
-                                  >
-                                    Details
-                                  </button>
+                                {/* Specifications Row */}
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-slate-600 text-xs font-bold flex-1">
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Vehicle No</span>
+                                    <span className="text-slate-800">{claim.vehicleNo}</span>
+                                  </div>
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Type</span>
+                                    <span className="text-slate-800">{claim.type}</span>
+                                  </div>
+                                  <div className="flex flex-col gap-0.5 col-span-2 sm:col-span-1">
+                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Location</span>
+                                    <span className="text-slate-800 truncate" title={claim.location}>{claim.location}</span>
+                                  </div>
                                 </div>
-
                               </div>
 
-                              {/* Timestamp bottom-right */}
-                              <span className="text-[11px] text-slate-400 font-bold self-end mt-4">
-                                {claim.time}
-                              </span>
+                              {/* Right / Buttons & Time */}
+                              <div className="flex items-center gap-5 flex-shrink-0">
+                                <span className="text-[11px] text-slate-400 font-bold select-none">
+                                  {claim.time}
+                                </span>
+                                <button
+                                  onClick={() => setSelectedClaim(claim.rawClaim)}
+                                  className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-[13px] px-6 py-2.5 rounded-full transition-all tracking-wide cursor-pointer focus:outline-none shadow-sm shadow-slate-500/20 whitespace-nowrap text-center border-none"
+                                >
+                                  Details
+                                </button>
+                              </div>
                             </div>
                           );
                         })}
