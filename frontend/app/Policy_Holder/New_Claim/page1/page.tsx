@@ -359,7 +359,7 @@ export default function UploadDocumentsPage() {
               type="submit"
               className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center"
             >
-              Submit &gt;
+              Submit
             </button>
           </div>
 
