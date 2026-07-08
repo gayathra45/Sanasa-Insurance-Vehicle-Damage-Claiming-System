@@ -15,11 +15,11 @@ export default function AgentsPage() {
 
   // Modal / Form states
   const [showModal, setShowModal] = useState(false);
-  const [customPopup, setCustomPopup] = useState<{
+      const [customPopup, setCustomPopup] = useState<{
     show: boolean;
     title: string;
     message: string;
-    type: "alert" | "confirm";
+    type?: "alert" | "confirm" | "success" | "error";
     onConfirm?: () => void;
   }>({ show: false, title: "", message: "", type: "alert" });
   const [formData, setFormData] = useState({
@@ -526,54 +526,72 @@ export default function AgentsPage() {
         </div>
       )}
 
-      {/* Custom Popup Modal */}
+                  {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-slate-150 overflow-hidden transform scale-100 transition-all animate-scale-up text-left">
-            <div className="bg-[#0f2d3a] px-6 py-4 flex items-center gap-2.5 text-white select-none">
-              {customPopup.type === "confirm" ? (
-                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
+            
+            {/* Header/Title with clean inline icon */}
+            <div className="flex items-center gap-3.5">
+              {customPopup.type === "success" ? (
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              ) : customPopup.type === "confirm" ? (
+                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
               ) : (
-                <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
               )}
-              <h3 className="font-extrabold text-sm tracking-tight">{customPopup.title}</h3>
+              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
+                {customPopup.title}
+              </h3>
             </div>
-            <div className="p-6">
-              <p className="text-slate-600 text-sm font-semibold leading-relaxed">
+
+            {/* Message Body */}
+            <div>
+              <p className="text-slate-500 text-[13px] font-semibold leading-relaxed">
                 {customPopup.message}
               </p>
-              <div className="flex justify-end gap-3 mt-6 select-none">
-                {customPopup.type === "confirm" ? (
-                  <>
-                    <button
-                      onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                      className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={() => {
-                        setCustomPopup({ ...customPopup, show: false });
-                        if (customPopup.onConfirm) customPopup.onConfirm();
-                      }}
-                      className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
-                    >
-                      Confirm
-                    </button>
-                  </>
-                ) : (
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex justify-end gap-2.5 mt-2 select-none">
+              {customPopup.type === "confirm" ? (
+                <>
                   <button
                     onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                    className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
                   >
-                    OK
+                    Cancel
                   </button>
-                )}
-              </div>
+                  <button
+                    onClick={() => {
+                      setCustomPopup({ ...customPopup, show: false });
+                      if (customPopup.onConfirm) customPopup.onConfirm();
+                    }}
+                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  >
+                    Confirm
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                >
+                  OK
+                </button>
+              )}
             </div>
           </div>
         </div>
