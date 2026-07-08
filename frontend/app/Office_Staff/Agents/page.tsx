@@ -4,18 +4,22 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
 
+/**
+ * AgentsPage Component
+ * Provides a management workbench to search, register, view, and delete Insurance Agents assigned to the office branch.
+ */
 export default function AgentsPage() {
   const router = useRouter();
+
+  // --- UI Display & Search States ---
   const [branch, setBranch] = useState("");
-  
-  // Data list states
   const [agents, setAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Modal / Form states
+  // --- Modal / Form Registration States ---
   const [showModal, setShowModal] = useState(false);
-      const [customPopup, setCustomPopup] = useState<{
+  const [customPopup, setCustomPopup] = useState<{
     show: boolean;
     title: string;
     message: string;
@@ -34,7 +38,8 @@ export default function AgentsPage() {
   const [formSuccess, setFormSuccess] = useState("");
   const [submittingAgent, setSubmittingAgent] = useState(false);
 
-  // Load agents from backend
+  // --- Data Loading Operations ---
+  // Loads all registered Insurance Agents belonging to the specific branch.
   const loadAgents = async (branchName: string) => {
     try {
       setLoading(true);
@@ -51,6 +56,8 @@ export default function AgentsPage() {
     }
   };
 
+  // --- Lifecycle Effects ---
+  // Restores session details and triggers data load on mounting.
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedStaff = sessionStorage.getItem("logged_in_staff");

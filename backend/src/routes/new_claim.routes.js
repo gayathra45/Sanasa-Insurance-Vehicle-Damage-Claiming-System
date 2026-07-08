@@ -1,3 +1,9 @@
+/**
+ * New Claim Router
+ * Handles policy holder vehicle profile lookups and accident claim submissions,
+ * including automated nearest branch assignment, sequential ID generation,
+ * and base64 image parsing + Cloudinary storage uploads.
+ */
 import express from "express";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
@@ -6,6 +12,10 @@ import { getNearestBranch } from "../utils/branch.js";
 import { sendEmail } from "../utils/email.js";
 
 const router = express.Router();
+
+// ==========================================
+// --- API: Vehicle Lookup ---
+// ==========================================
 
 // 1. Fetch user's registered vehicles list
 router.get("/vehicles", async (req, res) => {

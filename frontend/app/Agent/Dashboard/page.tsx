@@ -33,19 +33,29 @@ interface Claim {
   messages: ClaimMessage[];
 }
 
+/**
+ * AgentDashboard Component
+ * The main workbench for Insurance Agents.
+ * Allows viewing assigned claims, submitting assessment estimations, and communicating with Policy Holders.
+ */
 export default function AgentDashboard() {
   const router = useRouter();
+
+  // --- Profile & UI Display States ---
   const [agentName, setAgentName] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [showSupportChat, setShowSupportChat] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
   const [chatLogs, setChatLogs] = useState<{ sender: string; text: string }[]>([]);
 
+  // --- Claim Data States ---
   const [claims, setClaims] = useState<Claim[]>([]);
   const [agentEmail, setAgentEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [assessmentAmount, setAssessmentAmount] = useState<string>("");
-      const [customPopup, setCustomPopup] = useState<{
+
+  // --- Custom Dialog Notification Modal State ---
+  const [customPopup, setCustomPopup] = useState<{
     show: boolean;
     title: string;
     message: string;
@@ -53,6 +63,8 @@ export default function AgentDashboard() {
     onConfirm?: () => void;
   }>({ show: false, title: "", message: "", type: "alert" });
 
+  // --- Data Loading Operations ---
+  // Retrieves assigned claims from the database using the logged-in agent's email address.
   const fetchClaims = async (email: string) => {
     try {
       setLoading(true);
@@ -67,6 +79,8 @@ export default function AgentDashboard() {
     }
   };
 
+  // --- Lifecycle Effects ---
+  // Authenticate session and load claims on mounting.
   useEffect(() => {
     const agentData = sessionStorage.getItem("logged_in_agent");
     if (!agentData) {
@@ -86,12 +100,15 @@ export default function AgentDashboard() {
     }
   }, []);
 
+  // Update input text estimation value when active selection claim changes.
   useEffect(() => {
     if (selectedClaim) {
       setAssessmentAmount(selectedClaim.amount ? String(selectedClaim.amount) : "");
     }
   }, [selectedClaim]);
 
+  // --- Helper Methods ---
+  // Derives urgency classification based on damage categorization.
   const getSeverity = (damageType: string): "Urgent" | "Medium" | "Low" => {
     const type = (damageType || "").toLowerCase();
     if (type.includes("fire")) return "Urgent";
@@ -113,6 +130,8 @@ export default function AgentDashboard() {
 
 
 
+  // --- Claim Status Operations ---
+  // Submits the finalized assessment amount to the API and updates the claim status to Approved.
   const handleApproveAssessment = async (claimId: string) => {
     try {
       const numAmount = parseFloat(assessmentAmount);
@@ -139,6 +158,8 @@ export default function AgentDashboard() {
     }
   };
 
+  // --- Real-time Helpdesk Logs ---
+  // Simulates chat dialog records with the Support Staff service.
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;

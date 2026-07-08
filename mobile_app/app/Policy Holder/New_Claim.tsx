@@ -42,14 +42,20 @@ interface PhotoState {
   base64: string;
 }
 
+/**
+ * FileNewClaim Screen (Policy Holder)
+ * A multi-step form wizard layout that guides the policy holder to select a vehicle, input incident info,
+ * pin coordinates location (with autocomplete address search & GPS capability), and upload compressed license / accident photographs.
+ */
 export default function FileNewClaim() {
+  // --- Profile & Vehicle Context ---
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [userNic, setUserNic] = useState("");
 
-  // Wizard Steps
+  // --- Wizard Form Navigation ---
   const [currentStep, setCurrentStep] = useState(1);
 
-  // Form Fields State
+  // --- Step 1: Incident Specifications & Coordinate Pin ---
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [incidentDate, setIncidentDate] = useState("");
   const [incidentTime, setIncidentTime] = useState("");
@@ -59,30 +65,31 @@ export default function FileNewClaim() {
   const [latitude, setLatitude] = useState(6.9271);
   const [longitude, setLongitude] = useState(79.8612);
 
-  // Search suggestion state variables
+  // --- Location Autocomplete Suggestion Controllers ---
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResultsDropdown, setShowResultsDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isUserTyping, setIsUserTyping] = useState(false);
   const isRestored = useRef(false);
 
-  // Loading States
+  // --- Operations Loading States ---
   const [isVehiclesLoading, setIsVehiclesLoading] = useState(true);
   const [isLocating, setIsLocating] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Success Modal States
+  // --- Modals Display Flags ---
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [generatedClaimNumber, setGeneratedClaimNumber] = useState("");
   const [showMapModal, setShowMapModal] = useState(false);
 
-  // Photo uploads
+  // --- Step 2: Photo Attachment Storage ---
   const [accidentFront, setAccidentFront] = useState<PhotoState | null>(null);
   const [accidentRear, setAccidentRear] = useState<PhotoState | null>(null);
   const [accidentSide, setAccidentSide] = useState<PhotoState | null>(null);
   const [licenseFront, setLicenseFront] = useState<PhotoState | null>(null);
   const [licenseRear, setLicenseRear] = useState<PhotoState | null>(null);
 
+  // --- Constant Data Configurations ---
   const damageTypes = [
     "Front Bumper / Grille Damage",
     "Rear Bumper Damage",

@@ -7,12 +7,21 @@ import Navbar from "@/app/Components/Homepage/Navbar";
 import Footer from "@/app/Components/Login/Footer";
 import { API_URL } from "@/app/config";
 
+/**
+ * Login Component
+ * Handles user authentication for all roles (Policy Holders, Insurance Agents, Office Staff, and Admins).
+ * Uses session storage to persist user context upon successful authentication.
+ */
 export default function Login() {
   const router = useRouter();
+
+  // --- Input State & UI Controls ---
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-    const [customPopup, setCustomPopup] = useState<{
+
+  // --- Custom Dialog Popup State ---
+  const [customPopup, setCustomPopup] = useState<{
     show: boolean;
     title: string;
     message: string;
@@ -20,12 +29,16 @@ export default function Login() {
     onConfirm?: () => void;
   }>({ show: false, title: "", message: "", type: "alert" });
 
+  // --- Lifecycle Effects ---
+  // Reset any existing session context on mount to guarantee fresh credentials state.
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       sessionStorage.clear();
     }
   }, []);
 
+  // --- Authentication Submission ---
+  // Sends the user credentials to the authentication service and checks their authorized system role.
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
     try {

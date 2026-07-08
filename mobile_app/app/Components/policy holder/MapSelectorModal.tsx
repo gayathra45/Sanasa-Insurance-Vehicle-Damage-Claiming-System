@@ -289,10 +289,18 @@ const getHtmlContent = (lat: number, lon: number) => `
 
 const WebViewComponent = WebView as any;
 
+/**
+ * MapSelectorModal Component
+ * Renders an interactive Leaflet map overlay inside a native WebView or web iframe,
+ * allowing users to drag a pin or search locations to select exact accident coordinates.
+ */
 export default function MapSelectorModal({ visible, onClose, latitude, longitude, onLocationSelect }: MapSelectorModalProps) {
+  // --- Selected Coordinates & UI Display States ---
   const [tempCoords, setTempCoords] = useState({ latitude, longitude });
   const [modalAddress, setModalAddress] = useState("Loading address...");
   const [isLocating, setIsLocating] = useState(false);
+
+  // --- Search Autocomplete Suggestion Controllers ---
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResultsDropdown, setShowResultsDropdown] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
@@ -300,7 +308,7 @@ export default function MapSelectorModal({ visible, onClose, latitude, longitude
   const webViewRef = React.useRef<any>(null);
   const htmlContent = getHtmlContent(latitude, longitude);
 
-  // Autocomplete suggestions debouncer
+  // --- Autocomplete Suggestions Debouncer ---
   React.useEffect(() => {
     if (!isUserTyping || !modalAddress || modalAddress.trim() === "" || modalAddress === "Loading address..." || modalAddress.startsWith("Loading")) {
       return;

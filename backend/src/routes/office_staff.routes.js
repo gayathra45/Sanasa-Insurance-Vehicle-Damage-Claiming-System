@@ -1,3 +1,8 @@
+/**
+ * Office Staff Router
+ * Handles endpoints for Office Staff login, dashboard statistics calculation,
+ * registration verification, and agent management operations.
+ */
 import express from "express";
 import OfficeStaff from "../models/office_staff.model.js";
 import User from "../models/user.model.js";
@@ -7,6 +12,10 @@ import Admin from "../models/admin.model.js";
 import { hashPassword } from "../utils/crypto.js";
 
 const router = express.Router();
+
+// ==========================================
+// --- API: Authentication ---
+// ==========================================
 
 // POST login: /api/office-staff/login
 router.post("/login", async (req, res) => {

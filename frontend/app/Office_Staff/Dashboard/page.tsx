@@ -9,7 +9,13 @@ interface RegistrationItem {
   date: string;
 }
 
+/**
+ * OfficeStaffDashboard Component
+ * The central overview console for Office Staff. Displays unassigned claims, recent registrations,
+ * and high-level branch metrics (active/pending claims).
+ */
 export default function OfficeStaffDashboard() {
+  // --- Dashboard State Hooks ---
   const [branch, setBranch] = useState("Galle");
   const [stats, setStats] = useState({
     unassignedClaims: 0,
@@ -23,6 +29,8 @@ export default function OfficeStaffDashboard() {
   const [error, setError] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
 
+  // --- Utility Helper Functions ---
+  // Returns true if the claim has attributes indicating urgent attention is required.
   const checkUrgent = (claim: any) => {
     return (
       claim.damageType?.toLowerCase().includes("severe") ||
@@ -32,6 +40,7 @@ export default function OfficeStaffDashboard() {
     );
   };
 
+  // --- Side Effects & API Calls ---
   useEffect(() => {
     let currentBranch = "Galle";
     if (typeof window !== "undefined") {
