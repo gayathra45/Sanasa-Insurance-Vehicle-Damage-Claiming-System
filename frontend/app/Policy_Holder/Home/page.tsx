@@ -551,7 +551,7 @@ export default function PolicyHolderHome() {
           <div className="lg:col-span-7">
             <div className="flex items-center gap-2.5 mb-6 select-none">
               <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 01-1.678-2.34a11.987 11.987 0 001.951-5.719c0-3.008-1.95-5.562-4.688-6.48a3.375 3.375 0 00-6.624 0C5.55 2.688 3.6 5.242 3.6 8.25c0 3.282-1.076 6.302-2.909 8.74a.75.75 0 00.616 1.201h17.914a.75.75 0 00.616-1.201a11.97 11.97 0 00-1.837-1.836M12 21a3.375 3.375 0 01-3.375-3.375h6.75A3.375 3.375 0 0112 21z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 0 1-1.678-2.34a11.987 11.987 0 0 0 1.951-5.719c0-3.008-1.95-5.562-4.688-6.48a3.375 3.375 0 0 0-6.624 0C5.55 2.688 3.6 5.242 3.6 8.25c0 3.282-1.076 6.302-2.909 8.74a.75.75 0 0 0 .616 1.201h17.914a.75.75 0 0 0 .616-1.201a11.97 11.97 0 0 0-1.837-1.836M12 21a3.375 3.375 0 0 1-3.375-3.375h6.75A3.375 3.375 0 0 1 12 21Z" />
               </svg>
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
                 Notifications & Reminders
