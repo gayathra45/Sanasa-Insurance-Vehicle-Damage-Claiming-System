@@ -159,30 +159,54 @@ export default function FileNewClaim() {
 
   const reverseGeocode = async (lat: number, lon: number) => {
     try {
-      const addressArray = await Location.reverseGeocodeAsync({
-        latitude: lat,
-        longitude: lon
-      });
+      let fullAddress = "";
+      
+      try {
+        const addressArray = await Location.reverseGeocodeAsync({
+          latitude: lat,
+          longitude: lon
+        });
 
-      if (addressArray && addressArray.length > 0) {
-        const item = addressArray[0];
-        const street = item.street || "";
-        const city = item.city || item.subregion || "";
-        const district = item.district || "";
-        const country = item.country || "";
-        
-        let fullAddress = "";
-        if (street) fullAddress += `${street}, `;
-        if (district) fullAddress += `${district}, `;
-        if (city) fullAddress += `${city}, `;
-        if (country) fullAddress += country;
-
-        // Clean up trailing comma/space
-        fullAddress = fullAddress.trim().replace(/,\s*$/, "");
-        setAddress(fullAddress || `${lat.toFixed(6)}, ${lon.toFixed(6)}`);
-      } else {
-        setAddress(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+        if (addressArray && addressArray.length > 0) {
+          const item = addressArray[0];
+          const name = item.name || "";
+          const street = item.street || "";
+          const subregion = item.subregion || "";
+          const city = item.city || "";
+          const district = item.district || "";
+          const region = item.region || "";
+          const country = item.country || "";
+          
+          let parts = [];
+          if (name && name !== street) parts.push(name);
+          if (street) parts.push(street);
+          if (subregion) parts.push(subregion);
+          if (city) parts.push(city);
+          if (district) parts.push(district);
+          if (region) parts.push(region);
+          if (country) parts.push(country);
+          
+          const uniqueParts = [...new Set(parts.map(p => p.trim()))].filter(p => p.length > 0);
+          fullAddress = uniqueParts.join(", ");
+        }
+      } catch (locErr) {
+        console.warn("Native reverse geocoding failed, trying Nominatim fallback...", locErr);
       }
+
+      const isNumbersOnly = /^\d+[\s,.\d-]*$/.test(fullAddress.trim());
+      if (!fullAddress || isNumbersOnly) {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&accept-language=en`, {
+          headers: {
+            "User-Agent": "SanasaInsuranceMobileApp/1.0 (contact: support@sanasainsurance.lk)"
+          }
+        });
+        const data = await res.json();
+        if (data && data.display_name) {
+          fullAddress = data.display_name;
+        }
+      }
+
+      setAddress(fullAddress || `${lat.toFixed(6)}, ${lon.toFixed(6)}`);
     } catch (e) {
       console.warn("Reverse geocoding error:", e);
       setAddress(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
