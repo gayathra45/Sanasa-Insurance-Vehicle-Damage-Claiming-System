@@ -401,7 +401,7 @@ export default function OfficeStaffDashboard() {
 
       {selectedClaim && (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[24px] border border-slate-150 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden text-slate-800 text-left">
+          <div className="bg-white rounded-[24px] border border-slate-150 w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden text-slate-800 text-left">
             {/* Header */}
             <div className="px-6 pt-6 pb-4 flex justify-between items-center border-b border-slate-100">
               <h3 className="text-lg font-black text-slate-800 tracking-tight">
