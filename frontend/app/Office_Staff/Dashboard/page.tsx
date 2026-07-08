@@ -9,6 +9,16 @@ interface RegistrationItem {
   date: string;
 }
 
+// Returns true if the claim has attributes indicating urgent attention is required.
+const checkUrgent = (claim: any) => {
+  return (
+    claim.damageType?.toLowerCase().includes("severe") ||
+    claim.description?.toLowerCase().includes("urgent") ||
+    claim.priority?.toLowerCase() === "high" ||
+    claim.priority?.toLowerCase() === "urgent"
+  );
+};
+
 /**
  * OfficeStaffDashboard Component
  * The central overview console for Office Staff. Displays unassigned claims, recent registrations,
@@ -28,17 +38,6 @@ export default function OfficeStaffDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
-
-  // --- Utility Helper Functions ---
-  // Returns true if the claim has attributes indicating urgent attention is required.
-  const checkUrgent = (claim: any) => {
-    return (
-      claim.damageType?.toLowerCase().includes("severe") ||
-      claim.description?.toLowerCase().includes("urgent") ||
-      claim.priority?.toLowerCase() === "high" ||
-      claim.priority?.toLowerCase() === "urgent"
-    );
-  };
 
   // --- Side Effects & API Calls ---
   useEffect(() => {

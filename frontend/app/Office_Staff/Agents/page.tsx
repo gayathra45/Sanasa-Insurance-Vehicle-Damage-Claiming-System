@@ -4,6 +4,18 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
 
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return "-";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch {
+    return dateStr;
+  }
+};
+
 /**
  * AgentsPage Component
  * Provides a management workbench to search, register, view, and delete Insurance Agents assigned to the office branch.
@@ -38,24 +50,6 @@ export default function AgentsPage() {
   const [formSuccess, setFormSuccess] = useState("");
   const [submittingAgent, setSubmittingAgent] = useState(false);
 
-  // --- Data Loading Operations ---
-  // Loads all registered Insurance Agents belonging to the specific branch.
-  const loadAgents = async (branchName: string) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/office-staff/agents?branch=${encodeURIComponent(branchName)}`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch agents.");
-      }
-      const data = await res.json();
-      setAgents(data.agents || []);
-    } catch (err: any) {
-      console.error("Error loading agents:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // --- Lifecycle Effects ---
   // Restores session details and triggers data load on mounting.
   useEffect(() => {
@@ -81,6 +75,26 @@ export default function AgentsPage() {
       }
     }
   }, [router]);
+
+  // --- Data Loading Operations ---
+  // Loads all registered Insurance Agents belonging to the specific branch.
+  const loadAgents = async (branchName: string) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`http://localhost:5000/api/office-staff/agents?branch=${encodeURIComponent(branchName)}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch agents.");
+      }
+      const data = await res.json();
+      setAgents(data.agents || []);
+    } catch (err: any) {
+      console.error("Error loading agents:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Event Handlers & Submissions ---
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,18 +194,6 @@ export default function AgentsPage() {
       agent.address?.toLowerCase().includes(q)
     );
   });
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "-";
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
-    } catch {
-      return dateStr;
-    }
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans">

@@ -65,20 +65,6 @@ export default function AgentDashboard() {
 
   // --- Data Loading Operations ---
   // Retrieves assigned claims from the database using the logged-in agent's email address.
-  const fetchClaims = async (email: string) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/agent/claims?email=${email}`);
-      if (!res.ok) throw new Error("Failed to fetch claims");
-      const data = await res.json();
-      setClaims(data);
-    } catch (e) {
-      console.error("Fetch claims error:", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // --- Lifecycle Effects ---
   // Authenticate session and load claims on mounting.
   useEffect(() => {
@@ -106,6 +92,22 @@ export default function AgentDashboard() {
       setAssessmentAmount(selectedClaim.amount ? String(selectedClaim.amount) : "");
     }
   }, [selectedClaim]);
+
+  // --- Data Loading Operations ---
+  // Retrieves assigned claims from the database using the logged-in agent's email address.
+  const fetchClaims = async (email: string) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`http://localhost:5000/api/agent/claims?email=${email}`);
+      if (!res.ok) throw new Error("Failed to fetch claims");
+      const data = await res.json();
+      setClaims(data);
+    } catch (e) {
+      console.error("Fetch claims error:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- Helper Methods ---
   // Derives urgency classification based on damage categorization.
