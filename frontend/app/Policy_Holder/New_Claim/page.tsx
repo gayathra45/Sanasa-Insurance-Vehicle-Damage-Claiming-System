@@ -244,6 +244,7 @@ export default function FileNewClaim() {
         const lon = parseFloat(data[0].lon);
         setLatitude(lat);
         setLongitude(lon);
+        setInitialCoords({ latitude: lat, longitude: lon });
         setAddress(data[0].display_name);
         
         // Update map iframe
@@ -305,6 +306,7 @@ export default function FileNewClaim() {
         const { latitude: lat, longitude: lon } = position.coords;
         setLatitude(lat);
         setLongitude(lon);
+        setInitialCoords({ latitude: lat, longitude: lon });
 
         // Update map iframe marker location
         const iframe = document.getElementById("map-iframe") as HTMLIFrameElement;
@@ -593,6 +595,7 @@ export default function FileNewClaim() {
                           const lon = parseFloat(result.lon);
                           setLatitude(lat);
                           setLongitude(lon);
+                          setInitialCoords({ latitude: lat, longitude: lon });
                           setAddress(result.display_name);
                           setIsUserTyping(false);
                           setShowResultsDropdown(false);
@@ -833,6 +836,7 @@ export default function FileNewClaim() {
                     <button
                       type="button"
                       onClick={() => {
+                        setInitialCoords({ latitude, longitude });
                         setModalInitialCoords(null);
                         setShowMapModal(false);
                       }}
