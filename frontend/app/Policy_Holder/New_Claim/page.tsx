@@ -665,8 +665,11 @@ export default function FileNewClaim() {
           
           {/* Section 1: Vehicle & Incident */}
           <section className="flex flex-col gap-6">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-5 mt-4 select-none">
-              Vehicle & Incident <span className="font-semibold text-2xl text-[#0d2a3a]">&gt;</span>
+            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <svg className="w-7 h-7 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
+              </svg>
+              Vehicle & Incident
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -776,8 +779,12 @@ export default function FileNewClaim() {
 
           {/* Section 2: Incident Location */}
           <section className="flex flex-col gap-6 mt-8">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-5 mt-4 select-none">
-              Incident Location <span className="font-semibold text-2xl text-[#0d2a3a]">&gt;</span>
+            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <svg className="w-7 h-7 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              </svg>
+              Incident Location
             </h2>
 
             <div className="flex flex-col gap-2 relative">

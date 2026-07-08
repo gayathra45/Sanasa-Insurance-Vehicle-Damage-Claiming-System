@@ -313,8 +313,11 @@ export default function UploadDocumentsPage() {
           
           {/* Section: Upload Documents */}
           <section className="flex flex-col gap-8">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-5 mt-4 select-none">
-              Upload Documents <span className="font-semibold text-2xl text-[#0d2a3a]">&gt;</span>
+            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <svg className="w-7 h-7 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
+              </svg>
+              Upload Documents
             </h2>
 
             {/* Subsection 1: Accident Photos */}
