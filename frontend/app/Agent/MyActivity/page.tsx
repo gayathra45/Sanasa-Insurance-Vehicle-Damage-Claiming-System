@@ -2342,7 +2342,7 @@ export default function AgentActivityPage() {
                       </h3>
 
                       {attachments.length === 0 ? (
-                        <p className="text-xs text-slate-450 font-black italic select-none py-2">
+                        <p className="text-xs text-slate-500 font-bold italic select-none py-2">
                           No driving license or accident photos attached to this claim dossier.
                         </p>
                       ) : (
@@ -2390,7 +2390,7 @@ export default function AgentActivityPage() {
                       </h3>
 
                       {agentDocs.length === 0 ? (
-                        <p className="text-xs text-slate-450 font-black italic select-none py-2">
+                        <p className="text-xs text-slate-500 font-bold italic select-none py-2">
                           No repair estimates or assessment documents uploaded by the agent.
                         </p>
                       ) : (
