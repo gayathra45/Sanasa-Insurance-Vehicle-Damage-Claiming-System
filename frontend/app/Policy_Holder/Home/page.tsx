@@ -549,19 +549,13 @@ export default function PolicyHolderHome() {
           
           {/* Notifications Column */}
           <div className="lg:col-span-7">
-            <div className="flex items-center gap-2 mb-6 cursor-pointer group">
+            <div className="flex items-center gap-2.5 mb-6 select-none">
+              <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a9.04 9.04 0 01-1.397-1.836A11.986 11.986 0 0019.5 8.25c0-3.008-1.95-5.562-4.688-6.48a3.375 3.375 0 00-6.624 0C5.55 2.688 3.6 5.242 3.6 8.25c0 3.282-1.076 6.302-2.909 8.74a.75.75 0 00.616 1.201h17.914a.75.75 0 00.616-1.201a11.97 11.97 0 00-1.837-1.836M12 21a3.375 3.375 0 01-3.375-3.375h6.75A3.375 3.375 0 0112 21z" />
+              </svg>
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
                 Notifications & Reminders
               </h2>
-              <svg
-                className="w-5 h-5 text-slate-500 group-hover:translate-x-1 transition-transform"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-              </svg>
             </div>
 
             {/* Alert List */}
@@ -668,19 +662,13 @@ export default function PolicyHolderHome() {
           {/* Vehicles Column */}
           <div className="lg:col-span-5 flex flex-col gap-8">
             <div>
-              <Link href="/Policy_Holder/MyVehicles" className="flex items-center gap-2 mb-6 cursor-pointer group no-underline text-inherit select-none">
+              <Link href="/Policy_Holder/MyVehicles" className="flex items-center gap-2.5 mb-6 cursor-pointer group no-underline text-inherit select-none">
+                <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
+                </svg>
                 <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
                   My Vehicles
                 </h2>
-                <svg
-                  className="w-5 h-5 text-slate-500 group-hover:translate-x-1 transition-transform"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                </svg>
               </Link>
 
               {/* Vehicle List */}
