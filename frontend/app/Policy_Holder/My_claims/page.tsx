@@ -31,31 +31,58 @@ export default function MyClaims() {
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCancellingClaim, setIsCancellingClaim] = useState(false);
+  const [customPopup, setCustomPopup] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    type: "alert" | "confirm";
+    onConfirm?: () => void;
+  }>({ show: false, title: "", message: "", type: "alert" });
 
   const handleCancelClaim = async (claimNumber: string) => {
-    const confirmCancel = window.confirm("Are you sure you want to cancel and delete this claim? This action cannot be undone.");
-    if (!confirmCancel) return;
+    setCustomPopup({
+      show: true,
+      title: "Cancel Claim",
+      message: "Are you sure you want to cancel and delete this claim? This action cannot be undone.",
+      type: "confirm",
+      onConfirm: async () => {
+        setIsCancellingClaim(true);
+        try {
+          const res = await fetch(`${API_URL}/policy-holder/delete-claim/${encodeURIComponent(claimNumber)}`, {
+            method: "DELETE"
+          });
 
-    setIsCancellingClaim(true);
-    try {
-      const res = await fetch(`${API_URL}/policy-holder/delete-claim/${encodeURIComponent(claimNumber)}`, {
-        method: "DELETE"
-      });
-
-      if (res.ok) {
-        alert("Claim cancelled and deleted successfully!");
-        setSelectedClaim(null);
-        setClaims(prev => prev.filter(c => c.claimNumber !== claimNumber));
-      } else {
-        const data = await res.json();
-        alert(data.error || "Failed to cancel claim.");
+          if (res.ok) {
+            setCustomPopup({
+              show: true,
+              title: "Success",
+              message: "Claim cancelled and deleted successfully!",
+              type: "alert"
+            });
+            setSelectedClaim(null);
+            setClaims(prev => prev.filter(c => c.claimNumber !== claimNumber));
+          } else {
+            const data = await res.json();
+            setCustomPopup({
+              show: true,
+              title: "Error",
+              message: data.error || "Failed to cancel claim.",
+              type: "alert"
+            });
+          }
+        } catch (err) {
+          console.error(err);
+          setCustomPopup({
+            show: true,
+            title: "Error",
+            message: "An error occurred while trying to cancel the claim.",
+            type: "alert"
+          });
+        } finally {
+          setIsCancellingClaim(false);
+        }
       }
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred while trying to cancel the claim.");
-    } finally {
-      setIsCancellingClaim(false);
-    }
+    });
   };
 
   const getUserRequestedDocs = (claim: Claim): string[] => {
@@ -587,6 +614,59 @@ export default function MyClaims() {
           </div>
         );
       })()}
+
+      {/* Custom Popup Modal */}
+      {customPopup.show && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-slate-150 overflow-hidden transform scale-100 transition-all animate-scale-up text-left text-slate-800">
+            <div className="bg-[#0f2d3a] px-6 py-4 flex items-center gap-2.5 text-white select-none">
+              {customPopup.type === "confirm" ? (
+                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              <h3 className="font-extrabold text-sm tracking-tight">{customPopup.title}</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 text-sm font-semibold leading-relaxed">
+                {customPopup.message}
+              </p>
+              <div className="flex justify-end gap-3 mt-6 select-none">
+                {customPopup.type === "confirm" ? (
+                  <>
+                    <button
+                      onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                      className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCustomPopup({ ...customPopup, show: false });
+                        if (customPopup.onConfirm) customPopup.onConfirm();
+                      }}
+                      className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                    >
+                      Confirm
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                    className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  >
+                    OK
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <PolicyHolderFooter />
     </div>

@@ -48,6 +48,11 @@ export default function RegistrationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReg, setSelectedReg] = useState<Registration | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [customPopup, setCustomPopup] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+  }>({ show: false, title: "", message: "" });
 
   useEffect(() => {
     let currentBranch = "";
@@ -114,7 +119,7 @@ export default function RegistrationsPage() {
       }
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to update status.");
+      setCustomPopup({ show: true, title: "Error", message: err.message || "Failed to update status." });
     }
   };
 
@@ -518,6 +523,33 @@ export default function RegistrationsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Popup Modal */}
+      {customPopup.show && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-slate-150 overflow-hidden transform scale-100 transition-all animate-scale-up text-left">
+            <div className="bg-[#0f2d3a] px-6 py-4 flex items-center gap-2.5 text-white select-none">
+              <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="font-extrabold text-sm tracking-tight">{customPopup.title}</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 text-sm font-semibold leading-relaxed">
+                {customPopup.message}
+              </p>
+              <div className="flex justify-end mt-6 select-none">
+                <button
+                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

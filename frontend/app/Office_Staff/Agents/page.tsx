@@ -15,6 +15,13 @@ export default function AgentsPage() {
 
   // Modal / Form states
   const [showModal, setShowModal] = useState(false);
+  const [customPopup, setCustomPopup] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    type: "alert" | "confirm";
+    onConfirm?: () => void;
+  }>({ show: false, title: "", message: "", type: "alert" });
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -122,22 +129,37 @@ export default function AgentsPage() {
   };
 
   const handleDeleteAgent = async (agentId: string) => {
-    const confirmDelete = window.confirm("Are you sure you want to delete this agent? This action cannot be undone.");
-    if (!confirmDelete) return;
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/office-staff/agents/${agentId}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) {
-        throw new Error("Failed to delete agent.");
+    setCustomPopup({
+      show: true,
+      title: "Confirm Deletion",
+      message: "Are you sure you want to delete this agent? This action cannot be undone.",
+      type: "confirm",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/api/office-staff/agents/${agentId}`, {
+            method: "DELETE"
+          });
+          if (!res.ok) {
+            throw new Error("Failed to delete agent.");
+          }
+          setCustomPopup({
+            show: true,
+            title: "Success",
+            message: "Agent deleted successfully!",
+            type: "alert"
+          });
+          loadAgents(branch);
+        } catch (err: any) {
+          console.error(err);
+          setCustomPopup({
+            show: true,
+            title: "Error",
+            message: err.message || "Failed to delete agent.",
+            type: "alert"
+          });
+        }
       }
-      alert("Agent deleted successfully!");
-      loadAgents(branch);
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Failed to delete agent.");
-    }
+    });
   };
 
   // Filtered agents based on search query
@@ -500,6 +522,59 @@ export default function AgentsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Popup Modal */}
+      {customPopup.show && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-slate-150 overflow-hidden transform scale-100 transition-all animate-scale-up text-left">
+            <div className="bg-[#0f2d3a] px-6 py-4 flex items-center gap-2.5 text-white select-none">
+              {customPopup.type === "confirm" ? (
+                <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              ) : (
+                <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              )}
+              <h3 className="font-extrabold text-sm tracking-tight">{customPopup.title}</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 text-sm font-semibold leading-relaxed">
+                {customPopup.message}
+              </p>
+              <div className="flex justify-end gap-3 mt-6 select-none">
+                {customPopup.type === "confirm" ? (
+                  <>
+                    <button
+                      onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                      className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCustomPopup({ ...customPopup, show: false });
+                        if (customPopup.onConfirm) customPopup.onConfirm();
+                      }}
+                      className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                    >
+                      Confirm
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                    className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  >
+                    OK
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}

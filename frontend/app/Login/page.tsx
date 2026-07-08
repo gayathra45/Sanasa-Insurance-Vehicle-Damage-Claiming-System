@@ -12,6 +12,11 @@ export default function Login() {
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [customPopup, setCustomPopup] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+  }>({ show: false, title: "", message: "" });
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -29,7 +34,7 @@ export default function Login() {
       });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.error || "Login failed.");
+        setCustomPopup({ show: true, title: "Login Failed", message: data.error || "Login failed." });
         return;
       }
 
@@ -46,11 +51,11 @@ export default function Login() {
         sessionStorage.setItem("logged_in_admin", JSON.stringify(data.admin));
         router.push("/Admin/Dashboard");
       } else {
-        alert("Unknown user role returned from server.");
+        setCustomPopup({ show: true, title: "System Error", message: "Unknown user role returned from server." });
       }
     } catch (err) {
       console.error("Login request failed", err);
-      alert("Unable to connect to the server.");
+      setCustomPopup({ show: true, title: "Connection Error", message: "Unable to connect to the server. Please check your network connection." });
     }
   };
 
@@ -227,6 +232,33 @@ export default function Login() {
 
       </div>
       </div>
+      {/* Custom Popup Modal */}
+      {customPopup.show && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-slate-150 overflow-hidden transform scale-100 transition-all animate-scale-up text-left">
+            <div className="bg-[#0f2d3a] px-6 py-4 flex items-center gap-2.5 text-white select-none">
+              <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="font-extrabold text-sm tracking-tight">{customPopup.title}</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 text-sm font-semibold leading-relaxed">
+                {customPopup.message}
+              </p>
+              <div className="flex justify-end mt-6 select-none">
+                <button
+                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );

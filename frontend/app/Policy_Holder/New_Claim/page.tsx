@@ -64,6 +64,11 @@ export default function FileNewClaim() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResultsDropdown, setShowResultsDropdown] = useState(false);
   const [isUserTyping, setIsUserTyping] = useState(false);
+  const [customPopup, setCustomPopup] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+  }>({ show: false, title: "", message: "" });
 
   // Restore draft details from sessionStorage if it exists on mount
   useEffect(() => {
@@ -278,7 +283,7 @@ export default function FileNewClaim() {
   // Geolocation Handler
   const handleGPSLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
+      setCustomPopup({ show: true, title: "GPS Error", message: "Geolocation is not supported by your browser." });
       setAddress("123 Galle Road, Colombo, Sri Lanka");
       return;
     }
@@ -329,7 +334,7 @@ export default function FileNewClaim() {
         } else if (err.code === 3) { // TIMEOUT
           errorMsg = "Location request timed out. Please check your network or device GPS.";
         }
-        alert(errorMsg);
+        setCustomPopup({ show: true, title: "GPS Error", message: errorMsg });
         setAddress("123 Galle Road, Colombo, Sri Lanka");
       } finally {
         setIsLocating(false);
@@ -342,7 +347,7 @@ export default function FileNewClaim() {
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedVehicle || !incidentDate || !incidentTime || !damageType || !description || !address) {
-      alert("Please fill in all required fields marked with *");
+      setCustomPopup({ show: true, title: "Validation Error", message: "Please fill in all required fields marked with *" });
       return;
     }
 
@@ -879,6 +884,33 @@ export default function FileNewClaim() {
           <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
         </svg>
       </button>
+
+      {/* Custom Popup Modal */}
+      {customPopup.show && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-slate-150 overflow-hidden transform scale-100 transition-all animate-scale-up text-left text-slate-800">
+            <div className="bg-[#0f2d3a] px-6 py-4 flex items-center gap-2.5 text-white select-none">
+              <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="font-extrabold text-sm tracking-tight">{customPopup.title}</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 text-sm font-semibold leading-relaxed">
+                {customPopup.message}
+              </p>
+              <div className="flex justify-end mt-6 select-none">
+                <button
+                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <PolicyHolderFooter />
     </div>

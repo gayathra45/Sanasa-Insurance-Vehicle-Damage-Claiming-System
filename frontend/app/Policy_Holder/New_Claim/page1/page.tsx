@@ -25,6 +25,11 @@ export default function UploadDocumentsPage() {
   // Success Modal States
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [generatedClaimNumber, setGeneratedClaimNumber] = useState("");
+  const [customPopup, setCustomPopup] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+  }>({ show: false, title: "", message: "" });
 
   // Refs for file inputs
   const accidentFrontRef = useRef<HTMLInputElement>(null);
@@ -57,7 +62,7 @@ export default function UploadDocumentsPage() {
       const validFiles: File[] = [];
       for (const file of selectedFiles) {
         if (file.size > MAX_SIZE) {
-          alert(`File "${file.name}" exceeds the 5MB maximum size limit and was skipped.`);
+          setCustomPopup({ show: true, title: "File Size Limit", message: `File "${file.name}" exceeds the 5MB maximum size limit and was skipped.` });
         } else {
           validFiles.push(file);
         }
@@ -106,12 +111,12 @@ export default function UploadDocumentsPage() {
     const totalLicensePhotos = licenseFront.files.length + licenseRear.files.length;
 
     if (totalAccidentPhotos === 0) {
-      alert("Please upload at least one accident photo (Front, Rear, or Side).");
+      setCustomPopup({ show: true, title: "Validation Error", message: "Please upload at least one accident photo (Front, Rear, or Side)." });
       return;
     }
 
     if (totalLicensePhotos === 0) {
-      alert("Please upload at least one Driving License photo.");
+      setCustomPopup({ show: true, title: "Validation Error", message: "Please upload at least one Driving License photo." });
       return;
     }
 
@@ -168,7 +173,7 @@ export default function UploadDocumentsPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.error || "Failed to submit claim to database.");
+        setCustomPopup({ show: true, title: "Submission Failed", message: data.error || "Failed to submit claim to database." });
         return;
       }
 
@@ -186,7 +191,7 @@ export default function UploadDocumentsPage() {
       setShowSuccessModal(true);
     } catch (err) {
       console.error("New claim submission failed", err);
-      alert("Unable to reach the claims database server. Please try again.");
+      setCustomPopup({ show: true, title: "Connection Error", message: "Unable to reach the claims database server. Please try again." });
     }
   };
 
@@ -415,6 +420,33 @@ export default function UploadDocumentsPage() {
             >
               <span>&lt;</span> <span>Back to Home</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Popup Modal */}
+      {customPopup.show && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-2xl border border-slate-150 overflow-hidden transform scale-100 transition-all animate-scale-up text-left text-slate-800">
+            <div className="bg-[#0f2d3a] px-6 py-4 flex items-center gap-2.5 text-white select-none">
+              <svg className="w-5 h-5 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="font-extrabold text-sm tracking-tight">{customPopup.title}</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-slate-600 text-sm font-semibold leading-relaxed">
+                {customPopup.message}
+              </p>
+              <div className="flex justify-end mt-6 select-none">
+                <button
+                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
