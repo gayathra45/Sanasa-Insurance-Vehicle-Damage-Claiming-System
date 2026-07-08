@@ -346,127 +346,145 @@ export default function AgentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up">
             {/* Modal Header */}
-            <div className="bg-amber-500 px-6 py-4 flex justify-between items-center text-white select-none">
-              <h2 className="font-bold text-lg">Register New Insurance Agent</h2>
+            <div className="bg-gradient-to-r from-[#0f2d3a] to-[#1a4a60] px-8 py-5 flex justify-between items-center text-white select-none">
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                <h2 className="font-extrabold text-lg tracking-tight">Register New Insurance Agent</h2>
+              </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-white hover:text-slate-100 bg-transparent border-none outline-none cursor-pointer"
+                className="text-white/80 hover:text-white bg-transparent border-none outline-none cursor-pointer transition-colors p-1 rounded-lg hover:bg-white/10"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
             {/* Modal Content / Form */}
-            <form onSubmit={handleFormSubmit} className="p-6 flex flex-col gap-4">
+            <form onSubmit={handleFormSubmit} className="p-8 flex flex-col gap-5">
               {formError && (
-                <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-2.5 rounded-xl border border-red-100">
-                  {formError}
+                <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{formError}</span>
                 </div>
               )}
               {formSuccess && (
-                <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-2.5 rounded-xl border border-emerald-100">
-                  {formSuccess}
+                <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{formSuccess}</span>
                 </div>
               )}
 
               {/* Form Group: Name */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-500 ml-1">Full Name</label>
+                <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Full Name</label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="E.g., John Doe"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
                 />
               </div>
 
               {/* Form Row: Email & NIC */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 ml-1">Email Address</label>
+                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Email Address</label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="agent@sanasainsurance.lk"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 ml-1">NIC Number</label>
+                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Number</label>
                   <input
                     type="text"
                     required
                     value={formData.nic}
                     onChange={(e) => setFormData({ ...formData, nic: e.target.value })}
-                    placeholder="e.g. 199912345678 or 991234567V"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    placeholder="E.g., 199912345678 or 991234567V"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
                   />
                 </div>
               </div>
 
               {/* Form Row: DOB & Password */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 ml-1">Date of Birth</label>
+                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Date of Birth</label>
                   <input
                     type="date"
                     required
                     value={formData.dob}
                     onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-500 ml-1">Password</label>
+                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Password</label>
                   <input
                     type="password"
                     required
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder="Min. 6 characters"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
                   />
                 </div>
               </div>
 
               {/* Form Group: Address */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-slate-500 ml-1">Home Address</label>
+                <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Home Address</label>
                 <textarea
                   required
                   rows={2}
                   value={formData.address}
                   onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                   placeholder="Enter home address here..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all resize-none"
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold resize-none"
                 />
               </div>
 
-              {/* Read-only Branch Info */}
-              <div className="flex flex-col gap-1.5 bg-slate-50 border border-slate-100 p-3.5 rounded-xl select-none">
-                <span className="text-xs font-bold text-slate-400">Assigned Branch</span>
-                <span className="text-sm font-extrabold text-slate-600">{branch} Branch</span>
+              {/* Read-only Branch Info Accent Card */}
+              <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none">
+                <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Assigned Branch</span>
+                  <span className="text-sm font-extrabold text-[#0f2d3a]">{branch} Branch</span>
+                </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3 mt-4">
+              <div className="flex justify-end gap-3.5 mt-4">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-bold transition-all cursor-pointer bg-white"
+                  className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-full text-sm font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingAgent}
-                  className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 active:scale-95 text-white rounded-xl text-sm font-bold shadow-md shadow-amber-500/20 transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
+                  className="px-8 py-3 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-sm font-bold shadow-lg shadow-[#0f2d3a]/25 transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
                 >
                   {submittingAgent ? (
                     <>
@@ -474,10 +492,10 @@ export default function AgentsPage() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                       </svg>
-                      <span>Submitting...</span>
+                      <span>Registering...</span>
                     </>
                   ) : (
-                    <span>Submit Application</span>
+                    <span>Register Agent</span>
                   )}
                 </button>
               </div>
