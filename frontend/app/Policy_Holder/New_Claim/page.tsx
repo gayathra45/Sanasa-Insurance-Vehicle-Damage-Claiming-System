@@ -33,6 +33,18 @@ function getVehicleEmoji(type: string): string {
   return "🚗";
 }
 
+// Preset damage classification types
+const damageTypes = [
+  "Front Bumper / Grille Damage",
+  "Rear Bumper Damage",
+  "Side Scratch / Dent (Left/Right)",
+  "Windshield / Glass Crack",
+  "Engine / Mechanical Failure",
+  "Suspension Damage",
+  "Total Loss / Rollover",
+  "Other Accident Damage"
+];
+
 interface Vehicle {
   numberPlate: string;
   vehicleType: string;
@@ -71,6 +83,8 @@ export default function FileNewClaim() {
     type?: "alert" | "confirm" | "success" | "error";
     onConfirm?: () => void;
   }>({ show: false, title: "", message: "", type: "alert" });
+
+  // --- Lifecycle Effects ---
 
   // Restore draft details from sessionStorage if it exists on mount
   useEffect(() => {
@@ -169,17 +183,20 @@ export default function FileNewClaim() {
     }
   }, []);
 
-  // Preset Damage Types
-  const damageTypes = [
-    "Front Bumper / Grille Damage",
-    "Rear Bumper Damage",
-    "Side Scratch / Dent (Left/Right)",
-    "Windshield / Glass Crack",
-    "Engine / Mechanical Failure",
-    "Suspension Damage",
-    "Total Loss / Rollover",
-    "Other Accident Damage"
-  ];
+  // Autocomplete suggestions debouncer
+  useEffect(() => {
+    if (!isUserTyping || !address || address.trim() === "" || address === "Colombo, Sri Lanka") {
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(() => {
+      geocodeAddressForSuggestions(address);
+    }, 450); // 450ms debounce
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [address, isUserTyping]);
+
+  // --- Data Loading & Geocoding Methods ---
 
   const reverseGeocode = async (lat: number, lon: number) => {
     try {
@@ -268,19 +285,6 @@ export default function FileNewClaim() {
       console.error("Geocoding address failed:", err);
     }
   };
-
-  // Autocomplete suggestions debouncer
-  useEffect(() => {
-    if (!isUserTyping || !address || address.trim() === "" || address === "Colombo, Sri Lanka") {
-      return;
-    }
-
-    const delayDebounceFn = setTimeout(() => {
-      geocodeAddressForSuggestions(address);
-    }, 450); // 450ms debounce
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [address, isUserTyping]);
 
   // Geolocation Handler
   const handleGPSLocation = () => {

@@ -101,6 +101,9 @@ export default function FileNewClaim() {
     "Other Accident Damage"
   ];
 
+  // --- Lifecycle Effects ---
+
+  // Load user context and draft on mounting
   useEffect(() => {
     (async () => {
       // 1. Load user context
@@ -138,6 +141,55 @@ export default function FileNewClaim() {
       }
     })();
   }, []);
+
+  // Save draft whenever form fields change
+  useEffect(() => {
+    if (!isRestored.current || !userNic) return;
+    (async () => {
+      const draft = {
+        selectedVehicle,
+        incidentDate,
+        incidentTime,
+        damageType,
+        description,
+        address,
+        latitude,
+        longitude
+      };
+      await AsyncStorage.setItem("current_claim_draft", JSON.stringify(draft));
+    })();
+  }, [selectedVehicle, incidentDate, incidentTime, damageType, description, address, latitude, longitude, userNic]);
+
+  // Autocomplete suggestions debouncer for main page
+  useEffect(() => {
+    if (!isUserTyping || !address || address.trim() === "" || address === "Colombo, Sri Lanka" || address.startsWith("Loading")) {
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=15&countrycodes=lk&accept-language=en`, {
+          headers: {
+            "User-Agent": "SanasaInsuranceMobileApp/1.0 (contact: support@sanasainsurance.lk)"
+          }
+        });
+        const data = await res.json();
+        if (data && data.length > 0) {
+          setSearchResults(data);
+          setShowResultsDropdown(true);
+        } else {
+          setSearchResults([]);
+          setShowResultsDropdown(false);
+        }
+      } catch (err) {
+        console.warn("Autocomplete error:", err);
+      }
+    }, 400); // 400ms debounce
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [address, isUserTyping]);
+
+  // --- Data Loading & Geocoding Methods ---
 
   const loadVehicles = async (nic: string, fallbackVehicles: Vehicle[]) => {
     setIsVehiclesLoading(true);
@@ -219,53 +271,6 @@ export default function FileNewClaim() {
       setAddress(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
     }
   };
-
-  // Save draft whenever form fields change
-  useEffect(() => {
-    if (!isRestored.current || !userNic) return;
-    (async () => {
-      const draft = {
-        selectedVehicle,
-        incidentDate,
-        incidentTime,
-        damageType,
-        description,
-        address,
-        latitude,
-        longitude
-      };
-      await AsyncStorage.setItem("current_claim_draft", JSON.stringify(draft));
-    })();
-  }, [selectedVehicle, incidentDate, incidentTime, damageType, description, address, latitude, longitude, userNic]);
-
-  // Autocomplete suggestions debouncer for main page
-  useEffect(() => {
-    if (!isUserTyping || !address || address.trim() === "" || address === "Colombo, Sri Lanka" || address.startsWith("Loading")) {
-      return;
-    }
-
-    const delayDebounceFn = setTimeout(async () => {
-      try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=15&countrycodes=lk&accept-language=en`, {
-          headers: {
-            "User-Agent": "SanasaInsuranceMobileApp/1.0 (contact: support@sanasainsurance.lk)"
-          }
-        });
-        const data = await res.json();
-        if (data && data.length > 0) {
-          setSearchResults(data);
-          setShowResultsDropdown(true);
-        } else {
-          setSearchResults([]);
-          setShowResultsDropdown(false);
-        }
-      } catch (err) {
-        console.warn("Autocomplete error:", err);
-      }
-    }, 400); // 400ms debounce
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [address, isUserTyping]);
 
   const handleSelectSuggestion = (result: any) => {
     const lat = parseFloat(result.lat);
