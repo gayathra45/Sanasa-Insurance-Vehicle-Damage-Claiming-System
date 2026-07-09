@@ -225,7 +225,7 @@ export default function PolicyHolderHome() {
       <PolicyHolderNavbar />
 
       {/* Immersive curved header with background image and horizontal gradient overlay */}
-      <header className="relative w-full h-[450px] md:h-[420px] rounded-b-[60px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
+      <header className="relative w-full min-h-[460px] md:h-[420px] rounded-b-[40px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
         {/* Horizontal gradient overlay to darken left text area but keep the right image fold bright and clear */}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
 
@@ -275,18 +275,18 @@ export default function PolicyHolderHome() {
           </div>
 
           {/* Action Buttons - Highly highlighted with glowing drop shadows */}
-          <div className="flex flex-row justify-center gap-6 mt-2">
+          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 md:gap-6 mt-4 md:mt-2 w-full sm:w-auto">
             <Link
               href="/Policy_Holder/New_Claim"
-              className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-base md:text-lg px-10 py-4.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
-              style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
+              className="w-full sm:w-auto text-center bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm md:text-lg px-8 sm:px-10 py-3.5 sm:py-4.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.45)" }}
             >
               New Claim
             </Link>
             <Link
               href="/Policy_Holder/TrackClaims"
-              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-base md:text-lg px-10 py-4.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
-              style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
+              className="w-full sm:w-auto text-center bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm md:text-lg px-8 sm:px-10 py-3.5 sm:py-4.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.45)" }}
             >
               Track Claim
             </Link>
@@ -370,17 +370,17 @@ export default function PolicyHolderHome() {
             {vehicles.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                 {vehicles.map((vehicle, idx) => (
-                  <div key={idx} className="bg-white border border-slate-200 rounded-[22px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex items-center justify-between">
-                    <div className="flex items-center gap-4">
+                  <div key={idx} className="bg-white border border-slate-200 rounded-[22px] p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-row items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                       {getVehicleIconContainer(vehicle.vehicleType)}
-                      <div>
-                        <h4 className="text-slate-800 font-extrabold text-base leading-tight">{formatNumberPlate(vehicle.numberPlate)}</h4>
-                        <p className="text-slate-400 font-bold text-xs mt-0.5">{vehicle.company} {vehicle.model} {vehicle.year}</p>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-slate-800 font-extrabold text-sm sm:text-base leading-tight truncate">{formatNumberPlate(vehicle.numberPlate)}</h4>
+                        <p className="text-slate-400 font-bold text-[11px] sm:text-xs mt-0.5 truncate">{vehicle.company} {vehicle.model} {vehicle.year}</p>
                       </div>
                     </div>
                     <Link
                       href="/Policy_Holder/MyVehicles"
-                      className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-5 py-1.5 rounded-full transition-all no-underline"
+                      className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-4 sm:px-5 py-1.5 rounded-full transition-all no-underline flex-shrink-0"
                     >
                       View
                     </Link>
