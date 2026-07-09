@@ -535,6 +535,54 @@ export default function FileNewClaim() {
     }
   };
 
+  const capturePhoto = async (stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>) => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Required", "Please allow camera access to take photographs.");
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      try {
+        const asset = result.assets[0];
+        const base64Data = await compressImageMobile(asset.uri);
+        stateSetter({
+          uri: asset.uri,
+          base64: base64Data
+        });
+      } catch (err) {
+        Alert.alert("Error", "Failed to compress captured image.");
+      }
+    }
+  };
+
+  const handleImageSourceSelect = (stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>, label: string) => {
+    Alert.alert(
+      `Upload ${label}`,
+      "Choose a photo source option:",
+      [
+        {
+          text: "Take Photo (Camera)",
+          onPress: () => capturePhoto(stateSetter)
+        },
+        {
+          text: "Choose from Gallery",
+          onPress: () => selectPhoto(stateSetter)
+        },
+        {
+          text: "Cancel",
+          style: "cancel"
+        }
+      ],
+      { cancelable: true }
+    );
+  };
+
   const removePhoto = (stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>) => {
     stateSetter(null);
   };
@@ -635,10 +683,10 @@ export default function FileNewClaim() {
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity style={styles.placeholderBox} onPress={() => selectPhoto(stateSetter)}>
+          <TouchableOpacity style={styles.placeholderBox} onPress={() => handleImageSourceSelect(stateSetter, label)}>
             <Ionicons name="camera" size={32} color="#94a3b8" />
             <Text style={styles.placeholderTitle}>Select Image</Text>
-            <Text style={styles.placeholderDesc}>JPG, PNG up to 5MB</Text>
+            <Text style={styles.placeholderDesc}>Camera or Gallery up to 5MB</Text>
           </TouchableOpacity>
         )}
       </View>
