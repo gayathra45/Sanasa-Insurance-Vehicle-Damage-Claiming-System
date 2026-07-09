@@ -458,44 +458,40 @@ export default function ResetPassword() {
 
             {/* ── STAGE: Success ── */}
             {stage === "success" && (
-              <div className="absolute inset-0 bg-[#0e3b44]/95 backdrop-blur-xl rounded-3xl sm:rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center z-20 animate-fade-in">
-                <div className="flex flex-col items-center max-w-sm">
-                  {/* Glowing Checkmark Wrapper */}
-                  <div className="relative mb-6">
-                    {/* Ring Glow animation */}
-                    <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-md scale-110 animate-pulse" />
-                    <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center border-2 border-white/20 shadow-[0_0_30px_rgba(249,115,22,0.4)] relative z-10 transform scale-100 hover:scale-105 transition-transform duration-300">
-                      <svg className="w-10 h-10 text-white animate-[bounce_1s_infinite_alternate]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                    </div>
+              <div className="w-full flex flex-col items-center justify-center py-4 text-center z-20 animate-fade-in">
+                <div className="flex flex-col items-center max-w-sm w-full gap-6">
+                  {/* Simple Success Checkmark (Green) */}
+                  <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border border-green-400/40 shadow-[0_0_30px_rgba(74,222,128,0.4)] animate-[pulse_1.5s_infinite]">
+                    <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
                   </div>
 
-                  <div>
+                  <div className="flex flex-col gap-3">
                     <h3 className="text-white text-3xl font-extrabold tracking-tight drop-shadow-md">Password Updated!</h3>
-                    <p className="text-white/80 text-sm mt-3 leading-relaxed">
+                    <p className="text-white/80 text-sm leading-relaxed">
                       Your password has been changed successfully. You can now access your account.
                     </p>
                   </div>
 
                   {/* Countdown Progress Bar */}
-                  <div className="mt-8 flex flex-col items-center w-full px-4">
+                  <div className="flex flex-col items-center w-full px-4 gap-3.5">
                     <div className="w-48 bg-white/10 h-2 rounded-full overflow-hidden relative shadow-inner">
                       <div
-                        className="bg-gradient-to-r from-orange-500 to-amber-400 h-full rounded-full transition-all duration-1000 ease-linear"
+                        className="bg-green-500 h-full rounded-full transition-all duration-1000 ease-linear"
                         style={{ width: `${(redirectCountdown / 3) * 100}%` }}
                       />
                     </div>
-                    <p className="text-white/60 text-xs mt-3.5 font-medium tracking-wide flex items-center gap-1.5">
+                    <p className="text-white/60 text-xs font-medium tracking-wide flex items-center gap-1.5 justify-center">
                       <Spinner />
-                      <span>Redirecting to login in <strong className="text-orange-400 font-bold">{redirectCountdown}s</strong>...</span>
+                      <span>Redirecting to login in <strong className="text-green-400 font-bold">{redirectCountdown}s</strong>...</span>
                     </p>
                   </div>
 
                   {/* Manual Navigation Button */}
                   <button
                     onClick={() => router.push("/Login")}
-                    className="mt-8 w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full font-bold shadow-lg shadow-orange-500/25 active:scale-95 hover:scale-[1.03] transition-all flex items-center justify-center gap-2 border-none outline-none cursor-pointer"
+                    className="w-full max-w-[200px] py-3 bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white rounded-full font-bold shadow-lg shadow-orange-500/25 active:scale-95 hover:scale-[1.03] transition-all flex items-center justify-center gap-2 border-none outline-none cursor-pointer"
                   >
                     <span>Go to Login</span>
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
