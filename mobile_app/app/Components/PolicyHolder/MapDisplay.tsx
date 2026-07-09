@@ -139,7 +139,7 @@ const getHtmlContent = (lat: number, lon: number) => `
       sendLocation(position.lat, position.lng);
     });
 
-    window.addEventListener('message', function(e) {
+    var messageHandler = function(e) {
       try {
         var data = typeof e.data === 'string' ? JSON.parse(e.data) : e.data;
         if (data.latitude && data.longitude) {
@@ -148,7 +148,9 @@ const getHtmlContent = (lat: number, lon: number) => `
           map.panTo(newLatLng);
         }
       } catch (err) {}
-    });
+    };
+    window.addEventListener('message', messageHandler);
+    document.addEventListener('message', messageHandler);
   </script>
 </body>
 </html>`;
