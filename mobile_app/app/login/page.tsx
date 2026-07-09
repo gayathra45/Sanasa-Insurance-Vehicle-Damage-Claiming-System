@@ -115,6 +115,9 @@ export default function MobileLogin() {
               {/* Dynamic Input (NIC / Email) */}
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>NIC or Email Address</Text>
+                <Text style={styles.subtext}>
+                  Policy Holders: Use NIC or Email · Agents: Use Email
+                </Text>
                 <View style={styles.inputWrapper}>
                   <Ionicons
                     name="person-outline"
@@ -128,7 +131,7 @@ export default function MobileLogin() {
                     placeholderTextColor="#94a3b8"
                     value={loginId}
                     onChangeText={setLoginId}
-                    keyboardType="email-address"
+                    keyboardType="default"
                     autoCapitalize="none"
                     autoCorrect={false}
                   />

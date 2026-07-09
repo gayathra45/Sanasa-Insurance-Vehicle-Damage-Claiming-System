@@ -14,11 +14,12 @@ import {
   Platform,
   Alert,
   ImageBackground,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import PolicyHolderNavbar from "../Components/policy holder/page";
+import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import { API_BASE_URL } from "../config";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
@@ -38,6 +39,15 @@ interface Claim {
   requestedDocuments?: string[];
   currentStep?: number;
   messages?: { sender: string; message: string; sentAt: string }[];
+  accidentPhotos?: {
+    front?: string[];
+    rear?: string[];
+    side?: string[];
+  };
+  drivingLicense?: {
+    front?: string[];
+    rear?: string[];
+  };
 }
 
 export default function MyClaims() {
@@ -71,6 +81,14 @@ export default function MyClaims() {
     }
   };
 
+  const formatImageUri = (uri: string) => {
+    if (!uri) return "";
+    if (uri.startsWith("data:") || uri.startsWith("http") || uri.startsWith("file")) {
+      return uri;
+    }
+    return `data:image/jpeg;base64,${uri}`;
+  };
+
   const fetchClaims = useCallback(async (nic: string) => {
     setIsLoading(true);
     try {
@@ -93,7 +111,9 @@ export default function MyClaims() {
             documentsRequested: claim.documentsRequested || false,
             requestedDocuments: claim.requestedDocuments || [],
             currentStep: claim.currentStep || 1,
-            messages: claim.messages || []
+            messages: claim.messages || [],
+            accidentPhotos: claim.accidentPhotos || { front: [], rear: [], side: [] },
+            drivingLicense: claim.drivingLicense || { front: [], rear: [] }
           }));
         }
       }
@@ -119,7 +139,9 @@ export default function MyClaims() {
             documentsRequested: false,
             requestedDocuments: [],
             currentStep: 1,
-            messages: []
+            messages: [],
+            accidentPhotos: parsed.accidentPhotos || { front: [], rear: [], side: [] },
+            drivingLicense: parsed.drivingLicense || { front: [], rear: [] }
           });
         }
       }
@@ -418,6 +440,102 @@ export default function MyClaims() {
                   <View style={styles.descriptionContainer}>
                     <Text style={styles.descriptionHeader}>Incident Description</Text>
                     <Text style={styles.descriptionText}>&quot;{selectedClaim.description}&quot;</Text>
+                  </View>
+                )}
+
+                {/* Uploaded Photos Section */}
+                {selectedClaim.accidentPhotos && (
+                  <View style={styles.photosSection}>
+                    <Text style={styles.sectionTitle}>Accident Photographs</Text>
+                    <View style={styles.photoGrid}>
+                      {/* Front Damage */}
+                      {selectedClaim.accidentPhotos.front && selectedClaim.accidentPhotos.front.length > 0 ? (
+                        <View style={styles.photoWrapper}>
+                          <Image
+                            source={{ uri: formatImageUri(selectedClaim.accidentPhotos.front[0]) }}
+                            style={styles.photoThumbnail}
+                            resizeMode="cover"
+                          />
+                          <Text style={styles.photoLabel}>Front Damage</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.emptyPhotoWrapper}>
+                          <Ionicons name="image-outline" size={20} color="#94a3b8" />
+                          <Text style={styles.emptyPhotoLabel}>No Front Photo</Text>
+                        </View>
+                      )}
+
+                      {/* Rear Damage */}
+                      {selectedClaim.accidentPhotos.rear && selectedClaim.accidentPhotos.rear.length > 0 ? (
+                        <View style={styles.photoWrapper}>
+                          <Image
+                            source={{ uri: formatImageUri(selectedClaim.accidentPhotos.rear[0]) }}
+                            style={styles.photoThumbnail}
+                            resizeMode="cover"
+                          />
+                          <Text style={styles.photoLabel}>Rear Damage</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.emptyPhotoWrapper}>
+                          <Ionicons name="image-outline" size={20} color="#94a3b8" />
+                          <Text style={styles.emptyPhotoLabel}>No Rear Photo</Text>
+                        </View>
+                      )}
+
+                      {/* Side Damage */}
+                      {selectedClaim.accidentPhotos.side && selectedClaim.accidentPhotos.side.length > 0 ? (
+                        <View style={styles.photoWrapper}>
+                          <Image
+                            source={{ uri: formatImageUri(selectedClaim.accidentPhotos.side[0]) }}
+                            style={styles.photoThumbnail}
+                            resizeMode="cover"
+                          />
+                          <Text style={styles.photoLabel}>Side Damage</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.emptyPhotoWrapper}>
+                          <Ionicons name="image-outline" size={20} color="#94a3b8" />
+                          <Text style={styles.emptyPhotoLabel}>No Side Photo</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <Text style={[styles.sectionTitle, { marginTop: 16 }]}>Driving License</Text>
+                    <View style={styles.photoGrid}>
+                      {/* License Front */}
+                      {selectedClaim.drivingLicense && selectedClaim.drivingLicense.front && selectedClaim.drivingLicense.front.length > 0 ? (
+                        <View style={styles.photoWrapper}>
+                          <Image
+                            source={{ uri: formatImageUri(selectedClaim.drivingLicense.front[0]) }}
+                            style={styles.photoThumbnail}
+                            resizeMode="cover"
+                          />
+                          <Text style={styles.photoLabel}>License Front</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.emptyPhotoWrapper}>
+                          <Ionicons name="image-outline" size={20} color="#94a3b8" />
+                          <Text style={styles.emptyPhotoLabel}>No License Front</Text>
+                        </View>
+                      )}
+
+                      {/* License Rear */}
+                      {selectedClaim.drivingLicense && selectedClaim.drivingLicense.rear && selectedClaim.drivingLicense.rear.length > 0 ? (
+                        <View style={styles.photoWrapper}>
+                          <Image
+                            source={{ uri: formatImageUri(selectedClaim.drivingLicense.rear[0]) }}
+                            style={styles.photoThumbnail}
+                            resizeMode="cover"
+                          />
+                          <Text style={styles.photoLabel}>License Rear</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.emptyPhotoWrapper}>
+                          <Ionicons name="image-outline" size={20} color="#94a3b8" />
+                          <Text style={styles.emptyPhotoLabel}>No License Rear</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
                 )}
 
@@ -755,4 +873,67 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   closeFooterBtnText: { fontSize: 14, color: "#ffffff", fontWeight: "800" },
+
+  /* Photos Section */
+  photosSection: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+    marginBottom: 8,
+  },
+  photoGrid: {
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "space-between",
+  },
+  photoWrapper: {
+    flex: 1,
+    height: 90,
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    alignItems: "center",
+  },
+  photoThumbnail: {
+    width: "100%",
+    height: 68,
+  },
+  photoLabel: {
+    fontSize: 8.5,
+    fontWeight: "700",
+    color: "#475569",
+    marginTop: 4,
+    textAlign: "center",
+  },
+  emptyPhotoWrapper: {
+    flex: 1,
+    height: 90,
+    borderRadius: 14,
+    backgroundColor: "#f1f5f9",
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "#cbd5e1",
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 4,
+  },
+  emptyPhotoLabel: {
+    fontSize: 8,
+    fontWeight: "600",
+    color: "#64748b",
+    marginTop: 4,
+    textAlign: "center",
+  },
 });

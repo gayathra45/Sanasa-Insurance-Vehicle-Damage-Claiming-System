@@ -38,6 +38,28 @@ export default function OfficeStaffDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
+  const [detailedClaim, setDetailedClaim] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (selectedClaim) {
+      const fetchFullClaim = async () => {
+        try {
+          const res = await fetch(`http://localhost:5000/api/policy-holder/track-claim?claimNumber=${encodeURIComponent(selectedClaim.claimNumber)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.claim) {
+              setDetailedClaim(data.claim);
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching full claim details for office staff", err);
+        }
+      };
+      fetchFullClaim();
+    } else {
+      setDetailedClaim(null);
+    }
+  }, [selectedClaim]);
 
   // --- Side Effects & API Calls ---
   useEffect(() => {
@@ -479,6 +501,79 @@ export default function OfficeStaffDashboard() {
                 <p className="text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs leading-relaxed whitespace-pre-wrap">
                   {selectedClaim.description || "No description provided."}
                 </p>
+              </div>
+
+              {/* Policy Holder Uploaded Documents / Photos Display Section */}
+              <div className="flex flex-col gap-3 mt-4 border-t border-slate-100 pt-4">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Uploaded Documents & Photos</span>
+                {!detailedClaim ? (
+                  <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
+                    <svg className="animate-spin h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    <span>Loading uploaded documents...</span>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Accident Photos */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[11px] text-slate-500 font-bold">Accident Photos</span>
+                      {(!detailedClaim.accidentPhotos || 
+                        ((detailedClaim.accidentPhotos.front || []).length === 0 && 
+                         (detailedClaim.accidentPhotos.rear || []).length === 0 && 
+                         (detailedClaim.accidentPhotos.side || []).length === 0)) ? (
+                        <span className="text-xs text-slate-400 italic">No accident photos uploaded</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-2.5">
+                          {(detailedClaim.accidentPhotos.front || []).map((url: string, index: number) => (
+                            <a key={`front-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-20 h-20 rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                              <img src={url} alt="Accident Front" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition-all">Front</div>
+                            </a>
+                          ))}
+                          {(detailedClaim.accidentPhotos.rear || []).map((url: string, index: number) => (
+                            <a key={`rear-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-20 h-20 rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                              <img src={url} alt="Accident Rear" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition-all">Rear</div>
+                            </a>
+                          ))}
+                          {(detailedClaim.accidentPhotos.side || []).map((url: string, index: number) => (
+                            <a key={`side-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-20 h-20 rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                              <img src={url} alt="Accident Side" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition-all">Side</div>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Driving License */}
+                    <div className="flex flex-col gap-1.5">
+                      <span className="text-[11px] text-slate-500 font-bold">Driving License</span>
+                      {(!detailedClaim.drivingLicense || 
+                        ((detailedClaim.drivingLicense.front || []).length === 0 && 
+                         (detailedClaim.drivingLicense.rear || []).length === 0)) ? (
+                        <span className="text-xs text-slate-400 italic">No driving license photos uploaded</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-2.5">
+                          {(detailedClaim.drivingLicense.front || []).map((url: string, index: number) => (
+                            <a key={`lic-front-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-20 h-20 rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                              <img src={url} alt="License Front" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition-all">License Front</div>
+                            </a>
+                          ))}
+                          {(detailedClaim.drivingLicense.rear || []).map((url: string, index: number) => (
+                            <a key={`lic-rear-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-20 h-20 rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                              <img src={url} alt="License Rear" className="w-full h-full object-cover" />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition-all">License Rear</div>
+                            </a>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

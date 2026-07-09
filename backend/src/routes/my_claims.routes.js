@@ -51,8 +51,7 @@ router.get("/user-claims", async (req, res) => {
 
     const cleanNic = nic.trim();
     const claims = await Claim.find(
-      { userNic: cleanNic },
-      { accidentPhotos: 0, drivingLicense: 0 }
+      { userNic: cleanNic }
     ).sort({ createdAt: -1 });
     res.json({ claims });
   } catch (err) {

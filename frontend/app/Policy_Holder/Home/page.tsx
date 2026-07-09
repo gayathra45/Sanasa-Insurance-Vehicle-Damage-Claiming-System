@@ -148,6 +148,7 @@ export default function PolicyHolderHome() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      sessionStorage.removeItem("current_claim_draft");
       const userStr = sessionStorage.getItem("logged_in_user");
       if (userStr) {
         try {

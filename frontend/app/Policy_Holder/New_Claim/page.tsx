@@ -66,7 +66,7 @@ export default function FileNewClaim() {
   const [incidentTime, setIncidentTime] = useState("");
   const [damageType, setDamageType] = useState("");
   const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("Colombo, Sri Lanka");
+  const [address, setAddress] = useState("");
   const [isLocating, setIsLocating] = useState(false);
   const [latitude, setLatitude] = useState(6.9271);
   const [longitude, setLongitude] = useState(79.8612);
@@ -172,10 +172,7 @@ export default function FileNewClaim() {
         }
 
         // 3. Final Fallback vehicles
-        const fallbackVehicles: Vehicle[] = [
-          { numberPlate: "CBH-3202", vehicleType: "Car", year: "2019", company: "Toyota", model: "Corolla" },
-          { numberPlate: "NE-7856", vehicleType: "Lorry", year: "2016", company: "Ashok Leyland", model: "Lorry" }
-        ];
+        const fallbackVehicles: Vehicle[] = [];
         setVehicles(fallbackVehicles);
       };
 
@@ -865,6 +862,7 @@ export default function FileNewClaim() {
           <div className="flex flex-row justify-between items-center mt-4 mb-10">
             <Link
               href="/Policy_Holder/Home"
+              onClick={() => sessionStorage.removeItem("current_claim_draft")}
               className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center"
             >
               Cancel
