@@ -414,6 +414,9 @@ router.post("/reset-password/update", async (req, res) => {
     }
 
     user.password = hashPassword(newPassword);
+    if (user.mustChangePassword !== undefined) {
+      user.mustChangePassword = false;
+    }
     user.resetSessionToken = undefined;
     user.resetSessionExpires = undefined;
     await user.save();
