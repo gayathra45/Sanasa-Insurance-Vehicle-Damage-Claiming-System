@@ -5,7 +5,6 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { API_URL } from "@/app/config";
 import { compressImage } from "../../../utils/imageCompressor";
 
 interface FileUploadState {
@@ -26,6 +25,14 @@ export default function UploadDocumentsPage() {
   // Success Modal States
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [generatedClaimNumber, setGeneratedClaimNumber] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+      const [customPopup, setCustomPopup] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    type?: "alert" | "confirm" | "success" | "error";
+    onConfirm?: () => void;
+  }>({ show: false, title: "", message: "", type: "alert" });
 
   // Refs for file inputs
   const accidentFrontRef = useRef<HTMLInputElement>(null);
@@ -58,7 +65,7 @@ export default function UploadDocumentsPage() {
       const validFiles: File[] = [];
       for (const file of selectedFiles) {
         if (file.size > MAX_SIZE) {
-          alert(`File "${file.name}" exceeds the 5MB maximum size limit and was skipped.`);
+          setCustomPopup({ show: true, title: "File Size Limit", message: `File "${file.name}" exceeds the 5MB maximum size limit and was skipped.` });
         } else {
           validFiles.push(file);
         }
@@ -101,20 +108,24 @@ export default function UploadDocumentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isSubmitting) return;
+
     // Check if at least some files are uploaded
     const totalAccidentPhotos =
       accidentFront.files.length + accidentRear.files.length + accidentSide.files.length;
     const totalLicensePhotos = licenseFront.files.length + licenseRear.files.length;
 
     if (totalAccidentPhotos === 0) {
-      alert("Please upload at least one accident photo (Front, Rear, or Side).");
+      setCustomPopup({ show: true, title: "Validation Error", message: "Please upload at least one accident photo (Front, Rear, or Side)." });
       return;
     }
 
     if (totalLicensePhotos === 0) {
-      alert("Please upload at least one Driving License photo.");
+      setCustomPopup({ show: true, title: "Validation Error", message: "Please upload at least one Driving License photo." });
       return;
     }
+
+    setIsSubmitting(true);
 
     // Convert helper: File -> base64 with compression
     const convertFilesToBase64 = async (files: File[]): Promise<string[]> => {
@@ -122,54 +133,55 @@ export default function UploadDocumentsPage() {
       return Promise.all(promises);
     };
 
-    // Show loading indicator or block UI if converting takes time (optional)
-    const frontPhotos = await convertFilesToBase64(accidentFront.files);
-    const rearPhotos = await convertFilesToBase64(accidentRear.files);
-    const sidePhotos = await convertFilesToBase64(accidentSide.files);
-    const licFront = await convertFilesToBase64(licenseFront.files);
-    const licRear = await convertFilesToBase64(licenseRear.files);
-
-    // Retrieve previous page details
-    let combinedPayload: any = {};
-    if (typeof window !== "undefined") {
-      try {
-        const draftStr = sessionStorage.getItem("current_claim_draft");
-        if (draftStr) {
-          combinedPayload = JSON.parse(draftStr);
-        }
-      } catch (err) {
-        console.error("Error retrieving draft details", err);
-      }
-    }
-
-    const claimData = {
-      userNic: combinedPayload.userNic || "123456789V",
-      vehiclePlate: combinedPayload.selectedVehicle || "Unknown Plate",
-      incidentDate: combinedPayload.incidentDate || "",
-      incidentTime: combinedPayload.incidentTime || "",
-      damageType: combinedPayload.damageType || "",
-      description: combinedPayload.description || "",
-      location: combinedPayload.address || "Colombo, Sri Lanka",
-      accidentPhotos: {
-        front: frontPhotos,
-        rear: rearPhotos,
-        side: sidePhotos
-      },
-      drivingLicense: {
-        front: licFront,
-        rear: licRear
-      }
-    };
-
     try {
-      const response = await fetch(`${API_URL}/policy-holder/new-claim`, {
+      // Show loading indicator or block UI if converting takes time (optional)
+      const frontPhotos = await convertFilesToBase64(accidentFront.files);
+      const rearPhotos = await convertFilesToBase64(accidentRear.files);
+      const sidePhotos = await convertFilesToBase64(accidentSide.files);
+      const licFront = await convertFilesToBase64(licenseFront.files);
+      const licRear = await convertFilesToBase64(licenseRear.files);
+
+      // Retrieve previous page details
+      let combinedPayload: any = {};
+      if (typeof window !== "undefined") {
+        try {
+          const draftStr = sessionStorage.getItem("current_claim_draft");
+          if (draftStr) {
+            combinedPayload = JSON.parse(draftStr);
+          }
+        } catch (err) {
+          console.error("Error retrieving draft details", err);
+        }
+      }
+
+      const claimData = {
+        userNic: combinedPayload.userNic || "123456789V",
+        vehiclePlate: combinedPayload.selectedVehicle || "Unknown Plate",
+        incidentDate: combinedPayload.incidentDate || "",
+        incidentTime: combinedPayload.incidentTime || "",
+        damageType: combinedPayload.damageType || "",
+        description: combinedPayload.description || "",
+        location: combinedPayload.address || "Colombo, Sri Lanka",
+        accidentPhotos: {
+          front: frontPhotos,
+          rear: rearPhotos,
+          side: sidePhotos
+        },
+        drivingLicense: {
+          front: licFront,
+          rear: licRear
+        }
+      };
+
+      const response = await fetch("http://localhost:5000/api/policy-holder/new-claim", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(claimData)
       });
       const data = await response.json();
       if (!response.ok) {
-        alert(data.error || "Failed to submit claim to database.");
+        setCustomPopup({ show: true, title: "Submission Failed", message: data.error || "Failed to submit claim to database." });
+        setIsSubmitting(false);
         return;
       }
 
@@ -187,7 +199,8 @@ export default function UploadDocumentsPage() {
       setShowSuccessModal(true);
     } catch (err) {
       console.error("New claim submission failed", err);
-      alert("Unable to reach the claims database server. Please try again.");
+      setCustomPopup({ show: true, title: "Connection Error", message: "Unable to reach the claims database server. Please try again." });
+      setIsSubmitting(false);
     }
   };
 
@@ -217,7 +230,7 @@ export default function UploadDocumentsPage() {
           /* Empty Card State */
           <div
             onClick={() => inputRef.current?.click()}
-            className="w-full h-[170px] bg-[#e2e8f0]/60 hover:bg-slate-200/60 border border-slate-300 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-150 active:scale-[0.98] select-none shadow-sm"
+            className="w-full h-[170px] bg-[#e2e8f0]/60 hover:bg-slate-200/60 border border-slate-300 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-150 active:scale-[0.97] select-none shadow-sm"
           >
             <svg className="w-10 h-10 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
               <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
@@ -351,15 +364,28 @@ export default function UploadDocumentsPage() {
           <div className="flex flex-row justify-between items-center mt-6 mb-10">
             <Link
               href="/Policy_Holder/New_Claim"
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center"
+              className={`bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center ${
+                isSubmitting ? "pointer-events-none opacity-50" : ""
+              }`}
             >
               Back
             </Link>
             <button
               type="submit"
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center"
+              disabled={isSubmitting}
+              className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-[#0f2d3a]/50 text-white font-bold text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
             >
-              Submit
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Submitting...
+                </span>
+              ) : (
+                "Submit"
+              )}
             </button>
           </div>
 
@@ -416,6 +442,77 @@ export default function UploadDocumentsPage() {
             >
               <span>&lt;</span> <span>Back to Home</span>
             </button>
+          </div>
+        </div>
+      )}
+
+                  {/* Custom Popup Modal */}
+      {customPopup.show && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
+            
+            {/* Header/Title with clean inline icon */}
+            <div className="flex items-center gap-3.5">
+              {customPopup.type === "success" ? (
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              ) : customPopup.type === "confirm" ? (
+                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              )}
+              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
+                {customPopup.title}
+              </h3>
+            </div>
+
+            {/* Message Body */}
+            <div>
+              <p className="text-slate-500 text-[13px] font-semibold leading-relaxed">
+                {customPopup.message}
+              </p>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex justify-end gap-2.5 mt-2 select-none">
+              {customPopup.type === "confirm" ? (
+                <>
+                  <button
+                    onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCustomPopup({ ...customPopup, show: false });
+                      if (customPopup.onConfirm) customPopup.onConfirm();
+                    }}
+                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  >
+                    Confirm
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                >
+                  OK
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

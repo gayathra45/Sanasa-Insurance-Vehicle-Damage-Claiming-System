@@ -7,7 +7,7 @@ import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { uploadToCloudinary } from "../utils/upload.js";
-import { sendEmail } from "../utils/email.js";
+import { sendEmail, getBaseTemplate } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -436,13 +436,9 @@ router.post("/agents", async (req, res) => {
       }
     }
 
-    // Generate a long random password for the inactive account
-    const tempPassword = crypto.randomBytes(32).toString("hex");
+    // Generate secure temporary password containing letters, digits, and a special character
+    const tempPassword = "SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90);
     const hashedPassword = hashPassword(tempPassword);
-
-    // Generate activation token
-    const activationToken = crypto.randomBytes(32).toString("hex");
-    const activationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
     // Upload documents to Cloudinary if they exist
     let nicFrontUrl = "";
@@ -468,6 +464,7 @@ router.post("/agents", async (req, res) => {
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
+      mustChangePassword: true,
       nic: cleanNic,
       address: address.trim(),
       dob: dob.trim(),
@@ -479,37 +476,50 @@ router.post("/agents", async (req, res) => {
       nicBack: nicBackUrl,
       birthCertificate: birthCertificateUrl,
       policeReport: policeReportUrl,
-      status: "inactive",
-      activationToken,
-      activationExpires
+      status: "active"
     });
 
     await newAgent.save();
 
-    // Send activation email
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
-    const activationLink = `${frontendUrl}/ActivateAgent?token=${activationToken}`;
-
-    const subject = "Activate Your Sanasa Insurance Agent Account";
-    const textBody = `Hello ${name.trim()},\n\nYou have been registered as an Insurance Agent for Sanasa Insurance. Please activate your account and set your login password by clicking the link below:\n\n${activationLink}\n\nThis link will expire in 24 hours.\n\nThank you,\nSanasa Insurance Team`;
-    const htmlBody = `
-      <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 600px; margin: auto; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
-        <h2 style="color: #0f2d4a; margin-top: 0;">Welcome to Sanasa Insurance, ${name.trim()}!</h2>
-        <p>You have been registered as an Insurance Agent at our <strong>${branch.trim()} Branch</strong>.</p>
-        <p>To activate your account and set your password, please click the button below:</p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${activationLink}" style="background-color: #0f2d4a; color: white; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 8px; display: inline-block;">Activate Account</a>
-        </div>
-        <p style="color: #64748b; font-size: 12px;">This activation link will expire in 24 hours.</p>
-        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-        <p style="color: #64748b; font-size: 12px;">If you did not request this, please ignore this email.</p>
-      </div>
-    `;
+    // Send welcome email with login details to the agent's email
+    const subject = `Welcome to Sanasa Insurance — Your Agent Credentials`;
+    const htmlBody = getBaseTemplate(
+      subject,
+      `
+      <h2>Agent Account Created Successfully</h2>
+      <p>Dear <strong>${name.trim()}</strong>,</p>
+      <p>Your agent account has been registered by the branch staff at the <strong>${branch.trim()}</strong> branch. Below are your login credentials and account details:</p>
+      <table class="data-table">
+        <tr>
+          <td class="label">Agent ID:</td>
+          <td class="value highlight-value">${nextAgentId}</td>
+        </tr>
+        <tr>
+          <td class="label">Email / Login Username:</td>
+          <td class="value">${cleanEmail}</td>
+        </tr>
+        <tr>
+          <td class="label">Temporary Password:</td>
+          <td class="value highlight-value">${tempPassword}</td>
+        </tr>
+        <tr>
+          <td class="label">NIC Number:</td>
+          <td class="value">${cleanNic}</td>
+        </tr>
+        <tr>
+          <td class="label">Assigned Branch:</td>
+          <td class="value">${branch.trim()}</td>
+        </tr>
+      </table>
+      <p>Please log in using your temporary password. Upon your first login to either the Agent Web Dashboard or Mobile App, you will be prompted to set a new password of your choice for subsequent logins.</p>
+      `
+    );
+    const textBody = `Welcome to Sanasa Insurance. Your Agent ID is ${nextAgentId}. Use email ${cleanEmail} and temporary password ${tempPassword} to log in.`;
 
     try {
       await sendEmail(cleanEmail, subject, htmlBody, textBody);
     } catch (emailErr) {
-      console.error("Failed to send activation email:", emailErr);
+      console.error("⚠️ Failed to send agent welcome email:", emailErr.message);
     }
 
     // Return agent details without password

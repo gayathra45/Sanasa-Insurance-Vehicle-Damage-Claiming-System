@@ -11,7 +11,29 @@ export async function sendEmail(toEmail, subject, htmlBody, textBody) {
   const senderEmail = process.env.SENDER_EMAIL || "codemapper71@gmail.com";
   const resendKey = process.env.RESEND_API_KEY;
 
-  // 1. Check for Mailtrap / Custom SMTP
+  // 1. Check if SMTP is Gmail (either by host or user email)
+  const isGmail = (smtpHost && smtpHost.includes("gmail.com")) || 
+                  (smtpUser && smtpUser.trim().toLowerCase().endsWith("@gmail.com"));
+
+  if (isGmail && smtpUser && smtpPass &&
+      !smtpUser.includes("your-") &&
+      !smtpPass.includes("your-")) {
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: { user: smtpUser.trim(), pass: smtpPass.trim() },
+    });
+    await transporter.sendMail({
+      from: `"Sanasa Insurance" <${smtpUser.trim()}>`,
+      to: toEmail,
+      subject,
+      html: htmlBody,
+      text: textBody,
+    });
+    console.log(`✅ Email sent to ${toEmail} via Gmail SMTP Service`);
+    return { sent: true };
+  }
+
+  // 2. Fallback: Custom SMTP (Mailtrap, etc.)
   const hasCustomSmtp = smtpHost && smtpUser && smtpPass &&
                         !smtpHost.includes("your-") &&
                         !smtpUser.includes("your-") &&
@@ -31,35 +53,10 @@ export async function sendEmail(toEmail, subject, htmlBody, textBody) {
       html: htmlBody,
       text: textBody,
     });
-    console.log(`✅ Email sent to ${toEmail} via SMTP Server (${smtpHost})`);
+    console.log(`✅ Email sent to ${toEmail} via Custom SMTP Server (${smtpHost})`);
     return { sent: true };
   }
 
-  // 2. Fallback: Check for legacy Gmail SMTP
-  const hasGmail = smtpUser && smtpPass &&
-                   smtpUser.includes("@gmail.com") &&
-                   !smtpUser.includes("your-gmail") &&
-                   !smtpPass.includes("your-16-char");
-
-  if (hasGmail) {
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: { user: smtpUser, pass: smtpPass },
-    });
-    await transporter.sendMail({
-      from: `"Sanasa Insurance" <${smtpUser}>`,
-      to: toEmail,
-      subject,
-      html: htmlBody,
-      text: textBody,
-    });
-    console.log(`✅ Email sent to ${toEmail} via Gmail SMTP`);
-    return { sent: true };
-  }
-
-  // 3. Fallback: Check for Resend
   const hasResend = resendKey && !resendKey.includes("re_your");
   if (hasResend) {
     const resend = new Resend(resendKey);

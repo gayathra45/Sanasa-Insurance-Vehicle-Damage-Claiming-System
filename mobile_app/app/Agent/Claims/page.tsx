@@ -452,7 +452,7 @@ export default function AgentClaimsPage() {
     setSelectedClaim(null);
     AsyncStorage.removeItem("notification_claim_data").catch(() => {});
     if (from === "notifications") {
-      router.replace("/Agent/Notifications/page");
+      router.replace("/Agent/Notifications/page" as any);
     } else if (claimId) {
       router.replace("/Agent/Claims/page");
     }

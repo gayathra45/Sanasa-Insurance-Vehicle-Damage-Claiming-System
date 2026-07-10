@@ -265,4 +265,42 @@ router.get("/activities", async (req, res) => {
   }
 });
 
+// POST change agent password: /api/agent/change-password
+router.post("/change-password", async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Email, current password, and new password are required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const agent = await Agent.findOne({ email: cleanEmail });
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    // Verify current temporary/existing password
+    const hashedCurrent = hashPassword(currentPassword);
+    if (agent.password !== hashedCurrent) {
+      return res.status(400).json({ error: "Incorrect current password." });
+    }
+
+    // Update password and clear mustChangePassword flag
+    agent.password = hashPassword(newPassword);
+    agent.mustChangePassword = false;
+    await agent.save();
+
+    // Log this activity
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    await logAgentActivity(cleanEmail, "Password Change", deviceType, "Temporary password reset completed successfully.");
+
+    res.json({ message: "Password updated successfully." });
+  } catch (err) {
+    console.error("Change password route error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 export default router;
