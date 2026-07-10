@@ -43,8 +43,18 @@ export default function AgentsPage() {
     email: "",
     nic: "",
     dob: "",
-    address: ""
+    address: "",
+    phone: "",
+    bankName: "",
+    bankBranch: "",
+    accountNumber: "",
+    accountType: "",
+    accountHolderName: ""
   });
+  const [nicFront, setNicFront] = useState<File | null>(null);
+  const [nicBack, setNicBack] = useState<File | null>(null);
+  const [birthCertificate, setBirthCertificate] = useState<File | null>(null);
+  const [policeReport, setPoliceReport] = useState<File | null>(null);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [submittingAgent, setSubmittingAgent] = useState(false);
@@ -105,6 +115,7 @@ export default function AgentsPage() {
     if (!formData.nic.trim()) return setFormError("NIC Number is required.");
     if (!formData.dob.trim()) return setFormError("Date of Birth is required.");
     if (!formData.address.trim()) return setFormError("Home Address is required.");
+    if (!formData.phone.trim()) return setFormError("Phone Number is required.");
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim())) {
@@ -118,10 +129,34 @@ export default function AgentsPage() {
 
     setSubmittingAgent(true);
     try {
+      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+
+      let nicFrontBase64 = "";
+      let nicBackBase64 = "";
+      let birthCertificateBase64 = "";
+      let policeReportBase64 = "";
+
+      if (nicFront) nicFrontBase64 = await toBase64(nicFront);
+      if (nicBack) nicBackBase64 = await toBase64(nicBack);
+      if (birthCertificate) birthCertificateBase64 = await toBase64(birthCertificate);
+      if (policeReport) policeReportBase64 = await toBase64(policeReport);
+
       const res = await fetch("http://localhost:5000/api/office-staff/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, branch })
+        body: JSON.stringify({
+          ...formData,
+          branch,
+          nicFront: nicFrontBase64,
+          nicBack: nicBackBase64,
+          birthCertificate: birthCertificateBase64,
+          policeReport: policeReportBase64
+        })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -129,7 +164,23 @@ export default function AgentsPage() {
       }
 
       setFormSuccess("Agent registered successfully!");
-      setFormData({ name: "", email: "", nic: "", dob: "", address: "" });
+      setFormData({
+        name: "",
+        email: "",
+        nic: "",
+        dob: "",
+        address: "",
+        phone: "",
+        bankName: "",
+        bankBranch: "",
+        accountNumber: "",
+        accountType: "",
+        accountHolderName: ""
+      });
+      setNicFront(null);
+      setNicBack(null);
+      setBirthCertificate(null);
+      setPoliceReport(null);
       
       // Reload agents list
       loadAgents(branch);
@@ -393,103 +444,275 @@ export default function AgentsPage() {
             </div>
 
             {/* Modal Content / Form */}
-            <form onSubmit={handleFormSubmit} className="p-8 flex flex-col gap-5">
-              {formError && (
-                <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <span>{formError}</span>
-                </div>
-              )}
-              {formSuccess && (
-                <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{formSuccess}</span>
-                </div>
-              )}
+            <form onSubmit={handleFormSubmit} className="flex flex-col h-[80vh] md:h-auto max-h-[85vh]">
+              {/* Scrollable inputs container */}
+              <div className="px-8 py-6 overflow-y-auto flex flex-col gap-5 flex-1">
+                {formError && (
+                  <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 flex-shrink-0">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>{formError}</span>
+                  </div>
+                )}
+                {formSuccess && (
+                  <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 flex-shrink-0">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{formSuccess}</span>
+                  </div>
+                )}
 
-              {/* Form Group: Name */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="E.g., John Doe"
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                />
+                {/* --- Section 1: General Details --- */}
+                <div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">General Details</h3>
+                  <div className="flex flex-col gap-4">
+                    {/* Name */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Full Name <span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="E.g., John Doe"
+                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                      />
+                    </div>
+
+                    {/* Email & Phone */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Email Address <span className="text-red-500">*</span></label>
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="agent@sanasainsurance.lk"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Phone Number <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="E.g., 0712345678"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* NIC & DOB */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Number <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.nic}
+                          onChange={(e) => setFormData({ ...formData, nic: e.target.value })}
+                          placeholder="E.g., 199912345678 or 991234567V"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Date of Birth <span className="text-red-500">*</span></label>
+                        <input
+                          type="date"
+                          required
+                          value={formData.dob}
+                          onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Address */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Home Address <span className="text-red-500">*</span></label>
+                      <textarea
+                        required
+                        rows={2}
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="Enter home address here..."
+                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold resize-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* --- Section 2: Bank Account Details --- */}
+                <div className="mt-2">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Bank Account Details</h3>
+                  <div className="flex flex-col gap-4">
+                    {/* Bank Name & Branch */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Name</label>
+                        <input
+                          type="text"
+                          value={formData.bankName}
+                          onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                          placeholder="E.g., Bank of Ceylon"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Branch</label>
+                        <input
+                          type="text"
+                          value={formData.bankBranch}
+                          onChange={(e) => setFormData({ ...formData, bankBranch: e.target.value })}
+                          placeholder="E.g., Galle Fort"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Account Number & Type */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Number</label>
+                        <input
+                          type="text"
+                          value={formData.accountNumber}
+                          onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                          placeholder="E.g., 8123456789"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Type</label>
+                        <select
+                          value={formData.accountType}
+                          onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold cursor-pointer"
+                        >
+                          <option value="">Select Account Type</option>
+                          <option value="Savings">Savings Account</option>
+                          <option value="Current">Current Account</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Account Holder Name */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Holder Name</label>
+                      <input
+                        type="text"
+                        value={formData.accountHolderName}
+                        onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
+                        placeholder="E.g., J. Doe"
+                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* --- Section 3: Required Documents --- */}
+                <div className="mt-2 mb-2">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Required Documents</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* NIC Front */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Front Photo</label>
+                      <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-slate-600 truncate max-w-[80%] select-none">
+                          {nicFront ? nicFront.name : "Select file..."}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => setNicFront(e.target.files?.[0] || null)}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* NIC Back */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Back Photo</label>
+                      <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-slate-600 truncate max-w-[80%] select-none">
+                          {nicBack ? nicBack.name : "Select file..."}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => setNicBack(e.target.files?.[0] || null)}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Birth Certificate */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Birth Certificate</label>
+                      <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-slate-600 truncate max-w-[80%] select-none">
+                          {birthCertificate ? birthCertificate.name : "Select file..."}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => setBirthCertificate(e.target.files?.[0] || null)}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Police Report */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Police Report</label>
+                      <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-slate-600 truncate max-w-[80%] select-none">
+                          {policeReport ? policeReport.name : "Select file..."}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => setPoliceReport(e.target.files?.[0] || null)}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Read-only Branch Info Accent Card */}
+                <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none flex-shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Assigned Branch</span>
+                    <span className="text-sm font-extrabold text-[#0f2d3a]">{branch} Branch</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Form Row: Email & NIC */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="agent@sanasainsurance.lk"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Number</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.nic}
-                    onChange={(e) => setFormData({ ...formData, nic: e.target.value })}
-                    placeholder="E.g., 199912345678 or 991234567V"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                  />
-                </div>
-              </div>
-
-              {/* Form Row: DOB */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Date of Birth</label>
-                <input
-                  type="date"
-                  required
-                  value={formData.dob}
-                  onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                />
-              </div>
-
-              {/* Form Group: Address */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Home Address</label>
-                <textarea
-                  required
-                  rows={2}
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Enter home address here..."
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold resize-none"
-                />
-              </div>
-
-              {/* Read-only Branch Info Accent Card */}
-              <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none">
-                <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Assigned Branch</span>
-                  <span className="text-sm font-extrabold text-[#0f2d3a]">{branch} Branch</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3.5 mt-4">
+              {/* Action Buttons (Fixed Footer) */}
+              <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-100 flex-shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}

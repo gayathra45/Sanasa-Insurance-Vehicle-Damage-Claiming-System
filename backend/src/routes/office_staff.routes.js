@@ -11,6 +11,7 @@ import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { uploadToCloudinary } from "../utils/upload.js";
 
 const router = express.Router();
 
@@ -249,7 +250,26 @@ router.patch("/claims/:claimNumber", async (req, res) => {
 // POST create a new agent: /api/office-staff/agents
 router.post("/agents", async (req, res) => {
   try {
-    const { name, email, nic, address, dob, branch } = req.body;
+    const {
+      name,
+      email,
+      nic,
+      address,
+      dob,
+      branch,
+      phone,
+      city,
+      province,
+      bankName,
+      bankBranch,
+      accountNumber,
+      accountType,
+      accountHolderName,
+      nicFront,
+      nicBack,
+      birthCertificate,
+      policeReport
+    } = req.body;
 
     if (!name || !email || !nic || !address || !dob || !branch) {
       return res.status(400).json({ error: "All agent profile fields are required." });
@@ -297,6 +317,25 @@ router.post("/agents", async (req, res) => {
     const tempPassword = "SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90);
     const hashedPassword = hashPassword(tempPassword);
 
+    // Upload documents to Cloudinary if they exist
+    let nicFrontUrl = "";
+    let nicBackUrl = "";
+    let birthCertificateUrl = "";
+    let policeReportUrl = "";
+
+    if (nicFront) {
+      nicFrontUrl = await uploadToCloudinary(nicFront, "agents/documents");
+    }
+    if (nicBack) {
+      nicBackUrl = await uploadToCloudinary(nicBack, "agents/documents");
+    }
+    if (birthCertificate) {
+      birthCertificateUrl = await uploadToCloudinary(birthCertificate, "agents/documents");
+    }
+    if (policeReport) {
+      policeReportUrl = await uploadToCloudinary(policeReport, "agents/documents");
+    }
+
     const newAgent = new Agent({
       agentId: nextAgentId,
       name: name.trim(),
@@ -306,7 +345,20 @@ router.post("/agents", async (req, res) => {
       nic: cleanNic,
       address: address.trim(),
       dob: dob.trim(),
-      branch: branch.trim()
+      branch: branch.trim(),
+      phone: phone ? phone.trim() : "",
+      city: city ? city.trim() : "",
+      province: province ? province.trim() : "",
+      bankName: bankName ? bankName.trim() : "",
+      bankBranch: bankBranch ? bankBranch.trim() : "",
+      accountNumber: accountNumber ? accountNumber.trim() : "",
+      accountType: accountType ? accountType.trim() : "",
+      accountHolderName: accountHolderName ? accountHolderName.trim() : "",
+      nicFront: nicFrontUrl,
+      nicBack: nicBackUrl,
+      birthCertificate: birthCertificateUrl,
+      policeReport: policeReportUrl,
+      status: "active"
     });
 
     await newAgent.save();
