@@ -749,36 +749,38 @@ export default function AgentsPage() {
             </form>
           </div>
         </div>
-      )}                {/* Agent Details View Modal */}
+      )}                        {/* Agent Details View Modal */}
       {selectedAgentDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-4xl shadow-xl border border-slate-200 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col">
             
             {/* Modal Header */}
-            <div className="px-8 py-5 border-b border-slate-150 flex justify-between items-center text-slate-800 flex-shrink-0 bg-white">
-              <div className="flex items-center gap-3">
-                <div className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-700 font-bold text-xs select-none">
+            <div className="px-8 py-6 border-b border-slate-150 flex justify-between items-center text-slate-800 flex-shrink-0 bg-white">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-full bg-slate-100 text-[#0f2d3a] font-bold text-sm flex items-center justify-center select-none flex-shrink-0 border border-slate-200">
                   {selectedAgentDetails.agentId}
                 </div>
                 <div>
-                  <h2 className="font-bold text-base text-slate-900 flex items-center gap-2">
-                    {selectedAgentDetails.name}
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="font-bold text-lg text-slate-900 leading-none">
+                      {selectedAgentDetails.name}
+                    </h2>
+                    <span className={`text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border ${
                       (selectedAgentDetails.availability || "Active") === "Active"
                         ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : "bg-slate-100 text-slate-500 border-slate-200"
                     }`}>
                       {selectedAgentDetails.availability || "Active"}
                     </span>
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                  </div>
+                  <p className="text-xs font-semibold text-slate-400 mt-1.5 tracking-wide">
                     {selectedAgentDetails.branch} Branch • Registered Agent
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedAgentDetails(null)}
-                className="text-slate-400 hover:text-slate-600 bg-transparent border-none outline-none cursor-pointer transition-colors p-1.5 rounded-lg hover:bg-slate-100"
+                className="text-slate-400 hover:text-slate-650 bg-transparent border-none outline-none cursor-pointer transition-colors p-2 rounded-full hover:bg-slate-100"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -794,64 +796,64 @@ export default function AgentsPage() {
                 
                 {/* Profile Section */}
                 <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex flex-col gap-4">
-                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider select-none border-b border-slate-200/60 pb-2">
+                  <h3 className="text-xs font-bold text-slate-705 uppercase tracking-wider select-none border-b border-slate-200/60 pb-2">
                     Agent Profile Details
                   </h3>
 
                   <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-xs text-slate-600">
-                    <div className="flex flex-col gap-0.5 col-span-2">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Email Address</span>
-                      <span className="text-slate-800 font-medium">{selectedAgentDetails.email}</span>
+                    <div className="flex flex-col gap-1 col-span-2">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Email Address</span>
+                      <span className="text-slate-900 font-bold text-[13px]">{selectedAgentDetails.email}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Phone Number</span>
-                      <span className="text-slate-800 font-medium">{selectedAgentDetails.phone || "-"}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Phone Number</span>
+                      <span className="text-slate-900 font-bold text-[13px]">{selectedAgentDetails.phone || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">NIC Number</span>
-                      <span className="text-slate-800 font-medium">{selectedAgentDetails.nic}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">NIC Number</span>
+                      <span className="text-slate-900 font-bold text-[13px]">{selectedAgentDetails.nic}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Date of Birth</span>
-                      <span className="text-slate-800 font-medium">{formatDate(selectedAgentDetails.dob)}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Date of Birth</span>
+                      <span className="text-slate-900 font-bold text-[13px]">{formatDate(selectedAgentDetails.dob)}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Onboarded Date</span>
-                      <span className="text-slate-800 font-medium">{formatDate(selectedAgentDetails.createdAt)}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Onboarded Date</span>
+                      <span className="text-slate-900 font-bold text-[13px]">{formatDate(selectedAgentDetails.createdAt)}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5 col-span-2">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Home Address</span>
-                      <span className="text-slate-800 font-medium leading-relaxed">{selectedAgentDetails.address}</span>
+                    <div className="flex flex-col gap-1 col-span-2">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Home Address</span>
+                      <span className="text-slate-900 font-bold text-[13px] leading-relaxed">{selectedAgentDetails.address}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Bank Account Section */}
                 <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex flex-col gap-4">
-                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider select-none border-b border-slate-200/60 pb-2">
+                  <h3 className="text-xs font-bold text-slate-705 uppercase tracking-wider select-none border-b border-slate-200/60 pb-2">
                     Bank Account Details
                   </h3>
 
                   <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-xs text-slate-600">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Bank Name</span>
-                      <span className="text-slate-800 font-medium">{selectedAgentDetails.bankName || "-"}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Bank Name</span>
+                      <span className="text-slate-900 font-bold text-[13px]">{selectedAgentDetails.bankName || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Branch Name</span>
-                      <span className="text-slate-800 font-medium">{selectedAgentDetails.bankBranch || "-"}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Branch Name</span>
+                      <span className="text-slate-900 font-bold text-[13px]">{selectedAgentDetails.bankBranch || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Account Number</span>
-                      <span className="text-slate-800 font-medium font-mono">{selectedAgentDetails.accountNumber || "-"}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Account Number</span>
+                      <span className="text-slate-900 font-bold text-[13px] font-mono">{selectedAgentDetails.accountNumber || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Account Type</span>
-                      <span className="text-slate-800 font-medium">{selectedAgentDetails.accountType || "-"}</span>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Account Type</span>
+                      <span className="text-slate-900 font-bold text-[13px]">{selectedAgentDetails.accountType || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5 col-span-2">
-                      <span className="text-[10px] text-slate-400 font-semibold uppercase">Account Holder Name</span>
-                      <span className="text-slate-800 font-medium">{selectedAgentDetails.accountHolderName || "-"}</span>
+                    <div className="flex flex-col gap-1 col-span-2">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Account Holder Name</span>
+                      <span className="text-slate-900 font-bold text-[13px]">{selectedAgentDetails.accountHolderName || "-"}</span>
                     </div>
                   </div>
                 </div>
@@ -860,7 +862,7 @@ export default function AgentsPage() {
 
               {/* Right Column: Registered Documents */}
               <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100 flex flex-col gap-4">
-                <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider select-none border-b border-slate-200/60 pb-2">
+                <h3 className="text-xs font-bold text-slate-705 uppercase tracking-wider select-none border-b border-slate-200/60 pb-2">
                   Registered Documents
                 </h3>
 
@@ -912,9 +914,9 @@ export default function AgentsPage() {
             <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-155 bg-slate-50/50 flex-shrink-0">
               <button
                 onClick={() => setSelectedAgentDetails(null)}
-                className="px-5 py-2.5 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-lg text-xs font-bold shadow-sm cursor-pointer border-none outline-none transition-all"
+                className="px-8 py-3 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-sm font-bold shadow-md cursor-pointer border-none outline-none transition-all"
               >
-                Close details
+                Close
               </button>
             </div>
           </div>
