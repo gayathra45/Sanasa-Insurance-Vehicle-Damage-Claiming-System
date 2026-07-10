@@ -26,8 +26,12 @@ export default function AgentsPage() {
   // --- UI Display & Search States ---
   const [branch, setBranch] = useState("");
   const [agents, setAgents] = useState<any[]>([]);
+  const [deletedAgents, setDeletedAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingDeleted, setLoadingDeleted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isViewedAgentDeleted, setIsViewedAgentDeleted] = useState(false);
+  const [showDeletedArchive, setShowDeletedArchive] = useState(false);
 
   // --- Modal / Form Registration States ---
   const [showModal, setShowModal] = useState(false);
@@ -109,6 +113,22 @@ export default function AgentsPage() {
       console.error("Error loading agents:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadDeletedAgents = async (branchName: string) => {
+    try {
+      setLoadingDeleted(true);
+      const res = await fetch(`http://localhost:5000/api/office-staff/deleted-agents?branch=${encodeURIComponent(branchName)}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch deleted agents.");
+      }
+      const data = await res.json();
+      setDeletedAgents(data.deletedAgents || []);
+    } catch (err: any) {
+      console.error("Error loading deleted agents:", err);
+    } finally {
+      setLoadingDeleted(false);
     }
   };
 
@@ -256,6 +276,9 @@ export default function AgentsPage() {
       setShowDeleteModal(false);
       setDeletingAgentId(null);
       loadAgents(branch);
+      if (showDeletedArchive) {
+        loadDeletedAgents(branch);
+      }
     } catch (err: any) {
       console.error(err);
       setCustomPopup({
@@ -443,7 +466,10 @@ export default function AgentsPage() {
                             </span>
                           </div>
                           <button
-                            onClick={() => setSelectedAgentDetails(agent)}
+                            onClick={() => {
+                              setIsViewedAgentDeleted(false);
+                              setSelectedAgentDetails(agent);
+                            }}
                             className="px-5 py-2 bg-[#0f2d3a]/10 hover:bg-[#0f2d3a] hover:text-white text-[#0f2d3a] font-bold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
                           >
                             View Details
@@ -456,36 +482,141 @@ export default function AgentsPage() {
               )}
             </div>
 
+            {/* Toggle Button for Archive */}
+            <div className="mt-8 flex justify-center">
+              <button
+                onClick={() => {
+                  const nextState = !showDeletedArchive;
+                  setShowDeletedArchive(nextState);
+                  if (nextState && branch) {
+                    loadDeletedAgents(branch);
+                  }
+                }}
+                className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer bg-white active:scale-95 shadow-sm flex items-center gap-2 outline-none"
+              >
+                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${showDeletedArchive ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+                {showDeletedArchive ? "Hide Deleted Agents Archive" : "Show Deleted Agents Archive"}
+              </button>
+            </div>
+
+            {/* Deleted Agents Section */}
+            {showDeletedArchive && (
+              <div className="mt-8 border-t border-slate-100 pt-8 select-none animate-fade-in">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
+                      <svg className="w-5.5 h-5.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Deleted Agents Archive
+                    </h2>
+                    <p className="text-xs font-semibold text-slate-400 mt-1">
+                      Archived records of insurance agents terminated or resigned from this branch.
+                    </p>
+                  </div>
+                </div>
+
+                {loadingDeleted ? (
+                  <div className="bg-slate-50 border border-slate-150 rounded-[28px] p-12 flex flex-col items-center justify-center text-center shadow-sm">
+                    <div className="animate-spin rounded-full h-7 w-7 border-t-2 border-b-2 border-slate-400"></div>
+                    <span className="mt-2.5 text-slate-400 text-xs font-bold">Loading archive...</span>
+                  </div>
+                ) : deletedAgents.length === 0 ? (
+                  <div className="bg-slate-50/50 border border-dashed border-slate-200 rounded-[28px] p-12 text-center select-none">
+                    <p className="text-slate-400 font-extrabold text-xs uppercase tracking-wider">No Deleted Agents</p>
+                    <p className="text-slate-350 text-[11px] mt-1 font-semibold">The branch agent archive is currently empty.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3.5">
+                    {deletedAgents.map((agent) => {
+                      const initials = (agent.name || "A").substring(0, 1).toUpperCase();
+                      return (
+                        <div
+                          key={agent._id}
+                          className="bg-slate-50/60 border border-slate-200/80 rounded-2xl p-4.5 flex flex-col md:flex-row md:items-center justify-between gap-4 relative transition-all"
+                        >
+                          {/* Profile Info */}
+                          <div className="flex items-center gap-4.5 min-w-[240px]">
+                            <div className="w-10 h-10 rounded-xl bg-slate-200/60 text-slate-500 flex items-center justify-center font-black text-sm select-none flex-shrink-0">
+                              {initials}
+                            </div>
+                            <div className="min-w-0">
+                              <h3 className="font-bold text-slate-700 text-sm leading-tight truncate pr-4" title={agent.name}>
+                                {agent.name}
+                              </h3>
+                              <span className="text-[9px] font-bold text-slate-400 block mt-1 uppercase tracking-wider">
+                                ID: {agent.agentId} • {agent.nic}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Deletion details */}
+                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold">Deletion Reason</span>
+                              <span className="text-slate-600 font-bold">{agent.reason}</span>
+                            </div>
+                            <div className="flex flex-col gap-0.5">
+                              <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold">Termination Date</span>
+                              <span className="text-slate-600 font-bold">{formatDate(agent.deletedAt)}</span>
+                            </div>
+                          </div>
+
+                          {/* View Button */}
+                          <div className="flex items-center justify-end gap-3 flex-shrink-0 border-t border-slate-100 pt-2.5 md:pt-0 md:border-none">
+                            <button
+                              onClick={() => {
+                                setIsViewedAgentDeleted(true);
+                                setSelectedAgentDetails(agent);
+                              }}
+                              className="px-4.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-600 hover:text-slate-800 font-bold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
+                            >
+                              View Archive
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
           </main>
         </div>
       </div>
 
       {/* Modal Dialog */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-xl border border-slate-200 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col text-left">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#0f2d3a] to-[#1a4a60] px-8 py-5 flex justify-between items-center text-white select-none">
-              <div className="flex items-center gap-3">
-                <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-                <h2 className="font-extrabold text-lg tracking-tight">Register New Insurance Agent</h2>
+            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 bg-white select-none">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-[22px] font-black text-[#0f2d3a] tracking-tight leading-none">
+                    Register New Insurance Agent
+                  </h2>
+                </div>
+                <p className="text-xs text-slate-400 font-bold mt-2">
+                  Create a new field officer account assigned to the {branch} Branch
+                </p>
               </div>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
-                className="text-white/80 hover:text-white bg-transparent border-none outline-none cursor-pointer transition-colors p-1 rounded-lg hover:bg-white/10"
+                className="text-slate-400 hover:text-slate-700 text-2xl font-bold border-none bg-transparent cursor-pointer transition-colors p-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                &times;
               </button>
             </div>
 
             {/* Modal Content / Form */}
-            <form onSubmit={handleFormSubmit} className="flex flex-col h-[80vh] md:h-auto max-h-[85vh]">
+            <form onSubmit={handleFormSubmit} className="flex flex-col flex-1 overflow-hidden">
               {/* Scrollable inputs container */}
-              <div className="px-8 py-6 overflow-y-auto flex flex-col gap-5 flex-1">
+              <div className="p-8 overflow-y-auto bg-white flex-1 flex flex-col gap-8">
                 {formError && (
                   <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 flex-shrink-0">
                     <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -751,7 +882,7 @@ export default function AgentsPage() {
               </div>
 
               {/* Action Buttons (Fixed Footer) */}
-              <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-100 flex-shrink-0 bg-slate-50/50">
+              <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-200 bg-slate-50 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -792,13 +923,19 @@ export default function AgentsPage() {
                   <h2 className="text-[22px] font-black text-[#0f2d3a] tracking-tight leading-none">
                     {selectedAgentDetails.name}
                   </h2>
-                  <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border tracking-wide ${
-                    (selectedAgentDetails.availability || "Active") === "Active"
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-slate-100 text-slate-500 border-slate-200"
-                  }`}>
-                    {selectedAgentDetails.availability || "Active"}
-                  </span>
+                  {isViewedAgentDeleted ? (
+                    <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border tracking-wide bg-red-50 text-red-700 border-red-200">
+                      Deleted / Archived
+                    </span>
+                  ) : (
+                    <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border tracking-wide ${
+                      (selectedAgentDetails.availability || "Active") === "Active"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-slate-100 text-slate-500 border-slate-200"
+                    }`}>
+                      {selectedAgentDetails.availability || "Active"}
+                    </span>
+                  )}
                 </div>
                 <p className="text-xs text-slate-400 font-bold mt-2">
                   ID: {selectedAgentDetails.agentId} • {selectedAgentDetails.branch} Branch
@@ -900,22 +1037,67 @@ export default function AgentsPage() {
                 </div>
               </div>
 
+              {isViewedAgentDeleted && (
+                <div className="mt-4 flex flex-col gap-3 bg-red-50/20 border border-red-200/40 p-5 rounded-2xl text-left">
+                  <h3 className="text-[11px] font-black text-red-800 uppercase tracking-widest border-b border-red-200/40 pb-2.5 mb-1 select-none">
+                    Account Deletion Record
+                  </h3>
+                  <div className="flex flex-col gap-4 text-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Reason for Deletion</span>
+                        <span className="text-slate-800 font-extrabold text-[13px]">{selectedAgentDetails.reason}</span>
+                      </div>
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Deletion Timestamp</span>
+                        <span className="text-slate-800 font-bold">{formatDate(selectedAgentDetails.deletedAt)}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-0.5 text-left">
+                      <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Remarks / Additional Notes</span>
+                      <span className="text-slate-700 font-semibold bg-white border border-slate-100 p-3.5 rounded-xl block leading-relaxed shadow-sm text-left">
+                        {selectedAgentDetails.note || "No remarks provided."}
+                      </span>
+                    </div>
+                    {selectedAgentDetails.document && (
+                      <div className="flex flex-col gap-1 mt-1 text-left">
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Deletion Proof Document</span>
+                        <div className="flex items-center gap-3">
+                          <a
+                            href={selectedAgentDetails.document}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="px-4 py-2 bg-red-650 hover:bg-red-750 text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition-all no-underline inline-block active:scale-95 border-none"
+                          >
+                            View Proof Document
+                          </a>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
             </div>
 
             {/* Modal Footer */}
             <div className="flex justify-between items-center px-8 py-5 border-t border-slate-200 bg-slate-50 flex-shrink-0">
-              <button
-                onClick={() => {
-                  setSelectedAgentDetails(null);
-                  handleDeleteAgent(selectedAgentDetails._id);
-                }}
-                className="px-6 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
-              >
-                <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Delete Agent
-              </button>
+              {!isViewedAgentDeleted ? (
+                <button
+                  onClick={() => {
+                    setSelectedAgentDetails(null);
+                    handleDeleteAgent(selectedAgentDetails._id);
+                  }}
+                  className="px-6 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+                >
+                  <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete Agent
+                </button>
+              ) : (
+                <div></div>
+              )}
               <button
                 onClick={() => setSelectedAgentDetails(null)}
                 className="px-8 py-3 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-sm font-bold shadow-md cursor-pointer border-none outline-none transition-all"

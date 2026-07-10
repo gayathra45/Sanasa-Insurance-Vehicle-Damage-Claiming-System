@@ -5,6 +5,7 @@ import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
+import DeletedAgent from "../models/deleted_agent.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
@@ -179,6 +180,21 @@ router.get("/agents", async (req, res) => {
     res.json({ agents });
   } catch (err) {
     console.error("Fetch office staff agents error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET all deleted agents for a specific branch: /api/office-staff/deleted-agents
+router.get("/deleted-agents", async (req, res) => {
+  try {
+    const { branch } = req.query;
+    if (!branch) {
+      return res.status(400).json({ error: "Branch query parameter is required." });
+    }
+    const deletedAgents = await DeletedAgent.find({ branch: branch.trim() }).sort({ deletedAt: -1 });
+    res.json({ deletedAgents });
+  } catch (err) {
+    console.error("Fetch office staff deleted agents error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
@@ -565,9 +581,39 @@ router.delete("/agents/:id", async (req, res) => {
     console.log(`[Termination Log] Agent ${agent.name} (${agent.agentId}) deleted.`);
     console.log(`- Reason: ${reason || "Not provided"}`);
     console.log(`- Note: ${note || "None"}`);
+    
+    let documentUrl = "";
     if (document) {
       console.log(`- Attached proof document length: ${document.length} characters (Base64)`);
+      documentUrl = await uploadToCloudinary(document, "agents/deletion_proof");
     }
+
+    // Save to DeletedAgent archive
+    await DeletedAgent.create({
+      agentId: agent.agentId,
+      name: agent.name,
+      email: agent.email,
+      nic: agent.nic,
+      address: agent.address,
+      dob: agent.dob,
+      branch: agent.branch,
+      phone: agent.phone || "",
+      city: agent.city || "",
+      province: agent.province || "",
+      bankName: agent.bankName || "",
+      bankBranch: agent.bankBranch || "",
+      accountNumber: agent.accountNumber || "",
+      accountType: agent.accountType || "",
+      accountHolderName: agent.accountHolderName || "",
+      nicFront: agent.nicFront || "",
+      nicBack: agent.nicBack || "",
+      birthCertificate: agent.birthCertificate || "",
+      policeReport: agent.policeReport || "",
+      reason: reason || "Other",
+      note: note || "",
+      document: documentUrl,
+      deletedAt: new Date()
+    });
 
     await Agent.findByIdAndDelete(id);
     res.json({ message: "Agent removed successfully." });
