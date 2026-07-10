@@ -607,6 +607,7 @@ router.patch("/agents/:id", async (req, res) => {
 
     if (password) {
       agent.password = hashPassword(password);
+      agent.mustChangePassword = true;
     }
 
     await agent.save();

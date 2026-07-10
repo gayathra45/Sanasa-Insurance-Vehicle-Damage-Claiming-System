@@ -184,6 +184,7 @@ router.post("/activate", async (req, res) => {
     // Hash password and set to active
     agent.password = hashPassword(password);
     agent.status = "active";
+    agent.mustChangePassword = false;
     agent.activationToken = undefined;
     agent.activationExpires = undefined;
 
