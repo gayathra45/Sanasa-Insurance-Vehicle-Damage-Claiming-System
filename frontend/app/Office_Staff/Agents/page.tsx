@@ -58,6 +58,7 @@ export default function AgentsPage() {
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [submittingAgent, setSubmittingAgent] = useState(false);
+  const [selectedAgentDetails, setSelectedAgentDetails] = useState<any | null>(null);
 
   // --- Lifecycle Effects ---
   // Restores session details and triggers data load on mounting.
@@ -399,7 +400,14 @@ export default function AgentsPage() {
                         </div>
 
                         {/* Footer Action Bar */}
-                        <div className="border-t border-slate-100 pt-3.5 flex justify-end items-center">
+                        <div className="border-t border-slate-100 pt-3.5 flex justify-between items-center">
+                          <button
+                            onClick={() => setSelectedAgentDetails(agent)}
+                            className="px-4.5 py-1.5 bg-[#0f2d3a]/10 hover:bg-[#0f2d3a] hover:text-white text-[#0f2d3a] font-extrabold text-[11px] rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
+                          >
+                            View Details
+                          </button>
+                          
                           <button
                             onClick={() => handleDeleteAgent(agent._id)}
                             className="bg-transparent hover:bg-red-50 text-red-500 hover:text-red-700 p-2 rounded-xl border-none cursor-pointer flex items-center justify-center transition-all group/btn"
@@ -743,7 +751,160 @@ export default function AgentsPage() {
         </div>
       )}
 
-                  {/* Custom Popup Modal */}
+                  {/* Agent Details View Modal */}
+      {selectedAgentDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col">
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-[#0f2d3a] to-[#1a4a60] px-8 py-5 flex justify-between items-center text-white select-none">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-black text-xs select-none">
+                  {selectedAgentDetails.agentId}
+                </div>
+                <div>
+                  <h2 className="font-extrabold text-base tracking-tight leading-tight">{selectedAgentDetails.name}</h2>
+                  <span className="text-[10px] text-white/70 font-semibold uppercase tracking-wider">{selectedAgentDetails.branch} Branch</span>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedAgentDetails(null)}
+                className="text-white/80 hover:text-white bg-transparent border-none outline-none cursor-pointer transition-colors p-1 rounded-lg hover:bg-white/10"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-8 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+              
+              {/* Left Side: Profile & Bank Details */}
+              <div className="flex flex-col gap-6">
+                
+                {/* Agent Profile Details */}
+                <div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Agent Profile</h3>
+                  <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-600">
+                    <div className="flex flex-col gap-0.5 col-span-2">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Email Address</span>
+                      <span className="text-slate-800 font-bold">{selectedAgentDetails.email}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Phone Number</span>
+                      <span className="text-slate-800 font-bold">{selectedAgentDetails.phone || "-"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">NIC Number</span>
+                      <span className="text-slate-800 font-bold">{selectedAgentDetails.nic}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Date of Birth</span>
+                      <span className="text-slate-800 font-bold">{formatDate(selectedAgentDetails.dob)}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Onboarded Date</span>
+                      <span className="text-slate-800 font-bold">{formatDate(selectedAgentDetails.createdAt)}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 col-span-2">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Home Address</span>
+                      <span className="text-slate-800 font-bold leading-relaxed">{selectedAgentDetails.address}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bank Account Details */}
+                <div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Bank Account</h3>
+                  <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-600">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Bank Name</span>
+                      <span className="text-slate-800 font-bold">{selectedAgentDetails.bankName || "-"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Branch Name</span>
+                      <span className="text-slate-800 font-bold">{selectedAgentDetails.bankBranch || "-"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Account Number</span>
+                      <span className="text-slate-800 font-bold">{selectedAgentDetails.accountNumber || "-"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Account Type</span>
+                      <span className="text-slate-800 font-bold">{selectedAgentDetails.accountType || "-"}</span>
+                    </div>
+                    <div className="flex flex-col gap-0.5 col-span-2">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Account Holder Name</span>
+                      <span className="text-slate-800 font-bold">{selectedAgentDetails.accountHolderName || "-"}</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Right Side: Uploaded Documents */}
+              <div className="flex flex-col gap-4">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1 select-none">Registered Documents</h3>
+                <div className="grid grid-cols-2 gap-4 flex-1">
+                  
+                  {[
+                    { label: "NIC Front", url: selectedAgentDetails.nicFront },
+                    { label: "NIC Back", url: selectedAgentDetails.nicBack },
+                    { label: "Birth Certificate", url: selectedAgentDetails.birthCertificate },
+                    { label: "Police Report", url: selectedAgentDetails.policeReport }
+                  ].map((doc, idx) => (
+                    <div key={idx} className="flex flex-col gap-1.5">
+                      <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black ml-1 select-none">{doc.label}</span>
+                      {doc.url ? (
+                        <div className="relative group border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 h-32 flex flex-col items-center justify-center">
+                          {doc.url.toLowerCase().endsWith(".pdf") ? (
+                            <div className="flex flex-col items-center justify-center p-4 select-none">
+                              <svg className="w-10 h-10 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
+                              </svg>
+                              <span className="text-[10px] text-slate-400 font-bold mt-1">PDF Document</span>
+                            </div>
+                          ) : (
+                            <img src={doc.url} alt={doc.label} className="w-full h-full object-cover" />
+                          )}
+                          <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="px-3.5 py-1.5 bg-white text-slate-900 font-extrabold text-[10px] rounded-full shadow-md no-underline select-none active:scale-95 transition-all cursor-pointer"
+                            >
+                              Open Full View
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="border border-dashed border-slate-200 rounded-2xl h-32 flex items-center justify-center text-slate-400 text-xs font-semibold select-none bg-slate-50/20">
+                          Not Uploaded
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-100 bg-slate-50/50 flex-shrink-0">
+              <button
+                onClick={() => setSelectedAgentDetails(null)}
+                className="px-6 py-3 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-sm font-bold shadow-md cursor-pointer border-none outline-none transition-all"
+              >
+                Close View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Popup Modal */}
       {customPopup.show && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
