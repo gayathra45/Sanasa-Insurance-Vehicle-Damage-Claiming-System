@@ -10,6 +10,7 @@ import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
 import { hashPassword } from "../utils/crypto.js";
+import { sendEmail, getBaseTemplate } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -248,10 +249,10 @@ router.patch("/claims/:claimNumber", async (req, res) => {
 // POST create a new agent: /api/office-staff/agents
 router.post("/agents", async (req, res) => {
   try {
-    const { name, email, nic, address, dob, password, branch } = req.body;
+    const { name, email, nic, address, dob, branch } = req.body;
 
-    if (!name || !email || !nic || !address || !dob || !password || !branch) {
-      return res.status(400).json({ error: "All fields are required." });
+    if (!name || !email || !nic || !address || !dob || !branch) {
+      return res.status(400).json({ error: "All agent profile fields are required." });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -292,13 +293,16 @@ router.post("/agents", async (req, res) => {
       }
     }
 
-    const hashedPassword = hashPassword(password);
+    // Generate secure temporary password containing letters, digits, and a special character
+    const tempPassword = "SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90);
+    const hashedPassword = hashPassword(tempPassword);
 
     const newAgent = new Agent({
       agentId: nextAgentId,
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
+      mustChangePassword: true,
       nic: cleanNic,
       address: address.trim(),
       dob: dob.trim(),
@@ -306,6 +310,47 @@ router.post("/agents", async (req, res) => {
     });
 
     await newAgent.save();
+
+    // Send welcome email with login details to the agent's email
+    const subject = `Welcome to Sanasa Insurance — Your Agent Credentials`;
+    const htmlBody = getBaseTemplate(
+      subject,
+      `
+      <h2>Agent Account Created Successfully</h2>
+      <p>Dear <strong>${name.trim()}</strong>,</p>
+      <p>Your agent account has been registered by the branch staff at the <strong>${branch.trim()}</strong> branch. Below are your login credentials and account details:</p>
+      <table class="data-table">
+        <tr>
+          <td class="label">Agent ID:</td>
+          <td class="value highlight-value">${nextAgentId}</td>
+        </tr>
+        <tr>
+          <td class="label">Email / Login Username:</td>
+          <td class="value">${cleanEmail}</td>
+        </tr>
+        <tr>
+          <td class="label">Temporary Password:</td>
+          <td class="value highlight-value">${tempPassword}</td>
+        </tr>
+        <tr>
+          <td class="label">NIC Number:</td>
+          <td class="value">${cleanNic}</td>
+        </tr>
+        <tr>
+          <td class="label">Assigned Branch:</td>
+          <td class="value">${branch.trim()}</td>
+        </tr>
+      </table>
+      <p>Please log in using your temporary password. Upon your first login to either the Agent Web Dashboard or Mobile App, you will be prompted to set a new password of your choice for subsequent logins.</p>
+      `
+    );
+    const textBody = `Welcome to Sanasa Insurance. Your Agent ID is ${nextAgentId}. Use email ${cleanEmail} and temporary password ${tempPassword} to log in.`;
+
+    try {
+      await sendEmail(cleanEmail, subject, htmlBody, textBody);
+    } catch (emailErr) {
+      console.error("⚠️ Failed to send agent welcome email:", emailErr.message);
+    }
 
     // Return agent details without password
     const agentObj = newAgent.toObject();

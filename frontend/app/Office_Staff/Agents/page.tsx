@@ -43,8 +43,7 @@ export default function AgentsPage() {
     email: "",
     nic: "",
     dob: "",
-    address: "",
-    password: ""
+    address: ""
   });
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
@@ -106,7 +105,6 @@ export default function AgentsPage() {
     if (!formData.nic.trim()) return setFormError("NIC Number is required.");
     if (!formData.dob.trim()) return setFormError("Date of Birth is required.");
     if (!formData.address.trim()) return setFormError("Home Address is required.");
-    if (formData.password.length < 6) return setFormError("Password must be at least 6 characters.");
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim())) {
@@ -131,7 +129,7 @@ export default function AgentsPage() {
       }
 
       setFormSuccess("Agent registered successfully!");
-      setFormData({ name: "", email: "", nic: "", dob: "", address: "", password: "" });
+      setFormData({ name: "", email: "", nic: "", dob: "", address: "" });
       
       // Reload agents list
       loadAgents(branch);
@@ -259,7 +257,7 @@ export default function AgentsPage() {
               {/* Add New Agent Button */}
               <button
                 onClick={() => {
-                  setFormData({ name: "", email: "", nic: "", dob: "", address: "", password: "" });
+                  setFormData({ name: "", email: "", nic: "", dob: "", address: "" });
                   setFormError("");
                   setFormSuccess("");
                   setShowModal(true);
@@ -452,29 +450,16 @@ export default function AgentsPage() {
                 </div>
               </div>
 
-              {/* Form Row: DOB & Password */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Date of Birth</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.dob}
-                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Min. 6 characters"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                  />
-                </div>
+              {/* Form Row: DOB */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Date of Birth</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.dob}
+                  onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                />
               </div>
 
               {/* Form Group: Address */}
