@@ -754,21 +754,36 @@ export default function AgentsPage() {
                   {/* Agent Details View Modal */}
       {selectedAgentDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col">
+          <div className="bg-white rounded-[32px] w-full max-w-4xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col">
+            
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#0f2d3a] to-[#1a4a60] px-8 py-5 flex justify-between items-center text-white select-none">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center font-black text-xs select-none">
+            <div className="bg-[#0f2d3a] px-8 py-6 flex justify-between items-center text-white select-none relative overflow-hidden flex-shrink-0">
+              {/* Subtle background decoration */}
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl transform translate-x-10 -translate-y-10"></div>
+              
+              <div className="flex items-center gap-4 relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center font-black text-xs text-[#00ddff] shadow-inner select-none">
                   {selectedAgentDetails.agentId}
                 </div>
                 <div>
-                  <h2 className="font-extrabold text-base tracking-tight leading-tight">{selectedAgentDetails.name}</h2>
-                  <span className="text-[10px] text-white/70 font-semibold uppercase tracking-wider">{selectedAgentDetails.branch} Branch</span>
+                  <h2 className="font-extrabold text-base md:text-lg tracking-tight leading-tight flex items-center gap-2">
+                    {selectedAgentDetails.name}
+                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full border ${
+                      (selectedAgentDetails.availability || "Active") === "Active"
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                        : "bg-slate-500/20 text-slate-300 border-slate-500/30"
+                    }`}>
+                      {selectedAgentDetails.availability || "Active"}
+                    </span>
+                  </h2>
+                  <span className="text-[11px] text-white/60 font-semibold block mt-1 uppercase tracking-wider">
+                    {selectedAgentDetails.branch} Branch • Registered Agent
+                  </span>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedAgentDetails(null)}
-                className="text-white/80 hover:text-white bg-transparent border-none outline-none cursor-pointer transition-colors p-1 rounded-lg hover:bg-white/10"
+                className="text-white/80 hover:text-white bg-transparent border-none outline-none cursor-pointer transition-colors p-2 rounded-xl hover:bg-white/10 relative z-10"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -777,86 +792,116 @@ export default function AgentsPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-8 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="p-8 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50/50">
               
-              {/* Left Side: Profile & Bank Details */}
+              {/* Left Column: Profile Card & Bank Card */}
               <div className="flex flex-col gap-6">
                 
-                {/* Agent Profile Details */}
-                <div>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Agent Profile</h3>
-                  <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-600">
-                    <div className="flex flex-col gap-0.5 col-span-2">
+                {/* Profile Card */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col gap-5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider select-none">Agent Profile Details</h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs font-semibold text-slate-600">
+                    <div className="flex flex-col gap-1 col-span-2">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Email Address</span>
-                      <span className="text-slate-800 font-bold">{selectedAgentDetails.email}</span>
+                      <span className="text-slate-800 font-bold text-[13px]">{selectedAgentDetails.email}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Phone Number</span>
-                      <span className="text-slate-800 font-bold">{selectedAgentDetails.phone || "-"}</span>
+                      <span className="text-slate-800 font-bold text-[13px]">{selectedAgentDetails.phone || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">NIC Number</span>
-                      <span className="text-slate-800 font-bold">{selectedAgentDetails.nic}</span>
+                      <span className="text-slate-800 font-bold text-[13px]">{selectedAgentDetails.nic}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Date of Birth</span>
-                      <span className="text-slate-800 font-bold">{formatDate(selectedAgentDetails.dob)}</span>
+                      <span className="text-slate-800 font-bold text-[13px]">{formatDate(selectedAgentDetails.dob)}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Onboarded Date</span>
-                      <span className="text-slate-800 font-bold">{formatDate(selectedAgentDetails.createdAt)}</span>
+                      <span className="text-slate-800 font-bold text-[13px]">{formatDate(selectedAgentDetails.createdAt)}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5 col-span-2">
+                    <div className="flex flex-col gap-1 col-span-2">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Home Address</span>
-                      <span className="text-slate-800 font-bold leading-relaxed">{selectedAgentDetails.address}</span>
+                      <span className="text-slate-700 font-bold leading-relaxed text-[12px]">{selectedAgentDetails.address}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Bank Account Details */}
-                <div>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Bank Account</h3>
-                  <div className="grid grid-cols-2 gap-4 text-xs font-semibold text-slate-600">
-                    <div className="flex flex-col gap-0.5">
+                {/* Bank Card (Premium Backdrop style) */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col gap-5 relative overflow-hidden">
+                  {/* Subtle banking watermark */}
+                  <div className="absolute -right-4 -bottom-4 text-slate-50/70 select-none pointer-events-none transform -rotate-12">
+                    <svg className="w-24 h-24" fill="none" stroke="currentColor" strokeWidth="1" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5h.007m-.007 3h.007m-.007 3h.007m2.243-7.5 3 3m0 0 3-3m-3 3v7.5M12 9h4.5M12 12h4.5M12 15h4.5m1.125-3h.007m-.007 3h.007m-.007 3h.007M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                    </svg>
+                  </div>
+
+                  <div className="flex items-center gap-2 relative z-10">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider select-none">Bank Account Details</h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs font-semibold text-slate-600 relative z-10">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Bank Name</span>
-                      <span className="text-slate-800 font-bold">{selectedAgentDetails.bankName || "-"}</span>
+                      <span className="text-slate-800 font-bold text-[13px]">{selectedAgentDetails.bankName || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Branch Name</span>
-                      <span className="text-slate-800 font-bold">{selectedAgentDetails.bankBranch || "-"}</span>
+                      <span className="text-slate-800 font-bold text-[13px]">{selectedAgentDetails.bankBranch || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Account Number</span>
-                      <span className="text-slate-800 font-bold">{selectedAgentDetails.accountNumber || "-"}</span>
+                      <span className="text-slate-800 font-bold text-[13px] tracking-wide">{selectedAgentDetails.accountNumber || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5">
+                    <div className="flex flex-col gap-1">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Account Type</span>
-                      <span className="text-slate-800 font-bold">{selectedAgentDetails.accountType || "-"}</span>
+                      <span className="text-slate-800 font-bold text-[13px]">{selectedAgentDetails.accountType || "-"}</span>
                     </div>
-                    <div className="flex flex-col gap-0.5 col-span-2">
+                    <div className="flex flex-col gap-1 col-span-2">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Account Holder Name</span>
-                      <span className="text-slate-800 font-bold">{selectedAgentDetails.accountHolderName || "-"}</span>
+                      <span className="text-slate-800 font-bold text-[13px]">{selectedAgentDetails.accountHolderName || "-"}</span>
                     </div>
                   </div>
                 </div>
 
               </div>
 
-              {/* Right Side: Uploaded Documents */}
-              <div className="flex flex-col gap-4">
-                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest border-b border-slate-100 pb-1 select-none">Registered Documents</h3>
+              {/* Right Column: Registered Documents */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col gap-5">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wider select-none">Registered Document Vault</h3>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4 flex-1">
-                  
                   {[
-                    { label: "NIC Front", url: selectedAgentDetails.nicFront },
-                    { label: "NIC Back", url: selectedAgentDetails.nicBack },
+                    { label: "NIC Front Image", url: selectedAgentDetails.nicFront },
+                    { label: "NIC Back Image", url: selectedAgentDetails.nicBack },
                     { label: "Birth Certificate", url: selectedAgentDetails.birthCertificate },
-                    { label: "Police Report", url: selectedAgentDetails.policeReport }
+                    { label: "Police Report Document", url: selectedAgentDetails.policeReport }
                   ].map((doc, idx) => (
                     <div key={idx} className="flex flex-col gap-1.5">
                       <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black ml-1 select-none">{doc.label}</span>
                       {doc.url ? (
-                        <div className="relative group border border-slate-200 rounded-2xl overflow-hidden bg-slate-50 h-32 flex flex-col items-center justify-center">
+                        <div className="relative group border border-slate-200/80 rounded-2xl overflow-hidden bg-slate-50 h-32 flex flex-col items-center justify-center transition-all duration-200 hover:shadow-md hover:border-slate-300">
                           {doc.url.toLowerCase().endsWith(".pdf") ? (
                             <div className="flex flex-col items-center justify-center p-4 select-none">
                               <svg className="w-10 h-10 text-red-500" fill="currentColor" viewBox="0 0 20 20">
@@ -867,25 +912,33 @@ export default function AgentsPage() {
                           ) : (
                             <img src={doc.url} alt={doc.label} className="w-full h-full object-cover" />
                           )}
-                          <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          {/* Hover action banner */}
+                          <div className="absolute inset-0 bg-[#0f2d3a]/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2 items-center justify-center p-2">
+                            <span className="text-[10px] text-white font-extrabold select-none tracking-wide text-center leading-none mb-1">{doc.label}</span>
                             <a
                               href={doc.url}
                               target="_blank"
                               rel="noreferrer"
-                              className="px-3.5 py-1.5 bg-white text-slate-900 font-extrabold text-[10px] rounded-full shadow-md no-underline select-none active:scale-95 transition-all cursor-pointer"
+                              className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-[#0f2d3a] font-extrabold text-[10px] rounded-full shadow-md no-underline select-none active:scale-95 transition-all cursor-pointer flex items-center gap-1"
                             >
-                              Open Full View
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                              </svg>
+                              Preview File
                             </a>
                           </div>
                         </div>
                       ) : (
-                        <div className="border border-dashed border-slate-200 rounded-2xl h-32 flex items-center justify-center text-slate-400 text-xs font-semibold select-none bg-slate-50/20">
+                        <div className="border border-dashed border-slate-200/80 rounded-2xl h-32 flex flex-col items-center justify-center text-slate-400 text-xs font-semibold select-none bg-slate-50/20 select-none">
+                          <svg className="w-6 h-6 text-slate-300 mb-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                          </svg>
                           Not Uploaded
                         </div>
                       )}
                     </div>
                   ))}
-
                 </div>
               </div>
 
@@ -897,7 +950,7 @@ export default function AgentsPage() {
                 onClick={() => setSelectedAgentDetails(null)}
                 className="px-6 py-3 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-sm font-bold shadow-md cursor-pointer border-none outline-none transition-all"
               >
-                Close View
+                Close Details
               </button>
             </div>
           </div>
