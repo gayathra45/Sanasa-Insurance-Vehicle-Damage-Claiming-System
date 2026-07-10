@@ -996,6 +996,7 @@ export default function AgentsPage() {
             </div>
           </div>
         </div>
+      )}
       {/* Delete Agent Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
