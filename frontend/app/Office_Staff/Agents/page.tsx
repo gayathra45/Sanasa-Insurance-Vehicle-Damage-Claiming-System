@@ -59,6 +59,14 @@ export default function AgentsPage() {
   const [formSuccess, setFormSuccess] = useState("");
   const [submittingAgent, setSubmittingAgent] = useState(false);
   const [selectedAgentDetails, setSelectedAgentDetails] = useState<any | null>(null);
+  
+  // Deletion Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAgentId, setDeletingAgentId] = useState<string | null>(null);
+  const [deleteReason, setDeleteReason] = useState("Resigned");
+  const [deleteNote, setDeleteNote] = useState("");
+  const [deleteDoc, setDeleteDoc] = useState<File | null>(null);
+  const [submittingDelete, setSubmittingDelete] = useState(false);
 
   // --- Lifecycle Effects ---
   // Restores session details and triggers data load on mounting.
@@ -199,38 +207,66 @@ export default function AgentsPage() {
     }
   };
 
-  const handleDeleteAgent = async (agentId: string) => {
-    setCustomPopup({
-      show: true,
-      title: "Confirm Deletion",
-      message: "Are you sure you want to delete this agent? This action cannot be undone.",
-      type: "confirm",
-      onConfirm: async () => {
-        try {
-          const res = await fetch(`http://localhost:5000/api/office-staff/agents/${agentId}`, {
-            method: "DELETE"
-          });
-          if (!res.ok) {
-            throw new Error("Failed to delete agent.");
-          }
-          setCustomPopup({
-            show: true,
-            title: "Success",
-            message: "Agent deleted successfully!",
-            type: "alert"
-          });
-          loadAgents(branch);
-        } catch (err: any) {
-          console.error(err);
-          setCustomPopup({
-            show: true,
-            title: "Error",
-            message: err.message || "Failed to delete agent.",
-            type: "alert"
-          });
-        }
+  const handleDeleteAgent = (agentId: string) => {
+    setDeletingAgentId(agentId);
+    setDeleteReason("Resigned");
+    setDeleteNote("");
+    setDeleteDoc(null);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deletingAgentId) return;
+
+    setSubmittingDelete(true);
+    try {
+      let documentBase64 = "";
+      if (deleteDoc) {
+        const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = error => reject(error);
+        });
+        documentBase64 = await toBase64(deleteDoc);
       }
-    });
+
+      const res = await fetch(`http://localhost:5000/api/office-staff/agents/${deletingAgentId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reason: deleteReason,
+          note: deleteNote,
+          document: documentBase64
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete agent.");
+      }
+
+      setCustomPopup({
+        show: true,
+        title: "Success",
+        message: "Agent deleted successfully!",
+        type: "alert"
+      });
+
+      setShowDeleteModal(false);
+      setDeletingAgentId(null);
+      loadAgents(branch);
+    } catch (err: any) {
+      console.error(err);
+      setCustomPopup({
+        show: true,
+        title: "Error",
+        message: err.message || "Failed to delete agent.",
+        type: "alert"
+      });
+    } finally {
+      setSubmittingDelete(false);
+    }
   };
 
   // Filtered agents based on search query
@@ -958,6 +994,115 @@ export default function AgentsPage() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      {/* Delete Agent Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-8 flex flex-col gap-5">
+            <div>
+              <h3 className="font-black text-lg text-slate-900 tracking-tight select-none">
+                Delete Agent Account
+              </h3>
+              <p className="text-xs font-semibold text-slate-400 mt-1 select-none">
+                Please specify the reason and details for removing this agent.
+              </p>
+            </div>
+
+            <form onSubmit={confirmDeleteAgent} className="flex flex-col gap-4">
+              
+              {/* Deletion Reason Dropdown */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none">
+                  Reason for Deletion <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-slate-350 focus:bg-white transition-all select-none"
+                  required
+                >
+                  <option value="Resigned">Resigned</option>
+                  <option value="Suspended/Terminated">Suspended/Terminated</option>
+                  <option value="Contract Ended">Contract Ended</option>
+                  <option value="Incorrect Entry / Duplication">Incorrect Entry / Duplication</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {/* Add Note textarea */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none">
+                  Additional Notes / Remarks <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={deleteNote}
+                  onChange={(e) => setDeleteNote(e.target.value)}
+                  placeholder="Enter remarks about this deletion..."
+                  rows={3}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-slate-350 focus:bg-white transition-all resize-none"
+                  required
+                />
+              </div>
+
+              {/* Document Attach (Optional) file input */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none">
+                  Attach Proof Document (Optional)
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-350 transition-all rounded-xl text-xs font-bold text-slate-700 cursor-pointer select-none">
+                    Choose File
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setDeleteDoc(e.target.files[0]);
+                        }
+                      }}
+                      className="hidden"
+                      accept=".pdf,image/*"
+                    />
+                  </label>
+                  <span className="text-xs text-slate-500 font-bold truncate max-w-[200px]">
+                    {deleteDoc ? deleteDoc.name : "No file attached"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3.5 mt-2 border-t border-slate-100 pt-4 select-none">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeletingAgentId(null);
+                  }}
+                  className="px-6 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                  disabled={submittingDelete}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-red-650 hover:bg-red-700 active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none flex items-center justify-center gap-1.5"
+                  disabled={submittingDelete}
+                >
+                  {submittingDelete ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <span>Delete Agent</span>
+                  )}
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}
