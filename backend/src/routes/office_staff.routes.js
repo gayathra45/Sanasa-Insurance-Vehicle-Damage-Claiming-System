@@ -387,6 +387,11 @@ router.post("/agents", async (req, res) => {
       phone,
       city,
       province,
+      bankName,
+      bankBranch,
+      accountNumber,
+      accountType,
+      accountHolderName,
       nicFront,
       nicBack,
       birthCertificate,
@@ -459,6 +464,13 @@ router.post("/agents", async (req, res) => {
       policeReportUrl = await uploadToCloudinary(policeReport, "agents/documents");
     }
 
+    // Automatically find province based on the branch
+    const staff = await OfficeStaff.findOne({ branch: branch.trim() });
+    let resolvedProvince = staff ? staff.province : "";
+    if (!resolvedProvince && province) {
+      resolvedProvince = province.trim();
+    }
+
     const newAgent = new Agent({
       agentId: nextAgentId,
       name: name.trim(),
@@ -471,7 +483,12 @@ router.post("/agents", async (req, res) => {
       branch: branch.trim(),
       phone: phone ? phone.trim() : "",
       city: city ? city.trim() : "",
-      province: province ? province.trim() : "",
+      province: resolvedProvince,
+      bankName: bankName ? bankName.trim() : "",
+      bankBranch: bankBranch ? bankBranch.trim() : "",
+      accountNumber: accountNumber ? accountNumber.trim() : "",
+      accountType: accountType ? accountType.trim() : "",
+      accountHolderName: accountHolderName ? accountHolderName.trim() : "",
       nicFront: nicFrontUrl,
       nicBack: nicBackUrl,
       birthCertificate: birthCertificateUrl,
