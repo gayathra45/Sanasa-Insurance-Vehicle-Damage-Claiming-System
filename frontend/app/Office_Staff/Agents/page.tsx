@@ -776,119 +776,87 @@ export default function AgentsPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-8 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8 bg-white flex-1">
+            <div className="p-8 overflow-y-auto bg-white flex-1 flex flex-col gap-8">
               
-              {/* Left Column: Profile & Bank Details */}
-              <div className="flex flex-col gap-6">
+              {/* Agent Profile Details & Bank Account Details side-by-side or stacked as a clean list table */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 
-                {/* Profile Section */}
-                <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-200/80 flex flex-col gap-4">
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest select-none border-b border-slate-200 pb-2">
-                    Agent Profile Details
+                {/* Profile Details List */}
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
+                    Agent Profile Info
                   </h3>
-
-                  <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs">
-                    <div className="flex flex-col gap-1 col-span-2">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Email Address</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm">{selectedAgentDetails.email}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Phone Number</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm">{selectedAgentDetails.phone || "-"}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">NIC Number</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm">{selectedAgentDetails.nic}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Date of Birth</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm">{formatDate(selectedAgentDetails.dob)}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Onboarded Date</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm">{formatDate(selectedAgentDetails.createdAt)}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 col-span-2">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Home Address</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm leading-relaxed">{selectedAgentDetails.address}</span>
-                    </div>
+                  <div className="flex flex-col text-xs">
+                    {[
+                      { label: "Email Address", value: selectedAgentDetails.email },
+                      { label: "Phone Number", value: selectedAgentDetails.phone || "-" },
+                      { label: "NIC Number", value: selectedAgentDetails.nic },
+                      { label: "Date of Birth", value: formatDate(selectedAgentDetails.dob) },
+                      { label: "Onboarded Date", value: formatDate(selectedAgentDetails.createdAt) },
+                      { label: "Home Address", value: selectedAgentDetails.address }
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center py-2.5 border-b border-slate-100/60 last:border-none gap-4">
+                        <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
+                        <span className="text-slate-900 font-bold text-right truncate max-w-xs">{item.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Bank Account Section */}
-                <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-200/80 flex flex-col gap-4">
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest select-none border-b border-slate-200 pb-2">
+                {/* Bank Account Details List */}
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
                     Bank Account Details
                   </h3>
-
-                  <div className="grid grid-cols-2 gap-y-4 gap-x-6 text-xs">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Bank Name</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm">{selectedAgentDetails.bankName || "-"}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Branch Name</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm">{selectedAgentDetails.bankBranch || "-"}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Account Number</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm font-mono">{selectedAgentDetails.accountNumber || "-"}</span>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Account Type</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm">{selectedAgentDetails.accountType || "-"}</span>
-                    </div>
-                    <div className="flex flex-col gap-1 col-span-2">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Account Holder Name</span>
-                      <span className="text-slate-900 font-bold text-[13px] md:text-sm">{selectedAgentDetails.accountHolderName || "-"}</span>
-                    </div>
+                  <div className="flex flex-col text-xs">
+                    {[
+                      { label: "Bank Name", value: selectedAgentDetails.bankName || "-" },
+                      { label: "Branch Name", value: selectedAgentDetails.bankBranch || "-" },
+                      { label: "Account Number", value: selectedAgentDetails.accountNumber || "-", isMono: true },
+                      { label: "Account Type", value: selectedAgentDetails.accountType || "-" },
+                      { label: "Account Holder", value: selectedAgentDetails.accountHolderName || "-" }
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center py-2.5 border-b border-slate-100/60 last:border-none gap-4">
+                        <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
+                        <span className={`text-slate-900 font-bold text-right truncate max-w-xs ${item.isMono ? 'font-mono' : ''}`}>{item.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
               </div>
 
-              {/* Right Column: Registered Documents */}
-              <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-200/80 flex flex-col gap-4">
-                <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest select-none border-b border-slate-200 pb-2">
-                  Registered Documents
+              {/* Registered Documents Section: Row layout */}
+              <div className="mt-2 flex flex-col gap-3">
+                <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
+                  Uploaded Verification Documents
                 </h3>
-
-                <div className="grid grid-cols-2 gap-4 flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { label: "NIC Front", url: selectedAgentDetails.nicFront },
-                    { label: "NIC Back", url: selectedAgentDetails.nicBack },
+                    { label: "NIC Front Image", url: selectedAgentDetails.nicFront },
+                    { label: "NIC Back Image", url: selectedAgentDetails.nicBack },
                     { label: "Birth Certificate", url: selectedAgentDetails.birthCertificate },
-                    { label: "Police Report", url: selectedAgentDetails.policeReport }
+                    { label: "Police Report Document", url: selectedAgentDetails.policeReport }
                   ].map((doc, idx) => (
-                    <div key={idx} className="flex flex-col gap-1">
-                      <span className="text-[10px] text-slate-500 font-bold ml-0.5 uppercase tracking-wider">{doc.label}</span>
-                      {doc.url ? (
-                        <div className="relative group border border-slate-200 rounded-xl overflow-hidden bg-white h-32 flex flex-col items-center justify-center transition-all">
-                          {doc.url.toLowerCase().endsWith(".pdf") ? (
-                            <div className="flex flex-col items-center justify-center p-4 select-none">
-                              <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9 2a2 2 0 00-2 2v8a2 2 0 002 2h6a2 2 0 002-2V6.414A2 2 0 0016.414 5L14 2.586A2 2 0 0012.586 2H9z" />
-                              </svg>
-                              <span className="text-[10px] text-slate-505 font-bold mt-1">PDF File</span>
-                            </div>
-                          ) : (
-                            <img src={doc.url} alt={doc.label} className="w-full h-full object-cover" />
-                          )}
-                          <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <a
-                              href={doc.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-3.5 py-1.5 bg-white text-slate-800 font-bold text-[11px] rounded-lg shadow-md no-underline select-none active:scale-95 transition-all cursor-pointer"
-                            >
-                              View Document
-                            </a>
-                          </div>
+                    <div key={idx} className="bg-slate-50/50 border border-slate-200/80 rounded-xl p-3.5 flex flex-col justify-between gap-3 text-xs">
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1 select-none">{doc.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${doc.url ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                          <span className="text-[11px] text-slate-800 font-bold">
+                            {doc.url ? 'Uploaded' : 'Not Uploaded'}
+                          </span>
                         </div>
-                      ) : (
-                        <div className="border border-dashed border-slate-200 rounded-xl h-32 flex items-center justify-center text-slate-400 text-xs font-semibold select-none bg-white">
-                          Not Uploaded
-                        </div>
+                      </div>
+                      {doc.url && (
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3.5 py-1.5 bg-[#0f2d3a]/10 hover:bg-[#0f2d3a] hover:text-white text-[#0f2d3a] font-bold text-[10px] rounded-lg transition-all text-center no-underline cursor-pointer active:scale-95 shadow-sm"
+                        >
+                          View Document
+                        </a>
                       )}
                     </div>
                   ))}
