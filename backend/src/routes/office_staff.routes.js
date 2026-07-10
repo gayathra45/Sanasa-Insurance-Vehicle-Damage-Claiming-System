@@ -426,10 +426,22 @@ router.post("/agents", async (req, res) => {
 router.delete("/agents/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedAgent = await Agent.findByIdAndDelete(id);
-    if (!deletedAgent) {
+    const { reason, note, document } = req.body || {};
+    
+    // Find the agent to get details before deletion
+    const agent = await Agent.findById(id);
+    if (!agent) {
       return res.status(404).json({ error: "Agent not found." });
     }
+    
+    console.log(`[Termination Log] Agent ${agent.name} (${agent.agentId}) deleted.`);
+    console.log(`- Reason: ${reason || "Not provided"}`);
+    console.log(`- Note: ${note || "None"}`);
+    if (document) {
+      console.log(`- Attached proof document length: ${document.length} characters (Base64)`);
+    }
+
+    await Agent.findByIdAndDelete(id);
     res.json({ message: "Agent removed successfully." });
   } catch (err) {
     console.error("Delete agent error:", err);
