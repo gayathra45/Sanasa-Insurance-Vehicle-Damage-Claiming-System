@@ -596,6 +596,8 @@ export default function FileNewClaim() {
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+
     if (!accidentFront && !accidentRear && !accidentSide) {
       Alert.alert("Accident Photos Required", "Please upload at least one accident photo (Front, Rear, or Side).");
       return;

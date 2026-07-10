@@ -63,6 +63,18 @@ router.post("/new-claim", async (req, res) => {
       return res.status(404).json({ error: "Policy holder with this NIC not found." });
     }
 
+    // Check for duplicate claims first to prevent double-submissions
+    const existingClaim = await Claim.findOne({
+      userNic: cleanNic,
+      vehiclePlate,
+      incidentDate,
+      incidentTime
+    });
+
+    if (existingClaim) {
+      return res.status(400).json({ error: "A claim for this vehicle and incident time has already been submitted." });
+    }
+
     // Generate next sequential claim ID (CLM-0000-0001)
     const lastClaim = await Claim.findOne({}, { claimNumber: 1 }).sort({ createdAt: -1 });
     let nextClaimNum = "CLM-0000-0001";
