@@ -306,10 +306,25 @@ export default function AgentsPage() {
                 />
               </div>
 
-              {/* Add New Agent Button */}
               <button
                 onClick={() => {
-                  setFormData({ name: "", email: "", nic: "", dob: "", address: "" });
+                  setFormData({
+                    name: "",
+                    email: "",
+                    nic: "",
+                    dob: "",
+                    address: "",
+                    phone: "",
+                    bankName: "",
+                    bankBranch: "",
+                    accountNumber: "",
+                    accountType: "",
+                    accountHolderName: ""
+                  });
+                  setNicFront(null);
+                  setNicBack(null);
+                  setBirthCertificate(null);
+                  setPoliceReport(null);
                   setFormError("");
                   setFormSuccess("");
                   setShowModal(true);
@@ -984,7 +999,7 @@ export default function AgentsPage() {
               ) : (
                 <button
                   onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  className="px-6 py-2 bg-[#880808] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
                 >
                   OK
                 </button>
