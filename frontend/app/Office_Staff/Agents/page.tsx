@@ -354,7 +354,7 @@ export default function AgentsPage() {
                   <p className="text-slate-400 text-xs mt-1.5 font-semibold">Click "Register Agent" to onboard your first field officer.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="flex flex-col gap-4">
                   {filteredAgents.map((agent) => {
                     const initials = (agent.name || "A").substring(0, 1).toUpperCase();
                     const isOnline = (agent.availability || "Active") === "Active";
@@ -362,60 +362,50 @@ export default function AgentsPage() {
                     return (
                       <div
                         key={agent._id}
-                        className="bg-white border-y border-r border-l-4 border-slate-200/80 border-l-[#0f2d3a]/70 hover:border-l-[#0f2d3a] hover:border-y-slate-300 hover:border-r-slate-300 rounded-2xl p-6 shadow-[0_4px_12px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-200 flex flex-col justify-between gap-5 relative group"
+                        className="bg-white border-y border-r border-l-4 border-slate-200/80 border-l-[#0f2d3a]/70 hover:border-l-[#0f2d3a] hover:border-slate-300 rounded-2xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-5 relative group animate-fade-in"
                       >
-                        {/* Status Badge Top-Right */}
-                        <div className="absolute top-6 right-6 select-none">
-                          <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
-                            isOnline
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-slate-100 text-slate-500 border-slate-250"
-                          }`}>
-                            {isOnline ? "Active" : "Offline"}
-                          </span>
-                        </div>
-
-                        {/* Top Block: Profile Initial & Name */}
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 text-[#0f2d3a] flex items-center justify-center font-black text-base select-none shadow-xs">
+                        {/* Left Section: Profile Info */}
+                        <div className="flex items-center gap-4.5 min-w-[240px]">
+                          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 text-[#0f2d3a] flex items-center justify-center font-black text-base select-none shadow-xs flex-shrink-0">
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-extrabold text-slate-900 text-base leading-tight truncate pr-16" title={agent.name}>
+                            <h3 className="font-extrabold text-slate-900 text-[15px] leading-tight truncate pr-4" title={agent.name}>
                               {agent.name}
                             </h3>
-                            <span className="text-[10px] font-bold text-slate-400 block mt-1.5 uppercase tracking-wider">
-                              Onboarded {formatDate(agent.createdAt)}
+                            <span className="text-[10px] font-bold text-slate-400 block mt-1 uppercase tracking-wider">
+                              ID: {agent.agentId}
                             </span>
                           </div>
                         </div>
 
-                        {/* Info details block */}
-                        <div className="border-t border-slate-100 pt-4 flex flex-col gap-3 text-xs text-slate-650">
+                        {/* Middle Details Grid: Horizontal rows */}
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-6 text-xs">
                           <div className="flex flex-col gap-0.5">
                             <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">Email Address</span>
                             <span className="text-slate-900 font-bold truncate" title={agent.email}>{agent.email}</span>
                           </div>
-                          
-                          <div className="flex justify-between gap-4">
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">NIC Number</span>
-                              <span className="text-slate-900 font-bold">{agent.nic}</span>
-                            </div>
-                            <div className="flex flex-col gap-0.5 text-right">
-                              <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">Date of Birth</span>
-                              <span className="text-slate-900 font-bold">{formatDate(agent.dob)}</span>
-                            </div>
-                          </div>
-
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">Home Address</span>
-                            <span className="text-slate-900 font-bold line-clamp-1" title={agent.address}>{agent.address}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">NIC Number</span>
+                            <span className="text-slate-900 font-bold">{agent.nic}</span>
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">Onboarded Date</span>
+                            <span className="text-slate-900 font-bold">{formatDate(agent.createdAt)}</span>
                           </div>
                         </div>
 
-                        {/* Footer Action Bar */}
-                        <div className="border-t border-slate-100 pt-3.5 flex justify-start items-center">
+                        {/* Right Section: Status Badge & View Button */}
+                        <div className="flex items-center justify-between md:justify-end gap-5 flex-shrink-0 border-t border-slate-100 pt-3 md:pt-0 md:border-none">
+                          <div className="select-none">
+                            <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border tracking-wide ${
+                              isOnline
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-slate-100 text-slate-500 border-slate-250"
+                            }`}>
+                              {isOnline ? "Active" : "Offline"}
+                            </span>
+                          </div>
                           <button
                             onClick={() => setSelectedAgentDetails(agent)}
                             className="px-5 py-2 bg-[#0f2d3a]/10 hover:bg-[#0f2d3a] hover:text-white text-[#0f2d3a] font-bold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
