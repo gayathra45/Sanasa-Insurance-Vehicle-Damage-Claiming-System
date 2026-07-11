@@ -9,6 +9,7 @@ const officeStaffSchema = new mongoose.Schema({
   location: { type: String, required: true }, // Location, e.g., "Old Foods Market , Galle"
   staffCount: { type: Number, required: true }, // Staff Count, e.g., 10
   password: { type: String, required: true },
+  mustChangePassword: { type: Boolean, default: true },
   resetOtp: { type: String },
   resetOtpExpires: { type: Date },
   resetOtpRequestedAt: { type: Date },

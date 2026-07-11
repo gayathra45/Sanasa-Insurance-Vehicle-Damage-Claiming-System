@@ -501,7 +501,7 @@ export default function ResetPassword() {
 
             {/* ── STAGE: Success ── */}
             {stage === "success" && (
-              <div className="absolute inset-0 bg-[#0e3b44]/95 backdrop-blur-xl rounded-3xl sm:rounded-[2.5rem] flex flex-col items-center justify-center p-8 text-center z-20 animate-fade-in">
+              <div className="relative flex flex-col items-center justify-center py-6 text-center z-20 animate-fade-in w-full">
                 <div className="flex flex-col items-center max-w-sm">
                   {/* Glowing Checkmark Wrapper */}
                   <div className="relative mb-6">

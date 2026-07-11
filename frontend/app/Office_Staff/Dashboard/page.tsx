@@ -23,6 +23,15 @@ export default function OfficeStaffDashboard() {
   const [error, setError] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
 
+  // --- Password Modal States ---
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwdError, setPwdError] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [staffEmail, setStaffEmail] = useState("");
+
   const checkUrgent = (claim: any) => {
     return (
       claim.damageType?.toLowerCase().includes("severe") ||
@@ -34,13 +43,18 @@ export default function OfficeStaffDashboard() {
 
   useEffect(() => {
     let currentBranch = "Galle";
+    let email = "";
     if (typeof window !== "undefined") {
       const savedStaff = sessionStorage.getItem("logged_in_staff");
       if (savedStaff) {
         try {
           const staffObj = JSON.parse(savedStaff);
-          if (staffObj && staffObj.branch) {
-            currentBranch = staffObj.branch;
+          if (staffObj) {
+            if (staffObj.branch) currentBranch = staffObj.branch;
+            if (staffObj.email) email = staffObj.email;
+            if (staffObj.mustChangePassword) {
+              setShowPasswordModal(true);
+            }
           }
         } catch (e) {
           console.error("Error parsing logged_in_staff", e);
@@ -48,6 +62,7 @@ export default function OfficeStaffDashboard() {
       }
     }
     setBranch(currentBranch);
+    setStaffEmail(email);
 
     async function fetchStats() {
       try {
@@ -115,6 +130,60 @@ export default function OfficeStaffDashboard() {
 
     fetchStats();
   }, []);
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPwdError("");
+    if (!currentPassword) {
+      setPwdError("Current temporary password is required.");
+      return;
+    }
+    if (newPassword.length < 6 || newPassword.length > 12) {
+      setPwdError("Password must be between 6 and 12 characters.");
+      return;
+    }
+    if (!/[0-9]/.test(newPassword) && !/[^A-Za-z0-9]/.test(newPassword)) {
+      setPwdError("Password must contain at least one number or special character.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwdError("Passwords do not match.");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/office-staff/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: staffEmail,
+          currentPassword,
+          newPassword,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update password.");
+      }
+
+      // Update sessionStorage
+      if (typeof window !== "undefined") {
+        const savedStaff = sessionStorage.getItem("logged_in_staff");
+        if (savedStaff) {
+          const staff = JSON.parse(savedStaff);
+          staff.mustChangePassword = false;
+          sessionStorage.setItem("logged_in_staff", JSON.stringify(staff));
+        }
+      }
+
+      setShowPasswordModal(false);
+    } catch (err: any) {
+      setPwdError(err.message || "Failed to update password.");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans">
@@ -483,6 +552,91 @@ export default function OfficeStaffDashboard() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── UPDATE PASSWORD REQUIRED MODAL ── */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4 animate-fade-in select-none">
+          <div className="relative w-full max-w-md bg-white border border-slate-100 rounded-3xl shadow-2xl overflow-hidden transform scale-100 transition-all duration-300">
+            {/* Header */}
+            <div className="bg-[#0f172a] text-white py-6 px-8 text-center flex flex-col gap-1.5 border-b border-slate-800">
+              <h2 className="text-xl font-bold tracking-tight">Update Password Required</h2>
+              <p className="text-xs text-[#94a3b8] leading-normal max-w-xs mx-auto">
+                You are logged in with a temporary password. Please set a new secure password.
+              </p>
+            </div>
+
+            {/* Form Body */}
+            <form onSubmit={handlePasswordChange} className="p-8 flex flex-col gap-5">
+              {pwdError && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-xl text-red-700 text-xs font-semibold leading-relaxed flex items-start gap-2.5">
+                  <svg className="w-5 h-5 flex-shrink-0 text-red-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                  </svg>
+                  <span>{pwdError}</span>
+                </div>
+              )}
+
+              {/* Current Password */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                  Current Temporary Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  className="w-full bg-[#f8fafc] text-slate-900 rounded-xl py-3 px-4 text-sm border border-[#e2e8f0] focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                  placeholder="Enter current temp password"
+                />
+              </div>
+
+              {/* New Password */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full bg-[#f8fafc] text-slate-900 rounded-xl py-3 px-4 text-sm border border-[#e2e8f0] focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                  placeholder="Min. 6 chars, with number or symbol"
+                />
+              </div>
+
+              {/* Confirm Password */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full bg-[#f8fafc] text-slate-900 rounded-xl py-3 px-4 text-sm border border-[#e2e8f0] focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                  placeholder="Repeat new password"
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={isUpdatingPassword}
+                className="w-full bg-[#f97316] hover:bg-[#ea580c] active:scale-[0.98] text-white font-bold py-3.5 rounded-xl transition-all shadow-md shadow-orange-500/20 text-sm cursor-pointer outline-none border-none mt-2 flex items-center justify-center gap-2"
+              >
+                {isUpdatingPassword ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white" />
+                ) : (
+                  "Set New Password"
+                )}
+              </button>
+            </form>
           </div>
         </div>
       )}

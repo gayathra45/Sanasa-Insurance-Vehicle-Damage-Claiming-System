@@ -42,6 +42,43 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// POST change password on first login: /api/office-staff/change-password
+router.post("/change-password", async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ error: "All fields are required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const staff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (!staff) {
+      return res.status(404).json({ error: "Branch staff account not found." });
+    }
+
+    const hashedCurrent = hashPassword(currentPassword);
+    if (staff.password !== hashedCurrent) {
+      return res.status(400).json({ error: "Incorrect current temporary password." });
+    }
+
+    if (newPassword.length < 6 || newPassword.length > 12) {
+      return res.status(400).json({ error: "Password must be between 6 and 12 characters." });
+    }
+    if (!/[0-9]/.test(newPassword) && !/[^A-Za-z0-9]/.test(newPassword)) {
+      return res.status(400).json({ error: "Password must contain at least one number or special character." });
+    }
+
+    staff.password = hashPassword(newPassword);
+    staff.mustChangePassword = false;
+    await staff.save();
+
+    res.json({ message: "Password updated successfully." });
+  } catch (err) {
+    console.error("Change branch password error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 // GET dashboard stats: /api/office-staff/dashboard-stats
 router.get("/dashboard-stats", async (req, res) => {
   try {

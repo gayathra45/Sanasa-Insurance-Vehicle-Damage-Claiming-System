@@ -325,7 +325,8 @@ router.post("/staff", async (req, res) => {
       province: province.trim(),
       location: location.trim(),
       staffCount: Number(staffCount),
-      password: hashedPassword
+      password: hashedPassword,
+      mustChangePassword: true
     });
 
     await newStaff.save();
