@@ -583,6 +583,7 @@ export default function AgentsPage() {
                         className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold resize-none"
                       />
                     </div>
+
                   </div>
                 </div>
 

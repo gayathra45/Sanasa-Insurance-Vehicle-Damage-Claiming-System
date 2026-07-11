@@ -145,9 +145,7 @@ export default function AgentDashboard() {
         setAgentEmail(parsed.email);
         fetchClaims(parsed.email);
       }
-      if (parsed.mustChangePassword) {
-        setShowPasswordModal(true);
-      }
+      // Password modal trigger disabled per user request
     } catch (e) {
       console.error(e);
       router.push("/Login");

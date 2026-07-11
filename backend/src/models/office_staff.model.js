@@ -14,6 +14,7 @@ const officeStaffSchema = new mongoose.Schema({
   resetOtpRequestedAt: { type: Date },
   resetSessionToken: { type: String },
   resetSessionExpires: { type: Date },
+  resetRequestStatus: { type: String, default: "None" }, // "None", "Pending", "Approved"
   createdAt: { type: Date, default: Date.now }
 });
 

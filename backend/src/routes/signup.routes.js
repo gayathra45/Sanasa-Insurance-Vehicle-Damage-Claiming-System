@@ -268,8 +268,20 @@ router.post("/reset-password/send-otp", async (req, res) => {
     } else if (dbStaff) {
       const cleanMobile = cleanInput.replace(/[-+()\s]/g, "");
       if (dbStaff.mobile === cleanMobile) {
-        user = dbStaff;
-        userName = dbStaff.name;
+        const status = dbStaff.resetRequestStatus || "None";
+        if (status === "Pending" || status === "None") {
+          if (status === "None") {
+            dbStaff.resetRequestStatus = "Pending";
+            await dbStaff.save();
+          }
+          return res.json({
+            status: "pending_approval",
+            message: "Your password reset request has been submitted to the Admin. Please wait for approval."
+          });
+        } else if (status === "Approved") {
+          user = dbStaff;
+          userName = dbStaff.name;
+        }
       } else {
         return res.status(400).json({ error: "Invalid Mobile number for this email." });
       }
@@ -416,6 +428,9 @@ router.post("/reset-password/update", async (req, res) => {
     user.password = hashPassword(newPassword);
     if (user.mustChangePassword !== undefined) {
       user.mustChangePassword = false;
+    }
+    if (user.resetRequestStatus !== undefined) {
+      user.resetRequestStatus = "None";
     }
     user.resetSessionToken = undefined;
     user.resetSessionExpires = undefined;

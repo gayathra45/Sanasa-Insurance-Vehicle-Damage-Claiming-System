@@ -56,6 +56,22 @@ export default function ResetPassword() {
     }
   }, [stage, redirectCountdown, router]);
 
+  // Load email and stage from query parameters if provided (e.g. from email link)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const emailParam = params.get("email");
+      const stageParam = params.get("stage") as Stage;
+      if (emailParam) {
+        setEmail(emailParam);
+        setSentEmail(emailParam);
+      }
+      if (stageParam === "otp") {
+        setStage("otp");
+      }
+    }
+  }, []);
+
   // Password strength
   const getStrength = () => {
     if (!newPassword) return { label: "", color: "bg-transparent", width: "w-0" };
@@ -116,6 +132,12 @@ export default function ResetPassword() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to send OTP.");
+
+      if (data.status === "pending_approval") {
+        router.push(`/Login?message=${encodeURIComponent(data.message)}`);
+        return;
+      }
+
       setSentEmail(email.trim());
       if (data.devOtp) setDevOtp(data.devOtp);
       setOtpDigits(Array(6).fill(""));
