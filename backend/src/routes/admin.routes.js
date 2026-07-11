@@ -314,8 +314,10 @@ router.post("/staff", async (req, res) => {
       return res.status(400).json({ error: "An admin account with this Email is already registered." });
     }
 
-    const tempPassword = password || ("SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90));
-    const hashedPassword = hashPassword(tempPassword);
+    // Generate a secure activation token and hash a placeholder password
+    const token = crypto.randomBytes(32).toString("hex");
+    const placeholderPassword = crypto.randomBytes(16).toString("hex");
+    const hashedPassword = hashPassword(placeholderPassword);
 
     const newStaff = new OfficeStaff({
       name: name.trim(),
@@ -326,19 +328,22 @@ router.post("/staff", async (req, res) => {
       location: location.trim(),
       staffCount: Number(staffCount),
       password: hashedPassword,
-      mustChangePassword: true
+      mustChangePassword: true,
+      resetSessionToken: token,
+      resetSessionExpires: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
     });
 
     await newStaff.save();
 
-    // Send welcome email with login details to the branch staff's email
-    const subject = `Welcome to Sanasa Insurance — Your Branch Staff Credentials`;
+    // Send welcome email with activation details
+    const activationUrl = `http://localhost:3000/Reset_password?token=${encodeURIComponent(token)}`;
+    const subject = `Welcome to Sanasa Insurance — Activate Your Branch Staff Account`;
     const htmlBody = getBaseTemplate(
       subject,
       `
       <h2>Branch Staff Account Created Successfully</h2>
       <p>Dear <strong>${name.trim()}</strong>,</p>
-      <p>Your branch office staff login credentials and registration details for the <strong>${branch.trim()}</strong> branch have been created:</p>
+      <p>Your branch office staff account registration details for the <strong>${branch.trim()}</strong> branch have been created:</p>
       <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 500px; margin: 20px 0;">
         <tr style="border-bottom: 1px solid #ddd;">
           <td style="padding: 8px; font-weight: bold; width: 150px;">Role:</td>
@@ -349,10 +354,6 @@ router.post("/staff", async (req, res) => {
           <td style="padding: 8px;">${cleanEmail}</td>
         </tr>
         <tr style="border-bottom: 1px solid #ddd;">
-          <td style="padding: 8px; font-weight: bold;">Password:</td>
-          <td style="padding: 8px; font-family: monospace; font-size: 16px; color: #1b75e0;">${tempPassword}</td>
-        </tr>
-        <tr style="border-bottom: 1px solid #ddd;">
           <td style="padding: 8px; font-weight: bold;">Province:</td>
           <td style="padding: 8px;">${province.trim()}</td>
         </tr>
@@ -361,7 +362,13 @@ router.post("/staff", async (req, res) => {
           <td style="padding: 8px;">${location.trim()}</td>
         </tr>
       </table>
-      <p>Please use these credentials to log in to the Sanasa Insurance staff portal.</p>
+      <p>To finalize setting up your account, please click the button below to set your secure password:</p>
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="${activationUrl}" style="background-color: #0f2d3a; color: #ffffff; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">Activate & Set Password</a>
+      </p>
+      <p style="font-size: 13px; color: #718096; line-height: 1.5; text-align: center;">
+        This activation link is valid for <strong>24 hours</strong>. If you did not request this, you can ignore this email.
+      </p>
       `
     );
 
