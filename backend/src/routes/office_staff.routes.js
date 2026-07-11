@@ -411,7 +411,8 @@ router.post("/agents", async (req, res) => {
       nicFront,
       nicBack,
       birthCertificate,
-      policeReport
+      policeReport,
+      password
     } = req.body;
 
     console.log("POST /agents fields received:", { name, email, nic, address, dob, branch });
@@ -458,7 +459,7 @@ router.post("/agents", async (req, res) => {
     }
 
     // Generate secure temporary password containing letters, digits, and a special character
-    const tempPassword = "SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90);
+    const tempPassword = password || ("SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90));
     const hashedPassword = hashPassword(tempPassword);
 
     // Upload documents to Cloudinary if they exist
@@ -492,7 +493,7 @@ router.post("/agents", async (req, res) => {
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
-      mustChangePassword: true,
+      mustChangePassword: false,
       nic: cleanNic,
       address: address.trim(),
       dob: dob.trim(),

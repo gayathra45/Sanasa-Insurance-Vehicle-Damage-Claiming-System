@@ -4,6 +4,8 @@ import Admin from "../models/admin.model.js";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
+import OfficeStaff from "../models/office_staff.model.js";
+import { sendEmail, getBaseTemplate } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -276,6 +278,202 @@ router.get("/notifications", async (req, res) => {
     res.json({ notifications: compiled });
   } catch (err) {
     console.error("Fetch admin notifications error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST create a new office staff member: /api/admin/staff
+router.post("/staff", async (req, res) => {
+  try {
+    const { name, email, mobile, branch, province, location, staffCount, password } = req.body;
+
+    if (!name || !email || !mobile || !branch || !province || !location || staffCount === undefined) {
+      return res.status(400).json({ error: "All fields are required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Check if email already exists in OfficeStaff, User, Agent, or Admin
+    const existingOfficeStaff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (existingOfficeStaff) {
+      return res.status(400).json({ error: "An office staff account with this Email is already registered." });
+    }
+
+    const existingUser = await User.findOne({ email: cleanEmail });
+    if (existingUser) {
+      return res.status(400).json({ error: "A user with this Email is already registered." });
+    }
+
+    const existingAgent = await Agent.findOne({ email: cleanEmail });
+    if (existingAgent) {
+      return res.status(400).json({ error: "An agent with this Email is already registered." });
+    }
+
+    const existingAdmin = await Admin.findOne({ email: cleanEmail });
+    if (existingAdmin) {
+      return res.status(400).json({ error: "An admin account with this Email is already registered." });
+    }
+
+    const tempPassword = password || ("SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90));
+    const hashedPassword = hashPassword(tempPassword);
+
+    const newStaff = new OfficeStaff({
+      name: name.trim(),
+      email: cleanEmail,
+      mobile: mobile.trim(),
+      branch: branch.trim(),
+      province: province.trim(),
+      location: location.trim(),
+      staffCount: Number(staffCount),
+      password: hashedPassword
+    });
+
+    await newStaff.save();
+
+    // Send welcome email with login details to the branch staff's email
+    const subject = `Welcome to Sanasa Insurance — Your Branch Staff Credentials`;
+    const htmlBody = getBaseTemplate(
+      subject,
+      `
+      <h2>Branch Staff Account Created Successfully</h2>
+      <p>Dear <strong>${name.trim()}</strong>,</p>
+      <p>Your branch office staff login credentials and registration details for the <strong>${branch.trim()}</strong> branch have been created:</p>
+      <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 500px; margin: 20px 0;">
+        <tr style="border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; font-weight: bold; width: 150px;">Role:</td>
+          <td style="padding: 8px;">Branch Office Staff</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; font-weight: bold;">Login Email:</td>
+          <td style="padding: 8px;">${cleanEmail}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; font-weight: bold;">Password:</td>
+          <td style="padding: 8px; font-family: monospace; font-size: 16px; color: #1b75e0;">${tempPassword}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; font-weight: bold;">Province:</td>
+          <td style="padding: 8px;">${province.trim()}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #ddd;">
+          <td style="padding: 8px; font-weight: bold;">Office Location:</td>
+          <td style="padding: 8px;">${location.trim()}</td>
+        </tr>
+      </table>
+      <p>Please use these credentials to log in to the Sanasa Insurance staff portal.</p>
+      `
+    );
+
+    try {
+      await sendEmail({
+        to: cleanEmail,
+        subject,
+        html: htmlBody
+      });
+    } catch (emailErr) {
+      console.error("Failed to send welcome email to branch:", emailErr);
+    }
+
+    const staffObj = newStaff.toObject();
+    delete staffObj.password;
+
+    res.status(201).json({ message: "Office staff registered successfully", staff: staffObj });
+  } catch (err) {
+    console.error("Create staff API error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET all pending branch password reset requests: /api/admin/staff/password-requests
+router.get("/staff/password-requests", async (req, res) => {
+  try {
+    const requests = await OfficeStaff.find({ resetRequestStatus: "Pending" }, { password: 0 });
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch staff password requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST approve branch password reset request: /api/admin/staff/password-requests/approve
+router.post("/staff/password-requests/approve", async (req, res) => {
+  try {
+    const { staffId } = req.body;
+    if (!staffId) return res.status(400).json({ error: "Staff ID is required." });
+
+    const staff = await OfficeStaff.findById(staffId);
+    if (!staff) return res.status(404).json({ error: "Branch not found." });
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    staff.resetOtp = crypto.createHash("sha256").update(otp).digest("hex");
+    staff.resetOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    staff.resetOtpRequestedAt = new Date();
+    staff.resetRequestStatus = "Approved";
+    await staff.save();
+
+    // Prepare email HTML and Text
+    const resetUrl = `http://localhost:3000/Reset_password?email=${encodeURIComponent(staff.email)}&stage=otp`;
+    const htmlBody = getBaseTemplate(
+      "Password Reset Verification Code",
+      `
+      <h2>Password Reset Request Approved</h2>
+      <p>Hi <strong>${staff.name}</strong>,</p>
+      <p>Your password reset request has been approved by the Admin. Use the verification code below to reset your password:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <div class="otp-code">${otp}</div>
+      </div>
+      <p style="text-align: center; font-size: 14px; color: #4a5568;">
+        This code is valid for <strong>10 minutes</strong>. Do not share this code with anyone.
+      </p>
+      <p>Please click the link below to enter your verification code and set a new password:</p>
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="${resetUrl}" style="background-color: #ff9800; color: #ffffff; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
+      </p>
+      `
+    );
+    const textBody = `Your branch password reset code is: ${otp}\n\nReset link: ${resetUrl}\n\nThis code expires in 10 minutes. Do not share it with anyone.`;
+
+    let emailSent = false;
+    let emailError = null;
+    try {
+      const result = await sendEmail(staff.email, `${otp} — Branch Password Reset Verification Code`, htmlBody, textBody);
+      emailSent = result.sent;
+      emailError = result.error || null;
+    } catch (sendErr) {
+      emailError = sendErr.message;
+    }
+
+    res.json({
+      message: emailSent ? "Password request approved. OTP sent to branch email." : "Dev Mode: Request approved, OTP generated (email not sent).",
+      emailSent,
+      emailError,
+      devOtp: emailSent ? undefined : otp
+    });
+  } catch (err) {
+    console.error("Approve staff password request error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST reject branch password reset request: /api/admin/staff/password-requests/reject
+router.post("/staff/password-requests/reject", async (req, res) => {
+  try {
+    const { staffId } = req.body;
+    if (!staffId) return res.status(400).json({ error: "Staff ID is required." });
+
+    const staff = await OfficeStaff.findById(staffId);
+    if (!staff) return res.status(404).json({ error: "Branch not found." });
+
+    staff.resetRequestStatus = "None";
+    staff.resetOtp = undefined;
+    staff.resetOtpExpires = undefined;
+    staff.resetOtpRequestedAt = undefined;
+    await staff.save();
+
+    res.json({ message: "Password request rejected successfully." });
+  } catch (err) {
+    console.error("Reject staff password request error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });

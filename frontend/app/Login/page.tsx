@@ -13,10 +13,16 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState("");
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       sessionStorage.clear();
+      const params = new URLSearchParams(window.location.search);
+      const msg = params.get("message");
+      if (msg) {
+        setInfoMessage(msg);
+      }
     }
   }, []);
 
@@ -107,6 +113,15 @@ export default function Login() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
               </button>
+            </div>
+          )}
+
+          {infoMessage && (
+            <div className="bg-blue-500/20 border-l-4 border-blue-400 p-4 rounded-xl text-white text-sm flex items-start gap-3">
+              <svg className="w-5 h-5 flex-shrink-0 text-blue-300 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.085 1.085l-.04.02m-.086-1.085a.75.75 0 00-1.085-.022m0 0l-.017-.016a.75.75 0 00-1.078 1.025l.016.018a.75.75 0 001.078-1.027zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>{infoMessage}</span>
             </div>
           )}
 
