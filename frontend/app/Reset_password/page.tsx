@@ -34,6 +34,7 @@ export default function ResetPassword() {
 
   // UI
   const [validationError, setValidationError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
 
@@ -62,11 +63,15 @@ export default function ResetPassword() {
       const params = new URLSearchParams(window.location.search);
       const emailParam = params.get("email");
       const stageParam = params.get("stage") as Stage;
+      const tokenParam = params.get("token");
       if (emailParam) {
         setEmail(emailParam);
         setSentEmail(emailParam);
       }
-      if (stageParam === "otp") {
+      if (tokenParam) {
+        setSessionToken(tokenParam);
+        setStage("set-password");
+      } else if (stageParam === "otp") {
         setStage("otp");
       }
     }
@@ -134,7 +139,7 @@ export default function ResetPassword() {
       if (!res.ok) throw new Error(data.error || "Failed to send OTP.");
 
       if (data.status === "pending_approval") {
-        router.push(`/Login?message=${encodeURIComponent(data.message)}`);
+        setSuccessMessage(data.message);
         return;
       }
 
@@ -299,9 +304,25 @@ export default function ResetPassword() {
                 <span>{validationError}</span>
               </div>
             )}
+            {/* Success Banner */}
+            {successMessage && (
+              <div className="bg-emerald-500/20 border-l-4 border-emerald-500 p-5 rounded-2xl text-white text-sm flex flex-col gap-4 animate-fade-in">
+                <div className="flex items-start gap-3">
+                  <svg className="w-6 h-6 flex-shrink-0 text-emerald-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold leading-relaxed">{successMessage}</span>
+                </div>
+                <div className="flex justify-end mt-2 select-none">
+                  <Link href="/Login" className="bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold py-2.5 px-6 rounded-full transition-all text-xs outline-none border-none cursor-pointer no-underline text-center">
+                    Back to Login
+                  </Link>
+                </div>
+              </div>
+            )}
 
             {/* ── STAGE: Request ── */}
-            {stage === "request" && (
+            {stage === "request" && !successMessage && (
               <form onSubmit={handleSendOtp} className="flex flex-col gap-5">
                 {/* NIC or Mobile */}
                 <div className="flex flex-col gap-2">

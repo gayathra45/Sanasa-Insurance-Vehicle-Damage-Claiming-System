@@ -365,11 +365,7 @@ router.post("/staff", async (req, res) => {
     );
 
     try {
-      await sendEmail({
-        to: cleanEmail,
-        subject,
-        html: htmlBody
-      });
+      await sendEmail(cleanEmail, subject, htmlBody);
     } catch (emailErr) {
       console.error("Failed to send welcome email to branch:", emailErr);
     }
@@ -404,40 +400,35 @@ router.post("/staff/password-requests/approve", async (req, res) => {
     const staff = await OfficeStaff.findById(staffId);
     if (!staff) return res.status(404).json({ error: "Branch not found." });
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    staff.resetOtp = crypto.createHash("sha256").update(otp).digest("hex");
-    staff.resetOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-    staff.resetOtpRequestedAt = new Date();
+    // Generate secure temporary token
+    const token = crypto.randomBytes(32).toString("hex");
+    staff.resetSessionToken = token;
+    staff.resetSessionExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
     staff.resetRequestStatus = "Approved";
     await staff.save();
 
     // Prepare email HTML and Text
-    const resetUrl = `http://localhost:3000/Reset_password?email=${encodeURIComponent(staff.email)}&stage=otp`;
+    const resetUrl = `http://localhost:3000/Reset_password?token=${encodeURIComponent(token)}`;
     const htmlBody = getBaseTemplate(
-      "Password Reset Verification Code",
+      "Password Reset Link",
       `
       <h2>Password Reset Request Approved</h2>
       <p>Hi <strong>${staff.name}</strong>,</p>
-      <p>Your password reset request has been approved by the Admin. Use the verification code below to reset your password:</p>
-      <div style="text-align: center; margin: 30px 0;">
-        <div class="otp-code">${otp}</div>
-      </div>
-      <p style="text-align: center; font-size: 14px; color: #4a5568;">
-        This code is valid for <strong>10 minutes</strong>. Do not share this code with anyone.
+      <p>Your password reset request has been approved by the Admin. Please click the button below to set a new password:</p>
+      <p style="text-align: center; margin: 35px 0;">
+        <a href="${resetUrl}" style="background-color: #0f2d3a; color: #ffffff; padding: 14px 32px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">Reset Password</a>
       </p>
-      <p>Please click the link below to enter your verification code and set a new password:</p>
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${resetUrl}" style="background-color: #ff9800; color: #ffffff; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
+      <p style="font-size: 13px; color: #718096; line-height: 1.5; text-align: center;">
+        This link is valid for <strong>1 hour</strong>. If you did not request this, you can ignore this email.
       </p>
       `
     );
-    const textBody = `Your branch password reset code is: ${otp}\n\nReset link: ${resetUrl}\n\nThis code expires in 10 minutes. Do not share it with anyone.`;
+    const textBody = `Your branch password reset link is: ${resetUrl}\n\nThis link expires in 1 hour.`;
 
     let emailSent = false;
     let emailError = null;
     try {
-      const result = await sendEmail(staff.email, `${otp} — Branch Password Reset Verification Code`, htmlBody, textBody);
+      const result = await sendEmail(staff.email, "Branch Password Reset Link", htmlBody, textBody);
       emailSent = result.sent;
       emailError = result.error || null;
     } catch (sendErr) {
@@ -445,10 +436,10 @@ router.post("/staff/password-requests/approve", async (req, res) => {
     }
 
     res.json({
-      message: emailSent ? "Password request approved. OTP sent to branch email." : "Dev Mode: Request approved, OTP generated (email not sent).",
+      message: emailSent ? "Password request approved. Reset link sent to branch email." : "Dev Mode: Request approved, reset link generated (email not sent).",
       emailSent,
       emailError,
-      devOtp: emailSent ? undefined : otp
+      devToken: emailSent ? undefined : token
     });
   } catch (err) {
     console.error("Approve staff password request error:", err);
@@ -469,7 +460,27 @@ router.post("/staff/password-requests/reject", async (req, res) => {
     staff.resetOtp = undefined;
     staff.resetOtpExpires = undefined;
     staff.resetOtpRequestedAt = undefined;
+    staff.resetSessionToken = undefined;
+    staff.resetSessionExpires = undefined;
     await staff.save();
+
+    // Send Rejection Email
+    const subject = "Password Reset Request Rejected";
+    const htmlBody = getBaseTemplate(
+      subject,
+      `
+      <h2>Password Reset Request Rejected</h2>
+      <p>Hi <strong>${staff.name}</strong>,</p>
+      <p>Your password reset request has been reviewed and rejected by the Administrator.</p>
+      <p>If you believe this was in error, please contact the System Administrator.</p>
+      `
+    );
+
+    try {
+      await sendEmail(staff.email, subject, htmlBody);
+    } catch (emailErr) {
+      console.error("Failed to send rejection email:", emailErr);
+    }
 
     res.json({ message: "Password request rejected successfully." });
   } catch (err) {
