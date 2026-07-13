@@ -329,7 +329,6 @@ export default function AdminDashboard() {
                     </span>
                   </div>
                 </div>
-<<<<<<< HEAD
 
                 {/* Branch Performance & Monthly Claims split section */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
@@ -363,91 +362,73 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Monthly Claims Chart (Right: 7 cols) */}
-                  <div className="lg:col-span-7 flex flex-col select-none">
-                    <h2 className="text-lg font-black text-slate-800 mb-8 tracking-wide">
-                      Monthly Claims
-                    </h2>
-                    
-                    {/* Visual Chart Area */}
-                    <div className="relative flex flex-col w-full bg-white pl-8 pr-4 py-4 min-h-[260px]">
+                  <div className="lg:col-span-7 flex flex-col select-none bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+                    <div className="flex justify-between items-center mb-8">
+                      <div>
+                        <h2 className="text-base font-extrabold text-slate-800">
+                          Insurance Claims Overview
+                        </h2>
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                          Visualizing submissions & approvals
+                        </p>
+                      </div>
                       
-                      {/* Grid background lines and Y-axis labels */}
-                      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-12">
-                        <div className="w-full border-t border-dashed border-slate-200/60 relative">
-                          <span className="absolute -left-7 -top-2 text-[10px] text-slate-400 font-bold">{maxLimit}</span>
-                        </div>
-                        <div className="w-full border-t border-dashed border-slate-200/60 relative">
-                          <span className="absolute -left-7 -top-2 text-[10px] text-slate-400 font-bold">{step * 2}</span>
-                        </div>
-                        <div className="w-full border-t border-dashed border-slate-200/60 relative">
-                          <span className="absolute -left-7 -top-2 text-[10px] text-slate-400 font-bold">{step}</span>
-                        </div>
-                        <div className="w-full border-t border-slate-300 relative">
-                          <span className="absolute -left-7 -top-2 text-[10px] text-slate-400 font-bold">0</span>
-                        </div>
+                      {/* Metric info */}
+                      <span className="text-[10px] bg-slate-50 border border-slate-200/60 text-slate-500 font-extrabold px-3 py-1 rounded-full">
+                        Last 30 Days
+                      </span>
+                    </div>
+
+                    <div className="h-64 flex flex-col justify-between relative mt-4">
+                      {/* Grid Lines */}
+                      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                        <div className="w-full border-t border-slate-100"></div>
+                        <div className="w-full border-t border-slate-100"></div>
+                        <div className="w-full border-t border-slate-100"></div>
+                        <div className="w-full border-b border-slate-200"></div>
                       </div>
 
-                      {/* Bars wrapper */}
-                      <div className="relative flex-1 flex items-end justify-between w-full h-[200px] z-10 pb-[2px]">
-                        {monthlyClaims.map((data) => {
-                          const submittedPercent = data.submitted > 0 ? Math.min((data.submitted / maxLimit) * 100, 100) : 0;
-                          const approvedPercent = data.approved > 0 ? Math.min((data.approved / maxLimit) * 100, 100) : 0;
+                      {/* Y-Axis Labels */}
+                      <div className="absolute left-[-40px] inset-y-0 flex flex-col justify-between text-[10px] text-slate-400 font-bold pointer-events-none select-none text-right w-8">
+                        <span>{maxLimit}</span>
+                        <span>{Math.round(step * 2)}</span>
+                        <span>{Math.round(step)}</span>
+                        <span>0</span>
+                      </div>
 
+                      {/* Chart Bars */}
+                      <div className="flex-1 flex justify-around items-end z-10 px-2">
+                        {monthlyClaims.map((data) => {
+                          const subHeight = maxLimit > 0 ? (data.submitted / maxLimit) * 100 : 0;
+                          const appHeight = maxLimit > 0 ? (data.approved / maxLimit) * 100 : 0;
+                          
                           return (
-                            <div key={data.month} className="flex-1 flex flex-col items-center group min-w-0">
-                              {/* Bars container */}
-                              <div className="h-[180px] w-full flex items-end justify-center gap-[4px] relative">
-                                {/* Submitted Bar (Blue) */}
-                                {submittedPercent > 0 && (
-                                  <div
-                                    className="w-[10px] bg-[#3b82f6] rounded-t-sm transition-all duration-300 hover:brightness-110 relative group/bar cursor-pointer"
-                                    style={{ height: `${submittedPercent}%` }}
-                                  >
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap mb-1 z-20 pointer-events-none">
-                                      Submitted: {data.submitted}
-                                    </div>
-                                  </div>
-                                )}
-                                
-                                {/* Approved Bar (Green) */}
-                                {approvedPercent > 0 && (
-                                  <div
-                                    className="w-[10px] bg-[#10b981] rounded-t-sm transition-all duration-300 hover:brightness-110 relative group/bar cursor-pointer"
-                                    style={{ height: `${approvedPercent}%` }}
-                                  >
-                                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover/bar:opacity-100 transition-opacity whitespace-nowrap mb-1 z-20 pointer-events-none">
-                                      Approved: {data.approved}
-                                    </div>
-                                  </div>
-                                )}
+                            <div key={data.month} className="flex flex-col items-center h-full justify-end w-12 group">
+                              <div className="flex items-end gap-1.5 h-full w-full justify-center">
+                                {/* Submitted bar */}
+                                <div
+                                  className="w-3.5 bg-blue-500 rounded-t-[3px] transition-all duration-500 hover:opacity-85 cursor-pointer relative"
+                                  style={{ height: `${subHeight}%` }}
+                                  title={`Submitted: ${data.submitted}`}
+                                ></div>
+                                {/* Approved bar */}
+                                <div
+                                  className="w-3.5 bg-emerald-500 rounded-t-[3px] transition-all duration-500 hover:opacity-85 cursor-pointer"
+                                  style={{ height: `${appHeight}%` }}
+                                  title={`Approved: ${data.approved}`}
+                                ></div>
                               </div>
-                              {/* Month Label */}
-                              <span className="text-[10px] text-slate-400 font-bold mt-2.5">
+                              <span className="text-[10px] font-extrabold text-slate-400 mt-2 select-none">
                                 {data.month}
                               </span>
                             </div>
                           );
                         })}
                       </div>
-
-                      {/* Legend underneath the chart */}
-                      <div className="flex items-center gap-6 mt-8 pl-1">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3.5 h-3.5 bg-[#3b82f6] rounded-[3px]"></div>
-                          <span className="text-xs text-slate-500 font-bold">Submitted</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-3.5 h-3.5 bg-[#10b981] rounded-[3px]"></div>
-                          <span className="text-xs text-slate-500 font-bold">Approved</span>
-                        </div>
-                      </div>
-
                     </div>
                   </div>
 
                 </div>
-=======
->>>>>>> 90d3466 (Implement Admin cross-approval registration and password reset flows with first-time forced password change)
               </>
             )}
           </main>
