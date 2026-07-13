@@ -372,8 +372,15 @@ router.post("/staff", async (req, res) => {
       `
     );
 
+    const textBody = `Dear ${name.trim()},\n\nYour branch office staff account registration details for the ${branch.trim()} branch have been created:\n\nRole: Branch Office Staff\nLogin Email: ${cleanEmail}\nProvince: ${province.trim()}\nOffice Location: ${location.trim()}\n\nTo finalize setting up your account, please set your password using this link:\n${activationUrl}\n\nThis activation link is valid for 24 hours.`;
+
     try {
-      await sendEmail(cleanEmail, subject, htmlBody);
+      await sendEmail(
+        cleanEmail,
+        subject,
+        htmlBody,
+        textBody
+      );
     } catch (emailErr) {
       console.error("Failed to send welcome email to branch:", emailErr);
     }
