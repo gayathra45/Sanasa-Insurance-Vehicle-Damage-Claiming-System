@@ -497,4 +497,310 @@ router.post("/staff/password-requests/reject", async (req, res) => {
   }
 });
 
+// GET all active admins: /api/admin/admins/all
+router.get("/admins/all", async (req, res) => {
+  try {
+    const admins = await Admin.find({ status: "Approved" }, { password: 0 }).sort({ createdAt: -1 });
+    res.json({ admins });
+  } catch (err) {
+    console.error("Fetch all admins error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST register new admin (pending approval): /api/admin/register-admin
+router.post("/register-admin", async (req, res) => {
+  try {
+    const { name, email, mobile, nic, registeredBy } = req.body;
+    if (!name || !email || !mobile || !nic || !registeredBy) {
+      return res.status(400).json({ error: "All profile fields are required." });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanNic = nic.trim();
+    const cleanMobile = mobile.trim();
+
+    // Check if already exists in Admin
+    const existingAdmin = await Admin.findOne({
+      $or: [{ email: cleanEmail }, { nic: cleanNic }, { mobile: cleanMobile }]
+    });
+    if (existingAdmin) {
+      return res.status(400).json({ error: "An administrator with this email, NIC, or mobile number already exists." });
+    }
+
+    // Generate a temporary random placeholder password
+    const tempPlaceholderPassword = hashPassword(crypto.randomBytes(16).toString("hex"));
+
+    const newAdmin = new Admin({
+      name: name.trim(),
+      email: cleanEmail,
+      mobile: cleanMobile,
+      nic: cleanNic,
+      password: tempPlaceholderPassword,
+      status: "Pending",
+      mustChangePassword: true,
+      registeredBy
+    });
+
+    await newAdmin.save();
+    res.status(201).json({ message: "Admin registration request submitted. Awaiting approval from another administrator." });
+  } catch (err) {
+    console.error("Register admin request error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET all pending admin registration requests: /api/admin/admins/pending
+router.get("/admins/pending", async (req, res) => {
+  try {
+    const { adminId } = req.query;
+    if (!adminId) return res.status(400).json({ error: "Admin ID is required." });
+
+    const requests = await Admin.find({
+      status: "Pending",
+      registeredBy: { $ne: adminId }
+    }, { password: 0 }).sort({ createdAt: -1 });
+
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch pending admins error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST approve admin registration request: /api/admin/admins/approve
+router.post("/admins/approve", async (req, res) => {
+  try {
+    const { targetAdminId, approvingAdminId } = req.body;
+    if (!targetAdminId || !approvingAdminId) {
+      return res.status(400).json({ error: "Target Admin ID and Approving Admin ID are required." });
+    }
+
+    const targetAdmin = await Admin.findById(targetAdminId);
+    if (!targetAdmin) return res.status(404).json({ error: "Administrator not found." });
+
+    if (String(targetAdmin.registeredBy) === String(approvingAdminId)) {
+      return res.status(400).json({ error: "You cannot approve an administrator registered by yourself. Another admin must approve this." });
+    }
+
+    // Generate a random 10-character temporary password
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%";
+    let tempPassword = "";
+    for (let i = 0; i < 10; i++) {
+      tempPassword += chars.charAt(crypto.randomInt(0, chars.length));
+    }
+
+    targetAdmin.password = hashPassword(tempPassword);
+    targetAdmin.status = "Approved";
+    targetAdmin.approvedBy = approvingAdminId;
+    targetAdmin.mustChangePassword = true;
+    await targetAdmin.save();
+
+    // Send email with credentials
+    const loginUrl = "http://localhost:3000/Login";
+    const htmlBody = getBaseTemplate(
+      "Welcome to Sanasa Insurance — Admin Account Approved",
+      `
+      <h2>Administrator Account Activated</h2>
+      <p>Dear <strong>${targetAdmin.name}</strong>,</p>
+      <p>Your request to join Sanasa Insurance as a System Administrator has been approved. You can now log in using the temporary credentials below:</p>
+      <table class="data-table">
+        <tr>
+          <td class="label">Login Email:</td>
+          <td class="value">${targetAdmin.email}</td>
+        </tr>
+        <tr>
+          <td class="label">Temporary Password:</td>
+          <td class="value highlight-value">${tempPassword}</td>
+        </tr>
+      </table>
+      <p>Upon your first login, you will be required to update this temporary password to a new secure password of your choice.</p>
+      <br/>
+      <div style="text-align: center;">
+        <a href="${loginUrl}" style="background-color: #0f2d3a; color: #ffffff; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">Log In to Portal</a>
+      </div>
+      `
+    );
+
+    const textBody = `Dear ${targetAdmin.name}, your Admin account has been approved.\nLogin email: ${targetAdmin.email}\nTemporary password: ${tempPassword}\nPlease login at ${loginUrl} to reset your password.`;
+
+    let emailSent = false;
+    let emailError = null;
+    try {
+      const result = await sendEmail(targetAdmin.email, "Welcome to Sanasa Insurance — Admin Account Approved", htmlBody, textBody);
+      emailSent = result.sent;
+      emailError = result.error || null;
+    } catch (sendErr) {
+      emailError = sendErr.message;
+    }
+
+    res.json({
+      message: emailSent ? "Administrator approved successfully. Welcome email sent." : "Dev Mode: Approved successfully (email not sent).",
+      emailSent,
+      emailError,
+      devPassword: emailSent ? undefined : tempPassword
+    });
+  } catch (err) {
+    console.error("Approve admin error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST reject admin registration request: /api/admin/admins/reject
+router.post("/admins/reject", async (req, res) => {
+  try {
+    const { targetAdminId, approvingAdminId } = req.body;
+    if (!targetAdminId || !approvingAdminId) {
+      return res.status(400).json({ error: "Target Admin ID and Approving Admin ID are required." });
+    }
+
+    const targetAdmin = await Admin.findById(targetAdminId);
+    if (!targetAdmin) return res.status(404).json({ error: "Administrator not found." });
+
+    if (String(targetAdmin.registeredBy) === String(approvingAdminId)) {
+      return res.status(400).json({ error: "You cannot reject an administrator registration request created by yourself." });
+    }
+
+    targetAdmin.status = "Rejected";
+    await targetAdmin.save();
+
+    res.json({ message: "Admin registration request rejected successfully." });
+  } catch (err) {
+    console.error("Reject admin error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET all pending admin password reset requests: /api/admin/admins/password-requests
+router.get("/admins/password-requests", async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) return res.status(400).json({ error: "Email query parameter is required." });
+
+    // Find other admins who have pending reset requests
+    const requests = await Admin.find({
+      resetRequestStatus: "Pending",
+      email: { $ne: email.trim().toLowerCase() }
+    }, { password: 0 }).sort({ createdAt: -1 });
+
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch admin password requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST approve admin password reset request: /api/admin/admins/password-requests/approve
+router.post("/admins/password-requests/approve", async (req, res) => {
+  try {
+    const { adminId } = req.body;
+    if (!adminId) return res.status(400).json({ error: "Admin ID is required." });
+
+    const admin = await Admin.findById(adminId);
+    if (!admin) return res.status(404).json({ error: "Administrator not found." });
+
+    const otp = String(crypto.randomInt(100000, 999999));
+    admin.resetOtp = crypto.createHash("sha256").update(otp).digest("hex");
+    admin.resetOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    admin.resetOtpRequestedAt = new Date();
+    admin.resetRequestStatus = "Approved";
+    await admin.save();
+
+    const resetUrl = `http://localhost:3000/Reset_password?email=${encodeURIComponent(admin.email)}&stage=otp`;
+    const htmlBody = getBaseTemplate(
+      "Password Reset Request Approved — Sanasa Insurance",
+      `
+      <h2>Admin Password Reset Request Approved</h2>
+      <p>Dear <strong>${admin.name}</strong>,</p>
+      <p>Your password reset request has been approved by another administrator. Use the verification code below to reset your password:</p>
+      <table class="data-table">
+        <tr>
+          <td class="label">Verification Code:</td>
+          <td class="value highlight-value">${otp}</td>
+        </tr>
+      </table>
+      <p>Please click the button below to proceed to the password reset screen:</p>
+      <div style="text-align: center; margin-top: 25px;">
+        <a href="${resetUrl}" style="background-color: #ff9800; color: #ffffff; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
+      </div>
+      <p>This verification code expires in 10 minutes. If you did not request this, please contact support immediately.</p>
+      `
+    );
+
+    const textBody = `Your admin password reset code is: ${otp}\nReset link: ${resetUrl}\nThis code expires in 10 minutes. Do not share it with anyone.`;
+
+    let emailSent = false;
+    let emailError = null;
+    try {
+      const result = await sendEmail(admin.email, `${otp} — Admin Password Reset Verification Code`, htmlBody, textBody);
+      emailSent = result.sent;
+      emailError = result.error || null;
+    } catch (sendErr) {
+      emailError = sendErr.message;
+    }
+
+    res.json({
+      message: emailSent ? "Password request approved. OTP sent to admin email." : "Dev Mode: Request approved, OTP generated (email not sent).",
+      emailSent,
+      emailError,
+      devOtp: emailSent ? undefined : otp
+    });
+  } catch (err) {
+    console.error("Approve admin password request error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST reject admin password reset request: /api/admin/admins/password-requests/reject
+router.post("/admins/password-requests/reject", async (req, res) => {
+  try {
+    const { adminId } = req.body;
+    if (!adminId) return res.status(400).json({ error: "Admin ID is required." });
+
+    const admin = await Admin.findById(adminId);
+    if (!admin) return res.status(404).json({ error: "Administrator not found." });
+
+    admin.resetRequestStatus = "None";
+    admin.resetOtp = undefined;
+    admin.resetOtpExpires = undefined;
+    admin.resetOtpRequestedAt = undefined;
+    await admin.save();
+
+    res.json({ message: "Password request rejected successfully." });
+  } catch (err) {
+    console.error("Reject admin password request error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST change password for admin: /api/admin/admins/change-password
+router.post("/admins/change-password", async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ error: "All fields are required." });
+    }
+
+    const admin = await Admin.findOne({ email: email.trim().toLowerCase() });
+    if (!admin) return res.status(404).json({ error: "Administrator not found." });
+
+    const hashedInput = hashPassword(currentPassword);
+    if (admin.password !== hashedInput) {
+      return res.status(400).json({ error: "Incorrect current temporary password." });
+    }
+
+    admin.password = hashPassword(newPassword);
+    admin.mustChangePassword = false;
+    await admin.save();
+
+    // Return updated admin object
+    const adminObj = admin.toObject();
+    delete adminObj.password;
+
+    res.json({ message: "Password updated successfully.", admin: adminObj });
+  } catch (err) {
+    console.error("Change password admin route error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 export default router;
