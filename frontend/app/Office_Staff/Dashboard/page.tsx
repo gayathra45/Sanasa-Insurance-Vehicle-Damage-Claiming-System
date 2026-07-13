@@ -32,6 +32,7 @@ export default function OfficeStaffDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
+  const [detailedClaim, setDetailedClaim] = useState<any | null>(null);
 
   // --- Password Modal States ---
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -243,60 +244,6 @@ export default function OfficeStaffDashboard() {
 
     fetchStats();
   }, []);
-
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPwdError("");
-    if (!currentPassword) {
-      setPwdError("Current temporary password is required.");
-      return;
-    }
-    if (newPassword.length < 6 || newPassword.length > 12) {
-      setPwdError("Password must be between 6 and 12 characters.");
-      return;
-    }
-    if (!/[0-9]/.test(newPassword) && !/[^A-Za-z0-9]/.test(newPassword)) {
-      setPwdError("Password must contain at least one number or special character.");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPwdError("Passwords do not match.");
-      return;
-    }
-
-    setIsUpdatingPassword(true);
-    try {
-      const res = await fetch("http://localhost:5000/api/office-staff/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: staffEmail,
-          currentPassword,
-          newPassword,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to update password.");
-      }
-
-      // Update sessionStorage
-      if (typeof window !== "undefined") {
-        const savedStaff = sessionStorage.getItem("logged_in_staff");
-        if (savedStaff) {
-          const staff = JSON.parse(savedStaff);
-          staff.mustChangePassword = false;
-          sessionStorage.setItem("logged_in_staff", JSON.stringify(staff));
-        }
-      }
-
-      setShowPasswordModal(false);
-    } catch (err: any) {
-      setPwdError(err.message || "Failed to update password.");
-    } finally {
-      setIsUpdatingPassword(false);
-    }
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-white font-sans">
