@@ -180,10 +180,10 @@ export default function RegistrationsPage() {
                 </svg>
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="hidden lg:inline">Welcome back, </span>
                 <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">
-                  {branch} Branch
+                  {branch || "Galle"} Branch
                 </span>
+                <span className="hidden md:inline text-slate-400 font-medium">— Registrations</span>
               </h1>
             </div>
             
