@@ -40,6 +40,87 @@ export default function OfficeStaffDashboard() {
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
   const [detailedClaim, setDetailedClaim] = useState<any | null>(null);
 
+  // --- Password Modal States ---
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [staffEmail, setStaffEmail] = useState("");
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  const getPasswordStrength = (pwd: string) => {
+    if (!pwd) return { label: "None", color: "bg-slate-200", width: "w-0" };
+    let score = 0;
+    if (pwd.length >= 6) score += 1;
+    if (pwd.length >= 10) score += 1;
+    if (/[0-9]/.test(pwd)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pwd)) score += 1;
+
+    if (score <= 1) return { label: "Weak", color: "bg-red-500", width: "w-1/4" };
+    if (score === 2) return { label: "Medium", color: "bg-amber-500", width: "w-2/4" };
+    if (score === 3) return { label: "Strong", color: "bg-emerald-500", width: "w-3/4" };
+    return { label: "Very Strong", color: "bg-teal-500", width: "w-full" };
+  };
+  const strength = getPasswordStrength(passwordForm.newPassword);
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (!passwordForm.currentPassword) return setPasswordError("Current temporary password is required.");
+    if (passwordForm.newPassword.length < 6 || passwordForm.newPassword.length > 12) {
+      return setPasswordError("Password must be between 6 and 12 characters.");
+    }
+    if (!/[0-9]/.test(passwordForm.newPassword) && !/[^A-Za-z0-9]/.test(passwordForm.newPassword)) {
+      return setPasswordError("Password must contain at least one number or special character.");
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      return setPasswordError("Passwords do not match.");
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/office-staff/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: staffEmail,
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update password.");
+      }
+
+      setPasswordSuccess("Password updated successfully!");
+      
+      // Update sessionStorage
+      const staffData = sessionStorage.getItem("logged_in_staff");
+      if (staffData) {
+        const parsed = JSON.parse(staffData);
+        parsed.mustChangePassword = false;
+        sessionStorage.setItem("logged_in_staff", JSON.stringify(parsed));
+      }
+
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordSuccess("");
+      }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      setPasswordError(err.message || "Failed to update password.");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
   useEffect(() => {
     if (selectedClaim) {
       const fetchFullClaim = async () => {
