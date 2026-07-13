@@ -18,19 +18,51 @@ interface Claim {
   location?: string;
   createdAt?: string;
   officer?: string;
+  assignedAgent?: string;
   documentsRequested?: boolean;
   requestedDocuments?: string[];
   documentRequestTo?: string;
   currentStep?: number;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
+  accidentPhotos?: {
+    front: string[];
+    rear: string[];
+    side: string[];
+  };
+  drivingLicense?: {
+    front: string[];
+    rear: string[];
+  };
 }
 
 export default function MyClaims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+  const [detailedClaim, setDetailedClaim] = useState<Claim | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCancellingClaim, setIsCancellingClaim] = useState(false);
+
+  useEffect(() => {
+    if (selectedClaim) {
+      const fetchFullClaim = async () => {
+        try {
+          const res = await fetch(`${API_URL}/policy-holder/track-claim?claimNumber=${encodeURIComponent(selectedClaim.claimNumber)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.claim) {
+              setDetailedClaim(data.claim);
+            }
+          }
+        } catch (err) {
+          console.error("Error fetching full claim details", err);
+        }
+      };
+      fetchFullClaim();
+    } else {
+      setDetailedClaim(null);
+    }
+  }, [selectedClaim]);
       const [customPopup, setCustomPopup] = useState<{
     show: boolean;
     title: string;
@@ -141,6 +173,7 @@ export default function MyClaims() {
                   description: claim.description,
                   location: claim.location,
                   officer: "Not Assigned",
+                  assignedAgent: claim.assignedAgent || "",
                   documentsRequested: claim.documentsRequested || false,
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
@@ -173,6 +206,7 @@ export default function MyClaims() {
                 description: parsed.description,
                 location: parsed.location,
                 officer: "Not Assigned",
+                assignedAgent: "",
                 documentsRequested: false,
                 requestedDocuments: [],
                 currentStep: 1,
@@ -560,6 +594,79 @@ export default function MyClaims() {
                   })()}
                 </div>
 
+                {/* Policy Holder Uploaded Documents / Photos Display Section */}
+                <div className="px-2 mt-6 border-t border-slate-100 pt-5">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3 select-none">Uploaded Documents & Photos</p>
+                  {!detailedClaim ? (
+                    <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
+                      <svg className="animate-spin h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <span>Loading uploaded documents...</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Accident Photos */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-wide">Accident Photos</span>
+                        {(!detailedClaim.accidentPhotos || 
+                          ((detailedClaim.accidentPhotos.front || []).length === 0 && 
+                           (detailedClaim.accidentPhotos.rear || []).length === 0 && 
+                           (detailedClaim.accidentPhotos.side || []).length === 0)) ? (
+                          <span className="text-xs text-slate-500 italic font-semibold">No accident photos uploaded</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-3">
+                            {(detailedClaim.accidentPhotos.front || []).map((url: string, index: number) => (
+                              <a key={`front-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                                <img src={url} alt="Accident Front" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">Front</div>
+                              </a>
+                            ))}
+                            {(detailedClaim.accidentPhotos.rear || []).map((url: string, index: number) => (
+                              <a key={`rear-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                                <img src={url} alt="Accident Rear" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">Rear</div>
+                              </a>
+                            ))}
+                            {(detailedClaim.accidentPhotos.side || []).map((url: string, index: number) => (
+                              <a key={`side-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                                <img src={url} alt="Accident Side" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">Side</div>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Driving License */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-wide">Driving License</span>
+                        {(!detailedClaim.drivingLicense || 
+                          ((detailedClaim.drivingLicense.front || []).length === 0 && 
+                           (detailedClaim.drivingLicense.rear || []).length === 0)) ? (
+                          <span className="text-xs text-slate-500 italic font-semibold">No driving license photos uploaded</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-3">
+                            {(detailedClaim.drivingLicense.front || []).map((url: string, index: number) => (
+                              <a key={`lic-front-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                                <img src={url} alt="License Front" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">License Front</div>
+                              </a>
+                            ))}
+                            {(detailedClaim.drivingLicense.rear || []).map((url: string, index: number) => (
+                              <a key={`lic-rear-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
+                                <img src={url} alt="License Rear" className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">License Rear</div>
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 {/* Warning Alert Box matching mockup */}
                 {selectedClaim.documentsRequested && getUserRequestedDocs(selectedClaim).length > 0 && (
                   <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2 mt-4">
@@ -587,7 +694,7 @@ export default function MyClaims() {
 
               {/* Modal Footer */}
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-shrink-0">
-                {selectedClaim.currentStep && selectedClaim.currentStep < 2 && (!selectedClaim.officer || selectedClaim.officer === "Not Assigned") && selectedClaim.status !== "Cancelled" ? (
+                {selectedClaim.currentStep && selectedClaim.currentStep < 2 && (!selectedClaim.officer || selectedClaim.officer === "Not Assigned") && (!selectedClaim.assignedAgent || selectedClaim.assignedAgent === "") && selectedClaim.status !== "Cancelled" ? (
                   <button
                     onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
                     disabled={isCancellingClaim}

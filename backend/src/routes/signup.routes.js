@@ -10,7 +10,7 @@ import dotenv from "dotenv";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { hashPassword } from "../utils/crypto.js";
 import { getNearestBranch } from "../utils/branch.js";
-import { sendEmail } from "../utils/email.js";
+import { sendEmail, getBaseTemplate } from "../utils/email.js";
 dotenv.config({ override: true });
 
 const router = express.Router();
@@ -268,16 +268,40 @@ router.post("/reset-password/send-otp", async (req, res) => {
     } else if (dbStaff) {
       const cleanMobile = cleanInput.replace(/[-+()\s]/g, "");
       if (dbStaff.mobile === cleanMobile) {
-        user = dbStaff;
-        userName = dbStaff.name;
+        const status = dbStaff.resetRequestStatus || "None";
+        if (status === "Pending" || status === "None") {
+          if (status === "None") {
+            dbStaff.resetRequestStatus = "Pending";
+            await dbStaff.save();
+          }
+          return res.json({
+            status: "pending_approval",
+            message: "Your password reset request has been submitted to the Admin. Please wait for approval."
+          });
+        } else if (status === "Approved") {
+          user = dbStaff;
+          userName = dbStaff.name;
+        }
       } else {
         return res.status(400).json({ error: "Invalid Mobile number for this email." });
       }
     } else if (dbAdmin) {
       const cleanMobile = cleanInput.replace(/[-+()\s]/g, "");
       if (dbAdmin.mobile === cleanMobile) {
-        user = dbAdmin;
-        userName = dbAdmin.name;
+        const status = dbAdmin.resetRequestStatus || "None";
+        if (status === "Pending" || status === "None") {
+          if (status === "None") {
+            dbAdmin.resetRequestStatus = "Pending";
+            await dbAdmin.save();
+          }
+          return res.json({
+            status: "pending_approval",
+            message: "Your password reset request has been submitted to other Admins. Please wait for approval."
+          });
+        } else if (status === "Approved") {
+          user = dbAdmin;
+          userName = dbAdmin.name;
+        }
       } else {
         return res.status(400).json({ error: "Invalid Mobile number for this email." });
       }
@@ -305,29 +329,23 @@ router.post("/reset-password/send-otp", async (req, res) => {
     await user.save();
 
     const displayName = userName || "User";
-    const htmlBody = `
-      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px;background:#f4f7f9;border-radius:12px;border:1px solid #dde3e9">
-        <div style="text-align:center;margin-bottom:24px">
-          <h2 style="color:#0e3b44;font-size:22px;margin:0">Sanasa General Insurance</h2>
-          <p style="color:#666;font-size:13px;margin:4px 0 0">Password Reset Verification Code</p>
-        </div>
-        <p style="color:#444;font-size:15px">Hi <strong>${displayName}</strong>,</p>
-        <p style="color:#555;font-size:14px;line-height:1.6">Your password reset verification code is:</p>
-        <div style="text-align:center;margin:32px 0">
-          <div style="display:inline-block;background:#0e3b44;color:#ff9800;font-size:40px;font-weight:bold;letter-spacing:14px;padding:20px 36px;border-radius:14px;font-family:monospace;border:2px solid #1a5c6b">
-            ${otp}
-          </div>
-        </div>
-        <p style="color:#555;font-size:14px;text-align:center">
-          This code expires in <strong>10 minutes</strong>. Do not share it with anyone.
-        </p>
-        <p style="color:#888;font-size:12px;text-align:center;margin-top:16px">
-          If you did not request this, you can safely ignore this email.
-        </p>
-        <hr style="border:none;border-top:1px solid #dde3e9;margin:24px 0"/>
-        <p style="color:#aaa;font-size:11px;text-align:center">Sanasa General Insurance &bull; Sri Lanka</p>
+    const htmlBody = getBaseTemplate(
+      "Password Reset Verification Code",
+      `
+      <h2>Password Reset Request</h2>
+      <p>Hi <strong>${displayName}</strong>,</p>
+      <p>We received a request to reset your password. Use the verification code below to proceed with resetting your password:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <div class="otp-code">${otp}</div>
       </div>
-    `;
+      <p style="text-align: center; font-size: 14px; color: #4a5568;">
+        This code is valid for <strong>10 minutes</strong>. For security reasons, do not share this code with anyone.
+      </p>
+      <p style="font-size: 13px; color: #718096; margin-top: 30px; border-top: 1px solid #edf2f7; padding-top: 20px;">
+        If you did not request a password reset, you can safely ignore this email.
+      </p>
+      `
+    );
     const textBody = `Your Sanasa Insurance password reset code is: ${otp}\n\nThis code expires in 10 minutes. Do not share it with anyone.`;
 
     let emailSent = false;
@@ -420,6 +438,12 @@ router.post("/reset-password/update", async (req, res) => {
     }
 
     user.password = hashPassword(newPassword);
+    if (user.mustChangePassword !== undefined) {
+      user.mustChangePassword = false;
+    }
+    if (user.resetRequestStatus !== undefined) {
+      user.resetRequestStatus = "None";
+    }
     user.resetSessionToken = undefined;
     user.resetSessionExpires = undefined;
     await user.save();

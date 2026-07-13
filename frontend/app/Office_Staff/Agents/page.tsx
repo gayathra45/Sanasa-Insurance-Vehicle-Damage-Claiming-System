@@ -44,11 +44,29 @@ export default function AgentsPage() {
     nic: "",
     dob: "",
     address: "",
-    password: ""
+    phone: "",
+    bankName: "",
+    bankBranch: "",
+    accountNumber: "",
+    accountType: "",
+    accountHolderName: ""
   });
+  const [nicFront, setNicFront] = useState<File | null>(null);
+  const [nicBack, setNicBack] = useState<File | null>(null);
+  const [birthCertificate, setBirthCertificate] = useState<File | null>(null);
+  const [policeReport, setPoliceReport] = useState<File | null>(null);
   const [formError, setFormError] = useState("");
   const [formSuccess, setFormSuccess] = useState("");
   const [submittingAgent, setSubmittingAgent] = useState(false);
+  const [selectedAgentDetails, setSelectedAgentDetails] = useState<any | null>(null);
+  
+  // Deletion Modal states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAgentId, setDeletingAgentId] = useState<string | null>(null);
+  const [deleteReason, setDeleteReason] = useState("Resigned");
+  const [deleteNote, setDeleteNote] = useState("");
+  const [deleteDoc, setDeleteDoc] = useState<File | null>(null);
+  const [submittingDelete, setSubmittingDelete] = useState(false);
 
   // --- Lifecycle Effects ---
   // Restores session details and triggers data load on mounting.
@@ -106,7 +124,7 @@ export default function AgentsPage() {
     if (!formData.nic.trim()) return setFormError("NIC Number is required.");
     if (!formData.dob.trim()) return setFormError("Date of Birth is required.");
     if (!formData.address.trim()) return setFormError("Home Address is required.");
-    if (formData.password.length < 6) return setFormError("Password must be at least 6 characters.");
+    if (!formData.phone.trim()) return setFormError("Phone Number is required.");
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email.trim())) {
@@ -120,10 +138,34 @@ export default function AgentsPage() {
 
     setSubmittingAgent(true);
     try {
+      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+
+      let nicFrontBase64 = "";
+      let nicBackBase64 = "";
+      let birthCertificateBase64 = "";
+      let policeReportBase64 = "";
+
+      if (nicFront) nicFrontBase64 = await toBase64(nicFront);
+      if (nicBack) nicBackBase64 = await toBase64(nicBack);
+      if (birthCertificate) birthCertificateBase64 = await toBase64(birthCertificate);
+      if (policeReport) policeReportBase64 = await toBase64(policeReport);
+
       const res = await fetch("http://localhost:5000/api/office-staff/agents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, branch })
+        body: JSON.stringify({
+          ...formData,
+          branch,
+          nicFront: nicFrontBase64,
+          nicBack: nicBackBase64,
+          birthCertificate: birthCertificateBase64,
+          policeReport: policeReportBase64
+        })
       });
       const data = await res.json();
       if (!res.ok) {
@@ -131,7 +173,23 @@ export default function AgentsPage() {
       }
 
       setFormSuccess("Agent registered successfully!");
-      setFormData({ name: "", email: "", nic: "", dob: "", address: "", password: "" });
+      setFormData({
+        name: "",
+        email: "",
+        nic: "",
+        dob: "",
+        address: "",
+        phone: "",
+        bankName: "",
+        bankBranch: "",
+        accountNumber: "",
+        accountType: "",
+        accountHolderName: ""
+      });
+      setNicFront(null);
+      setNicBack(null);
+      setBirthCertificate(null);
+      setPoliceReport(null);
       
       // Reload agents list
       loadAgents(branch);
@@ -149,38 +207,66 @@ export default function AgentsPage() {
     }
   };
 
-  const handleDeleteAgent = async (agentId: string) => {
-    setCustomPopup({
-      show: true,
-      title: "Confirm Deletion",
-      message: "Are you sure you want to delete this agent? This action cannot be undone.",
-      type: "confirm",
-      onConfirm: async () => {
-        try {
-          const res = await fetch(`http://localhost:5000/api/office-staff/agents/${agentId}`, {
-            method: "DELETE"
-          });
-          if (!res.ok) {
-            throw new Error("Failed to delete agent.");
-          }
-          setCustomPopup({
-            show: true,
-            title: "Success",
-            message: "Agent deleted successfully!",
-            type: "alert"
-          });
-          loadAgents(branch);
-        } catch (err: any) {
-          console.error(err);
-          setCustomPopup({
-            show: true,
-            title: "Error",
-            message: err.message || "Failed to delete agent.",
-            type: "alert"
-          });
-        }
+  const handleDeleteAgent = (agentId: string) => {
+    setDeletingAgentId(agentId);
+    setDeleteReason("Resigned");
+    setDeleteNote("");
+    setDeleteDoc(null);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!deletingAgentId) return;
+
+    setSubmittingDelete(true);
+    try {
+      let documentBase64 = "";
+      if (deleteDoc) {
+        const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = error => reject(error);
+        });
+        documentBase64 = await toBase64(deleteDoc);
       }
-    });
+
+      const res = await fetch(`http://localhost:5000/api/office-staff/agents/${deletingAgentId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reason: deleteReason,
+          note: deleteNote,
+          document: documentBase64
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to delete agent.");
+      }
+
+      setCustomPopup({
+        show: true,
+        title: "Success",
+        message: "Agent deleted successfully!",
+        type: "alert"
+      });
+
+      setShowDeleteModal(false);
+      setDeletingAgentId(null);
+      loadAgents(branch);
+    } catch (err: any) {
+      console.error(err);
+      setCustomPopup({
+        show: true,
+        title: "Error",
+        message: err.message || "Failed to delete agent.",
+        type: "alert"
+      });
+    } finally {
+      setSubmittingDelete(false);
+    }
   };
 
   // Filtered agents based on search query
@@ -214,14 +300,25 @@ export default function AgentsPage() {
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">
-                  {branch} Branch
+                  {branch || "Galle"} Branch
                 </span>
-                <span className="hidden lg:inline"> — Insurance Agents</span>
+                <span className="hidden md:inline text-slate-400 font-medium">— Insurance Agents</span>
               </h1>
             </div>
             
-            <div className="text-sm font-semibold bg-slate-100 px-4 py-1.5 rounded-full text-slate-600 border border-slate-200">
-              Staff Portal
+            <div className="flex items-center gap-5">
+              {/* Notification Bell Icon */}
+              <button className="relative p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-slate-500 hover:text-slate-800">
+                  <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.65.342 3.228.96 4.658A1.875 1.875 0 0 1 18 17.25H6a1.875 1.875 0 0 1-1.71-2.842 9.06 9.06 0 0 0 .96-4.658V9ZM12 18.75a2.25 2.25 0 0 1-2.247-2.118.75.75 0 0 1 .746-.757h3a.75.75 0 0 1 .746.757A2.25 2.25 0 0 1 12 18.75Z" clipRule="evenodd" />
+                </svg>
+              </button>
+              {/* User Avatar Icon */}
+              <button className="relative p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-slate-500 hover:text-slate-800">
+                  <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12c0 2.754 1.14 5.244 2.98 7.03-.028-.01-.053-.024-.082-.031a.75.75 0 0 1-.502-.879C5.556 14.931 8.193 12 12 12s6.444 2.931 7.352 6.12a.75.75 0 0 1-.502.88c-.029.007-.054.02-.082.031ZM12 11.25a3.375 3.375 0 1 0 0-6.75 3.375 3.375 0 0 0 0 6.75Z" clipRule="evenodd" />
+                </svg>
+              </button>
             </div>
           </header>
 
@@ -256,10 +353,25 @@ export default function AgentsPage() {
                 />
               </div>
 
-              {/* Add New Agent Button */}
               <button
                 onClick={() => {
-                  setFormData({ name: "", email: "", nic: "", dob: "", address: "", password: "" });
+                  setFormData({
+                    name: "",
+                    email: "",
+                    nic: "",
+                    dob: "",
+                    address: "",
+                    phone: "",
+                    bankName: "",
+                    bankBranch: "",
+                    accountNumber: "",
+                    accountType: "",
+                    accountHolderName: ""
+                  });
+                  setNicFront(null);
+                  setNicBack(null);
+                  setBirthCertificate(null);
+                  setPoliceReport(null);
                   setFormError("");
                   setFormSuccess("");
                   setShowModal(true);
@@ -289,76 +401,63 @@ export default function AgentsPage() {
                   <p className="text-slate-400 text-xs mt-1.5 font-semibold">Click "Register Agent" to onboard your first field officer.</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="flex flex-col gap-4">
                   {filteredAgents.map((agent) => {
                     const initials = (agent.name || "A").substring(0, 1).toUpperCase();
-                    const isActive = agent.status !== "inactive";
+                    const isOnline = (agent.availability || "Active") === "Active";
 
                     return (
                       <div
                         key={agent._id}
-                        className="bg-white border border-slate-100 hover:border-slate-200/80 rounded-3xl p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-md hover:scale-[1.01] transition-all duration-200 flex flex-col justify-between gap-5 relative group"
+                        className="bg-white border-y border-r border-l-4 border-slate-200/80 border-l-[#0f2d3a]/70 hover:border-l-[#0f2d3a] hover:border-slate-300 rounded-2xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-5 relative group animate-fade-in"
                       >
-                        {/* Status Badge Top-Right */}
-                        <div className="absolute top-6 right-6 select-none">
-                          <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
-                            isActive
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-amber-50 text-amber-700 border-amber-200"
-                          }`}>
-                            {isActive ? "Active" : "Pending Activation"}
-                          </span>
-                        </div>
-
-                        {/* Top Block: Profile Initial & Name */}
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-black text-lg select-none shadow-sm">
+                        {/* Left Section: Profile Info */}
+                        <div className="flex items-center gap-4.5 min-w-[240px]">
+                          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 text-[#0f2d3a] flex items-center justify-center font-black text-base select-none shadow-xs flex-shrink-0">
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-extrabold text-slate-800 text-base leading-tight truncate pr-16" title={agent.name}>
+                            <h3 className="font-extrabold text-slate-900 text-[15px] leading-tight truncate pr-4" title={agent.name}>
                               {agent.name}
                             </h3>
                             <span className="text-[10px] font-bold text-slate-400 block mt-1 uppercase tracking-wider">
-                              Onboarded {formatDate(agent.createdAt)}
+                              ID: {agent.agentId}
                             </span>
                           </div>
                         </div>
 
-                        {/* Info details block */}
-                        <div className="border-t border-slate-100 pt-4 flex flex-col gap-2.5 text-xs font-semibold text-slate-600">
+                        {/* Middle Details Grid: Horizontal rows */}
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-6 text-xs">
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black select-none">Email Address</span>
-                            <span className="text-slate-800 truncate" title={agent.email}>{agent.email}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">Email Address</span>
+                            <span className="text-slate-900 font-bold truncate" title={agent.email}>{agent.email}</span>
                           </div>
-                          
-                          <div className="flex justify-between gap-4">
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black select-none">NIC Number</span>
-                              <span className="text-slate-800">{agent.nic}</span>
-                            </div>
-                            <div className="flex flex-col gap-0.5 text-right">
-                              <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black select-none">Date of Birth</span>
-                              <span className="text-slate-800">{formatDate(agent.dob)}</span>
-                            </div>
-                          </div>
-
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black select-none">Home Address</span>
-                            <span className="text-slate-700 line-clamp-1" title={agent.address}>{agent.address}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">NIC Number</span>
+                            <span className="text-slate-900 font-bold">{agent.nic}</span>
+                          </div>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">Onboarded Date</span>
+                            <span className="text-slate-900 font-bold">{formatDate(agent.createdAt)}</span>
                           </div>
                         </div>
 
-                        {/* Footer Action Bar */}
-                        <div className="border-t border-slate-100 pt-3.5 flex justify-end items-center">
+                        {/* Right Section: Status Badge & View Button */}
+                        <div className="flex items-center justify-between md:justify-end gap-5 flex-shrink-0 border-t border-slate-100 pt-3 md:pt-0 md:border-none">
+                          <div className="select-none">
+                            <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border tracking-wide ${
+                              isOnline
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-slate-100 text-slate-500 border-slate-250"
+                            }`}>
+                              {isOnline ? "Active" : "Offline"}
+                            </span>
+                          </div>
                           <button
-                            onClick={() => handleDeleteAgent(agent._id)}
-                            className="bg-transparent hover:bg-red-50 text-red-500 hover:text-red-700 p-2 rounded-xl border-none cursor-pointer flex items-center justify-center transition-all group/btn"
-                            title="Delete Agent Account"
+                            onClick={() => setSelectedAgentDetails(agent)}
+                            className="px-5 py-2 bg-[#0f2d3a]/10 hover:bg-[#0f2d3a] hover:text-white text-[#0f2d3a] font-bold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
                           >
-                            <svg className="w-5 h-5 text-red-500 hover:text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            View Details
                           </button>
                         </div>
                       </div>
@@ -395,116 +494,276 @@ export default function AgentsPage() {
             </div>
 
             {/* Modal Content / Form */}
-            <form onSubmit={handleFormSubmit} className="p-8 flex flex-col gap-5">
-              {formError && (
-                <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <span>{formError}</span>
-                </div>
-              )}
-              {formSuccess && (
-                <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2">
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>{formSuccess}</span>
-                </div>
-              )}
+            <form onSubmit={handleFormSubmit} className="flex flex-col h-[80vh] md:h-auto max-h-[85vh]">
+              {/* Scrollable inputs container */}
+              <div className="px-8 py-6 overflow-y-auto flex flex-col gap-5 flex-1">
+                {formError && (
+                  <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 flex-shrink-0">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>{formError}</span>
+                  </div>
+                )}
+                {formSuccess && (
+                  <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 flex-shrink-0">
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{formSuccess}</span>
+                  </div>
+                )}
 
-              {/* Form Group: Name */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="E.g., John Doe"
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                />
+                {/* --- Section 1: General Details --- */}
+                <div>
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">General Details</h3>
+                  <div className="flex flex-col gap-4">
+                    {/* Name */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Full Name <span className="text-red-500">*</span></label>
+                      <input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="E.g., John Doe"
+                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                      />
+                    </div>
+
+                    {/* Email & Phone */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Email Address <span className="text-red-500">*</span></label>
+                        <input
+                          type="email"
+                          required
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="agent@sanasainsurance.lk"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Phone Number <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          placeholder="E.g., 0712345678"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* NIC & DOB */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Number <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.nic}
+                          onChange={(e) => setFormData({ ...formData, nic: e.target.value })}
+                          placeholder="E.g., 199912345678 or 991234567V"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Date of Birth <span className="text-red-500">*</span></label>
+                        <input
+                          type="date"
+                          required
+                          value={formData.dob}
+                          onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Address */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Home Address <span className="text-red-500">*</span></label>
+                      <textarea
+                        required
+                        rows={2}
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="Enter home address here..."
+                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold resize-none"
+                      />
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* --- Section 2: Bank Account Details --- */}
+                <div className="mt-2">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Bank Account Details</h3>
+                  <div className="flex flex-col gap-4">
+                    {/* Bank Name & Branch */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Name</label>
+                        <input
+                          type="text"
+                          value={formData.bankName}
+                          onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                          placeholder="E.g., Bank of Ceylon"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Branch</label>
+                        <input
+                          type="text"
+                          value={formData.bankBranch}
+                          onChange={(e) => setFormData({ ...formData, bankBranch: e.target.value })}
+                          placeholder="E.g., Galle Fort"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Account Number & Type */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Number</label>
+                        <input
+                          type="text"
+                          value={formData.accountNumber}
+                          onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                          placeholder="E.g., 8123456789"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Type</label>
+                        <select
+                          value={formData.accountType}
+                          onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold cursor-pointer"
+                        >
+                          <option value="">Select Account Type</option>
+                          <option value="Savings">Savings Account</option>
+                          <option value="Current">Current Account</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Account Holder Name */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Holder Name</label>
+                      <input
+                        type="text"
+                        value={formData.accountHolderName}
+                        onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
+                        placeholder="E.g., J. Doe"
+                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* --- Section 3: Required Documents --- */}
+                <div className="mt-2 mb-2">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Required Documents</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* NIC Front */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Front Photo</label>
+                      <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-slate-600 truncate max-w-[80%] select-none">
+                          {nicFront ? nicFront.name : "Select file..."}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => setNicFront(e.target.files?.[0] || null)}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* NIC Back */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Back Photo</label>
+                      <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-slate-600 truncate max-w-[80%] select-none">
+                          {nicBack ? nicBack.name : "Select file..."}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => setNicBack(e.target.files?.[0] || null)}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Birth Certificate */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Birth Certificate</label>
+                      <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-slate-600 truncate max-w-[80%] select-none">
+                          {birthCertificate ? birthCertificate.name : "Select file..."}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => setBirthCertificate(e.target.files?.[0] || null)}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Police Report */}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Police Report</label>
+                      <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
+                        <span className="text-slate-600 truncate max-w-[80%] select-none">
+                          {policeReport ? policeReport.name : "Select file..."}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*,application/pdf"
+                          onChange={(e) => setPoliceReport(e.target.files?.[0] || null)}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Read-only Branch Info Accent Card */}
+                <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none flex-shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center flex-shrink-0">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Assigned Branch</span>
+                    <span className="text-sm font-extrabold text-[#0f2d3a]">{branch} Branch</span>
+                  </div>
+                </div>
               </div>
 
-              {/* Form Row: Email & NIC */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Email Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    placeholder="agent@sanasainsurance.lk"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Number</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.nic}
-                    onChange={(e) => setFormData({ ...formData, nic: e.target.value })}
-                    placeholder="E.g., 199912345678 or 991234567V"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                  />
-                </div>
-              </div>
-
-              {/* Form Row: DOB & Password */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Date of Birth</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.dob}
-                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Password</label>
-                  <input
-                    type="password"
-                    required
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Min. 6 characters"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                  />
-                </div>
-              </div>
-
-              {/* Form Group: Address */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Home Address</label>
-                <textarea
-                  required
-                  rows={2}
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Enter home address here..."
-                  className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold resize-none"
-                />
-              </div>
-
-              {/* Read-only Branch Info Accent Card */}
-              <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none">
-                <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Assigned Branch</span>
-                  <span className="text-sm font-extrabold text-[#0f2d3a]">{branch} Branch</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end gap-3.5 mt-4">
+              {/* Action Buttons (Fixed Footer) */}
+              <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-100 flex-shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -532,10 +791,154 @@ export default function AgentsPage() {
               </div>
             </form>
           </div>
+        </div>      )}                          {/* Agent Details View Modal */}
+      {selectedAgentDetails && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-xl border border-slate-200 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 bg-white select-none">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-[22px] font-black text-[#0f2d3a] tracking-tight leading-none">
+                    {selectedAgentDetails.name}
+                  </h2>
+                  <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border tracking-wide ${
+                    (selectedAgentDetails.availability || "Active") === "Active"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-slate-100 text-slate-500 border-slate-200"
+                  }`}>
+                    {selectedAgentDetails.availability || "Active"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 font-bold mt-2">
+                  ID: {selectedAgentDetails.agentId} • {selectedAgentDetails.branch} Branch
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedAgentDetails(null)}
+                className="text-slate-400 hover:text-slate-700 text-2xl font-bold border-none bg-transparent cursor-pointer transition-colors p-1"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-8 overflow-y-auto bg-white flex-1 flex flex-col gap-8">
+              
+              {/* Agent Profile Details & Bank Account Details side-by-side or stacked as a clean list table */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                {/* Profile Details List */}
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
+                    Agent Profile Info
+                  </h3>
+                  <div className="flex flex-col text-xs">
+                    {[
+                      { label: "Email Address", value: selectedAgentDetails.email },
+                      { label: "Phone Number", value: selectedAgentDetails.phone || "-" },
+                      { label: "NIC Number", value: selectedAgentDetails.nic },
+                      { label: "Date of Birth", value: formatDate(selectedAgentDetails.dob) },
+                      { label: "Onboarded Date", value: formatDate(selectedAgentDetails.createdAt) },
+                      { label: "Home Address", value: selectedAgentDetails.address }
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center py-2.5 border-b border-slate-100/60 last:border-none gap-4">
+                        <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
+                        <span className="text-slate-900 font-bold text-right truncate max-w-xs">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Bank Account Details List */}
+                <div className="flex flex-col gap-3">
+                  <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
+                    Bank Account Details
+                  </h3>
+                  <div className="flex flex-col text-xs">
+                    {[
+                      { label: "Bank Name", value: selectedAgentDetails.bankName || "-" },
+                      { label: "Branch Name", value: selectedAgentDetails.bankBranch || "-" },
+                      { label: "Account Number", value: selectedAgentDetails.accountNumber || "-", isMono: true },
+                      { label: "Account Type", value: selectedAgentDetails.accountType || "-" },
+                      { label: "Account Holder", value: selectedAgentDetails.accountHolderName || "-" }
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center py-2.5 border-b border-slate-100/60 last:border-none gap-4">
+                        <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
+                        <span className={`text-slate-900 font-bold text-right truncate max-w-xs ${item.isMono ? 'font-mono' : ''}`}>{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Registered Documents Section: Row layout */}
+              <div className="mt-2 flex flex-col gap-3">
+                <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
+                  Uploaded Verification Documents
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: "NIC Front Image", url: selectedAgentDetails.nicFront },
+                    { label: "NIC Back Image", url: selectedAgentDetails.nicBack },
+                    { label: "Birth Certificate", url: selectedAgentDetails.birthCertificate },
+                    { label: "Police Report Document", url: selectedAgentDetails.policeReport }
+                  ].map((doc, idx) => (
+                    <div key={idx} className="bg-slate-50/50 border border-slate-200/80 rounded-xl p-3.5 flex flex-col justify-between gap-3 text-xs">
+                      <div>
+                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1 select-none">{doc.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${doc.url ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                          <span className="text-[11px] text-slate-800 font-bold">
+                            {doc.url ? 'Uploaded' : 'Not Uploaded'}
+                          </span>
+                        </div>
+                      </div>
+                      {doc.url && (
+                        <a
+                          href={doc.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3.5 py-1.5 bg-[#0f2d3a]/10 hover:bg-[#0f2d3a] hover:text-white text-[#0f2d3a] font-bold text-[10px] rounded-lg transition-all text-center no-underline cursor-pointer active:scale-95 shadow-sm"
+                        >
+                          View Document
+                        </a>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex justify-between items-center px-8 py-5 border-t border-slate-200 bg-slate-50 flex-shrink-0">
+              <button
+                onClick={() => {
+                  setSelectedAgentDetails(null);
+                  handleDeleteAgent(selectedAgentDetails._id);
+                }}
+                className="px-6 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Agent
+              </button>
+              <button
+                onClick={() => setSelectedAgentDetails(null)}
+                className="px-8 py-3 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-sm font-bold shadow-md cursor-pointer border-none outline-none transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
-                  {/* Custom Popup Modal */}
+      {/* Custom Popup Modal */}
       {customPopup.show && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
@@ -602,6 +1005,116 @@ export default function AgentsPage() {
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+      {/* Delete Agent Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-fade-in">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-8 flex flex-col gap-5">
+            <div>
+              <h3 className="font-black text-lg text-slate-900 tracking-tight select-none">
+                Delete Agent Account
+              </h3>
+              <p className="text-xs font-semibold text-slate-400 mt-1 select-none">
+                Please specify the reason and details for removing this agent.
+              </p>
+            </div>
+
+            <form onSubmit={confirmDeleteAgent} className="flex flex-col gap-4">
+              
+              {/* Deletion Reason Dropdown */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none">
+                  Reason for Deletion <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-slate-350 focus:bg-white transition-all select-none"
+                  required
+                >
+                  <option value="Resigned">Resigned</option>
+                  <option value="Suspended/Terminated">Suspended/Terminated</option>
+                  <option value="Contract Ended">Contract Ended</option>
+                  <option value="Incorrect Entry / Duplication">Incorrect Entry / Duplication</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              {/* Add Note textarea */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none">
+                  Additional Notes / Remarks <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={deleteNote}
+                  onChange={(e) => setDeleteNote(e.target.value)}
+                  placeholder="Enter remarks about this deletion..."
+                  rows={3}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-slate-350 focus:bg-white transition-all resize-none"
+                  required
+                />
+              </div>
+
+              {/* Document Attach (Optional) file input */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none">
+                  Attach Proof Document (Optional)
+                </label>
+                <div className="flex items-center gap-3">
+                  <label className="px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-350 transition-all rounded-xl text-xs font-bold text-slate-700 cursor-pointer select-none">
+                    Choose File
+                    <input
+                      type="file"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setDeleteDoc(e.target.files[0]);
+                        }
+                      }}
+                      className="hidden"
+                      accept=".pdf,image/*"
+                    />
+                  </label>
+                  <span className="text-xs text-slate-500 font-bold truncate max-w-[200px]">
+                    {deleteDoc ? deleteDoc.name : "No file attached"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3.5 mt-2 border-t border-slate-100 pt-4 select-none">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeletingAgentId(null);
+                  }}
+                  className="px-6 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                  disabled={submittingDelete}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-red-650 hover:bg-red-700 active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none flex items-center justify-center gap-1.5"
+                  disabled={submittingDelete}
+                >
+                  {submittingDelete ? (
+                    <>
+                      <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <span>Deleting...</span>
+                    </>
+                  ) : (
+                    <span>Delete Agent</span>
+                  )}
+                </button>
+              </div>
+
+            </form>
           </div>
         </div>
       )}

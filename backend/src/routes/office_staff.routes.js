@@ -10,6 +10,8 @@ import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
 import { hashPassword } from "../utils/crypto.js";
+import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { uploadToCloudinary } from "../utils/upload.js";
 
 const router = express.Router();
 
@@ -248,10 +250,30 @@ router.patch("/claims/:claimNumber", async (req, res) => {
 // POST create a new agent: /api/office-staff/agents
 router.post("/agents", async (req, res) => {
   try {
-    const { name, email, nic, address, dob, password, branch } = req.body;
+    const {
+      name,
+      email,
+      nic,
+      address,
+      dob,
+      branch,
+      phone,
+      city,
+      province,
+      bankName,
+      bankBranch,
+      accountNumber,
+      accountType,
+      accountHolderName,
+      nicFront,
+      nicBack,
+      birthCertificate,
+      policeReport,
+      password
+    } = req.body;
 
-    if (!name || !email || !nic || !address || !dob || !password || !branch) {
-      return res.status(400).json({ error: "All fields are required." });
+    if (!name || !email || !nic || !address || !dob || !branch) {
+      return res.status(400).json({ error: "All agent profile fields are required." });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -292,20 +314,103 @@ router.post("/agents", async (req, res) => {
       }
     }
 
-    const hashedPassword = hashPassword(password);
+    // Generate secure temporary password containing letters, digits, and a special character
+    const tempPassword = password || ("SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90));
+    const hashedPassword = hashPassword(tempPassword);
+
+    // Upload documents to Cloudinary if they exist
+    let nicFrontUrl = "";
+    let nicBackUrl = "";
+    let birthCertificateUrl = "";
+    let policeReportUrl = "";
+
+    if (nicFront) {
+      nicFrontUrl = await uploadToCloudinary(nicFront, "agents/documents");
+    }
+    if (nicBack) {
+      nicBackUrl = await uploadToCloudinary(nicBack, "agents/documents");
+    }
+    if (birthCertificate) {
+      birthCertificateUrl = await uploadToCloudinary(birthCertificate, "agents/documents");
+    }
+    if (policeReport) {
+      policeReportUrl = await uploadToCloudinary(policeReport, "agents/documents");
+    }
+
+    // Automatically find province based on the branch
+    const staff = await OfficeStaff.findOne({ branch: branch.trim() });
+    let resolvedProvince = staff ? staff.province : "";
+    if (!resolvedProvince && province) {
+      resolvedProvince = province.trim();
+    }
 
     const newAgent = new Agent({
       agentId: nextAgentId,
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
+      mustChangePassword: false,
       nic: cleanNic,
       address: address.trim(),
       dob: dob.trim(),
-      branch: branch.trim()
+      branch: branch.trim(),
+      phone: phone ? phone.trim() : "",
+      city: city ? city.trim() : "",
+      province: resolvedProvince,
+      bankName: bankName ? bankName.trim() : "",
+      bankBranch: bankBranch ? bankBranch.trim() : "",
+      accountNumber: accountNumber ? accountNumber.trim() : "",
+      accountType: accountType ? accountType.trim() : "",
+      accountHolderName: accountHolderName ? accountHolderName.trim() : "",
+      nicFront: nicFrontUrl,
+      nicBack: nicBackUrl,
+      birthCertificate: birthCertificateUrl,
+      policeReport: policeReportUrl,
+      status: "active"
     });
 
     await newAgent.save();
+
+    // Send welcome email with login details to the agent's email
+    const subject = `Welcome to Sanasa Insurance — Your Agent Credentials`;
+    const htmlBody = getBaseTemplate(
+      subject,
+      `
+      <h2>Agent Account Created Successfully</h2>
+      <p>Dear <strong>${name.trim()}</strong>,</p>
+      <p>Your agent account has been registered by the branch staff at the <strong>${branch.trim()}</strong> branch. Below are your login credentials and account details:</p>
+      <table class="data-table">
+        <tr>
+          <td class="label">Agent ID:</td>
+          <td class="value highlight-value">${nextAgentId}</td>
+        </tr>
+        <tr>
+          <td class="label">Email / Login Username:</td>
+          <td class="value">${cleanEmail}</td>
+        </tr>
+        <tr>
+          <td class="label">Temporary Password:</td>
+          <td class="value highlight-value">${tempPassword}</td>
+        </tr>
+        <tr>
+          <td class="label">NIC Number:</td>
+          <td class="value">${cleanNic}</td>
+        </tr>
+        <tr>
+          <td class="label">Assigned Branch:</td>
+          <td class="value">${branch.trim()}</td>
+        </tr>
+      </table>
+      <p>Please log in using your temporary password. Upon your first login to either the Agent Web Dashboard or Mobile App, you will be prompted to set a new password of your choice for subsequent logins.</p>
+      `
+    );
+    const textBody = `Welcome to Sanasa Insurance. Your Agent ID is ${nextAgentId}. Use email ${cleanEmail} and temporary password ${tempPassword} to log in.`;
+
+    try {
+      await sendEmail(cleanEmail, subject, htmlBody, textBody);
+    } catch (emailErr) {
+      console.error("⚠️ Failed to send agent welcome email:", emailErr.message);
+    }
 
     // Return agent details without password
     const agentObj = newAgent.toObject();
@@ -322,10 +427,22 @@ router.post("/agents", async (req, res) => {
 router.delete("/agents/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedAgent = await Agent.findByIdAndDelete(id);
-    if (!deletedAgent) {
+    const { reason, note, document } = req.body || {};
+    
+    // Find the agent to get details before deletion
+    const agent = await Agent.findById(id);
+    if (!agent) {
       return res.status(404).json({ error: "Agent not found." });
     }
+    
+    console.log(`[Termination Log] Agent ${agent.name} (${agent.agentId}) deleted.`);
+    console.log(`- Reason: ${reason || "Not provided"}`);
+    console.log(`- Note: ${note || "None"}`);
+    if (document) {
+      console.log(`- Attached proof document length: ${document.length} characters (Base64)`);
+    }
+
+    await Agent.findByIdAndDelete(id);
     res.json({ message: "Agent removed successfully." });
   } catch (err) {
     console.error("Delete agent error:", err);
@@ -392,6 +509,7 @@ router.patch("/agents/:id", async (req, res) => {
 
     if (password) {
       agent.password = hashPassword(password);
+      agent.mustChangePassword = true;
     }
 
     await agent.save();

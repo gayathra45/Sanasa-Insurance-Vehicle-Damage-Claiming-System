@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, StatusBar } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import PolicyHolderNavbar from "../Components/policy holder/page";
+import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 
 export default function MyVehicles() {
   return (

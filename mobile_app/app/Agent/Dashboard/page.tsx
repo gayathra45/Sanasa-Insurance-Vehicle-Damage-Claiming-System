@@ -95,6 +95,66 @@ export default function AgentDashboard() {
 
   const showAlert = (title: string, message: string) => setCustomAlert({ title, message });
 
+  // --- Password Modal States ---
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  const handlePasswordChange = async () => {
+    if (!currentPassword) {
+      Alert.alert("Error", "Current temporary password is required.");
+      return;
+    }
+    if (newPassword.length < 6 || newPassword.length > 12) {
+      Alert.alert("Error", "Password must be between 6 and 12 characters.");
+      return;
+    }
+    if (!/[0-9]/.test(newPassword) && !/[^A-Za-z0-9]/.test(newPassword)) {
+      Alert.alert("Error", "Password must contain at least one number or special character.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Error", "Passwords do not match.");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/agent/change-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: agentEmail,
+          currentPassword,
+          newPassword
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update password.");
+      }
+
+      Alert.alert("Success", "Password updated successfully!");
+      
+      // Update AsyncStorage
+      const agentStr = await AsyncStorage.getItem("logged_in_agent");
+      if (agentStr) {
+        const agent = JSON.parse(agentStr);
+        agent.mustChangePassword = false;
+        await AsyncStorage.setItem("logged_in_agent", JSON.stringify(agent));
+      }
+
+      setShowPasswordModal(false);
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert("Error", err.message || "Failed to update password.");
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
   // ── Fetch Claims ─────────────────────────────────────────────────────────
   const fetchClaims = useCallback(async (email: string) => {
     try {
@@ -123,6 +183,9 @@ export default function AgentDashboard() {
           fetchClaims(agent.email);
         } else {
           setLoading(false);
+        }
+        if (agent.mustChangePassword) {
+          setShowPasswordModal(true);
         }
       } catch { router.replace("/login/page"); }
     })();
@@ -701,6 +764,80 @@ export default function AgentDashboard() {
           </View>
         </View>
       )}
+
+      {/* ── CHANGE PASSWORD REQUIRED MODAL ── */}
+      <Modal visible={showPasswordModal} transparent={true} animationType="fade">
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.pwdOverlay}
+        >
+          <View style={styles.pwdCard}>
+            {/* Header */}
+            <View style={styles.pwdHeader}>
+              <Text style={styles.pwdHeaderTitle}>Update Password Required</Text>
+              <Text style={styles.pwdHeaderSub}>
+                You are logged in with a temporary password. Please set a new secure password.
+              </Text>
+            </View>
+
+            {/* Body */}
+            <View style={styles.pwdBody}>
+              {/* Current Password */}
+              <View>
+                <Text style={styles.pwdFieldLabel}>Current Temporary Password</Text>
+                <TextInput
+                  style={styles.pwdInput}
+                  secureTextEntry
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  placeholder="Enter current temp password"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              {/* New Password */}
+              <View>
+                <Text style={styles.pwdFieldLabel}>New Password</Text>
+                <TextInput
+                  style={styles.pwdInput}
+                  secureTextEntry
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  placeholder="Min. 6 chars, with number or symbol"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              {/* Confirm Password */}
+              <View>
+                <Text style={styles.pwdFieldLabel}>Confirm New Password</Text>
+                <TextInput
+                  style={styles.pwdInput}
+                  secureTextEntry
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  placeholder="Repeat new password"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              {/* Submit */}
+              <TouchableOpacity
+                style={[styles.pwdSubmitBtn, isUpdatingPassword && { backgroundColor: "#fb923c" }]}
+                onPress={handlePasswordChange}
+                disabled={isUpdatingPassword}
+                activeOpacity={0.8}
+              >
+                {isUpdatingPassword ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={styles.pwdSubmitBtnText}>Set New Password</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -988,4 +1125,88 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
   },
   alertButtonText: { color: "#fff", fontSize: 14, fontWeight: "bold" },
+
+  /* Change password modal styles */
+  pwdOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(2, 6, 23, 0.75)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 20,
+  },
+  pwdCard: {
+    width: "100%",
+    maxWidth: 340,
+    backgroundColor: "#ffffff",
+    borderRadius: 32,
+    overflow: "hidden",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 15,
+    elevation: 10,
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
+  },
+  pwdHeader: {
+    backgroundColor: "#0f172a",
+    paddingVertical: 22,
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+  pwdHeaderTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#ffffff",
+    textAlign: "center",
+  },
+  pwdHeaderSub: {
+    fontSize: 11.5,
+    color: "#94a3b8",
+    fontWeight: "600",
+    marginTop: 6,
+    textAlign: "center",
+    lineHeight: 16,
+  },
+  pwdBody: {
+    padding: 24,
+    gap: 16,
+  },
+  pwdFieldLabel: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+    marginBottom: 4,
+  },
+  pwdInput: {
+    backgroundColor: "#f8fafc",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === "ios" ? 14 : 10,
+    color: "#0f172a",
+    fontSize: 13.5,
+    fontWeight: "600",
+  },
+  pwdSubmitBtn: {
+    backgroundColor: "#f97316",
+    borderRadius: 16,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    shadowColor: "#f97316",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  pwdSubmitBtnText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "800",
+  },
 });

@@ -19,7 +19,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import PolicyHolderNavbar from "../Components/policy holder/page";
+import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import { API_BASE_URL } from "../config";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -101,6 +101,7 @@ export default function PolicyHolderDashboard() {
 
   useEffect(() => {
     (async () => {
+      await AsyncStorage.removeItem("current_claim_draft");
       const userStr = await AsyncStorage.getItem("logged_in_user");
       if (!userStr) { router.replace("/login/page"); return; }
       try {
