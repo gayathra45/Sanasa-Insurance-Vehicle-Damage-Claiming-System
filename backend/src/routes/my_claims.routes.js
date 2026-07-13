@@ -296,7 +296,6 @@ router.delete("/delete-claim/:claimNumber", async (req, res) => {
 
     const cleanClaimNum = claimNumber.trim().toUpperCase();
     const claim = await Claim.findOne({ claimNumber: cleanClaimNum });
-
     if (!claim) {
       return res.status(404).json({ error: "Claim not found." });
     }
