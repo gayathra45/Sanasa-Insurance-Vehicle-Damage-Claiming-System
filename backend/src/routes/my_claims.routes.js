@@ -113,4 +113,30 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
   }
 });
 
+// 5. Delete/Cancel a claim by Claim Number
+router.delete("/delete-claim/:claimNumber", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    if (!claimNumber) {
+      return res.status(400).json({ error: "Claim number parameter is required." });
+    }
+
+    const cleanClaimNum = claimNumber.trim().toUpperCase();
+    
+    // Find the claim first to check details or verify existence
+    const claim = await Claim.findOne({ claimNumber: cleanClaimNum });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    // Delete the claim
+    await Claim.findOneAndDelete({ claimNumber: cleanClaimNum });
+
+    res.json({ message: "Claim cancelled and deleted successfully." });
+  } catch (err) {
+    console.error("Delete claim API error:", err);
+    res.status(500).json({ error: "An internal server error occurred while deleting the claim." });
+  }
+});
+
 export default router;
