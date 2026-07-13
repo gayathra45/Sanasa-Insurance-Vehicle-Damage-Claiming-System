@@ -74,6 +74,12 @@ router.post("/login", async (req, res) => {
     }
 
     if (admin && admin.password === hashedInput) {
+      if (admin.status === "Pending") {
+        return res.status(400).json({ error: "Your administrator registration is pending approval from another admin." });
+      } else if (admin.status === "Rejected") {
+        return res.status(400).json({ error: "Your administrator registration request has been rejected." });
+      }
+
       const adminObj = admin.toObject();
       delete adminObj.password;
       return res.json({ role: "admin", admin: adminObj });

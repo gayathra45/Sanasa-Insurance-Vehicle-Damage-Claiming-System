@@ -288,8 +288,20 @@ router.post("/reset-password/send-otp", async (req, res) => {
     } else if (dbAdmin) {
       const cleanMobile = cleanInput.replace(/[-+()\s]/g, "");
       if (dbAdmin.mobile === cleanMobile) {
-        user = dbAdmin;
-        userName = dbAdmin.name;
+        const status = dbAdmin.resetRequestStatus || "None";
+        if (status === "Pending" || status === "None") {
+          if (status === "None") {
+            dbAdmin.resetRequestStatus = "Pending";
+            await dbAdmin.save();
+          }
+          return res.json({
+            status: "pending_approval",
+            message: "Your password reset request has been submitted to other Admins. Please wait for approval."
+          });
+        } else if (status === "Approved") {
+          user = dbAdmin;
+          userName = dbAdmin.name;
+        }
       } else {
         return res.status(400).json({ error: "Invalid Mobile number for this email." });
       }
