@@ -2630,69 +2630,73 @@ function OfficeStaffClaimsPageContent() {
                 </div>
 
                 {/* Internal Notes — Bottom Section */}
-                <div className="border-t border-slate-100 pt-5 select-none text-left">
-                  <div className="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
-                    <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                      <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                      </svg>
-                      Internal Notes
-                    </h4>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubModal("add_note")}
-                        className="text-[#f97316] hover:text-orange-600 p-1.5 rounded-xl hover:bg-orange-50 transition-all border-none cursor-pointer flex items-center justify-center bg-transparent"
-                        title="Add Note"
-                      >
-                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                <div className="border-t border-slate-100 pt-5">
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4 text-left select-none">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                        <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowNotes(!showNotes)}
-                        className="text-cyan-600 hover:text-cyan-700 font-extrabold text-[11px] bg-transparent border-none cursor-pointer flex items-center gap-1 select-none"
-                      >
-                        {showNotes ? "See Less" : "See More"}
-                      </button>
-                    </div>
-                  </div>
-
-                  {showNotes ? (
-                    <div className="animate-fade-in text-left">
-                      {selectedClaim.notes && selectedClaim.notes.length > 0 ? (
-                        <div className="bg-slate-50 border border-slate-200/85 rounded-2xl p-5 space-y-4">
-                          {selectedClaim.notes.map((note, idx) => (
-                            <div key={idx} className="flex gap-3 border-b border-slate-100 last:border-0 pb-3.5 last:pb-0">
-                              <div className="w-8 h-8 rounded-full bg-slate-200/70 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <svg className="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                                </svg>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-slate-700 leading-relaxed">{note.text}</p>
-                                <span className="text-[10px] text-slate-400 font-bold block mt-1">
-                                  {note.addedBy} &middot; {formatMessageTime(note.addedAt)}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-5 text-center">
-                          <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        Internal Notes
+                      </h4>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setActiveSubModal("add_note")}
+                          className="text-[#f97316] hover:text-orange-600 p-1.5 rounded-xl hover:bg-orange-50 transition-all border-none cursor-pointer flex items-center justify-center bg-transparent"
+                          title="Add Note"
+                        >
+                          <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                           </svg>
-                          <span className="text-[12px] text-slate-400 font-semibold italic">No notes added yet. Click the icon above to add a note.</span>
-                        </div>
-                      )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowNotes(!showNotes)}
+                          className="text-cyan-600 hover:text-cyan-700 font-extrabold text-[11px] bg-transparent border-none cursor-pointer flex items-center gap-1 select-none"
+                        >
+                          {showNotes ? "See Less" : "See More"}
+                        </button>
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
-                      Content hidden. Click "See More" above to view.
-                    </p>
-                  )}
+
+                    {showNotes ? (
+                      <div className="animate-fade-in text-left">
+                        {selectedClaim.notes && selectedClaim.notes.length > 0 ? (
+                          <div className="flex flex-col gap-2">
+                            {selectedClaim.notes.map((note, idx) => (
+                              <div key={idx} className="flex items-center justify-between py-2.5 px-4 bg-white border border-slate-200/70 rounded-xl hover:border-slate-300 transition-all shadow-sm">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                    <svg className="w-3 h-3 text-slate-500" fill="currentColor" viewBox="0 0 20 20">
+                                      <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                                    </svg>
+                                  </div>
+                                  <div className="flex flex-col min-w-0">
+                                    <span className="text-xs font-semibold text-slate-700">{note.text}</span>
+                                    <span className="text-[9px] text-slate-400 font-bold leading-none mt-0.5">
+                                      {note.addedBy} &middot; {formatMessageTime(note.addedAt)}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-5 text-center">
+                            <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                            </svg>
+                            <span className="text-[12px] text-slate-400 font-semibold italic">No notes added yet. Click the icon above to add a note.</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
+                        Content hidden. Click "See More" above to view.
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Category 3: Requested Documents */}
