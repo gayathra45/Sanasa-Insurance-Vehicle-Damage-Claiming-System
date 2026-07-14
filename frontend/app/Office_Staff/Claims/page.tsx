@@ -938,7 +938,11 @@ function OfficeStaffClaimsPageContent() {
                             setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                           }}
                           className={`bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:border-[#0f2d4a] relative overflow-hidden ${
-                            isUrgent ? "border-l-4 border-l-red-500" : "border-l-4 border-l-[#0f2d4a]"
+                            isUrgent
+                              ? "border-l-4 border-l-red-500"
+                              : (claim.assignedAgent && claim.currentStep < 3 && claim.status !== "Rejected")
+                                ? "border-l-4 border-l-amber-500 bg-amber-50/10"
+                                : "border-l-4 border-l-[#0f2d4a]"
                           }`}
                         >
                           {/* Claim ID & Date */}
