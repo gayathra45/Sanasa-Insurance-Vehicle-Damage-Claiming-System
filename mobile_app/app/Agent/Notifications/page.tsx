@@ -246,7 +246,7 @@ export default function AgentNotificationsPage() {
       const formattedPlate = formatNumberPlate(claim.vehiclePlate);
 
       // 1. High Priority Case Assignment (Step 2 + Active status)
-      if (claim.currentStep === 2 && claim.status !== "Approved" && claim.status !== "Rejected") {
+      if ((claim.currentStep === 2 || claim.currentStep === 1) && claim.status !== "Approved" && claim.status !== "Rejected") {
         const notifId = `${claim._id}_assignment`;
         if (!clearedIds.includes(notifId)) {
           list.push({

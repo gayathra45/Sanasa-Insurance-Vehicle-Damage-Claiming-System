@@ -283,7 +283,7 @@ export default function AgentClaimsPage() {
     if (selectedClaim) {
       if (step === "4") {
         setActiveInspectionStep(4);
-      } else if (selectedClaim.currentStep === 2) {
+      } else if (selectedClaim.currentStep === 2 || selectedClaim.currentStep === 1) {
         setActiveInspectionStep(1);
       } else if (selectedClaim.currentStep === 3) {
         if (selectedClaim.inspectionSubmitted) {
@@ -2041,7 +2041,7 @@ ${inspectionReportText.trim()}
                           <Text style={[styles.modalDescLabel, { color: "#1e3a8a" }]}>Action Required: Step 0{selectedClaim.currentStep}</Text>
                           
                           {/* Step 2 Actions: Case Assignment */}
-                          {selectedClaim.currentStep === 2 && (
+                          {(selectedClaim.currentStep === 2 || selectedClaim.currentStep === 1) && (
                             <View style={{ gap: 8, marginTop: 4 }}>
                               <Text style={{ fontSize: 12.5, fontWeight: "600", color: "#475569", lineHeight: 18 }}>
                                 Review and accept this case file assignment to start damage inspections.
