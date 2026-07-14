@@ -384,6 +384,8 @@ function OfficeStaffClaimsPageContent() {
   // Modal / Detail / Action states
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [showAllDetails, setShowAllDetails] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [showDocStatus, setShowDocStatus] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewReportText, setPreviewReportText] = useState<string | null>(null);
   const [showAssignModal, setShowAssignModal] = useState<Claim | null>(null);
@@ -613,6 +615,8 @@ function OfficeStaffClaimsPageContent() {
       setManualReason("");
       setManualUpdateByVal("");
       setShowAllDetails(false);
+      setShowNotes(false);
+      setShowDocStatus(false);
     }
   }, [selectedClaim]);
 
@@ -2639,89 +2643,69 @@ function OfficeStaffClaimsPageContent() {
                   </button>
                 </div>
 
-                {/* On-Site Physical Inspection Report Section */}
-                {selectedClaim.inspectionSubmitted && selectedClaim.inspectionReport && (
-                  <div className="border-t border-slate-100 pt-5 text-left">
-                    <div className="flex items-center justify-between mb-3 select-none">
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                        <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        On-Site Physical Inspection Report
-                      </h4>
-                      {selectedClaim.assignedAgent && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setContactRecipient("Agent");
-                            setActiveSubModal("contact");
-                          }}
-                          className="text-cyan-600 hover:text-cyan-700 font-extrabold text-[11px] bg-transparent border-none cursor-pointer flex items-center gap-1"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                          </svg>
-                          Discuss with Agent
-                        </button>
-                      )}
-                    </div>
-                    <div className="bg-white border border-slate-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col p-5">
-                      {renderParsedInspection(
-                        selectedClaim.inspectionReport,
-                        selectedClaim.additionalDocuments || [],
-                        API_URL,
-                        setPreviewImage
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Internal Notes ΓÇö Bottom Section */}
-                <div className="border-t border-slate-100 pt-5 select-none">
-                  <div className="flex items-center justify-between mb-3">
+                {/* Internal Notes — Bottom Section */}
+                <div className="border-t border-slate-100 pt-5 select-none text-left">
+                  <div className="flex items-center justify-between mb-3 border-b border-slate-200 pb-2">
                     <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                       <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                       </svg>
                       Internal Notes
                     </h4>
-                    <button
-                      type="button"
-                      onClick={() => setActiveSubModal("add_note")}
-                      className="text-[#f97316] hover:text-orange-600 p-1.5 rounded-xl hover:bg-orange-50 transition-all border-none cursor-pointer flex items-center justify-center bg-transparent"
-                      title="Add Note"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                      </svg>
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setActiveSubModal("add_note")}
+                        className="text-[#f97316] hover:text-orange-600 p-1.5 rounded-xl hover:bg-orange-50 transition-all border-none cursor-pointer flex items-center justify-center bg-transparent"
+                        title="Add Note"
+                      >
+                        <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowNotes(!showNotes)}
+                        className="text-cyan-600 hover:text-cyan-700 font-extrabold text-[11px] bg-transparent border-none cursor-pointer flex items-center gap-1 select-none"
+                      >
+                        {showNotes ? "See Less" : "See More"}
+                      </button>
+                    </div>
                   </div>
 
-                  {selectedClaim.notes && selectedClaim.notes.length > 0 ? (
-                    <div className="bg-amber-50/50 border border-amber-100 rounded-2xl p-4 space-y-3">
-                      {selectedClaim.notes.map((note, idx) => (
-                        <div key={idx} className="flex gap-3 border-b border-amber-100/50 last:border-0 pb-3 last:pb-0">
-                          <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                            <svg className="w-3.5 h-3.5 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                            </svg>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[12px] font-semibold text-slate-700 leading-relaxed">{note.text}</p>
-                            <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
-                              {note.addedBy} &middot; {formatMessageTime(note.addedAt)}
-                            </span>
-                          </div>
+                  {showNotes ? (
+                    <div className="animate-fade-in text-left">
+                      {selectedClaim.notes && selectedClaim.notes.length > 0 ? (
+                        <div className="bg-slate-50 border border-slate-200/85 rounded-2xl p-5 space-y-4">
+                          {selectedClaim.notes.map((note, idx) => (
+                            <div key={idx} className="flex gap-3 border-b border-slate-100 last:border-0 pb-3.5 last:pb-0">
+                              <div className="w-8 h-8 rounded-full bg-slate-200/70 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <svg className="w-4 h-4 text-slate-600" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
+                                </svg>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-slate-700 leading-relaxed">{note.text}</p>
+                                <span className="text-[10px] text-slate-400 font-bold block mt-1">
+                                  {note.addedBy} &middot; {formatMessageTime(note.addedAt)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      ) : (
+                        <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-5 text-center">
+                          <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                          </svg>
+                          <span className="text-[12px] text-slate-400 font-semibold italic">No notes added yet. Click the icon above to add a note.</span>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-5 text-center">
-                      <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                      </svg>
-                      <span className="text-[12px] text-slate-400 font-semibold italic">No notes added yet. Click the icon above to add a note.</span>
-                    </div>
+                    <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
+                      Content hidden. Click "See More" above to view.
+                    </p>
                   )}
                 </div>
 
@@ -2787,149 +2771,166 @@ function OfficeStaffClaimsPageContent() {
 
                   return (
                     <div className="border-t border-slate-100 pt-5">
-                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                        <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
-                          {hasPending ? (
-                            <svg className="w-4.5 h-4.5 text-amber-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
-                          ) : (
-                            <svg className="w-4.5 h-4.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
-                          )}
-                          Requested Documents Status
-                        </h3>
-
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-2 select-none">
-                            <span className="text-[10px] bg-blue-100 text-blue-800 font-black tracking-wider uppercase px-2 py-0.5 rounded border border-blue-200">
-                              Policy Holder Requests
-                            </span>
-                          </div>
-                          {policyHolderDocs.length > 0 ? (
-                            <div className="flex flex-col gap-2">
-                              {policyHolderDocs.map((item, idx) => {
-                                const { requestedAt, submittedAt } = getDocDetails(item.name, item.status);
-                                return (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center justify-between py-2.5 px-4 bg-white border border-slate-200/70 rounded-xl hover:border-slate-300 transition-all shadow-sm"
-                                  >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                        item.status === "Pending" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
-                                      }`} />
-                                      <div className="flex flex-col min-w-0">
-                                        <span className="text-xs font-extrabold text-slate-800 truncate">{item.name}</span>
-                                        <span className="text-[9px] text-slate-400 font-bold leading-none mt-0.5">
-                                          {item.status === "Pending" ? (
-                                            `Requested: ${requestedAt}`
-                                          ) : (
-                                            `Requested: ${requestedAt} ┬╖ Uploaded: ${submittedAt || "Recent"}`
-                                          )}
-                                        </span>
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded select-none border ${
-                                        item.status === "Pending"
-                                          ? "bg-amber-100/80 text-amber-800 border-amber-200"
-                                          : "bg-emerald-100/80 text-emerald-800 border-emerald-200"
-                                      }`}>
-                                        {item.status}
-                                      </span>
-                                      {item.status === "Submitted" && item.url && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            let docUrl = item.url;
-                                            if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                                              docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
-                                            }
-                                            setPreviewImage(docUrl || null);
-                                          }}
-                                          className="text-[10px] font-black text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
-                                        >
-                                          View
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
-                              No active requests or submissions.
-                            </p>
-                          )}
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4 text-left">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-2 select-none">
+                          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                            {hasPending ? (
+                              <svg className="w-4.5 h-4.5 text-amber-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <svg className="w-4.5 h-4.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                            )}
+                            Requested Documents Status
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={() => setShowDocStatus(!showDocStatus)}
+                            className="text-cyan-600 hover:text-cyan-700 font-extrabold text-[11px] bg-transparent border-none cursor-pointer flex items-center gap-1 select-none"
+                          >
+                            {showDocStatus ? "See Less" : "See More"}
+                          </button>
                         </div>
 
-                        <div className="space-y-3 pt-4 border-t border-slate-200/60">
-                          <div className="flex items-center gap-2 select-none">
-                            <span className="text-[10px] bg-cyan-100 text-cyan-800 font-black tracking-wider uppercase px-2 py-0.5 rounded border border-cyan-200">
-                              Agent Requests
-                            </span>
-                          </div>
-                          {agentDocs.length > 0 ? (
-                            <div className="flex flex-col gap-2">
-                              {agentDocs.map((item, idx) => {
-                                const { requestedAt, submittedAt } = getDocDetails(item.name, item.status);
-                                return (
-                                  <div
-                                    key={idx}
-                                    className="flex items-center justify-between py-2.5 px-4 bg-white border border-slate-200/70 rounded-xl hover:border-slate-300 transition-all shadow-sm"
-                                  >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                        item.status === "Pending" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
-                                      }`} />
-                                      <div className="flex flex-col min-w-0">
-                                        <span className="text-xs font-extrabold text-slate-800 truncate">{item.name}</span>
-                                        <span className="text-[9px] text-slate-400 font-bold leading-none mt-0.5">
-                                          {item.status === "Pending" ? (
-                                            `Requested: ${requestedAt}`
-                                          ) : (
-                                            `Requested: ${requestedAt} ┬╖ Uploaded: ${submittedAt || "Recent"}`
+                        {showDocStatus ? (
+                          <div className="space-y-4 pt-2 animate-fade-in text-left">
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2 select-none">
+                                <span className="text-[10px] bg-blue-100 text-blue-800 font-black tracking-wider uppercase px-2 py-0.5 rounded border border-blue-200">
+                                  Policy Holder Requests
+                                </span>
+                              </div>
+                              {policyHolderDocs.length > 0 ? (
+                                <div className="flex flex-col gap-2">
+                                  {policyHolderDocs.map((item, idx) => {
+                                    const { requestedAt, submittedAt } = getDocDetails(item.name, item.status);
+                                    return (
+                                      <div
+                                        key={idx}
+                                        className="flex items-center justify-between py-2.5 px-4 bg-white border border-slate-200/70 rounded-xl hover:border-slate-300 transition-all shadow-sm"
+                                      >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                            item.status === "Pending" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                                          }`} />
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="text-xs font-extrabold text-slate-800 truncate">{item.name}</span>
+                                            <span className="text-[9px] text-slate-400 font-bold leading-none mt-0.5">
+                                              {item.status === "Pending" ? (
+                                                `Requested: ${requestedAt}`
+                                              ) : (
+                                                `Requested: ${requestedAt} · Uploaded: ${submittedAt || "Recent"}`
+                                              )}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                          <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded select-none border ${
+                                            item.status === "Pending"
+                                              ? "bg-amber-100/80 text-amber-800 border-amber-200"
+                                              : "bg-emerald-100/80 text-emerald-800 border-emerald-200"
+                                          }`}>
+                                            {item.status}
+                                          </span>
+                                          {item.status === "Submitted" && item.url && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                let docUrl = item.url;
+                                                if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                                  docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                                }
+                                                setPreviewImage(docUrl || null);
+                                              }}
+                                              className="text-[10px] font-black text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
+                                            >
+                                              View
+                                            </button>
                                           )}
-                                        </span>
+                                        </div>
                                       </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                      <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded select-none border ${
-                                        item.status === "Pending"
-                                          ? "bg-amber-100/80 text-amber-800 border-amber-200"
-                                          : "bg-emerald-100/80 text-emerald-800 border-emerald-200"
-                                      }`}>
-                                        {item.status}
-                                      </span>
-                                      {item.status === "Submitted" && item.url && (
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            let docUrl = item.url;
-                                            if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                                              docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
-                                            }
-                                            setPreviewImage(docUrl || null);
-                                          }}
-                                          className="text-[10px] font-black text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
-                                        >
-                                          View
-                                        </button>
-                                      )}
-                                    </div>
-                                  </div>
-                                );
-                              })}
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
+                                  No active requests or submissions.
+                                </p>
+                              )}
                             </div>
-                          ) : (
-                            <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
-                              No active requests or submissions.
-                            </p>
-                          )}
-                        </div>
+
+                            <div className="space-y-3 pt-4 border-t border-slate-200/60">
+                              <div className="flex items-center gap-2 select-none">
+                                <span className="text-[10px] bg-cyan-100 text-cyan-800 font-black tracking-wider uppercase px-2 py-0.5 rounded border border-cyan-200">
+                                  Agent Requests
+                                </span>
+                              </div>
+                              {agentDocs.length > 0 ? (
+                                <div className="flex flex-col gap-2">
+                                  {agentDocs.map((item, idx) => {
+                                    const { requestedAt, submittedAt } = getDocDetails(item.name, item.status);
+                                    return (
+                                      <div
+                                        key={idx}
+                                        className="flex items-center justify-between py-2.5 px-4 bg-white border border-slate-200/70 rounded-xl hover:border-slate-300 transition-all shadow-sm"
+                                      >
+                                        <div className="flex items-center gap-3 min-w-0">
+                                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                            item.status === "Pending" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
+                                          }`} />
+                                          <div className="flex flex-col min-w-0">
+                                            <span className="text-xs font-extrabold text-slate-800 truncate">{item.name}</span>
+                                            <span className="text-[9px] text-slate-400 font-bold leading-none mt-0.5">
+                                              {item.status === "Pending" ? (
+                                                `Requested: ${requestedAt}`
+                                              ) : (
+                                                `Requested: ${requestedAt} · Uploaded: ${submittedAt || "Recent"}`
+                                              )}
+                                            </span>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                          <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded select-none border ${
+                                            item.status === "Pending"
+                                              ? "bg-amber-100/80 text-amber-800 border-amber-200"
+                                              : "bg-emerald-100/80 text-emerald-800 border-emerald-200"
+                                          }`}>
+                                            {item.status}
+                                          </span>
+                                          {item.status === "Submitted" && item.url && (
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                let docUrl = item.url;
+                                                if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                                  docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                                }
+                                                setPreviewImage(docUrl || null);
+                                              }}
+                                              className="text-[10px] font-black text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
+                                            >
+                                              View
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
+                                  No active requests or submissions.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
+                            Content hidden. Click "See More" above to view.
+                          </p>
+                        )}
                       </div>
                     </div>
                   );
