@@ -290,7 +290,7 @@ export default function RegistrationsPage() {
                         {/* Card Footer Actions */}
                         <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-shrink-0">
                           <span className="text-amber-500 font-extrabold text-[11px] group-hover:underline flex items-center gap-1 select-none">
-                            View Profile <span className="font-extrabold">&gt;</span>
+                            View Profile
                           </span>
                           
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -321,9 +321,9 @@ export default function RegistrationsPage() {
 
                 {/* Pagination (decorative style from image) */}
                 <div className="flex items-center justify-end gap-3 mt-4 text-slate-400 font-bold select-none text-sm">
-                  <button className="hover:text-slate-600 font-extrabold cursor-pointer">&lt;</button>
+                  <button className="hover:text-slate-600 font-extrabold cursor-pointer">Prev</button>
                   <span className="text-slate-800 font-black">1</span>
-                  <button className="hover:text-slate-600 font-extrabold cursor-pointer">&gt;</button>
+                  <button className="hover:text-slate-600 font-extrabold cursor-pointer">Next</button>
                 </div>
               </div>
             )}
