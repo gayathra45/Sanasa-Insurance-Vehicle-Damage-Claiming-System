@@ -576,8 +576,24 @@ function OfficeStaffClaimsPageContent() {
         console.warn("Background claims polling failed:", err);
       }
     }, 7000);
-    return () => clearInterval(pollInterval);
   }, [branch, selectedClaim, showAssignModal]);
+
+  // Poll agents in background for real-time status updates
+  useEffect(() => {
+    if (!branch) return;
+    const pollInterval = setInterval(async () => {
+      try {
+        const agentsRes = await fetch(`${API_URL}/office-staff/agents?branch=${branch}`);
+        if (agentsRes.ok) {
+          const agentsData = await agentsRes.json();
+          setAgents(agentsData.agents || []);
+        }
+      } catch (err) {
+        console.warn("Background agents polling failed:", err);
+      }
+    }, 7000);
+    return () => clearInterval(pollInterval);
+  }, [branch]);
 
   useEffect(() => {
     if (claimId && claims.length > 0) {
