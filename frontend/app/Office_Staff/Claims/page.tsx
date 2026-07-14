@@ -2438,38 +2438,34 @@ function OfficeStaffClaimsPageContent() {
                       >
                         Contact
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAllDetails(!showAllDetails)}
+                        className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-2.5 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        {showAllDetails ? (
+                          <>
+                            <span>View Less Details</span>
+                            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                            </svg>
+                          </>
+                        ) : (
+                          <>
+                            <span>View More Details</span>
+                            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
 
                 {/* Expandable Section: Description & Uploaded Photos */}
-                <div className="border-t border-slate-200 pt-6 select-text flex flex-col gap-4">
-                  <div className="flex justify-center select-none">
-                    <button
-                      type="button"
-                      onClick={() => setShowAllDetails(!showAllDetails)}
-                      className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-extrabold text-xs px-6 py-2.5 rounded-full transition-all border border-slate-200 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
-                    >
-                      {showAllDetails ? (
-                        <>
-                          <span>View Less Details</span>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-                          </svg>
-                        </>
-                      ) : (
-                        <>
-                          <span>View More Details</span>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                          </svg>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {showAllDetails && (
-                    <div className="space-y-6 animate-fade-in">
+                {showAllDetails && (
+                  <div className="border-t border-slate-200 pt-6 select-text flex flex-col gap-6 animate-fade-in">
                       <div className="text-left">
                         <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">Claim Description</h3>
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4.5">
@@ -2553,10 +2549,8 @@ function OfficeStaffClaimsPageContent() {
                             </div>
                           );
                         })()}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {/* Progress Stepper Section */}
                 <div className="py-6 px-2 select-none border-t border-slate-100">
