@@ -2889,11 +2889,13 @@ function OfficeStaffClaimsPageContent() {
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a]"
                 >
                   <option value="" className="text-slate-800 bg-white">-- Choose Agent --</option>
-                  {agents.map((agent) => (
-                    <option key={agent._id} value={agent.email} className="text-slate-800 bg-white">
-                      {agent.name} ({agent.phone || "No contact"})
-                    </option>
-                  ))}
+                  {agents
+                    .filter((agent) => agent.availability !== "Offline")
+                    .map((agent) => (
+                      <option key={agent._id} value={agent.email} className="text-slate-800 bg-white">
+                        {agent.name} ({agent.phone || "No contact"})
+                      </option>
+                    ))}
                 </select>
               </div>
 
