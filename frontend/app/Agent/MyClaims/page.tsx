@@ -1394,25 +1394,7 @@ export default function AgentMyClaims() {
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Est. Amount</span>
-                        {selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" ? (
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <input
-                              type="number"
-                              value={assessmentAmount}
-                              onChange={(e) => setAssessmentAmount(e.target.value)}
-                              placeholder="Enter LKR amount"
-                              className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 font-bold focus:outline-none max-w-[150px]"
-                            />
-                            <button
-                              onClick={() => handleApproveAssessment(selectedClaim._id)}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg border-none cursor-pointer transition-colors active:scale-95 whitespace-nowrap"
-                            >
-                              Approve
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-slate-700 font-black truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
-                        )}
+                        <span className="text-slate-700 font-black truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
                       </div>
                     </div>
 
