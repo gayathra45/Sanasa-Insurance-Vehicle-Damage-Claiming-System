@@ -2633,12 +2633,12 @@ function OfficeStaffClaimsPageContent() {
                 <div className="border-t border-slate-100 pt-5">
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4 text-left select-none">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                        <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        <svg className="w-4.5 h-4.5 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
                         Internal Notes
-                      </h4>
+                      </h3>
                       <div className="flex items-center gap-3">
                         <button
                           type="button"
@@ -2761,8 +2761,8 @@ function OfficeStaffClaimsPageContent() {
 
                   return (
                     <div className="border-t border-slate-100 pt-5">
-                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4 text-left">
-                        <div className="flex items-center justify-between border-b border-slate-200 pb-2 select-none">
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4 text-left select-none">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                           <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                             {hasPending ? (
                               <svg className="w-4.5 h-4.5 text-amber-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
