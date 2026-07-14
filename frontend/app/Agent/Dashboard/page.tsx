@@ -527,7 +527,9 @@ export default function AgentDashboard() {
           fetchPolicyHolders(parsed.branch);
         }
       }
-      // Password modal trigger disabled per user request
+      if (parsed.mustChangePassword) {
+        setShowPasswordModal(true);
+      }
     } catch (e) {
       console.error(e);
       router.push("/Login");
