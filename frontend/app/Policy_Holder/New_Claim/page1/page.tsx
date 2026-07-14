@@ -440,7 +440,7 @@ export default function UploadDocumentsPage() {
               }}
               className="mt-9 self-start bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-extrabold text-[14px] px-8 py-3.5 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
             >
-              <span>&lt;</span> <span>Back to Home</span>
+              <span>Back to Home</span>
             </button>
           </div>
         </div>
