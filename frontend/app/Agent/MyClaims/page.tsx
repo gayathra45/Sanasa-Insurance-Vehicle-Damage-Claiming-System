@@ -327,9 +327,9 @@ export default function AgentMyClaims() {
   const [chatLogs, setChatLogs] = useState<{ sender: string; text: string }[]>([]);
 
   // Fetch claims from API
-  const fetchClaims = async (email: string) => {
+  const fetchClaims = async (email: string, showLoading: boolean = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await fetch(`${API_URL}/agent/claims?email=${email}`);
       if (!res.ok) throw new Error("Failed to fetch claims");
       const data = await res.json();
@@ -338,9 +338,30 @@ export default function AgentMyClaims() {
     } catch (e) {
       console.error("Fetch agent claims error:", e);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
+
+  // Poll claims status in background
+  useEffect(() => {
+    if (!agentEmail) return;
+    const interval = setInterval(() => {
+      fetchClaims(agentEmail, false);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [agentEmail]);
+
+  // Keep selectedClaim in sync with claims list updates
+  useEffect(() => {
+    if (selectedClaim) {
+      const updated = claims.find(c => c._id === selectedClaim._id || c.claimNumber === selectedClaim.claimNumber);
+      if (updated) {
+        if (JSON.stringify(updated) !== JSON.stringify(selectedClaim)) {
+          setSelectedClaim(updated);
+        }
+      }
+    }
+  }, [claims, selectedClaim]);
 
   const fetchPolicyHolders = async (branchName: string) => {
     try {

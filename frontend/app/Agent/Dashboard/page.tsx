@@ -485,9 +485,9 @@ export default function AgentDashboard() {
     }
   };
 
-  const fetchClaims = async (email: string) => {
+  const fetchClaims = async (email: string, showLoading: boolean = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const res = await fetch(`${API_URL}/agent/claims?email=${email}`);
       if (!res.ok) throw new Error("Failed to fetch claims");
       const data = await res.json();
@@ -506,7 +506,7 @@ export default function AgentDashboard() {
     } catch (e) {
       console.error("Fetch claims error:", e);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -536,14 +536,27 @@ export default function AgentDashboard() {
     }
   }, []);
 
-  // Poll availability status
+  // Poll availability and claims status
   useEffect(() => {
     if (!agentEmail) return;
     const interval = setInterval(() => {
       fetchAvailability(agentEmail);
+      fetchClaims(agentEmail, false);
     }, 5000);
     return () => clearInterval(interval);
   }, [agentEmail]);
+
+  // Keep selectedClaim in sync with claims list updates
+  useEffect(() => {
+    if (selectedClaim) {
+      const updated = claims.find(c => c._id === selectedClaim._id || c.claimNumber === selectedClaim.claimNumber);
+      if (updated) {
+        if (JSON.stringify(updated) !== JSON.stringify(selectedClaim)) {
+          setSelectedClaim(updated);
+        }
+      }
+    }
+  }, [claims, selectedClaim]);
 
   useEffect(() => {
     if (selectedClaim) {
