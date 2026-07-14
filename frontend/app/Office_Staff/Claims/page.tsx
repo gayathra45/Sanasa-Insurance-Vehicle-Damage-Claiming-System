@@ -2563,7 +2563,7 @@ function OfficeStaffClaimsPageContent() {
                 )}
 
                 {/* Progress Stepper Section */}
-                <div className="py-6 px-2 select-none border-t border-slate-100">
+                <div className="pt-6 pb-2 px-2 select-none border-t border-slate-100">
                   <div className="flex items-center justify-between relative max-w-[650px] mx-auto">
                     {/* Connecting Line background (navy) */}
                     <div className="absolute top-[18px] left-[20px] right-[20px] h-1 bg-[#0f2d4a] -z-10 rounded-full" />
@@ -2600,7 +2600,7 @@ function OfficeStaffClaimsPageContent() {
                 </div>
 
                 {/* Action Section (Orange Buttons in Row) */}
-                <div className="flex flex-wrap items-center justify-center gap-4 select-none pt-2">
+                <div className="flex flex-wrap items-center justify-center gap-4 select-none pt-0.5 pb-4">
                   <button
                     type="button"
                     onClick={() => setActiveSubModal("update_tracking")}
