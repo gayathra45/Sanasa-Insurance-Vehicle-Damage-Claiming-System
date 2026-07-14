@@ -987,7 +987,15 @@ function OfficeStaffClaimsPageContent() {
                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Assigned Agent</span>
                             <span className="text-xs font-semibold truncate block">
                               {claim.assignedAgent ? (
-                                <span className="text-slate-700" title={claim.assignedAgent}>{getAgentName(claim.assignedAgent)}</span>
+                                <div className="flex flex-col">
+                                  <span className="text-slate-700" title={claim.assignedAgent}>{getAgentName(claim.assignedAgent)}</span>
+                                  {claim.currentStep < 3 && claim.status !== "Rejected" && (
+                                    <span className="inline-flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 mt-1 w-fit animate-pulse select-none uppercase tracking-wider">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                                      Awaiting Acceptance
+                                    </span>
+                                  )}
+                                </div>
                               ) : (
                                 <span className="text-amber-600 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 text-[10px] inline-block w-fit">Unassigned</span>
                               )}
