@@ -2440,6 +2440,90 @@ function OfficeStaffClaimsPageContent() {
                   </div>
                 </div>
 
+                {/* Description & Uploaded Photos */}
+                <div className="border-t border-slate-200 pt-6 select-text">
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">Claim Description</h3>
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4.5 mb-6 text-left">
+                    <p className="text-xs font-semibold text-slate-600 leading-relaxed whitespace-pre-line">
+                      {selectedClaim.description || "No description provided."}
+                    </p>
+                  </div>
+
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none text-left">Uploaded Documents & Photos</h3>
+                  {(() => {
+                    const phDocs: { name: string; url: string }[] = [];
+                    
+                    const dlFront = selectedClaim.drivingLicense?.front?.[0];
+                    const dlRear = selectedClaim.drivingLicense?.rear?.[0];
+                    if (dlFront) phDocs.push({ name: "Driving License (Front)", url: dlFront });
+                    if (dlRear) phDocs.push({ name: "Driving License (Rear)", url: dlRear });
+                    
+                    let photoIndex = 1;
+                    const fPhotos = selectedClaim.accidentPhotos?.front || [];
+                    const rPhotos = selectedClaim.accidentPhotos?.rear || [];
+                    const sPhotos = selectedClaim.accidentPhotos?.side || [];
+                    
+                    fPhotos.forEach((url: string) => {
+                      phDocs.push({ name: `Accident Photo ${photoIndex++} (Front)`, url });
+                    });
+                    rPhotos.forEach((url: string) => {
+                      phDocs.push({ name: `Accident Photo ${photoIndex++} (Rear)`, url });
+                    });
+                    sPhotos.forEach((url: string) => {
+                      phDocs.push({ name: `Accident Photo ${photoIndex++} (Side)`, url });
+                    });
+                    
+                    (selectedClaim.additionalDocuments || []).forEach((doc) => {
+                      const uploadedBy = doc.uploadedBy || "Policy Holder";
+                      if (uploadedBy === "Policy Holder") {
+                        phDocs.push({ name: doc.name, url: doc.url });
+                      }
+                    });
+
+                    if (phDocs.length === 0) {
+                      return <p className="text-xs text-slate-400 font-bold italic select-none py-2 text-left">No documents or photos uploaded.</p>;
+                    }
+
+                    return (
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
+                        {phDocs.map((doc, idx) => {
+                          let docUrl = doc.url;
+                          if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                            docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                          }
+                          return (
+                            <div key={idx} className="flex flex-col gap-1.5">
+                              <span className="text-[10px] font-extrabold text-slate-500 truncate select-none">{doc.name}</span>
+                              <div 
+                                onClick={() => setPreviewImage(docUrl || null)}
+                                className="aspect-[4/3] rounded-xl border border-slate-200 overflow-hidden bg-slate-100 cursor-pointer hover:opacity-90 active:scale-98 transition-all relative group shadow-sm flex items-center justify-center"
+                              >
+                                {docUrl ? (
+                                  <img 
+                                    src={docUrl} 
+                                    alt={doc.name} 
+                                    className="w-full h-full object-cover" 
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = "none";
+                                    }}
+                                  />
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 font-bold">No Preview</span>
+                                )}
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
+                </div>
+
                 {/* Progress Stepper Section */}
                 <div className="py-6 px-2 select-none border-t border-slate-100">
                   <div className="flex items-center justify-between relative max-w-[650px] mx-auto">
