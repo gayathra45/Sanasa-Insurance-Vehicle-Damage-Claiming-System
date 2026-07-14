@@ -40,6 +40,7 @@ export default function UploadDocumentsPage() {
   const accidentSideRef = useRef<HTMLInputElement>(null);
   const licenseFrontRef = useRef<HTMLInputElement>(null);
   const licenseRearRef = useRef<HTMLInputElement>(null);
+  const isSubmittingRef = useRef(false);
 
   // Lock background scroll when success modal is open
   React.useEffect(() => {
@@ -108,7 +109,7 @@ export default function UploadDocumentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isSubmitting) return;
+    if (isSubmitting || isSubmittingRef.current) return;
 
     // Check if at least some files are uploaded
     const totalAccidentPhotos =
@@ -125,6 +126,7 @@ export default function UploadDocumentsPage() {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     // Convert helper: File -> base64 with compression
@@ -182,6 +184,7 @@ export default function UploadDocumentsPage() {
       if (!response.ok) {
         setCustomPopup({ show: true, title: "Submission Failed", message: data.error || "Failed to submit claim to database." });
         setIsSubmitting(false);
+        isSubmittingRef.current = false;
         return;
       }
 
@@ -201,6 +204,7 @@ export default function UploadDocumentsPage() {
       console.error("New claim submission failed", err);
       setCustomPopup({ show: true, title: "Connection Error", message: "Unable to reach the claims database server. Please try again." });
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
