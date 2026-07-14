@@ -2442,34 +2442,49 @@ function OfficeStaffClaimsPageContent() {
                       >
                         Contact
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowAllDetails(!showAllDetails)}
+                        className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-2.5 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
+                      >
+                        {showAllDetails ? (
+                          <>
+                            <span>View Less Details</span>
+                            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                            </svg>
+                          </>
+                        ) : (
+                          <>
+                            <span>View More Details</span>
+                            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 </div>
 
-                {/* Collapsible Claim Details & Uploads Section */}
-                <div className="border-t border-slate-200 pt-6 select-text flex flex-col gap-6 text-left">
-                  
-                  {/* Claim Description Section */}
-                  <div>
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">Claim Description</h3>
-                    {showAllDetails ? (
-                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4.5 animate-fade-in">
-                        <p className="text-xs font-semibold text-slate-600 leading-relaxed whitespace-pre-line">
+                {/* Expandable Section: Description & Uploaded Photos */}
+                {showAllDetails && (
+                  <div className="border-t border-slate-200 pt-6 select-text flex flex-col gap-6 text-left animate-fade-in">
+                    
+                    {/* Claim Description Section */}
+                    <div>
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">Claim Description</h3>
+                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4.5 text-left">
+                        <p className="text-xs font-semibold text-slate-600 leading-relaxed whitespace-pre-line text-left">
                           {selectedClaim.description || "No description provided."}
                         </p>
                       </div>
-                    ) : (
-                      <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
-                        Content hidden. Click "See More" below to view.
-                      </p>
-                    )}
-                  </div>
+                    </div>
 
-                  {/* Uploaded Documents & Photos Section */}
-                  <div>
-                    <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">Uploaded Documents & Photos</h3>
-                    {showAllDetails ? (
-                      <div className="animate-fade-in">
+                    {/* Uploaded Documents & Photos Section */}
+                    <div>
+                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">Uploaded Documents & Photos</h3>
+                      <div className="text-left">
                         {(() => {
                           const phDocs: { name: string; url: string }[] = [];
                           
@@ -2501,11 +2516,11 @@ function OfficeStaffClaimsPageContent() {
                           });
 
                           if (phDocs.length === 0) {
-                            return <p className="text-xs text-slate-400 font-bold italic select-none py-2">No documents or photos uploaded.</p>;
+                            return <p className="text-xs text-slate-400 font-bold italic select-none py-2 text-left">No documents or photos uploaded.</p>;
                           }
 
                           return (
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-left">
                               {phDocs.map((doc, idx) => {
                                 let docUrl = doc.url;
                                 if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
@@ -2543,38 +2558,9 @@ function OfficeStaffClaimsPageContent() {
                           );
                         })()}
                       </div>
-                    ) : (
-                      <p className="text-xs text-slate-400 font-bold italic select-none py-1 pl-1">
-                        Content hidden. Click "See More" below to view.
-                      </p>
-                    )}
+                    </div>
                   </div>
-
-                  {/* Toggle Button */}
-                  <div className="flex justify-center select-none pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowAllDetails(!showAllDetails)}
-                      className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-700 font-extrabold text-xs px-6 py-2.5 rounded-full transition-all border border-slate-200 cursor-pointer flex items-center justify-center gap-1.5 shadow-sm"
-                    >
-                      {showAllDetails ? (
-                        <>
-                          <span>See Less</span>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-                          </svg>
-                        </>
-                      ) : (
-                        <>
-                          <span>See More</span>
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                          </svg>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
+                )}
 
                 {/* Progress Stepper Section */}
                 <div className="py-6 px-2 select-none border-t border-slate-100">
