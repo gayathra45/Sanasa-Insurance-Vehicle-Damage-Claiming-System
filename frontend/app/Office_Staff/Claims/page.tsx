@@ -818,7 +818,7 @@ function OfficeStaffClaimsPageContent() {
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span>
-                <span className="hidden lg:inline"> ΓÇö Claims Portal</span>
+                <span className="hidden lg:inline"> — Claims Portal</span>
               </h1>
             </div>
             <div className="flex items-center gap-5">
@@ -1756,7 +1756,7 @@ function OfficeStaffClaimsPageContent() {
                           <p>Email: {selectedClaim.assignedAgent}</p>
                           {(() => {
                             const agentObj = agents.find(a => a.email.toLowerCase().trim() === selectedClaim.assignedAgent.toLowerCase().trim());
-                            return agentObj ? <p>Phone: {agentObj.phone || "ΓÇö"}</p> : null;
+                            return agentObj ? <p>Phone: {agentObj.phone || "—"}</p> : null;
                           })()}
                         </div>
                       </>
