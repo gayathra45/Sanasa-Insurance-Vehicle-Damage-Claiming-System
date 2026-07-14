@@ -2550,8 +2550,6 @@ function OfficeStaffClaimsPageContent() {
                           );
                         })()}
                   </div>
-                </div>
-              )}
 
                 {/* Progress Stepper Section */}
                 <div className="py-6 px-2 select-none border-t border-slate-100">
@@ -2915,6 +2913,8 @@ function OfficeStaffClaimsPageContent() {
                     </div>
                   );
                 })()}
+                </div>
+              )}
 
               </div>
 
