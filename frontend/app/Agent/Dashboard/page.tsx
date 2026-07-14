@@ -1832,7 +1832,7 @@ export default function AgentDashboard() {
               </div>
 
               {/* Action Buttons: Accept / Decline */}
-              {selectedClaim.status.toLowerCase() === "pending" && selectedClaim.currentStep === 2 && (
+              {(selectedClaim.currentStep === 2 || selectedClaim.currentStep === 1) && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                 <div className="flex items-center gap-4 mt-6 flex-shrink-0">
                   <button
                     type="button"
@@ -1860,7 +1860,7 @@ export default function AgentDashboard() {
               )}
 
               {/* Status Banner for Accepted (In Progress / Approved) Claims */}
-              {(selectedClaim.status.toLowerCase() === "in progress" || selectedClaim.currentStep === 3) && !selectedClaim.inspectionSubmitted && (
+              {selectedClaim.currentStep >= 3 && !selectedClaim.inspectionSubmitted && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                 <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-6 text-center select-none animate-fade-in flex-shrink-0 animate-in slide-in-from-bottom-5">
                   <p className="text-emerald-800 text-xs md:text-sm font-black flex items-center justify-center gap-2">
                     <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
