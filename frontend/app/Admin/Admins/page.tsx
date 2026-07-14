@@ -56,6 +56,15 @@ export default function AdminAdminsPage() {
     }
   }, []);
 
+  // Poll pending request counts in real-time (every 5 seconds)
+  useEffect(() => {
+    if (!currentAdmin) return;
+    const interval = setInterval(() => {
+      fetchPendingCounts(currentAdmin);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [currentAdmin]);
+
   const fetchActiveAdmins = async () => {
     setLoadingAdmins(true);
     try {
