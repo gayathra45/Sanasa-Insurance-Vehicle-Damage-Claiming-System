@@ -97,6 +97,7 @@ interface Agent {
   email: string;
   branch: string;
   phone?: string;
+  availability?: string;
 }
 
 const parseInspectionReport = (reportText: string) => {
