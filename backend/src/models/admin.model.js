@@ -7,7 +7,7 @@ const adminSchema = new mongoose.Schema({
   nic: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   status: { type: String, default: "Pending", enum: ["Pending", "Approved", "Rejected"] },
-  mustChangePassword: { type: Boolean, default: true },
+  mustChangePassword: { type: Boolean, default: false },
   registeredBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
   approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Admin" },
   resetRequestStatus: { type: String, default: "None", enum: ["None", "Pending", "Approved"] },

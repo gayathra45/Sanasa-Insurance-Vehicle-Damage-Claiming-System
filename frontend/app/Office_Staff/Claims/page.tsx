@@ -1934,7 +1934,7 @@ function OfficeStaffClaimsPageContent() {
                     onClick={() => setIsManualMode(!isManualMode)}
                     className="bg-[#f97316] hover:bg-orange-600 text-white font-extrabold text-[11px] px-4 py-2 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
                   >
-                    {isManualMode ? "ΓÜÖ∩╕Å Standard Flow" : "Γ£Å∩╕Å Update Manually"}
+                    {isManualMode ? "\u2699\uFE0F Standard Flow" : "\u270D\uFE0F Update Manually"}
                   </button>
                 </div>
 
@@ -2604,21 +2604,55 @@ function OfficeStaffClaimsPageContent() {
                     />
 
                     {getStepperSteps(selectedClaim).map((stepObj, idx) => {
-                      const isActive = stepObj.active;
+                      const stepNum = idx + 1;
+                      
+                      // Calculate step status
+                      let stepStatus: "completed" | "active" | "pending" = "pending";
+                      if (selectedClaim.status === "Rejected") {
+                        if (stepNum <= 5) {
+                          stepStatus = "completed";
+                        } else {
+                          stepStatus = "pending";
+                        }
+                      } else {
+                        const isPaid = selectedClaim.status === "Approved" && !!selectedClaim.paymentReceipt;
+                        if (isPaid) {
+                          stepStatus = "completed";
+                        } else if (stepNum < selectedClaim.currentStep) {
+                          stepStatus = "completed";
+                        } else if (stepNum === selectedClaim.currentStep) {
+                          stepStatus = "active";
+                        } else {
+                          stepStatus = "pending";
+                        }
+                      }
+
+                      let circleStyle = "";
+                      if (stepStatus === "completed") {
+                        circleStyle = selectedClaim.status === "Rejected"
+                          ? "text-red-500 border-red-500 shadow-sm shadow-red-500/10"
+                          : "text-[#22c55e] border-[#22c55e] shadow-sm shadow-[#22c55e]/10";
+                      } else if (stepStatus === "active") {
+                        // Orange border/text and slightly highlighted bg for the active stage
+                        circleStyle = "text-[#f97316] border-[#f97316] shadow-sm shadow-[#f97316]/20 bg-orange-50 font-black scale-105";
+                      } else {
+                        circleStyle = "text-[#0f2d4a]/40 border-[#0f2d4a]/20";
+                      }
+
                       return (
                         <div key={idx} className="flex flex-col items-center flex-1 relative">
                           {/* Step Circle */}
-                          <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs border-2 bg-white transition-all duration-300 ${
-                            isActive 
-                              ? selectedClaim.status === "Rejected"
-                                ? "text-red-500 border-red-500 shadow-sm shadow-red-500/10"
-                                : "text-[#22c55e] border-[#22c55e] shadow-sm shadow-[#22c55e]/10" 
-                              : "text-[#0f2d4a] border-[#0f2d4a]"
-                          }`}>
+                          <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs border-2 bg-white transition-all duration-300 ${circleStyle}`}>
                             {stepObj.num}
                           </div>
                           {/* Step Label */}
-                          <span className="text-[10px] font-semibold mt-2 tracking-wide text-slate-400 select-none text-center">
+                          <span className={`text-[10px] font-semibold mt-2 tracking-wide select-none text-center ${
+                            stepStatus === "active" 
+                              ? "text-[#f97316] font-extrabold" 
+                              : stepStatus === "completed"
+                                ? "text-slate-700"
+                                : "text-slate-400"
+                          }`}>
                             {stepObj.label}
                           </span>
                         </div>

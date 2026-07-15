@@ -9,14 +9,13 @@ const officeStaffSchema = new mongoose.Schema({
   location: { type: String, required: true }, // Location, e.g., "Old Foods Market , Galle"
   staffCount: { type: Number, required: true }, // Staff Count, e.g., 10
   password: { type: String, required: true },
-  mustChangePassword: { type: Boolean, default: true },
+  mustChangePassword: { type: Boolean, default: false },
   resetOtp: { type: String },
   resetOtpExpires: { type: Date },
   resetOtpRequestedAt: { type: Date },
   resetSessionToken: { type: String },
   resetSessionExpires: { type: Date },
   resetRequestStatus: { type: String, default: "None" }, // "None", "Pending", "Approved"
-  mustChangePassword: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 
