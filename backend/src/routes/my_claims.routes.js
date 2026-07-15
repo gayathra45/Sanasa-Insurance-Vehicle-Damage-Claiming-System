@@ -4,7 +4,7 @@ import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
-import { sendEmail } from "../utils/email.js";
+import { sendEmail, sendAgentActivityEmail } from "../utils/email.js";
 import { logAgentActivity } from "../utils/activity.js";
 
 const router = express.Router();
@@ -206,6 +206,23 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
     claim.markModified("requestedDocuments");
     claim.markModified("additionalDocuments");
     await claim.save();
+
+    // Send activity update email to agent
+    if (claim.assignedAgent) {
+      let customMsg = "The policy holder has updated the claim details.";
+      let activityText = "Claim Updated by Policy Holder";
+      
+      if (uploadedDocuments && Array.isArray(uploadedDocuments) && uploadedDocuments.length > 0) {
+        activityText = "Document Uploaded";
+        customMsg = `The policy holder uploaded document(s): ${uploadedDocuments.map(d => d.documentName).join(", ")}.`;
+      } else if (messageText) {
+        activityText = "Message Received";
+        customMsg = `The policy holder sent a message: "${messageText}"`;
+      }
+      
+      await sendAgentActivityEmail(claim.assignedAgent, activityText, claim, customMsg);
+    }
+
     res.json({ message: "Claim updated successfully", claim });
   } catch (err) {
     console.error("Update claim API error:", err);

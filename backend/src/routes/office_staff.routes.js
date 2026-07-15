@@ -8,7 +8,7 @@ import Admin from "../models/admin.model.js";
 import DeletedAgent from "../models/deleted_agent.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { uploadToCloudinary } from "../utils/upload.js";
-import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { sendEmail, getBaseTemplate, sendAgentActivityEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -319,6 +319,10 @@ router.patch("/claims/:claimNumber", async (req, res) => {
       return res.status(404).json({ error: "Claim not found." });
     }
 
+    const previousAgent = claim.assignedAgent;
+    const previousStatus = claim.status;
+    const previousStep = claim.currentStep;
+
     if (status !== undefined) {
       claim.status = status;
     }
@@ -410,6 +414,42 @@ router.patch("/claims/:claimNumber", async (req, res) => {
     }
 
     await claim.save();
+
+    // Trigger notification email to assigned agent
+    if (claim.assignedAgent) {
+      const isNewAssignment = assignedAgent !== undefined && assignedAgent.trim() !== "" && assignedAgent.trim().toLowerCase() !== (previousAgent || "").trim().toLowerCase();
+      const isStatusChanged = status !== undefined && status !== previousStatus;
+      const isStepChanged = currentStep !== undefined && Number(currentStep) !== previousStep;
+      const isReceiptUploaded = paymentReceipt !== undefined && !!claim.paymentReceipt;
+
+      if (isNewAssignment) {
+        await sendAgentActivityEmail(
+          claim.assignedAgent,
+          "New Claim Assigned",
+          claim,
+          `You have been assigned to handle this claim. Please log in to accept the claim and initiate the inspection.`
+        );
+      } else if (isStatusChanged || isStepChanged || isReceiptUploaded) {
+        let activityText = "Claim Details Updated";
+        let customMsg = "The office staff has updated the claim details.";
+        
+        if (status === "Approved") {
+          activityText = "Claim Approved";
+          customMsg = `The claim has been officially APPROVED. Approved Amount: LKR ${claim.amount || 0.00}`;
+        } else if (status === "Rejected") {
+          activityText = "Claim Rejected";
+          customMsg = `The claim has been REJECTED. Reason: ${claim.rejectionReason || "No reason specified."}`;
+        } else if (isReceiptUploaded) {
+          activityText = "Payment Receipt Submitted";
+          customMsg = "The transaction bank receipt has been submitted and payment processing is completed.";
+        } else if (isStepChanged) {
+          activityText = `Progress Updated to Step ${claim.currentStep}`;
+          customMsg = `The claim tracking step has been updated to: Step ${claim.currentStep}`;
+        }
+
+        await sendAgentActivityEmail(claim.assignedAgent, activityText, claim, customMsg);
+      }
+    }
 
     const user = await User.findOne({ nic: claim.userNic }, { bankDetails: 1 });
     const claimWithBankDetails = claim.toObject();

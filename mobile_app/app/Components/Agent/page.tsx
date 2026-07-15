@@ -168,7 +168,23 @@ export default function AgentNavbar({ activeRoute, activeTab }: AgentNavbarProps
 
   const handleLogout = async () => {
     setCustomAlert(null);
+    const agentStr = await AsyncStorage.getItem("logged_in_agent");
+    if (agentStr) {
+      try {
+        const agent = JSON.parse(agentStr);
+        if (agent.email) {
+          await fetch(`${API_BASE_URL}/api/agent/availability`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: agent.email, availability: "Offline" })
+          });
+        }
+      } catch (e) {
+        console.error("Error setting offline on mobile logout:", e);
+      }
+    }
     await AsyncStorage.removeItem("logged_in_agent");
+    await AsyncStorage.removeItem("availability_prompted");
     router.replace("/login/page");
   };
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
+import { API_URL } from "@/app/config";
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "-";
@@ -103,7 +104,7 @@ export default function AgentsPage() {
     if (!branch) return;
     const pollInterval = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/office-staff/agents?branch=${encodeURIComponent(branch)}`);
+        const res = await fetch(`${API_URL}/office-staff/agents?branch=${encodeURIComponent(branch)}`);
         if (res.ok) {
           const data = await res.json();
           setAgents(data.agents || []);
@@ -111,16 +112,26 @@ export default function AgentsPage() {
       } catch (err) {
         console.warn("Background agents polling failed:", err);
       }
-    }, 7000);
+    }, 3000); // 3 seconds interval for real-time responsiveness
     return () => clearInterval(pollInterval);
   }, [branch]);
+
+  // Keep selectedAgentDetails in sync with background status updates
+  useEffect(() => {
+    if (selectedAgentDetails) {
+      const updated = agents.find(a => a._id === selectedAgentDetails._id);
+      if (updated) {
+        setSelectedAgentDetails(updated);
+      }
+    }
+  }, [agents]);
 
   // --- Data Loading Operations ---
   // Loads all registered Insurance Agents belonging to the specific branch.
   const loadAgents = async (branchName: string) => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/office-staff/agents?branch=${encodeURIComponent(branchName)}`);
+      const res = await fetch(`${API_URL}/office-staff/agents?branch=${encodeURIComponent(branchName)}`);
       if (!res.ok) {
         throw new Error("Failed to fetch agents.");
       }
@@ -136,7 +147,7 @@ export default function AgentsPage() {
   const loadDeletedAgents = async (branchName: string) => {
     try {
       setLoadingDeleted(true);
-      const res = await fetch(`http://localhost:5000/api/office-staff/deleted-agents?branch=${encodeURIComponent(branchName)}`);
+      const res = await fetch(`${API_URL}/office-staff/deleted-agents?branch=${encodeURIComponent(branchName)}`);
       if (!res.ok) {
         throw new Error("Failed to fetch deleted agents.");
       }
@@ -192,7 +203,7 @@ export default function AgentsPage() {
       if (birthCertificate) birthCertificateBase64 = await toBase64(birthCertificate);
       if (policeReport) policeReportBase64 = await toBase64(policeReport);
 
-      const res = await fetch("http://localhost:5000/api/office-staff/agents", {
+      const res = await fetch(`${API_URL}/office-staff/agents`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -269,7 +280,7 @@ export default function AgentsPage() {
         documentBase64 = await toBase64(deleteDoc);
       }
 
-      const res = await fetch(`http://localhost:5000/api/office-staff/agents/${deletingAgentId}`, {
+      const res = await fetch(`${API_URL}/office-staff/agents/${deletingAgentId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

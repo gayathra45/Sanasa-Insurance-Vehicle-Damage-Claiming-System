@@ -5,6 +5,7 @@ import Claim from "../models/claim.model.js";
 import User from "../models/user.model.js";
 import { logAgentActivity } from "../utils/activity.js";
 import AgentActivity from "../models/agent_activity.model.js";
+import { sendAgentActivityEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -125,6 +126,23 @@ router.post("/claims/:id/status", async (req, res) => {
       await logAgentActivity(updatedClaim.assignedAgent, "Inspection Submitted", deviceType, `Submitted physical inspection report for claim: ${updatedClaim.claimNumber}`);
     } else if (status !== undefined) {
       await logAgentActivity(updatedClaim.assignedAgent, "Claim Updated", deviceType, `Updated status to ${status} for claim: ${updatedClaim.claimNumber}`);
+    }
+
+    // Send activity email to agent
+    if (updatedClaim.assignedAgent) {
+      let activityText = "Claim Updated";
+      let customMsg = "You updated the claim details.";
+      if (acceptClaim) {
+        activityText = "Claim Accepted";
+        customMsg = "You have successfully accepted this claim assignment. The physical inspection is now marked in progress.";
+      } else if (inspectionSubmitted) {
+        activityText = "Inspection Report Submitted";
+        customMsg = "You have successfully submitted the physical vehicle inspection report. The claim is now ready for office staff review.";
+      } else if (status !== undefined) {
+        activityText = `Status Updated: ${status}`;
+        customMsg = `You updated the claim status to: ${status}.`;
+      }
+      await sendAgentActivityEmail(updatedClaim.assignedAgent, activityText, updatedClaim, customMsg);
     }
 
     res.json({ message: "Claim status updated successfully", claim: updatedClaim });

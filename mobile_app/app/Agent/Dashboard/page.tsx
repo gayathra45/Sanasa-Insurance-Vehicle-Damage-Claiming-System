@@ -288,6 +288,7 @@ export default function AgentDashboard() {
 
   // --- Password Modal States ---
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -1518,6 +1519,12 @@ ${inspectionReportText.trim()}
           setAgentEmail(agent.email);
           fetchClaims(agent.email);
           fetchAvailability(agent.email);
+          
+          // Check if availability prompted for this session in AsyncStorage
+          const prompted = await AsyncStorage.getItem("availability_prompted");
+          if (!prompted) {
+            setShowAvailabilityModal(true);
+          }
         } else {
           setLoading(false);
         }
@@ -1527,6 +1534,31 @@ ${inspectionReportText.trim()}
       } catch { router.replace("/login/page"); }
     })();
   }, []);
+
+  // Set status to Offline when mobile app is minimized/closed
+  useEffect(() => {
+    if (!agentEmail) return;
+    const { AppState } = require("react-native");
+    
+    const handleAppStateChange = async (nextAppState: string) => {
+      if (nextAppState === "background" || nextAppState === "inactive") {
+        try {
+          await fetch(`${API_BASE_URL}/api/agent/availability`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: agentEmail, availability: "Offline" })
+          });
+        } catch (e) {
+          console.error("Error setting offline status on mobile app close:", e);
+        }
+      }
+    };
+
+    const subscription = AppState.addEventListener("change", handleAppStateChange);
+    return () => {
+      subscription.remove();
+    };
+  }, [agentEmail]);
 
   // Poll availability status
   useEffect(() => {
@@ -3231,6 +3263,69 @@ ${inspectionReportText.trim()}
             </View>
           );
         })()}
+      </Modal>
+
+      {/* ── SET AVAILABILITY PROMPT MODAL ── */}
+      <Modal visible={showAvailabilityModal} transparent={true} animationType="fade">
+        <View style={styles.pwdOverlay}>
+          <View style={[styles.pwdCard, { paddingVertical: 30, alignItems: "center" }]}>
+            {/* Header Icon */}
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: "#fff7ed", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+              <Ionicons name="person-outline" size={32} color="#f97316" />
+            </View>
+
+            {/* Header */}
+            <Text style={[styles.pwdHeaderTitle, { textAlign: "center", fontSize: 18, marginBottom: 8 }]}>Set Your Availability</Text>
+            <Text style={{ color: "#64748b", fontSize: 13, textAlign: "center", paddingHorizontal: 20, marginBottom: 24, lineHeight: 18 }}>
+              Please select your status to start receiving claim assignments from the branch.
+            </Text>
+
+            {/* Buttons */}
+            <View style={{ width: "100%", paddingHorizontal: 20, gap: 12 }}>
+              {/* Go Online */}
+              <TouchableOpacity
+                onPress={async () => {
+                  await toggleAvailability("Active");
+                  await AsyncStorage.setItem("availability_prompted", "true");
+                  setShowAvailabilityModal(false);
+                }}
+                style={{
+                  backgroundColor: "#22c55e",
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "row",
+                  gap: 8,
+                }}
+              >
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#ffffff" }} />
+                <Text style={{ color: "#ffffff", fontWeight: "bold", fontSize: 14 }}>Go Online (Active)</Text>
+              </TouchableOpacity>
+
+              {/* Remain Offline */}
+              <TouchableOpacity
+                onPress={async () => {
+                  await toggleAvailability("Offline");
+                  await AsyncStorage.setItem("availability_prompted", "true");
+                  setShowAvailabilityModal(false);
+                }}
+                style={{
+                  backgroundColor: "#e2e8f0",
+                  paddingVertical: 14,
+                  borderRadius: 12,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexDirection: "row",
+                  gap: 8,
+                }}
+              >
+                <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#94a3b8" }} />
+                <Text style={{ color: "#334155", fontWeight: "bold", fontSize: 14 }}>Remain Offline</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </Modal>
 
       {/* ── CHANGE PASSWORD REQUIRED MODAL ── */}

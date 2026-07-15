@@ -386,6 +386,34 @@ export default function AgentDashboard() {
   const [agentEmail, setAgentEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [availability, setAvailability] = useState<"Active" | "Offline">("Active");
+  const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
+
+  // Automatically go offline on browser tab close/exit
+  useEffect(() => {
+    if (!agentEmail) return;
+    const handleUnload = () => {
+      const url = `${API_URL}/agent/availability`;
+      const payload = JSON.stringify({ email: agentEmail, availability: "Offline" });
+      if (navigator.sendBeacon) {
+        const blob = new Blob([payload], { type: "application/json" });
+        navigator.sendBeacon(url, blob);
+      } else {
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: payload,
+          keepalive: true
+        });
+      }
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("unload", handleUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      window.removeEventListener("unload", handleUnload);
+    };
+  }, [agentEmail]);
 
   const fetchAvailability = async (email: string) => {
     try {
@@ -525,6 +553,12 @@ export default function AgentDashboard() {
         fetchAvailability(parsed.email);
         if (parsed.branch) {
           fetchPolicyHolders(parsed.branch);
+        }
+        
+        // Check if availability was already prompted in this login session
+        const prompted = sessionStorage.getItem("availability_prompted");
+        if (!prompted) {
+          setShowAvailabilityModal(true);
         }
       }
       if (parsed.mustChangePassword) {
@@ -2004,6 +2038,54 @@ export default function AgentDashboard() {
             >
               Okay, Got It
             </button>
+          </div>
+        </div>
+      )}
+
+      {showAvailabilityModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[9998] flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-white border border-slate-100 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] overflow-hidden p-8 flex flex-col items-center text-center select-none animate-in fade-in zoom-in duration-200">
+            {/* Header Icon */}
+            <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center mb-5 text-[#f97316]">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
+            
+            {/* Title */}
+            <h2 className="font-extrabold text-xl text-slate-800 tracking-tight">Set Your Availability</h2>
+            
+            {/* Description */}
+            <p className="text-slate-500 text-xs font-semibold mt-3.5 leading-relaxed max-w-[280px]">
+              Please select your status to start receiving claim assignments from the branch.
+            </p>
+            
+            {/* Buttons Container */}
+            <div className="w-full flex flex-col gap-3 mt-8">
+              <button
+                onClick={() => {
+                  toggleAvailability("Active");
+                  sessionStorage.setItem("availability_prompted", "true");
+                  setShowAvailabilityModal(false);
+                }}
+                className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-extrabold text-xs py-3.5 rounded-xl border-none cursor-pointer shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+                Go Online (Active)
+              </button>
+              
+              <button
+                onClick={() => {
+                  toggleAvailability("Offline");
+                  sessionStorage.setItem("availability_prompted", "true");
+                  setShowAvailabilityModal(false);
+                }}
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs py-3.5 rounded-xl border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                Remain Offline
+              </button>
+            </div>
           </div>
         </div>
       )}

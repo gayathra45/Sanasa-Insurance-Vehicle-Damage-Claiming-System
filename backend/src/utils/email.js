@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import { Resend } from "resend";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 dotenv.config({ override: true });
 
 export async function sendEmail(toEmail, subject, htmlBody, textBody) {
@@ -225,4 +226,48 @@ export function getBaseTemplate(title, bodyHtml, footerNote = "Sanasa General In
       </body>
     </html>
   `;
+}
+
+export async function sendAgentActivityEmail(agentEmail, activityType, claim, customMessage = "") {
+  try {
+    if (!agentEmail || agentEmail.trim() === "") return;
+    
+    const Agent = mongoose.model("Agent");
+    const agent = await Agent.findOne({ email: agentEmail.trim().toLowerCase() });
+    const agentName = agent ? agent.name : "Agent";
+
+    const subject = `[Sanasa Activity Update] - Claim: ${claim.claimNumber}`;
+    
+    const bodyHtml = `
+      <h2>New Claim Activity Update</h2>
+      <p>Dear <strong>${agentName}</strong>,</p>
+      <p>There has been a new update/activity on a claim assigned to you:</p>
+      <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 500px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7;">
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 10px; font-weight: bold; width: 150px; color: #4a5568;">Claim Number:</td>
+          <td style="padding: 10px; color: #2d3748; font-weight: 600;">${claim.claimNumber}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 10px; font-weight: bold; color: #4a5568;">Vehicle No:</td>
+          <td style="padding: 10px; color: #2d3748;">${claim.vehiclePlate}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 10px; font-weight: bold; color: #4a5568;">Activity:</td>
+          <td style="padding: 10px; color: #f97316; font-weight: bold;">${activityType}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 10px; font-weight: bold; color: #4a5568;">Current Status:</td>
+          <td style="padding: 10px; font-weight: bold; color: #2d3748;">${claim.status} (Step ${claim.currentStep})</td>
+        </tr>
+      </table>
+      ${customMessage ? `<p style="background-color: #ebf8ff; border-left: 4px solid #3182ce; padding: 12px; border-radius: 4px; font-style: italic; font-size: 14px; margin-top: 15px; margin-bottom: 15px;">${customMessage}</p>` : ""}
+      <p style="margin-top: 20px;">Please log in to your Agent portal to view the details and proceed with the necessary steps.</p>
+    `;
+
+    const htmlBody = getBaseTemplate(subject, bodyHtml);
+    await sendEmail(agentEmail.trim().toLowerCase(), subject, htmlBody);
+    console.log(`✅ Activity email sent successfully to Agent: ${agentEmail}`);
+  } catch (error) {
+    console.error("❌ Error sending agent activity email:", error);
+  }
 }

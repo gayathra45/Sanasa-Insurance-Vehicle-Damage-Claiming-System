@@ -4,12 +4,34 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { API_URL } from "@/app/config";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const lastScrollY = useRef(0);
+
+  const handleLogout = async () => {
+    // Set status to Offline in backend first
+    const agentData = sessionStorage.getItem("logged_in_agent");
+    if (agentData) {
+      try {
+        const parsed = JSON.parse(agentData);
+        if (parsed.email) {
+          await fetch(`${API_URL}/agent/availability`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: parsed.email, availability: "Offline" })
+          });
+        }
+      } catch (e) {
+        console.error("Error setting offline status on logout:", e);
+      }
+    }
+    sessionStorage.clear();
+    window.location.href = "/Login";
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,23 +126,28 @@ export default function Navbar() {
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white" />
             </Link>
 
-            {/* Profile Avatar Icon */}
-            <Link href="/Login" className="text-black hover:text-[#00ddff] transition-colors p-1" aria-label="Profile">
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="text-slate-800 hover:text-red-500 transition-colors p-1 bg-transparent border-none cursor-pointer flex items-center justify-center"
+              aria-label="Logout"
+              title="Logout"
+            >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
-                strokeWidth="2"
+                strokeWidth="2.0"
                 stroke="currentColor"
-                className="w-8 h-8"
+                className="w-7.5 h-7.5"
               >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"
+                  d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
                 />
               </svg>
-            </Link>
+            </button>
           </div>
 
           {/* Mobile Hamburger Button */}
@@ -202,11 +229,29 @@ export default function Navbar() {
                   </svg>
                   <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white" />
                 </Link>
-                <Link href="/Login" onClick={() => setIsOpen(false)} className="text-black hover:text-[#00ddff] p-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-7 h-7">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    handleLogout();
+                  }}
+                  className="text-slate-800 hover:text-red-500 p-1 bg-transparent border-none cursor-pointer flex items-center justify-center"
+                  aria-label="Logout"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="w-6.5 h-6.5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"
+                    />
                   </svg>
-                </Link>
+                </button>
               </div>
             </div>
           </div>
