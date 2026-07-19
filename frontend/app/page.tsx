@@ -190,7 +190,7 @@ export default function Home() {
               src="/home2_h.png"
               alt="Motor Insurance Features"
               fill
-              className="z-[1]"
+              className="z-1"
               style={{ objectFit: 'cover' }}
             />
             <div className={motorGradient}>
