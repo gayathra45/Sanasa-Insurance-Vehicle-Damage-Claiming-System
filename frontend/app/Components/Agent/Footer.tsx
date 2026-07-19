@@ -1,4 +1,3 @@
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -112,7 +111,7 @@ export default function Footer() {
       {/* Copyright Bar */}
       <div className="max-w-[1200px] mx-auto text-center pt-6 mt-10 border-t border-white/10 text-sm font-semibold tracking-wide">
         <p className="m-0">
-          © 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
+        &copy; 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
         </p>
       </div>
     </footer>

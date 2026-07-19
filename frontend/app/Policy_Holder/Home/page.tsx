@@ -175,7 +175,7 @@ export default function PolicyHolderHome() {
                 }
 
                 // Check for local session submitted claims
-                let localClaims: any[] = [];
+                const localClaims: any[] = [];
                 const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
                 if (lastSubmitted) {
                   const parsed = JSON.parse(lastSubmitted);

@@ -187,7 +187,7 @@ export default function MyClaims() {
         }
 
         // 3. Fallback to check if a claim was recently submitted in current session
-        let localClaims: Claim[] = [];
+        const localClaims: Claim[] = [];
         try {
           const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
           if (lastSubmitted) {

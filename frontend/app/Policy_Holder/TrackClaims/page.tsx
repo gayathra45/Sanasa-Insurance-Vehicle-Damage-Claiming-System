@@ -110,7 +110,7 @@ function TrackClaimsContent() {
           }
         }
 
-        let localClaims: Claim[] = [];
+        const localClaims: Claim[] = [];
         try {
           const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
           if (lastSubmitted) {
@@ -172,7 +172,7 @@ function TrackClaimsContent() {
     }
   }, [searchParams]);
 
-  const formatDateString = (dateStr: string) => {
+  function formatDateString(dateStr: string) {
     if (!dateStr) return "";
     try {
       const date = new Date(dateStr);
@@ -182,7 +182,7 @@ function TrackClaimsContent() {
     } catch (e) {
       return dateStr;
     }
-  };
+  }
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanId = claimId.trim().toUpperCase();
@@ -343,7 +343,7 @@ function TrackClaimsContent() {
             Track Claims
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            Monitor your claim's progress in real-time
+            Monitor your claim&apos;s progress in real-time
           </p>
         </header>
       </div>
@@ -430,7 +430,7 @@ function TrackClaimsContent() {
                 <div className="px-2 mb-6">
                   <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1.5">Description</p>
                   <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    "{trackedClaim.description}"
+                    &quot;{trackedClaim.description}&quot;
                   </p>
                 </div>
               )}
@@ -635,7 +635,7 @@ function TrackClaimsContent() {
             <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
             </svg>
-            Enter your Claim ID in the search bar above to track your claim's status.
+            Enter your Claim ID in the search bar above to track your claim&apos;s status.
           </div>
         )}
 

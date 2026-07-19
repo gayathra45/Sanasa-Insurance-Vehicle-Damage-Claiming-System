@@ -47,7 +47,7 @@ export default function About() {
               University of Ruhuna for the yeoman services rendered by him to
               uplift the cooperative Movement in Sri Lanka. Dr. Kiriwandeniya is
               a recipient of the Vishwaprasadani Presidential Award in 1996, one
-              of Sri Lanka's highest and most prestigious national honors.
+              of Sri Lanka&apos;s highest and most prestigious national honors.
             </p>
           </div>
         </div>
