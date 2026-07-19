@@ -47,7 +47,7 @@ export default function About() {
               University of Ruhuna for the yeoman services rendered by him to
               uplift the cooperative Movement in Sri Lanka. Dr. Kiriwandeniya is
               a recipient of the Vishwaprasadani Presidential Award in 1996, one
-              of Sri Lanka's highest and most prestigious national honors.
+              of Sri Lanka&apos;s highest and most prestigious national honors.
             </p>
           </div>
         </div>
@@ -55,7 +55,7 @@ export default function About() {
         {/* Right Side - Image */}
         <div className="flex-1 flex justify-center items-center">
           <Image
-            src="/about 1.jpg"
+            src="/about_1.jpg"
             alt="Founder Dr. P.A. Kiriwandeniya"
             width={350}
             height={400}

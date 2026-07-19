@@ -1,4 +1,3 @@
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -8,10 +7,10 @@ export default function Footer() {
       <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-8 text-center md:text-left">
         
         {/* Left Section - Logo */}
-        <div className="flex-shrink-0 flex justify-center md:justify-start">
+        <div className="shrink-0 flex justify-center md:justify-start">
           <Link href="/">
             <Image
-              src="/footer logo.svg"
+              src="/footer_logo.svg"
               alt="Sanasa General Insurance"
               width={140}
               height={55}
@@ -45,8 +44,8 @@ export default function Footer() {
         </div>
 
         {/* Right Section - Login/Sign Up & Social Media */}
-        <div className="flex flex-col items-center md:items-end gap-5 flex-shrink-0 w-full md:w-auto">
-          <div className="flex gap-[15px] flex-shrink-0 justify-center w-full md:w-auto">
+        <div className="flex flex-col items-center md:items-end gap-5 shrink-0 w-full md:w-auto">
+          <div className="flex gap-[15px] shrink-0 justify-center w-full md:w-auto">
             <Link
               href="/Login"
               className="bg-transparent border-2 border-white text-white py-2 px-6 rounded-full no-underline text-sm font-semibold transition-all duration-300 hover:bg-white hover:text-[#ffa500]"
@@ -55,7 +54,7 @@ export default function Footer() {
             </Link>
             <Link
               href="/SignUp"
-              className="bg-white text-[#102A43] py-2 px-6 rounded-full no-underline text-sm font-semibold border-none cursor-pointer transition-all duration-300 hover:opacity-90 hover:-translate-y-[2px]"
+              className="bg-white text-[#102A43] py-2 px-6 rounded-full no-underline text-sm font-semibold border-none cursor-pointer transition-all duration-300 hover:opacity-90 hover:translate-y-[-2px]"
             >
               Sign Up
             </Link>
@@ -104,7 +103,7 @@ export default function Footer() {
       {/* Copyright Bar */}
       <div className="max-w-[1200px] mx-auto text-center pt-5 mt-8 border-t border-white/20 text-[13px] opacity-90">
         <p className="m-0">
-          © 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
+        &copy; 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
         </p>
       </div>
     </footer>

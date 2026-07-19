@@ -1,4 +1,3 @@
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -8,10 +7,10 @@ export default function Footer() {
       <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between gap-8 md:gap-4">
         
         {/* Left Column - Logo */}
-        <div className="flex-shrink-0 flex justify-start items-start">
+        <div className="shrink-0 flex justify-start items-start">
           <Link href="/Agent/Home">
             <Image
-              src="/footer logo.svg"
+              src="/footer_logo.svg"
               alt="Sanasa General Insurance"
               width={150}
               height={60}
@@ -57,7 +56,7 @@ export default function Footer() {
               viewBox="0 0 24 24"
               strokeWidth="2"
               stroke="currentColor"
-              className="w-6 h-6 rotate-[15deg] animate-pulse"
+              className="w-6 h-6 rotate-15 animate-pulse"
             >
               <path
                 strokeLinecap="round"
@@ -112,7 +111,7 @@ export default function Footer() {
       {/* Copyright Bar */}
       <div className="max-w-[1200px] mx-auto text-center pt-6 mt-10 border-t border-white/10 text-sm font-semibold tracking-wide">
         <p className="m-0">
-          © 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
+        &copy; 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
         </p>
       </div>
     </footer>

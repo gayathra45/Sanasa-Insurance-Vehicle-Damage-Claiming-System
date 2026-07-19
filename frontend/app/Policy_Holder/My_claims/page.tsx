@@ -187,7 +187,7 @@ export default function MyClaims() {
         }
 
         // 3. Fallback to check if a claim was recently submitted in current session
-        let localClaims: Claim[] = [];
+        const localClaims: Claim[] = [];
         try {
           const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
           if (lastSubmitted) {
@@ -506,7 +506,7 @@ export default function MyClaims() {
             <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative animate-fade-in overflow-hidden">
               
               {/* Modal Header Title */}
-              <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
+              <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 shrink-0">
                 <h2 className="text-[22px] font-extrabold text-[#0f2d3a] tracking-tight leading-none">
                   Claim Details – {selectedClaim.claimNumber}
                 </h2>
@@ -677,7 +677,7 @@ export default function MyClaims() {
                     <ul className="list-none flex flex-col gap-2 mb-4 pl-1">
                       {getUserRequestedDocs(selectedClaim).map((doc) => (
                         <li key={doc} className="flex items-center gap-2 text-[#aa4f4f] font-bold text-xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] shrink-0" />
                           <span>{doc}</span>
                         </li>
                       ))}
@@ -693,7 +693,7 @@ export default function MyClaims() {
               </div>
 
               {/* Modal Footer */}
-              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-shrink-0">
+              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center shrink-0">
                 {selectedClaim.currentStep && selectedClaim.currentStep < 2 && (!selectedClaim.officer || selectedClaim.officer === "Not Assigned") && (!selectedClaim.assignedAgent || selectedClaim.assignedAgent === "") && selectedClaim.status !== "Cancelled" ? (
                   <button
                     onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
@@ -730,19 +730,19 @@ export default function MyClaims() {
             {/* Header/Title with clean inline icon */}
             <div className="flex items-center gap-3.5">
               {customPopup.type === "success" ? (
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               ) : customPopup.type === "confirm" ? (
-                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>

@@ -119,7 +119,7 @@ function getVehicleIconSvg(type: string, className = "w-9 h-9 text-black") {
 function getVehicleIconContainer(type: string) {
   const svg = getVehicleIconSvg(type);
   return (
-    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white border-2 border-black text-black shadow-sm flex-shrink-0 select-none">
+    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white border-2 border-black text-black shadow-sm shrink-0 select-none">
       {svg}
     </div>
   );
@@ -175,7 +175,7 @@ export default function PolicyHolderHome() {
                 }
 
                 // Check for local session submitted claims
-                let localClaims: any[] = [];
+                const localClaims: any[] = [];
                 const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
                 if (lastSubmitted) {
                   const parsed = JSON.parse(lastSubmitted);
@@ -306,7 +306,7 @@ export default function PolicyHolderHome() {
             href="/Policy_Holder/My_claims"
             className="bg-white px-6 py-5.5 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
-            <div className="text-slate-400 flex-shrink-0">
+            <div className="text-slate-400 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6m4 13V10m4 9V14" />
             </svg>
@@ -322,7 +322,7 @@ export default function PolicyHolderHome() {
             href="/Policy_Holder/My_claims"
             className="bg-white px-6 py-5.5 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
-            <div className="text-slate-400 flex-shrink-0">
+            <div className="text-slate-400 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -338,7 +338,7 @@ export default function PolicyHolderHome() {
             href="/Policy_Holder/My_claims"
             className="bg-white px-6 py-5.5 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
-            <div className="text-slate-400 flex-shrink-0">
+            <div className="text-slate-400 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
@@ -358,7 +358,7 @@ export default function PolicyHolderHome() {
           {/* Vehicles Column */}
           <div className="lg:col-span-12">
             <div className="flex items-center gap-2.5 mb-6 select-none">
-              <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <svg className="w-6 h-6 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
               </svg>
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
@@ -380,7 +380,7 @@ export default function PolicyHolderHome() {
                     </div>
                     <Link
                       href="/Policy_Holder/MyVehicles"
-                      className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-4 sm:px-5 py-1.5 rounded-full transition-all no-underline flex-shrink-0"
+                      className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-4 sm:px-5 py-1.5 rounded-full transition-all no-underline shrink-0"
                     >
                       View
                     </Link>

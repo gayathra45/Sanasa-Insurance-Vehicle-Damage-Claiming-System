@@ -1,4 +1,3 @@
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -8,10 +7,10 @@ export default function LoginFooter() {
       <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-8 text-center md:text-left">
         
         {/* Left Section - Logo */}
-        <div className="flex-shrink-0 flex justify-center md:justify-start">
+        <div className="shrink-0 flex justify-center md:justify-start">
           <Link href="/">
             <Image
-              src="/footer logo.svg"
+              src="/footer_logo.svg"
               alt="Sanasa General Insurance"
               width={140}
               height={55}
@@ -84,7 +83,7 @@ export default function LoginFooter() {
       {/* Copyright Bar */}
       <div className="max-w-[1200px] mx-auto text-center pt-5 mt-8 border-t border-white/20 text-[13px] opacity-90">
         <p className="m-0">
-          © 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
+        &copy; 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
         </p>
       </div>
     </footer>

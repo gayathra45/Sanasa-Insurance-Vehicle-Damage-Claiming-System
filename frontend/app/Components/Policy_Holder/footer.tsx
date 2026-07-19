@@ -1,4 +1,3 @@
-import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -8,10 +7,10 @@ export default function PolicyHolderFooter() {
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center md:items-start gap-10">
         
         {/* Left Section - Logo */}
-        <div className="flex-shrink-0 flex justify-center md:justify-start">
+        <div className="shrink-0 flex justify-center md:justify-start">
           <Link href="/Policy_Holder/Home">
             <Image
-              src="/footer logo.svg"
+              src="/footer_logo.svg"
               alt="Sanasa General Insurance"
               width={130}
               height={52}
@@ -63,7 +62,7 @@ export default function PolicyHolderFooter() {
         </div>
 
         {/* Right Section - Contact & Socials */}
-        <div className="flex flex-col items-center md:items-end gap-6 flex-shrink-0 w-full md:w-auto">
+        <div className="flex flex-col items-center md:items-end gap-6 shrink-0 w-full md:w-auto">
           {/* 24 Hours Contact */}
           <div className="flex items-center gap-3">
             <svg
@@ -129,7 +128,7 @@ export default function PolicyHolderFooter() {
       {/* Copyright Bar */}
       <div className="max-w-7xl mx-auto text-center pt-6 mt-10 border-t border-white/15 text-[14px]">
         <p className="m-0 font-medium">
-          © 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
+        &copy; 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
         </p>
       </div>
     </footer>

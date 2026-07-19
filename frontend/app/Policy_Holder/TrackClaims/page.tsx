@@ -5,6 +5,15 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { API_URL } from "@/app/config";
+
+interface AdditionalDoc {
+  name: string;
+  url: string;
+  uploadedAt: string;
+  uploadedBy?: string;
+  _id?: string;
+}
 
 interface Claim {
   claimNumber: string;
@@ -21,6 +30,17 @@ interface Claim {
   requestedDocuments?: string[];
   currentStep?: number;
   messages?: { sender: string; message: string; sentAt: string }[];
+  accidentPhotos?: {
+    front?: string[];
+    rear?: string[];
+    side?: string[];
+  };
+  drivingLicense?: {
+    front?: string[];
+    rear?: string[];
+  };
+  additionalDocuments?: AdditionalDoc[];
+  userNic?: string;
 }
 
 function TrackClaimsContent() {
@@ -30,6 +50,8 @@ function TrackClaimsContent() {
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [claimsList, setClaimsList] = useState<Claim[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [userNic, setUserNic] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
 
 
@@ -37,22 +59,25 @@ function TrackClaimsContent() {
     if (typeof window !== "undefined") {
       const loadClaims = async () => {
         setIsLoading(true);
-        let userNic = "";
+        let sessionNic = "";
         
         const userStr = sessionStorage.getItem("logged_in_user");
         if (userStr) {
           try {
             const user = JSON.parse(userStr);
-            if (user.nic) userNic = user.nic;
+            if (user.nic) {
+              sessionNic = user.nic;
+              setUserNic(user.nic);
+            }
           } catch (err) {
             console.error("Error parsing logged_in_user session", err);
           }
         }
 
         let databaseClaims: Claim[] = [];
-        if (userNic) {
+        if (sessionNic) {
           try {
-            const res = await fetch(`http://localhost:5000/api/policy-holder/user-claims?nic=${encodeURIComponent(userNic)}`, {
+            const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(sessionNic)}`, {
               cache: "no-store"
             });
             if (res.ok) {
@@ -72,7 +97,11 @@ function TrackClaimsContent() {
                   documentsRequested: claim.documentsRequested || false,
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
-                  messages: claim.messages || []
+                  messages: claim.messages || [],
+                  accidentPhotos: claim.accidentPhotos || {},
+                  drivingLicense: claim.drivingLicense || {},
+                  additionalDocuments: claim.additionalDocuments || [],
+                  userNic: claim.userNic || ""
                 }));
               }
             }
@@ -81,7 +110,7 @@ function TrackClaimsContent() {
           }
         }
 
-        let localClaims: Claim[] = [];
+        const localClaims: Claim[] = [];
         try {
           const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
           if (lastSubmitted) {
@@ -102,7 +131,11 @@ function TrackClaimsContent() {
                 documentsRequested: false,
                 requestedDocuments: [],
                 currentStep: 1,
-                messages: []
+                messages: [],
+                accidentPhotos: parsed.accidentPhotos || {},
+                drivingLicense: parsed.drivingLicense || {},
+                additionalDocuments: parsed.additionalDocuments || [],
+                userNic: parsed.userNic || ""
               });
             }
           }
@@ -119,7 +152,16 @@ function TrackClaimsContent() {
           setClaimId(idParam);
           const found = combined.find(c => c.claimNumber.toLowerCase() === idParam.toLowerCase());
           if (found) {
-            setTrackedClaim(found);
+            if (sessionNic && found.userNic !== sessionNic) {
+              setTrackedClaim(null);
+              setErrorMsg("This claim reference does not belong to your account.");
+            } else {
+              setTrackedClaim(found);
+              setErrorMsg("");
+            }
+          } else {
+            setTrackedClaim(null);
+            setErrorMsg(`No claim found with ID "${idParam}". Please verify your reference number.`);
           }
           setSearchAttempted(true);
         }
@@ -130,7 +172,7 @@ function TrackClaimsContent() {
     }
   }, [searchParams]);
 
-  const formatDateString = (dateStr: string) => {
+  function formatDateString(dateStr: string) {
     if (!dateStr) return "";
     try {
       const date = new Date(dateStr);
@@ -140,7 +182,7 @@ function TrackClaimsContent() {
     } catch (e) {
       return dateStr;
     }
-  };
+  }
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanId = claimId.trim().toUpperCase();
@@ -148,15 +190,22 @@ function TrackClaimsContent() {
 
     setIsLoading(true);
     setSearchAttempted(true);
+    setErrorMsg("");
 
     try {
       // 1. Try fetching from Backend API first
-      const res = await fetch(`http://localhost:5000/api/policy-holder/track-claim?claimNumber=${encodeURIComponent(cleanId)}`, {
+      const res = await fetch(`${API_URL}/policy-holder/track-claim?claimNumber=${encodeURIComponent(cleanId)}`, {
         cache: "no-store"
       });
       if (res.ok) {
         const data = await res.json();
         if (data.claim) {
+          if (userNic && data.claim.userNic !== userNic) {
+            setTrackedClaim(null);
+            setErrorMsg("This claim reference does not belong to your account.");
+            setIsLoading(false);
+            return;
+          }
           setTrackedClaim({
             claimNumber: data.claim.claimNumber,
             vehiclePlate: data.claim.vehiclePlate,
@@ -171,7 +220,11 @@ function TrackClaimsContent() {
             documentsRequested: data.claim.documentsRequested || false,
             requestedDocuments: data.claim.requestedDocuments || [],
             currentStep: data.claim.currentStep || 1,
-            messages: data.claim.messages || []
+            messages: data.claim.messages || [],
+            accidentPhotos: data.claim.accidentPhotos || {},
+            drivingLicense: data.claim.drivingLicense || {},
+            additionalDocuments: data.claim.additionalDocuments || [],
+            userNic: data.claim.userNic || ""
           });
           setIsLoading(false);
           return;
@@ -185,7 +238,18 @@ function TrackClaimsContent() {
     const found = claimsList.find(
       c => c.claimNumber.toUpperCase() === cleanId
     );
-    setTrackedClaim(found || null);
+    if (found) {
+      if (userNic && found.userNic !== userNic) {
+        setTrackedClaim(null);
+        setErrorMsg("This claim reference does not belong to your account.");
+      } else {
+        setTrackedClaim(found);
+        setErrorMsg("");
+      }
+    } else {
+      setTrackedClaim(null);
+      setErrorMsg(`No claim found with ID "${cleanId}". Please verify your reference number.`);
+    }
     setIsLoading(false);
   };
   const formatNumberPlate = (plate: string): string => {
@@ -271,7 +335,7 @@ function TrackClaimsContent() {
       <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
         <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/myclaim.png')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           <div className="absolute inset-0 bg-slate-900/35" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
         </div>
 
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
@@ -279,7 +343,7 @@ function TrackClaimsContent() {
             Track Claims
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            Monitor your claim's progress in real-time
+            Monitor your claim&apos;s progress in real-time
           </p>
         </header>
       </div>
@@ -366,8 +430,146 @@ function TrackClaimsContent() {
                 <div className="px-2 mb-6">
                   <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1.5">Description</p>
                   <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    "{trackedClaim.description}"
+                    &quot;{trackedClaim.description}&quot;
                   </p>
+                </div>
+              )}
+
+              {/* Uploaded Photos & Documents Section */}
+              {(((trackedClaim.accidentPhotos?.front && trackedClaim.accidentPhotos.front.length > 0) ||
+                (trackedClaim.accidentPhotos?.rear && trackedClaim.accidentPhotos.rear.length > 0) ||
+                (trackedClaim.accidentPhotos?.side && trackedClaim.accidentPhotos.side.length > 0)) ||
+                ((trackedClaim.drivingLicense?.front && trackedClaim.drivingLicense.front.length > 0) ||
+                  (trackedClaim.drivingLicense?.rear && trackedClaim.drivingLicense.rear.length > 0)) ||
+                (trackedClaim.additionalDocuments && trackedClaim.additionalDocuments.length > 0)) && (
+                <div className="px-2 mb-6 border-t border-slate-100 pt-6">
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3 select-none">Uploaded Photos & Documents</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Accident Photos */}
+                    {((trackedClaim.accidentPhotos?.front && trackedClaim.accidentPhotos.front.length > 0) ||
+                      (trackedClaim.accidentPhotos?.rear && trackedClaim.accidentPhotos.rear.length > 0) ||
+                      (trackedClaim.accidentPhotos?.side && trackedClaim.accidentPhotos.side.length > 0)) && (
+                      <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-2.5">
+                        <span className="text-[13px] font-extrabold text-[#0f2d3a] border-b border-slate-200/80 pb-1.5 select-none">Accident Photos</span>
+                        <div className="flex flex-wrap gap-2">
+                          {/* Front */}
+                          {trackedClaim.accidentPhotos?.front?.map((url, idx) => (
+                            <a
+                              key={`front-${idx}`}
+                              href={url.startsWith("http") || url.startsWith("data:") ? url : `${API_URL.replace("/api", "")}/uploads/${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
+                            >
+                              <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                              </svg>
+                              <span>Front {idx + 1}</span>
+                            </a>
+                          ))}
+                          {/* Rear */}
+                          {trackedClaim.accidentPhotos?.rear?.map((url, idx) => (
+                            <a
+                              key={`rear-${idx}`}
+                              href={url.startsWith("http") || url.startsWith("data:") ? url : `${API_URL.replace("/api", "")}/uploads/${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
+                            >
+                              <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                              </svg>
+                              <span>Rear {idx + 1}</span>
+                            </a>
+                          ))}
+                          {/* Side */}
+                          {trackedClaim.accidentPhotos?.side?.map((url, idx) => (
+                            <a
+                              key={`side-${idx}`}
+                              href={url.startsWith("http") || url.startsWith("data:") ? url : `${API_URL.replace("/api", "")}/uploads/${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
+                            >
+                              <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                              </svg>
+                              <span>Side {idx + 1}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Driving License */}
+                    {((trackedClaim.drivingLicense?.front && trackedClaim.drivingLicense.front.length > 0) ||
+                      (trackedClaim.drivingLicense?.rear && trackedClaim.drivingLicense.rear.length > 0)) && (
+                      <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-2.5">
+                        <span className="text-[13px] font-extrabold text-[#0f2d3a] border-b border-slate-200/80 pb-1.5 select-none">Driving License</span>
+                        <div className="flex flex-wrap gap-2">
+                          {/* Front */}
+                          {trackedClaim.drivingLicense?.front?.map((url, idx) => (
+                            <a
+                              key={`lic-front-${idx}`}
+                              href={url.startsWith("http") || url.startsWith("data:") ? url : `${API_URL.replace("/api", "")}/uploads/${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
+                            >
+                              <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+                              </svg>
+                              <span>License Front {idx + 1}</span>
+                            </a>
+                          ))}
+                          {/* Rear */}
+                          {trackedClaim.drivingLicense?.rear?.map((url, idx) => (
+                            <a
+                              key={`lic-rear-${idx}`}
+                              href={url.startsWith("http") || url.startsWith("data:") ? url : `${API_URL.replace("/api", "")}/uploads/${url}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
+                            >
+                              <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+                              </svg>
+                              <span>License Rear {idx + 1}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Documents */}
+                    {trackedClaim.additionalDocuments && trackedClaim.additionalDocuments.length > 0 && (
+                      <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-2.5 sm:col-span-2">
+                        <span className="text-[13px] font-extrabold text-[#0f2d3a] border-b border-slate-200/80 pb-1.5 select-none">Additional Documents</span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {trackedClaim.additionalDocuments.map((doc, idx) => {
+                            const docUrl = doc.url.startsWith("http") || doc.url.startsWith("data:") ? doc.url : `${API_URL.replace("/api", "")}/uploads/${doc.url}`;
+                            return (
+                              <a
+                                key={idx}
+                                href={docUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-3 rounded-xl flex items-center gap-3 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
+                              >
+                                <svg className="w-5 h-5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                                <div className="flex-1 min-w-0">
+                                  <p className="truncate text-slate-800 m-0 font-extrabold">{doc.name}</p>
+                                  <p className="text-[10px] text-slate-400 font-semibold m-0 mt-0.5">Uploaded by {doc.uploadedBy || "Policy Holder"}</p>
+                                </div>
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -384,7 +586,7 @@ function TrackClaimsContent() {
                       : ["Police Report", "Repair Estimate"]
                     ).map((doc) => (
                       <li key={doc} className="flex items-center gap-2 text-[#aa4f4f] font-bold text-xs">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] shrink-0" />
                         <span>{doc}</span>
                       </li>
                     ))}
@@ -426,14 +628,14 @@ function TrackClaimsContent() {
           </div>
         ) : searchAttempted ? (
           <div className="text-center py-12 text-red-500 font-bold bg-red-50/20 border border-red-100 rounded-3xl max-w-md mx-auto animate-pulse">
-            No claim found with ID "{claimId}". Please verify your reference number.
+            {errorMsg || `No claim found with ID "${claimId}". Please verify your reference number.`}
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400 font-semibold max-w-md mx-auto select-none">
             <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
             </svg>
-            Enter your Claim ID in the search bar above to track your claim's status.
+            Enter your Claim ID in the search bar above to track your claim&apos;s status.
           </div>
         )}
 
