@@ -338,7 +338,7 @@ function TrackClaimsContent() {
       <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
         <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/myclaim.png')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           <div className="absolute inset-0 bg-slate-900/35" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
         </div>
 
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
@@ -502,7 +502,7 @@ function TrackClaimsContent() {
                       const reqTime = getDocRequestTime(trackedClaim, doc);
                       return (
                         <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-650 shrink-0 mt-1.5" />
                           <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
                             <span className="font-extrabold">{doc}</span>
                             {reqTime && (
@@ -522,7 +522,7 @@ function TrackClaimsContent() {
                   </ul>
                   <Link
                     href={`/Policy_Holder/Documents?uploadClaim=${trackedClaim.claimNumber}`}
-                    className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    className="inline-block bg-red-650 hover:bg-red-750 text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                   >
                     Go to Documents
                   </Link>
