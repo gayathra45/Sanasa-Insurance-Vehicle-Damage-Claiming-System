@@ -237,7 +237,7 @@ export default function OfficeStaffDashboard() {
         {/* Right Main Container */}
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Header Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
@@ -327,14 +327,14 @@ export default function OfficeStaffDashboard() {
                   {/* Unassigned Claims Card */}
                   <div className="bg-gradient-to-br from-red-50/50 to-white rounded-[20px] border border-red-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-red-100/60 rounded-xl text-red-600 flex-shrink-0">
+                      <div className="p-2 bg-red-100/60 rounded-xl text-red-600 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
                         </svg>
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Unassigned Claims</span>
                     </div>
-                    <span className="text-xl font-black text-red-600 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-black text-red-600 tracking-tight pr-1 shrink-0">
                       {stats.unassignedClaims}
                     </span>
                   </div>
@@ -342,14 +342,14 @@ export default function OfficeStaffDashboard() {
                   {/* New Registrations Card */}
                   <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 flex-shrink-0">
+                      <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
                         </svg>
                       </div>
                       <span className="text-slate-600 font-bold text-xs">New Registrations</span>
                     </div>
-                    <span className="text-xl font-black text-blue-900 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-black text-blue-900 tracking-tight pr-1 shrink-0">
                       {stats.newRegistrations}
                     </span>
                   </div>
@@ -357,14 +357,14 @@ export default function OfficeStaffDashboard() {
                   {/* Active Claims Card */}
                   <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 flex-shrink-0">
+                      <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Active Claims</span>
                     </div>
-                    <span className="text-xl font-black text-emerald-800 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-black text-emerald-800 tracking-tight pr-1 shrink-0">
                       {stats.activeClaims}
                     </span>
                   </div>
@@ -372,14 +372,14 @@ export default function OfficeStaffDashboard() {
                   {/* Pending Claims Card */}
                   <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 flex-shrink-0">
+                      <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Pending Claims</span>
                     </div>
-                    <span className="text-xl font-black text-amber-800 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-black text-amber-800 tracking-tight pr-1 shrink-0">
                       {stats.pendingClaims}
                     </span>
                   </div>
@@ -391,7 +391,7 @@ export default function OfficeStaffDashboard() {
                   {/* Left Column: New Claims (8 cols) */}
                   <div className="lg:col-span-8 flex flex-col select-none">
                     <div className="flex items-center gap-2.5 mb-6 select-none">
-                      <svg className="w-5 h-5 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <svg className="w-5 h-5 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                       </svg>
                       <h2 className="text-lg font-black text-slate-800 tracking-wide">
@@ -418,7 +418,7 @@ export default function OfficeStaffDashboard() {
                               {/* Left / Info Group */}
                               <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 flex-1 min-w-0">
                                 {/* Title / Urgency */}
-                                <div className="flex-shrink-0">
+                                <div className="shrink-0">
                                   <span className={`font-black text-base ${headerTextClass} block`}>
                                     {claim.urgency}
                                   </span>
@@ -445,7 +445,7 @@ export default function OfficeStaffDashboard() {
                               </div>
 
                               {/* Right / Buttons & Time */}
-                              <div className="flex items-center gap-5 flex-shrink-0">
+                              <div className="flex items-center gap-5 shrink-0">
                                 <span className="text-[11px] text-slate-400 font-bold select-none">
                                   {claim.time}
                                 </span>
@@ -466,7 +466,7 @@ export default function OfficeStaffDashboard() {
                   {/* Right Column: New Registration (4 cols) */}
                   <div className="lg:col-span-4 flex flex-col select-none">
                     <div className="flex items-center gap-2.5 mb-6 select-none">
-                      <svg className="w-5 h-5 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <svg className="w-5 h-5 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                       </svg>
                       <h2 className="text-lg font-black text-slate-800 tracking-wide">

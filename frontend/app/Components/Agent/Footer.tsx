@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row justify-between gap-8 md:gap-4">
         
         {/* Left Column - Logo */}
-        <div className="flex-shrink-0 flex justify-start items-start">
+        <div className="shrink-0 flex justify-start items-start">
           <Link href="/Agent/Home">
             <Image
               src="/footer_logo.svg"
@@ -56,7 +56,7 @@ export default function Footer() {
               viewBox="0 0 24 24"
               strokeWidth="2"
               stroke="currentColor"
-              className="w-6 h-6 rotate-[15deg] animate-pulse"
+              className="w-6 h-6 rotate-15 animate-pulse"
             >
               <path
                 strokeLinecap="round"

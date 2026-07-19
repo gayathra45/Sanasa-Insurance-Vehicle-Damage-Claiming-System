@@ -169,7 +169,7 @@ export default function RegistrationsPage() {
 
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Header Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
@@ -218,7 +218,7 @@ export default function RegistrationsPage() {
                 
                 {/* Title */}
                 <div className="flex items-center gap-2.5 mb-2 select-none">
-                  <svg className="w-5 h-5 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <svg className="w-5 h-5 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                   </svg>
                   <h2 className="text-lg font-black text-slate-800 tracking-wide">
@@ -276,26 +276,26 @@ export default function RegistrationsPage() {
                           {/* Card Body Attributes */}
                           <div className="flex flex-col text-slate-500 text-xs font-semibold gap-2 select-none">
                             <div className="flex">
-                              <span className="w-24 flex-shrink-0 text-slate-400">NIC</span>
+                              <span className="w-24 shrink-0 text-slate-400">NIC</span>
                               <span>: {reg.nic}</span>
                             </div>
                             <div className="flex">
-                              <span className="w-24 flex-shrink-0 text-slate-400">Vehicle Plate</span>
+                              <span className="w-24 shrink-0 text-slate-400">Vehicle Plate</span>
                               <span>: {reg.vehicles && reg.vehicles.length > 0 ? formatPlate(reg.vehicles[0].numberPlate) : "-"}</span>
                             </div>
                             <div className="flex">
-                              <span className="w-24 flex-shrink-0 text-slate-400">Policy No.</span>
+                              <span className="w-24 shrink-0 text-slate-400">Policy No.</span>
                               <span className="font-bold text-slate-700">: {reg.vehicles && reg.vehicles.length > 0 ? reg.vehicles[0].policyNumber : "-"}</span>
                             </div>
                             <div className="flex">
-                              <span className="w-24 flex-shrink-0 text-slate-400">Date</span>
+                              <span className="w-24 shrink-0 text-slate-400">Date</span>
                               <span>: {formatDate(reg.createdAt)}</span>
                             </div>
                           </div>
                         </div>
 
                         {/* Card Footer Actions */}
-                        <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-shrink-0">
+                        <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0">
                           <span className="text-amber-500 font-extrabold text-[11px] group-hover:underline flex items-center gap-1 select-none">
                             View Profile
                           </span>
@@ -350,7 +350,7 @@ export default function RegistrationsPage() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative animate-fade-in overflow-hidden">
             {/* Header */}
-            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 select-none">
+            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 select-none">
               <div>
                 <h2 className="text-[22px] font-black text-[#0f2d3a] tracking-tight leading-none">
                   {selectedReg.firstName} {selectedReg.lastName}
@@ -491,7 +491,7 @@ export default function RegistrationsPage() {
             </div>
 
             {/* Footer */}
-            <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
+            <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
               <button
                 onClick={() => setSelectedReg(null)}
                 className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"
@@ -537,19 +537,19 @@ export default function RegistrationsPage() {
             {/* Header/Title with clean inline icon */}
             <div className="flex items-center gap-3.5">
               {customPopup.type === "success" ? (
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               ) : customPopup.type === "confirm" ? (
-                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>

@@ -144,7 +144,7 @@ export default function AdminDashboard() {
         {/* Right Main Container */}
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Welcome Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-admin-mobile-menu"))}
@@ -228,14 +228,14 @@ export default function AdminDashboard() {
                   {/* Policy Holders Card */}
                   <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 flex-shrink-0">
+                      <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
                         </svg>
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Policy Holders</span>
                     </div>
-                    <span className="text-xl font-black text-blue-900 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-black text-blue-900 tracking-tight pr-1 shrink-0">
                       {stats.policyHolders}
                     </span>
                   </div>
@@ -243,14 +243,14 @@ export default function AdminDashboard() {
                   {/* Total Claims Card */}
                   <div className="bg-gradient-to-br from-slate-50/60 to-white rounded-[20px] border border-slate-200/80 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 rounded-xl text-slate-800 flex-shrink-0">
+                      <div className="p-2 bg-slate-100 rounded-xl text-slate-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08" />
                         </svg>
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Total Claims</span>
                     </div>
-                    <span className="text-xl font-black text-slate-800 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-black text-slate-800 tracking-tight pr-1 shrink-0">
                       {stats.totalClaims}
                     </span>
                   </div>
@@ -258,14 +258,14 @@ export default function AdminDashboard() {
                   {/* Active Claims Card */}
                   <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 flex-shrink-0">
+                      <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Active Claims</span>
                     </div>
-                    <span className="text-xl font-black text-emerald-800 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-black text-emerald-800 tracking-tight pr-1 shrink-0">
                       {stats.activeClaims}
                     </span>
                   </div>
@@ -273,14 +273,14 @@ export default function AdminDashboard() {
                   {/* Pending Claims Card */}
                   <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 flex-shrink-0">
+                      <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                         </svg>
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Pending Claims</span>
                     </div>
-                    <span className="text-xl font-black text-amber-800 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-black text-amber-800 tracking-tight pr-1 shrink-0">
                       {stats.pendingClaims}
                     </span>
                   </div>
@@ -297,7 +297,7 @@ export default function AdminDashboard() {
           <div className="w-full max-w-md bg-white border border-slate-100 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] flex flex-col my-auto overflow-hidden max-h-[95vh] transition-all duration-300">
             <div className="overflow-y-auto flex-1 flex flex-col">
               {/* Header */}
-              <div className="px-8 pt-8 pb-5 select-none relative flex-shrink-0 border-b border-slate-100/60 bg-slate-50/55">
+              <div className="px-8 pt-8 pb-5 select-none relative shrink-0 border-b border-slate-100/60 bg-slate-50/55">
                 <h2 className="font-extrabold text-xl text-slate-800 tracking-tight flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
@@ -315,7 +315,7 @@ export default function AdminDashboard() {
               <form onSubmit={handlePasswordChange} className="p-8 flex flex-col gap-5">
                 {passwordError && (
                   <div className="bg-red-50 text-red-600 text-xs font-bold p-4 rounded-2xl border border-red-100 flex items-center gap-3">
-                    <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <span>{passwordError}</span>
@@ -323,7 +323,7 @@ export default function AdminDashboard() {
                 )}
                 {passwordSuccess && (
                   <div className="bg-emerald-50 text-emerald-600 text-xs font-bold p-4 rounded-2xl border border-emerald-100 flex items-center gap-3">
-                    <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>{passwordSuccess}</span>

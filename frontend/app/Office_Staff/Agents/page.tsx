@@ -288,7 +288,7 @@ export default function AgentsPage() {
 
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Header Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
@@ -326,7 +326,7 @@ export default function AgentsPage() {
             
             {/* Page Header Title */}
             <div className="flex items-center gap-2.5 mb-2 select-none">
-              <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <svg className="w-6 h-6 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.947 11.947 0 0112 21c-2.17 0-4.207-.576-5.963-1.584v-.109A6 6 0 0112 13.5c1.47 0 2.837.525 3.9 1.398M12 12a3 3 0 100-6 3 3 0 000 6zm6.5-3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM5.058 15.05A6 6 0 001.5 19.5a9.379 9.379 0 002.625.372c.866 0 1.7-.117 2.492-.338A9.39 9.39 0 0012 18.75c-.328-.507-.566-1.077-.696-1.687A11.947 11.947 0 006 18c0-.623.095-1.223.27-1.786a4.126 4.126 0 00-6.19 2.535M7.5 9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
               </svg>
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
@@ -413,7 +413,7 @@ export default function AgentsPage() {
                       >
                         {/* Left Section: Profile Info */}
                         <div className="flex items-center gap-4.5 min-w-[240px]">
-                          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 text-[#0f2d3a] flex items-center justify-center font-black text-base select-none shadow-xs flex-shrink-0">
+                          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 text-[#0f2d3a] flex items-center justify-center font-black text-base select-none shadow-xs shrink-0">
                             {initials}
                           </div>
                           <div className="min-w-0">
@@ -443,7 +443,7 @@ export default function AgentsPage() {
                         </div>
 
                         {/* Right Section: Status Badge & View Button */}
-                        <div className="flex items-center justify-between md:justify-end gap-5 flex-shrink-0 border-t border-slate-100 pt-3 md:pt-0 md:border-none">
+                        <div className="flex items-center justify-between md:justify-end gap-5 shrink-0 border-t border-slate-100 pt-3 md:pt-0 md:border-none">
                           <div className="select-none">
                             <span className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full border tracking-wide ${
                               isOnline
@@ -498,16 +498,16 @@ export default function AgentsPage() {
               {/* Scrollable inputs container */}
               <div className="px-8 py-6 overflow-y-auto flex flex-col gap-5 flex-1">
                 {formError && (
-                  <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 flex-shrink-0">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 shrink-0">
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <span>{formError}</span>
                   </div>
                 )}
                 {formSuccess && (
-                  <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 flex-shrink-0">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 shrink-0">
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>{formSuccess}</span>
@@ -749,8 +749,8 @@ export default function AgentsPage() {
                 </div>
 
                 {/* Read-only Branch Info Accent Card */}
-                <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none flex-shrink-0">
-                  <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center shrink-0">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
@@ -763,7 +763,7 @@ export default function AgentsPage() {
               </div>
 
               {/* Action Buttons (Fixed Footer) */}
-              <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-100 flex-shrink-0 bg-slate-50/50">
+              <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-100 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -797,7 +797,7 @@ export default function AgentsPage() {
           <div className="bg-white rounded-2xl w-full max-w-4xl shadow-xl border border-slate-200 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col">
             
             {/* Modal Header */}
-            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 bg-white select-none">
+            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none">
               <div>
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-[22px] font-black text-[#0f2d3a] tracking-tight leading-none">
@@ -914,7 +914,7 @@ export default function AgentsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex justify-between items-center px-8 py-5 border-t border-slate-200 bg-slate-50 flex-shrink-0">
+            <div className="flex justify-between items-center px-8 py-5 border-t border-slate-200 bg-slate-50 shrink-0">
               <button
                 onClick={() => {
                   setSelectedAgentDetails(null);
@@ -946,19 +946,19 @@ export default function AgentsPage() {
             {/* Header/Title with clean inline icon */}
             <div className="flex items-center gap-3.5">
               {customPopup.type === "success" ? (
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               ) : customPopup.type === "confirm" ? (
-                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>

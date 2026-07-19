@@ -318,7 +318,7 @@ export default function SignUpPage1() {
             {/* Show Validation Error Banner if present */}
             {validationError && (
               <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-center gap-3 animate-pulse">
-                <svg className="w-5 h-5 flex-shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span>{validationError}</span>
@@ -381,7 +381,7 @@ export default function SignUpPage1() {
                         Vehicle Type <span className="text-red-500 font-bold">*</span>
                       </label>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 border border-white/20 text-white flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 border border-white/20 text-white shrink-0">
                           {getVehicleIconSvg(v.vehicleType, "w-6 h-6 text-white")}
                         </div>
                         <div className="relative flex-1">

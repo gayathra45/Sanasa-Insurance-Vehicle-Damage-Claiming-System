@@ -335,7 +335,7 @@ function TrackClaimsContent() {
       <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
         <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/myclaim.png')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           <div className="absolute inset-0 bg-slate-900/35" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
         </div>
 
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
@@ -461,7 +461,7 @@ function TrackClaimsContent() {
                               rel="noopener noreferrer"
                               className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
                             >
-                              <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                               </svg>
                               <span>Front {idx + 1}</span>
@@ -476,7 +476,7 @@ function TrackClaimsContent() {
                               rel="noopener noreferrer"
                               className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
                             >
-                              <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                               </svg>
                               <span>Rear {idx + 1}</span>
@@ -491,7 +491,7 @@ function TrackClaimsContent() {
                               rel="noopener noreferrer"
                               className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
                             >
-                              <svg className="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-blue-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                               </svg>
                               <span>Side {idx + 1}</span>
@@ -516,7 +516,7 @@ function TrackClaimsContent() {
                               rel="noopener noreferrer"
                               className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
                             >
-                              <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
                               </svg>
                               <span>License Front {idx + 1}</span>
@@ -531,7 +531,7 @@ function TrackClaimsContent() {
                               rel="noopener noreferrer"
                               className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-2 rounded-xl flex items-center gap-2 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
                             >
-                              <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                              <svg className="w-4 h-4 text-emerald-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
                               </svg>
                               <span>License Rear {idx + 1}</span>
@@ -556,7 +556,7 @@ function TrackClaimsContent() {
                                 rel="noopener noreferrer"
                                 className="bg-white border border-slate-200 hover:border-blue-400 transition-all p-3 rounded-xl flex items-center gap-3 cursor-pointer no-underline text-slate-700 text-xs font-bold shadow-sm"
                               >
-                                <svg className="w-5 h-5 text-indigo-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 text-indigo-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                                 </svg>
                                 <div className="flex-1 min-w-0">
@@ -586,7 +586,7 @@ function TrackClaimsContent() {
                       : ["Police Report", "Repair Estimate"]
                     ).map((doc) => (
                       <li key={doc} className="flex items-center gap-2 text-[#aa4f4f] font-bold text-xs">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] shrink-0" />
                         <span>{doc}</span>
                       </li>
                     ))}

@@ -13,7 +13,7 @@ export default function OfficeStaffFooter() {
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-8">
           
           {/* Logo */}
-          <div className="flex-shrink-0 flex items-center md:items-start flex-col">
+          <div className="shrink-0 flex items-center md:items-start flex-col">
             <div className="relative w-44 h-20 brightness-0 invert">
               <Image
                 src="/logo.png"
