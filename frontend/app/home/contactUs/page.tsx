@@ -70,9 +70,9 @@ export default function ContactUs() {
                className="object-cover object-center" 
             />
             {/* Dark gradient overlay on the left to make "Location" text pop */}
-            <div className="absolute inset-0 bg-linear-to-r from-[#1b3b55]/90 via-[#1b3b55]/40 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-[#1b3b55]/90 via-[#1b3b55]/40 to-transparent"></div>
             {/* White gradient overlay from bottom to fade out the background */}
-            <div className="absolute inset-0 bg-linear-to-t from-white via-white/50 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent"></div>
          </div>
          
          <div className="relative max-w-6xl mx-auto px-6 z-10 flex flex-col">
