@@ -123,7 +123,7 @@ export default function AgentContactPage() {
         <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           {/* Dark slate overlay */}
           <div className="absolute inset-0 bg-slate-900/35" />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
         </div>
 
         {/* Header Text Content */}
@@ -292,7 +292,7 @@ export default function AgentContactPage() {
           </div>
 
           {/* Head office card */}
-          <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-[28px] p-6 shadow-md text-white">
+          <div className="bg-linear-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-[28px] p-6 shadow-md text-white">
             <h3 className="font-black text-white text-base border-b border-slate-800 pb-3">
               Headquarters Location
             </h3>

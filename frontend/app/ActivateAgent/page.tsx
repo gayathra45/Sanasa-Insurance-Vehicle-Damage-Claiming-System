@@ -141,7 +141,7 @@ export default function ActivateAgent() {
       {/* Background with blend settings */}
       <div className="fixed inset-0 z-[-10] bg-cover bg-center bg-no-repeat bg-fixed pointer-events-none" style={{ backgroundImage: "url('/login_bg.jpg')" }} />
       <div className="fixed inset-0 z-[-9] bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
-      <div className="fixed inset-0 z-[-8] bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
+      <div className="fixed inset-0 z-[-8] bg-linear-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
       <div className="fixed inset-0 z-[-7] overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-300/15 blur-[120px]" />
@@ -299,7 +299,7 @@ export default function ActivateAgent() {
                   
                   <div className="relative mb-6">
                     <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-md scale-110 animate-pulse" />
-                    <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center border-2 border-white/20 shadow-[0_0_30px_rgba(249,115,22,0.4)] relative z-10">
+                    <div className="w-20 h-20 bg-linear-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center border-2 border-white/20 shadow-[0_0_30px_rgba(249,115,22,0.4)] relative z-10">
                       <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
@@ -316,7 +316,7 @@ export default function ActivateAgent() {
                   <div className="mt-8 flex flex-col items-center w-full px-4">
                     <div className="w-48 bg-white/10 h-2 rounded-full overflow-hidden relative shadow-inner">
                       <div
-                        className="bg-gradient-to-r from-orange-500 to-amber-400 h-full rounded-full transition-all duration-1000 ease-linear"
+                        className="bg-linear-to-r from-orange-500 to-amber-400 h-full rounded-full transition-all duration-1000 ease-linear"
                         style={{ width: `${(redirectCountdown / 3) * 100}%` }}
                       />
                     </div>

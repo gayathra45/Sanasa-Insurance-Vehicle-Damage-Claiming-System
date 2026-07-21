@@ -908,7 +908,7 @@ export default function AgentDashboard() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-multiply transition-all duration-750 ease-out"
           style={{ backgroundImage: "url('/newclaim1.webp')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900/90 to-cyan-950/40 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-tr from-slate-950 via-slate-900/90 to-cyan-950/40 pointer-events-none" />
 
         {/* Ambient Floating Glow Circles */}
         <div className="absolute top-[-20%] right-[-10%] w-[45%] h-[60%] rounded-full bg-cyan-400/10 blur-[130px] pointer-events-none animate-pulse duration-10000" />
@@ -918,7 +918,7 @@ export default function AgentDashboard() {
           <div className="space-y-3">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-sm select-none">
-                Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-200">{agentName}</span>!
+                Welcome back, <span className="text-transparent bg-clip-text bg-linear-to-r from-white via-slate-100 to-cyan-200">{agentName}</span>!
               </h1>
               {/* Availability Status Selector */}
               <div className="flex items-center gap-2 bg-slate-950/45 border border-white/10 rounded-full p-1 self-start md:self-center select-none shadow-md">
@@ -956,7 +956,7 @@ export default function AgentDashboard() {
           {/* Floating Metric Badges - Placed below the text in a row */}
           <div className="flex flex-wrap gap-6 mt-2">
             {/* Urgent Card */}
-            <div className="bg-gradient-to-br from-[#7f1d1d]/85 to-[#991b1b]/80 border border-red-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(239,68,68,0.15)] hover:bg-[#7f1d1d]/90 hover:scale-[1.02] hover:border-red-400 transition-all duration-300">
+            <div className="bg-linear-to-br from-[#7f1d1d]/85 to-[#991b1b]/80 border border-red-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(239,68,68,0.15)] hover:bg-[#7f1d1d]/90 hover:scale-[1.02] hover:border-red-400 transition-all duration-300">
               {/* Siren/Alarm Light Icon on the left */}
               <svg className="w-10 h-10 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2a1 1 0 011 1v1.085A8.005 8.005 0 0119.5 12v1H20a1 1 0 110 2h-1.05a5.002 5.002 0 01-13.9 0H4a1 1 0 110-2h.5v-1A8.005 8.005 0 0111 4.085V3a1 1 0 011-1zm0 17a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
@@ -971,7 +971,7 @@ export default function AgentDashboard() {
             </div>
 
             {/* Assigned Card */}
-            <div className="bg-gradient-to-br from-[#0e7490]/85 to-[#0891b2]/80 border border-cyan-400/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(6,182,212,0.15)] hover:bg-[#0e7490]/90 hover:scale-[1.02] hover:border-cyan-300 transition-all duration-300">
+            <div className="bg-linear-to-br from-[#0e7490]/85 to-[#0891b2]/80 border border-cyan-400/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(6,182,212,0.15)] hover:bg-[#0e7490]/90 hover:scale-[1.02] hover:border-cyan-300 transition-all duration-300">
               {/* ID Badge Icon on the left */}
               <svg className="w-9 h-9 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path fillRule="evenodd" d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm3 3a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm0 6.5C6 13.12 8.68 13 10 13c1.32 0 4 .12 4 1.5V16H6v-1.5zM14 7h4v1.5h-4V7zm0 3h4v1.5h-4V10zm-4 7h8v1.5h-8V17z" clipRule="evenodd" />
@@ -986,7 +986,7 @@ export default function AgentDashboard() {
             </div>
 
             {/* Completed Card */}
-            <div className="bg-gradient-to-br from-[#065f46]/85 to-[#047857]/80 border border-emerald-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(16,185,129,0.15)] hover:bg-[#065f46]/90 hover:scale-[1.02] hover:border-emerald-400 transition-all duration-300">
+            <div className="bg-linear-to-br from-[#065f46]/85 to-[#047857]/80 border border-emerald-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(16,185,129,0.15)] hover:bg-[#065f46]/90 hover:scale-[1.02] hover:border-emerald-400 transition-all duration-300">
               {/* Checkmark Shield Icon on the left */}
               <svg className="w-9 h-9 text-white flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
@@ -1012,7 +1012,7 @@ export default function AgentDashboard() {
           
           {/* Pending Document Requests Section */}
           {claimsWithPendingAgentRequests.length > 0 && (
-            <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-red-200/40 rounded-3xl p-6 shadow-lg shadow-red-500/[0.005] relative overflow-hidden">
+            <div className="flex flex-col gap-4 bg-linear-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-red-200/40 rounded-3xl p-6 shadow-lg shadow-red-500/[0.005] relative overflow-hidden">
               <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/60 pb-3 mb-2">
                 <h2 className="text-lg font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
                   <svg className="w-5 h-5 text-red-500 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1020,7 +1020,7 @@ export default function AgentDashboard() {
                   </svg>
                   Action Required: Pending Agent Document Requests
                   {/* Total Pending Count Badge */}
-                  <span className="bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 select-none shadow-[0_2px_8px_rgba(239,68,68,0.25)] animate-pulse">
+                  <span className="bg-linear-to-r from-red-500 to-rose-600 text-white text-xs font-black px-2.5 py-0.5 rounded-full flex items-center gap-1 select-none shadow-[0_2px_8px_rgba(239,68,68,0.25)] animate-pulse">
                     {claimsWithPendingAgentRequests.length}
                   </span>
                 </h2>
@@ -1047,7 +1047,7 @@ export default function AgentDashboard() {
                       className="relative overflow-hidden bg-white/70 backdrop-blur-sm border border-slate-100/80 rounded-2xl p-4 pl-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm hover:shadow-[0_8px_24px_rgba(239,68,68,0.03)] hover:border-red-200/50 hover:bg-white hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-300 group"
                     >
                       {/* Vertical Red Accent Strip */}
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-red-500 to-rose-600 group-hover:w-1.5 transition-all duration-300" />
+                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-linear-to-b from-red-500 to-rose-600 group-hover:w-1.5 transition-all duration-300" />
                       
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center mr-2">
                         {/* Col 1: Claim ID & Plate */}
@@ -1098,7 +1098,7 @@ export default function AgentDashboard() {
           )}
 
           {/* New Claims Section */}
-          <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-slate-200/40 rounded-3xl p-6 shadow-lg shadow-slate-500/[0.005] relative overflow-hidden">
+          <div className="flex flex-col gap-4 bg-linear-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-slate-200/40 rounded-3xl p-6 shadow-lg shadow-slate-500/[0.005] relative overflow-hidden">
             <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/60 pb-3 mb-2">
               <h2 className="text-lg font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
                 <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1106,7 +1106,7 @@ export default function AgentDashboard() {
                 </svg>
                 New Claims
                 {/* Total Count Badge */}
-                <span className="bg-gradient-to-r from-slate-700 to-slate-800 text-white text-xs font-black px-2.5 py-0.5 rounded-full flex items-center justify-center select-none shadow-[0_2px_8px_rgba(15,23,42,0.12)] border border-slate-700/30">
+                <span className="bg-linear-to-r from-slate-700 to-slate-800 text-white text-xs font-black px-2.5 py-0.5 rounded-full flex items-center justify-center select-none shadow-[0_2px_8px_rgba(15,23,42,0.12)] border border-slate-700/30">
                   {activeClaims.length}
                 </span>
               </h2>
@@ -1132,7 +1132,7 @@ export default function AgentDashboard() {
                       className="relative overflow-hidden bg-white/70 backdrop-blur-sm border border-slate-100/80 rounded-2xl p-4 pl-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm hover:shadow-[0_8px_24px_rgba(0,0,0,0.03)] hover:border-slate-200 hover:bg-white hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-300 group"
                     >
                       {/* Decorative vertical color bar that glows/width-increases on card hover */}
-                      <div className={`absolute left-0 top-0 bottom-0 w-1 group-hover:w-1.5 transition-all duration-300 ${isUrgent ? 'bg-gradient-to-b from-red-500 to-rose-600' : 'bg-gradient-to-b from-cyan-400 to-cyan-500'}`} />
+                      <div className={`absolute left-0 top-0 bottom-0 w-1 group-hover:w-1.5 transition-all duration-300 ${isUrgent ? 'bg-linear-to-b from-red-500 to-rose-600' : 'bg-linear-to-b from-cyan-400 to-cyan-500'}`} />
                       
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center mr-2">
                         {/* Col 1: Claim ID & Severity */}
@@ -1255,7 +1255,7 @@ export default function AgentDashboard() {
           </div>
 
           {/* Contact Support Card Box */}
-          <div className="bg-gradient-to-br from-cyan-50/90 via-sky-50/40 to-blue-50/20 border border-cyan-150/60 rounded-3xl p-6 shadow-md hover:shadow-lg hover:scale-[1.01] transition-all duration-300 relative overflow-hidden flex flex-col gap-4">
+          <div className="bg-linear-to-br from-cyan-50/90 via-sky-50/40 to-blue-50/20 border border-cyan-150/60 rounded-3xl p-6 shadow-md hover:shadow-lg hover:scale-[1.01] transition-all duration-300 relative overflow-hidden flex flex-col gap-4">
             
             {/* Pulsing online status indicator */}
             <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/50 rounded-full px-2.5 py-0.5 select-none">
