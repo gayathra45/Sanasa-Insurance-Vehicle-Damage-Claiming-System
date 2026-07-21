@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
+import { getApiUrl } from "@/app/config";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -49,7 +50,8 @@ export default function AdminDashboard() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/admin/dashboard-stats");
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/dashboard-stats`);
       if (!res.ok) throw new Error("Failed to fetch dashboard stats.");
       const data = await res.json();
       if (data.stats) {
@@ -98,7 +100,8 @@ export default function AdminDashboard() {
 
     setIsUpdatingPassword(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/change-password", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/admins/change-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -226,7 +229,7 @@ export default function AdminDashboard() {
                 {/* 4 Cards Grid - Mobile view */}
                 <div className="grid lg:hidden grid-cols-1 gap-4 mb-8">
                   {/* Policy Holders Card */}
-                  <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -241,7 +244,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Total Claims Card */}
-                  <div className="bg-gradient-to-br from-slate-50/60 to-white rounded-[20px] border border-slate-200/80 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-slate-50/60 to-white rounded-[20px] border border-slate-200/80 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-slate-100 rounded-xl text-slate-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -256,7 +259,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Active Claims Card */}
-                  <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -271,7 +274,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Pending Claims Card */}
-                  <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -293,7 +296,7 @@ export default function AdminDashboard() {
 
       {/* Forced Password Update Modal */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-9999 flex items-center justify-center p-4 overflow-y-auto">
           <div className="w-full max-w-md bg-white border border-slate-100 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] flex flex-col my-auto overflow-hidden max-h-[95vh] transition-all duration-300">
             <div className="overflow-y-auto flex-1 flex flex-col">
               {/* Header */}

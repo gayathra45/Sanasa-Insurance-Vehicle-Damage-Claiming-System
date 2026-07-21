@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Agent/Navbar";
 import Footer from "@/app/Components/Agent/Footer";
+import { getApiUrl } from "@/app/config";
 
 // Interface representing a MongoDB Claim document
 interface ClaimMessage {
@@ -92,7 +93,8 @@ export default function AgentDashboard() {
 
     setIsUpdatingPassword(true);
     try {
-      const res = await fetch("http://localhost:5000/api/agent/change-password", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/agent/change-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -176,7 +178,8 @@ export default function AgentDashboard() {
   const fetchClaims = async (email: string) => {
     try {
       setLoading(true);
-      const res = await fetch(`http://localhost:5000/api/agent/claims?email=${email}`);
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/agent/claims?email=${email}`);
       if (!res.ok) throw new Error("Failed to fetch claims");
       const data = await res.json();
       setClaims(data);
@@ -220,7 +223,8 @@ export default function AgentDashboard() {
         return;
       }
 
-      const res = await fetch(`http://localhost:5000/api/agent/claims/${claimId}/status`, {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/agent/claims/${claimId}/status`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "Approved", amount: numAmount })
@@ -286,7 +290,7 @@ export default function AgentDashboard() {
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-multiply transition-all duration-750 ease-out"
           style={{ backgroundImage: "url('/newclaim1.webp')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900/90 to-cyan-950/40 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-tr from-slate-950 via-slate-900/90 to-cyan-950/40 pointer-events-none" />
 
         {/* Ambient Floating Glow Circles */}
         <div className="absolute top-[-20%] right-[-10%] w-[45%] h-[60%] rounded-full bg-cyan-400/10 blur-[130px] pointer-events-none animate-pulse duration-10000" />
@@ -295,7 +299,7 @@ export default function AgentDashboard() {
         <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col gap-8">
           <div className="space-y-3">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-sm select-none">
-              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-200">{agentName}</span>!
+              Welcome back, <span className="text-transparent bg-clip-text bg-linear-to-r from-white via-slate-100 to-cyan-200">{agentName}</span>!
             </h1>
             <p className="text-lg md:text-xl text-slate-300 max-w-3xl leading-relaxed font-medium">
               You have <span className="text-[#ffa500] font-extrabold">0 assigned claims</span> today including{" "}
@@ -306,7 +310,7 @@ export default function AgentDashboard() {
           {/* Floating Metric Badges - Placed below the text in a row */}
           <div className="flex flex-wrap gap-6 mt-2">
             {/* Urgent Card */}
-            <div className="bg-gradient-to-br from-[#7f1d1d]/85 to-[#991b1b]/80 border border-red-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(239,68,68,0.15)] hover:bg-[#7f1d1d]/90 hover:scale-[1.02] hover:border-red-400 transition-all duration-300">
+            <div className="bg-linear-to-br from-[#7f1d1d]/85 to-[#991b1b]/80 border border-red-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(239,68,68,0.15)] hover:bg-[#7f1d1d]/90 hover:scale-[1.02] hover:border-red-400 transition-all duration-300">
               {/* Siren/Alarm Light Icon on the left */}
               <svg className="w-10 h-10 text-white shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2a1 1 0 011 1v1.085A8.005 8.005 0 0119.5 12v1H20a1 1 0 110 2h-1.05a5.002 5.002 0 01-13.9 0H4a1 1 0 110-2h.5v-1A8.005 8.005 0 0111 4.085V3a1 1 0 011-1zm0 17a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
@@ -321,7 +325,7 @@ export default function AgentDashboard() {
             </div>
 
             {/* Assigned Card */}
-            <div className="bg-gradient-to-br from-[#0e7490]/85 to-[#0891b2]/80 border border-cyan-400/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(6,182,212,0.15)] hover:bg-[#0e7490]/90 hover:scale-[1.02] hover:border-cyan-300 transition-all duration-300">
+            <div className="bg-linear-to-br from-[#0e7490]/85 to-[#0891b2]/80 border border-cyan-400/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(6,182,212,0.15)] hover:bg-[#0e7490]/90 hover:scale-[1.02] hover:border-cyan-300 transition-all duration-300">
               {/* ID Badge Icon on the left */}
               <svg className="w-9 h-9 text-white shrink-0" fill="currentColor" viewBox="0 0 24 24">
                 <path fillRule="evenodd" d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm3 3a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm0 6.5C6 13.12 8.68 13 10 13c1.32 0 4 .12 4 1.5V16H6v-1.5zM14 7h4v1.5h-4V7zm0 3h4v1.5h-4V10zm-4 7h8v1.5h-8V17z" clipRule="evenodd" />
@@ -385,7 +389,7 @@ export default function AgentDashboard() {
           </div>
 
           {/* Contact Support Card Box */}
-          <div className="bg-gradient-to-br from-cyan-50/90 to-blue-50/40 border border-cyan-150 rounded-3xl p-6 shadow-[0_8px_30px_rgba(6,182,212,0.03)] flex flex-col gap-4 text-center hover:scale-[1.01] transition-transform duration-300">
+          <div className="bg-linear-to-br from-cyan-50/90 to-blue-50/40 border border-cyan-150 rounded-3xl p-6 shadow-[0_8px_30px_rgba(6,182,212,0.03)] flex flex-col gap-4 text-center hover:scale-[1.01] transition-transform duration-300">
             <h3 className="text-cyan-800 font-extrabold text-xl tracking-tight flex items-center justify-center gap-2">
               <svg className="w-5 h-5 text-cyan-700" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -415,10 +419,10 @@ export default function AgentDashboard() {
 
       {/* MongoDB Data Inspector / Claim Details Modal */}
       {selectedClaim && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-all duration-300 animate-in fade-in">
+        <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-all duration-300 animate-in fade-in">
           <div className="bg-white rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] border border-slate-100 animate-in zoom-in-95 duration-200">
             {/* Header */}
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 flex justify-between items-center border-b border-slate-800">
+            <div className="bg-linear-to-r from-slate-900 to-slate-800 text-white p-6 flex justify-between items-center border-b border-slate-800">
               <div>
                 <h3 className="text-xl font-bold tracking-tight">Claim Details - {selectedClaim.claimNumber}</h3>
               </div>
@@ -597,7 +601,7 @@ export default function AgentDashboard() {
 
                   {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}
@@ -667,7 +671,7 @@ export default function AgentDashboard() {
       )}
 
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-9999 flex items-center justify-center p-4 overflow-y-auto">
           <div className="w-full max-w-md bg-white border border-slate-100 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] flex flex-col my-auto overflow-hidden max-h-[95vh] transition-all duration-300">
             <div className="overflow-y-auto flex-1 flex flex-col">
               {/* Header */}

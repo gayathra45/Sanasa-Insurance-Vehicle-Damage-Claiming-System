@@ -25,15 +25,15 @@ export default function Home() {
   
   const motorSection = "w-full flex flex-col";
   const motorImageContainer = "relative w-full h-[300px] md:h-[400px] flex";
-  const motorGradient = "absolute inset-0 z-[2] bg-gradient-to-b from-white/90 via-transparent to-black/80 flex justify-between items-end p-8 md:px-24 md:py-12";
+  const motorGradient = "absolute inset-0 z-2 bg-linear-to-b from-white/90 via-transparent to-black/80 flex justify-between items-end p-8 md:px-24 md:py-12";
   const motorTitle = "text-white text-[2.5rem] md:text-[4rem] font-bold mb-8";
   const motorContent = "flex flex-col md:flex-row p-8 md:p-16 bg-white items-center gap-8 md:justify-between";
   const motorText = "flex-1 text-lg leading-relaxed text-gray-800 font-medium text-left";
   const motorImage = "flex-[1.5] flex justify-center items-center";
   
   const appSection = "relative w-full min-h-[500px] md:min-h-[550px] flex items-center justify-center mt-12 overflow-hidden";
-  const appBg = "absolute inset-0 w-full h-full z-[1]";
-  const appContent = "relative z-[2] flex flex-col md:flex-row items-center justify-center md:justify-between w-full max-w-[1200px] p-8 md:px-16 md:py-12 gap-8 md:gap-16";
+  const appBg = "absolute inset-0 w-full h-full z-1";
+  const appContent = "relative z-2 flex flex-col md:flex-row items-center justify-center md:justify-between w-full max-w-[1200px] p-8 md:px-16 md:py-12 gap-8 md:gap-16";
   const appImageContainer = "flex-none md:flex-1 flex justify-center items-center";
   const appCard = "flex-1 bg-white/98 p-8 md:p-10 rounded-3xl text-slate-900 text-center md:text-left shadow-2xl";
   const appSubtitle = "text-xs font-bold tracking-[0.15em] uppercase text-slate-500 mb-3";

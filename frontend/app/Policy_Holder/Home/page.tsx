@@ -5,6 +5,8 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 
+import { getApiUrl } from "@/app/config";
+
 function formatNumberPlate(plate: string): string {
   if (!plate) return "";
   const cleaned = plate.trim();
@@ -163,7 +165,8 @@ export default function PolicyHolderHome() {
           if (user.nic) {
             const fetchClaims = async () => {
               try {
-                const res = await fetch(`http://localhost:5000/api/policy-holder/user-claims?nic=${encodeURIComponent(user.nic)}`, {
+                const baseUrl = getApiUrl();
+                const res = await fetch(`${baseUrl}/policy-holder/user-claims?nic=${encodeURIComponent(user.nic)}`, {
                   cache: "no-store"
                 });
                 let dbClaims: any[] = [];
@@ -227,7 +230,7 @@ export default function PolicyHolderHome() {
       {/* Immersive curved header with background image and horizontal gradient overlay */}
       <header className="relative w-full min-h-[460px] md:h-[420px] rounded-b-[40px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
         {/* Horizontal gradient overlay to darken left text area but keep the right image fold bright and clear */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
 
         {/* Content Container */}
         <div className="relative z-10 max-w-7xl mx-auto h-full px-6 md:px-16 pt-10 pb-12 flex flex-col justify-between">
@@ -299,7 +302,7 @@ export default function PolicyHolderHome() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 relative z-20">
         
         {/* Three Stat Cards - Overlapping header area & clickable buttons */}
-        <section className="-mt-[60px] md:-mt-[50px] grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <section className="mt-[-60px] md:mt-[-50px] grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           
           {/* Total Claims */}
           <Link

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
+import { getApiUrl } from "@/app/config";
 
 interface Vehicle {
   numberPlate: string;
@@ -82,7 +83,8 @@ export default function RegistrationsPage() {
 
     async function loadRegistrations() {
       try {
-        const res = await fetch(`http://localhost:5000/api/office-staff/registrations?branch=${currentBranch}`);
+        const baseUrl = getApiUrl();
+        const res = await fetch(`${baseUrl}/office-staff/registrations?branch=${currentBranch}`);
         if (!res.ok) {
           throw new Error("Failed to fetch registrations.");
         }
@@ -103,7 +105,8 @@ export default function RegistrationsPage() {
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/office-staff/registrations/${id}/status`, {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/office-staff/registrations/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
@@ -464,7 +467,8 @@ export default function RegistrationsPage() {
                     const docUrl = (selectedReg.documents as any)?.[doc.key];
                     let srcUrl = docUrl || "";
                     if (srcUrl && !srcUrl.startsWith("http") && !srcUrl.startsWith("data:")) {
-                      srcUrl = `http://localhost:5000/uploads/${srcUrl}`;
+                      const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+                      srcUrl = `http://${host}:5000/uploads/${srcUrl}`;
                     }
                     return (
                       <div key={doc.key} className="border border-slate-200 rounded-xl p-4 flex flex-col items-center">
@@ -506,7 +510,7 @@ export default function RegistrationsPage() {
       {/* Document Preview Lightbox Modal */}
       {previewImage && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300 select-none cursor-zoom-out animate-fade-in"
+          className="fixed inset-0 z-100 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300 select-none cursor-zoom-out animate-fade-in"
           onClick={() => setPreviewImage(null)}
         >
           <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center bg-[#0a0a0a]/30" onClick={(e) => e.stopPropagation()}>
@@ -531,7 +535,7 @@ export default function RegistrationsPage() {
 
                   {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}

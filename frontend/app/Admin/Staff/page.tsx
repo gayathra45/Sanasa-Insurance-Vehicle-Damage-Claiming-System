@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
+import { getApiUrl } from "@/app/config";
 
 export default function AdminStaffPage() {
   // Modal / Form states
@@ -31,7 +32,8 @@ export default function AdminStaffPage() {
   // Fetch pending requests count on load
   const fetchCount = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff/password-requests");
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff/password-requests`);
       const data = await res.json();
       if (res.ok && data.requests) {
         setPendingRequestsCount(data.requests.length);
@@ -49,7 +51,8 @@ export default function AdminStaffPage() {
   const fetchPasswordRequests = async () => {
     setLoadingRequests(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff/password-requests");
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff/password-requests`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch password requests.");
       setPasswordRequests(data.requests || []);
@@ -64,7 +67,8 @@ export default function AdminStaffPage() {
   const handleApproveRequest = async (staffId: string) => {
     setActioningRequestId(staffId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff/password-requests/approve", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff/password-requests/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId })
@@ -84,7 +88,8 @@ export default function AdminStaffPage() {
   const handleRejectRequest = async (staffId: string) => {
     setActioningRequestId(staffId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff/password-requests/reject", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff/password-requests/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId })
@@ -120,7 +125,8 @@ export default function AdminStaffPage() {
 
     setSubmittingStaff(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)

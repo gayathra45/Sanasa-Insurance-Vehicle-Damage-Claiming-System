@@ -261,10 +261,10 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen w-full flex flex-col relative">
       {/* ── Background ── */}
-      <div className="fixed inset-0 z-[-10] bg-cover bg-center bg-no-repeat bg-fixed pointer-events-none" style={{ backgroundImage: "url('/login_bg.jpg')" }} />
-      <div className="fixed inset-0 z-[-9] bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
-      <div className="fixed inset-0 z-[-8] bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
-      <div className="fixed inset-0 z-[-7] overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat bg-fixed pointer-events-none" style={{ backgroundImage: "url('/login_bg.jpg')" }} />
+      <div className="fixed inset-0 -z-9 bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
+      <div className="fixed inset-0 -z-8 bg-linear-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
+      <div className="fixed inset-0 -z-7 overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-300/15 blur-[120px]" />
       </div>

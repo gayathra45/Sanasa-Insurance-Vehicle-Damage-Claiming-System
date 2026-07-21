@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import Footer from "@/app/Components/Login/Footer";
-import { API_URL } from "@/app/config";
+import { getApiUrl } from "@/app/config";
 
 /**
  * Login Component
@@ -20,6 +20,7 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [infoMessage, setInfoMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // --- Custom Dialog Popup State ---
   const [customPopup, setCustomPopup] = useState<{
@@ -47,8 +48,11 @@ export default function Login() {
   // Sends the user credentials to the authentication service and checks their authorized system role.
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
+    setIsLoading(true);
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const baseUrl = getApiUrl();
+      const response = await fetch(`${baseUrl}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ loginId, password })
@@ -56,6 +60,7 @@ export default function Login() {
       const data = await response.json();
       if (!response.ok) {
         setCustomPopup({ show: true, title: "Login Failed", message: data.error || "Login failed." });
+        setIsLoading(false);
         return;
       }
 
@@ -73,12 +78,15 @@ export default function Login() {
         router.push("/Admin/Dashboard");
       } else {
         setCustomPopup({ show: true, title: "System Error", message: "Unknown user role returned from server." });
+        setIsLoading(false);
       }
     } catch (err) {
       console.error("Login request failed", err);
       setCustomPopup({ show: true, title: "Connection Error", message: "Unable to connect to the server. Please check your network connection." });
+      setIsLoading(false);
     }
   };
+
 
   return (
     <div className="min-h-screen w-full flex flex-col">
@@ -91,7 +99,7 @@ export default function Login() {
       >
       {/* Visual Teal/Blue Overlay Layers for Modern Depth */}
       <div className="absolute inset-0 bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
+      <div className="absolute inset-0 bg-linear-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
 
       {/* Floating ambient light effects to wow the user */}
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px] pointer-events-none" />
@@ -236,10 +244,22 @@ export default function Login() {
             {/* Confirm Button */}
             <button
               type="submit"
-              className="mt-4 w-full max-w-[220px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3.5 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-lg cursor-pointer select-none outline-none border-none"
+              disabled={isLoading}
+              className="mt-4 w-full max-w-[220px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3.5 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-lg cursor-pointer select-none outline-none border-none disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              Confirm
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Signing in...</span>
+                </>
+              ) : (
+                "Confirm"
+              )}
             </button>
+
           </form>
 
           {/* Footer Links */}
@@ -264,7 +284,7 @@ export default function Login() {
       </div>
             {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
+import { getApiUrl } from "@/app/config";
 
 export default function AdminAdminsPage() {
   // Current logged in admin state
@@ -59,7 +60,8 @@ export default function AdminAdminsPage() {
   const fetchActiveAdmins = async () => {
     setLoadingAdmins(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/all");
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/admins/all`);
       const data = await res.json();
       if (res.ok) {
         setActiveAdmins(data.admins || []);
@@ -73,8 +75,9 @@ export default function AdminAdminsPage() {
 
   const fetchPendingCounts = async (admin: any) => {
     try {
+      const baseUrl = getApiUrl();
       // 1. Fetch pending registrations (excluding self)
-      const resPending = await fetch(`http://localhost:5000/api/admin/admins/pending?adminId=${admin._id}`);
+      const resPending = await fetch(`${baseUrl}/admin/admins/pending?adminId=${admin._id}`);
       const dataPending = await resPending.json();
       if (resPending.ok && dataPending.requests) {
         setPendingCount(dataPending.requests.length);
@@ -82,7 +85,7 @@ export default function AdminAdminsPage() {
       }
 
       // 2. Fetch pending password requests (excluding self)
-      const resRequests = await fetch(`http://localhost:5000/api/admin/admins/password-requests?email=${encodeURIComponent(admin.email)}`);
+      const resRequests = await fetch(`${baseUrl}/admin/admins/password-requests?email=${encodeURIComponent(admin.email)}`);
       const dataRequests = await resRequests.json();
       if (resRequests.ok && dataRequests.requests) {
         setRequestsCount(dataRequests.requests.length);
@@ -107,12 +110,17 @@ export default function AdminAdminsPage() {
     if (!emailRegex.test(formData.email.trim())) {
       return setFormError("Please enter a valid email address.");
     }
+    const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
+    if (!nicRegex.test(formData.nic.trim())) {
+      return setFormError("Invalid NIC format. Must be 9 digits followed by V/X, or 12 digits.");
+    }
 
     if (!currentAdmin) return setFormError("Current administrator session is not found.");
 
     setSubmittingAdmin(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/register-admin", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/register-admin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -144,7 +152,8 @@ export default function AdminAdminsPage() {
     if (!currentAdmin) return;
     setActioningAdminId(targetAdminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/approve", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/admins/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -170,7 +179,8 @@ export default function AdminAdminsPage() {
     if (!currentAdmin) return;
     setActioningAdminId(targetAdminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/reject", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/admins/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -194,7 +204,8 @@ export default function AdminAdminsPage() {
   const handleApprovePasswordRequest = async (adminId: string) => {
     setActioningRequestId(adminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/password-requests/approve", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/admins/password-requests/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminId })
@@ -214,7 +225,8 @@ export default function AdminAdminsPage() {
   const handleRejectPasswordRequest = async (adminId: string) => {
     setActioningRequestId(adminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/password-requests/reject", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/admins/password-requests/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminId })

@@ -9,7 +9,7 @@ export default function PolicyHolderContact() {
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
       <PolicyHolderNavbar />
 
-      <main className="flex-grow flex items-center justify-center p-8 bg-slate-50 min-h-[500px]">
+      <main className="grow flex items-center justify-center p-8 bg-slate-50 min-h-[500px]">
         <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-xl max-w-md w-full text-center flex flex-col items-center gap-6">
           <div className="w-20 h-20 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-inner select-none">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-10 h-10 animate-pulse">
