@@ -226,7 +226,7 @@ export default function AdminDashboard() {
                 {/* 4 Cards Grid - Mobile view */}
                 <div className="grid lg:hidden grid-cols-1 gap-4 mb-8">
                   {/* Policy Holders Card */}
-                  <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Total Claims Card */}
-                  <div className="bg-gradient-to-br from-slate-50/60 to-white rounded-[20px] border border-slate-200/80 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-slate-50/60 to-white rounded-[20px] border border-slate-200/80 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-slate-100 rounded-xl text-slate-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -256,7 +256,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Active Claims Card */}
-                  <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -271,7 +271,7 @@ export default function AdminDashboard() {
                   </div>
 
                   {/* Pending Claims Card */}
-                  <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
