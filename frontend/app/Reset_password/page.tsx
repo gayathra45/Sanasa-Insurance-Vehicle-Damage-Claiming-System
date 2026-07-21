@@ -261,7 +261,7 @@ export default function ResetPassword() {
     </svg>
   );
 
-  const submitBtnClass = "w-full max-w-[240px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3.5 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-lg cursor-pointer select-none outline-none border-none disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2";
+  const submitBtnClass = "w-full max-w-[240px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-lg cursor-pointer select-none outline-none border-none disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2";
 
   return (
     <div className="min-h-screen w-full flex flex-col relative">
@@ -281,7 +281,7 @@ export default function ResetPassword() {
 
           {/* Left: Title */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left text-white max-w-md">
-            <h1 className="text-6xl md:text-8xl font-bold tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] leading-[0.9] animate-fade-in">
+            <h1 className="text-6xl md:text-8xl font-bold tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] leading-[0.9] transition-all duration-300">
               Reset<br />Password
             </h1>
             <p className="mt-4 text-white/55 text-sm max-w-xs leading-relaxed">
@@ -306,7 +306,7 @@ export default function ResetPassword() {
             )}
             {/* Success Banner */}
             {successMessage && (
-              <div className="bg-emerald-500/20 border-l-4 border-emerald-500 p-5 rounded-2xl text-white text-sm flex flex-col gap-4 animate-fade-in">
+              <div className="bg-emerald-500/20 border-l-4 border-emerald-500 p-5 rounded-2xl text-white text-sm flex flex-col gap-4 transition-all duration-300">
                 <div className="flex items-start gap-3">
                   <svg className="w-6 h-6 flex-shrink-0 text-emerald-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -314,7 +314,7 @@ export default function ResetPassword() {
                   <span className="font-semibold leading-relaxed">{successMessage}</span>
                 </div>
                 <div className="flex justify-end mt-2 select-none">
-                  <Link href="/Login" className="bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold py-2.5 px-6 rounded-full transition-all text-xs outline-none border-none cursor-pointer no-underline text-center">
+                  <Link href="/Login" className="bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold py-3 px-6 rounded-full transition-all text-xs outline-none border-none cursor-pointer no-underline text-center">
                     Back to Login
                   </Link>
                 </div>
@@ -337,7 +337,7 @@ export default function ResetPassword() {
                       </svg>
                     </span>
                     <input type="text" required value={loginId} onChange={(e) => setLoginId(e.target.value)}
-                      className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
                       placeholder="Enter your NIC or Mobile number" />
                   </div>
                 </div>
@@ -355,7 +355,7 @@ export default function ResetPassword() {
                       </svg>
                     </span>
                     <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
                       placeholder="Enter your registered email" />
                   </div>
                 </div>
@@ -447,7 +447,7 @@ export default function ResetPassword() {
                   <div className="relative">
                     <input type={showPassword ? "text" : "password"} required value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-6 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-6 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium"
                       placeholder="Enter new password" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)}
                       className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 cursor-pointer">
@@ -461,7 +461,7 @@ export default function ResetPassword() {
                         <span className="font-semibold">Password Strength:</span>
                         <span className="font-bold uppercase tracking-wider">{strength.label}</span>
                       </div>
-                      <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
                         <div className={`h-full ${strength.color} ${strength.width} transition-all duration-300 rounded-full`} />
                       </div>
                       <div className="flex flex-col gap-1 text-[11px]">
@@ -482,7 +482,7 @@ export default function ResetPassword() {
                   <div className="relative">
                     <input type={showConfirmPassword ? "text" : "password"} required value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-6 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-6 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium"
                       placeholder="Confirm new password" />
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 cursor-pointer">
@@ -501,7 +501,7 @@ export default function ResetPassword() {
 
             {/* ── STAGE: Success ── */}
             {stage === "success" && (
-              <div className="relative flex flex-col items-center justify-center py-6 text-center z-20 animate-fade-in w-full">
+              <div className="relative flex flex-col items-center justify-center py-6 text-center z-20 transition-all duration-300 w-full">
                 <div className="flex flex-col items-center max-w-sm">
                   {/* Glowing Checkmark Wrapper */}
                   <div className="relative mb-6">

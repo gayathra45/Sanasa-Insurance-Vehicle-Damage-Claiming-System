@@ -539,13 +539,13 @@ export default function AddVehiclesPage() {
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="hidden lg:inline">Welcome back, </span>
-                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span>
               </h1>
             </div>
             <div className="flex items-center gap-5">
               <Link
                 href="/Office_Staff/Notifications"
-                className="relative p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
+                className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -609,15 +609,15 @@ export default function AddVehiclesPage() {
                   <div className="flex flex-wrap items-center gap-3.5 select-none self-start md:self-auto">
                     <button
                       onClick={() => setIsAddVehicleOpen(true)}
-                      className="bg-amber-500 hover:bg-amber-600 border-none text-white font-black text-xs px-5 py-2.5 rounded-full cursor-pointer transition-all shadow-sm active:scale-[0.98] flex items-center gap-1.5 h-[36px]"
+                      className="bg-amber-500 hover:bg-amber-600 border-none text-white font-black text-xs px-5 py-3 rounded-full cursor-pointer transition-all shadow-sm active:scale-[0.98] flex items-center gap-1.5 h-[36px]"
                     >
-                      <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                       </svg>
                       Add Vehicle
                     </button>
 
-                    <div className="flex bg-slate-200/60 p-1.5 rounded-full">
+                    <div className="flex bg-slate-200/60 p-2 rounded-full">
                       <button
                         onClick={() => setActiveMenuTab("pending")}
                         className={`font-black text-xs px-5 py-2 rounded-full border-none transition-all cursor-pointer flex items-center gap-2 relative ${
@@ -628,7 +628,7 @@ export default function AddVehiclesPage() {
                       >
                         Pending Approvals
                         {pendingVehicles.length > 0 && (
-                          <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
+                          <span className="text-[10px] font-black bg-red-500 text-white px-2 py-1 rounded-full">
                             {pendingVehicles.length}
                           </span>
                         )}
@@ -643,7 +643,7 @@ export default function AddVehiclesPage() {
                       >
                         Confirmed Vehicles
                         {filteredConfirmed.length > 0 && (
-                          <span className="ml-1 text-[10px] font-black bg-slate-300 text-slate-700 px-2 py-0.5 rounded-full">
+                          <span className="ml-1 text-[10px] font-black bg-slate-300 text-slate-700 px-2 py-1 rounded-full">
                             {filteredConfirmed.length}
                           </span>
                         )}
@@ -654,7 +654,7 @@ export default function AddVehiclesPage() {
 
                 {/* Sub-tab Feedback Alerts */}
                 {actionSuccess && (
-                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-2xl text-xs font-bold flex items-center gap-2 select-none animate-fade-in">
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-2xl text-xs font-bold flex items-center gap-2 select-none transition-all duration-300">
                     <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                     </svg>
@@ -663,7 +663,7 @@ export default function AddVehiclesPage() {
                 )}
 
                 {actionError && (
-                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-2 select-none animate-fade-in">
+                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-2 select-none transition-all duration-300">
                     <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                     </svg>
@@ -676,12 +676,12 @@ export default function AddVehiclesPage() {
                   /* TAB 1: Pending Approvals View (Default) */
                   <div className="flex flex-col gap-6">
                     {pendingLoading ? (
-                      <div className="w-full flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-[28px] shadow-sm animate-fade-in">
+                      <div className="w-full flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-[28px] shadow-sm transition-all duration-300">
                         <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#f59e0b]"></div>
                         <span className="mt-4 text-slate-500 font-bold text-sm">Fetching pending vehicles...</span>
                       </div>
                     ) : pendingVehicles.length === 0 ? (
-                      <div className="bg-white border border-slate-200 rounded-[28px] p-16 text-center select-none shadow-sm flex flex-col items-center justify-center gap-4 min-h-[350px] animate-fade-in">
+                      <div className="bg-white border border-slate-200 rounded-[28px] p-16 text-center select-none shadow-sm flex flex-col items-center justify-center gap-4 min-h-[350px] transition-all duration-300">
                         <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
                           <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
@@ -693,7 +693,7 @@ export default function AddVehiclesPage() {
                         </p>
                       </div>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300">
                         {pendingVehicles.map((item, idx) => {
                           const actionKey = `${item.user.nic}-${item.vehicle.numberPlate}`;
                           const isProcessing = verifyingId === actionKey;
@@ -717,16 +717,16 @@ export default function AddVehiclesPage() {
                                         const parts = getPlateParts(item.vehicle.numberPlate);
                                         return (
                                           <div className="inline-flex items-center bg-[#f8fafc] border border-slate-350 rounded-md shadow-sm overflow-hidden font-mono leading-none">
-                                            <div className="bg-blue-600 text-white font-sans font-black text-[8px] px-1.5 py-1.5 border-r border-slate-250 flex items-center justify-center shrink-0">
+                                            <div className="bg-blue-600 text-white font-sans font-black text-[8px] px-2 py-2 border-r border-slate-250 flex items-center justify-center shrink-0">
                                               {parts.province}
                                             </div>
-                                            <div className="text-slate-900 font-black text-[12px] px-2.5 py-0.5 tracking-wider uppercase bg-white">
+                                            <div className="text-slate-900 font-black text-[12px] px-3 py-1 tracking-wider uppercase bg-white">
                                               {parts.number}
                                             </div>
                                           </div>
                                         );
                                       })()}
-                                      <span className="inline-flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full uppercase tracking-wider mt-1.5 block w-fit">
+                                      <span className="inline-flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full uppercase tracking-wider mt-1.5 block w-fit">
                                         <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
                                         Pending
                                       </span>
@@ -751,15 +751,15 @@ export default function AddVehiclesPage() {
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Policy Number</span>
-                                    <span className="text-[#f59e0b] font-black font-mono bg-amber-50 border border-amber-100 rounded px-1.5 py-0.5 shadow-sm">{item.vehicle.policyNumber}</span>
+                                    <span className="text-[#f59e0b] font-black font-mono bg-amber-50 border border-amber-100 rounded px-2 py-1 shadow-sm">{item.vehicle.policyNumber}</span>
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Engine Number</span>
-                                    <span className="text-slate-800 font-bold font-mono bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5">{item.vehicle.engineNumber || "N/A"}</span>
+                                    <span className="text-slate-800 font-bold font-mono bg-slate-50 border border-slate-100 rounded px-2 py-1">{item.vehicle.engineNumber || "N/A"}</span>
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Chassis Number</span>
-                                    <span className="text-slate-800 font-bold font-mono bg-slate-50 border border-slate-100 rounded px-1.5 py-0.5">{item.vehicle.chassisNumber || "N/A"}</span>
+                                    <span className="text-slate-800 font-bold font-mono bg-slate-50 border border-slate-100 rounded px-2 py-1">{item.vehicle.chassisNumber || "N/A"}</span>
                                   </div>
                                 </div>
 
@@ -788,14 +788,14 @@ export default function AddVehiclesPage() {
                               <div className="flex items-center gap-2 border-t border-slate-100 pt-4 mt-5 select-none shrink-0 w-full justify-between">
                                 <button
                                   onClick={() => setSelectedUserForModal(item.user)}
-                                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 font-extrabold text-[11px] px-3.5 py-2.5 rounded-full transition-all active:scale-95 shadow-sm hover:scale-[1.01]"
+                                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 font-extrabold text-[11px] px-4 py-3 rounded-full transition-all active:scale-95 shadow-sm hover:scale-[1.01]"
                                 >
                                   Profile
                                 </button>
                                 <button
                                   onClick={() => handleVerifyVehicle(item.user.nic, item.vehicle.numberPlate, "Approve")}
                                   disabled={isProcessing}
-                                  className="flex-grow bg-[#0f2d3a] hover:bg-emerald-600 disabled:bg-slate-200 text-white font-extrabold text-[11px] py-2.5 rounded-full cursor-pointer transition-all duration-300 flex items-center justify-center gap-1 border-none active:scale-95 shadow-sm hover:shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:scale-[1.01]"
+                                  className="flex-grow bg-[#0f2d3a] hover:bg-emerald-600 disabled:bg-slate-200 text-white font-extrabold text-[11px] py-3 rounded-full cursor-pointer transition-all duration-300 flex items-center justify-center gap-1 border-none active:scale-95 shadow-sm hover:shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:scale-[1.01]"
                                 >
                                   {isProcessing ? "..." : (
                                     <>
@@ -809,7 +809,7 @@ export default function AddVehiclesPage() {
                                 <button
                                   onClick={() => handleVerifyVehicle(item.user.nic, item.vehicle.numberPlate, "Reject")}
                                   disabled={isProcessing}
-                                  className="bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 text-slate-500 hover:text-red-650 font-extrabold text-[11px] px-3 py-2.5 rounded-full cursor-pointer transition-all duration-250 active:scale-95 outline-none shadow-sm hover:scale-[1.01]"
+                                  className="bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 text-slate-500 hover:text-red-650 font-extrabold text-[11px] px-3 py-3 rounded-full cursor-pointer transition-all duration-250 active:scale-95 outline-none shadow-sm hover:scale-[1.01]"
                                 >
                                   Reject
                                 </button>
@@ -823,7 +823,7 @@ export default function AddVehiclesPage() {
                   </div>
                 ) : (
                   /* TAB 2: Confirmed Vehicles (Searchable list of all approved vehicles in branch) */
-                  <div className="bg-white p-6 border border-slate-200 rounded-[28px] shadow-sm flex flex-col gap-6 animate-fade-in">
+                  <div className="bg-white p-6 border border-slate-200 rounded-[28px] shadow-sm flex flex-col gap-6 transition-all duration-300">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 select-none">
                       <div>
                         <h3 className="font-black text-slate-800 text-base">
@@ -872,32 +872,32 @@ export default function AddVehiclesPage() {
                           <tbody className="bg-white divide-y divide-slate-100 font-semibold text-xs text-slate-700">
                             {filteredConfirmed.map((item, idx) => (
                               <tr key={idx} className="hover:bg-slate-50/50">
-                                <td className="px-5 py-4.5 font-black text-slate-800">
+                                <td className="px-5 py-5 font-black text-slate-800">
                                   {formatNumberPlate(item.vehicle.numberPlate)}
                                 </td>
-                                <td className="px-5 py-4.5 text-slate-600">
-                                  <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-[10px] font-bold">
+                                <td className="px-5 py-5 text-slate-600">
+                                  <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-[10px] font-bold">
                                     {item.vehicle.vehicleType}
                                   </span>
                                 </td>
-                                <td className="px-5 py-4.5 text-slate-600">
+                                <td className="px-5 py-5 text-slate-600">
                                   {item.vehicle.company} {item.vehicle.model} ({item.vehicle.year})
                                 </td>
-                                <td className="px-5 py-4.5 text-[#f59e0b] font-bold">
+                                <td className="px-5 py-5 text-[#f59e0b] font-bold">
                                   {item.vehicle.policyNumber}
                                 </td>
-                                <td className="px-5 py-4.5">
+                                <td className="px-5 py-5">
                                   <div className="font-bold text-slate-800">{item.user.firstName} {item.user.lastName}</div>
                                   <div className="text-[10px] text-slate-400 font-medium">NIC: {item.user.nic} | Mob: {item.user.mobile}</div>
                                 </td>
-                                <td className="px-5 py-4.5 text-slate-400 text-[10px] leading-tight font-medium">
+                                <td className="px-5 py-5 text-slate-400 text-[10px] leading-tight font-medium">
                                   <div>E: {item.vehicle.engineNumber || "N/A"}</div>
                                   <div className="mt-0.5">C: {item.vehicle.chassisNumber || "N/A"}</div>
                                 </td>
-                                <td className="px-5 py-4.5">
+                                <td className="px-5 py-5">
                                   <button
                                     onClick={() => setSelectedUserForModal(item.user)}
-                                    className="text-[10px] font-extrabold text-[#f59e0b] hover:text-[#d97706] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 border border-[#f59e0b]/20 px-3 py-1.5 rounded-full cursor-pointer transition-all outline-none"
+                                    className="text-[10px] font-extrabold text-[#f59e0b] hover:text-[#d97706] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 border border-[#f59e0b]/20 px-3 py-2 rounded-full cursor-pointer transition-all outline-none"
                                   >
                                     View Owner
                                   </button>
@@ -919,7 +919,7 @@ export default function AddVehiclesPage() {
 
       {/* Owner Profile Details Modal */}
       {selectedUserForModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 animate-fade-in text-slate-800">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300 text-slate-800">
           <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[640px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden">
             
             {/* Modal Header */}
@@ -991,12 +991,12 @@ export default function AddVehiclesPage() {
                 {selectedUserForModal.vehicles && selectedUserForModal.vehicles.length > 0 ? (
                   <div className="flex flex-col gap-3 max-h-[180px] overflow-y-auto pr-1">
                     {selectedUserForModal.vehicles.map((v: any, i: number) => (
-                      <div key={i} className="flex justify-between items-center bg-slate-50 border border-slate-100 p-3.5 rounded-xl text-xs">
+                      <div key={i} className="flex justify-between items-center bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs">
                         <div>
                           <div className="font-black text-slate-800">{formatNumberPlate(v.numberPlate)}</div>
                           <div className="text-slate-400 font-semibold mt-0.5">{v.company} {v.model} ({v.year})</div>
                         </div>
-                        <span className={`px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
+                        <span className={`px-3 py-1 rounded-full font-bold text-[10px] ${
                           v.status === "Approved" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
                           v.status === "Rejected" ? "bg-red-50 text-red-600 border border-red-100" :
                           "bg-amber-50 text-amber-600 border border-amber-100"
@@ -1014,10 +1014,10 @@ export default function AddVehiclesPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-8 py-4.5 bg-slate-50 border-t border-slate-150 flex justify-end flex-shrink-0">
+            <div className="px-8 py-5 bg-slate-50 border-t border-slate-150 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedUserForModal(null)}
-                className="bg-slate-800 hover:bg-slate-900 border-none text-white font-black text-xs px-6 py-2.5 rounded-full transition-all cursor-pointer outline-none"
+                className="bg-slate-800 hover:bg-slate-900 border-none text-white font-black text-xs px-6 py-3 rounded-full transition-all cursor-pointer outline-none"
               >
                 Close Profile
               </button>
@@ -1029,7 +1029,7 @@ export default function AddVehiclesPage() {
 
       {/* Add Vehicle Modal */}
       {isAddVehicleOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 animate-fade-in text-slate-800">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300 text-slate-800">
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[720px] max-h-[95vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden">
             
             {/* Modal Header */}
@@ -1049,7 +1049,7 @@ export default function AddVehiclesPage() {
               <div className="px-10 py-6 overflow-y-auto flex-1 flex flex-col gap-4">
                 
                 {addError && (
-                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-2 select-none animate-fade-in">
+                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-2 select-none transition-all duration-300">
                     <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                     </svg>

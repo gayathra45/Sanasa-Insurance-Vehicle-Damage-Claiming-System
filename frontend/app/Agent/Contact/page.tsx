@@ -167,7 +167,7 @@ export default function AgentContactPage() {
                   </p>
                 </div>
               </div>
-              <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3.5 py-1 rounded-full font-black text-[10px] uppercase self-start md:self-center select-none">
+              <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-1 rounded-full font-black text-[10px] uppercase self-start md:self-center select-none">
                 24/7 Priority Support
               </div>
             </a>
@@ -191,7 +191,7 @@ export default function AgentContactPage() {
                   </p>
                 </div>
               </div>
-              <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-3.5 py-1 rounded-full font-black text-[10px] uppercase self-start md:self-center select-none">
+              <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-1 rounded-full font-black text-[10px] uppercase self-start md:self-center select-none">
                 Submit Inquiry Ticket
               </div>
             </button>
@@ -213,7 +213,7 @@ export default function AgentContactPage() {
                     <button
                       type="button"
                       onClick={() => setOpenFaq(isOpen ? null : index)}
-                      className="w-full px-6 py-4.5 flex justify-between items-center text-left bg-transparent border-none outline-none cursor-pointer group"
+                      className="w-full px-6 py-5 flex justify-between items-center text-left bg-transparent border-none outline-none cursor-pointer group"
                     >
                       <span className="font-bold text-slate-700 text-sm md:text-base group-hover:text-emerald-600 transition-colors">
                         {faq.q}
@@ -241,7 +241,7 @@ export default function AgentContactPage() {
           {/* Office hours card */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col gap-4">
             <h3 className="font-black text-slate-800 text-base border-b border-slate-100 pb-3 flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
               Office Working Hours
             </h3>
             <div className="space-y-3.5 text-xs font-semibold text-slate-600">
@@ -310,7 +310,7 @@ export default function AgentContactPage() {
 
       {/* Support Inquiry Email Modal */}
       {showEmailModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl border border-slate-300 overflow-hidden transform scale-100 transition-all select-none">
             {/* Header */}
             <div className="px-8 pt-6 pb-4 flex justify-between items-center bg-white border-b border-slate-100">
@@ -335,7 +335,7 @@ export default function AgentContactPage() {
             <form onSubmit={handleSendEmail} className="p-8 flex flex-col gap-5">
               {modalFeedback && (
                 <div
-                  className={`text-xs font-bold px-4 py-2.5 rounded-xl border ${
+                  className={`text-xs font-bold px-4 py-3 rounded-xl border ${
                     modalFeedback.type === "success"
                       ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                       : "bg-red-50 text-red-600 border-red-100"

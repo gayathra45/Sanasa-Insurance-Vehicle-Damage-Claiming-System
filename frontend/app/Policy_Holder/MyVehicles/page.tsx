@@ -438,7 +438,7 @@ export default function MyVehicles() {
         
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-black font-extrabold px-6 py-4.5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black">
+          <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-black font-extrabold px-6 py-5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black">
             <svg className="w-6 h-6 animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
@@ -488,7 +488,7 @@ export default function MyVehicles() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-5 py-2.5 rounded-full font-bold text-[13px] md:text-sm tracking-wide transition-all outline-none border cursor-pointer select-none ${
+                className={`px-5 py-3 rounded-full font-bold text-[13px] md:text-sm tracking-wide transition-all outline-none border cursor-pointer select-none ${
                   activeCategory === cat.id
                     ? "bg-[#00ddff] border-[#00c8e6] text-black shadow-sm"
                     : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
@@ -512,7 +512,7 @@ export default function MyVehicles() {
               placeholder="Search make, plate, or policy..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-800 rounded-full py-2.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-200 font-medium"
+              className="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-800 rounded-full py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-200 font-medium"
             />
             {searchQuery.length > 0 && (
               <button
@@ -538,7 +538,7 @@ export default function MyVehicles() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* If no vehicles match the criteria, show a helpful inner-grid card */}
             {filteredVehicles.length === 0 && (
-              <div className="bg-white border border-slate-200 rounded-[30px] p-6.5 shadow-sm flex flex-col justify-center items-center text-center min-h-[280px]">
+              <div className="bg-white border border-slate-200 rounded-[30px] p-7 shadow-sm flex flex-col justify-center items-center text-center min-h-[280px]">
                 <div className="w-16 h-16 bg-slate-50 border border-slate-200/50 rounded-2xl flex items-center justify-center text-slate-400 mb-4">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
@@ -565,7 +565,7 @@ export default function MyVehicles() {
               return (
                 <div
                   key={vehicle.numberPlate}
-                  className="bg-white border border-slate-200 rounded-[30px] p-6.5 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1"
+                  className="bg-white border border-slate-200 rounded-[30px] p-7 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1"
                 >
                   {/* Decorative faint background accent */}
                   <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[100px] pointer-events-none group-hover:bg-cyan-50/50 transition-colors" />
@@ -579,8 +579,8 @@ export default function MyVehicles() {
                           <h3 className="text-slate-800 font-black text-lg md:text-xl tracking-tight leading-none">
                             {formatNumberPlate(vehicle.numberPlate)}
                           </h3>
-                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-500 bg-emerald-50/70 border border-emerald-100 rounded-full px-2.5 py-0.5 mt-1.5 select-none">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-500 bg-emerald-50/70 border border-emerald-100 rounded-full px-3 py-1 mt-1.5 select-none">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
                             <span>Active Coverage</span>
                           </span>
                         </div>
@@ -629,7 +629,7 @@ export default function MyVehicles() {
             {/* Dashed Add Vehicle Card in the Grid */}
             <button
               onClick={handleOpenAddVehicle}
-              className="bg-transparent border-2 border-dashed border-slate-300 hover:border-[#00ddff] hover:bg-slate-50/50 rounded-[30px] p-6.5 min-h-[280px] flex flex-col items-center justify-center gap-4 transition-all duration-300 group cursor-pointer w-full text-slate-800"
+              className="bg-transparent border-2 border-dashed border-slate-300 hover:border-[#00ddff] hover:bg-slate-50/50 rounded-[30px] p-7 min-h-[280px] flex flex-col items-center justify-center gap-4 transition-all duration-300 group cursor-pointer w-full text-slate-800"
             >
               <div className="w-16 h-16 rounded-full bg-slate-100 group-hover:bg-cyan-50 flex items-center justify-center text-slate-400 group-hover:text-[#00ddff] transition-all">
                 <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -647,7 +647,7 @@ export default function MyVehicles() {
         )}
 
         {/* Supportive Help Banner */}
-        <section className="bg-slate-800 border border-slate-900 rounded-[30px] p-6.5 mt-12 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_15px_30px_rgba(0,0,0,0.06)]">
+        <section className="bg-slate-800 border border-slate-900 rounded-[30px] p-7 mt-12 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_15px_30px_rgba(0,0,0,0.06)]">
           <div className="max-w-2xl text-center md:text-left select-none">
             <h4 className="text-lg font-black tracking-tight mb-1 text-white">Need to update your vehicle registry?</h4>
             <p className="text-slate-300 text-xs md:text-sm font-semibold leading-relaxed m-0">
@@ -656,7 +656,7 @@ export default function MyVehicles() {
           </div>
           <Link
             href="/Policy_Holder/Contact"
-            className="bg-[#ff9800] hover:bg-[#e68900] text-white font-extrabold text-sm px-8 py-3.5 rounded-full transition-all no-underline shadow-md whitespace-nowrap"
+            className="bg-[#ff9800] hover:bg-[#e68900] text-white font-extrabold text-sm px-8 py-4 rounded-full transition-all no-underline shadow-md whitespace-nowrap"
           >
             Contact Support
           </Link>
@@ -666,7 +666,7 @@ export default function MyVehicles() {
 
       {/* Vehicle Detail Popup Modal */}
       {selectedVehicleForModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[620px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden">
             
             {/* Modal Header */}
@@ -738,7 +738,7 @@ export default function MyVehicles() {
                 <Link
                   href={`/Policy_Holder/New_Claim?plate=${encodeURIComponent(selectedVehicleForModal.numberPlate)}`}
                   onClick={() => setSelectedVehicleForModal(null)}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-3.5 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -747,7 +747,7 @@ export default function MyVehicles() {
                 </Link>
                 <button
                   onClick={() => handleDownloadCoverNote(selectedVehicleForModal)}
-                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm py-3.5 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -762,7 +762,7 @@ export default function MyVehicles() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedVehicleForModal(null)}
-                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
               >
                 Close
               </button>
@@ -774,7 +774,7 @@ export default function MyVehicles() {
 
       {/* Add Vehicle Popup Modal */}
       {isAddVehicleOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[720px] max-h-[95vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden text-slate-800">
             
             {/* Modal Header */}
@@ -945,14 +945,14 @@ export default function MyVehicles() {
                 <button
                   type="button"
                   onClick={() => setIsAddVehicleOpen(false)}
-                  className="bg-[#19385a] hover:bg-[#11273f] text-white font-extrabold text-sm py-3.5 px-10 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center gap-1 hover:scale-[1.02] active:scale-[0.98]"
+                  className="bg-[#19385a] hover:bg-[#11273f] text-white font-extrabold text-sm py-4 px-10 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center gap-1 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   &lt; Close
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-[#19385a] hover:bg-[#11273f] disabled:bg-slate-300 text-white font-extrabold text-sm py-3.5 px-12 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center gap-1 hover:scale-[1.02] active:scale-[0.98]"
+                  className="bg-[#19385a] hover:bg-[#11273f] disabled:bg-slate-300 text-white font-extrabold text-sm py-4 px-12 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center gap-1 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {isSubmitting ? "Submitting..." : "Submit >"}
                 </button>
@@ -965,7 +965,7 @@ export default function MyVehicles() {
 
       {/* Floating Chat Support Bubble */}
       <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4.5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
@@ -975,7 +975,7 @@ export default function MyVehicles() {
 
       {/* Registration Success Modal Popup */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[460px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col items-center text-center relative overflow-hidden">
             <div className="w-16 h-16 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-[#f59e0b] mb-6 select-none">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -995,7 +995,7 @@ export default function MyVehicles() {
             
             <button
               onClick={() => setShowSuccessModal(false)}
-              className="w-full bg-[#19385a] hover:bg-[#11273f] text-white font-extrabold text-sm py-3.5 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center active:scale-[0.98] outline-none"
+              className="w-full bg-[#19385a] hover:bg-[#11273f] text-white font-extrabold text-sm py-4 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center active:scale-[0.98] outline-none"
             >
               Understood
             </button>

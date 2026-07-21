@@ -190,28 +190,28 @@ const renderPremiumInspectionReport = (reportText: string) => {
     if (val === "None") {
       color = "text-emerald-600 bg-emerald-50/40 border-emerald-200/60";
       icon = (
-        <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
         </svg>
       );
     } else if (val === "Minor") {
       color = "text-amber-600 bg-amber-50/40 border-amber-200/60";
       icon = (
-        <svg className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
         </svg>
       );
     } else if (val === "Major") {
       color = "text-rose-600 bg-rose-50/40 border-rose-200/60";
       icon = (
-        <svg className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.03V3m0 0a8.001 8.001 0 00-7.797 6.138m15.594 0A8.001 8.001 0 0012 3M3.243 9.75a8.002 8.002 0 008.757 8.757m0 0A8.002 8.002 0 0020.757 9.75" />
         </svg>
       );
     }
 
     return (
-      <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
+      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
         {icon}
         {val}
       </span>
@@ -223,14 +223,14 @@ const renderPremiumInspectionReport = (reportText: string) => {
       {/* Dashboard Title */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-4 select-none">
         <div className="flex items-center gap-3">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
           <div>
             <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
             <span className="text-[10px] font-bold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
           </div>
         </div>
-        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-extrabold tracking-wider uppercase px-3.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-extrabold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
           </svg>
           Verified By Agent
@@ -240,7 +240,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Odometer */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4.5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
+        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Odometer</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-black text-slate-800">{parsed.odometer || "N/A"}</span>
@@ -249,7 +249,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         </div>
 
         {/* Card 2: Fuel Level */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4.5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
+        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Fuel Level</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-black text-slate-800">{parsed.fuelLevel || "N/A"}</span>
@@ -258,7 +258,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         </div>
 
         {/* Card 3: Estimated Cost */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4.5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
+        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-black text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
@@ -267,7 +267,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         </div>
 
         {/* Card 4: Recommendation */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4.5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
+        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Recommendation</span>
           <div className="flex items-baseline gap-1 mt-2 overflow-hidden">
             <span className="text-[13px] font-black text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
@@ -284,7 +284,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
             <div className="space-y-2">
               {Object.entries(parsed.checklist || {}).map(([key, value]) => (
-                <div key={key} className="flex justify-between items-center py-1.5 border-b border-slate-50 last:border-0">
+                <div key={key} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
                   <span className="text-slate-600 font-bold text-xs">{key}</span>
                   {renderBadge(value)}
                 </div>
@@ -1056,14 +1056,14 @@ export default function AgentActivityPage() {
 
               <div>
                 {availability === "Offline" ? (
-                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase bg-[#ef4444] text-white shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase bg-[#ef4444] text-white shadow-sm">
                     Offline
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[10px] font-black uppercase bg-[#10b981] text-white shadow-sm">
-                    <span className="relative flex h-1.5 w-1.5">
+                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase bg-[#10b981] text-white shadow-sm">
+                    <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
                     </span>
                     Active
                   </span>
@@ -1078,15 +1078,15 @@ export default function AgentActivityPage() {
 
             <div className="flex-1 flex items-center mt-3">
               <div className="grid grid-cols-3 gap-3 text-center w-full">
-                <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-2.5 flex flex-col justify-center">
+                <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                   <span className="text-xl font-black text-slate-800">{totalAssigned}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Claims</span>
                 </div>
-                <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-2.5 flex flex-col justify-center">
+                <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                   <span className="text-xl font-black text-slate-800">{totalUploads}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Uploads</span>
                 </div>
-                <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-2.5 flex flex-col justify-center">
+                <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                   <span className="text-xl font-black text-slate-800">{totalMessages}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Chats</span>
                 </div>
@@ -1110,7 +1110,7 @@ export default function AgentActivityPage() {
             <button
               type="button"
               onClick={fetchAndShowLastActivities}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-4.5 py-2.5 rounded-xl transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5 shrink-0 mt-4 w-fit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-5 py-3 rounded-xl transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5 shrink-0 mt-4 w-fit"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4 text-white">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1206,7 +1206,7 @@ export default function AgentActivityPage() {
                         setSelectedClaim(claim);
                         setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                       }}
-                      className={`bg-white border border-slate-200 hover:border-[#0f2d4a] rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,0.7fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${
+                      className={`bg-white border border-slate-200 hover:border-[#0f2d4a] rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,0.7fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${
                         claim.inspectionSubmitted || claim.status === "Approved" || claim.status === "Rejected"
                           ? "border-l-4 border-l-emerald-500"
                           : isUrgent
@@ -1219,7 +1219,7 @@ export default function AgentActivityPage() {
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-black text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
                           {isUrgent && (
-                            <span className="bg-red-100 text-red-700 text-[8px] font-black tracking-wider uppercase px-1.5 py-0.5 rounded-md whitespace-nowrap animate-pulse">Urgent</span>
+                            <span className="bg-red-100 text-red-700 text-[8px] font-black tracking-wider uppercase px-2 py-1 rounded-md whitespace-nowrap animate-pulse">Urgent</span>
                           )}
                         </div>
                         <span className="text-[10px] text-slate-400 font-bold mt-1 block">Registered: {formatDate(claim.createdAt)}</span>
@@ -1257,7 +1257,7 @@ export default function AgentActivityPage() {
 
                       {/* Status Badge */}
                       <div className="flex flex-col items-center min-w-0">
-                        <span className={`text-[9px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
+                        <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
                           {claim.status}
                         </span>
                       </div>
@@ -1270,7 +1270,7 @@ export default function AgentActivityPage() {
                             setSelectedClaim(claim);
                             setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                           }}
-                          className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                          className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
                         >
                           Details
                         </button>
@@ -1293,7 +1293,7 @@ export default function AgentActivityPage() {
           
           {/* SUB-MODAL 1: DOCUMENTS */}
           {activeSubModal === "documents" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
@@ -1364,7 +1364,7 @@ export default function AgentActivityPage() {
                               key={idx}
                               type="button"
                               onClick={() => setPreviewImage(docUrl || null)}
-                              className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-3.5 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
+                              className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <svg className="w-5 h-5 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
@@ -1418,7 +1418,7 @@ export default function AgentActivityPage() {
                                 onClick={() => {
                                   alert(`--- Inspection Report ---\n\n${doc.textContent}`);
                                 }}
-                                className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-3.5 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
+                                className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
                                 <svg className="w-5 h-5 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -1436,7 +1436,7 @@ export default function AgentActivityPage() {
                               key={idx}
                               type="button"
                               onClick={() => setPreviewImage(docUrl || null)}
-                              className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-3.5 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
+                              className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <svg className="w-5 h-5 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
@@ -1463,7 +1463,7 @@ export default function AgentActivityPage() {
                                   key={type}
                                   type="button"
                                   onClick={() => setAgentUploadDocName(type)}
-                                  className={`px-3.5 py-1.5 rounded-full text-[11px] font-bold transition-all border cursor-pointer select-none ${
+                                  className={`px-4 py-2 rounded-full text-[11px] font-bold transition-all border cursor-pointer select-none ${
                                     isSelected
                                       ? "bg-[#0f2d4a] border-[#0f2d4a] text-white shadow-sm"
                                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -1533,7 +1533,7 @@ export default function AgentActivityPage() {
                                 className="bg-red-50 hover:bg-red-100 text-red-500 border border-red-200 rounded-full p-2 transition-colors cursor-pointer"
                                 title="Remove file"
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.2" stroke="currentColor" className="w-4.5 h-4.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.2" stroke="currentColor" className="w-5 h-5">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                 </svg>
                               </button>
@@ -1583,7 +1583,7 @@ export default function AgentActivityPage() {
 
           {/* SUB-MODAL 2: REQUEST DOCUMENTS */}
           {activeSubModal === "request_docs" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
@@ -1624,7 +1624,7 @@ export default function AgentActivityPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider ml-1 select-none">Request From :</label>
-                          <div className="flex gap-4 p-2.5 bg-white border border-slate-200 rounded-xl">
+                          <div className="flex gap-4 p-3 bg-white border border-slate-200 rounded-xl">
                             <label className="flex items-center gap-1.5 cursor-pointer select-none">
                               <input
                                 type="radio"
@@ -1632,7 +1632,7 @@ export default function AgentActivityPage() {
                                 onChange={() => {
                                   setRequestItems(prev => prev.map((it, idx) => idx === index ? { ...it, recipient: "User", docType: "NIC Front Page" } : it));
                                 }}
-                                className="w-3.5 h-3.5 accent-[#0f2d4a]"
+                                className="w-4 h-4 accent-[#0f2d4a]"
                               />
                               <span className="text-xs font-bold text-slate-700">Policy Holder</span>
                             </label>
@@ -1662,7 +1662,7 @@ export default function AgentActivityPage() {
                       </div>
 
                       {item.docType === "Custom / Other" && (
-                        <div className="flex flex-col gap-1.5 animate-fade-in">
+                        <div className="flex flex-col gap-1.5 transition-all duration-300">
                           <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider ml-1 select-none">Custom Document Name :</label>
                           <input
                             type="text"
@@ -1766,7 +1766,7 @@ export default function AgentActivityPage() {
 
           {/* SUB-MODAL 3: ADD NOTE */}
           {activeSubModal === "add_note" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
@@ -1832,7 +1832,7 @@ export default function AgentActivityPage() {
 
           {/* SUB-MODAL 4: CONTACT */}
           {activeSubModal === "contact" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
@@ -1848,7 +1848,7 @@ export default function AgentActivityPage() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 select-none">
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1">
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Policy Holder</span>
                     <h5 className="text-xs font-extrabold text-slate-800">{getPolicyHolderName(selectedClaim.userNic)}</h5>
                     <div className="text-[11px] text-slate-600 font-semibold">
@@ -1856,7 +1856,7 @@ export default function AgentActivityPage() {
                       <p>Phone: {getPolicyHolderContact(selectedClaim.userNic)}</p>
                     </div>
                   </div>
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-1">
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Office Staff</span>
                     <h5 className="text-xs font-extrabold text-slate-800">Branch Operations</h5>
                     <div className="text-[11px] text-slate-600 font-semibold">
@@ -1953,7 +1953,7 @@ export default function AgentActivityPage() {
                         }
                       }}
                       disabled={updatingClaim || !newMessageText.trim()}
-                      className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs px-5 py-3.5 rounded-xl border-none cursor-pointer disabled:opacity-50"
+                      className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs px-5 py-4 rounded-xl border-none cursor-pointer disabled:opacity-50"
                     >
                       Send
                     </button>
@@ -1979,7 +1979,7 @@ export default function AgentActivityPage() {
 
           {/* SUB-MODAL 5: UPDATE TRACKING */}
           {activeSubModal === "update_tracking" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
@@ -2017,7 +2017,7 @@ export default function AgentActivityPage() {
                           type="button"
                           onClick={() => handleAcceptClaim(selectedClaim.claimNumber)}
                           disabled={isAcceptingClaim}
-                          className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-2.5 px-6 rounded-xl cursor-pointer disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
+                          className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
                         >
                           {isAcceptingClaim ? "Accepting..." : "Accept Claim Assignment"}
                         </button>
@@ -2040,7 +2040,7 @@ export default function AgentActivityPage() {
                               type="button"
                               onClick={() => handleSubmitInspectionReport(selectedClaim.claimNumber)}
                               disabled={isSubmittingReport || !inspectionReportText.trim()}
-                              className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-2.5 px-6 rounded-xl cursor-pointer self-end disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
+                              className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer self-end disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
                             >
                               {isSubmittingReport ? "Submitting..." : "Submit Inspection Report"}
                             </button>
@@ -2067,14 +2067,14 @@ export default function AgentActivityPage() {
                               value={assessmentAmount}
                               onChange={(e) => setAssessmentAmount(e.target.value)}
                               placeholder="E.g. 75000"
-                              className="bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-xs font-bold focus:outline-none max-w-[200px]"
+                              className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-800 text-xs font-bold focus:outline-none max-w-[200px]"
                             />
                           </div>
                           <button
                             type="button"
                             onClick={() => handleApproveAssessment(selectedClaim.claimNumber)}
                             disabled={updatingClaim || !assessmentAmount.trim()}
-                            className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-2.5 px-6 rounded-xl cursor-pointer self-start disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
+                            className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer self-start disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
                           >
                             Confirm Assessment Approval
                           </button>
@@ -2107,7 +2107,7 @@ export default function AgentActivityPage() {
                         {selectedClaim.paymentReceipt && (
                           <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex items-center justify-between select-none">
                             <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              <span className="w-2 h-2 rounded-full bg-emerald-500" />
                               Bank Transfer Completed
                             </span>
                             <button
@@ -2146,13 +2146,13 @@ export default function AgentActivityPage() {
 
           {/* MAIN DETAILS MODAL */}
           {activeSubModal === null && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[780px] max-h-[90vh] p-8 shadow-2xl relative flex flex-col animate-fade-in select-none">
+            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[780px] max-h-[90vh] p-8 shadow-2xl relative flex flex-col transition-all duration-300 select-none">
               
               {/* Close Button X */}
               <button
                 type="button"
                 onClick={() => setSelectedClaim(null)}
-                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent"
+                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent"
                 title="Close"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -2167,10 +2167,10 @@ export default function AgentActivityPage() {
                     {getPolicyHolderName(selectedClaim.userNic)}
                   </h2>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider">
                       ID: {selectedClaim.claimNumber}
                     </span>
-                    <span className={`border rounded-lg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                    <span className={`border rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                       selectedClaim.status.toLowerCase() === "pending"
                         ? "border-amber-300 text-amber-700 bg-amber-50/50"
                         : selectedClaim.status.toLowerCase() === "in progress"
@@ -2179,7 +2179,7 @@ export default function AgentActivityPage() {
                         ? "border-emerald-300 text-emerald-700 bg-emerald-50/50"
                         : "border-red-300 text-red-700 bg-red-50/50"
                     }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
+                      <span className={`w-2 h-2 rounded-full ${
                         selectedClaim.status.toLowerCase() === "pending"
                           ? "bg-amber-500 animate-pulse"
                           : selectedClaim.status.toLowerCase() === "in progress"
@@ -2335,7 +2335,7 @@ export default function AgentActivityPage() {
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
                       <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
-                        <svg className="w-4.5 h-4.5 text-[#0f2d4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <svg className="w-5 h-5 text-[#0f2d4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                         </svg>
                         Policy Holder Attachments & Photos
@@ -2383,7 +2383,7 @@ export default function AgentActivityPage() {
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
                       <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
-                        <svg className="w-4.5 h-4.5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <svg className="w-5 h-5 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
                         </svg>
                         Agent Uploaded Documents
@@ -2464,7 +2464,7 @@ export default function AgentActivityPage() {
                   onClick={() => setActiveSubModal("contact")}
                   className="bg-cyan-600 hover:bg-cyan-700 text-white font-black text-xs py-3 px-6 rounded-full cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-2 border-none"
                 >
-                  <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 01.778-.332 48.294 48.294 0 005.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
                   </svg>
                   Chat / Contact
@@ -2478,9 +2478,9 @@ export default function AgentActivityPage() {
                     type="button"
                     onClick={() => handleAcceptClaim(selectedClaim.claimNumber)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-3.5 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
-                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                     Accept
@@ -2489,9 +2489,9 @@ export default function AgentActivityPage() {
                     type="button"
                     onClick={() => handleDeclineClaim(selectedClaim.claimNumber)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-black text-sm py-3.5 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
-                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Reject
@@ -2501,7 +2501,7 @@ export default function AgentActivityPage() {
 
               {/* Status Banner for Accepted (In Progress / Approved) Claims */}
               {selectedClaim.currentStep >= 3 && !selectedClaim.inspectionSubmitted && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
-                <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-6 text-center select-none animate-fade-in">
+                <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-6 text-center select-none transition-all duration-300">
                   <p className="text-emerald-800 text-xs md:text-sm font-black flex items-center justify-center gap-2">
                     <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
@@ -2516,7 +2516,7 @@ export default function AgentActivityPage() {
 
               {/* Status Banner for Rejected Claims */}
               {selectedClaim.status.toLowerCase() === "rejected" && (
-                <div className="w-full bg-red-50 border border-red-200 rounded-2xl p-4 mt-6 flex flex-col items-center text-center select-none gap-3 animate-fade-in">
+                <div className="w-full bg-red-50 border border-red-200 rounded-2xl p-4 mt-6 flex flex-col items-center text-center select-none gap-3 transition-all duration-300">
                   <p className="text-red-800 text-xs md:text-sm font-black flex items-center justify-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -2532,7 +2532,7 @@ export default function AgentActivityPage() {
                       setSelectedClaim(null);
                       router.push("/Agent/Contact");
                     }}
-                    className="bg-red-600 hover:bg-red-700 text-white font-black text-xs py-2.5 px-6 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all text-center border-none"
+                    className="bg-red-600 hover:bg-red-700 text-white font-black text-xs py-3 px-6 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all text-center border-none"
                   >
                     Contact Branch Support
                   </button>
@@ -2546,7 +2546,7 @@ export default function AgentActivityPage() {
 
       {/* Preview Image Modal Overlay */}
       {previewImage && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm transition-all duration-300">
           <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-2xl p-2 overflow-hidden shadow-2xl flex flex-col items-center">
             <button
               onClick={() => setPreviewImage(null)}
@@ -2567,12 +2567,12 @@ export default function AgentActivityPage() {
 
       {/* Styled UI Redirect Modal Overlay */}
       {showMobileRedirect && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-all duration-300">
           <div className="relative w-full max-w-md bg-white rounded-[32px] p-8 shadow-2xl flex flex-col items-center text-center">
             {/* Close Button */}
             <button
               onClick={() => setShowMobileRedirect(false)}
-              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-all border-none bg-transparent cursor-pointer"
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all border-none bg-transparent cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -2619,7 +2619,7 @@ export default function AgentActivityPage() {
             {/* Close Button */}
             <button
               onClick={() => setShowMobileRedirect(false)}
-              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-extrabold text-xs py-3.5 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
+              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
             >
               Okay, Got It
             </button>
@@ -2631,7 +2631,7 @@ export default function AgentActivityPage() {
       {/* Activities Logs Modal Overlay */}
       {showActivitiesModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[650px] h-[550px] max-h-[85vh] shadow-2xl flex flex-col relative animate-fade-in overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[650px] h-[550px] max-h-[85vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
             {/* Header */}
             <div className="px-8 pt-6 pb-2 select-none bg-white">
               <h2 className="text-[22px] font-black text-slate-900 tracking-tight leading-none flex items-center gap-2">
@@ -2726,7 +2726,7 @@ export default function AgentActivityPage() {
                             <span className="font-extrabold text-sm text-slate-800 leading-tight">
                               {act.action}
                             </span>
-                            <span className={`text-[8px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider ${
+                            <span className={`text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-wider ${
                               isMobileApp ? "bg-purple-100 text-purple-700 border border-purple-200" : "bg-cyan-100 text-cyan-700 border border-cyan-200"
                             }`}>
                               {act.device}

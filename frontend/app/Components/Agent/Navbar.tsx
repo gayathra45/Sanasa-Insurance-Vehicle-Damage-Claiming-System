@@ -139,7 +139,7 @@ export default function Navbar() {
                 viewBox="0 0 24 24"
                 strokeWidth="2.0"
                 stroke="currentColor"
-                className="w-7.5 h-7.5"
+                className="w-8 h-8"
               >
                 <path
                   strokeLinecap="round"
@@ -171,11 +171,11 @@ export default function Navbar() {
 
         {/* Mobile Dropdown Navigation Menu */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 py-4 px-6 flex flex-col gap-4 shadow-lg z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 py-4 px-6 flex flex-col gap-4 shadow-lg z-50 duration-200">
             <Link
               href="/Agent/Dashboard"
               onClick={() => setIsOpen(false)}
-              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-semibold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Agent/Home") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -184,7 +184,7 @@ export default function Navbar() {
             <Link
               href="/Agent/Documents"
               onClick={() => setIsOpen(false)}
-              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-semibold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Agent/Documents") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -193,7 +193,7 @@ export default function Navbar() {
             <Link
               href="/Agent/MyActivity"
               onClick={() => setIsOpen(false)}
-              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-semibold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Agent/MyActivity") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -202,7 +202,7 @@ export default function Navbar() {
             <Link
               href="/Agent/Contact"
               onClick={() => setIsOpen(false)}
-              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-semibold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Agent/Contact") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -243,7 +243,7 @@ export default function Navbar() {
                     viewBox="0 0 24 24"
                     strokeWidth="2"
                     stroke="currentColor"
-                    className="w-6.5 h-6.5"
+                    className="w-7 h-7"
                   >
                     <path
                       strokeLinecap="round"

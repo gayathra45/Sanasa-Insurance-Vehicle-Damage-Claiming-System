@@ -272,7 +272,7 @@ export default function AdminNotifications() {
               </h1>
               {/* Desktop welcome title */}
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
-                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">Admin</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin</span>
                 <span> — Notifications Panel</span>
               </h1>
             </div>
@@ -329,7 +329,7 @@ export default function AdminNotifications() {
                   onClick={markAllAsRead}
                   className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-bold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start sm:self-center"
                 >
-                  <svg className="w-4.5 h-4.5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                   </svg>
                   Mark All as Read
@@ -341,7 +341,7 @@ export default function AdminNotifications() {
             <div className="flex flex-wrap gap-2.5 mb-8 border-b border-slate-100 pb-5 select-none">
               <button
                 onClick={() => setActiveTab("all")}
-                className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "all"
                     ? "bg-[#1a365d] border-[#1a365d] text-white shadow-sm"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -351,14 +351,14 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("unread")}
-                className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === "unread"
                     ? "bg-[#f59e0b] border-[#f59e0b] text-white shadow-sm"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
                 Unread
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
                   activeTab === "unread" ? "bg-white/20 text-white" : "bg-red-500 text-white"
                 }`}>
                   {notifications.filter((n) => !readIds.includes(n.id)).length}
@@ -366,14 +366,14 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("read")}
-                className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === "read"
                     ? "bg-slate-600 border-slate-600 text-white shadow-sm"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
                 Read
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
                   activeTab === "read" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
                 }`}>
                   {notifications.filter((n) => readIds.includes(n.id)).length}
@@ -381,7 +381,7 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("claims")}
-                className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "claims"
                     ? "bg-[#3b82f6] border-[#3b82f6] text-white shadow-sm"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -391,7 +391,7 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("policy_holders")}
-                className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "policy_holders"
                     ? "bg-[#10b981] border-[#10b981] text-white shadow-sm"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -401,7 +401,7 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("agents")}
-                className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "agents"
                     ? "bg-[#a855f7] border-[#a855f7] text-white shadow-sm"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -411,7 +411,7 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("staff_messages")}
-                className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "staff_messages"
                     ? "bg-purple-600 border-purple-600 text-white shadow-sm"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -516,7 +516,7 @@ export default function AdminNotifications() {
                                 {n.title}
                               </h4>
                               {!isRead && (
-                                <span className="w-2.5 h-2.5 bg-[#f59e0b] rounded-full border border-white" title="Unread Alert" />
+                                <span className="w-3 h-3 bg-[#f59e0b] rounded-full border border-white" title="Unread Alert" />
                               )}
                             </div>
                             <p className="text-slate-600 text-sm md:text-base font-semibold leading-relaxed mt-2.5">
@@ -528,7 +528,7 @@ export default function AdminNotifications() {
                         {/* Lower Action section */}
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="bg-slate-50/50 px-6 py-4.5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
+                          className="bg-slate-50/50 px-6 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
                         >
                           <div className="flex flex-wrap items-center gap-3.5 pl-0 md:pl-14">
                             <button
@@ -543,7 +543,7 @@ export default function AdminNotifications() {
                                   setSelectedAgent(n.agent);
                                 }
                               }}
-                              className={`font-bold text-xs md:text-sm px-6 py-2.5 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none text-white ${
+                              className={`font-bold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none text-white ${
                                 n.category === "claims"
                                   ? (isUrgent ? "bg-red-500 hover:bg-red-600" : "bg-blue-600 hover:bg-blue-700")
                                   : n.category === "policy_holders"
@@ -560,7 +560,7 @@ export default function AdminNotifications() {
                                 e.stopPropagation();
                                 toggleReadStatus(n.id);
                               }}
-                              className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-bold text-xs px-5 py-2.5 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
+                              className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-bold text-xs px-5 py-3 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
                             >
                               {isRead ? "Mark as Unread" : "Mark as Read"}
                             </button>
@@ -625,7 +625,7 @@ export default function AdminNotifications() {
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden animate-fade-in">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300">
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
                 <h2 className="text-[22px] font-extrabold text-[#1a365d] tracking-tight">
                   Claim Details – {selectedClaim.claimNumber}
@@ -709,7 +709,7 @@ export default function AdminNotifications() {
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
@@ -721,7 +721,7 @@ export default function AdminNotifications() {
                   {selectedClaim.messages && selectedClaim.messages.length > 0 ? (
                     <div className="flex flex-col gap-2.5 max-h-[200px] overflow-y-auto pr-1">
                       {selectedClaim.messages.map((msg, index) => (
-                        <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1">
+                        <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1">
                           <div className="flex justify-between items-center text-[11px]">
                             <span className="font-extrabold text-[#1a365d]">{msg.sender}</span>
                             <span className="text-slate-400 font-semibold">{formatDate(msg.sentAt)}</span>
@@ -739,13 +739,13 @@ export default function AdminNotifications() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0 gap-3">
                 <Link
                   href={`/Admin/Claims?claimId=${selectedClaim.claimNumber}`}
-                  className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-extrabold text-[14px] px-6 py-2.5 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
+                  className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-extrabold text-[14px] px-6 py-3 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
                 >
                   Manage Claim
                 </Link>
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>
@@ -760,7 +760,7 @@ export default function AdminNotifications() {
         const isVehicleView = selectedVehicle !== null;
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden animate-fade-in">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300">
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
                 <h2 className="text-[22px] font-extrabold text-[#1a365d] tracking-tight">
                   {isVehicleView
@@ -853,7 +853,7 @@ export default function AdminNotifications() {
                             href={selectedUser.documents.nicFront}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-3.5 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
+                            className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-4 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
                           >
                             View NIC Front
                           </a>
@@ -866,7 +866,7 @@ export default function AdminNotifications() {
                             href={selectedUser.documents.nicBack}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-3.5 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
+                            className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-4 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
                           >
                             View NIC Back
                           </a>
@@ -879,7 +879,7 @@ export default function AdminNotifications() {
                             href={selectedUser.documents.vehicleReg}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-3.5 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
+                            className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-4 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
                           >
                             View Vehicle Reg Document
                           </a>
@@ -892,7 +892,7 @@ export default function AdminNotifications() {
                             href={selectedUser.documents.revenueLicense}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-3.5 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
+                            className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-4 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
                           >
                             View Revenue License
                           </a>
@@ -906,13 +906,13 @@ export default function AdminNotifications() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0 gap-3">
                 <Link
                   href={`/Admin/PolicyHolders?nic=${selectedUser.nic}`}
-                  className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-extrabold text-[14px] px-6 py-2.5 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
+                  className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-extrabold text-[14px] px-6 py-3 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
                 >
                   Manage Profile
                 </Link>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>
@@ -925,7 +925,7 @@ export default function AdminNotifications() {
       {/* 3. Agent Detail Modal Popup */}
       {selectedAgent && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden animate-fade-in">
+          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300">
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
               <h2 className="text-[22px] font-extrabold text-[#1a365d] tracking-tight">
                 Agent Details – {selectedAgent.name} ({selectedAgent.agentId})
@@ -1008,7 +1008,7 @@ export default function AdminNotifications() {
                       href={selectedAgent.nicFront}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-3.5 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
+                      className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-4 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
                     >
                       NIC Front
                     </a>
@@ -1018,7 +1018,7 @@ export default function AdminNotifications() {
                       href={selectedAgent.nicBack}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-3.5 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
+                      className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-4 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
                     >
                       NIC Back
                     </a>
@@ -1028,7 +1028,7 @@ export default function AdminNotifications() {
                       href={selectedAgent.birthCertificate}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-3.5 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
+                      className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-4 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
                     >
                       Birth Certificate
                     </a>
@@ -1038,7 +1038,7 @@ export default function AdminNotifications() {
                       href={selectedAgent.policeReport}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-3.5 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
+                      className="bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs p-4 rounded-xl hover:bg-slate-200 text-center transition-colors no-underline block"
                     >
                       Police Report
                     </a>
@@ -1050,13 +1050,13 @@ export default function AdminNotifications() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0 gap-3">
               <Link
                 href={`/Admin/Agents?email=${selectedAgent.email}`}
-                className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-extrabold text-[14px] px-6 py-2.5 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
+                className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-extrabold text-[14px] px-6 py-3 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
               >
                 Manage Agent
               </Link>
               <button
                 onClick={() => setSelectedAgent(null)}
-                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"
+                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
               >
                 Close
               </button>

@@ -40,15 +40,15 @@ export default function PolicyHolderNavbar() {
 
   const getLinkClass = (href: string) => {
     if (isActive(href)) {
-      return "bg-[#00ddff] text-black font-bold px-6 py-1.5 rounded-full shadow-sm transition-all duration-150 no-underline";
+      return "bg-[#00ddff] text-black font-bold px-6 py-2 rounded-full shadow-sm transition-all duration-150 no-underline";
     }
-    return "text-[#333] hover:text-[#00ddff] font-bold px-6 py-1.5 transition-all duration-150 no-underline";
+    return "text-[#333] hover:text-[#00ddff] font-bold px-6 py-2 transition-all duration-150 no-underline";
   };
 
   return (
     <div className="w-full h-[57px] md:h-[65px]">
       <nav
-        className={`fixed left-0 right-0 w-full bg-white border-b border-gray-200 py-2.5 px-6 md:px-16 z-50 transition-all duration-300 ease-in-out shadow-sm ${
+        className={`fixed left-0 right-0 w-full bg-white border-b border-gray-200 py-3 px-6 md:px-16 z-50 transition-all duration-300 ease-in-out shadow-sm ${
           isVisible ? "top-0" : "-top-24"
         }`}
       >
@@ -94,7 +94,7 @@ export default function PolicyHolderNavbar() {
             {/* Notifications Bell */}
             <Link
               href="/Policy_Holder/Notifications"
-              className="relative transition-colors duration-150 p-1.5 text-black hover:text-[#00ddff] no-underline flex items-center justify-center"
+              className="relative transition-colors duration-150 p-2 text-black hover:text-[#00ddff] no-underline flex items-center justify-center"
               aria-label="Notifications"
             >
               <svg
@@ -155,7 +155,7 @@ export default function PolicyHolderNavbar() {
             <Link
               href="/Policy_Holder/Home"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Policy_Holder/Home") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -164,7 +164,7 @@ export default function PolicyHolderNavbar() {
             <Link
               href="/Policy_Holder/My_claims"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Policy_Holder/My_claims") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -173,7 +173,7 @@ export default function PolicyHolderNavbar() {
             <Link
               href="/Policy_Holder/Documents"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Policy_Holder/Documents") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -182,7 +182,7 @@ export default function PolicyHolderNavbar() {
             <Link
               href="/Policy_Holder/Contact"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Policy_Holder/Contact") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >

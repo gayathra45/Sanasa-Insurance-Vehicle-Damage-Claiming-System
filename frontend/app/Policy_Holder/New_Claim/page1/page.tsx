@@ -368,7 +368,7 @@ export default function UploadDocumentsPage() {
           <div className="flex flex-row justify-between items-center mt-6 mb-10">
             <Link
               href="/Policy_Holder/New_Claim"
-              className={`bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center ${
+              className={`bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center ${
                 isSubmitting ? "pointer-events-none opacity-50" : ""
               }`}
             >
@@ -377,7 +377,7 @@ export default function UploadDocumentsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-[#0f2d3a]/50 text-white font-bold text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
+              className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-[#0f2d3a]/50 text-white font-bold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -399,7 +399,7 @@ export default function UploadDocumentsPage() {
       {/* Floating Chat Support Bubble */}
       <button
         type="button"
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4.5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
@@ -410,7 +410,7 @@ export default function UploadDocumentsPage() {
       {/* Success Modal Popup matching the mockup exactly */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-          <div className="bg-[#e2e8f0] border border-slate-300 rounded-[35px] md:rounded-[45px] w-full max-w-[480px] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col items-center select-none relative animate-fade-in">
+          <div className="bg-[#e2e8f0] border border-slate-300 rounded-[35px] md:rounded-[45px] w-full max-w-[480px] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col items-center select-none relative transition-all duration-300">
             {/* Green Check Circle */}
             <div className="w-20 h-20 bg-[#00b050] rounded-full flex items-center justify-center shadow-md select-none">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24">
@@ -442,7 +442,7 @@ export default function UploadDocumentsPage() {
                 router.refresh();
                 router.push("/Policy_Holder/Home");
               }}
-              className="mt-9 self-start bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-extrabold text-[14px] px-8 py-3.5 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
+              className="mt-9 self-start bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-extrabold text-[14px] px-8 py-4 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
             >
               <span>Back to Home</span>
             </button>
@@ -452,7 +452,7 @@ export default function UploadDocumentsPage() {
 
                   {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}

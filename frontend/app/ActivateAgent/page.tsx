@@ -202,7 +202,7 @@ export default function ActivateAgent() {
                 </div>
                 <button
                   onClick={() => router.push("/Login")}
-                  className="w-full bg-white hover:bg-slate-50 text-[#0f2d4a] font-bold py-3.5 rounded-full transition-all text-sm outline-none border-none cursor-pointer"
+                  className="w-full bg-white hover:bg-slate-50 text-[#0f2d4a] font-bold py-4 rounded-full transition-all text-sm outline-none border-none cursor-pointer"
                 >
                   Back to Login
                 </button>
@@ -228,7 +228,7 @@ export default function ActivateAgent() {
                       required
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-6 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all placeholder:text-gray-400 font-medium"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-6 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all placeholder:text-gray-400 font-medium"
                       placeholder="Enter activation password"
                     />
                     <button
@@ -246,7 +246,7 @@ export default function ActivateAgent() {
                         <span className="font-semibold">Password Strength:</span>
                         <span className="font-bold uppercase tracking-wider">{strength.label}</span>
                       </div>
-                      <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
                         <div className={`h-full ${strength.color} ${strength.width} transition-all duration-300 rounded-full`} />
                       </div>
                       <div className="flex flex-col gap-1 text-[11px]">
@@ -267,7 +267,7 @@ export default function ActivateAgent() {
                       required
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-6 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all placeholder:text-gray-400 font-medium"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-6 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all placeholder:text-gray-400 font-medium"
                       placeholder="Confirm your password"
                     />
                     <button
@@ -285,7 +285,7 @@ export default function ActivateAgent() {
                 <button
                   type="submit"
                   disabled={isSubmitting || newPassword !== confirmPassword}
-                  className="w-full bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3.5 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-lg cursor-pointer select-none outline-none border-none disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  className="w-full bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-lg cursor-pointer select-none outline-none border-none disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? <><Spinner /> Activating...</> : "Activate Account"}
                 </button>
@@ -294,7 +294,7 @@ export default function ActivateAgent() {
 
             {/* STAGE: Success */}
             {stage === "success" && (
-              <div className="absolute inset-0 bg-[#0e3b44]/95 backdrop-blur-xl rounded-3xl flex flex-col items-center justify-center p-8 text-center z-20 animate-fade-in">
+              <div className="absolute inset-0 bg-[#0e3b44]/95 backdrop-blur-xl rounded-3xl flex flex-col items-center justify-center p-8 text-center z-20 transition-all duration-300">
                 <div className="flex flex-col items-center max-w-sm">
                   
                   <div className="relative mb-6">

@@ -367,12 +367,12 @@ function TrackClaimsContent() {
               placeholder="Enter Claim ID (e.g. CLM-2074-1487)"
               value={claimId}
               onChange={(e) => setClaimId(e.target.value)}
-              className="w-full bg-[#f1f5f9] text-slate-800 rounded-full py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-300 font-bold placeholder:text-slate-400 placeholder:font-medium shadow-inner"
+              className="w-full bg-[#f1f5f9] text-slate-800 rounded-full py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-300 font-bold placeholder:text-slate-400 placeholder:font-medium shadow-inner"
             />
           </div>
           <button
             type="submit"
-            className="w-full md:w-auto bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-base py-3.5 px-8 rounded-full shadow-md cursor-pointer border-none transition-all duration-150 active:scale-95 whitespace-nowrap"
+            className="w-full md:w-auto bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-base py-4 px-8 rounded-full shadow-md cursor-pointer border-none transition-all duration-150 active:scale-95 whitespace-nowrap"
           >
             Track Claim
           </button>
@@ -384,7 +384,7 @@ function TrackClaimsContent() {
             Searching details...
           </div>
         ) : trackedClaim ? (
-          <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-[24px] shadow-lg overflow-hidden animate-fade-in">
+          <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-[24px] shadow-lg overflow-hidden transition-all duration-300">
             {/* Header */}
             <div className="px-8 py-5 bg-slate-50 border-b border-slate-200">
               <h3 className="text-[20px] font-extrabold text-[#0f2d3a] tracking-tight leading-none">
@@ -400,7 +400,7 @@ function TrackClaimsContent() {
 
               {/* Payment Receipt Notification Banner */}
               {trackedClaim.paymentReceipt && (
-                <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
+                <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all duration-300">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -416,7 +416,7 @@ function TrackClaimsContent() {
                     href={trackedClaim.paymentReceipt.startsWith("http") || trackedClaim.paymentReceipt.startsWith("data:") ? trackedClaim.paymentReceipt : `${API_URL.replace("/api", "")}/uploads/${trackedClaim.paymentReceipt}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
+                    className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -471,7 +471,7 @@ function TrackClaimsContent() {
                 {trackedClaim.messages && trackedClaim.messages.length > 0 ? (
                   <div className="flex flex-col gap-2.5 max-h-[160px] overflow-y-auto pr-1">
                     {trackedClaim.messages.map((msg: any, index: number) => (
-                      <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1 shadow-sm">
+                      <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                         <div className="flex justify-between items-center text-[11px] select-none">
                           <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
                           <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
@@ -502,7 +502,7 @@ function TrackClaimsContent() {
                       const reqTime = getDocRequestTime(trackedClaim, doc);
                       return (
                         <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
-                          <span className="w-1.5 h-1.5 rounded-full bg-red-650 shrink-0 mt-1.5" />
+                          <span className="w-2 h-2 rounded-full bg-red-650 shrink-0 mt-1.5" />
                           <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
                             <span className="font-extrabold">{doc}</span>
                             {reqTime && (
@@ -522,7 +522,7 @@ function TrackClaimsContent() {
                   </ul>
                   <Link
                     href={`/Policy_Holder/Documents?uploadClaim=${trackedClaim.claimNumber}`}
-                    className="inline-block bg-red-650 hover:bg-red-750 text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    className="inline-block bg-red-650 hover:bg-red-750 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                   >
                     Go to Documents
                   </Link>

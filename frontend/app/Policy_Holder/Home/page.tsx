@@ -431,7 +431,7 @@ export default function PolicyHolderHome() {
                 Welcome back, {userName} !
               </h2>
             </div>
-            <p className="text-slate-200 text-[13px] md:text-sm font-semibold tracking-wide mt-1 animate-fade-in">
+            <p className="text-slate-200 text-[13px] md:text-sm font-semibold tracking-wide mt-1 transition-all duration-300">
               {pendingClaimsCount > 0 || hasDocumentRequest ? (
                 <>
                   Your policy is active and up to date. You have{" "}
@@ -470,14 +470,14 @@ export default function PolicyHolderHome() {
           <div className="flex flex-row justify-center gap-6 mt-2">
             <Link
               href="/Policy_Holder/New_Claim"
-              className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-base md:text-lg px-10 py-4.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
               style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
             >
               New Claim
             </Link>
             <Link
               href="/Policy_Holder/TrackClaims"
-              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-base md:text-lg px-10 py-4.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
               style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
             >
               Track Claim
@@ -496,7 +496,7 @@ export default function PolicyHolderHome() {
           {/* Total Claims */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-5.5 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 flex-shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -512,7 +512,7 @@ export default function PolicyHolderHome() {
           {/* In Progress */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-5.5 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 flex-shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -528,7 +528,7 @@ export default function PolicyHolderHome() {
           {/* Approved */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-5.5 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 flex-shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -572,7 +572,7 @@ export default function PolicyHolderHome() {
                   
                   if (isUrgent) {
                     cardClass = "bg-red-50/15 border-2 border-red-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[160px]";
-                    iconClass = "p-1.5 bg-red-100 rounded-xl text-red-500 flex-shrink-0 mt-0.5";
+                    iconClass = "p-2 bg-red-100 rounded-xl text-red-500 flex-shrink-0 mt-0.5";
                     iconSvg = (
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
                         <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.522a.75.75 0 01-.297 1.228 35.754 35.754 0 01-16.142 0 .75.75 0 01-.297-1.228A9.013 9.013 0 005.25 9.75V9zm4.5 8.25a3.75 3.75 0 007.5 0H9.75z" clipRule="evenodd" />
@@ -581,7 +581,7 @@ export default function PolicyHolderHome() {
                     titleClass = "text-red-600 font-extrabold text-base leading-none";
                   } else if (isApproved) {
                     cardClass = "bg-emerald-50/15 border-2 border-emerald-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]";
-                    iconClass = "p-1.5 bg-emerald-100 rounded-xl text-emerald-500 flex-shrink-0 mt-0.5";
+                    iconClass = "p-2 bg-emerald-100 rounded-xl text-emerald-500 flex-shrink-0 mt-0.5";
                     iconSvg = (
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
                         <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.74-5.24z" clipRule="evenodd" />
@@ -590,7 +590,7 @@ export default function PolicyHolderHome() {
                     titleClass = "text-emerald-600 font-extrabold text-base leading-none";
                   } else {
                     cardClass = "bg-blue-50/15 border-2 border-blue-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]";
-                    iconClass = "p-1.5 bg-blue-100 rounded-xl text-blue-500 flex-shrink-0 mt-0.5";
+                    iconClass = "p-2 bg-blue-100 rounded-xl text-blue-500 flex-shrink-0 mt-0.5";
                     iconSvg = (
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
                         <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" />
@@ -603,7 +603,7 @@ export default function PolicyHolderHome() {
                     <div
                       key={notif.id}
                       onClick={() => notif.claim && setSelectedClaim(notif.claim)}
-                      className={`${cardClass} animate-fade-in cursor-pointer hover:shadow-md transition-shadow`}
+                      className={`${cardClass} transition-all duration-300 cursor-pointer hover:shadow-md transition-shadow`}
                     >
                       <div className="flex items-start gap-4">
                         <div className={iconClass}>
@@ -637,8 +637,8 @@ export default function PolicyHolderHome() {
                                 href={act.href}
                                 className={`${
                                   isPrimary 
-                                    ? "bg-red-600 hover:bg-red-700 text-white font-extrabold text-[13px] px-5 py-1.5 rounded-full transition-all duration-150 no-underline shadow-sm"
-                                    : "bg-[#2f3e46] hover:bg-[#1a2327] text-white font-extrabold text-[13px] px-5 py-1.5 rounded-full transition-all duration-150 no-underline"
+                                    ? "bg-red-600 hover:bg-red-700 text-white font-extrabold text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline shadow-sm"
+                                    : "bg-[#2f3e46] hover:bg-[#1a2327] text-white font-extrabold text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline"
                                 }`}
                               >
                                 {act.label}
@@ -685,7 +685,7 @@ export default function PolicyHolderHome() {
                       </div>
                       <button
                         onClick={() => setSelectedVehicleForModal(vehicle)}
-                        className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-5 py-1.5 rounded-full transition-all bg-transparent cursor-pointer outline-none"
+                        className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-5 py-2 rounded-full transition-all bg-transparent cursor-pointer outline-none"
                       >
                         View
                       </button>
@@ -703,7 +703,7 @@ export default function PolicyHolderHome() {
             <div className="bg-gradient-to-br from-cyan-50/90 via-sky-50/40 to-blue-50/20 border border-cyan-150/60 rounded-3xl p-6 shadow-md hover:shadow-lg hover:scale-[1.01] transition-all duration-300 relative overflow-hidden flex flex-col gap-4">
               
               {/* Pulsing online status indicator */}
-              <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/50 rounded-full px-2.5 py-0.5 select-none">
+              <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/50 rounded-full px-3 py-1 select-none">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -732,7 +732,7 @@ export default function PolicyHolderHome() {
                     </span>
                     <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 000</span>
                   </div>
-                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-2.5 py-0.5 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
+                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
                     Line 1
                   </span>
                 </a>
@@ -746,7 +746,7 @@ export default function PolicyHolderHome() {
                     </span>
                     <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 001</span>
                   </div>
-                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-2.5 py-0.5 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
+                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
                     Line 2
                   </span>
                 </a>
@@ -760,7 +760,7 @@ export default function PolicyHolderHome() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-black font-extrabold px-6 py-4.5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black">
+        <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-black font-extrabold px-6 py-5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black">
           <svg className="w-6 h-6 animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
@@ -770,7 +770,7 @@ export default function PolicyHolderHome() {
 
       {/* Vehicle Detail Popup Modal */}
       {selectedVehicleForModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 animate-fade-in">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[620px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden">
             
             {/* Modal Header */}
@@ -842,7 +842,7 @@ export default function PolicyHolderHome() {
                 <Link
                   href={`/Policy_Holder/New_Claim?plate=${encodeURIComponent(selectedVehicleForModal.numberPlate)}`}
                   onClick={() => setSelectedVehicleForModal(null)}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-3.5 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -851,7 +851,7 @@ export default function PolicyHolderHome() {
                 </Link>
                 <button
                   onClick={() => handleDownloadCoverNote(selectedVehicleForModal)}
-                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm py-3.5 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -866,7 +866,7 @@ export default function PolicyHolderHome() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedVehicleForModal(null)}
-                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
               >
                 Close
               </button>
@@ -942,7 +942,7 @@ export default function PolicyHolderHome() {
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
               
               {/* Modal Header Title */}
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
@@ -1001,7 +1001,7 @@ export default function PolicyHolderHome() {
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
@@ -1016,7 +1016,7 @@ export default function PolicyHolderHome() {
                       return (
                         <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
                           {filteredMessages.map((msg: any, index: number) => (
-                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1 shadow-sm">
+                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                               <div className="flex justify-between items-center text-[11px] select-none">
                                 <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
                                 <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
@@ -1051,7 +1051,7 @@ export default function PolicyHolderHome() {
                         const reqTime = getDocRequestTime(selectedClaim, doc);
                         return (
                           <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
+                            <span className="w-2 h-2 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
                               <span className="font-extrabold">{doc}</span>
                               {reqTime && (
@@ -1071,7 +1071,7 @@ export default function PolicyHolderHome() {
                     </ul>
                     <Link
                       href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
-                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
                       Go to Documents
                     </Link>
@@ -1083,7 +1083,7 @@ export default function PolicyHolderHome() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>
@@ -1096,7 +1096,7 @@ export default function PolicyHolderHome() {
 
       {/* Floating Chat Bubble Button */}
       <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4.5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">

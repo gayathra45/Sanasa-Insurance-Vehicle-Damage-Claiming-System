@@ -85,7 +85,7 @@ export default function Login() {
         
         {/* Left Side: Large Title */}
         <div className="flex flex-col items-center lg:items-start text-center lg:text-left text-white max-w-md">
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] animate-fade-in">
+          <h1 className="text-6xl md:text-8xl font-bold tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] transition-all duration-300">
             Login
           </h1>
         </div>
@@ -94,7 +94,7 @@ export default function Login() {
         <div className="w-full max-w-[500px] bg-white/10 backdrop-blur-md border border-white/20 rounded-[2.5rem] p-8 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-8 transition-all duration-500 hover:border-white/30">
           
           {error && (
-            <div className="flex items-start gap-3 bg-red-500/15 backdrop-blur-md border border-red-500/30 text-red-100 p-4 rounded-2xl animate-fade-in shadow-[0_4px_20px_rgba(239,68,68,0.2)] relative overflow-hidden">
+            <div className="flex items-start gap-3 bg-red-500/15 backdrop-blur-md border border-red-500/30 text-red-100 p-4 rounded-2xl transition-all duration-300 shadow-[0_4px_20px_rgba(239,68,68,0.2)] relative overflow-hidden">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 rounded-l-2xl" />
               <span className="text-red-400 mt-0.5 shrink-0 pl-1">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -159,7 +159,7 @@ export default function Login() {
                     setLoginId(e.target.value);
                     if (error) setError(null);
                   }}
-                  className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                  className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
                   placeholder="Enter your NIC or Email address"
                 />
               </div>
@@ -195,7 +195,7 @@ export default function Login() {
                     setPassword(e.target.value);
                     if (error) setError(null);
                   }}
-                  className="w-full bg-white text-slate-800 rounded-2xl py-3.5 pl-12 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                  className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
                   placeholder="Enter your password"
                 />
                 {password.length > 0 && (
@@ -248,7 +248,7 @@ export default function Login() {
             {/* Confirm Button */}
             <button
               type="submit"
-              className="mt-4 w-full max-w-[220px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3.5 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-lg cursor-pointer select-none outline-none border-none"
+              className="mt-4 w-full max-w-[220px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-lg cursor-pointer select-none outline-none border-none"
             >
               Confirm
             </button>

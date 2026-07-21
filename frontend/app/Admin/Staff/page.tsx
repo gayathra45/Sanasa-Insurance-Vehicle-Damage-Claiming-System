@@ -180,11 +180,11 @@ export default function AdminStaffPage() {
               </h1>
               {/* Desktop welcome title */}
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
-                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">Admin Portal</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin Portal</span>
                 <span className="hidden lg:inline"> — Office Staff Management</span>
               </h1>
             </div>
-            <div className="text-sm font-semibold bg-slate-100 px-4 py-1.5 rounded-full text-slate-600 border border-slate-200">
+            <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full text-slate-600 border border-slate-200">
               System Admin
             </div>
           </header>
@@ -246,7 +246,7 @@ export default function AdminStaffPage() {
                   </svg>
                   <span>Password Reset Requests</span>
                   {pendingRequestsCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-5.5 h-5.5 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-6 h-6 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
                       {pendingRequestsCount}
                     </span>
                   )}
@@ -259,8 +259,8 @@ export default function AdminStaffPage() {
 
       {/* Register New Branch Modal (Redesigned in Claim Style) */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-2xl shadow-2xl flex flex-col relative animate-fade-in overflow-hidden max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-2xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
@@ -289,7 +289,7 @@ export default function AdminStaffPage() {
             <form onSubmit={handleFormSubmit} className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-6 text-left">
               {formError && (
                 <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-xl border border-red-100 flex items-center gap-2">
-                  <svg className="w-4.5 h-4.5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <span>{formError}</span>
@@ -297,7 +297,7 @@ export default function AdminStaffPage() {
               )}
               {formSuccess && (
                 <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-xl border border-emerald-100 flex items-center gap-2">
-                  <svg className="w-4.5 h-4.5 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <span>{formSuccess}</span>
@@ -326,7 +326,7 @@ export default function AdminStaffPage() {
                         value={formData.branch}
                         onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
                         placeholder="E.g., Galle"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                       />
                     </div>
                   </div>
@@ -346,7 +346,7 @@ export default function AdminStaffPage() {
                         value={formData.province}
                         onChange={(e) => setFormData({ ...formData, province: e.target.value })}
                         placeholder="E.g., Southern"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                       />
                     </div>
                   </div>
@@ -366,7 +366,7 @@ export default function AdminStaffPage() {
                         min={1}
                         value={formData.staffCount}
                         onChange={(e) => setFormData({ ...formData, staffCount: Number(e.target.value) })}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                       />
                     </div>
                   </div>
@@ -387,7 +387,7 @@ export default function AdminStaffPage() {
                         value={formData.location}
                         onChange={(e) => setFormData({ ...formData, location: e.target.value })}
                         placeholder="E.g., 12 Old Foods Road, Galle"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all resize-none font-semibold bg-white"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all resize-none font-semibold bg-white"
                       />
                     </div>
                   </div>
@@ -415,7 +415,7 @@ export default function AdminStaffPage() {
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       placeholder="E.g., Galle Branch Office Staff"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                     />
                   </div>
                 </div>
@@ -436,7 +436,7 @@ export default function AdminStaffPage() {
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         placeholder="e.g. galle@sanasainsurance.lk"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                       />
                     </div>
                   </div>
@@ -456,7 +456,7 @@ export default function AdminStaffPage() {
                         value={formData.mobile}
                         onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                         placeholder="e.g. 0768088176"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                       />
                     </div>
                   </div>
@@ -497,8 +497,8 @@ export default function AdminStaffPage() {
 
       {/* Password Requests Modal (Redesigned in Claim Style) */}
       {showRequestsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative animate-fade-in overflow-hidden max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
@@ -546,7 +546,7 @@ export default function AdminStaffPage() {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                   {passwordRequests.map((request) => (
-                    <div key={request._id} className="border border-slate-200 rounded-2xl p-5.5 bg-slate-50 hover:bg-slate-100/50 hover:shadow-sm transition-all flex flex-col gap-4 relative">
+                    <div key={request._id} className="border border-slate-200 rounded-2xl p-6 bg-slate-50 hover:bg-slate-100/50 hover:shadow-sm transition-all flex flex-col gap-4 relative">
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center flex-shrink-0 shadow-inner">
@@ -559,8 +559,8 @@ export default function AdminStaffPage() {
                             <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mt-1">{request.branch} Branch Office</span>
                           </div>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black tracking-wider uppercase select-none flex items-center gap-1 animate-pulse">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black tracking-wider uppercase select-none flex items-center gap-1 animate-pulse">
+                          <span className="w-2 h-2 rounded-full bg-amber-500" />
                           Pending Reset
                         </span>
                       </div>
@@ -605,7 +605,7 @@ export default function AdminStaffPage() {
                         >
                           {actioningRequestId === request._id ? (
                             <>
-                              <svg className="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+                              <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                               </svg>
@@ -613,7 +613,7 @@ export default function AdminStaffPage() {
                             </>
                           ) : (
                             <>
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor" className="w-3.5 h-3.5">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor" className="w-4 h-4">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                               </svg>
                               <span>Approve</span>
@@ -628,7 +628,7 @@ export default function AdminStaffPage() {
             </div>
             
             {/* Modal Footer */}
-            <div className="px-8 py-4.5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0 select-none">
+            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0 select-none">
               <button
                 onClick={() => setShowRequestsModal(false)}
                 className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95"

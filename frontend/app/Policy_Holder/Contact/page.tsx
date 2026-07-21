@@ -243,7 +243,7 @@ export default function PolicyHolderContact() {
 
       {/* Floating Chat Bubble Button */}
       <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4.5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
@@ -362,14 +362,14 @@ export default function PolicyHolderContact() {
                     setShowEmailModal(false);
                     setModalFeedback(null);
                   }}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-7 py-3.5 rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-7 py-4 rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="bg-[#0d2a3a] hover:bg-[#0284c7] disabled:bg-slate-400 text-white font-bold text-sm px-9 py-3.5 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-150 active:scale-[0.98] cursor-pointer border-none flex items-center justify-center gap-2 min-w-[130px]"
+                  className="bg-[#0d2a3a] hover:bg-[#0284c7] disabled:bg-slate-400 text-white font-bold text-sm px-9 py-4 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-150 active:scale-[0.98] cursor-pointer border-none flex items-center justify-center gap-2 min-w-[130px]"
                 >
                   {isSending ? (
                     <>

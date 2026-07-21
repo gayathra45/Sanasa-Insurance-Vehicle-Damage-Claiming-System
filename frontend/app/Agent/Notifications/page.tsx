@@ -458,7 +458,7 @@ export default function AgentNotifications() {
               onClick={markAllAsRead}
               className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-bold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
             >
-              <svg className="w-4.5 h-4.5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
               </svg>
               Mark All as Read
@@ -471,7 +471,7 @@ export default function AgentNotifications() {
         <div className="flex flex-wrap gap-2.5 mb-8 border-b border-slate-100 pb-5 select-none">
           <button
             onClick={() => setActiveTab("all")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "all"
                 ? "bg-[#0f172a] border-[#0f172a] text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -481,14 +481,14 @@ export default function AgentNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("unread")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "unread"
                 ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Unread
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "unread" ? "bg-white/20 text-white" : "bg-red-500 text-white"
             }`}>
               {notifications.filter((n) => !readIds.includes(n.id)).length}
@@ -496,14 +496,14 @@ export default function AgentNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("read")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "read"
                 ? "bg-slate-600 border-slate-600 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Read
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "read" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
             }`}>
               {notifications.filter((n) => readIds.includes(n.id)).length}
@@ -511,7 +511,7 @@ export default function AgentNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("action")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "action"
                 ? "bg-red-500 border-red-500 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -521,7 +521,7 @@ export default function AgentNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("decision")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "decision"
                 ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -531,7 +531,7 @@ export default function AgentNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("message")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "message"
                 ? "bg-amber-500 border-amber-500 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -541,7 +541,7 @@ export default function AgentNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("staff_message")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "staff_message"
                 ? "bg-purple-600 border-purple-600 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -636,7 +636,7 @@ export default function AgentNotifications() {
                             {n.title}
                           </h4>
                           {!isRead && (
-                            <span className="w-2.5 h-2.5 bg-cyan-500 rounded-full border border-white" title="Unread Alert" />
+                            <span className="w-3 h-3 bg-cyan-500 rounded-full border border-white" title="Unread Alert" />
                           )}
                         </div>
 
@@ -653,7 +653,7 @@ export default function AgentNotifications() {
 
                     <div
                       onClick={(e) => e.stopPropagation()}
-                      className="bg-slate-50/50 px-6 py-4.5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
+                      className="bg-slate-50/50 px-6 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
                     >
                       <div className="flex flex-wrap items-center gap-3.5 pl-0 md:pl-14">
                         {n.actionLabel === "View" ? (
@@ -662,14 +662,14 @@ export default function AgentNotifications() {
                               setSelectedClaim(n.claim);
                               markAsRead(n.id);
                             }}
-                            className="font-bold text-xs md:text-sm px-6 py-2.5 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none bg-[#0f172a] hover:bg-[#0891b2] text-white"
+                            className="font-bold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none bg-[#0f172a] hover:bg-[#0891b2] text-white"
                           >
                             View
                           </button>
                         ) : (
                           <Link
                             href={n.link}
-                            className={`font-bold text-xs md:text-sm px-6 py-2.5 rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline ${
+                            className={`font-bold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline ${
                               isUrgent
                                 ? "bg-red-500 hover:bg-red-600 text-white"
                                 : n.type === "decision"
@@ -686,7 +686,7 @@ export default function AgentNotifications() {
                             e.stopPropagation();
                             toggleReadStatus(n.id);
                           }}
-                          className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-bold text-xs px-5 py-2.5 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
+                          className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-bold text-xs px-5 py-3 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
                         >
                           {isRead ? "Mark as Unread" : "Mark as Read"}
                         </button>
@@ -782,7 +782,7 @@ export default function AgentNotifications() {
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
               
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
                 <h2 className="text-[22px] font-extrabold text-[#0f2d3a] tracking-tight leading-none text-slate-800">
@@ -831,7 +831,7 @@ export default function AgentNotifications() {
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
@@ -840,7 +840,7 @@ export default function AgentNotifications() {
                 {selectedClaim.inspectionReport && (
                   <div className="px-2 mb-6">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Submitted Inspection Report</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed whitespace-pre-wrap bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       {selectedClaim.inspectionReport}
                     </p>
                   </div>
@@ -851,7 +851,7 @@ export default function AgentNotifications() {
                   {selectedClaim.messages && selectedClaim.messages.length > 0 ? (
                     <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
                       {selectedClaim.messages.map((msg, index) => (
-                        <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1 shadow-sm">
+                        <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                           <div className="flex justify-between items-center text-[11px] select-none">
                             <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
                             <span className="text-slate-400 font-semibold">{formatDate(msg.sentAt)}</span>
@@ -873,13 +873,13 @@ export default function AgentNotifications() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-shrink-0">
                 <Link
                   href={`/Agent/Dashboard?claimId=${selectedClaim.claimNumber}`}
-                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm"
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm"
                 >
                   Manage Claim in Dashboard
                 </Link>
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>

@@ -162,28 +162,28 @@ const renderPremiumInspectionReport = (reportText: string) => {
     if (val === "None") {
       color = "text-emerald-600 bg-emerald-50/40 border-emerald-200/60";
       icon = (
-        <svg className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
         </svg>
       );
     } else if (val === "Minor") {
       color = "text-amber-600 bg-amber-50/40 border-amber-200/60";
       icon = (
-        <svg className="w-3.5 h-3.5 text-amber-550 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-amber-550 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
         </svg>
       );
     } else if (val === "Major") {
       color = "text-rose-600 bg-rose-50/40 border-rose-200/60";
       icon = (
-        <svg className="w-3.5 h-3.5 text-rose-505 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-rose-505 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.03V3m0 0a8.001 8.001 0 00-7.797 6.138m15.594 0A8.001 8.001 0 0012 3M3.243 9.75a8.002 8.002 0 008.757 8.757m0 0A8.002 8.002 0 0020.757 9.75" />
         </svg>
       );
     }
 
     return (
-      <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
+      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
         {icon}
         {val}
       </span>
@@ -195,14 +195,14 @@ const renderPremiumInspectionReport = (reportText: string) => {
       {/* Dashboard Title */}
       <div className="flex items-center justify-between border-b border-slate-200 pb-4 select-none">
         <div className="flex items-center gap-3">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
           <div>
             <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
             <span className="text-[10px] font-bold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
           </div>
         </div>
-        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-extrabold tracking-wider uppercase px-3.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-extrabold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
           </svg>
           Verified By Agent
@@ -212,7 +212,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Odometer */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4.5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
+        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Odometer</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-black text-slate-800">{parsed.odometer || "N/A"}</span>
@@ -221,7 +221,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         </div>
 
         {/* Card 2: Fuel Level */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4.5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
+        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Fuel Level</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-black text-slate-800">{parsed.fuelLevel || "N/A"}</span>
@@ -230,7 +230,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         </div>
 
         {/* Card 3: Estimated Cost */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4.5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
+        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-black text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
@@ -239,7 +239,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         </div>
 
         {/* Card 4: Recommendation */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4.5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
+        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
           <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Recommendation</span>
           <div className="flex items-baseline gap-1 mt-2 overflow-hidden">
             <span className="text-[13px] font-black text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
@@ -256,7 +256,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
             <div className="space-y-2">
               {Object.entries(parsed.checklist || {}).map(([key, value]) => (
-                <div key={key} className="flex justify-between items-center py-1.5 border-b border-slate-50 last:border-0">
+                <div key={key} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
                   <span className="text-slate-700 font-bold text-xs">{key}</span>
                   {renderBadge(value)}
                 </div>
@@ -821,7 +821,7 @@ export default function AgentMyClaims() {
         <div className="flex flex-wrap gap-2.5 mb-8 border-b border-slate-100 pb-5 select-none">
           <button
             onClick={() => setActiveTab("all")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "all"
                 ? "bg-[#0f2d3a] border-[#0f2d3a] text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -831,14 +831,14 @@ export default function AgentMyClaims() {
           </button>
           <button
             onClick={() => setActiveTab("urgent")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "urgent"
                 ? "bg-red-500 border-red-500 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Urgent Claims
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "urgent" ? "bg-white/20 text-white" : "bg-red-550 text-white"
             }`}>
               {claims.filter(c => getSeverity(c) === "Urgent").length}
@@ -846,14 +846,14 @@ export default function AgentMyClaims() {
           </button>
           <button
             onClick={() => setActiveTab("new")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "new"
                 ? "bg-amber-500 border-amber-500 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             New Assignments
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "new" ? "bg-white/20 text-white" : "bg-amber-500 text-white"
             }`}>
               {claims.filter(c => c.status === "Pending" && c.currentStep === 2).length}
@@ -861,14 +861,14 @@ export default function AgentMyClaims() {
           </button>
           <button
             onClick={() => setActiveTab("pending")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "pending"
                 ? "bg-cyan-600 border-cyan-600 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Pending / In Progress
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "pending" ? "bg-white/20 text-white" : "bg-cyan-600 text-white"
             }`}>
               {claims.filter(c => c.status === "In Progress" || c.currentStep === 3).length}
@@ -937,7 +937,7 @@ export default function AgentMyClaims() {
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Claim Number</span>
                         <div className="text-sm font-black text-slate-800 flex items-center gap-2 flex-wrap">
                           {claim.claimNumber}
-                          <span className={`text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full select-none tracking-wide border ${badgeStyle}`}>
+                          <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full select-none tracking-wide border ${badgeStyle}`}>
                             {badgeLabel}
                           </span>
                         </div>
@@ -976,7 +976,7 @@ export default function AgentMyClaims() {
                     {/* Action button */}
                     <button
                       onClick={() => setSelectedClaim(claim)}
-                      className="bg-[#0f2d3a] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-black py-2.5 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
+                      className="bg-[#0f2d3a] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-black py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
                     >
                       View Details
                     </button>
@@ -994,7 +994,7 @@ export default function AgentMyClaims() {
           
           {/* SUB-MODAL 1: DOCUMENTS */}
           {activeSubModal === "documents" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
@@ -1065,7 +1065,7 @@ export default function AgentMyClaims() {
                               key={idx}
                               type="button"
                               onClick={() => setPreviewImage(docUrl || null)}
-                              className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-3.5 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
+                              className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <svg className="w-5 h-5 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
@@ -1119,7 +1119,7 @@ export default function AgentMyClaims() {
                                 onClick={() => {
                                   alert(`--- Inspection Report ---\n\n${doc.textContent}`);
                                 }}
-                                className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-3.5 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
+                                className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
                                 <svg className="w-5 h-5 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -1137,7 +1137,7 @@ export default function AgentMyClaims() {
                               key={idx}
                               type="button"
                               onClick={() => setPreviewImage(docUrl || null)}
-                              className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-3.5 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
+                              className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <svg className="w-5 h-5 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
@@ -1164,7 +1164,7 @@ export default function AgentMyClaims() {
                                   key={type}
                                   type="button"
                                   onClick={() => setAgentUploadDocName(type)}
-                                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border cursor-pointer select-none ${
+                                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all border cursor-pointer select-none ${
                                     isSelected
                                       ? "bg-red-650 border-red-650 text-white shadow-sm"
                                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -1234,7 +1234,7 @@ export default function AgentMyClaims() {
                                 className="bg-red-550 hover:bg-red-100 text-red-500 border border-red-200 rounded-full p-2 transition-colors cursor-pointer border-none"
                                 title="Remove file"
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.2" stroke="currentColor" className="w-4.5 h-4.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.2" stroke="currentColor" className="w-5 h-5">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                 </svg>
                               </button>
@@ -1272,13 +1272,13 @@ export default function AgentMyClaims() {
 
           {/* MAIN DETAILS MODAL */}
           {activeSubModal === null && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[780px] max-h-[90vh] p-8 shadow-2xl relative flex flex-col animate-fade-in select-none">
+            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[780px] max-h-[90vh] p-8 shadow-2xl relative flex flex-col transition-all duration-300 select-none">
               
               {/* Close Button X */}
               <button
                 type="button"
                 onClick={() => setSelectedClaim(null)}
-                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent"
+                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent"
                 title="Close"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1293,10 +1293,10 @@ export default function AgentMyClaims() {
                     {getPolicyHolderName(selectedClaim.userNic)}
                   </h2>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider">
                       ID: {selectedClaim.claimNumber}
                     </span>
-                    <span className={`border rounded-lg px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                    <span className={`border rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
                       selectedClaim.status.toLowerCase() === "pending"
                         ? "border-amber-300 text-amber-700 bg-amber-50/50"
                         : selectedClaim.status.toLowerCase() === "in progress"
@@ -1305,7 +1305,7 @@ export default function AgentMyClaims() {
                         ? "border-emerald-300 text-emerald-700 bg-emerald-50/50"
                         : "border-red-300 text-red-700 bg-red-50/50"
                     }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${
+                      <span className={`w-2 h-2 rounded-full ${
                         selectedClaim.status.toLowerCase() === "pending"
                           ? "bg-amber-500 animate-pulse"
                           : selectedClaim.status.toLowerCase() === "in progress"
@@ -1427,7 +1427,7 @@ export default function AgentMyClaims() {
                     <button
                       type="button"
                       onClick={() => setActiveSubModal("documents")}
-                      className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-2.5 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
+                      className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
@@ -1464,7 +1464,7 @@ export default function AgentMyClaims() {
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
                       <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
-                        <svg className="w-4.5 h-4.5 text-[#0f2d4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <svg className="w-5 h-5 text-[#0f2d4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                         </svg>
                         Policy Holder Attachments & Photos
@@ -1522,9 +1522,9 @@ export default function AgentMyClaims() {
                     type="button"
                     onClick={() => handleAcceptClaim(selectedClaim._id)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-3.5 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
-                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                     Accept Assignment
@@ -1533,9 +1533,9 @@ export default function AgentMyClaims() {
                     type="button"
                     onClick={() => handleDeclineClaim(selectedClaim._id, selectedClaim.claimNumber)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-black text-sm py-3.5 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
-                    <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Decline Assignment
@@ -1545,7 +1545,7 @@ export default function AgentMyClaims() {
 
               {/* Status Banner for Accepted (In Progress / Approved) Claims */}
               {selectedClaim.currentStep >= 3 && !selectedClaim.inspectionSubmitted && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
-                <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-6 text-center select-none animate-fade-in flex-shrink-0">
+                <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-6 text-center select-none transition-all duration-300 flex-shrink-0">
                   <p className="text-emerald-800 text-xs md:text-sm font-black flex items-center justify-center gap-2">
                     <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
@@ -1565,7 +1565,7 @@ export default function AgentMyClaims() {
 
       {/* Preview Image Modal Overlay */}
       {previewImage && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm transition-all duration-300">
           <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-2xl p-2 overflow-hidden shadow-2xl flex flex-col items-center">
             <button
               onClick={() => setPreviewImage(null)}
@@ -1586,11 +1586,11 @@ export default function AgentMyClaims() {
 
       {/* Styled UI Redirect Modal Overlay */}
       {showMobileRedirect && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-all duration-300">
           <div className="relative w-full max-w-md bg-white rounded-[32px] p-8 shadow-2xl flex flex-col items-center text-center">
             <button
               onClick={() => setShowMobileRedirect(false)}
-              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-all border-none bg-transparent cursor-pointer"
+              className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all border-none bg-transparent cursor-pointer"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -1633,7 +1633,7 @@ export default function AgentMyClaims() {
 
             <button
               onClick={() => setShowMobileRedirect(false)}
-              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-extrabold text-xs py-3.5 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
+              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
             >
               Okay, Got It
             </button>

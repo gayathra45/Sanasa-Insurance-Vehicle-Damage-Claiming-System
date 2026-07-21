@@ -440,15 +440,15 @@ export default function MyClaims() {
             <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Performance Summary</span>
 
             <div className="grid grid-cols-3 gap-3 text-center mt-3">
-              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-2.5 flex flex-col justify-center">
+              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                 <span className="text-xl font-black text-slate-800">{totalClaimsThisYear}</span>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Claims</span>
               </div>
-              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-2.5 flex flex-col justify-center">
+              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                 <span className="text-xl font-black text-slate-800">{pendingClaimsThisYear}</span>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Pending</span>
               </div>
-              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-2.5 flex flex-col justify-center">
+              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                 <span className="text-xl font-black text-slate-800">{completedClaimsThisYear}</span>
                 <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Completed</span>
               </div>
@@ -535,7 +535,7 @@ export default function MyClaims() {
                 onClick={() => setSearchQuery("")}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -579,7 +579,7 @@ export default function MyClaims() {
                   <div
                     key={claim.claimNumber}
                     onClick={() => setSelectedClaim(claim)}
-                    className={`bg-white border border-slate-200 hover:border-[#0f2d4a] rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${
+                    className={`bg-white border border-slate-200 hover:border-[#0f2d4a] rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${
                       isUrgent ? "border-l-4 border-l-[#0f2d4a]" : "border-l-4 border-l-slate-300"
                     }`}
                   >
@@ -621,7 +621,7 @@ export default function MyClaims() {
                       <button
                         type="button"
                         onClick={() => setSelectedClaim(claim)}
-                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
                       >
                         Details
                       </button>
@@ -639,7 +639,7 @@ export default function MyClaims() {
       {/* Floating Chat Support Bubble matching the mockup */}
       <button
         type="button"
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4.5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
@@ -715,7 +715,7 @@ export default function MyClaims() {
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
               
               {/* Modal Header Title */}
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
@@ -738,7 +738,7 @@ export default function MyClaims() {
 
                 {/* Payment Receipt Notification Banner */}
                 {selectedClaim.paymentReceipt && (
-                  <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
+                  <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -754,7 +754,7 @@ export default function MyClaims() {
                       href={selectedClaim.paymentReceipt.startsWith("http") || selectedClaim.paymentReceipt.startsWith("data:") ? selectedClaim.paymentReceipt : `${API_URL.replace("/api", "")}/uploads/${selectedClaim.paymentReceipt}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
+                      className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -798,7 +798,7 @@ export default function MyClaims() {
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
@@ -812,7 +812,7 @@ export default function MyClaims() {
                       return (
                         <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
                           {filteredMessages.map((msg: any, index: number) => (
-                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1 shadow-sm">
+                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                               <div className="flex justify-between items-center text-[11px] select-none">
                                 <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
                                 <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
@@ -847,7 +847,7 @@ export default function MyClaims() {
                         const reqTime = getDocRequestTime(selectedClaim, doc);
                         return (
                           <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
+                            <span className="w-2 h-2 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
                               <span className="font-extrabold">{doc}</span>
                               {reqTime && (
@@ -867,7 +867,7 @@ export default function MyClaims() {
                     </ul>
                     <Link
                       href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
-                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
                       Go to Documents
                     </Link>
@@ -881,7 +881,7 @@ export default function MyClaims() {
                   <button
                     onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
                     disabled={isCancellingClaim}
-                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-2.5 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -894,7 +894,7 @@ export default function MyClaims() {
 
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95 flex items-center justify-center"
+                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95 flex items-center justify-center"
                 >
                   Close
                 </button>

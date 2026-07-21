@@ -509,7 +509,7 @@ export default function PolicyHolderDocuments() {
                   <div className="flex flex-col items-end justify-between self-stretch md:self-auto gap-4">
                     <button
                       onClick={() => handleOpenUpload(claim)}
-                      className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all duration-150 shadow-[0_4px_15px_rgba(220,38,38,0.25)] hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto text-center cursor-pointer border-none"
+                      className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all duration-150 shadow-[0_4px_15px_rgba(220,38,38,0.25)] hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto text-center cursor-pointer border-none"
                     >
                       Upload
                     </button>
@@ -587,7 +587,7 @@ export default function PolicyHolderDocuments() {
                         setUploadedListTargetClaim(claim);
                         setUploadedListModalOpen(true);
                       }}
-                      className="border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-500 hover:text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 cursor-pointer bg-white"
+                      className="border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-500 hover:text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 cursor-pointer bg-white"
                     >
                       View
                     </button>
@@ -602,7 +602,7 @@ export default function PolicyHolderDocuments() {
 
       {/* Floating Chat Bubble Button */}
       <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4.5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
@@ -613,7 +613,7 @@ export default function PolicyHolderDocuments() {
       {/* UPLOAD DOCUMENT DIALOG MODAL */}
       {uploadModalOpen && uploadTargetClaim && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-          <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative animate-fade-in max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative transition-all duration-300 max-h-[90vh] overflow-y-auto">
 
             {!uploadSuccess ? (
               <form onSubmit={handleUploadSubmit} className="flex flex-col">
@@ -684,14 +684,14 @@ export default function PolicyHolderDocuments() {
                   <button
                     type="button"
                     onClick={() => setUploadModalOpen(false)}
-                    className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-bold text-sm px-14 py-3.5 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                    className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
                   >
                     &lt; Close
                   </button>
                   <button
                     type="submit"
                     disabled={isUploading}
-                    className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-slate-400 active:scale-[0.97] text-white font-bold text-sm px-14 py-3.5 rounded-full transition-all duration-150 cursor-pointer border-none flex items-center justify-center gap-2 min-w-[140px] text-center"
+                    className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-slate-400 active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none flex items-center justify-center gap-2 min-w-[140px] text-center"
                   >
                     {isUploading ? (
                       <>
@@ -706,7 +706,7 @@ export default function PolicyHolderDocuments() {
               </form>
             ) : (
               /* Upload Complete Success View */
-              <div className="flex flex-col items-center select-none text-center py-6 animate-fade-in">
+              <div className="flex flex-col items-center select-none text-center py-6 transition-all duration-300">
                 {/* Green Checkmark Circle */}
                 <div className="w-16 h-16 bg-[#00b050] rounded-full flex items-center justify-center shadow-md select-none">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24">
@@ -730,7 +730,7 @@ export default function PolicyHolderDocuments() {
                       fetchClaims(user.nic);
                     }
                   }}
-                  className="mt-8 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-extrabold text-[14px] px-10 py-3.5 rounded-full transition-all duration-150 shadow-md border-none cursor-pointer"
+                  className="mt-8 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-extrabold text-[14px] px-10 py-4 rounded-full transition-all duration-150 shadow-md border-none cursor-pointer"
                 >
                   Done
                 </button>
@@ -744,7 +744,7 @@ export default function PolicyHolderDocuments() {
       {/* UPLOADED DOCUMENTS LIST DIALOG MODAL */}
       {uploadedListModalOpen && uploadedListTargetClaim && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-          <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative animate-fade-in max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative transition-all duration-300 max-h-[90vh] overflow-y-auto">
 
             <div className="select-none text-left">
               <h2 className="text-[26px] font-bold text-slate-950 tracking-tight leading-tight">
@@ -788,7 +788,7 @@ export default function PolicyHolderDocuments() {
               <button
                 type="button"
                 onClick={() => setUploadedListModalOpen(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-bold text-sm px-14 py-3.5 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
                 &lt; Close
               </button>
@@ -801,7 +801,7 @@ export default function PolicyHolderDocuments() {
       {/* VIEW DOCUMENT VIEWER MODAL */}
       {viewModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-          <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative animate-fade-in max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative transition-all duration-300 max-h-[90vh] overflow-y-auto">
 
             {/* Header */}
             {(() => {
@@ -895,7 +895,7 @@ export default function PolicyHolderDocuments() {
               <button
                 type="button"
                 onClick={() => setViewModalOpen(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-bold text-sm px-14 py-3.5 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
                 &lt; Close
               </button>

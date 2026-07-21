@@ -258,11 +258,11 @@ export default function AdminAdminsPage() {
                 </svg>
               </button>
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
-                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">Admin Portal</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin Portal</span>
                 <span className="hidden lg:inline"> — Administrators Management</span>
               </h1>
             </div>
-            <div className="text-sm font-semibold bg-slate-100 px-4 py-1.5 rounded-full text-slate-600 border border-slate-200">
+            <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full text-slate-600 border border-slate-200">
               System Admin
             </div>
           </header>
@@ -315,7 +315,7 @@ export default function AdminAdminsPage() {
                   </svg>
                   <span>Pending Registrations</span>
                   {pendingCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-5.5 h-5.5 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-6 h-6 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
                       {pendingCount}
                     </span>
                   )}
@@ -333,7 +333,7 @@ export default function AdminAdminsPage() {
                   </svg>
                   <span>Password Reset Requests</span>
                   {requestsCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-5.5 h-5.5 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-6 h-6 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
                       {requestsCount}
                     </span>
                   )}
@@ -386,11 +386,11 @@ export default function AdminAdminsPage() {
                     <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
                       {activeAdmins.map((admin) => (
                         <tr key={admin._id} className="hover:bg-slate-50/75 transition-colors">
-                          <td className="py-3.5 px-6 font-extrabold text-slate-800">{admin.name}</td>
-                          <td className="py-3.5 px-6 text-slate-600 select-all">{admin.email}</td>
-                          <td className="py-3.5 px-6 text-slate-600">{admin.mobile}</td>
-                          <td className="py-3.5 px-6 text-slate-600 uppercase">{admin.nic}</td>
-                          <td className="py-3.5 px-6 text-slate-400 select-none">
+                          <td className="py-4 px-6 font-extrabold text-slate-800">{admin.name}</td>
+                          <td className="py-4 px-6 text-slate-600 select-all">{admin.email}</td>
+                          <td className="py-4 px-6 text-slate-600">{admin.mobile}</td>
+                          <td className="py-4 px-6 text-slate-600 uppercase">{admin.nic}</td>
+                          <td className="py-4 px-6 text-slate-400 select-none">
                             {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A"}
                           </td>
                         </tr>
@@ -406,8 +406,8 @@ export default function AdminAdminsPage() {
 
       {/* MODAL 1: Register New Admin */}
       {showRegisterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col relative animate-fade-in overflow-hidden max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
               <div>
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Register Admin Request</h2>
@@ -428,7 +428,7 @@ export default function AdminAdminsPage() {
             <form onSubmit={handleRegisterSubmit} className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-5 text-left">
               {formError && (
                 <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-xl border border-red-100 flex items-center gap-2">
-                  <svg className="w-4.5 h-4.5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <span>{formError}</span>
@@ -436,7 +436,7 @@ export default function AdminAdminsPage() {
               )}
               {formSuccess && (
                 <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-xl border border-emerald-100 flex items-center gap-2">
-                  <svg className="w-4.5 h-4.5 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <span>{formSuccess}</span>
@@ -455,7 +455,7 @@ export default function AdminAdminsPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter Full Name"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                   />
                 </div>
 
@@ -468,7 +468,7 @@ export default function AdminAdminsPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="example@sanasainsurance.lk"
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                   />
                 </div>
 
@@ -482,7 +482,7 @@ export default function AdminAdminsPage() {
                       value={formData.mobile}
                       onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                       placeholder="e.g. 0771234567"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                     />
                   </div>
 
@@ -495,7 +495,7 @@ export default function AdminAdminsPage() {
                       value={formData.nic}
                       onChange={(e) => setFormData({ ...formData, nic: e.target.value })}
                       placeholder="e.g. 199912345678"
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                     />
                   </div>
                 </div>
@@ -534,8 +534,8 @@ export default function AdminAdminsPage() {
 
       {/* MODAL 2: Pending Registrations Review */}
       {showPendingModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative animate-fade-in overflow-hidden max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
               <div>
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Pending Admin Requests</h2>
@@ -583,7 +583,7 @@ export default function AdminAdminsPage() {
                             <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mt-1">Registered by another admin</span>
                           </div>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-[9px] font-black tracking-wider uppercase">Pending Approval</span>
+                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-[9px] font-black tracking-wider uppercase">Pending Approval</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-xs border-t border-b border-slate-200/60 py-4 font-semibold text-slate-700">
@@ -623,7 +623,7 @@ export default function AdminAdminsPage() {
               )}
             </div>
 
-            <div className="px-8 py-4.5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0 select-none">
+            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0 select-none">
               <button
                 onClick={() => setShowPendingModal(false)}
                 className="bg-[#0f2d3a] hover:bg-[#0c242e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
@@ -637,8 +637,8 @@ export default function AdminAdminsPage() {
 
       {/* MODAL 3: Password Reset Requests */}
       {showRequestsModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative animate-fade-in overflow-hidden max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
               <div>
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Admin Password Requests</h2>
@@ -686,7 +686,7 @@ export default function AdminAdminsPage() {
                             <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mt-1">System Administrator</span>
                           </div>
                         </div>
-                        <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black tracking-wider uppercase select-none animate-pulse">Pending Reset</span>
+                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black tracking-wider uppercase select-none animate-pulse">Pending Reset</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-xs border-t border-b border-slate-200/60 py-4 font-semibold text-slate-700">
@@ -722,7 +722,7 @@ export default function AdminAdminsPage() {
               )}
             </div>
 
-            <div className="px-8 py-4.5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0 select-none">
+            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0 select-none">
               <button
                 onClick={() => setShowRequestsModal(false)}
                 className="bg-[#0f2d3a] hover:bg-[#0c242e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"

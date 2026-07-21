@@ -427,7 +427,7 @@ export default function PolicyHolderNotifications() {
               onClick={markAllAsRead}
               className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-bold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
             >
-              <svg className="w-4.5 h-4.5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
               </svg>
               Mark All as Read
@@ -440,7 +440,7 @@ export default function PolicyHolderNotifications() {
         <div className="flex flex-wrap gap-2.5 mb-8 border-b border-slate-100 pb-5 select-none">
           <button
             onClick={() => setActiveTab("all")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "all"
                 ? "bg-[#0d2a3a] border-[#0d2a3a] text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -450,14 +450,14 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("unread")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "unread"
                 ? "bg-sky-500 border-sky-500 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Unread
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "unread" ? "bg-white/20 text-white" : "bg-red-500 text-white"
             }`}>
               {notifications.filter((n) => !readIds.includes(n.id)).length}
@@ -465,14 +465,14 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("read")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "read"
                 ? "bg-slate-600 border-slate-600 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Read
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "read" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
             }`}>
               {notifications.filter((n) => readIds.includes(n.id)).length}
@@ -480,7 +480,7 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("urgent")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "urgent"
                 ? "bg-red-500 border-red-500 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -490,7 +490,7 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("approved")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "approved"
                 ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -500,7 +500,7 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("status")}
-            className={`font-bold text-sm px-6 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "status"
                 ? "bg-amber-500 border-amber-500 text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -582,7 +582,7 @@ export default function PolicyHolderNotifications() {
                           
                           {/* Unread indicator dot */}
                           {!isRead && (
-                            <span className="w-2.5 h-2.5 bg-sky-500 rounded-full border border-white" title="Unread Alert" />
+                            <span className="w-3 h-3 bg-sky-500 rounded-full border border-white" title="Unread Alert" />
                           )}
                         </div>
 
@@ -601,7 +601,7 @@ export default function PolicyHolderNotifications() {
                     {/* Bottom Actions footer */}
                     <div
                       onClick={(e) => e.stopPropagation()} // Stop propagation so clicking buttons doesn't trigger modal popup
-                      className="bg-slate-50/50 px-6 py-4.5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
+                      className="bg-slate-50/50 px-6 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
                     >
                       <div className="flex flex-wrap items-center gap-3.5 pl-0 md:pl-14">
                         {n.actionLabel === "View" ? (
@@ -610,7 +610,7 @@ export default function PolicyHolderNotifications() {
                               setSelectedClaim(n.claim);
                               markAsRead(n.id);
                             }}
-                            className={`font-bold text-xs md:text-sm px-6 py-2.5 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none ${
+                            className={`font-bold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none ${
                               isApproved
                                 ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                                 : "bg-[#0d2a3a] hover:bg-[#0284c7] text-white"
@@ -621,7 +621,7 @@ export default function PolicyHolderNotifications() {
                         ) : (
                           <Link
                             href={n.link}
-                            className={`font-bold text-xs md:text-sm px-6 py-2.5 rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline ${
+                            className={`font-bold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline ${
                               isUrgent
                                 ? "bg-red-500 hover:bg-red-600 text-white"
                                 : isApproved
@@ -639,7 +639,7 @@ export default function PolicyHolderNotifications() {
                             e.stopPropagation();
                             toggleReadStatus(n.id);
                           }}
-                          className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-bold text-xs px-5 py-2.5 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
+                          className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-bold text-xs px-5 py-3 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
                         >
                           {isRead ? "Mark as Unread" : "Mark as Read"}
                         </button>
@@ -675,7 +675,7 @@ export default function PolicyHolderNotifications() {
 
       {/* Floating Chat Bubble Button */}
       <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4.5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
@@ -749,7 +749,7 @@ export default function PolicyHolderNotifications() {
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
               
               {/* Modal Header Title */}
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
@@ -808,7 +808,7 @@ export default function PolicyHolderNotifications() {
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
@@ -823,7 +823,7 @@ export default function PolicyHolderNotifications() {
                       return (
                         <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
                           {filteredMessages.map((msg: any, index: number) => (
-                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1 shadow-sm">
+                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                               <div className="flex justify-between items-center text-[11px] select-none">
                                 <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
                                 <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
@@ -858,7 +858,7 @@ export default function PolicyHolderNotifications() {
                         const reqTime = getDocRequestTime(selectedClaim, doc);
                         return (
                           <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
+                            <span className="w-2 h-2 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
                               <span className="font-extrabold">{doc}</span>
                               {reqTime && (
@@ -878,7 +878,7 @@ export default function PolicyHolderNotifications() {
                     </ul>
                     <Link
                       href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
-                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
                       Go to Documents
                     </Link>
@@ -890,7 +890,7 @@ export default function PolicyHolderNotifications() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>

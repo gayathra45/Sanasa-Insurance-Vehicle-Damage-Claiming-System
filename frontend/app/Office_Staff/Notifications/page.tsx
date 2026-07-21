@@ -355,13 +355,13 @@ export default function OfficeStaffNotifications() {
                 </svg>
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span>
                 <span className="hidden lg:inline"> — Notifications Center</span>
               </h1>
             </div>
             <div className="flex items-center gap-5">
               {/* Active notifications indicator count badge */}
-              <div className="text-sm font-semibold bg-slate-100 px-4 py-1.5 rounded-full select-none text-slate-600 border border-slate-200">
+              <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full select-none text-slate-600 border border-slate-200">
                 {notifications.filter(n => !readIds.includes(n.id)).length} unread alerts
               </div>
             </div>
@@ -405,7 +405,7 @@ export default function OfficeStaffNotifications() {
                   onClick={markAllAsRead}
                   className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-extrabold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
                 >
-                  <svg className="w-4.5 h-4.5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                   </svg>
                   Mark All as Read
@@ -417,7 +417,7 @@ export default function OfficeStaffNotifications() {
             <div className="flex flex-wrap gap-2 mb-2 pb-1 select-none">
               <button
                 onClick={() => setActiveTab("all")}
-                className={`font-black text-xs px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-black text-xs px-5 py-3 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "all"
                     ? "bg-[#f59e0b] border-[#f59e0b] text-white shadow-sm"
                     : "bg-white hover:bg-slate-100 border-slate-200 text-slate-500"
@@ -427,14 +427,14 @@ export default function OfficeStaffNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("unread")}
-                className={`font-black text-xs px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`font-black text-xs px-5 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === "unread"
                     ? "bg-[#e08900] border-[#e08900] text-white shadow-sm"
                     : "bg-white hover:bg-slate-100 border-slate-200 text-slate-500"
                 }`}
               >
                 Unread
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-black px-2 py-1 rounded-full ${
                   activeTab === "unread" ? "bg-white/20 text-white" : "bg-red-500 text-white"
                 }`}>
                   {notifications.filter((n) => !readIds.includes(n.id)).length}
@@ -442,14 +442,14 @@ export default function OfficeStaffNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("read")}
-                className={`font-black text-xs px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`font-black text-xs px-5 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === "read"
                     ? "bg-slate-700 border-slate-700 text-white shadow-sm"
                     : "bg-white hover:bg-slate-100 border-slate-200 text-slate-500"
                 }`}
               >
                 Read
-                <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                <span className={`text-[10px] font-black px-2 py-1 rounded-full ${
                   activeTab === "read" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-500"
                 }`}>
                   {notifications.filter((n) => readIds.includes(n.id)).length}
@@ -457,7 +457,7 @@ export default function OfficeStaffNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("claims")}
-                className={`font-black text-xs px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-black text-xs px-5 py-3 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "claims"
                     ? "bg-blue-600 border-blue-600 text-white shadow-sm"
                     : "bg-white hover:bg-slate-100 border-slate-200 text-slate-500"
@@ -467,7 +467,7 @@ export default function OfficeStaffNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("registrations")}
-                className={`font-black text-xs px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-black text-xs px-5 py-3 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "registrations"
                     ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
                     : "bg-white hover:bg-slate-100 border-slate-200 text-slate-500"
@@ -686,7 +686,7 @@ export default function OfficeStaffNotifications() {
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
               
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
                 <h2 className="text-[20px] font-black text-slate-800 tracking-tight leading-none">
@@ -735,7 +735,7 @@ export default function OfficeStaffNotifications() {
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
