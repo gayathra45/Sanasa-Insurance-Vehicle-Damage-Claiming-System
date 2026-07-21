@@ -171,7 +171,7 @@ export default function AdminNavbar() {
           />
 
           {/* Drawer content */}
-          <aside className="relative w-[280px] max-w-xs bg-gradient-to-b from-[#111c2a] via-[#102a43] to-[#09111b] border-r border-white/10 h-full flex flex-col text-white shadow-2xl p-5 select-none duration-200">
+          <aside className="relative w-[280px] max-w-xs bg-linear-to-b from-[#111c2a] via-[#102a43] to-[#09111b] border-r border-white/10 h-full flex flex-col text-white shadow-2xl p-5 select-none duration-200">
             {/* Close Button */}
             <button
               onClick={() => setIsMobileOpen(false)}

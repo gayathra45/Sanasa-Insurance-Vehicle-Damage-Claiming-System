@@ -329,7 +329,7 @@ export default function OfficeStaffDashboard() {
                 {/* 4 Cards Grid - Mobile view */}
                 <div className="grid lg:hidden grid-cols-1 gap-4 mb-8">
                   {/* Unassigned Claims Card */}
-                  <div className="bg-gradient-to-br from-red-50/50 to-white rounded-[20px] border border-red-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-red-50/50 to-white rounded-[20px] border border-red-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-red-100/60 rounded-xl text-red-600 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -344,7 +344,7 @@ export default function OfficeStaffDashboard() {
                   </div>
 
                   {/* New Registrations Card */}
-                  <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -359,7 +359,7 @@ export default function OfficeStaffDashboard() {
                   </div>
 
                   {/* Active Claims Card */}
-                  <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
@@ -374,7 +374,7 @@ export default function OfficeStaffDashboard() {
                   </div>
 
                   {/* Pending Claims Card */}
-                  <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
+                  <div className="bg-linear-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">

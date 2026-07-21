@@ -413,7 +413,7 @@ export default function AgentsPage() {
                     return (
                       <div
                         key={agent._id}
-                        className="bg-white border-y border-r border-l-4 border-slate-200/80 border-l-[#0f2d3a]/70 hover:border-l-[#0f2d3a] hover:border-slate-300 rounded-2xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-5 relative group transition-all duration-300"
+                        className="bg-white border-y border-r border-l-4 border-slate-200/80 border-l-[#0f2d3a]/70 hover:border-l-[#0f2d3a] hover:border-slate-300 rounded-2xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-5 relative group"
                       >
                         {/* Left Section: Profile Info */}
                         <div className="flex items-center gap-4.5 min-w-[240px]">
@@ -480,7 +480,7 @@ export default function AgentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up">
             {/* Modal Header */}
-            <div className="bg-gradient-to-r from-[#0f2d3a] to-[#1a4a60] px-8 py-5 flex justify-between items-center text-white select-none">
+            <div className="bg-linear-to-r from-[#0f2d3a] to-[#1a4a60] px-8 py-5 flex justify-between items-center text-white select-none">
               <div className="flex items-center gap-3">
                 <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -944,7 +944,7 @@ export default function AgentsPage() {
 
       {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}

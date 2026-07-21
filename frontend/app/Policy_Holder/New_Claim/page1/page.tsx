@@ -309,7 +309,7 @@ export default function UploadDocumentsPage() {
       <div className="max-w-4xl w-full mx-auto px-6 md:px-12 mt-8 relative">
         <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           <div className="absolute inset-0 bg-slate-900/35" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
         </div>
 
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
@@ -450,7 +450,7 @@ export default function UploadDocumentsPage() {
 
                   {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}

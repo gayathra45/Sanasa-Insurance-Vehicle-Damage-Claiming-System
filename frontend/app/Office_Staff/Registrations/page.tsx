@@ -392,7 +392,7 @@ export default function RegistrationsPage() {
 
               {/* Personal Details */}
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-2 gap-4 select-none">
-                <h3 className="col-span-2 font-black text-slate-800 text-xs tracking-wide uppercase text-amber-500 mb-2">Personal Information</h3>
+                <h3 className="col-span-2 font-black text-slate-800 text-xs tracking-wide uppercase mb-2">Personal Information</h3>
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">NIC Number</span>
                   <span className="text-sm font-extrabold text-slate-700">{selectedReg.nic}</span>
@@ -419,7 +419,7 @@ export default function RegistrationsPage() {
 
               {/* Registered Vehicles */}
               <div className="space-y-4 select-none">
-                <h3 className="font-black text-slate-800 text-xs tracking-wide uppercase text-amber-500">Registered Vehicles ({selectedReg.vehicles?.length || 0})</h3>
+                <h3 className="font-black text-slate-800 text-xs tracking-wide uppercase">Registered Vehicles ({selectedReg.vehicles?.length || 0})</h3>
                 {selectedReg.vehicles && selectedReg.vehicles.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
                     {selectedReg.vehicles.map((v, idx) => (
@@ -456,7 +456,7 @@ export default function RegistrationsPage() {
 
               {/* Uploaded Documents */}
               <div className="space-y-4 pb-4 select-none">
-                <h3 className="font-black text-slate-800 text-xs tracking-wide uppercase text-amber-500">Uploaded Documents</h3>
+                <h3 className="font-black text-slate-800 text-xs tracking-wide uppercase">Uploaded Documents</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { key: "nicFront", label: "NIC Front View" },
@@ -473,7 +473,7 @@ export default function RegistrationsPage() {
                     return (
                       <div key={doc.key} className="border border-slate-200 rounded-xl p-4 flex flex-col items-center">
                         <span className="text-xs font-bold text-slate-500 mb-2">{doc.label}</span>
-                        <div className="w-full aspect-[4/3] bg-slate-50 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center relative">
+                        <div className="w-full aspect-4/3 bg-slate-50 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center relative">
                           {docUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -510,7 +510,7 @@ export default function RegistrationsPage() {
       {/* Document Preview Lightbox Modal */}
       {previewImage && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300 select-none cursor-zoom-out transition-all duration-300"
+          className="fixed inset-0 z-100 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300 select-none cursor-zoom-out"
           onClick={() => setPreviewImage(null)}
         >
           <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center bg-[#0a0a0a]/30" onClick={(e) => e.stopPropagation()}>
@@ -535,7 +535,7 @@ export default function RegistrationsPage() {
 
                   {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}
