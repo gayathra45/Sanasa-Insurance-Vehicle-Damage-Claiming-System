@@ -364,7 +364,7 @@ export default function PolicyHolderNotifications() {
         <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/contact_border.jpeg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           {/* Slate Gradient Overlay */}
           <div className="absolute inset-0 bg-slate-900/35" />
-          <div className="absolute inset-0 bg-linear-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
         </div>
 
         {/* Text Content */}
