@@ -364,12 +364,12 @@ function TrackClaimsContent() {
               placeholder="Enter Claim ID (e.g. CLM-2074-1487)"
               value={claimId}
               onChange={(e) => setClaimId(e.target.value)}
-              className="w-full bg-[#f1f5f9] text-slate-800 rounded-full py-3.5 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-300 font-bold placeholder:text-slate-400 placeholder:font-medium shadow-inner"
+              className="w-full bg-[#f1f5f9] text-slate-800 rounded-full py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-300 font-bold placeholder:text-slate-400 placeholder:font-medium shadow-inner"
             />
           </div>
           <button
             type="submit"
-            className="w-full md:w-auto bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-base py-3.5 px-8 rounded-full shadow-md cursor-pointer border-none transition-all duration-150 active:scale-95 whitespace-nowrap"
+            className="w-full md:w-auto bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-base py-4 px-8 rounded-full shadow-md cursor-pointer border-none transition-all duration-150 active:scale-95 whitespace-nowrap"
           >
             Track Claim
           </button>
@@ -381,7 +381,7 @@ function TrackClaimsContent() {
             Searching details...
           </div>
         ) : trackedClaim ? (
-          <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-[24px] shadow-lg overflow-hidden animate-fade-in">
+          <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-[24px] shadow-lg overflow-hidden transition-all duration-300">
             {/* Header */}
             <div className="px-8 py-5 bg-slate-50 border-b border-slate-200">
               <h3 className="text-[20px] font-extrabold text-[#0f2d3a] tracking-tight leading-none">
@@ -586,14 +586,14 @@ function TrackClaimsContent() {
                       : ["Police Report", "Repair Estimate"]
                     ).map((doc) => (
                       <li key={doc} className="flex items-center gap-2 text-[#aa4f4f] font-bold text-xs">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] shrink-0" />
+                        <span className="w-2 h-2 rounded-full bg-[#df3d3d] shrink-0" />
                         <span>{doc}</span>
                       </li>
                     ))}
                   </ul>
                   <Link
                     href="/Policy_Holder/Documents"
-                    className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                   >
                     Go to Documents
                   </Link>
@@ -606,7 +606,7 @@ function TrackClaimsContent() {
                 {trackedClaim.messages && trackedClaim.messages.length > 0 ? (
                   <div className="flex flex-col gap-2.5 max-h-[160px] overflow-y-auto pr-1">
                     {trackedClaim.messages.map((msg: any, index: number) => (
-                      <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1 shadow-sm">
+                      <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                         <div className="flex justify-between items-center text-[11px] select-none">
                           <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
                           <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>

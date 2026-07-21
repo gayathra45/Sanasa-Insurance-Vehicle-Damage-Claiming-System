@@ -299,7 +299,7 @@ export default function SignUpPage3() {
           {/* MODERN SEGMENTED PILL STEP TRACKER */}
           <div className="w-full max-w-xl mx-auto flex flex-col gap-4 select-none">
             {/* Pill Bar */}
-            <div className="flex w-full gap-3 h-1.5">
+            <div className="flex w-full gap-3 h-2">
               {[1, 2, 3, 4].map((num) => {
                 const isActive = num === 4;
                 const isCompleted = num < 4;
@@ -509,7 +509,7 @@ export default function SignUpPage3() {
                   required
                   checked={agreedToTerms}
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
-                  className="mt-1 w-4.5 h-4.5 rounded text-orange-500 focus:ring-orange-400 cursor-pointer animate-fade-in"
+                  className="mt-1 w-5 h-5 rounded text-orange-500 focus:ring-orange-400 cursor-pointer transition-all duration-300"
                 />
                 <span>
                   I agree to the <span className="text-orange-400 underline hover:text-orange-300">Terms of Service</span> and <span className="text-orange-400 underline hover:text-orange-300">Privacy Policy</span> of Sanasa General Insurance.
@@ -522,7 +522,7 @@ export default function SignUpPage3() {
                   required
                   checked={consentData}
                   onChange={(e) => setConsentData(e.target.checked)}
-                  className="mt-1 w-4.5 h-4.5 rounded text-orange-500 focus:ring-orange-400 cursor-pointer animate-fade-in"
+                  className="mt-1 w-5 h-5 rounded text-orange-500 focus:ring-orange-400 cursor-pointer transition-all duration-300"
                 />
                 <span>
                   I consent to the collection and processing of my identity verification details and vehicle details for policy processing.
@@ -566,7 +566,7 @@ export default function SignUpPage3() {
 
             {/* DONE MODAL ON SUBMIT SUCCESS */}
             {showSuccessModal && (
-              <div className="absolute inset-0 bg-[#0e3b44]/95 backdrop-blur-xl rounded-[2.5rem] border border-white/20 flex flex-col items-center justify-center p-6 text-center z-30 transition-all duration-500 animate-fade-in">
+              <div className="absolute inset-0 bg-[#0e3b44]/95 backdrop-blur-xl rounded-[2.5rem] border border-white/20 flex flex-col items-center justify-center p-6 text-center z-30 transition-all duration-500 transition-all duration-300">
                 <div className="flex flex-col items-center gap-6 max-w-xl px-4 md:px-8">
                   
                   {/* Big Glowing Success Checkmark */}
@@ -580,7 +580,7 @@ export default function SignUpPage3() {
                   <h3 className="text-white text-3xl font-extrabold tracking-wide select-none">Done!</h3>
                   
                   {/* Reference Number Pill */}
-                  <div className="bg-[#d9d9d9] text-[#0e3b44] font-bold px-10 py-3.5 rounded-full text-xl tracking-wider shadow-inner select-all">
+                  <div className="bg-[#d9d9d9] text-[#0e3b44] font-bold px-10 py-4 rounded-full text-xl tracking-wider shadow-inner select-all">
                     {refNumber}
                   </div>
                   

@@ -252,7 +252,7 @@ export default function SignUp() {
           {/* MODERN SEGMENTED PILL STEP TRACKER */}
           <div className="w-full max-w-xl mx-auto flex flex-col gap-4 select-none">
             {/* Pill Bar */}
-            <div className="flex w-full gap-3 h-1.5">
+            <div className="flex w-full gap-3 h-2">
               {[1, 2, 3, 4].map((num) => {
                 const isActive = num === 1;
                 return (
@@ -513,12 +513,12 @@ export default function SignUp() {
                     </button>
                   </div>
                   {password && (
-                    <div className="mt-2 flex flex-col gap-2.5 px-1 bg-black/15 p-3 rounded-2xl border border-white/5 animate-fade-in">
+                    <div className="mt-2 flex flex-col gap-2.5 px-1 bg-black/15 p-3 rounded-2xl border border-white/5 transition-all duration-300">
                       <div className="flex justify-between items-center text-xs text-white/95">
                         <span className="font-semibold">Password Strength:</span>
                         <span className="font-bold uppercase tracking-wider">{strength.label}</span>
                       </div>
-                      <div className="h-1.5 w-full bg-white rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-white rounded-full overflow-hidden">
                         <div className={`h-full ${strength.color} ${strength.width} transition-all duration-350 rounded-full`} />
                       </div>
                       <div className="flex flex-col gap-1 text-[11px] text-white/90">

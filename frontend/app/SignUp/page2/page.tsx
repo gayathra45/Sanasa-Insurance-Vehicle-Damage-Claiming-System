@@ -215,7 +215,7 @@ export default function SignUpPage2() {
           {/* MODERN SEGMENTED PILL STEP TRACKER */}
           <div className="w-full max-w-xl mx-auto flex flex-col gap-4 select-none">
             {/* Pill Bar */}
-            <div className="flex w-full gap-3 h-1.5">
+            <div className="flex w-full gap-3 h-2">
               {[1, 2, 3, 4].map((num) => {
                 const isActive = num === 3;
                 const isCompleted = num < 3;
@@ -637,7 +637,7 @@ export default function SignUpPage2() {
 
             {/* Warning Info Badge under upload zones */}
             <div className="flex items-center justify-center w-full mt-2">
-              <div className="bg-white/10 border border-white/5 backdrop-blur-sm px-6 py-2.5 rounded-full flex items-center gap-2.5 text-white/95 text-xs sm:text-sm shadow-md max-w-2xl text-center select-none">
+              <div className="bg-white/10 border border-white/5 backdrop-blur-sm px-6 py-3 rounded-full flex items-center gap-2.5 text-white/95 text-xs sm:text-sm shadow-md max-w-2xl text-center select-none">
                 <span className="text-yellow-400 text-lg flex items-center">⚠️</span>
                 <span>All documents must be clear and legible. Incomplete submissions will delay account activation.</span>
               </div>

@@ -276,7 +276,7 @@ export default function SignUpPage1() {
           {/* MODERN SEGMENTED PILL STEP TRACKER */}
           <div className="w-full max-w-xl mx-auto flex flex-col gap-4 select-none">
             {/* Pill Bar */}
-            <div className="flex w-full gap-3 h-1.5">
+            <div className="flex w-full gap-3 h-2">
               {[1, 2, 3, 4].map((num) => {
                 const isActive = num === 2;
                 const isCompleted = num < 2;
@@ -505,7 +505,7 @@ export default function SignUpPage1() {
               <button
                 type="button"
                 onClick={addVehicle}
-                className="bg-gradient-to-r from-cyan-400 to-teal-400 text-white font-bold py-3.5 px-10 rounded-full shadow-lg transition-all duration-300 hover:opacity-90 active:scale-95 text-center text-base cursor-pointer select-none outline-none border-none"
+                className="bg-gradient-to-r from-cyan-400 to-teal-400 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-all duration-300 hover:opacity-90 active:scale-95 text-center text-base cursor-pointer select-none outline-none border-none"
               >
                 + Add Another Vehicle
               </button>
