@@ -94,17 +94,22 @@ export default function RegistrationsPage() {
     }
   }, [router]);
 
-  const handleStatusUpdate = async (id: string, newStatus: string) => {
+  const [rejectModal, setRejectModal] = useState<{ show: boolean; reg: Registration | null; reason: string }>({ show: false, reg: null, reason: "" });
+
+  const handleStatusUpdate = async (id: string, newStatus: string, reason?: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/office-staff/registrations/${id}/status`, {
+      const targetReg = registrations.find(r => r._id === id);
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/office-staff/registrations/${id}/status`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, reason }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        throw new Error(`Failed to update status to ${newStatus}`);
+        throw new Error(data.error || `Failed to update status to ${newStatus}`);
       }
       
       // Remove approved or rejected item from the view
@@ -112,10 +117,31 @@ export default function RegistrationsPage() {
       if (selectedReg && selectedReg._id === id) {
         setSelectedReg(null);
       }
+
+      setCustomPopup({
+        show: true,
+        title: newStatus === "Approved" ? "Registration Approved" : "Registration Rejected",
+        message: `Policyholder registration has been ${newStatus.toLowerCase()}.${data.emailSent && targetReg ? ` Notification email sent to ${targetReg.email}.` : ""}`,
+        type: "success"
+      });
     } catch (err: any) {
       console.error(err);
-      alert(err.message || "Failed to update status.");
+      setCustomPopup({ show: true, title: "Error", message: err.message || "Failed to update status.", type: "error" });
     }
+  };
+
+  const triggerApprove = (reg: Registration) => {
+    setCustomPopup({
+      show: true,
+      title: "Approve Registration",
+      message: `Are you sure you want to approve the registration for ${reg.firstName} ${reg.lastName}? An approval email will be sent to ${reg.email}.`,
+      type: "confirm",
+      onConfirm: () => handleStatusUpdate(reg._id, "Approved")
+    });
+  };
+
+  const triggerReject = (reg: Registration) => {
+    setRejectModal({ show: true, reg, reason: "" });
   };
 
   const formatDate = (dateStr: string) => {
@@ -295,13 +321,13 @@ export default function RegistrationsPage() {
                           
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => handleStatusUpdate(reg._id, "Approved")}
+                              onClick={() => triggerApprove(reg)}
                               className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-[11px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                             >
                               Approve
                             </button>
                             <button
-                              onClick={() => handleStatusUpdate(reg._id, "Rejected")}
+                              onClick={() => triggerReject(reg)}
                               className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-[11px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                             >
                               Reject
@@ -366,13 +392,13 @@ export default function RegistrationsPage() {
                 <span className="text-sm font-extrabold text-slate-700">Quick Actions for this registration:</span>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => handleStatusUpdate(selectedReg._id, "Approved")}
+                    onClick={() => triggerApprove(selectedReg)}
                     className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-xs px-4 py-3 rounded-lg transition-all cursor-pointer shadow-sm"
                   >
                     Approve Registration
                   </button>
                   <button
-                    onClick={() => handleStatusUpdate(selectedReg._id, "Rejected")}
+                    onClick={() => triggerReject(selectedReg)}
                     className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-xs px-4 py-3 rounded-lg transition-all cursor-pointer shadow-sm"
                   >
                     Reject Registration
@@ -518,6 +544,134 @@ export default function RegistrationsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
+          </div>
+        </div>
+      )}
+
+<<<<<<< Updated upstream
+=======
+                  {/* Rejection Reason Modal */}
+      {rejectModal.show && rejectModal.reg && (
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all p-6 flex flex-col gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
+                  Reject Registration
+                </h3>
+                <p className="text-xs text-slate-400 font-bold mt-1">
+                  {rejectModal.reg.firstName} {rejectModal.reg.lastName} ({rejectModal.reg.nic})
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-bold text-slate-700">
+                Reason for Rejection (Included in Email Notification):
+              </label>
+              <textarea
+                value={rejectModal.reason}
+                onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
+                placeholder="e.g. Incomplete NIC documentation provided or incorrect vehicle details."
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-400 resize-none h-24 font-medium"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2.5 mt-2 select-none">
+              <button
+                onClick={() => setRejectModal({ show: false, reg: null, reason: "" })}
+                className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  const regId = rejectModal.reg!._id;
+                  const reason = rejectModal.reason;
+                  setRejectModal({ show: false, reg: null, reason: "" });
+                  handleStatusUpdate(regId, "Rejected", reason);
+                }}
+                className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+              >
+                Reject Registration
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Popup Modal */}
+      {customPopup.show && (
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
+            
+            {/* Header/Title with clean inline icon */}
+            <div className="flex items-center gap-3.5">
+              {customPopup.type === "success" ? (
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              ) : customPopup.type === "confirm" ? (
+                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+              )}
+              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
+                {customPopup.title}
+              </h3>
+            </div>
+
+            {/* Message Body */}
+            <div>
+              <p className="text-slate-500 text-[13px] font-semibold leading-relaxed">
+                {customPopup.message}
+              </p>
+            </div>
+
+            {/* Footer Buttons */}
+            <div className="flex justify-end gap-2.5 mt-2 select-none">
+              {customPopup.type === "confirm" ? (
+                <>
+                  <button
+                    onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      setCustomPopup({ ...customPopup, show: false });
+                      if (customPopup.onConfirm) customPopup.onConfirm();
+                    }}
+                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  >
+                    Confirm
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                >
+                  OK
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}

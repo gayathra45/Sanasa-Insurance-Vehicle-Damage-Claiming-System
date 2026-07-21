@@ -255,7 +255,7 @@ router.get("/registrations", async (req, res) => {
 router.patch("/registrations/:id/status", async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, reason } = req.body;
 
     if (!["Pending", "Approved", "Rejected"].includes(status)) {
       return res.status(400).json({ error: "Invalid status value. Must be Pending, Approved, or Rejected." });
@@ -277,7 +277,69 @@ router.patch("/registrations/:id/status", async (req, res) => {
 
     await user.save();
 
-    res.json({ message: `Registration status updated to ${status}`, user });
+    // Send email notification on Approved or Rejected
+    let emailSent = false;
+    if (status === "Approved" || status === "Rejected") {
+      const isApproved = status === "Approved";
+      const subject = `Sanasa Insurance — Registration ${isApproved ? "Approved" : "Rejected"}`;
+
+      const bodyHtml = `
+        <h2>Account Registration ${isApproved ? "Approved 🎉" : "Rejected ⚠️"}</h2>
+        <p>Dear <strong>${user.firstName} ${user.lastName}</strong>,</p>
+        <p>${
+          isApproved
+            ? `Your policyholder account registration for the <strong>${user.branch} Branch</strong> has been verified and approved by our office staff. You can now log into your account using your NIC or email address.`
+            : `We regret to inform you that your policyholder account registration request for the <strong>${user.branch} Branch</strong> has been rejected by our office staff.`
+        }</p>
+        ${!isApproved && reason ? `<div style="background-color: #fff5f5; border-left: 4px solid #ef4444; padding: 14px; margin: 20px 0; border-radius: 8px;"><strong style="color: #991b1b;">Reason for Rejection:</strong> <span style="color: #7f1d1d;">${reason}</span></div>` : ""}
+        <table class="data-table">
+          <tr>
+            <td class="label">Reference Number:</td>
+            <td class="value highlight-value">${user.referenceNumber}</td>
+          </tr>
+          <tr>
+            <td class="label">Full Name:</td>
+            <td class="value">${user.firstName} ${user.lastName}</td>
+          </tr>
+          <tr>
+            <td class="label">NIC Number:</td>
+            <td class="value">${user.nic}</td>
+          </tr>
+          <tr>
+            <td class="label">Assigned Branch:</td>
+            <td class="value">${user.branch}</td>
+          </tr>
+          <tr>
+            <td class="label">Registration Status:</td>
+            <td class="value highlight-value">${status}</td>
+          </tr>
+        </table>
+        ${
+          isApproved
+            ? `<p style="margin-top: 20px;">You can now access all policyholder features including filing claims, tracking requests, and managing vehicle insurance details.</p>
+               <div style="text-align: center; margin: 30px 0;">
+                 <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/Login" style="background-color: #ff9800; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block; font-size: 15px; box-shadow: 0 4px 12px rgba(255,152,0,0.3);">Log In to Your Account</a>
+               </div>`
+            : `<p>If you have questions regarding this decision, please contact the <strong>${user.branch} Branch</strong> staff or visit your local branch office with your original verification documents.</p>`
+        }
+      `;
+
+      const textBody = `Dear ${user.firstName}, your registration status is now: ${status}. Reference: ${user.referenceNumber}.`;
+
+      try {
+        await sendEmail(user.email, subject, getBaseTemplate(subject, bodyHtml), textBody);
+        emailSent = true;
+        console.log(`✅ Registration status (${status}) email successfully sent to ${user.email}`);
+      } catch (emailErr) {
+        console.error("⚠️ Failed to send registration status email:", emailErr.message);
+      }
+    }
+
+    res.json({
+      message: `Registration status updated to ${status}`,
+      user,
+      emailSent
+    });
   } catch (err) {
     console.error("Update registration status error:", err);
     res.status(500).json({ error: "An internal server error occurred." });

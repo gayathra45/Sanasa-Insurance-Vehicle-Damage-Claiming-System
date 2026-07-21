@@ -36,9 +36,9 @@ router.post("/login", async (req, res) => {
     // 2. Check matches sequentially
     if (user && user.password === hashedInput) {
       if (user.status === "Rejected") {
-        return res.status(400).json({ error: "Your registration has been rejected by the office staff." });
+        return res.status(400).json({ error: "Your registration request has been rejected by the branch office staff. Please check your email for details or contact your local branch." });
       } else if (user.status !== "Approved") {
-        return res.status(400).json({ error: "Your account is pending approval from the office staff of your nearest branch." });
+        return res.status(400).json({ error: "Your account is pending approval from the office staff of your nearest branch. You will receive an email notification once your registration is approved." });
       }
 
       const userObj = user.toObject();
