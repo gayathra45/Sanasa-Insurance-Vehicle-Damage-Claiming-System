@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import { getApiUrl } from "@/app/config";
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [stats, setStats] = useState({
     policyHolders: 0,
     totalClaims: 0,
@@ -29,21 +31,20 @@ export default function AdminDashboard() {
   useEffect(() => {
     const adminData = sessionStorage.getItem("logged_in_admin");
     if (!adminData) {
-      window.location.href = "/Login";
+      router.replace("/Login");
       return;
     }
     try {
       const parsed = JSON.parse(adminData);
-      if (parsed.email) {
-        setAdminEmail(parsed.email);
-        fetchStats();
-      }
-      if (parsed.mustChangePassword) {
+      setAdminEmail(parsed?.email || parsed?.emailAddress || "");
+      fetchStats();
+
+      if (parsed?.mustChangePassword) {
         setShowPasswordModal(true);
       }
     } catch (e) {
-      console.error(e);
-      window.location.href = "/Login";
+      console.error("Error loading admin session", e);
+      router.replace("/Login");
     }
   }, []);
 
@@ -203,25 +204,25 @@ export default function AdminDashboard() {
                 <div className="hidden lg:grid grid-cols-4 gap-6 mb-12">
                   {/* Policy Holders Card */}
                   <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.policyHolders}</span>
+                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats?.policyHolders ?? 0}</span>
                     <span className="text-slate-500 font-bold text-sm mt-1">Policy Holders</span>
                   </div>
 
                   {/* Total Claims Card */}
                   <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.totalClaims}</span>
+                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats?.totalClaims ?? 0}</span>
                     <span className="text-slate-500 font-bold text-sm mt-1">Total Claims</span>
                   </div>
 
                   {/* Active Claims Card */}
                   <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.activeClaims}</span>
+                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats?.activeClaims ?? 0}</span>
                     <span className="text-slate-500 font-bold text-sm mt-1">Active Claims</span>
                   </div>
 
                   {/* Pending Claims Card */}
                   <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.pendingClaims}</span>
+                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats?.pendingClaims ?? 0}</span>
                     <span className="text-slate-500 font-bold text-sm mt-1">Pending Claims</span>
                   </div>
                 </div>
@@ -239,7 +240,7 @@ export default function AdminDashboard() {
                       <span className="text-slate-600 font-bold text-xs">Policy Holders</span>
                     </div>
                     <span className="text-xl font-black text-blue-900 tracking-tight pr-1 shrink-0">
-                      {stats.policyHolders}
+                      {stats?.policyHolders ?? 0}
                     </span>
                   </div>
 
@@ -254,7 +255,7 @@ export default function AdminDashboard() {
                       <span className="text-slate-600 font-bold text-xs">Total Claims</span>
                     </div>
                     <span className="text-xl font-black text-slate-800 tracking-tight pr-1 shrink-0">
-                      {stats.totalClaims}
+                      {stats?.totalClaims ?? 0}
                     </span>
                   </div>
 
@@ -269,7 +270,7 @@ export default function AdminDashboard() {
                       <span className="text-slate-600 font-bold text-xs">Active Claims</span>
                     </div>
                     <span className="text-xl font-black text-emerald-800 tracking-tight pr-1 shrink-0">
-                      {stats.activeClaims}
+                      {stats?.activeClaims ?? 0}
                     </span>
                   </div>
 
@@ -284,7 +285,7 @@ export default function AdminDashboard() {
                       <span className="text-slate-600 font-bold text-xs">Pending Claims</span>
                     </div>
                     <span className="text-xl font-black text-amber-800 tracking-tight pr-1 shrink-0">
-                      {stats.pendingClaims}
+                      {stats?.pendingClaims ?? 0}
                     </span>
                   </div>
                 </div>
