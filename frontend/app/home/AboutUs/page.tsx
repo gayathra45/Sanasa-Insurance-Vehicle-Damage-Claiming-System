@@ -9,7 +9,7 @@ export default function About() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
-      <section className="relative w-full max-w-[1400px] h-32 md:h-40 lg:h-48 mb-12 mt-4">
+      <section className="relative w-full max-w-350 h-32 md:h-40 lg:h-48 mb-12 mt-4">
         <div className="absolute top-0 left-0 w-[95%] md:w-[85%] h-full overflow-hidden rounded-r-[3rem] md:rounded-r-[5rem]">
           <Image
             src="/about_header.jpg"
