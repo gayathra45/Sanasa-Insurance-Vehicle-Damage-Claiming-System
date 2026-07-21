@@ -59,15 +59,15 @@ export default function PolicyHolderNavbar() {
 
   const getLinkClass = (href: string) => {
     if (isActive(href)) {
-      return "bg-[#00ddff] text-black font-bold px-6 py-1.5 rounded-full shadow-sm transition-all duration-150 no-underline";
+      return "bg-[#00ddff] text-black font-bold px-6 py-2 rounded-full shadow-sm transition-all duration-150 no-underline";
     }
-    return "text-[#333] hover:text-[#00ddff] font-bold px-6 py-1.5 transition-all duration-150 no-underline";
+    return "text-[#333] hover:text-[#00ddff] font-bold px-6 py-2 transition-all duration-150 no-underline";
   };
 
   return (
     <div className="w-full h-[57px] md:h-[65px]">
       <nav
-        className={`fixed left-0 right-0 w-full bg-white border-b border-gray-200 py-2.5 px-6 md:px-16 z-50 transition-all duration-300 ease-in-out shadow-sm ${
+        className={`fixed left-0 right-0 w-full bg-white border-b border-gray-200 py-3 px-6 md:px-16 z-50 transition-all duration-300 ease-in-out shadow-sm ${
           isVisible ? "top-0" : "-top-24"
         }`}
       >
@@ -112,7 +112,7 @@ export default function PolicyHolderNavbar() {
           <div className="flex items-center gap-4">
             {/* Notifications Bell */}
             <button
-              className="relative transition-colors duration-150 bg-transparent border-none cursor-pointer p-1.5 text-black hover:text-[#00ddff] focus:outline-none"
+              className="relative transition-colors duration-150 bg-transparent border-none cursor-pointer p-2 text-black hover:text-[#00ddff] focus:outline-none"
               aria-label="Notifications"
             >
               <svg
@@ -151,7 +151,7 @@ export default function PolicyHolderNavbar() {
               {/* Dropdown Menu */}
               {profileMenuOpen && (
                 <div
-                  className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2 z-50 animate-fade-in"
+                  className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2 z-50 transition-all duration-300"
                   style={{ top: "100%" }}
                 >
                   {/* Arrow */}
@@ -209,7 +209,7 @@ export default function PolicyHolderNavbar() {
             <Link
               href="/Policy_Holder/Home"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Policy_Holder/Home") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -218,7 +218,7 @@ export default function PolicyHolderNavbar() {
             <Link
               href="/Policy_Holder/My_claims"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Policy_Holder/My_claims") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -227,7 +227,7 @@ export default function PolicyHolderNavbar() {
             <Link
               href="/Policy_Holder/Documents"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Policy_Holder/Documents") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -236,7 +236,7 @@ export default function PolicyHolderNavbar() {
             <Link
               href="/Policy_Holder/Contact"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Policy_Holder/Contact") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >

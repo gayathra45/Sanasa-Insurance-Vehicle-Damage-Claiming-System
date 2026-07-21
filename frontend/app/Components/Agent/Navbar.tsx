@@ -201,11 +201,11 @@ export default function Navbar() {
 
         {/* Mobile Dropdown Navigation Menu */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 py-4 px-6 flex flex-col gap-4 shadow-lg z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-200 py-4 px-6 flex flex-col gap-4 shadow-lg z-50 duration-200">
             <Link
               href="/Agent/Dashboard"
               onClick={() => setIsOpen(false)}
-              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-semibold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Agent/Dashboard") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -214,7 +214,7 @@ export default function Navbar() {
             <Link
               href="/Agent/MyActivity"
               onClick={() => setIsOpen(false)}
-              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-semibold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Agent/MyActivity") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -223,7 +223,7 @@ export default function Navbar() {
             <Link
               href="/Agent/Contact"
               onClick={() => setIsOpen(false)}
-              className={`font-semibold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-semibold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/Agent/Contact") ? "bg-[#00ddff] text-black" : "text-slate-800 hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >

@@ -242,7 +242,7 @@ export default function PolicyHolderHome() {
                 Welcome back, {userName} !
               </h2>
             </div>
-            <p className="text-slate-200 text-[13px] md:text-sm font-semibold tracking-wide mt-1 animate-fade-in">
+            <p className="text-slate-200 text-[13px] md:text-sm font-semibold tracking-wide mt-1 transition-all duration-300">
               {pendingClaimsCount > 0 || hasDocumentRequest ? (
                 <>
                   Your policy is active and up to date. You have{" "}
@@ -281,14 +281,14 @@ export default function PolicyHolderHome() {
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 md:gap-6 mt-4 md:mt-2 w-full sm:w-auto">
             <Link
               href="/Policy_Holder/New_Claim"
-              className="w-full sm:w-auto text-center bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm md:text-lg px-8 sm:px-10 py-3.5 sm:py-4.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              className="w-full sm:w-auto text-center bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm md:text-lg px-8 sm:px-10 py-4 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
               style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.45)" }}
             >
               New Claim
             </Link>
             <Link
               href="/Policy_Holder/TrackClaims"
-              className="w-full sm:w-auto text-center bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm md:text-lg px-8 sm:px-10 py-3.5 sm:py-4.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              className="w-full sm:w-auto text-center bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm md:text-lg px-8 sm:px-10 py-4 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
               style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.45)" }}
             >
               Track Claim
@@ -307,7 +307,7 @@ export default function PolicyHolderHome() {
           {/* Total Claims */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-5.5 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -323,7 +323,7 @@ export default function PolicyHolderHome() {
           {/* In Progress */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-5.5 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -339,7 +339,7 @@ export default function PolicyHolderHome() {
           {/* Approved */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-5.5 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -383,7 +383,7 @@ export default function PolicyHolderHome() {
                     </div>
                     <Link
                       href="/Policy_Holder/MyVehicles"
-                      className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-4 sm:px-5 py-1.5 rounded-full transition-all no-underline shrink-0"
+                      className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-4 sm:px-5 py-2 rounded-full transition-all no-underline shrink-0"
                     >
                       View
                     </Link>
@@ -403,7 +403,7 @@ export default function PolicyHolderHome() {
 
       {/* Floating Chat Bubble Button */}
       <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4.5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">

@@ -375,13 +375,13 @@ export default function MyClaims() {
             <table className="w-full border-collapse">
               <thead className="bg-[#e2e8f0]/60">
                 <tr className="border-b border-slate-200">
-                  <th className="px-6 py-4.5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Claim ID</th>
-                  <th className="px-6 py-4.5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Vehicle</th>
-                  <th className="px-6 py-4.5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Date</th>
-                  <th className="px-6 py-4.5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Type</th>
-                  <th className="px-6 py-4.5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Amount</th>
-                  <th className="px-6 py-4.5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Status</th>
-                  <th className="px-6 py-4.5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Action</th>
+                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Claim ID</th>
+                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Vehicle</th>
+                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Date</th>
+                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Type</th>
+                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Amount</th>
+                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Status</th>
+                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200">
@@ -400,16 +400,16 @@ export default function MyClaims() {
                 ) : (
                   filteredClaims.map((claim) => (
                     <tr key={claim.claimNumber} className="hover:bg-slate-50/40 transition-colors">
-                      <td className="px-6 py-4.5 text-sm text-slate-700 font-medium whitespace-nowrap">{claim.claimNumber}</td>
-                      <td className="px-6 py-4.5 text-sm text-slate-700 font-medium whitespace-nowrap">{formatNumberPlate(claim.vehiclePlate)}</td>
-                      <td className="px-6 py-4.5 text-sm text-slate-700 font-medium whitespace-nowrap">{claim.incidentDate}</td>
-                      <td className="px-6 py-4.5 text-sm text-slate-700 font-medium whitespace-nowrap">{claim.damageType}</td>
-                      <td className="px-6 py-4.5 text-sm text-slate-700 font-medium text-center whitespace-nowrap">{claim.amount}</td>
-                      <td className="px-6 py-4.5 text-sm text-slate-700 font-medium text-center whitespace-nowrap">{getStatusBadge(claim.status)}</td>
-                      <td className="px-6 py-4.5 text-sm text-center whitespace-nowrap">
+                      <td className="px-6 py-5 text-sm text-slate-700 font-medium whitespace-nowrap">{claim.claimNumber}</td>
+                      <td className="px-6 py-5 text-sm text-slate-700 font-medium whitespace-nowrap">{formatNumberPlate(claim.vehiclePlate)}</td>
+                      <td className="px-6 py-5 text-sm text-slate-700 font-medium whitespace-nowrap">{claim.incidentDate}</td>
+                      <td className="px-6 py-5 text-sm text-slate-700 font-medium whitespace-nowrap">{claim.damageType}</td>
+                      <td className="px-6 py-5 text-sm text-slate-700 font-medium text-center whitespace-nowrap">{claim.amount}</td>
+                      <td className="px-6 py-5 text-sm text-slate-700 font-medium text-center whitespace-nowrap">{getStatusBadge(claim.status)}</td>
+                      <td className="px-6 py-5 text-sm text-center whitespace-nowrap">
                         <button
                           onClick={() => setSelectedClaim(claim)}
-                          className="border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold py-1 px-4.5 rounded-lg transition-all shadow-sm cursor-pointer"
+                          className="border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold py-1 px-5 rounded-lg transition-all shadow-sm cursor-pointer"
                         >
                           View
                         </button>
@@ -427,7 +427,7 @@ export default function MyClaims() {
       {/* Floating Chat Support Bubble matching the mockup */}
       <button
         type="button"
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-4.5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
@@ -503,7 +503,7 @@ export default function MyClaims() {
 
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative animate-fade-in overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
               
               {/* Modal Header Title */}
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 shrink-0">
@@ -558,7 +558,7 @@ export default function MyClaims() {
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
                     <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
@@ -572,7 +572,7 @@ export default function MyClaims() {
                       return (
                         <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
                           {filteredMessages.map((msg: any, index: number) => (
-                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-3.5 flex flex-col gap-1 shadow-sm">
+                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                               <div className="flex justify-between items-center text-[11px] select-none">
                                 <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
                                 <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
@@ -677,14 +677,14 @@ export default function MyClaims() {
                     <ul className="list-none flex flex-col gap-2 mb-4 pl-1">
                       {getUserRequestedDocs(selectedClaim).map((doc) => (
                         <li key={doc} className="flex items-center gap-2 text-[#aa4f4f] font-bold text-xs">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#df3d3d] shrink-0" />
+                          <span className="w-2 h-2 rounded-full bg-[#df3d3d] shrink-0" />
                           <span>{doc}</span>
                         </li>
                       ))}
                     </ul>
                     <Link
                       href="/Policy_Holder/Documents"
-                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
                       Go to Documents
                     </Link>
@@ -698,7 +698,7 @@ export default function MyClaims() {
                   <button
                     onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
                     disabled={isCancellingClaim}
-                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-2.5 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -711,7 +711,7 @@ export default function MyClaims() {
 
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95 flex items-center justify-center"
+                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95 flex items-center justify-center"
                 >
                   Close
                 </button>
@@ -724,7 +724,7 @@ export default function MyClaims() {
 
                   {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}

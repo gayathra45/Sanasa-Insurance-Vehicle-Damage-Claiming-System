@@ -127,7 +127,7 @@ export default function AdminNavbar() {
                 {getIcon(item.name)}
                 <span>{item.name}</span>
                 {hasChevron && (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
                 )}
@@ -171,11 +171,11 @@ export default function AdminNavbar() {
           />
 
           {/* Drawer content */}
-          <aside className="relative w-[280px] max-w-xs bg-gradient-to-b from-[#111c2a] via-[#102a43] to-[#09111b] border-r border-white/10 h-full flex flex-col text-white shadow-2xl p-5 select-none animate-in slide-in-from-left duration-200">
+          <aside className="relative w-[280px] max-w-xs bg-gradient-to-b from-[#111c2a] via-[#102a43] to-[#09111b] border-r border-white/10 h-full flex flex-col text-white shadow-2xl p-5 select-none duration-200">
             {/* Close Button */}
             <button
               onClick={() => setIsMobileOpen(false)}
-              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -212,11 +212,11 @@ export default function AdminNavbar() {
                         : "text-slate-100 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    {isActive && <div className="absolute left-1 w-1.5 h-5 bg-[#00ddff] rounded-full" />}
+                    {isActive && <div className="absolute left-1 w-2 h-5 bg-[#00ddff] rounded-full" />}
                     {getIcon(item.name)}
                     <span>{item.name}</span>
                     {hasChevron && (
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-3.5 h-3.5 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                       </svg>
                     )}

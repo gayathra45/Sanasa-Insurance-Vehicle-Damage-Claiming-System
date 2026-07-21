@@ -183,7 +183,7 @@ export default function RegistrationsPage() {
                 </svg>
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="bg-[#102A43] text-white text-base px-3.5 py-1.5 rounded-xl font-black shadow-sm tracking-wide">
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">
                   {branch || "Galle"} Branch
                 </span>
                 <span className="hidden md:inline text-slate-400 font-medium">— Registrations</span>
@@ -192,7 +192,7 @@ export default function RegistrationsPage() {
             
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
-              <button className="relative p-1.5 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
+              <button className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-slate-500 hover:text-slate-800">
                   <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.65.342 3.228.96 4.658A1.875 1.875 0 0 1 18 17.25H6a1.875 1.875 0 0 1-1.71-2.842 9.06 9.06 0 0 0 .96-4.658V9ZM12 18.75a2.25 2.25 0 0 1-2.247-2.118.75.75 0 0 1 .746-.757h3a.75.75 0 0 1 .746.757A2.25 2.25 0 0 1 12 18.75Z" clipRule="evenodd" />
                 </svg>
@@ -242,7 +242,7 @@ export default function RegistrationsPage() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder=""
-                      className="w-full pl-10 pr-4 py-2.5 rounded-full border border-slate-300 text-slate-700 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm"
+                      className="w-full pl-10 pr-4 py-3 rounded-full border border-slate-300 text-slate-700 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm"
                     />
                   </div>
                 </div>
@@ -267,11 +267,11 @@ export default function RegistrationsPage() {
                               <h3 className="font-black text-slate-800 text-base">
                                 {reg.firstName} {reg.lastName}
                               </h3>
-                              <span className="text-[10px] text-slate-400 font-black tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1 inline-block">
+                              <span className="text-[10px] text-slate-400 font-black tracking-wider uppercase bg-slate-100 px-2 py-1 rounded mt-1 inline-block">
                                 Ref: {reg.referenceNumber}
                               </span>
                             </div>
-                            <span className="bg-amber-50 text-amber-600 border border-amber-200 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide">
+                            <span className="bg-amber-50 text-amber-600 border border-amber-200 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wide">
                               {reg.vehicles && reg.vehicles.length > 0 ? reg.vehicles[0].vehicleType : "No Vehicle"}
                             </span>
                           </div>
@@ -306,19 +306,19 @@ export default function RegistrationsPage() {
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <button
                               onClick={() => handleStatusUpdate(reg._id, "Approved")}
-                              className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                              className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-[11px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleStatusUpdate(reg._id, "Rejected")}
-                              className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                              className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-[11px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                             >
                               Reject
                             </button>
                             <button
                               onClick={() => setSelectedReg(reg)}
-                              className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white"
+                              className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[11px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white"
                             >
                               View
                             </button>
@@ -351,7 +351,7 @@ export default function RegistrationsPage() {
       {/* Centered Profile Details Modal */}
       {selectedReg && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative animate-fade-in overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
             {/* Header */}
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 select-none">
               <div>
@@ -377,13 +377,13 @@ export default function RegistrationsPage() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleStatusUpdate(selectedReg._id, "Approved")}
-                    className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-xs px-4 py-2.5 rounded-lg transition-all cursor-pointer shadow-sm"
+                    className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-xs px-4 py-3 rounded-lg transition-all cursor-pointer shadow-sm"
                   >
                     Approve Registration
                   </button>
                   <button
                     onClick={() => handleStatusUpdate(selectedReg._id, "Rejected")}
-                    className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-xs px-4 py-2.5 rounded-lg transition-all cursor-pointer shadow-sm"
+                    className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-xs px-4 py-3 rounded-lg transition-all cursor-pointer shadow-sm"
                   >
                     Reject Registration
                   </button>
@@ -426,7 +426,7 @@ export default function RegistrationsPage() {
                       <div key={idx} className="border border-slate-150 rounded-xl p-5 bg-white shadow-sm flex flex-col gap-3">
                         <div className="flex justify-between items-center border-b border-slate-50 pb-2">
                           <span className="text-sm font-black text-slate-800">{formatPlate(v.numberPlate)}</span>
-                          <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-0.5 rounded uppercase">
+                          <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-1 rounded uppercase">
                             {v.vehicleType}
                           </span>
                         </div>
@@ -498,7 +498,7 @@ export default function RegistrationsPage() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end shrink-0">
               <button
                 onClick={() => setSelectedReg(null)}
-                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer"
+                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
               >
                 Close
               </button>
@@ -510,7 +510,7 @@ export default function RegistrationsPage() {
       {/* Document Preview Lightbox Modal */}
       {previewImage && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300 select-none cursor-zoom-out animate-fade-in"
+          className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300 select-none cursor-zoom-out transition-all duration-300"
           onClick={() => setPreviewImage(null)}
         >
           <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center bg-[#0a0a0a]/30" onClick={(e) => e.stopPropagation()}>
@@ -522,7 +522,7 @@ export default function RegistrationsPage() {
             />
             <button
               onClick={() => setPreviewImage(null)}
-              className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white p-2.5 rounded-full transition-colors cursor-pointer border border-white/20 select-none shadow-md"
+              className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-colors cursor-pointer border border-white/20 select-none shadow-md"
               aria-label="Close preview"
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor" className="w-5 h-5">
@@ -535,7 +535,7 @@ export default function RegistrationsPage() {
 
                   {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}

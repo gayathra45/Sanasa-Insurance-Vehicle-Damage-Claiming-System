@@ -140,7 +140,7 @@ export default function Navbar() {
             <Link
               href="/"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -149,7 +149,7 @@ export default function Navbar() {
             <Link
               href="/home/contactUs"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/home/contactUs") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -158,7 +158,7 @@ export default function Navbar() {
             <Link
               href="/home/News"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/home/News") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -167,7 +167,7 @@ export default function Navbar() {
             <Link
               href="/home/AboutUs"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-lg py-2.5 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
                 isActive("/home/AboutUs") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >

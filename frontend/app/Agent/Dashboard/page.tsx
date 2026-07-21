@@ -419,8 +419,8 @@ export default function AgentDashboard() {
 
       {/* MongoDB Data Inspector / Claim Details Modal */}
       {selectedClaim && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-all duration-300 animate-in fade-in">
-          <div className="bg-white rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] border border-slate-100 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-[2rem] w-full max-w-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh] border border-slate-100 duration-200">
             {/* Header */}
             <div className="bg-gradient-to-r from-slate-900 to-slate-800 text-white p-6 flex justify-between items-center border-b border-slate-800">
               <div>
@@ -474,7 +474,7 @@ export default function AgentDashboard() {
                           value={assessmentAmount}
                           onChange={(e) => setAssessmentAmount(e.target.value)}
                           placeholder="Enter LKR amount"
-                          className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-bold max-w-[150px]"
+                          className="bg-white border border-slate-200 rounded-lg px-3 py-1 text-slate-800 focus:outline-none focus:ring-1 focus:ring-cyan-500 font-bold max-w-[150px]"
                         />
                       </div>
                     ) : (
@@ -509,14 +509,14 @@ export default function AgentDashboard() {
                 {selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                   <button
                     onClick={() => handleApproveAssessment(selectedClaim._id)}
-                    className="bg-[#ff9800] hover:bg-[#ff8f00] text-white text-sm font-bold py-2.5 px-6 rounded-xl cursor-pointer hover:shadow-lg transition-all duration-300"
+                    className="bg-[#ff9800] hover:bg-[#ff8f00] text-white text-sm font-bold py-3 px-6 rounded-xl cursor-pointer hover:shadow-lg transition-all duration-300"
                   >
                     Approve Assessment
                   </button>
                 )}
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold py-2.5 px-6 rounded-xl cursor-pointer transition-colors"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold py-3 px-6 rounded-xl cursor-pointer transition-colors"
                 >
                   Close
                 </button>
@@ -529,12 +529,12 @@ export default function AgentDashboard() {
       {/* Floating Chat Bubble / Support Helpdesk Chat */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
         {showSupportChat && (
-          <div className="bg-white border border-slate-100 rounded-3xl w-[320px] md:w-[350px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-300">
+          <div className="bg-white border border-slate-100 rounded-3xl w-[320px] md:w-[350px] shadow-2xl flex flex-col overflow-hidden duration-300">
             {/* Header */}
             <div className="bg-[#00ddff] text-black px-5 py-4 flex justify-between items-center font-bold">
               <span className="text-[15px] tracking-tight">Agent Helpdesk Live Chat</span>
-              <button onClick={() => setShowSupportChat(false)} className="text-black/70 hover:text-black bg-black/5 hover:bg-black/10 p-1.5 rounded-full transition-colors cursor-pointer">
-                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <button onClick={() => setShowSupportChat(false)} className="text-black/70 hover:text-black bg-black/5 hover:bg-black/10 p-2 rounded-full transition-colors cursor-pointer">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -564,11 +564,11 @@ export default function AgentDashboard() {
                 value={chatMessage}
                 onChange={(e) => setChatMessage(e.target.value)}
                 placeholder="Type your message..."
-                className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-400 font-semibold"
+                className="flex-1 bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-400 font-semibold"
               />
               <button
                 type="submit"
-                className="bg-[#00ddff] text-black font-extrabold text-xs px-4 py-2.5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all"
+                className="bg-[#00ddff] text-black font-extrabold text-xs px-4 py-3 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all"
               >
                 Send
               </button>
@@ -601,7 +601,7 @@ export default function AgentDashboard() {
 
                   {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}
@@ -739,12 +739,12 @@ export default function AgentDashboard() {
 
                   {/* Password Strength Section (Calm Minimalist Style with High Contrast) */}
                   {passwordForm.newPassword && (
-                    <div className="mt-1.5 flex flex-col gap-2.5 p-4 rounded-2xl bg-slate-50/90 border border-slate-200 animate-fade-in select-none">
+                    <div className="mt-1.5 flex flex-col gap-2.5 p-4 rounded-2xl bg-slate-50/90 border border-slate-200 transition-all duration-300 select-none">
                       <div className="flex justify-between items-center text-xs text-slate-800">
                         <span className="font-extrabold">Password Strength:</span>
                         <span className="font-extrabold uppercase tracking-wider text-slate-900">{strength.label}</span>
                       </div>
-                      <div className="h-1.5 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                         <div className={`h-full ${strength.color} ${strength.width} transition-all duration-350 rounded-full`} />
                       </div>
                       <div className="flex flex-col gap-1.5 text-[11px] font-bold mt-1.5">
@@ -793,7 +793,7 @@ export default function AgentDashboard() {
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
-                  className="w-full mt-2 bg-[#0f2d3a] hover:bg-[#0c242e] active:scale-[0.98] text-white font-extrabold text-sm py-3.5 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
+                  className="w-full mt-2 bg-[#0f2d3a] hover:bg-[#0c242e] active:scale-[0.98] text-white font-extrabold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
                 >
                   {isUpdatingPassword ? (
                     <span className="flex items-center gap-2">

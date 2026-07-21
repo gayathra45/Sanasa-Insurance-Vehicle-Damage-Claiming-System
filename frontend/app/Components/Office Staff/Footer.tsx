@@ -62,7 +62,7 @@ export default function OfficeStaffFooter() {
             {/* 24 Hours Contact */}
             <div className="flex items-center gap-3">
               {/* Phone Icon */}
-              <div className="bg-white/10 p-2.5 rounded-full flex items-center justify-center">
+              <div className="bg-white/10 p-3 rounded-full flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 24 24"
