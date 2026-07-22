@@ -277,7 +277,7 @@ export default function SignUpPage3() {
       >
         {/* Background Visual teal/blue depth effects */}
         <div className="absolute inset-0 bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
         
         {/* Modern glowing ambient lights */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px] pointer-events-none" />
@@ -345,7 +345,7 @@ export default function SignUpPage3() {
             {/* Show Validation Error Banner if present */}
             {validationError && (
               <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-center gap-3 animate-pulse">
-                <svg className="w-5 h-5 flex-shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span>{validationError}</span>
@@ -459,8 +459,8 @@ export default function SignUpPage3() {
                   <div className="min-w-0">
                     <span className="text-white/50 font-medium text-xs uppercase block select-none">KYC Document (Front)</span>
                     <span className="text-green-400 font-bold flex items-center gap-1.5 w-full min-w-0">
-                      <svg className="w-4 h-4 text-green-400 flex-shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                      <span className="flex-shrink-0">Verified:</span>
+                      <svg className="w-4 h-4 text-green-400 shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      <span className="shrink-0">Verified:</span>
                       <span className="truncate min-w-0 block" title={nicFrontName || "nic_front.png"}>
                         {nicFrontName || "nic_front.png"}
                       </span>
@@ -469,8 +469,8 @@ export default function SignUpPage3() {
                   <div className="min-w-0">
                     <span className="text-white/50 font-medium text-xs uppercase block select-none">KYC Document (Back)</span>
                     <span className="text-green-400 font-bold flex items-center gap-1.5 w-full min-w-0">
-                      <svg className="w-4 h-4 text-green-400 flex-shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                      <span className="flex-shrink-0">Verified:</span>
+                      <svg className="w-4 h-4 text-green-400 shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      <span className="shrink-0">Verified:</span>
                       <span className="truncate min-w-0 block" title={nicBackName || "nic_back.png"}>
                         {nicBackName || "nic_back.png"}
                       </span>
@@ -479,8 +479,8 @@ export default function SignUpPage3() {
                   <div className="min-w-0">
                     <span className="text-white/50 font-medium text-xs uppercase block select-none">Vehicle Registration</span>
                     <span className="text-green-400 font-bold flex items-center gap-1.5 w-full min-w-0">
-                      <svg className="w-4 h-4 text-green-400 flex-shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                      <span className="flex-shrink-0">Verified:</span>
+                      <svg className="w-4 h-4 text-green-400 shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      <span className="shrink-0">Verified:</span>
                       <span className="truncate min-w-0 block" title={vehicleRegName || "vehicle_registration.png"}>
                         {vehicleRegName || "vehicle_registration.png"}
                       </span>
@@ -489,8 +489,8 @@ export default function SignUpPage3() {
                   <div className="min-w-0">
                     <span className="text-white/50 font-medium text-xs uppercase block select-none">Revenue License</span>
                     <span className="text-green-400 font-bold flex items-center gap-1.5 w-full min-w-0">
-                      <svg className="w-4 h-4 text-green-400 flex-shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
-                      <span className="flex-shrink-0">Verified:</span>
+                      <svg className="w-4 h-4 text-green-400 shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      <span className="shrink-0">Verified:</span>
                       <span className="truncate min-w-0 block" title={revenueLicenseName || "revenue_license.png"}>
                         {revenueLicenseName || "revenue_license.png"}
                       </span>
@@ -566,32 +566,32 @@ export default function SignUpPage3() {
 
             {/* DONE MODAL ON SUBMIT SUCCESS */}
             {showSuccessModal && (
-              <div className="absolute inset-0 bg-[#0e3b44]/95 backdrop-blur-xl rounded-[2.5rem] border border-white/20 flex flex-col items-center justify-center p-6 text-center z-30 transition-all duration-500 transition-all duration-300">
-                <div className="flex flex-col items-center gap-6 max-w-xl px-4 md:px-8">
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0e3b44]/70 backdrop-blur-md transition-all duration-300">
+                <div className="bg-[#0e3b44] border border-white/20 rounded-[2.5rem] w-full max-w-md p-8 md:p-10 shadow-2xl flex flex-col items-center justify-center text-center animate-scale-up">
                   
                   {/* Big Glowing Success Checkmark */}
-                  <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border border-green-400/40 shadow-[0_0_30px_rgba(74,222,128,0.4)] animate-[pulse_1.5s_infinite]">
-                    <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
+                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center border border-green-400/40 shadow-[0_0_20px_rgba(74,222,128,0.4)] animate-[pulse_1.5s_infinite] shrink-0">
+                    <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                   </div>
                   
                   {/* Done Title */}
-                  <h3 className="text-white text-3xl font-extrabold tracking-wide select-none">Done!</h3>
+                  <h3 className="text-white text-2xl font-extrabold tracking-wide mt-5 select-none">Done!</h3>
                   
                   {/* Reference Number Pill */}
-                  <div className="bg-[#d9d9d9] text-[#0e3b44] font-bold px-10 py-4 rounded-full text-xl tracking-wider shadow-inner select-all">
+                  <div className="bg-[#d9d9d9] text-[#0e3b44] font-bold px-8 py-3 rounded-full text-lg tracking-wider shadow-inner select-all mt-4">
                     {refNumber}
                   </div>
                   
                   {/* Detail message */}
-                  <p className="text-white/90 text-sm md:text-base font-medium leading-relaxed max-w-md">
+                  <p className="text-white/90 text-sm font-medium leading-relaxed max-w-sm mt-4">
                     Your insurance application has been received. Our office staff will review your documents and activate your account within 1–2 business days.
                   </p>
 
                   {/* Redirection indicator */}
-                  <div className="flex items-center gap-2 mt-2 text-xs text-orange-400 font-bold uppercase tracking-widest select-none">
-                    <svg className="animate-spin h-4 w-4 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-2 mt-6 text-xs text-orange-400 font-bold uppercase tracking-widest select-none">
+                    <svg className="animate-spin h-4 w-4 text-orange-400" xmlns="http://www.w3.org/2500/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
