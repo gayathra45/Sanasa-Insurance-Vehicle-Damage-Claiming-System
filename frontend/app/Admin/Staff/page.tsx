@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import { getApiUrl } from "@/app/config";
+import { sriLankaLocations } from "../../utils/locations";
 
 export default function AdminStaffPage() {
   // Modal / Form states
@@ -13,6 +14,8 @@ export default function AdminStaffPage() {
     mobile: "",
     branch: "",
     province: "",
+    district: "",
+    area: "",
     location: "",
     staffCount: 1
   });
@@ -114,8 +117,10 @@ export default function AdminStaffPage() {
     if (!formData.name.trim()) return setFormError("Full Name / Branch Name is required.");
     if (!formData.email.trim()) return setFormError("Email Address is required.");
     if (!formData.mobile.trim()) return setFormError("Mobile Number is required.");
+    if (!formData.province.trim()) return setFormError("Province selection is required.");
+    if (!formData.district.trim()) return setFormError("District selection is required.");
+    if (!formData.area.trim()) return setFormError("Area selection is required.");
     if (!formData.branch.trim()) return setFormError("Branch Name is required.");
-    if (!formData.province.trim()) return setFormError("Province is required.");
     if (!formData.location.trim()) return setFormError("Office Location is required.");
     if (formData.staffCount === undefined || formData.staffCount < 1) return setFormError("Staff count must be at least 1.");
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -143,6 +148,8 @@ export default function AdminStaffPage() {
         mobile: "",
         branch: "",
         province: "",
+        district: "",
+        area: "",
         location: "",
         staffCount: 1
       });
@@ -222,6 +229,8 @@ export default function AdminStaffPage() {
                       mobile: "",
                       branch: "",
                       province: "",
+                      district: "",
+                      area: "",
                       location: "",
                       staffCount: 1
                     });
@@ -314,6 +323,68 @@ export default function AdminStaffPage() {
                 </span>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Province Selection */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Province</label>
+                    <div className="relative">
+                      <select
+                        required
+                        value={formData.province}
+                        onChange={(e) => {
+                          const prov = e.target.value;
+                          setFormData({ ...formData, province: prov, district: "", area: "", branch: "" });
+                        }}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                      >
+                        <option value="">Select Province</option>
+                        {Object.keys(sriLankaLocations).map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* District Selection */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">District</label>
+                    <div className="relative">
+                      <select
+                        required
+                        disabled={!formData.province}
+                        value={formData.district}
+                        onChange={(e) => {
+                          const dist = e.target.value;
+                          setFormData({ ...formData, district: dist, area: "", branch: dist });
+                        }}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white disabled:bg-slate-100"
+                      >
+                        <option value="">Select District</option>
+                        {formData.province && Object.keys(sriLankaLocations[formData.province]).map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Area Selection */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Area</label>
+                    <div className="relative">
+                      <select
+                        required
+                        disabled={!formData.district}
+                        value={formData.area}
+                        onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white disabled:bg-slate-100"
+                      >
+                        <option value="">Select Area</option>
+                        {formData.province && formData.district && sriLankaLocations[formData.province][formData.district].map((a) => (
+                          <option key={a} value={a}>{a}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   {/* Branch Name */}
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Branch Name</label>
@@ -329,26 +400,6 @@ export default function AdminStaffPage() {
                         value={formData.branch}
                         onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
                         placeholder="E.g., Galle"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Province */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Province</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043a3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296a3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043a3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
-                        </svg>
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        value={formData.province}
-                        onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                        placeholder="E.g., Southern"
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                       />
                     </div>

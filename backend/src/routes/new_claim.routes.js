@@ -112,7 +112,7 @@ router.post("/new-claim", async (req, res) => {
       damageType,
       description,
       location,
-      branch: getNearestBranch(location, user.branch),
+      branch: await getNearestBranch(location, user.branch),
       accidentPhotos: {
         front: accidentFront,
         rear: accidentRear,
@@ -127,7 +127,7 @@ router.post("/new-claim", async (req, res) => {
     await newClaim.save();
 
     // Send confirmation emails
-    const branchName = getNearestBranch(location, user.branch);
+    const branchName = await getNearestBranch(location, user.branch);
     const policyHolderEmail = user.email;
     const branchEmail = `${branchName.toLowerCase().trim()}@gmail.com`;
 

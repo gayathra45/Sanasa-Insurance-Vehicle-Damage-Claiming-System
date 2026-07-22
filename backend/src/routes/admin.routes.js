@@ -286,9 +286,9 @@ router.get("/notifications", async (req, res) => {
 // POST create a new office staff member: /api/admin/staff
 router.post("/staff", async (req, res) => {
   try {
-    const { name, email, mobile, branch, province, location, staffCount, password } = req.body;
+    const { name, email, mobile, branch, province, district, area, location, staffCount, password } = req.body;
 
-    if (!name || !email || !mobile || !branch || !province || !location || staffCount === undefined) {
+    if (!name || !email || !mobile || !branch || !province || !district || !area || !location || staffCount === undefined) {
       return res.status(400).json({ error: "All fields are required." });
     }
 
@@ -324,11 +324,13 @@ router.post("/staff", async (req, res) => {
       mobile: mobile.trim(),
       branch: branch.trim(),
       province: province.trim(),
+      district: district.trim(),
+      area: area.trim(),
       location: location.trim(),
       staffCount: Number(staffCount),
-      password: hashedPassword
+      password: hashedPassword,
+      mustChangePassword: true
     });
-
     await newStaff.save();
 
     // Send welcome email with login details to the branch staff's email

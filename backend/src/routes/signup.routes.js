@@ -178,7 +178,7 @@ router.post("/", async (req, res) => {
         accountNumber: bankDetails.accountNumber,
         accountHolderName: bankDetails.accountHolderName
       },
-      branch: getNearestBranch(city),
+      branch: await getNearestBranch(city),
       referenceNumber: nextRefNum,
     });
 

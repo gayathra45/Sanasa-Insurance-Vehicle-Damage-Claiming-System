@@ -6,6 +6,8 @@ const officeStaffSchema = new mongoose.Schema({
   mobile: { type: String, required: true }, // Phone number, e.g., "0768088176"
   branch: { type: String, required: true }, // Branch Name, e.g., "Galle"
   province: { type: String, required: true }, // Province, e.g., "Southern"
+  district: { type: String, required: true }, // District, e.g., "Galle"
+  area: { type: String, required: true }, // Area, e.g., "Kaluwella"
   location: { type: String, required: true }, // Location, e.g., "Old Foods Market , Galle"
   staffCount: { type: Number, required: true }, // Staff Count, e.g., 10
   password: { type: String, required: true },

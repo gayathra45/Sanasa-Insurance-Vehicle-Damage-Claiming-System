@@ -1,47 +1,101 @@
+import OfficeStaff from "../models/office_staff.model.js";
+
 /**
  * Determines the nearest branch name based on a city or location string.
- * @param {string} location - The city or location name.
- * @param {string} fallbackBranch - The fallback branch if no location matches.
- * @returns {string} The matched branch name.
+ * This is an async function that queries registered branches from the DB
+ * and checks location mapping (Area -> City -> Province -> Fallback).
+ * 
+ * @param {string} location - The accident location description.
+ * @param {string} fallbackBranch - The user's home branch to fallback.
+ * @returns {Promise<string>} The resolved branch name.
  */
-export function getNearestBranch(location = "", fallbackBranch = "Galle") {
-  const cleanLocation = location.trim().toLowerCase();
+export async function getNearestBranch(location = "", fallbackBranch = "Galle") {
+  const cleanLocation = location.trim();
 
-  // 1. Check for specific city/region keywords to determine the nearest branch area.
-  // Check other branches first to prevent "Galle Road" from falsely matching the Galle branch.
-  if (cleanLocation.includes("kurunegala")) {
+  try {
+    // 1. Fetch active branches registered in the DB
+    const activeBranches = await OfficeStaff.find({}, "branch province district area");
+
+    if (activeBranches && activeBranches.length > 0) {
+      // Step A: Check if location contains any active branch's specific area name (exact area match)
+      for (const branch of activeBranches) {
+        if (branch.area) {
+          const areaName = branch.area.trim();
+          if (areaName) {
+            const regex = new RegExp(`\\b${escapeRegExp(areaName)}\\b(?!\\s+Road\\b|\\s+Mawatha\\b|\\s+Street\\b|\\s+Lane\\b|\\s+Avenue\\b)`, "i");
+            if (regex.test(cleanLocation)) {
+              return branch.branch;
+            }
+          }
+        }
+      }
+
+      // Step B: Check if location contains any active branch's district name
+      for (const branch of activeBranches) {
+        if (branch.district) {
+          const districtName = branch.district.trim();
+          if (districtName) {
+            const regex = new RegExp(`\\b${escapeRegExp(districtName)}\\b(?!\\s+Road\\b|\\s+Mawatha\\b|\\s+Street\\b|\\s+Lane\\b|\\s+Avenue\\b)`, "i");
+            if (regex.test(cleanLocation)) {
+              return branch.branch;
+            }
+          }
+        }
+      }
+
+      // Step C: Check if location contains any active branch's province name
+      for (const branch of activeBranches) {
+        if (branch.province) {
+          const provName = branch.province.trim();
+          if (provName) {
+            const regex = new RegExp(`\\b${escapeRegExp(provName)}\\b(?!\\s+Road\\b|\\s+Mawatha\\b|\\s+Street\\b|\\s+Lane\\b|\\s+Avenue\\b)`, "i");
+            if (regex.test(cleanLocation)) {
+              return branch.branch;
+            }
+          }
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error querying active branches in getNearestBranch:", error);
+  }
+
+  // 2. Default hardcoded keyword resolution if DB query failed or matched nothing
+  const lowerLocation = cleanLocation.toLowerCase();
+  if (/\bkurunegala\b/i.test(lowerLocation)) {
     return "Kurunegala";
   }
-  if (cleanLocation.includes("sooriyawewa")) {
+  if (/\bsooriyawewa\b/i.test(lowerLocation)) {
     return "Sooriyawewa";
   }
-  if (cleanLocation.includes("hambantota") || cleanLocation.includes("hambnatota")) {
+  if (/\bhambantota\b/i.test(lowerLocation) || /\bhambnatota\b/i.test(lowerLocation)) {
     return "Hambantota";
   }
-  if (cleanLocation.includes("matara")) {
+  if (/\bmatara\b/i.test(lowerLocation)) {
     return "Matara";
   }
-  if (cleanLocation.includes("colombo") || cleanLocation.includes("gampaha") || cleanLocation.includes("kalutara")) {
+  if (/\bcolombo\b/i.test(lowerLocation) || /\bgampaha\b/i.test(lowerLocation) || /\bkalutara\b/i.test(lowerLocation)) {
     return "Colombo";
   }
-  if (cleanLocation.includes("anuradhapura") || cleanLocation.includes("polonnaruwa")) {
+  if (/\banuradhapura\b/i.test(lowerLocation) || /\bpolonnaruwa\b/i.test(lowerLocation)) {
     return "Anuradhapura";
   }
-  if (cleanLocation.includes("embilipitiya") || cleanLocation.includes("ratnapura")) {
+  if (/\bembilipitiya\b/i.test(lowerLocation) || /\bratnapura\b/i.test(lowerLocation)) {
     return "Embilipitiya";
   }
-
-  // Check Galle last. If it contains "galle" but is NOT just "galle road" in another city.
-  // (Note: If it contains "galle road, kalutara", it will match kalutara/colombo above first).
-  if (cleanLocation.includes("galle")) {
+  if (/\bgalle\b/i.test(lowerLocation)) {
     return "Galle";
   }
 
-  // 2. If no location-based branch is matched, return the fallback branch (if valid)
+  // 3. Fallback to user home branch
   if (fallbackBranch) {
     const trimmed = fallbackBranch.trim();
     if (trimmed) return trimmed;
   }
 
   return "Galle";
+}
+
+function escapeRegExp(string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
