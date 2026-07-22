@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
-import { getApiUrl } from "@/app/config";
+import { API_URL } from "@/app/config";
 import { sriLankaLocations } from "../../utils/locations";
 
 export default function AdminStaffPage() {
@@ -35,7 +35,7 @@ export default function AdminStaffPage() {
   // Fetch pending requests count on load
   const fetchCount = async () => {
     try {
-      const baseUrl = getApiUrl();
+      const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/staff/password-requests`);
       const data = await res.json();
       if (res.ok && data.requests) {
@@ -54,7 +54,7 @@ export default function AdminStaffPage() {
   const fetchPasswordRequests = async () => {
     setLoadingRequests(true);
     try {
-      const baseUrl = getApiUrl();
+      const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/staff/password-requests`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch password requests.");
@@ -70,7 +70,7 @@ export default function AdminStaffPage() {
   const handleApproveRequest = async (staffId: string) => {
     setActioningRequestId(staffId);
     try {
-      const baseUrl = getApiUrl();
+      const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/staff/password-requests/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,7 +91,7 @@ export default function AdminStaffPage() {
   const handleRejectRequest = async (staffId: string) => {
     setActioningRequestId(staffId);
     try {
-      const baseUrl = getApiUrl();
+      const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/staff/password-requests/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -130,7 +130,7 @@ export default function AdminStaffPage() {
 
     setSubmittingStaff(true);
     try {
-      const baseUrl = getApiUrl();
+      const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/staff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
