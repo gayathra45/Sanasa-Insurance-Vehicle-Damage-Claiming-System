@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
+import { getApiUrl } from "@/app/config";
+import { sriLankaLocations } from "../../utils/locations";
 
 export default function AdminStaffPage() {
   // Modal / Form states
@@ -12,6 +14,8 @@ export default function AdminStaffPage() {
     mobile: "",
     branch: "",
     province: "",
+    district: "",
+    area: "",
     location: "",
     staffCount: 1
   });
@@ -31,7 +35,8 @@ export default function AdminStaffPage() {
   // Fetch pending requests count on load
   const fetchCount = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff/password-requests");
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff/password-requests`);
       const data = await res.json();
       if (res.ok && data.requests) {
         setPendingRequestsCount(data.requests.length);
@@ -44,15 +49,13 @@ export default function AdminStaffPage() {
   useEffect(() => {
     fetchCount();
     fetchPasswordRequests();
-
-    const interval = setInterval(fetchCount, 5000);
-    return () => clearInterval(interval);
   }, []);
 
   const fetchPasswordRequests = async () => {
     setLoadingRequests(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff/password-requests");
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff/password-requests`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to fetch password requests.");
       setPasswordRequests(data.requests || []);
@@ -67,7 +70,8 @@ export default function AdminStaffPage() {
   const handleApproveRequest = async (staffId: string) => {
     setActioningRequestId(staffId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff/password-requests/approve", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff/password-requests/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId })
@@ -87,7 +91,8 @@ export default function AdminStaffPage() {
   const handleRejectRequest = async (staffId: string) => {
     setActioningRequestId(staffId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff/password-requests/reject", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff/password-requests/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ staffId })
@@ -112,8 +117,10 @@ export default function AdminStaffPage() {
     if (!formData.name.trim()) return setFormError("Full Name / Branch Name is required.");
     if (!formData.email.trim()) return setFormError("Email Address is required.");
     if (!formData.mobile.trim()) return setFormError("Mobile Number is required.");
+    if (!formData.province.trim()) return setFormError("Province selection is required.");
+    if (!formData.district.trim()) return setFormError("District selection is required.");
+    if (!formData.area.trim()) return setFormError("Area selection is required.");
     if (!formData.branch.trim()) return setFormError("Branch Name is required.");
-    if (!formData.province.trim()) return setFormError("Province is required.");
     if (!formData.location.trim()) return setFormError("Office Location is required.");
     if (formData.staffCount === undefined || formData.staffCount < 1) return setFormError("Staff count must be at least 1.");
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -123,7 +130,8 @@ export default function AdminStaffPage() {
 
     setSubmittingStaff(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/staff", {
+      const baseUrl = getApiUrl();
+      const res = await fetch(`${baseUrl}/admin/staff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
@@ -140,6 +148,8 @@ export default function AdminStaffPage() {
         mobile: "",
         branch: "",
         province: "",
+        district: "",
+        area: "",
         location: "",
         staffCount: 1
       });
@@ -164,7 +174,7 @@ export default function AdminStaffPage() {
 
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Header */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-admin-mobile-menu"))}
@@ -219,6 +229,8 @@ export default function AdminStaffPage() {
                       mobile: "",
                       branch: "",
                       province: "",
+                      district: "",
+                      area: "",
                       location: "",
                       staffCount: 1
                     });
@@ -263,7 +275,7 @@ export default function AdminStaffPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-2xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             
             {/* Modal Header */}
-            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
+            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
                   Register New Branch
@@ -283,13 +295,13 @@ export default function AdminStaffPage() {
             </div>
             
             {/* Horizontal Divider Line */}
-            <div className="border-b border-black mx-8 mb-4 flex-shrink-0" />
+            <div className="border-b border-black mx-8 mb-4 shrink-0" />
 
             {/* Modal Content / Form */}
             <form onSubmit={handleFormSubmit} className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-6 text-left">
               {formError && (
                 <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-xl border border-red-100 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <span>{formError}</span>
@@ -297,7 +309,7 @@ export default function AdminStaffPage() {
               )}
               {formSuccess && (
                 <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-xl border border-emerald-100 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <span>{formSuccess}</span>
@@ -311,6 +323,68 @@ export default function AdminStaffPage() {
                 </span>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Province Selection */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Province</label>
+                    <div className="relative">
+                      <select
+                        required
+                        value={formData.province}
+                        onChange={(e) => {
+                          const prov = e.target.value;
+                          setFormData({ ...formData, province: prov, district: "", area: "", branch: "" });
+                        }}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                      >
+                        <option value="">Select Province</option>
+                        {Object.keys(sriLankaLocations).map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* District Selection */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">District</label>
+                    <div className="relative">
+                      <select
+                        required
+                        disabled={!formData.province}
+                        value={formData.district}
+                        onChange={(e) => {
+                          const dist = e.target.value;
+                          setFormData({ ...formData, district: dist, area: "", branch: dist });
+                        }}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white disabled:bg-slate-100"
+                      >
+                        <option value="">Select District</option>
+                        {formData.province && Object.keys(sriLankaLocations[formData.province]).map((d) => (
+                          <option key={d} value={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Area Selection */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Area</label>
+                    <div className="relative">
+                      <select
+                        required
+                        disabled={!formData.district}
+                        value={formData.area}
+                        onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white disabled:bg-slate-100"
+                      >
+                        <option value="">Select Area</option>
+                        {formData.province && formData.district && sriLankaLocations[formData.province][formData.district].map((a) => (
+                          <option key={a} value={a}>{a}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
                   {/* Branch Name */}
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Branch Name</label>
@@ -326,26 +400,6 @@ export default function AdminStaffPage() {
                         value={formData.branch}
                         onChange={(e) => setFormData({ ...formData, branch: e.target.value })}
                         placeholder="E.g., Galle"
-                        className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Province */}
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Province</label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 0 1-1.043 3.296 3.745 3.745 0 0 1-3.296 1.043A3.745 3.745 0 0 1 12 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 0 1-3.296-1.043a3.745 3.745 0 0 1-1.043-3.296A3.745 3.745 0 0 1 3 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 0 1 1.043-3.296a3.746 3.746 0 0 1 3.296-1.043A3.746 3.746 0 0 1 12 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 0 1 3.296 1.043a3.746 3.746 0 0 1 1.043 3.296A3.745 3.745 0 0 1 21 12Z" />
-                        </svg>
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        value={formData.province}
-                        onChange={(e) => setFormData({ ...formData, province: e.target.value })}
-                        placeholder="E.g., Southern"
                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
                       />
                     </div>
@@ -464,7 +518,7 @@ export default function AdminStaffPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex justify-end gap-3 mt-4 select-none flex-shrink-0">
+              <div className="flex justify-end gap-3 mt-4 select-none shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -501,7 +555,7 @@ export default function AdminStaffPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             
             {/* Modal Header */}
-            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
+            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
                   Branch Password Reset Requests
@@ -521,7 +575,7 @@ export default function AdminStaffPage() {
             </div>
             
             {/* Horizontal Divider Line */}
-            <div className="border-b border-black mx-8 mb-4 flex-shrink-0" />
+            <div className="border-b border-black mx-8 mb-4 shrink-0" />
 
             {/* Modal Content */}
             <div className="px-8 pb-4 flex-1 overflow-y-auto bg-white flex flex-col gap-4 text-left">
@@ -549,7 +603,7 @@ export default function AdminStaffPage() {
                     <div key={request._id} className="border border-slate-200 rounded-2xl p-6 bg-slate-50 hover:bg-slate-100/50 hover:shadow-sm transition-all flex flex-col gap-4 relative">
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center flex-shrink-0 shadow-inner">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 shadow-inner">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
                             </svg>
@@ -616,7 +670,7 @@ export default function AdminStaffPage() {
                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor" className="w-4 h-4">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                               </svg>
-                              <span>Approve</span>
+                              <span>Approve & Send OTP</span>
                             </>
                           )}
                         </button>
@@ -628,7 +682,7 @@ export default function AdminStaffPage() {
             </div>
             
             {/* Modal Footer */}
-            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0 select-none">
+            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end shrink-0 select-none">
               <button
                 onClick={() => setShowRequestsModal(false)}
                 className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95"

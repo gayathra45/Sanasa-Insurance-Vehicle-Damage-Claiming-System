@@ -3,16 +3,12 @@ import crypto from "crypto";
 import Admin from "../models/admin.model.js";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
-import Agent from "../models/agent.model.js";
 import OfficeStaff from "../models/office_staff.model.js";
+import Agent from "../models/agent.model.js";
+import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
 
 const router = express.Router();
-
-// Helper to hash password matching the project's standard hashing logic (SHA-256)
-function hashPassword(password) {
-  return crypto.createHash("sha256").update(password).digest("hex");
-}
 
 // POST admin login: /api/admin/login
 router.post("/login", async (req, res) => {
@@ -56,39 +52,11 @@ router.get("/dashboard-stats", async (req, res) => {
     oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
     const dateFilter = { createdAt: { $gte: oneMonthAgo } };
 
-    // 1. KPI Counts & Monthly aggregation (Fetched in parallel to minimize network latency)
-    const [
-      policyHoldersCount,
-      totalClaimsCount,
-      activeClaimsCount,
-      pendingClaimsCount,
-      claimsByMonth
-    ] = await Promise.all([
-      User.countDocuments(dateFilter),
-      Claim.countDocuments(dateFilter),
-      Claim.countDocuments({ status: "In Progress", ...dateFilter }),
-      Claim.countDocuments({ status: "Pending", ...dateFilter }),
-      Claim.aggregate([
-        {
-          $match: dateFilter
-        },
-        {
-          $project: {
-            month: { $month: "$createdAt" },
-            status: "$status"
-          }
-        },
-        {
-          $group: {
-            _id: { month: "$month" },
-            submittedCount: { $sum: 1 },
-            approvedCount: {
-              $sum: { $cond: [{ $eq: ["$status", "Approved"] }, 1, 0] }
-            }
-          }
-        }
-      ])
-    ]);
+    // 1. KPI Counts (last 30 days)
+    const policyHoldersCount = await User.countDocuments(dateFilter);
+    const totalClaimsCount = await Claim.countDocuments(dateFilter);
+    const activeClaimsCount = await Claim.countDocuments({ status: "In Progress", ...dateFilter });
+    const pendingClaimsCount = await Claim.countDocuments({ status: "Pending", ...dateFilter });
 
     // 2. Branch Performances (Temporarily set to 0, pending office staff assignment logic)
     const branches = [
@@ -97,6 +65,28 @@ router.get("/dashboard-stats", async (req, res) => {
       { name: "Anuradhapura", percentage: 0, count: 0 },
       { name: "Embilipitiya", percentage: 0, count: 0 }
     ];
+
+    // 3. Monthly Claims (Aggregated by month, filtered to last 30 days)
+    const claimsByMonth = await Claim.aggregate([
+      {
+        $match: dateFilter
+      },
+      {
+        $project: {
+          month: { $month: "$createdAt" },
+          status: "$status"
+        }
+      },
+      {
+        $group: {
+          _id: { month: "$month" },
+          submittedCount: { $sum: 1 },
+          approvedCount: {
+            $sum: { $cond: [{ $eq: ["$status", "Approved"] }, 1, 0] }
+          }
+        }
+      }
+    ]);
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const monthlyClaims = monthNames.map((name, index) => {
@@ -122,6 +112,17 @@ router.get("/dashboard-stats", async (req, res) => {
   } catch (err) {
     console.error("Admin dashboard stats API error:", err);
     res.status(500).json({ error: "An internal server error occurred fetching dashboard statistics." });
+  }
+});
+
+// GET all office staff: /api/admin/staff
+router.get("/staff", async (req, res) => {
+  try {
+    const staff = await OfficeStaff.find({}, { password: 0 }).sort({ createdAt: -1 });
+    res.json({ staff });
+  } catch (err) {
+    console.error("Fetch admin staff error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
   }
 });
 
@@ -206,7 +207,7 @@ router.get("/notifications", async (req, res) => {
     });
 
     // 2. Policy Holder notifications
-    const users = await User.find({}, { password: 0 }).sort({ createdAt: -1 });
+    const users = await User.find({}, { password: 0, documents: 0, bankDetails: 0 }).sort({ createdAt: -1 });
     users.forEach((user) => {
       // A. Pending portal registration
       if (user.status === "Pending" || (user.status !== "Approved" && user.status !== "Rejected")) {
@@ -247,7 +248,7 @@ router.get("/notifications", async (req, res) => {
     });
 
     // 3. Agent notifications
-    const agents = await Agent.find({}, { password: 0 }).sort({ createdAt: -1 });
+    const agents = await Agent.find({}, { password: 0, nicFront: 0, nicBack: 0, birthCertificate: 0, policeReport: 0 }).sort({ createdAt: -1 });
     agents.forEach((agent) => {
       // A. Inactive agent
       if (agent.status === "inactive") {
@@ -285,9 +286,9 @@ router.get("/notifications", async (req, res) => {
 // POST create a new office staff member: /api/admin/staff
 router.post("/staff", async (req, res) => {
   try {
-    const { name, email, mobile, branch, province, location, staffCount, password } = req.body;
+    const { name, email, mobile, branch, province, district, area, location, staffCount, password } = req.body;
 
-    if (!name || !email || !mobile || !branch || !province || !location || staffCount === undefined) {
+    if (!name || !email || !mobile || !branch || !province || !district || !area || !location || staffCount === undefined) {
       return res.status(400).json({ error: "All fields are required." });
     }
 
@@ -323,12 +324,13 @@ router.post("/staff", async (req, res) => {
       mobile: mobile.trim(),
       branch: branch.trim(),
       province: province.trim(),
+      district: district.trim(),
+      area: area.trim(),
       location: location.trim(),
       staffCount: Number(staffCount),
       password: hashedPassword,
       mustChangePassword: true
     });
-
     await newStaff.save();
 
     // Send welcome email with login details to the branch staff's email
@@ -365,15 +367,12 @@ router.post("/staff", async (req, res) => {
       `
     );
 
-    const textBody = `Dear ${name.trim()},\n\nYour branch office staff login credentials and registration details for the ${branch.trim()} branch have been created:\n\nRole: Branch Office Staff\nLogin Email: ${cleanEmail}\nPassword: ${tempPassword}\nProvince: ${province.trim()}\nOffice Location: ${location.trim()}\n\nPlease use these credentials to log in to the Sanasa Insurance staff portal.`;
-
     try {
-      await sendEmail(
-        cleanEmail,
+      await sendEmail({
+        to: cleanEmail,
         subject,
-        htmlBody,
-        textBody
-      );
+        html: htmlBody
+      });
     } catch (emailErr) {
       console.error("Failed to send welcome email to branch:", emailErr);
     }
@@ -408,35 +407,40 @@ router.post("/staff/password-requests/approve", async (req, res) => {
     const staff = await OfficeStaff.findById(staffId);
     if (!staff) return res.status(404).json({ error: "Branch not found." });
 
-    // Generate secure temporary token
-    const token = crypto.randomBytes(32).toString("hex");
-    staff.resetSessionToken = token;
-    staff.resetSessionExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    staff.resetOtp = crypto.createHash("sha256").update(otp).digest("hex");
+    staff.resetOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    staff.resetOtpRequestedAt = new Date();
     staff.resetRequestStatus = "Approved";
     await staff.save();
 
     // Prepare email HTML and Text
-    const resetUrl = `http://localhost:3000/Reset_password?token=${encodeURIComponent(token)}`;
+    const resetUrl = `http://localhost:3000/Reset_password?email=${encodeURIComponent(staff.email)}&stage=otp`;
     const htmlBody = getBaseTemplate(
-      "Password Reset Link",
+      "Password Reset Verification Code",
       `
       <h2>Password Reset Request Approved</h2>
       <p>Hi <strong>${staff.name}</strong>,</p>
-      <p>Your password reset request has been approved by the Admin. Please click the button below to set a new password:</p>
-      <p style="text-align: center; margin: 35px 0;">
-        <a href="${resetUrl}" style="background-color: #0f2d3a; color: #ffffff; padding: 14px 32px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block; font-size: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">Reset Password</a>
+      <p>Your password reset request has been approved by the Admin. Use the verification code below to reset your password:</p>
+      <div style="text-align: center; margin: 30px 0;">
+        <div class="otp-code">${otp}</div>
+      </div>
+      <p style="text-align: center; font-size: 14px; color: #4a5568;">
+        This code is valid for <strong>10 minutes</strong>. Do not share this code with anyone.
       </p>
-      <p style="font-size: 13px; color: #718096; line-height: 1.5; text-align: center;">
-        This link is valid for <strong>1 hour</strong>. If you did not request this, you can ignore this email.
+      <p>Please click the link below to enter your verification code and set a new password:</p>
+      <p style="text-align: center; margin: 30px 0;">
+        <a href="${resetUrl}" style="background-color: #ff9800; color: #ffffff; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">Reset Password</a>
       </p>
       `
     );
-    const textBody = `Your branch password reset link is: ${resetUrl}\n\nThis link expires in 1 hour.`;
+    const textBody = `Your branch password reset code is: ${otp}\n\nReset link: ${resetUrl}\n\nThis code expires in 10 minutes. Do not share it with anyone.`;
 
     let emailSent = false;
     let emailError = null;
     try {
-      const result = await sendEmail(staff.email, "Branch Password Reset Link", htmlBody, textBody);
+      const result = await sendEmail(staff.email, `${otp} — Branch Password Reset Verification Code`, htmlBody, textBody);
       emailSent = result.sent;
       emailError = result.error || null;
     } catch (sendErr) {
@@ -444,10 +448,10 @@ router.post("/staff/password-requests/approve", async (req, res) => {
     }
 
     res.json({
-      message: emailSent ? "Password request approved. Reset link sent to branch email." : "Dev Mode: Request approved, reset link generated (email not sent).",
+      message: emailSent ? "Password request approved. OTP sent to branch email." : "Dev Mode: Request approved, OTP generated (email not sent).",
       emailSent,
       emailError,
-      devToken: emailSent ? undefined : token
+      devOtp: emailSent ? undefined : otp
     });
   } catch (err) {
     console.error("Approve staff password request error:", err);
@@ -468,27 +472,7 @@ router.post("/staff/password-requests/reject", async (req, res) => {
     staff.resetOtp = undefined;
     staff.resetOtpExpires = undefined;
     staff.resetOtpRequestedAt = undefined;
-    staff.resetSessionToken = undefined;
-    staff.resetSessionExpires = undefined;
     await staff.save();
-
-    // Send Rejection Email
-    const subject = "Password Reset Request Rejected";
-    const htmlBody = getBaseTemplate(
-      subject,
-      `
-      <h2>Password Reset Request Rejected</h2>
-      <p>Hi <strong>${staff.name}</strong>,</p>
-      <p>Your password reset request has been reviewed and rejected by the Administrator.</p>
-      <p>If you believe this was in error, please contact the System Administrator.</p>
-      `
-    );
-
-    try {
-      await sendEmail(staff.email, subject, htmlBody);
-    } catch (emailErr) {
-      console.error("Failed to send rejection email:", emailErr);
-    }
 
     res.json({ message: "Password request rejected successfully." });
   } catch (err) {
