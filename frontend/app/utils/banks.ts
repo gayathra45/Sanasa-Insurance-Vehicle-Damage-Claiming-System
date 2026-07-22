@@ -44,15 +44,17 @@ const realBranchesList = [
   "Yatiyantota", "Yatiyana"
 ];
 
+const uniqueBranches = Array.from(new Set(realBranchesList));
+
 export const sriLankaBanks: BankBranchData = {
-  "Bank of Ceylon (BOC)": realBranchesList,
-  "People's Bank": realBranchesList,
-  "Commercial Bank of Ceylon": realBranchesList,
-  "Hatton National Bank (HNB)": realBranchesList,
-  "Sampath Bank": realBranchesList,
-  "Seylan Bank": realBranchesList,
-  "Nations Trust Bank (NTB)": realBranchesList,
-  "National Savings Bank (NSB)": realBranchesList,
-  "DFCC Bank": realBranchesList,
-  "SANASA Development Bank (SDB)": realBranchesList
+  "Bank of Ceylon (BOC)": uniqueBranches,
+  "People's Bank": uniqueBranches,
+  "Commercial Bank of Ceylon": uniqueBranches,
+  "Hatton National Bank (HNB)": uniqueBranches,
+  "Sampath Bank": uniqueBranches,
+  "Seylan Bank": uniqueBranches,
+  "Nations Trust Bank (NTB)": uniqueBranches,
+  "National Savings Bank (NSB)": uniqueBranches,
+  "DFCC Bank": uniqueBranches,
+  "SANASA Development Bank (SDB)": uniqueBranches
 };
