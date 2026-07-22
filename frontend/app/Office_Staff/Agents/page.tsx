@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
 import { API_URL } from "@/app/config";
+import { sriLankaLocations } from "../../utils/locations";
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "-";
@@ -27,12 +28,8 @@ export default function AgentsPage() {
   // --- UI Display & Search States ---
   const [branch, setBranch] = useState("");
   const [agents, setAgents] = useState<any[]>([]);
-  const [deletedAgents, setDeletedAgents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [loadingDeleted, setLoadingDeleted] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isViewedAgentDeleted, setIsViewedAgentDeleted] = useState(false);
-  const [showDeletedArchive, setShowDeletedArchive] = useState(false);
 
   // --- Modal / Form Registration States ---
   const [showModal, setShowModal] = useState(false);
@@ -49,6 +46,9 @@ export default function AgentsPage() {
     nic: "",
     dob: "",
     address: "",
+    province: "",
+    district: "",
+    area: "",
     phone: "",
     bankName: "",
     bankBranch: "",
@@ -99,39 +99,13 @@ export default function AgentsPage() {
     }
   }, [router]);
 
-  // Poll agents in background for real-time status updates
-  useEffect(() => {
-    if (!branch) return;
-    const pollInterval = setInterval(async () => {
-      try {
-        const res = await fetch(`${API_URL}/office-staff/agents?branch=${encodeURIComponent(branch)}`);
-        if (res.ok) {
-          const data = await res.json();
-          setAgents(data.agents || []);
-        }
-      } catch (err) {
-        console.warn("Background agents polling failed:", err);
-      }
-    }, 3000); // 3 seconds interval for real-time responsiveness
-    return () => clearInterval(pollInterval);
-  }, [branch]);
-
-  // Keep selectedAgentDetails in sync with background status updates
-  useEffect(() => {
-    if (selectedAgentDetails) {
-      const updated = agents.find(a => a._id === selectedAgentDetails._id);
-      if (updated) {
-        setSelectedAgentDetails(updated);
-      }
-    }
-  }, [agents]);
-
   // --- Data Loading Operations ---
   // Loads all registered Insurance Agents belonging to the specific branch.
   const loadAgents = async (branchName: string) => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/office-staff/agents?branch=${encodeURIComponent(branchName)}`);
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/office-staff/agents?branch=${encodeURIComponent(branchName)}`);
       if (!res.ok) {
         throw new Error("Failed to fetch agents.");
       }
@@ -141,22 +115,6 @@ export default function AgentsPage() {
       console.error("Error loading agents:", err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadDeletedAgents = async (branchName: string) => {
-    try {
-      setLoadingDeleted(true);
-      const res = await fetch(`${API_URL}/office-staff/deleted-agents?branch=${encodeURIComponent(branchName)}`);
-      if (!res.ok) {
-        throw new Error("Failed to fetch deleted agents.");
-      }
-      const data = await res.json();
-      setDeletedAgents(data.deletedAgents || []);
-    } catch (err: any) {
-      console.error("Error loading deleted agents:", err);
-    } finally {
-      setLoadingDeleted(false);
     }
   };
 
@@ -171,6 +129,9 @@ export default function AgentsPage() {
     if (!formData.email.trim()) return setFormError("Email Address is required.");
     if (!formData.nic.trim()) return setFormError("NIC Number is required.");
     if (!formData.dob.trim()) return setFormError("Date of Birth is required.");
+    if (!formData.province.trim()) return setFormError("Province selection is required.");
+    if (!formData.district.trim()) return setFormError("District selection is required.");
+    if (!formData.area.trim()) return setFormError("Area selection is required.");
     if (!formData.address.trim()) return setFormError("Home Address is required.");
     if (!formData.phone.trim()) return setFormError("Phone Number is required.");
 
@@ -179,9 +140,14 @@ export default function AgentsPage() {
       return setFormError("Please enter a valid email address.");
     }
 
-    const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
     if (!nicRegex.test(formData.nic.trim())) {
-      return setFormError("Invalid NIC format. Must be 9 digits followed by V/X, or exactly 12 digits.");
+      return setFormError("Invalid NIC format. Must be between 10 and 12 characters.");
+    }
+
+    const cleanPhone = formData.phone.replace(/[-+()\s]/g, "");
+    if (!/^\d{10}$/.test(cleanPhone)) {
+      return setFormError("Phone number must be exactly 10 digits.");
     }
 
     setSubmittingAgent(true);
@@ -203,7 +169,8 @@ export default function AgentsPage() {
       if (birthCertificate) birthCertificateBase64 = await toBase64(birthCertificate);
       if (policeReport) policeReportBase64 = await toBase64(policeReport);
 
-      const res = await fetch(`${API_URL}/office-staff/agents`, {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/office-staff/agents`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -227,6 +194,9 @@ export default function AgentsPage() {
         nic: "",
         dob: "",
         address: "",
+        province: "",
+        district: "",
+        area: "",
         phone: "",
         bankName: "",
         bankBranch: "",
@@ -280,7 +250,8 @@ export default function AgentsPage() {
         documentBase64 = await toBase64(deleteDoc);
       }
 
-      const res = await fetch(`${API_URL}/office-staff/agents/${deletingAgentId}`, {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/office-staff/agents/${deletingAgentId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -304,9 +275,6 @@ export default function AgentsPage() {
       setShowDeleteModal(false);
       setDeletingAgentId(null);
       loadAgents(branch);
-      if (showDeletedArchive) {
-        loadDeletedAgents(branch);
-      }
     } catch (err: any) {
       console.error(err);
       setCustomPopup({
@@ -339,7 +307,7 @@ export default function AgentsPage() {
 
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Header Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
@@ -377,7 +345,7 @@ export default function AgentsPage() {
             
             {/* Page Header Title */}
             <div className="flex items-center gap-2.5 mb-2 select-none">
-              <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <svg className="w-6 h-6 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.947 11.947 0 0112 21c-2.17 0-4.207-.576-5.963-1.584v-.109A6 6 0 0112 13.5c1.47 0 2.837.525 3.9 1.398M12 12a3 3 0 100-6 3 3 0 000 6zm6.5-3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM5.058 15.05A6 6 0 001.5 19.5a9.379 9.379 0 002.625.372c.866 0 1.7-.117 2.492-.338A9.39 9.39 0 0012 18.75c-.328-.507-.566-1.077-.696-1.687A11.947 11.947 0 006 18c0-.623.095-1.223.27-1.786a4.126 4.126 0 00-6.19 2.535M7.5 9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
               </svg>
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
@@ -412,6 +380,9 @@ export default function AgentsPage() {
                     nic: "",
                     dob: "",
                     address: "",
+                    province: "",
+                    district: "",
+                    area: "",
                     phone: "",
                     bankName: "",
                     bankBranch: "",
@@ -460,11 +431,11 @@ export default function AgentsPage() {
                     return (
                       <div
                         key={agent._id}
-                        className="bg-white border-y border-r border-l-4 border-slate-200/80 border-l-[#0f2d3a]/70 hover:border-l-[#0f2d3a] hover:border-slate-300 rounded-2xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-5 relative group transition-all duration-300"
+                        className="bg-white border-y border-r border-l-4 border-slate-200/80 border-l-[#0f2d3a]/70 hover:border-l-[#0f2d3a] hover:border-slate-300 rounded-2xl p-5 shadow-[0_2px_8px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-200 flex flex-col md:flex-row md:items-center justify-between gap-5 relative group"
                       >
                         {/* Left Section: Profile Info */}
                         <div className="flex items-center gap-4.5 min-w-[240px]">
-                          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 text-[#0f2d3a] flex items-center justify-center font-black text-base select-none shadow-xs flex-shrink-0">
+                          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 text-[#0f2d3a] flex items-center justify-center font-black text-base select-none shadow-xs shrink-0">
                             {initials}
                           </div>
                           <div className="min-w-0">
@@ -494,7 +465,7 @@ export default function AgentsPage() {
                         </div>
 
                         {/* Right Section: Status Badge & View Button */}
-                        <div className="flex items-center justify-between md:justify-end gap-5 flex-shrink-0 border-t border-slate-100 pt-3 md:pt-0 md:border-none">
+                        <div className="flex items-center justify-between md:justify-end gap-5 shrink-0 border-t border-slate-100 pt-3 md:pt-0 md:border-none">
                           <div className="select-none">
                             <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border tracking-wide ${
                               isOnline
@@ -505,10 +476,7 @@ export default function AgentsPage() {
                             </span>
                           </div>
                           <button
-                            onClick={() => {
-                              setIsViewedAgentDeleted(false);
-                              setSelectedAgentDetails(agent);
-                            }}
+                            onClick={() => setSelectedAgentDetails(agent)}
                             className="px-5 py-2 bg-[#0f2d3a]/10 hover:bg-[#0f2d3a] hover:text-white text-[#0f2d3a] font-bold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
                           >
                             View Details
@@ -521,152 +489,47 @@ export default function AgentsPage() {
               )}
             </div>
 
-            {/* Toggle Button for Archive */}
-            <div className="mt-8 flex justify-center">
-              <button
-                onClick={() => {
-                  const nextState = !showDeletedArchive;
-                  setShowDeletedArchive(nextState);
-                  if (nextState && branch) {
-                    loadDeletedAgents(branch);
-                  }
-                }}
-                className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-full text-xs font-black uppercase tracking-wider transition-all cursor-pointer bg-white active:scale-95 shadow-sm flex items-center gap-2 outline-none"
-              >
-                <svg className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${showDeletedArchive ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
-                {showDeletedArchive ? "Hide Deleted Agents Archive" : "Show Deleted Agents Archive"}
-              </button>
-            </div>
-
-            {/* Deleted Agents Section */}
-            {showDeletedArchive && (
-              <div className="mt-8 border-t border-slate-100 pt-8 select-none transition-all duration-300">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                  <div>
-                    <h2 className="text-lg font-black text-slate-800 tracking-tight flex items-center gap-2">
-                      <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Deleted Agents Archive
-                    </h2>
-                    <p className="text-xs font-semibold text-slate-400 mt-1">
-                      Archived records of insurance agents terminated or resigned from this branch.
-                    </p>
-                  </div>
-                </div>
-
-                {loadingDeleted ? (
-                  <div className="bg-slate-50 border border-slate-150 rounded-[28px] p-12 flex flex-col items-center justify-center text-center shadow-sm">
-                    <div className="animate-spin rounded-full h-7 w-7 border-t-2 border-b-2 border-slate-400"></div>
-                    <span className="mt-2.5 text-slate-400 text-xs font-bold">Loading archive...</span>
-                  </div>
-                ) : deletedAgents.length === 0 ? (
-                  <div className="bg-slate-50/50 border border-dashed border-slate-200 rounded-[28px] p-12 text-center select-none">
-                    <p className="text-slate-400 font-extrabold text-xs uppercase tracking-wider">No Deleted Agents</p>
-                    <p className="text-slate-350 text-[11px] mt-1 font-semibold">The branch agent archive is currently empty.</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col gap-3.5">
-                    {deletedAgents.map((agent) => {
-                      const initials = (agent.name || "A").substring(0, 1).toUpperCase();
-                      return (
-                        <div
-                          key={agent._id}
-                          className="bg-slate-50/60 border border-slate-200/80 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 relative transition-all"
-                        >
-                          {/* Profile Info */}
-                          <div className="flex items-center gap-4.5 min-w-[240px]">
-                            <div className="w-10 h-10 rounded-xl bg-slate-200/60 text-slate-500 flex items-center justify-center font-black text-sm select-none flex-shrink-0">
-                              {initials}
-                            </div>
-                            <div className="min-w-0">
-                              <h3 className="font-bold text-slate-700 text-sm leading-tight truncate pr-4" title={agent.name}>
-                                {agent.name}
-                              </h3>
-                              <span className="text-[9px] font-bold text-slate-400 block mt-1 uppercase tracking-wider">
-                                ID: {agent.agentId} • {agent.nic}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Deletion details */}
-                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold">Deletion Reason</span>
-                              <span className="text-slate-600 font-bold">{agent.reason}</span>
-                            </div>
-                            <div className="flex flex-col gap-0.5">
-                              <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold">Termination Date</span>
-                              <span className="text-slate-600 font-bold">{formatDate(agent.deletedAt)}</span>
-                            </div>
-                          </div>
-
-                          {/* View Button */}
-                          <div className="flex items-center justify-end gap-3 flex-shrink-0 border-t border-slate-100 pt-2.5 md:pt-0 md:border-none">
-                            <button
-                              onClick={() => {
-                                setIsViewedAgentDeleted(true);
-                                setSelectedAgentDetails(agent);
-                              }}
-                              className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-600 hover:text-slate-800 font-bold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
-                            >
-                              View Archive
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
           </main>
         </div>
       </div>
 
       {/* Modal Dialog */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-2xl w-full max-w-4xl shadow-xl border border-slate-200 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col text-left">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up">
             {/* Modal Header */}
-            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 bg-white select-none">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h2 className="text-[22px] font-black text-[#0f2d3a] tracking-tight leading-none">
-                    Register New Insurance Agent
-                  </h2>
-                </div>
-                <p className="text-xs text-slate-400 font-bold mt-2">
-                  Create a new field officer account assigned to the {branch} Branch
-                </p>
+            <div className="bg-linear-to-r from-[#0f2d3a] to-[#1a4a60] px-8 py-5 flex justify-between items-center text-white select-none">
+              <div className="flex items-center gap-3">
+                <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                <h2 className="font-extrabold text-lg tracking-tight">Register New Insurance Agent</h2>
               </div>
               <button
-                type="button"
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-slate-700 text-2xl font-bold border-none bg-transparent cursor-pointer transition-colors p-1"
+                className="text-white/80 hover:text-white bg-transparent border-none outline-none cursor-pointer transition-colors p-1 rounded-lg hover:bg-white/10"
               >
-                &times;
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
             {/* Modal Content / Form */}
-            <form onSubmit={handleFormSubmit} className="flex flex-col flex-1 overflow-hidden">
+            <form onSubmit={handleFormSubmit} className="flex flex-col h-[80vh] md:h-auto max-h-[85vh]">
               {/* Scrollable inputs container */}
-              <div className="p-8 overflow-y-auto bg-white flex-1 flex flex-col gap-8">
+              <div className="px-8 py-6 overflow-y-auto flex flex-col gap-5 flex-1">
                 {formError && (
-                  <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 flex-shrink-0">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 shrink-0">
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
                     <span>{formError}</span>
                   </div>
                 )}
                 {formSuccess && (
-                  <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 flex-shrink-0">
-                    <svg className="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 shrink-0">
+                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>{formSuccess}</span>
@@ -685,7 +548,7 @@ export default function AgentsPage() {
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="E.g., John Doe"
+                        placeholder="E.g., Gayathra Samuditha"
                         className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
                       />
                     </div>
@@ -754,6 +617,71 @@ export default function AgentsPage() {
                       />
                     </div>
 
+                    {/* Province, District, and Area cascading dropdowns */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Province Selection */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Province <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <select
+                            required
+                            value={formData.province}
+                            onChange={(e) => {
+                              const prov = e.target.value;
+                              setFormData({ ...formData, province: prov, district: "", area: "" });
+                            }}
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white"
+                          >
+                            <option value="">Select Province</option>
+                            {Object.keys(sriLankaLocations).map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* District Selection */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">District <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <select
+                            required
+                            disabled={!formData.province}
+                            value={formData.district}
+                            onChange={(e) => {
+                              const dist = e.target.value;
+                              setFormData({ ...formData, district: dist, area: "" });
+                            }}
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white disabled:bg-slate-50 disabled:text-slate-400"
+                          >
+                            <option value="">Select District</option>
+                            {formData.province && Object.keys(sriLankaLocations[formData.province]).map((d) => (
+                              <option key={d} value={d}>{d}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Area Selection */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Area <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <select
+                            required
+                            disabled={!formData.district}
+                            value={formData.area}
+                            onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white disabled:bg-slate-50 disabled:text-slate-400"
+                          >
+                            <option value="">Select Area</option>
+                            {formData.province && formData.district && sriLankaLocations[formData.province][formData.district].map((a) => (
+                              <option key={a} value={a}>{a}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 
@@ -818,7 +746,7 @@ export default function AgentsPage() {
                         type="text"
                         value={formData.accountHolderName}
                         onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
-                        placeholder="E.g., J. Doe"
+                        placeholder="E.g., G Samuditha"
                         className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
                       />
                     </div>
@@ -908,8 +836,8 @@ export default function AgentsPage() {
                 </div>
 
                 {/* Read-only Branch Info Accent Card */}
-                <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none flex-shrink-0">
-                  <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center flex-shrink-0">
+                <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center shrink-0">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
@@ -922,7 +850,7 @@ export default function AgentsPage() {
               </div>
 
               {/* Action Buttons (Fixed Footer) */}
-              <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-200 bg-slate-50 flex-shrink-0">
+              <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-100 shrink-0 bg-slate-50/50">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
@@ -950,32 +878,25 @@ export default function AgentsPage() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </div>      )}                          {/* Agent Details View Modal */}
       {selectedAgentDetails && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-2xl w-full max-w-4xl shadow-xl border border-slate-200 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col">
             
             {/* Modal Header */}
-            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 bg-white select-none">
+            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none">
               <div>
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-[22px] font-black text-[#0f2d3a] tracking-tight leading-none">
                     {selectedAgentDetails.name}
                   </h2>
-                  {isViewedAgentDeleted ? (
-                    <span className="text-[10px] font-black uppercase px-3 py-1 rounded-full border tracking-wide bg-red-50 text-red-700 border-red-200">
-                      Deleted / Archived
-                    </span>
-                  ) : (
-                    <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border tracking-wide ${
-                      (selectedAgentDetails.availability || "Active") === "Active"
-                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                        : "bg-slate-100 text-slate-500 border-slate-200"
-                    }`}>
-                      {selectedAgentDetails.availability || "Active"}
-                    </span>
-                  )}
+                  <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border tracking-wide ${
+                    (selectedAgentDetails.availability || "Active") === "Active"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : "bg-slate-100 text-slate-500 border-slate-200"
+                  }`}>
+                    {selectedAgentDetails.availability || "Active"}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-400 font-bold mt-2">
                   ID: {selectedAgentDetails.agentId} • {selectedAgentDetails.branch} Branch
@@ -1006,6 +927,9 @@ export default function AgentsPage() {
                       { label: "Phone Number", value: selectedAgentDetails.phone || "-" },
                       { label: "NIC Number", value: selectedAgentDetails.nic },
                       { label: "Date of Birth", value: formatDate(selectedAgentDetails.dob) },
+                      { label: "Province", value: selectedAgentDetails.province || "-" },
+                      { label: "District / City", value: selectedAgentDetails.district || selectedAgentDetails.city || "-" },
+                      { label: "Area", value: selectedAgentDetails.area || "-" },
                       { label: "Onboarded Date", value: formatDate(selectedAgentDetails.createdAt) },
                       { label: "Home Address", value: selectedAgentDetails.address }
                     ].map((item, idx) => (
@@ -1077,67 +1001,22 @@ export default function AgentsPage() {
                 </div>
               </div>
 
-              {isViewedAgentDeleted && (
-                <div className="mt-4 flex flex-col gap-3 bg-red-50/20 border border-red-200/40 p-5 rounded-2xl text-left">
-                  <h3 className="text-[11px] font-black text-red-800 uppercase tracking-widest border-b border-red-200/40 pb-2.5 mb-1 select-none">
-                    Account Deletion Record
-                  </h3>
-                  <div className="flex flex-col gap-4 text-xs">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Reason for Deletion</span>
-                        <span className="text-slate-800 font-extrabold text-[13px]">{selectedAgentDetails.reason}</span>
-                      </div>
-                      <div className="flex flex-col gap-0.5">
-                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Deletion Timestamp</span>
-                        <span className="text-slate-800 font-bold">{formatDate(selectedAgentDetails.deletedAt)}</span>
-                      </div>
-                    </div>
-                    <div className="flex flex-col gap-0.5 text-left">
-                      <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Remarks / Additional Notes</span>
-                      <span className="text-slate-700 font-semibold bg-white border border-slate-100 p-4 rounded-xl block leading-relaxed shadow-sm text-left">
-                        {selectedAgentDetails.note || "No remarks provided."}
-                      </span>
-                    </div>
-                    {selectedAgentDetails.document && (
-                      <div className="flex flex-col gap-1 mt-1 text-left">
-                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Deletion Proof Document</span>
-                        <div className="flex items-center gap-3">
-                          <a
-                            href={selectedAgentDetails.document}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-4 py-2 bg-red-650 hover:bg-red-750 text-white font-extrabold text-xs rounded-xl shadow-md cursor-pointer transition-all no-underline inline-block active:scale-95 border-none"
-                          >
-                            View Proof Document
-                          </a>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
             </div>
 
             {/* Modal Footer */}
-            <div className="flex justify-between items-center px-8 py-5 border-t border-slate-200 bg-slate-50 flex-shrink-0">
-              {!isViewedAgentDeleted ? (
-                <button
-                  onClick={() => {
-                    setSelectedAgentDetails(null);
-                    handleDeleteAgent(selectedAgentDetails._id);
-                  }}
-                  className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
-                >
-                  <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                  Delete Agent
-                </button>
-              ) : (
-                <div></div>
-              )}
+            <div className="flex justify-between items-center px-8 py-5 border-t border-slate-200 bg-slate-50 shrink-0">
+              <button
+                onClick={() => {
+                  setSelectedAgentDetails(null);
+                  handleDeleteAgent(selectedAgentDetails._id);
+                }}
+                className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Agent
+              </button>
               <button
                 onClick={() => setSelectedAgentDetails(null)}
                 className="px-8 py-3 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-sm font-bold shadow-md cursor-pointer border-none outline-none transition-all"
@@ -1151,25 +1030,25 @@ export default function AgentsPage() {
 
       {/* Custom Popup Modal */}
       {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
             
             {/* Header/Title with clean inline icon */}
             <div className="flex items-center gap-3.5">
               {customPopup.type === "success" ? (
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
               ) : customPopup.type === "confirm" ? (
-                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
@@ -1210,7 +1089,7 @@ export default function AgentsPage() {
               ) : (
                 <button
                   onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#880808] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
                 >
                   OK
                 </button>

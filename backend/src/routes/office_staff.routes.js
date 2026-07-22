@@ -1,16 +1,23 @@
+/**
+ * Office Staff Router
+ * Handles endpoints for Office Staff login, dashboard statistics calculation,
+ * registration verification, and agent management operations.
+ */
 import express from "express";
-import crypto from "crypto";
 import OfficeStaff from "../models/office_staff.model.js";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
-import DeletedAgent from "../models/deleted_agent.model.js";
 import { hashPassword } from "../utils/crypto.js";
+import { sendEmail, getBaseTemplate } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
-import { sendEmail, getBaseTemplate, sendAgentActivityEmail } from "../utils/email.js";
 
 const router = express.Router();
+
+// ==========================================
+// --- API: Authentication ---
+// ==========================================
 
 // POST login: /api/office-staff/login
 router.post("/login", async (req, res) => {
@@ -42,43 +49,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// POST change password on first login: /api/office-staff/change-password
-router.post("/change-password", async (req, res) => {
-  try {
-    const { email, currentPassword, newPassword } = req.body;
-    if (!email || !currentPassword || !newPassword) {
-      return res.status(400).json({ error: "All fields are required." });
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-    const staff = await OfficeStaff.findOne({ email: cleanEmail });
-    if (!staff) {
-      return res.status(404).json({ error: "Branch staff account not found." });
-    }
-
-    const hashedCurrent = hashPassword(currentPassword);
-    if (staff.password !== hashedCurrent) {
-      return res.status(400).json({ error: "Incorrect current temporary password." });
-    }
-
-    if (newPassword.length < 6 || newPassword.length > 12) {
-      return res.status(400).json({ error: "Password must be between 6 and 12 characters." });
-    }
-    if (!/[0-9]/.test(newPassword) && !/[^A-Za-z0-9]/.test(newPassword)) {
-      return res.status(400).json({ error: "Password must contain at least one number or special character." });
-    }
-
-    staff.password = hashPassword(newPassword);
-    staff.mustChangePassword = false;
-    await staff.save();
-
-    res.json({ message: "Password updated successfully." });
-  } catch (err) {
-    console.error("Change branch password error:", err);
-    res.status(500).json({ error: "An internal server error occurred." });
-  }
-});
-
 // GET dashboard stats: /api/office-staff/dashboard-stats
 router.get("/dashboard-stats", async (req, res) => {
   try {
@@ -95,51 +65,48 @@ router.get("/dashboard-stats", async (req, res) => {
     // Common query filter by branch
     const branchFilter = { branch: branch.trim() };
 
-    // 1. KPI Counts & lists (Fetched in parallel to minimize network latency)
-    const [
-      unassignedClaimsCount,
-      newRegistrationsCount,
-      activeClaimsCount,
-      pendingClaimsCount,
-      newClaimsList,
-      newRegistrationsList
-    ] = await Promise.all([
-      Claim.countDocuments({
+    // 1. KPI Counts
+    const unassignedClaimsCount = await Claim.countDocuments({
+      ...branchFilter,
+      ...dateFilter,
+      assignedAgent: ""
+    });
+
+    const newRegistrationsCount = await User.countDocuments({
+      ...branchFilter,
+      status: "Pending"
+    });
+
+    const activeClaimsCount = await Claim.countDocuments({
+      ...branchFilter,
+      ...dateFilter,
+      status: "In Progress"
+    });
+
+    const pendingClaimsCount = await Claim.countDocuments({
+      ...branchFilter,
+      ...dateFilter,
+      status: "Pending"
+    });
+
+    // 2. Fetch Lists for Dashboard (excluding heavy image/document fields)
+    // New Claims for this branch (latest first)
+    const newClaimsList = await Claim.find(
+      {
         ...branchFilter,
-        ...dateFilter,
-        assignedAgent: ""
-      }),
-      User.countDocuments({
+        ...dateFilter
+      },
+      { accidentPhotos: 0, drivingLicense: 0 }
+    ).sort({ createdAt: -1 });
+
+    // New Registrations for this branch (latest first)
+    const newRegistrationsList = await User.find(
+      {
         ...branchFilter,
-        ...dateFilter,
-        status: { $nin: ["Approved", "Rejected"] }
-      }),
-      Claim.countDocuments({
-        ...branchFilter,
-        ...dateFilter,
-        status: "In Progress"
-      }),
-      Claim.countDocuments({
-        ...branchFilter,
-        ...dateFilter,
         status: "Pending"
-      }),
-      Claim.find(
-        {
-          ...branchFilter,
-          ...dateFilter
-        },
-        { accidentPhotos: 0, drivingLicense: 0 }
-      ).sort({ createdAt: -1 }),
-      User.find(
-        {
-          ...branchFilter,
-          ...dateFilter,
-          status: { $nin: ["Approved", "Rejected"] }
-        },
-        { documents: 0 }
-      ).sort({ createdAt: -1 })
-    ]);
+      },
+      { documents: 0 }
+    ).sort({ createdAt: -1 });
 
     res.json({
       stats: {
@@ -165,26 +132,7 @@ router.get("/claims", async (req, res) => {
       return res.status(400).json({ error: "Branch query parameter is required." });
     }
     const claims = await Claim.find({ branch: branch.trim() }).sort({ createdAt: -1 });
-
-    const nics = claims.map(c => c.userNic);
-    const users = await User.find({ nic: { $in: nics } }, { nic: 1, bankDetails: 1 });
-    const bankDetailsMap = {};
-    users.forEach(u => {
-      bankDetailsMap[u.nic] = u.bankDetails;
-    });
-
-    const claimsWithBankDetails = claims.map(c => {
-      const plainObj = c.toObject();
-      plainObj.policyHolderBankDetails = bankDetailsMap[c.userNic] || {
-        bankName: "",
-        branchName: "",
-        accountNumber: "",
-        accountHolderName: ""
-      };
-      return plainObj;
-    });
-
-    res.json({ claims: claimsWithBankDetails });
+    res.json({ claims });
   } catch (err) {
     console.error("Fetch office staff claims error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
@@ -198,7 +146,10 @@ router.get("/policy-holders", async (req, res) => {
     if (!branch) {
       return res.status(400).json({ error: "Branch query parameter is required." });
     }
-    const policyHolders = await User.find({ branch: branch.trim(), status: "Approved" }, { password: 0 }).sort({ createdAt: -1 });
+    const policyHolders = await User.find(
+      { branch: branch.trim(), status: "Approved" },
+      { password: 0, documents: 0 }
+    ).sort({ createdAt: -1 });
     res.json({ policyHolders });
   } catch (err) {
     console.error("Fetch office staff policy holders error:", err);
@@ -221,21 +172,6 @@ router.get("/agents", async (req, res) => {
   }
 });
 
-// GET all deleted agents for a specific branch: /api/office-staff/deleted-agents
-router.get("/deleted-agents", async (req, res) => {
-  try {
-    const { branch } = req.query;
-    if (!branch) {
-      return res.status(400).json({ error: "Branch query parameter is required." });
-    }
-    const deletedAgents = await DeletedAgent.find({ branch: branch.trim() }).sort({ deletedAt: -1 });
-    res.json({ deletedAgents });
-  } catch (err) {
-    console.error("Fetch office staff deleted agents error:", err);
-    res.status(500).json({ error: "An internal server error occurred." });
-  }
-});
-
 // GET all registrations for a specific branch: /api/office-staff/registrations
 router.get("/registrations", async (req, res) => {
   try {
@@ -243,7 +179,10 @@ router.get("/registrations", async (req, res) => {
     if (!branch) {
       return res.status(400).json({ error: "Branch query parameter is required." });
     }
-    const registrations = await User.find({ branch: branch.trim(), status: { $ne: "Approved" } }, { password: 0 }).sort({ createdAt: -1 });
+    const registrations = await User.find(
+      { branch: branch.trim(), status: { $ne: "Approved" } },
+      { password: 0, documents: 0 }
+    ).sort({ createdAt: -1 });
     res.json({ registrations });
   } catch (err) {
     console.error("Fetch office staff registrations error:", err);
@@ -255,7 +194,7 @@ router.get("/registrations", async (req, res) => {
 router.patch("/registrations/:id/status", async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, reason } = req.body;
+    const { status } = req.body;
 
     if (!["Pending", "Approved", "Rejected"].includes(status)) {
       return res.status(400).json({ error: "Invalid status value. Must be Pending, Approved, or Rejected." });
@@ -267,79 +206,9 @@ router.patch("/registrations/:id/status", async (req, res) => {
     }
 
     user.status = status;
-    
-    // Automatically approve initial vehicles if registration is approved
-    if (status === "Approved" && user.vehicles && Array.isArray(user.vehicles)) {
-      user.vehicles.forEach(v => {
-        v.status = "Approved";
-      });
-    }
-
     await user.save();
 
-    // Send email notification on Approved or Rejected
-    let emailSent = false;
-    if (status === "Approved" || status === "Rejected") {
-      const isApproved = status === "Approved";
-      const subject = `Sanasa Insurance — Registration ${isApproved ? "Approved" : "Rejected"}`;
-
-      const bodyHtml = `
-        <h2>Account Registration ${isApproved ? "Approved 🎉" : "Rejected ⚠️"}</h2>
-        <p>Dear <strong>${user.firstName} ${user.lastName}</strong>,</p>
-        <p>${
-          isApproved
-            ? `Your policyholder account registration for the <strong>${user.branch} Branch</strong> has been verified and approved by our office staff. You can now log into your account using your NIC or email address.`
-            : `We regret to inform you that your policyholder account registration request for the <strong>${user.branch} Branch</strong> has been rejected by our office staff.`
-        }</p>
-        ${!isApproved && reason ? `<div style="background-color: #fff5f5; border-left: 4px solid #ef4444; padding: 14px; margin: 20px 0; border-radius: 8px;"><strong style="color: #991b1b;">Reason for Rejection:</strong> <span style="color: #7f1d1d;">${reason}</span></div>` : ""}
-        <table class="data-table">
-          <tr>
-            <td class="label">Reference Number:</td>
-            <td class="value highlight-value">${user.referenceNumber}</td>
-          </tr>
-          <tr>
-            <td class="label">Full Name:</td>
-            <td class="value">${user.firstName} ${user.lastName}</td>
-          </tr>
-          <tr>
-            <td class="label">NIC Number:</td>
-            <td class="value">${user.nic}</td>
-          </tr>
-          <tr>
-            <td class="label">Assigned Branch:</td>
-            <td class="value">${user.branch}</td>
-          </tr>
-          <tr>
-            <td class="label">Registration Status:</td>
-            <td class="value highlight-value">${status}</td>
-          </tr>
-        </table>
-        ${
-          isApproved
-            ? `<p style="margin-top: 20px;">You can now access all policyholder features including filing claims, tracking requests, and managing vehicle insurance details.</p>
-               <div style="text-align: center; margin: 30px 0;">
-                 <a href="${process.env.FRONTEND_URL || "http://localhost:3000"}/Login" style="background-color: #ff9800; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 30px; font-weight: bold; display: inline-block; font-size: 15px; box-shadow: 0 4px 12px rgba(255,152,0,0.3);">Log In to Your Account</a>
-               </div>`
-            : `<p>If you have questions regarding this decision, please contact the <strong>${user.branch} Branch</strong> staff or visit your local branch office with your original verification documents.</p>`
-        }
-      `;
-
-      const textBody = `Dear ${user.firstName}, your registration status is now: ${status}. Reference: ${user.referenceNumber}.`;
-
-      try {
-        await sendEmail(user.email, subject, getBaseTemplate(subject, bodyHtml), textBody);
-        emailSent = true;
-        console.log(`✅ Registration status (${status}) email successfully sent to ${user.email}`);
-      } catch (emailErr) {
-        console.error("⚠️ Failed to send registration status email:", emailErr.message);
-      }
-    }
-
-    res.json({
-      message: `Registration status updated to ${status}`,
-      user,
-      emailSent
-    });
+    res.json({ message: `Registration status updated to ${status}`, user });
   } catch (err) {
     console.error("Update registration status error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
@@ -350,179 +219,28 @@ router.patch("/registrations/:id/status", async (req, res) => {
 router.patch("/claims/:claimNumber", async (req, res) => {
   try {
     const { claimNumber } = req.params;
-    const {
-      status,
-      amount,
-      currentStep,
-      assignedAgent,
-      messageText,
-      messageTexts,
-      messageSender,
-      messageRecipient,
-      priority,
-      requestedDocuments,
-      documentsRequested,
-      documentRequestTo,
-      inspectionReport,
-      inspectionSubmitted,
-      paymentReceipt,
-      noteText,
-      bankName,
-      bankBranch,
-      bankAccount,
-      rejectionReason,
-      isManuallyUpdated,
-      manualUpdateReason,
-      manualUpdateBy
-    } = req.body;
+    const { status, amount, currentStep, assignedAgent, messageText, messageSender } = req.body;
 
     const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
     if (!claim) {
       return res.status(404).json({ error: "Claim not found." });
     }
 
-    const previousAgent = claim.assignedAgent;
-    const previousStatus = claim.status;
-    const previousStep = claim.currentStep;
-
-    if (status !== undefined) {
-      claim.status = status;
-    }
-    
-    if (amount !== undefined) {
-      claim.amount = amount === "" ? null : Number(amount);
-    }
-
-    if (currentStep !== undefined) {
-      claim.currentStep = Number(currentStep);
-    }
-
-    if (assignedAgent !== undefined) {
-      claim.assignedAgent = assignedAgent;
-      // Auto-advance to Step 2 (Assigned) if agent assigned and step is 1
-      if (assignedAgent && claim.currentStep < 2) {
-        claim.currentStep = 2;
-      }
-    }
-
-    if (priority !== undefined) claim.priority = priority;
-    if (requestedDocuments !== undefined) claim.requestedDocuments = requestedDocuments;
-    if (documentsRequested !== undefined) claim.documentsRequested = documentsRequested;
-    if (documentRequestTo !== undefined) claim.documentRequestTo = documentRequestTo;
-    if (inspectionReport !== undefined) claim.inspectionReport = inspectionReport;
-    
-    if (inspectionSubmitted !== undefined) {
-      claim.inspectionSubmitted = inspectionSubmitted;
-      if (inspectionSubmitted && claim.currentStep < 4) {
-        claim.currentStep = 4;
-      }
-    }
-
-    if (paymentReceipt !== undefined) {
-      let receiptUrl = paymentReceipt;
-      if (paymentReceipt && paymentReceipt.startsWith("data:")) {
-        receiptUrl = await uploadToCloudinary(paymentReceipt, "claims/payment_receipts");
-      }
-      claim.paymentReceipt = receiptUrl;
-      if (receiptUrl && claim.currentStep < 6) {
-        claim.currentStep = 6;
-      }
-    }
-
-    if (bankName !== undefined) claim.bankName = bankName;
-    if (bankBranch !== undefined) claim.bankBranch = bankBranch;
-    if (bankAccount !== undefined) claim.bankAccount = bankAccount;
-    if (rejectionReason !== undefined) claim.rejectionReason = rejectionReason;
-
-    if (isManuallyUpdated !== undefined) {
-      claim.isManuallyUpdated = isManuallyUpdated;
-      if (isManuallyUpdated) {
-        claim.manualUpdateAt = new Date();
-      }
-    }
-    if (manualUpdateReason !== undefined) {
-      claim.manualUpdateReason = manualUpdateReason;
-    }
-    if (manualUpdateBy !== undefined) {
-      claim.manualUpdateBy = manualUpdateBy;
-    }
+    if (status !== undefined) claim.status = status;
+    if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
+    if (currentStep !== undefined) claim.currentStep = Number(currentStep);
+    if (assignedAgent !== undefined) claim.assignedAgent = assignedAgent;
 
     if (messageText) {
       claim.messages.push({
         sender: messageSender || "Office Staff",
         message: messageText,
-        sentAt: new Date(),
-        recipient: messageRecipient || "Policy Holder"
-      });
-    }
-
-    if (Array.isArray(messageTexts)) {
-      messageTexts.forEach((msg) => {
-        claim.messages.push({
-          sender: messageSender || "Office Staff",
-          message: msg.message || msg,
-          sentAt: new Date(),
-          recipient: msg.recipient || messageRecipient || "Policy Holder"
-        });
-      });
-    }
-
-    if (noteText) {
-      claim.notes.push({
-        text: noteText,
-        addedBy: messageSender || "Office Staff",
-        addedAt: new Date()
+        sentAt: new Date()
       });
     }
 
     await claim.save();
-
-    // Trigger notification email to assigned agent
-    if (claim.assignedAgent) {
-      const isNewAssignment = assignedAgent !== undefined && assignedAgent.trim() !== "" && assignedAgent.trim().toLowerCase() !== (previousAgent || "").trim().toLowerCase();
-      const isStatusChanged = status !== undefined && status !== previousStatus;
-      const isStepChanged = currentStep !== undefined && Number(currentStep) !== previousStep;
-      const isReceiptUploaded = paymentReceipt !== undefined && !!claim.paymentReceipt;
-
-      if (isNewAssignment) {
-        await sendAgentActivityEmail(
-          claim.assignedAgent,
-          "New Claim Assigned",
-          claim,
-          `You have been assigned to handle this claim. Please log in to accept the claim and initiate the inspection.`
-        );
-      } else if (isStatusChanged || isStepChanged || isReceiptUploaded) {
-        let activityText = "Claim Details Updated";
-        let customMsg = "The office staff has updated the claim details.";
-        
-        if (status === "Approved") {
-          activityText = "Claim Approved";
-          customMsg = `The claim has been officially APPROVED. Approved Amount: LKR ${claim.amount || 0.00}`;
-        } else if (status === "Rejected") {
-          activityText = "Claim Rejected";
-          customMsg = `The claim has been REJECTED. Reason: ${claim.rejectionReason || "No reason specified."}`;
-        } else if (isReceiptUploaded) {
-          activityText = "Payment Receipt Submitted";
-          customMsg = "The transaction bank receipt has been submitted and payment processing is completed.";
-        } else if (isStepChanged) {
-          activityText = `Progress Updated to Step ${claim.currentStep}`;
-          customMsg = `The claim tracking step has been updated to: Step ${claim.currentStep}`;
-        }
-
-        await sendAgentActivityEmail(claim.assignedAgent, activityText, claim, customMsg);
-      }
-    }
-
-    const user = await User.findOne({ nic: claim.userNic }, { bankDetails: 1 });
-    const claimWithBankDetails = claim.toObject();
-    claimWithBankDetails.policyHolderBankDetails = user ? user.bankDetails : {
-      bankName: "",
-      branchName: "",
-      accountNumber: "",
-      accountHolderName: ""
-    };
-
-    res.json({ message: "Claim updated successfully", claim: claimWithBankDetails });
+    res.json({ message: "Claim updated successfully", claim });
   } catch (err) {
     console.error("Update claim error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
@@ -541,6 +259,8 @@ router.post("/agents", async (req, res) => {
       branch,
       phone,
       city,
+      district,
+      area,
       province,
       bankName,
       bankBranch,
@@ -554,9 +274,8 @@ router.post("/agents", async (req, res) => {
       password
     } = req.body;
 
-    console.log("POST /agents fields received:", { name, email, nic, address, dob, branch });
-    if (!name || !email || !nic || !address || !dob || !branch) {
-      return res.status(400).json({ error: "All standard fields are required." });
+    if (!name || !email || !nic || !address || !dob || !branch || !province || !district || !area) {
+      return res.status(400).json({ error: "All agent profile fields including Province, District, and Area are required." });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -597,10 +316,9 @@ router.post("/agents", async (req, res) => {
       }
     }
 
-    // Generate a secure activation token and hash a placeholder password
-    const token = crypto.randomBytes(32).toString("hex");
-    const placeholderPassword = crypto.randomBytes(16).toString("hex");
-    const hashedPassword = hashPassword(placeholderPassword);
+    // Generate secure temporary password containing letters, digits, and a special character
+    const tempPassword = password || ("SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90));
+    const hashedPassword = hashPassword(tempPassword);
 
     // Upload documents to Cloudinary if they exist
     let nicFrontUrl = "";
@@ -633,16 +351,16 @@ router.post("/agents", async (req, res) => {
       name: name.trim(),
       email: cleanEmail,
       password: hashedPassword,
-      mustChangePassword: true,
-      resetSessionToken: token,
-      resetSessionExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+      mustChangePassword: false,
       nic: cleanNic,
       address: address.trim(),
       dob: dob.trim(),
       branch: branch.trim(),
       phone: phone ? phone.trim() : "",
-      city: city ? city.trim() : "",
-      province: resolvedProvince,
+      city: district ? district.trim() : "",
+      district: district ? district.trim() : "",
+      area: area ? area.trim() : "",
+      province: province ? province.trim() : resolvedProvince,
       bankName: bankName ? bankName.trim() : "",
       bankBranch: bankBranch ? bankBranch.trim() : "",
       accountNumber: accountNumber ? accountNumber.trim() : "",
@@ -657,15 +375,14 @@ router.post("/agents", async (req, res) => {
 
     await newAgent.save();
 
-    // Send welcome email with activation details
-    const activationUrl = `http://localhost:3000/Reset_password?token=${encodeURIComponent(token)}`;
-    const subject = `Welcome to Sanasa Insurance — Activate Your Agent Account`;
+    // Send welcome email with login details to the agent's email
+    const subject = `Welcome to Sanasa Insurance — Your Agent Credentials`;
     const htmlBody = getBaseTemplate(
       subject,
       `
       <h2>Agent Account Created Successfully</h2>
       <p>Dear <strong>${name.trim()}</strong>,</p>
-      <p>Your agent account has been registered by the branch staff at the <strong>${branch.trim()}</strong> branch. Below are your account details:</p>
+      <p>Your agent account has been registered by the branch staff at the <strong>${branch.trim()}</strong> branch. Below are your login credentials and account details:</p>
       <table class="data-table">
         <tr>
           <td class="label">Agent ID:</td>
@@ -676,6 +393,10 @@ router.post("/agents", async (req, res) => {
           <td class="value">${cleanEmail}</td>
         </tr>
         <tr>
+          <td class="label">Temporary Password:</td>
+          <td class="value highlight-value">${tempPassword}</td>
+        </tr>
+        <tr>
           <td class="label">NIC Number:</td>
           <td class="value">${cleanNic}</td>
         </tr>
@@ -684,16 +405,10 @@ router.post("/agents", async (req, res) => {
           <td class="value">${branch.trim()}</td>
         </tr>
       </table>
-      <p>To finalize setting up your account, please click the button below to set your secure password:</p>
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="${activationUrl}" style="background-color: #0f2d3a; color: #ffffff; padding: 12px 28px; border-radius: 25px; text-decoration: none; font-weight: bold; display: inline-block;">Activate & Set Password</a>
-      </p>
-      <p style="font-size: 13px; color: #718096; line-height: 1.5; text-align: center;">
-        This activation link is valid for <strong>24 hours</strong>. If you did not request this, you can ignore this email.
-      </p>
+      <p>Please log in using your temporary password. Upon your first login to either the Agent Web Dashboard or Mobile App, you will be prompted to set a new password of your choice for subsequent logins.</p>
       `
     );
-    const textBody = `Welcome to Sanasa Insurance. Your Agent ID is ${nextAgentId}. Use email ${cleanEmail} and the activation link ${activationUrl} to activate your account and set your password.`;
+    const textBody = `Welcome to Sanasa Insurance. Your Agent ID is ${nextAgentId}. Use email ${cleanEmail} and temporary password ${tempPassword} to log in.`;
 
     try {
       await sendEmail(cleanEmail, subject, htmlBody, textBody);
@@ -727,39 +442,9 @@ router.delete("/agents/:id", async (req, res) => {
     console.log(`[Termination Log] Agent ${agent.name} (${agent.agentId}) deleted.`);
     console.log(`- Reason: ${reason || "Not provided"}`);
     console.log(`- Note: ${note || "None"}`);
-    
-    let documentUrl = "";
     if (document) {
       console.log(`- Attached proof document length: ${document.length} characters (Base64)`);
-      documentUrl = await uploadToCloudinary(document, "agents/deletion_proof");
     }
-
-    // Save to DeletedAgent archive
-    await DeletedAgent.create({
-      agentId: agent.agentId,
-      name: agent.name,
-      email: agent.email,
-      nic: agent.nic,
-      address: agent.address,
-      dob: agent.dob,
-      branch: agent.branch,
-      phone: agent.phone || "",
-      city: agent.city || "",
-      province: agent.province || "",
-      bankName: agent.bankName || "",
-      bankBranch: agent.bankBranch || "",
-      accountNumber: agent.accountNumber || "",
-      accountType: agent.accountType || "",
-      accountHolderName: agent.accountHolderName || "",
-      nicFront: agent.nicFront || "",
-      nicBack: agent.nicBack || "",
-      birthCertificate: agent.birthCertificate || "",
-      policeReport: agent.policeReport || "",
-      reason: reason || "Other",
-      note: note || "",
-      document: documentUrl,
-      deletedAt: new Date()
-    });
 
     await Agent.findByIdAndDelete(id);
     res.json({ message: "Agent removed successfully." });
@@ -782,6 +467,8 @@ router.patch("/agents/:id", async (req, res) => {
       password,
       phone,
       city,
+      district,
+      area,
       province,
       bankName,
       bankBranch,
@@ -805,7 +492,13 @@ router.patch("/agents/:id", async (req, res) => {
     if (dob !== undefined) agent.dob = dob.trim();
     if (address !== undefined) agent.address = address.trim();
     if (phone !== undefined) agent.phone = phone.trim();
-    if (city !== undefined) agent.city = city.trim();
+    if (district !== undefined) {
+      agent.district = district.trim();
+      agent.city = district.trim();
+    } else if (city !== undefined) {
+      agent.city = city.trim();
+    }
+    if (area !== undefined) agent.area = area.trim();
     if (province !== undefined) agent.province = province.trim();
     if (bankName !== undefined) agent.bankName = bankName.trim();
     if (bankBranch !== undefined) agent.bankBranch = bankBranch.trim();
@@ -859,7 +552,7 @@ router.get("/pending-vehicles", async (req, res) => {
         { "vehicles.status": { $exists: false } },
         { "vehicles": { $elemMatch: { status: { $exists: false } } } }
       ]
-    }, { password: 0 });
+    }, { password: 0, documents: 0, bankDetails: 0 });
 
     const pendingVehiclesList = [];
     users.forEach(user => {
@@ -935,43 +628,6 @@ router.patch("/vehicles/verify", async (req, res) => {
     });
   } catch (err) {
     console.error("Verify vehicle error:", err);
-    res.status(500).json({ error: "An internal server error occurred." });
-  }
-});
-
-// POST change office staff password: /api/office-staff/change-password
-router.post("/change-password", async (req, res) => {
-  try {
-    const { email, currentPassword, newPassword } = req.body;
-    if (!email || !currentPassword || !newPassword) {
-      return res.status(400).json({ error: "Email, Current Password, and New Password are required." });
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-    const staff = await OfficeStaff.findOne({ email: cleanEmail });
-    if (!staff) {
-      return res.status(404).json({ error: "Office staff member not found." });
-    }
-
-    const hashedInput = hashPassword(currentPassword);
-    if (staff.password !== hashedInput) {
-      return res.status(400).json({ error: "Incorrect current password." });
-    }
-
-    if (newPassword.length < 6 || newPassword.length > 12) {
-      return res.status(400).json({ error: "Password must be between 6 and 12 characters." });
-    }
-    if (!/[0-9]/.test(newPassword) && !/[^A-Za-z0-9]/.test(newPassword)) {
-      return res.status(400).json({ error: "Password must contain at least one number or special character." });
-    }
-
-    staff.password = hashPassword(newPassword);
-    staff.mustChangePassword = false;
-    await staff.save();
-
-    res.json({ message: "Password updated successfully." });
-  } catch (err) {
-    console.error("Change staff password error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
