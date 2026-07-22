@@ -481,45 +481,48 @@ export default function AgentsPage() {
       {/* Modal Dialog */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-2xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             {/* Modal Header */}
-            <div className="bg-linear-to-r from-[#0f2d3a] to-[#1a4a60] px-8 py-5 flex justify-between items-center text-white select-none">
-              <div className="flex items-center gap-3">
-                <svg className="w-6 h-6 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-                <h2 className="font-extrabold text-lg tracking-tight">Register New Insurance Agent</h2>
+            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                  Register New Insurance Agent
+                </h2>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
+                  Define agent profile and bank credentials
+                </p>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-white/80 hover:text-white bg-transparent border-none outline-none cursor-pointer transition-colors p-1 rounded-lg hover:bg-white/10"
+                className="text-slate-400 hover:text-slate-650 bg-transparent border-none outline-none cursor-pointer transition-colors p-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
+            
+            {/* Horizontal Divider Line */}
+            <div className="border-b border-black mx-8 mb-4 shrink-0" />
 
             {/* Modal Content / Form */}
-            <form onSubmit={handleFormSubmit} className="flex flex-col h-[80vh] md:h-auto max-h-[85vh]">
-              {/* Scrollable inputs container */}
-              <div className="px-8 py-6 overflow-y-auto flex flex-col gap-5 flex-1">
-                {formError && (
-                  <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 shrink-0">
-                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                    <span>{formError}</span>
-                  </div>
-                )}
-                {formSuccess && (
-                  <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 shrink-0">
-                    <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{formSuccess}</span>
-                  </div>
-                )}
+            <form onSubmit={handleFormSubmit} className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-6 text-left">
+              {formError && (
+                <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 shrink-0">
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <span>{formError}</span>
+                </div>
+              )}
+              {formSuccess && (
+                <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 shrink-0">
+                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{formSuccess}</span>
+                </div>
+              )}
 
                 {/* --- Section 1: General Details --- */}
                 <div>
@@ -533,7 +536,7 @@ export default function AgentsPage() {
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="E.g., John Doe"
+                        placeholder="E.g., Gayathra Samuditha"
                         className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
                       />
                     </div>
@@ -671,7 +674,7 @@ export default function AgentsPage() {
                           required
                           value={formData.accountHolderName}
                           onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
-                          placeholder="E.g., J. Doe"
+                          placeholder="E.g., G Samuditha"
                           className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
                         />
                       </div>
@@ -773,21 +776,19 @@ export default function AgentsPage() {
                     <span className="text-sm font-extrabold text-[#0f2d3a]">{branch} Branch</span>
                   </div>
                 </div>
-              </div>
-
-              {/* Action Buttons (Fixed Footer) */}
-              <div className="flex justify-end gap-3.5 px-8 py-5 border-t border-slate-100 shrink-0 bg-slate-50/50">
+              {/* Action Buttons */}
+              <div className="flex justify-end gap-3 mt-4 select-none shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-full text-sm font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                  className="px-6 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingAgent}
-                  className="px-8 py-3 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-sm font-bold shadow-lg shadow-[#0f2d3a]/25 transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(15,45,58,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
                 >
                   {submittingAgent ? (
                     <>
