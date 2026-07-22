@@ -47,6 +47,7 @@ const realBranchesList = [
 const uniqueBranches = Array.from(new Set(realBranchesList));
 
 export const sriLankaBanks: BankBranchData = {
+  // Local Licensed Commercial Banks
   "Bank of Ceylon (BOC)": uniqueBranches,
   "People's Bank": uniqueBranches,
   "Commercial Bank of Ceylon": uniqueBranches,
@@ -56,5 +57,27 @@ export const sriLankaBanks: BankBranchData = {
   "Nations Trust Bank (NTB)": uniqueBranches,
   "National Savings Bank (NSB)": uniqueBranches,
   "DFCC Bank": uniqueBranches,
-  "SANASA Development Bank (SDB)": uniqueBranches
+  "SANASA Development Bank (SDB)": uniqueBranches,
+  "Union Bank of Colombo": uniqueBranches,
+  "Pan Asia Banking Corporation (PABC)": uniqueBranches,
+  "Amana Bank": uniqueBranches,
+  "Cargills Bank": uniqueBranches,
+
+  // Licensed Specialized Banks
+  "Regional Development Bank (RDB)": uniqueBranches,
+  "State Mortgage and Investment Bank (SMIB)": uniqueBranches,
+  "Housing Development Finance Corporation Bank (HDFC)": uniqueBranches,
+
+  // Foreign Commercial Banks
+  "HSBC": uniqueBranches,
+  "Standard Chartered Bank": uniqueBranches,
+  "Citibank": uniqueBranches,
+  "State Bank of India (SBI)": uniqueBranches,
+  "Indian Bank": uniqueBranches,
+  "Indian Overseas Bank": uniqueBranches,
+  "Habib Bank": uniqueBranches,
+  "MCB Bank": uniqueBranches,
+  "Deutsche Bank": uniqueBranches,
+  "Public Bank Berhad": uniqueBranches,
+  "Bank of China": uniqueBranches
 };
