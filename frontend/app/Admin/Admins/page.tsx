@@ -110,9 +110,16 @@ export default function AdminAdminsPage() {
     if (!emailRegex.test(formData.email.trim())) {
       return setFormError("Please enter a valid email address.");
     }
-    const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
-    if (!nicRegex.test(formData.nic.trim())) {
-      return setFormError("Invalid NIC format. Must be 9 digits followed by V/X, or 12 digits.");
+
+    const cleanMobile = formData.mobile.replace(/[-+()\s]/g, "");
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return setFormError("Mobile number must be exactly 10 digits.");
+    }
+
+    const cleanNic = formData.nic.trim();
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
+    if (!nicRegex.test(cleanNic)) {
+      return setFormError("Invalid NIC format. Must be 10-12 characters/digits.");
     }
 
     if (!currentAdmin) return setFormError("Current administrator session is not found.");

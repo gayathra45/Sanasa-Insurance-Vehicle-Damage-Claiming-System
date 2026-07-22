@@ -117,6 +117,10 @@ export default function AdminStaffPage() {
     if (!formData.name.trim()) return setFormError("Full Name / Branch Name is required.");
     if (!formData.email.trim()) return setFormError("Email Address is required.");
     if (!formData.mobile.trim()) return setFormError("Mobile Number is required.");
+    const cleanMobile = formData.mobile.replace(/[-+()\s]/g, "");
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return setFormError("Mobile number must be exactly 10 digits.");
+    }
     if (!formData.province.trim()) return setFormError("Province selection is required.");
     if (!formData.district.trim()) return setFormError("District selection is required.");
     if (!formData.area.trim()) return setFormError("Area selection is required.");

@@ -59,14 +59,14 @@ router.post("/", async (req, res) => {
     }
 
     const cleanNic = nic.trim();
-    const nicRegex = /^\d{8,11}[0-9vVxX]$/;
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
     if (!nicRegex.test(cleanNic)) {
-      return res.status(400).json({ error: "Invalid NIC number. Must be between 9 and 12 characters, starting with numbers and ending with optional V or X." });
+      return res.status(400).json({ error: "Invalid NIC number. Must be between 10 and 12 characters/digits." });
     }
 
     const cleanMobile = mobile.replace(/[-+()\s]/g, "");
-    if (!/^\d{9,10}$/.test(cleanMobile)) {
-      return res.status(400).json({ error: "Mobile number must be exactly 9 or 10 digits." });
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return res.status(400).json({ error: "Mobile number must be exactly 10 digits." });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

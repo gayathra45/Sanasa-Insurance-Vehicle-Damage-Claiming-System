@@ -130,18 +130,18 @@ export default function SignUp() {
       return;
     }
 
-    // NIC format check: 9-12 characters, numbers only, last character can be V/v/X/x.
+    // NIC format check: 10-12 characters/digits.
     const cleanNic = nic.trim();
-    const nicRegex = /^\d{8,11}[0-9vVxX]$/;
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
     if (!nicRegex.test(cleanNic)) {
-      setValidationError("Please enter a valid NIC (9-12 characters, numbers only, last character can be V or X).");
+      setValidationError("Please enter a valid NIC (10-12 characters/digits).");
       return;
     }
 
-    // Mobile number check: exactly 9 or 10 digits
+    // Mobile number check: exactly 10 digits
     const cleanMobile = mobile.replace(/[-+()\s]/g, "");
-    if (!/^\d{9,10}$/.test(cleanMobile)) {
-      setValidationError("Mobile number must be exactly 9 or 10 digits.");
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      setValidationError("Mobile number must be exactly 10 digits.");
       return;
     }
 
