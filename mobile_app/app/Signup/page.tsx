@@ -18,6 +18,7 @@ import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import { API_BASE_URL } from "../_config";
+import { sriLankaBanks } from "../../utils/banks";
 
 // Sri Lanka Provinces and Cities Data
 const provincesData = [
@@ -82,6 +83,8 @@ export default function MobileSignup() {
   const [showCityPicker, setShowCityPicker] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [activeVehicleTypeIndex, setActiveVehicleTypeIndex] = useState<number | null>(null);
+  const [showBankPicker, setShowBankPicker] = useState(false);
+  const [showBranchPicker, setShowBranchPicker] = useState(false);
 
   // STEP 1 Bank details States
   const [bankName, setBankName] = useState("");
@@ -99,7 +102,7 @@ export default function MobileSignup() {
       model: "",
       engineNumber: "",
       chassisNumber: "",
-      policyNumber: ""
+      policyNumber: "SAN"
     }
   ]);
 
@@ -144,7 +147,7 @@ export default function MobileSignup() {
   const addVehicle = () => {
     setVehicles([
       ...vehicles,
-      { numberPlate: "", vehicleType: "", year: "", company: "", model: "", engineNumber: "", chassisNumber: "", policyNumber: "" }
+      { numberPlate: "", vehicleType: "", year: "", company: "", model: "", engineNumber: "", chassisNumber: "", policyNumber: "SAN" }
     ]);
   };
 
@@ -273,15 +276,15 @@ export default function MobileSignup() {
         return;
       }
 
-      const nicRegex = /^\d{8,11}[0-9vVxX]$/;
+      const nicRegex = /^[0-9vVxX]{10,12}$/;
       if (!nicRegex.test(nic.trim())) {
-        showAlert("Validation Error", "Invalid NIC Number (Must be 9-12 characters, ending with V or X).");
+        showAlert("Validation Error", "Invalid NIC Number (Must be 10-12 characters/digits).");
         return;
       }
 
       const cleanMobile = mobile.replace(/[-+()\s]/g, "");
-      if (!/^\d{9,10}$/.test(cleanMobile)) {
-        showAlert("Validation Error", "Mobile number must be exactly 9 or 10 digits.");
+      if (!/^\d{10}$/.test(cleanMobile)) {
+        showAlert("Validation Error", "Mobile number must be exactly 10 digits.");
         return;
       }
 
@@ -347,8 +350,8 @@ export default function MobileSignup() {
         }
 
         const cleanPolicy = v.policyNumber.replace(/[\s-]/g, "");
-        if (!/^SAN[A-Za-z0-9]{5,9}$/i.test(cleanPolicy)) {
-          showAlert("Validation Error", `Vehicle #${i + 1} Policy must start with 'SAN' and be between 8 and 12 characters.`);
+        if (!/^SAN\d{7}$/i.test(cleanPolicy)) {
+          showAlert("Validation Error", `Vehicle #${i + 1} Policy must start with 'SAN' followed by exactly 7 digits (e.g. SAN9876543).`);
           return;
         }
       }
@@ -697,15 +700,69 @@ export default function MobileSignup() {
                     <Text style={styles.stepTitle}>Bank Details (For Payouts)</Text>
                   </View>
 
-                  <View style={styles.inputBox}>
-                    <Text style={styles.inputLabel}>Bank Name *</Text>
-                    <TextInput style={styles.textInput} placeholder="e.g. Bank of Ceylon" placeholderTextColor="#94a3b8" value={bankName} onChangeText={setBankName} />
-                  </View>
+                   {/* Bank Name Picker dropdown */}
+                   <View style={styles.inputBox}>
+                     <Text style={styles.inputLabel}>Bank Name *</Text>
+                     <TouchableOpacity
+                       activeOpacity={0.7}
+                       style={styles.pickerSelector}
+                       onPress={() => setShowBankPicker(!showBankPicker)}
+                     >
+                       <Text style={[styles.pickerSelectorText, bankName ? styles.pickerSelected : null]}>
+                         {bankName || "Select Bank"}
+                       </Text>
+                       <Ionicons name="chevron-down-outline" size={20} color="#64748b" />
+                     </TouchableOpacity>
+                     {showBankPicker && (
+                       <ScrollView style={styles.dropdownOverlay} nestedScrollEnabled={true} keyboardShouldPersistTaps="handled">
+                         {Object.keys(sriLankaBanks).map((b) => (
+                           <TouchableOpacity
+                             key={b}
+                             style={styles.dropdownOption}
+                             onPress={() => {
+                               setBankName(b);
+                               setBranchName(""); // reset branch when bank changes
+                               setShowBankPicker(false);
+                             }}
+                           >
+                             <Text style={styles.dropdownOptionText}>{b}</Text>
+                           </TouchableOpacity>
+                         ))}
+                       </ScrollView>
+                     )}
+                   </View>
 
-                  <View style={styles.inputBox}>
-                    <Text style={styles.inputLabel}>Branch Name *</Text>
-                    <TextInput style={styles.textInput} placeholder="e.g. Galle Fort" placeholderTextColor="#94a3b8" value={branchName} onChangeText={setBranchName} />
-                  </View>
+                   {/* Branch Name Picker dropdown */}
+                   <View style={styles.inputBox}>
+                     <Text style={styles.inputLabel}>Branch Name *</Text>
+                     <TouchableOpacity
+                       activeOpacity={0.7}
+                       style={[styles.pickerSelector, !bankName && { opacity: 0.6 }]}
+                       disabled={!bankName}
+                       onPress={() => setShowBranchPicker(!showBranchPicker)}
+                     >
+                       <Text style={[styles.pickerSelectorText, branchName ? styles.pickerSelected : null]}>
+                         {branchName || "Select Branch"}
+                       </Text>
+                       <Ionicons name="chevron-down-outline" size={20} color="#64748b" />
+                     </TouchableOpacity>
+                     {showBranchPicker && bankName && (
+                       <ScrollView style={styles.dropdownOverlay} nestedScrollEnabled={true} keyboardShouldPersistTaps="handled">
+                         {sriLankaBanks[bankName].map((br) => (
+                           <TouchableOpacity
+                             key={br}
+                             style={styles.dropdownOption}
+                             onPress={() => {
+                               setBranchName(br);
+                               setShowBranchPicker(false);
+                             }}
+                           >
+                             <Text style={styles.dropdownOptionText}>{br}</Text>
+                           </TouchableOpacity>
+                         ))}
+                       </ScrollView>
+                     )}
+                   </View>
 
                   <View style={styles.inputBox}>
                     <Text style={styles.inputLabel}>Account Number *</Text>
