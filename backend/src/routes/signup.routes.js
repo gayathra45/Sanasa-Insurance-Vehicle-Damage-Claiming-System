@@ -241,6 +241,14 @@ router.post("/reset-password/send-otp", async (req, res) => {
       return res.status(400).json({ error: "NIC or Mobile number is required." });
     }
 
+    const cleanMobileCheck = cleanInput.replace(/[-+()\s]/g, "");
+    const isMobile = /^\d{10}$/.test(cleanMobileCheck);
+    const isNic = /^[0-9vVxX]{10,12}$/.test(cleanInput);
+
+    if (!isMobile && !isNic) {
+      return res.status(400).json({ error: "Please enter a valid Mobile number (exactly 10 digits) or NIC (10-12 characters)." });
+    }
+
     // Look up in parallel across all collections
     const [dbUser, dbAgent, dbStaff, dbAdmin] = await Promise.all([
       User.findOne({ email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } }),

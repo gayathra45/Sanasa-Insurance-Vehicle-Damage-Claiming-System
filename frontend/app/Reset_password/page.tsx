@@ -117,8 +117,23 @@ export default function ResetPassword() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError("");
-    if (!loginId.trim()) { setValidationError("NIC or Mobile number is required."); return; }
-    if (!email.trim()) { setValidationError("Email address is required."); return; }
+    const cleanId = loginId.trim();
+    if (!cleanId) {
+      setValidationError("NIC or Mobile number is required.");
+      return;
+    }
+
+    const isMobile = /^\d{10}$/.test(cleanId);
+    const isNic = /^[0-9vVxX]{10,12}$/.test(cleanId);
+    if (!isMobile && !isNic) {
+      setValidationError("Please enter a valid Mobile number (exactly 10 digits) or NIC (10-12 characters).");
+      return;
+    }
+
+    if (!email.trim()) {
+      setValidationError("Email address is required.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
