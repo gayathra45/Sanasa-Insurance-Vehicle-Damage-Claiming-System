@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
 import { getApiUrl } from "@/app/config";
+import { sriLankaLocations } from "../../utils/locations";
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "-";
@@ -45,6 +46,9 @@ export default function AgentsPage() {
     nic: "",
     dob: "",
     address: "",
+    province: "",
+    district: "",
+    area: "",
     phone: "",
     bankName: "",
     bankBranch: "",
@@ -125,6 +129,9 @@ export default function AgentsPage() {
     if (!formData.email.trim()) return setFormError("Email Address is required.");
     if (!formData.nic.trim()) return setFormError("NIC Number is required.");
     if (!formData.dob.trim()) return setFormError("Date of Birth is required.");
+    if (!formData.province.trim()) return setFormError("Province selection is required.");
+    if (!formData.district.trim()) return setFormError("District selection is required.");
+    if (!formData.area.trim()) return setFormError("Area selection is required.");
     if (!formData.address.trim()) return setFormError("Home Address is required.");
     if (!formData.phone.trim()) return setFormError("Phone Number is required.");
 
@@ -133,9 +140,14 @@ export default function AgentsPage() {
       return setFormError("Please enter a valid email address.");
     }
 
-    const nicRegex = /^([0-9]{9}[vVxX]|[0-9]{12})$/;
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
     if (!nicRegex.test(formData.nic.trim())) {
-      return setFormError("Invalid NIC format. Must be 9 digits followed by V/X, or exactly 12 digits.");
+      return setFormError("Invalid NIC format. Must be between 10 and 12 characters.");
+    }
+
+    const cleanPhone = formData.phone.replace(/[-+()\s]/g, "");
+    if (!/^\d{10}$/.test(cleanPhone)) {
+      return setFormError("Phone number must be exactly 10 digits.");
     }
 
     setSubmittingAgent(true);
@@ -182,6 +194,9 @@ export default function AgentsPage() {
         nic: "",
         dob: "",
         address: "",
+        province: "",
+        district: "",
+        area: "",
         phone: "",
         bankName: "",
         bankBranch: "",
@@ -365,6 +380,9 @@ export default function AgentsPage() {
                     nic: "",
                     dob: "",
                     address: "",
+                    province: "",
+                    district: "",
+                    area: "",
                     phone: "",
                     bankName: "",
                     bankBranch: "",
@@ -597,6 +615,71 @@ export default function AgentsPage() {
                         placeholder="Enter home address here..."
                         className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold resize-none"
                       />
+                    </div>
+
+                    {/* Province, District, and Area cascading dropdowns */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* Province Selection */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Province <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <select
+                            required
+                            value={formData.province}
+                            onChange={(e) => {
+                              const prov = e.target.value;
+                              setFormData({ ...formData, province: prov, district: "", area: "" });
+                            }}
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white"
+                          >
+                            <option value="">Select Province</option>
+                            {Object.keys(sriLankaLocations).map((p) => (
+                              <option key={p} value={p}>{p}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* District Selection */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">District <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <select
+                            required
+                            disabled={!formData.province}
+                            value={formData.district}
+                            onChange={(e) => {
+                              const dist = e.target.value;
+                              setFormData({ ...formData, district: dist, area: "" });
+                            }}
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white disabled:bg-slate-50 disabled:text-slate-400"
+                          >
+                            <option value="">Select District</option>
+                            {formData.province && Object.keys(sriLankaLocations[formData.province]).map((d) => (
+                              <option key={d} value={d}>{d}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Area Selection */}
+                      <div className="flex flex-col gap-1.5">
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Area <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <select
+                            required
+                            disabled={!formData.district}
+                            value={formData.area}
+                            onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white disabled:bg-slate-50 disabled:text-slate-400"
+                          >
+                            <option value="">Select Area</option>
+                            {formData.province && formData.district && sriLankaLocations[formData.province][formData.district].map((a) => (
+                              <option key={a} value={a}>{a}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
                     </div>
 
                   </div>
@@ -844,6 +927,9 @@ export default function AgentsPage() {
                       { label: "Phone Number", value: selectedAgentDetails.phone || "-" },
                       { label: "NIC Number", value: selectedAgentDetails.nic },
                       { label: "Date of Birth", value: formatDate(selectedAgentDetails.dob) },
+                      { label: "Province", value: selectedAgentDetails.province || "-" },
+                      { label: "District / City", value: selectedAgentDetails.district || selectedAgentDetails.city || "-" },
+                      { label: "Area", value: selectedAgentDetails.area || "-" },
                       { label: "Onboarded Date", value: formatDate(selectedAgentDetails.createdAt) },
                       { label: "Home Address", value: selectedAgentDetails.address }
                     ].map((item, idx) => (

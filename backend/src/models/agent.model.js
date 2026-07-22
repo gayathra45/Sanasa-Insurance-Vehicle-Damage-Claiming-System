@@ -12,6 +12,8 @@ const agentSchema = new mongoose.Schema({
   branch: { type: String, required: true },
   phone: { type: String, default: "" },
   city: { type: String, default: "" },
+  district: { type: String, default: "" },
+  area: { type: String, default: "" },
   province: { type: String, default: "" },
   bankName: { type: String, default: "" },
   bankBranch: { type: String, default: "" },

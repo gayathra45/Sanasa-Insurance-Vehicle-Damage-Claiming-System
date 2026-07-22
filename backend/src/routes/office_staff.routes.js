@@ -259,6 +259,8 @@ router.post("/agents", async (req, res) => {
       branch,
       phone,
       city,
+      district,
+      area,
       province,
       bankName,
       bankBranch,
@@ -272,8 +274,8 @@ router.post("/agents", async (req, res) => {
       password
     } = req.body;
 
-    if (!name || !email || !nic || !address || !dob || !branch) {
-      return res.status(400).json({ error: "All agent profile fields are required." });
+    if (!name || !email || !nic || !address || !dob || !branch || !province || !district || !area) {
+      return res.status(400).json({ error: "All agent profile fields including Province, District, and Area are required." });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -355,8 +357,10 @@ router.post("/agents", async (req, res) => {
       dob: dob.trim(),
       branch: branch.trim(),
       phone: phone ? phone.trim() : "",
-      city: city ? city.trim() : "",
-      province: resolvedProvince,
+      city: district ? district.trim() : "",
+      district: district ? district.trim() : "",
+      area: area ? area.trim() : "",
+      province: province ? province.trim() : resolvedProvince,
       bankName: bankName ? bankName.trim() : "",
       bankBranch: bankBranch ? bankBranch.trim() : "",
       accountNumber: accountNumber ? accountNumber.trim() : "",
@@ -463,6 +467,8 @@ router.patch("/agents/:id", async (req, res) => {
       password,
       phone,
       city,
+      district,
+      area,
       province,
       bankName,
       bankBranch,
@@ -486,7 +492,13 @@ router.patch("/agents/:id", async (req, res) => {
     if (dob !== undefined) agent.dob = dob.trim();
     if (address !== undefined) agent.address = address.trim();
     if (phone !== undefined) agent.phone = phone.trim();
-    if (city !== undefined) agent.city = city.trim();
+    if (district !== undefined) {
+      agent.district = district.trim();
+      agent.city = district.trim();
+    } else if (city !== undefined) {
+      agent.city = city.trim();
+    }
+    if (area !== undefined) agent.area = area.trim();
     if (province !== undefined) agent.province = province.trim();
     if (bankName !== undefined) agent.bankName = bankName.trim();
     if (bankBranch !== undefined) agent.bankBranch = bankBranch.trim();
