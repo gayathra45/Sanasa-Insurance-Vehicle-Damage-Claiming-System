@@ -140,7 +140,7 @@ export default function SignUpPage1() {
       model: "",
       engineNumber: "",
       chassisNumber: "",
-      policyNumber: ""
+      policyNumber: "SAN"
     }
   ]);
 
@@ -183,7 +183,7 @@ export default function SignUpPage1() {
         model: "",
         engineNumber: "",
         chassisNumber: "",
-        policyNumber: ""
+        policyNumber: "SAN"
       }
     ]);
   };
@@ -218,8 +218,8 @@ export default function SignUpPage1() {
       }
 
       const cleanPolicy = v.policyNumber.replace(/[\s-]/g, "");
-      if (!/^SAN[A-Za-z0-9]{5,9}$/i.test(cleanPolicy)) {
-        setValidationError(`Vehicle #${i + 1} Insurance Policy Number must start with 'SAN' and be between 8 and 12 alphanumeric characters.`);
+      if (!/^SAN\d{7}$/i.test(cleanPolicy)) {
+        setValidationError(`Vehicle #${i + 1} Insurance Policy Number must start with 'SAN' followed by exactly 7 digits (e.g., SAN9876543).`);
         return;
       }
     }
@@ -254,7 +254,7 @@ export default function SignUpPage1() {
       >
         {/* Background Visual teal/blue depth effects */}
         <div className="absolute inset-0 bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
         
         {/* Modern glowing ambient lights */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px] pointer-events-none" />
@@ -318,7 +318,7 @@ export default function SignUpPage1() {
             {/* Show Validation Error Banner if present */}
             {validationError && (
               <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-center gap-3 animate-pulse">
-                <svg className="w-5 h-5 flex-shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span>{validationError}</span>
@@ -381,7 +381,7 @@ export default function SignUpPage1() {
                         Vehicle Type <span className="text-red-500 font-bold">*</span>
                       </label>
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 border border-white/20 text-white flex-shrink-0">
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 border border-white/20 text-white shrink-0">
                           {getVehicleIconSvg(v.vehicleType, "w-6 h-6 text-white")}
                         </div>
                         <div className="relative flex-1">
@@ -491,7 +491,7 @@ export default function SignUpPage1() {
                         value={v.policyNumber}
                         onChange={(e) => handleVehicleChange(idx, "policyNumber", e.target.value)}
                         className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                        placeholder="POL-987654"
+                        placeholder="SAN9876543"
                       />
                     </div>
 
@@ -505,7 +505,7 @@ export default function SignUpPage1() {
               <button
                 type="button"
                 onClick={addVehicle}
-                className="bg-gradient-to-r from-cyan-400 to-teal-400 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-all duration-300 hover:opacity-90 active:scale-95 text-center text-base cursor-pointer select-none outline-none border-none"
+                className="bg-linear-to-r from-cyan-400 to-teal-400 text-white font-bold py-4 px-10 rounded-full shadow-lg transition-all duration-300 hover:opacity-90 active:scale-95 text-center text-base cursor-pointer select-none outline-none border-none"
               >
                 + Add Another Vehicle
               </button>
