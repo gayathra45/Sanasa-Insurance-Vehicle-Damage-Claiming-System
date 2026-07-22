@@ -48,6 +48,13 @@ export default function RegistrationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedReg, setSelectedReg] = useState<Registration | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [customPopup, setCustomPopup] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    type?: "alert" | "confirm" | "success" | "error";
+    onConfirm?: () => void;
+  }>({ show: false, title: "", message: "", type: "alert" });
 
   useEffect(() => {
     let currentBranch = "";
@@ -99,7 +106,7 @@ export default function RegistrationsPage() {
   const handleStatusUpdate = async (id: string, newStatus: string, reason?: string) => {
     try {
       const targetReg = registrations.find(r => r._id === id);
-      const baseUrl = getApiUrl();
+      const baseUrl = "http://localhost:5000/api";
       const res = await fetch(`${baseUrl}/office-staff/registrations/${id}/status`, {
         method: "PATCH",
         headers: {
@@ -548,8 +555,6 @@ export default function RegistrationsPage() {
         </div>
       )}
 
-<<<<<<< Updated upstream
-=======
                   {/* Rejection Reason Modal */}
       {rejectModal.show && rejectModal.reg && (
         <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
