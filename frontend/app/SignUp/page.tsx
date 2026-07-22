@@ -130,18 +130,18 @@ export default function SignUp() {
       return;
     }
 
-    // NIC format check: 9-12 characters, numbers only, last character can be V/v/X/x.
+    // NIC format check: 10-12 characters/digits.
     const cleanNic = nic.trim();
-    const nicRegex = /^\d{8,11}[0-9vVxX]$/;
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
     if (!nicRegex.test(cleanNic)) {
-      setValidationError("Please enter a valid NIC (9-12 characters, numbers only, last character can be V or X).");
+      setValidationError("Please enter a valid NIC (10-12 characters/digits).");
       return;
     }
 
-    // Mobile number check: exactly 9 or 10 digits
+    // Mobile number check: exactly 10 digits
     const cleanMobile = mobile.replace(/[-+()\s]/g, "");
-    if (!/^\d{9,10}$/.test(cleanMobile)) {
-      setValidationError("Mobile number must be exactly 9 or 10 digits.");
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      setValidationError("Mobile number must be exactly 10 digits.");
       return;
     }
 
@@ -230,7 +230,7 @@ export default function SignUp() {
       >
         {/* Background Visual teal/blue depth effects */}
         <div className="absolute inset-0 bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
         
         {/* Modern glowing ambient lights */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px] pointer-events-none" />
@@ -284,7 +284,7 @@ export default function SignUp() {
             {/* Show Validation Error Banner if present */}
             {validationError && (
               <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-center gap-3 animate-pulse">
-                <svg className="w-5 h-5 flex-shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span>{validationError}</span>

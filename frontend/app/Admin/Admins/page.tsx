@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
+import { API_URL } from "@/app/config";
 
 export default function AdminAdminsPage() {
   // Current logged in admin state
@@ -56,19 +57,11 @@ export default function AdminAdminsPage() {
     }
   }, []);
 
-  // Poll pending request counts in real-time (every 5 seconds)
-  useEffect(() => {
-    if (!currentAdmin) return;
-    const interval = setInterval(() => {
-      fetchPendingCounts(currentAdmin);
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [currentAdmin]);
-
   const fetchActiveAdmins = async () => {
     setLoadingAdmins(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/all");
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/all`);
       const data = await res.json();
       if (res.ok) {
         setActiveAdmins(data.admins || []);
@@ -82,8 +75,9 @@ export default function AdminAdminsPage() {
 
   const fetchPendingCounts = async (admin: any) => {
     try {
+      const baseUrl = API_URL;
       // 1. Fetch pending registrations (excluding self)
-      const resPending = await fetch(`http://localhost:5000/api/admin/admins/pending?adminId=${admin._id}`);
+      const resPending = await fetch(`${baseUrl}/admin/admins/pending?adminId=${admin._id}`);
       const dataPending = await resPending.json();
       if (resPending.ok && dataPending.requests) {
         setPendingCount(dataPending.requests.length);
@@ -91,7 +85,7 @@ export default function AdminAdminsPage() {
       }
 
       // 2. Fetch pending password requests (excluding self)
-      const resRequests = await fetch(`http://localhost:5000/api/admin/admins/password-requests?email=${encodeURIComponent(admin.email)}`);
+      const resRequests = await fetch(`${baseUrl}/admin/admins/password-requests?email=${encodeURIComponent(admin.email)}`);
       const dataRequests = await resRequests.json();
       if (resRequests.ok && dataRequests.requests) {
         setRequestsCount(dataRequests.requests.length);
@@ -117,11 +111,23 @@ export default function AdminAdminsPage() {
       return setFormError("Please enter a valid email address.");
     }
 
+    const cleanMobile = formData.mobile.replace(/[-+()\s]/g, "");
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return setFormError("Mobile number must be exactly 10 digits.");
+    }
+
+    const cleanNic = formData.nic.trim();
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
+    if (!nicRegex.test(cleanNic)) {
+      return setFormError("Invalid NIC format. Must be 10-12 characters/digits.");
+    }
+
     if (!currentAdmin) return setFormError("Current administrator session is not found.");
 
     setSubmittingAdmin(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/register-admin", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/register-admin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -153,7 +159,8 @@ export default function AdminAdminsPage() {
     if (!currentAdmin) return;
     setActioningAdminId(targetAdminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/approve", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -179,7 +186,8 @@ export default function AdminAdminsPage() {
     if (!currentAdmin) return;
     setActioningAdminId(targetAdminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/reject", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -203,7 +211,8 @@ export default function AdminAdminsPage() {
   const handleApprovePasswordRequest = async (adminId: string) => {
     setActioningRequestId(adminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/password-requests/approve", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/password-requests/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminId })
@@ -223,7 +232,8 @@ export default function AdminAdminsPage() {
   const handleRejectPasswordRequest = async (adminId: string) => {
     setActioningRequestId(adminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/password-requests/reject", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/password-requests/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminId })
@@ -247,7 +257,7 @@ export default function AdminAdminsPage() {
 
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Header */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-admin-mobile-menu"))}
@@ -408,7 +418,7 @@ export default function AdminAdminsPage() {
       {showRegisterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
-            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
+            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Register Admin Request</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Define new admin profile for approval</p>
@@ -423,12 +433,12 @@ export default function AdminAdminsPage() {
               </button>
             </div>
 
-            <div className="border-b border-black mx-8 mb-4 flex-shrink-0" />
+            <div className="border-b border-black mx-8 mb-4 shrink-0" />
 
             <form onSubmit={handleRegisterSubmit} className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-5 text-left">
               {formError && (
                 <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-xl border border-red-100 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                   </svg>
                   <span>{formError}</span>
@@ -436,7 +446,7 @@ export default function AdminAdminsPage() {
               )}
               {formSuccess && (
                 <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-xl border border-emerald-100 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
                   <span>{formSuccess}</span>
@@ -501,7 +511,7 @@ export default function AdminAdminsPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-4 select-none flex-shrink-0">
+              <div className="flex justify-end gap-3 mt-4 select-none shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowRegisterModal(false)}
@@ -536,7 +546,7 @@ export default function AdminAdminsPage() {
       {showPendingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
-            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
+            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Pending Admin Requests</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Approve new admins to join the system</p>
@@ -551,7 +561,7 @@ export default function AdminAdminsPage() {
               </button>
             </div>
 
-            <div className="border-b border-black mx-8 mb-4 flex-shrink-0" />
+            <div className="border-b border-black mx-8 mb-4 shrink-0" />
 
             <div className="px-8 pb-4 flex-1 overflow-y-auto bg-white flex flex-col gap-4 text-left">
               {loadingPending ? (
@@ -573,7 +583,7 @@ export default function AdminAdminsPage() {
                     <div key={req._id} className="border border-slate-200 rounded-2xl p-5 bg-slate-50 flex flex-col gap-4 hover:shadow-sm transition-all">
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-[#102A43] flex items-center justify-center flex-shrink-0 shadow-inner">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-[#102A43] flex items-center justify-center shrink-0 shadow-inner">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                             </svg>
@@ -623,7 +633,7 @@ export default function AdminAdminsPage() {
               )}
             </div>
 
-            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0 select-none">
+            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end shrink-0 select-none">
               <button
                 onClick={() => setShowPendingModal(false)}
                 className="bg-[#0f2d3a] hover:bg-[#0c242e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
@@ -639,7 +649,7 @@ export default function AdminAdminsPage() {
       {showRequestsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
-            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center flex-shrink-0">
+            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
                 <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Admin Password Requests</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Review, approve and dispatch reset codes to admins</p>
@@ -654,7 +664,7 @@ export default function AdminAdminsPage() {
               </button>
             </div>
 
-            <div className="border-b border-black mx-8 mb-4 flex-shrink-0" />
+            <div className="border-b border-black mx-8 mb-4 shrink-0" />
 
             <div className="px-8 pb-4 flex-1 overflow-y-auto bg-white flex flex-col gap-4 text-left">
               {loadingRequests ? (
@@ -676,7 +686,7 @@ export default function AdminAdminsPage() {
                     <div key={req._id} className="border border-slate-200 rounded-2xl p-5 bg-slate-50 flex flex-col gap-4 hover:shadow-sm transition-all">
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center flex-shrink-0 shadow-inner">
+                          <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 shadow-inner">
                             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
                             </svg>
@@ -722,7 +732,7 @@ export default function AdminAdminsPage() {
               )}
             </div>
 
-            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end flex-shrink-0 select-none">
+            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end shrink-0 select-none">
               <button
                 onClick={() => setShowRequestsModal(false)}
                 className="bg-[#0f2d3a] hover:bg-[#0c242e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"

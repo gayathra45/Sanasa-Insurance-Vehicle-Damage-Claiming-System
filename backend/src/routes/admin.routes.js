@@ -292,6 +292,11 @@ router.post("/staff", async (req, res) => {
       return res.status(400).json({ error: "All fields are required." });
     }
 
+    const cleanMobile = mobile.replace(/[-+()\s]/g, "");
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return res.status(400).json({ error: "Mobile number must be exactly 10 digits." });
+    }
+
     const cleanEmail = email.trim().toLowerCase();
 
     // Check if email already exists in OfficeStaff, User, Agent, or Admin
@@ -501,7 +506,16 @@ router.post("/register-admin", async (req, res) => {
     }
     const cleanEmail = email.trim().toLowerCase();
     const cleanNic = nic.trim();
-    const cleanMobile = mobile.trim();
+    const cleanMobile = mobile.replace(/[-+()\s]/g, "");
+
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return res.status(400).json({ error: "Mobile number must be exactly 10 digits." });
+    }
+
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
+    if (!nicRegex.test(cleanNic)) {
+      return res.status(400).json({ error: "Invalid NIC number. Must be between 10 and 12 characters/digits." });
+    }
 
     // Check if already exists in Admin
     const existingAdmin = await Admin.findOne({
