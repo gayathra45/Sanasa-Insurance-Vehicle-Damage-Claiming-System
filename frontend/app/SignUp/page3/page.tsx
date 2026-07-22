@@ -566,32 +566,32 @@ export default function SignUpPage3() {
 
             {/* DONE MODAL ON SUBMIT SUCCESS */}
             {showSuccessModal && (
-              <div className="absolute inset-0 bg-[#0e3b44]/95 backdrop-blur-xl rounded-[2.5rem] border border-white/20 flex flex-col items-center justify-center p-6 text-center z-30 transition-all duration-500">
-                <div className="flex flex-col items-center gap-6 max-w-xl px-4 md:px-8">
+              <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0e3b44]/70 backdrop-blur-md transition-all duration-300">
+                <div className="bg-[#0e3b44] border border-white/20 rounded-[2.5rem] w-full max-w-md p-8 md:p-10 shadow-2xl flex flex-col items-center justify-center text-center animate-scale-up">
                   
                   {/* Big Glowing Success Checkmark */}
-                  <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border border-green-400/40 shadow-[0_0_30px_rgba(74,222,128,0.4)] animate-[pulse_1.5s_infinite]">
-                    <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
+                  <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center border border-green-400/40 shadow-[0_0_20px_rgba(74,222,128,0.4)] animate-[pulse_1.5s_infinite] shrink-0">
+                    <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
                   </div>
                   
                   {/* Done Title */}
-                  <h3 className="text-white text-3xl font-extrabold tracking-wide select-none">Done!</h3>
+                  <h3 className="text-white text-2xl font-extrabold tracking-wide mt-5 select-none">Done!</h3>
                   
                   {/* Reference Number Pill */}
-                  <div className="bg-[#d9d9d9] text-[#0e3b44] font-bold px-10 py-4 rounded-full text-xl tracking-wider shadow-inner select-all">
+                  <div className="bg-[#d9d9d9] text-[#0e3b44] font-bold px-8 py-3 rounded-full text-lg tracking-wider shadow-inner select-all mt-4">
                     {refNumber}
                   </div>
                   
                   {/* Detail message */}
-                  <p className="text-white/90 text-sm md:text-base font-medium leading-relaxed max-w-md">
+                  <p className="text-white/90 text-sm font-medium leading-relaxed max-w-sm mt-4">
                     Your insurance application has been received. Our office staff will review your documents and activate your account within 1–2 business days.
                   </p>
 
                   {/* Redirection indicator */}
-                  <div className="flex items-center gap-2 mt-2 text-xs text-orange-400 font-bold uppercase tracking-widest select-none">
-                    <svg className="animate-spin h-4 w-4 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <div className="flex items-center gap-2 mt-6 text-xs text-orange-400 font-bold uppercase tracking-widest select-none">
+                    <svg className="animate-spin h-4 w-4 text-orange-400" xmlns="http://www.w3.org/2500/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
