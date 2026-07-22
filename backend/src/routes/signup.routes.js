@@ -96,10 +96,11 @@ router.post("/", async (req, res) => {
       if (!/^\d{4}$/.test(v.year)) {
         return res.status(400).json({ error: `Invalid year for Vehicle #${i + 1}. Must be a 4-digit number.` });
       }
-      const cleanPolicy = v.policyNumber.replace(/[\s-]/g, "");
-      if (!/^SAN[A-Za-z0-9]{5,9}$/i.test(cleanPolicy)) {
-        return res.status(400).json({ error: `Vehicle #${i + 1} Insurance Policy Number must start with 'SAN' and be between 8 and 12 alphanumeric characters.` });
+      const cleanPolicy = v.policyNumber.replace(/[\s-]/g, "").toUpperCase();
+      if (!/^SAN\d{7}$/.test(cleanPolicy)) {
+        return res.status(400).json({ error: `Vehicle #${i + 1} Insurance Policy Number must start with 'SAN' followed by exactly 7 digits (e.g., SAN9876543).` });
       }
+      v.policyNumber = cleanPolicy;
     }
 
     const { nicFront, nicBack, vehicleReg, revenueLicense } = documents;

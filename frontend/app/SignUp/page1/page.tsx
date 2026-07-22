@@ -140,7 +140,7 @@ export default function SignUpPage1() {
       model: "",
       engineNumber: "",
       chassisNumber: "",
-      policyNumber: ""
+      policyNumber: "SAN"
     }
   ]);
 
@@ -183,7 +183,7 @@ export default function SignUpPage1() {
         model: "",
         engineNumber: "",
         chassisNumber: "",
-        policyNumber: ""
+        policyNumber: "SAN"
       }
     ]);
   };
@@ -218,8 +218,8 @@ export default function SignUpPage1() {
       }
 
       const cleanPolicy = v.policyNumber.replace(/[\s-]/g, "");
-      if (!/^SAN[A-Za-z0-9]{5,9}$/i.test(cleanPolicy)) {
-        setValidationError(`Vehicle #${i + 1} Insurance Policy Number must start with 'SAN' and be between 8 and 12 alphanumeric characters.`);
+      if (!/^SAN\d{7}$/i.test(cleanPolicy)) {
+        setValidationError(`Vehicle #${i + 1} Insurance Policy Number must start with 'SAN' followed by exactly 7 digits (e.g., SAN9876543).`);
         return;
       }
     }
@@ -491,7 +491,7 @@ export default function SignUpPage1() {
                         value={v.policyNumber}
                         onChange={(e) => handleVehicleChange(idx, "policyNumber", e.target.value)}
                         className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                        placeholder="POL-987654"
+                        placeholder="SAN9876543"
                       />
                     </div>
 
