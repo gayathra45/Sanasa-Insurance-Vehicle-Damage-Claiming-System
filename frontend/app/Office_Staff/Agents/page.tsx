@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
 import { getApiUrl } from "@/app/config";
-import { sriLankaLocations } from "../../utils/locations";
+import { sriLankaBanks } from "../../utils/banks";
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "-";
@@ -46,14 +46,10 @@ export default function AgentsPage() {
     nic: "",
     dob: "",
     address: "",
-    province: "",
-    district: "",
-    area: "",
     phone: "",
     bankName: "",
     bankBranch: "",
     accountNumber: "",
-    accountType: "",
     accountHolderName: ""
   });
   const [nicFront, setNicFront] = useState<File | null>(null);
@@ -129,9 +125,6 @@ export default function AgentsPage() {
     if (!formData.email.trim()) return setFormError("Email Address is required.");
     if (!formData.nic.trim()) return setFormError("NIC Number is required.");
     if (!formData.dob.trim()) return setFormError("Date of Birth is required.");
-    if (!formData.province.trim()) return setFormError("Province selection is required.");
-    if (!formData.district.trim()) return setFormError("District selection is required.");
-    if (!formData.area.trim()) return setFormError("Area selection is required.");
     if (!formData.address.trim()) return setFormError("Home Address is required.");
     if (!formData.phone.trim()) return setFormError("Phone Number is required.");
 
@@ -194,14 +187,10 @@ export default function AgentsPage() {
         nic: "",
         dob: "",
         address: "",
-        province: "",
-        district: "",
-        area: "",
         phone: "",
         bankName: "",
         bankBranch: "",
         accountNumber: "",
-        accountType: "",
         accountHolderName: ""
       });
       setNicFront(null);
@@ -380,14 +369,10 @@ export default function AgentsPage() {
                     nic: "",
                     dob: "",
                     address: "",
-                    province: "",
-                    district: "",
-                    area: "",
                     phone: "",
                     bankName: "",
                     bankBranch: "",
                     accountNumber: "",
-                    accountType: "",
                     accountHolderName: ""
                   });
                   setNicFront(null);
@@ -617,70 +602,7 @@ export default function AgentsPage() {
                       />
                     </div>
 
-                    {/* Province, District, and Area cascading dropdowns */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {/* Province Selection */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Province <span className="text-red-500">*</span></label>
-                        <div className="relative">
-                          <select
-                            required
-                            value={formData.province}
-                            onChange={(e) => {
-                              const prov = e.target.value;
-                              setFormData({ ...formData, province: prov, district: "", area: "" });
-                            }}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white"
-                          >
-                            <option value="">Select Province</option>
-                            {Object.keys(sriLankaLocations).map((p) => (
-                              <option key={p} value={p}>{p}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
 
-                      {/* District Selection */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">District <span className="text-red-500">*</span></label>
-                        <div className="relative">
-                          <select
-                            required
-                            disabled={!formData.province}
-                            value={formData.district}
-                            onChange={(e) => {
-                              const dist = e.target.value;
-                              setFormData({ ...formData, district: dist, area: "" });
-                            }}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white disabled:bg-slate-50 disabled:text-slate-400"
-                          >
-                            <option value="">Select District</option>
-                            {formData.province && Object.keys(sriLankaLocations[formData.province]).map((d) => (
-                              <option key={d} value={d}>{d}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Area Selection */}
-                      <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Area <span className="text-red-500">*</span></label>
-                        <div className="relative">
-                          <select
-                            required
-                            disabled={!formData.district}
-                            value={formData.area}
-                            onChange={(e) => setFormData({ ...formData, area: e.target.value })}
-                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white disabled:bg-slate-50 disabled:text-slate-400"
-                          >
-                            <option value="">Select Area</option>
-                            {formData.province && formData.district && sriLankaLocations[formData.province][formData.district].map((a) => (
-                              <option key={a} value={a}>{a}</option>
-                            ))}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
 
                   </div>
                 </div>
@@ -689,36 +611,53 @@ export default function AgentsPage() {
                 <div className="mt-2">
                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Bank Account Details</h3>
                   <div className="flex flex-col gap-4">
-                    {/* Bank Name & Branch */}
+                    {/* Bank Name & Branch Dropdowns */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Bank Name Dropdown */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Name</label>
-                        <input
-                          type="text"
-                          value={formData.bankName}
-                          onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                          placeholder="E.g., Bank of Ceylon"
-                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                        />
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Name <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <select
+                            required
+                            value={formData.bankName}
+                            onChange={(e) => setFormData({ ...formData, bankName: e.target.value, bankBranch: "" })}
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white"
+                          >
+                            <option value="">Select Bank</option>
+                            {Object.keys(sriLankaBanks).map((b) => (
+                              <option key={b} value={b}>{b}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
+
+                      {/* Bank Branch Dropdown */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Branch</label>
-                        <input
-                          type="text"
-                          value={formData.bankBranch}
-                          onChange={(e) => setFormData({ ...formData, bankBranch: e.target.value })}
-                          placeholder="E.g., Galle Fort"
-                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                        />
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Branch <span className="text-red-500">*</span></label>
+                        <div className="relative">
+                          <select
+                            required
+                            disabled={!formData.bankName}
+                            value={formData.bankBranch}
+                            onChange={(e) => setFormData({ ...formData, bankBranch: e.target.value })}
+                            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold bg-white disabled:bg-slate-50 disabled:text-slate-400"
+                          >
+                            <option value="">Select Branch</option>
+                            {formData.bankName && sriLankaBanks[formData.bankName].map((br) => (
+                              <option key={br} value={br}>{br}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Account Number & Type */}
+                    {/* Account Number & Account Holder Name */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Number</label>
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Number <span className="text-red-500">*</span></label>
                         <input
                           type="text"
+                          required
                           value={formData.accountNumber}
                           onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
                           placeholder="E.g., 8123456789"
@@ -726,29 +665,16 @@ export default function AgentsPage() {
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Type</label>
-                        <select
-                          value={formData.accountType}
-                          onChange={(e) => setFormData({ ...formData, accountType: e.target.value })}
-                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 bg-white focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold cursor-pointer"
-                        >
-                          <option value="">Select Account Type</option>
-                          <option value="Savings">Savings Account</option>
-                          <option value="Current">Current Account</option>
-                        </select>
+                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Holder Name <span className="text-red-500">*</span></label>
+                        <input
+                          type="text"
+                          required
+                          value={formData.accountHolderName}
+                          onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
+                          placeholder="E.g., J. Doe"
+                          className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
+                        />
                       </div>
-                    </div>
-
-                    {/* Account Holder Name */}
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Holder Name</label>
-                      <input
-                        type="text"
-                        value={formData.accountHolderName}
-                        onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
-                        placeholder="E.g., J. Doe"
-                        className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0f2d3a]/10 focus:border-[#0f2d3a] transition-all duration-200 font-semibold"
-                      />
                     </div>
                   </div>
                 </div>
