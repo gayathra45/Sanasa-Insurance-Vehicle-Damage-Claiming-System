@@ -34,7 +34,6 @@ export default function ResetPassword() {
 
   // UI
   const [validationError, setValidationError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [redirectCountdown, setRedirectCountdown] = useState(3);
 
@@ -63,15 +62,11 @@ export default function ResetPassword() {
       const params = new URLSearchParams(window.location.search);
       const emailParam = params.get("email");
       const stageParam = params.get("stage") as Stage;
-      const tokenParam = params.get("token");
       if (emailParam) {
         setEmail(emailParam);
         setSentEmail(emailParam);
       }
-      if (tokenParam) {
-        setSessionToken(tokenParam);
-        setStage("set-password");
-      } else if (stageParam === "otp") {
+      if (stageParam === "otp") {
         setStage("otp");
       }
     }
@@ -122,8 +117,23 @@ export default function ResetPassword() {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setValidationError("");
-    if (!loginId.trim()) { setValidationError("NIC or Mobile number is required."); return; }
-    if (!email.trim()) { setValidationError("Email address is required."); return; }
+    const cleanId = loginId.trim();
+    if (!cleanId) {
+      setValidationError("NIC or Mobile number is required.");
+      return;
+    }
+
+    const isMobile = /^\d{10}$/.test(cleanId);
+    const isNic = /^[0-9vVxX]{10,12}$/.test(cleanId);
+    if (!isMobile && !isNic) {
+      setValidationError("Please enter a valid Mobile number (exactly 10 digits) or NIC (10-12 characters).");
+      return;
+    }
+
+    if (!email.trim()) {
+      setValidationError("Email address is required.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -139,7 +149,7 @@ export default function ResetPassword() {
       if (!res.ok) throw new Error(data.error || "Failed to send OTP.");
 
       if (data.status === "pending_approval") {
-        setSuccessMessage(data.message);
+        router.push(`/Login?message=${encodeURIComponent(data.message)}`);
         return;
       }
 
@@ -266,9 +276,9 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen w-full flex flex-col relative">
       {/* ── Background ── */}
-      <div className="fixed inset-0 z-[-10] bg-cover bg-center bg-no-repeat bg-fixed pointer-events-none" style={{ backgroundImage: "url('/login_bg.jpg')" }} />
+      <div className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat bg-fixed pointer-events-none" style={{ backgroundImage: "url('/login_bg.jpg')" }} />
       <div className="fixed inset-0 z-[-9] bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
-      <div className="fixed inset-0 z-[-8] bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
+      <div className="fixed inset-0 z-[-8] bg-linear-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
       <div className="fixed inset-0 z-[-7] overflow-hidden pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px]" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-300/15 blur-[120px]" />
@@ -298,31 +308,15 @@ export default function ResetPassword() {
             {/* Error Banner */}
             {validationError && (
               <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-start gap-3">
-                <svg className="w-5 h-5 flex-shrink-0 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-5 h-5 shrink-0 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
                 <span>{validationError}</span>
               </div>
             )}
-            {/* Success Banner */}
-            {successMessage && (
-              <div className="bg-emerald-500/20 border-l-4 border-emerald-500 p-5 rounded-2xl text-white text-sm flex flex-col gap-4 transition-all duration-300">
-                <div className="flex items-start gap-3">
-                  <svg className="w-6 h-6 flex-shrink-0 text-emerald-400 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span className="font-semibold leading-relaxed">{successMessage}</span>
-                </div>
-                <div className="flex justify-end mt-2 select-none">
-                  <Link href="/Login" className="bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold py-3 px-6 rounded-full transition-all text-xs outline-none border-none cursor-pointer no-underline text-center">
-                    Back to Login
-                  </Link>
-                </div>
-              </div>
-            )}
 
             {/* ── STAGE: Request ── */}
-            {stage === "request" && !successMessage && (
+            {stage === "request" && (
               <form onSubmit={handleSendOtp} className="flex flex-col gap-5">
                 {/* NIC or Mobile */}
                 <div className="flex flex-col gap-2">
@@ -501,44 +495,40 @@ export default function ResetPassword() {
 
             {/* ── STAGE: Success ── */}
             {stage === "success" && (
-              <div className="relative flex flex-col items-center justify-center py-6 text-center z-20 transition-all duration-300 w-full">
-                <div className="flex flex-col items-center max-w-sm">
-                  {/* Glowing Checkmark Wrapper */}
-                  <div className="relative mb-6">
-                    {/* Ring Glow animation */}
-                    <div className="absolute inset-0 rounded-full bg-orange-500/30 blur-md scale-110 animate-pulse" />
-                    <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center border-2 border-white/20 shadow-[0_0_30px_rgba(249,115,22,0.4)] relative z-10 transform scale-100 hover:scale-105 transition-transform duration-300">
-                      <svg className="w-10 h-10 text-white animate-[bounce_1s_infinite_alternate]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                      </svg>
-                    </div>
+              <div className="w-full flex flex-col items-center justify-center py-4 text-center z-20 transition-all duration-300">
+                <div className="flex flex-col items-center max-w-sm w-full gap-6">
+                  {/* Simple Success Checkmark (Green) */}
+                  <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border border-green-400/40 shadow-[0_0_30px_rgba(74,222,128,0.4)] animate-[pulse_1.5s_infinite]">
+                    <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
                   </div>
 
-                  <div>
+                  <div className="flex flex-col gap-3">
                     <h3 className="text-white text-3xl font-extrabold tracking-tight drop-shadow-md">Password Updated!</h3>
-                    <p className="text-white/80 text-sm mt-3 leading-relaxed">
+                    <p className="text-white/80 text-sm leading-relaxed">
                       Your password has been changed successfully. You can now access your account.
                     </p>
                   </div>
 
                   {/* Countdown Progress Bar */}
-                  <div className="mt-8 flex flex-col items-center w-full px-4">
+                  <div className="flex flex-col items-center w-full px-4 gap-3.5">
                     <div className="w-48 bg-white/10 h-2 rounded-full overflow-hidden relative shadow-inner">
                       <div
-                        className="bg-gradient-to-r from-orange-500 to-amber-400 h-full rounded-full transition-all duration-1000 ease-linear"
+                        className="bg-green-500 h-full rounded-full transition-all duration-1000 ease-linear"
                         style={{ width: `${(redirectCountdown / 3) * 100}%` }}
                       />
                     </div>
-                    <p className="text-white/60 text-xs mt-3.5 font-medium tracking-wide flex items-center gap-1.5">
+                    <p className="text-white/60 text-xs font-medium tracking-wide flex items-center gap-1.5 justify-center">
                       <Spinner />
-                      <span>Redirecting to login in <strong className="text-orange-400 font-bold">{redirectCountdown}s</strong>...</span>
+                      <span>Redirecting to login in <strong className="text-green-400 font-bold">{redirectCountdown}s</strong>...</span>
                     </p>
                   </div>
 
                   {/* Manual Navigation Button */}
                   <button
                     onClick={() => router.push("/Login")}
-                    className="mt-8 w-full max-w-[200px] py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white rounded-full font-bold shadow-lg shadow-orange-500/25 active:scale-95 hover:scale-[1.03] transition-all flex items-center justify-center gap-2 border-none outline-none cursor-pointer"
+                    className="w-full max-w-[200px] py-3 bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white rounded-full font-bold shadow-lg shadow-orange-500/25 active:scale-95 hover:scale-[1.03] transition-all flex items-center justify-center gap-2 border-none outline-none cursor-pointer"
                   >
                     <span>Go to Login</span>
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
