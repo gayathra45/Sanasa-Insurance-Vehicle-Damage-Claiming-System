@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import LoginFooter from "@/app/Components/Login/Footer";
 import { API_URL } from "@/app/config";
+import { sriLankaBanks } from "../utils/banks";
 
 // Province and Cities Sri Lanka Data
 const provincesData = [
@@ -596,34 +597,58 @@ export default function SignUp() {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Bank Name */}
+                    {/* Bank Name Dropdown */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
                         Bank Name <span className="text-red-500 font-bold">*</span>
                       </label>
-                      <input
-                        type="text"
-                        required
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                        placeholder="e.g. Bank of Ceylon"
-                      />
+                      <div className="relative">
+                        <select
+                          required
+                          value={bankName}
+                          onChange={(e) => {
+                            setBankName(e.target.value);
+                            setBranchName(""); // reset branch selection when bank changes
+                          }}
+                          className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none"
+                        >
+                          <option value="" disabled>Select Bank</option>
+                          {Object.keys(sriLankaBanks).map((b) => (
+                            <option key={b} value={b}>{b}</option>
+                          ))}
+                        </select>
+                        <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-700">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Branch Name */}
+                    {/* Branch Name Dropdown */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
                         Branch Name <span className="text-red-500 font-bold">*</span>
                       </label>
-                      <input
-                        type="text"
-                        required
-                        value={branchName}
-                        onChange={(e) => setBranchName(e.target.value)}
-                        className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                        placeholder="e.g. Galle Fort"
-                      />
+                      <div className="relative">
+                        <select
+                          required
+                          disabled={!bankName}
+                          value={branchName}
+                          onChange={(e) => setBranchName(e.target.value)}
+                          className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          <option value="" disabled>Select Branch</option>
+                          {bankName && sriLankaBanks[bankName].map((br) => (
+                            <option key={br} value={br}>{br}</option>
+                          ))}
+                        </select>
+                        <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-700">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                          </svg>
+                        </span>
+                      </div>
                     </div>
 
                     {/* Account Number */}
