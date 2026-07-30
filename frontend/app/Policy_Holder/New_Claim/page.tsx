@@ -423,7 +423,7 @@ export default function FileNewClaim() {
 
         await reverseGeocode(lat, lon);
       } catch (err: any) {
-        console.error("Geolocation failed:", err);
+        console.error("Geolocation failed:", err?.message ? `[Code ${err.code}] ${err.message}` : err);
         let errorMsg = "Could not retrieve your location.";
         if (err.code === 1) { // PERMISSION_DENIED
           errorMsg = "Location access was denied. Please allow location permissions in your browser settings for this website.";
