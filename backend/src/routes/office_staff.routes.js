@@ -632,4 +632,41 @@ router.patch("/vehicles/verify", async (req, res) => {
   }
 });
 
+// POST change office staff password: /api/office-staff/change-password
+router.post("/change-password", async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Email, Current Password, and New Password are required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const staff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (!staff) {
+      return res.status(404).json({ error: "Office staff not found." });
+    }
+
+    const hashedInput = hashPassword(currentPassword);
+    if (staff.password !== hashedInput) {
+      return res.status(400).json({ error: "Incorrect current password." });
+    }
+
+    if (newPassword.length < 6 || newPassword.length > 12) {
+      return res.status(400).json({ error: "Password must be between 6 and 12 characters." });
+    }
+    if (!/[0-9]/.test(newPassword) && !/[^A-Za-z0-9]/.test(newPassword)) {
+      return res.status(400).json({ error: "Password must contain at least one number or special character." });
+    }
+
+    staff.password = hashPassword(newPassword);
+    staff.mustChangePassword = false;
+    await staff.save();
+
+    res.json({ message: "Password updated successfully." });
+  } catch (err) {
+    console.error("Change office staff password error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 export default router;

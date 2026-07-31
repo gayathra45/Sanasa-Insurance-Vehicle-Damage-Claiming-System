@@ -156,6 +156,12 @@ export default function OfficeStaffDashboard() {
           if (staffObj && staffObj.branch) {
             currentBranch = staffObj.branch;
           }
+          if (staffObj && staffObj.email) {
+            setStaffEmail(staffObj.email);
+          }
+          if (staffObj && staffObj.mustChangePassword) {
+            setShowPasswordModal(true);
+          }
         } catch (e) {
           console.error("Error parsing logged_in_staff", e);
         }
@@ -670,6 +676,128 @@ export default function OfficeStaffDashboard() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Forced Password Update Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-9999 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="w-full max-w-md bg-white border border-slate-100 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] flex flex-col my-auto overflow-hidden max-h-[95vh] transition-all duration-300">
+            <div className="overflow-y-auto flex-1 flex flex-col">
+              {/* Header */}
+              <div className="px-8 pt-8 pb-5 select-none relative shrink-0 border-b border-slate-100/60 bg-slate-50/55">
+                <h2 className="font-extrabold text-xl text-slate-800 tracking-tight flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                  Update Password
+                </h2>
+                <p className="text-slate-600 text-xs font-semibold mt-2 leading-relaxed">
+                  You are logged in with a temporary password. Please set a new secure password.
+                </p>
+              </div>
+
+              {/* Form Content */}
+              <form onSubmit={handlePasswordChange} className="p-8 flex flex-col gap-5">
+                {passwordError && (
+                  <div className="bg-red-50 text-red-600 text-xs font-bold p-4 rounded-2xl border border-red-100 flex items-center gap-3">
+                    <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>{passwordError}</span>
+                  </div>
+                )}
+                {passwordSuccess && (
+                  <div className="bg-emerald-50 text-emerald-600 text-xs font-bold p-4 rounded-2xl border border-emerald-100 flex items-center gap-3">
+                    <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{passwordSuccess}</span>
+                  </div>
+                )}
+
+                {/* Current Password Field */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                    Current Temporary Password <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                    placeholder="Enter current temp password"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
+                  />
+                </div>
+
+                {/* New Password Field */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                    New Password <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    placeholder="Enter new password"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
+                  />
+                  {/* Password Strength Indicator */}
+                  {passwordForm.newPassword.length > 0 && (
+                    <div className="mt-1 px-1">
+                      <div className="flex justify-between items-center mb-1 text-[10px] font-bold text-slate-500">
+                        <span>Strength:</span>
+                        <span className={strength.label === "Weak" ? "text-red-500" : strength.label === "Medium" ? "text-amber-500" : "text-emerald-500"}>
+                          {strength.label}
+                        </span>
+                      </div>
+                      <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                        <div className={`h-full ${strength.color} ${strength.width} transition-all duration-300`} />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Confirm Password Field */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                    Confirm New Password <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    placeholder="Re-enter new password"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <button
+                  type="submit"
+                  disabled={isUpdatingPassword}
+                  className="w-full bg-[#0d2a3a] hover:bg-[#1e4670] active:scale-98 text-white font-extrabold text-xs py-4 rounded-full shadow-md shadow-slate-900/10 hover:shadow-lg transition-all duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-2 h-[48px]"
+                >
+                  {isUpdatingPassword ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-4.5 w-4.5 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      Updating...
+                    </>
+                  ) : (
+                    "Save & Continue"
+                  )}
+                </button>
+              </form>
             </div>
           </div>
         </div>

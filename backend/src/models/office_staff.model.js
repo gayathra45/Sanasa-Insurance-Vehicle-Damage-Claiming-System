@@ -17,6 +17,7 @@ const officeStaffSchema = new mongoose.Schema({
   resetSessionToken: { type: String },
   resetSessionExpires: { type: Date },
   resetRequestStatus: { type: String, default: "None" }, // "None", "Pending", "Approved"
+  mustChangePassword: { type: Boolean, default: true },
   createdAt: { type: Date, default: Date.now }
 });
 
