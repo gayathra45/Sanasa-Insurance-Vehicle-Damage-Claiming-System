@@ -372,12 +372,15 @@ router.post("/staff", async (req, res) => {
       `
     );
 
+    const textBody = `Dear ${name.trim()},\n\nYour branch office staff account has been created for the ${branch.trim()} branch.\n\nLogin Email: ${cleanEmail}\nTemporary Password: ${tempPassword}\n\nPlease login to the staff portal.`;
+
     try {
-      await sendEmail({
-        to: cleanEmail,
+      await sendEmail(
+        cleanEmail,
         subject,
-        html: htmlBody
-      });
+        htmlBody,
+        textBody
+      );
     } catch (emailErr) {
       console.error("Failed to send welcome email to branch:", emailErr);
     }
