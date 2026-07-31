@@ -28,9 +28,9 @@ Office Staff  - email - galle@gmail.com
 Office Staff  - email - matara@gmail.com
                 password - matara123
 
-                pmvihaga@gmail.com
-                
+                pmvihaga@gmail.com (Sooriyawewa)
+
 
 
 admin         - email - admin@gmail.com
-                password - gayathra45          
+                password - admin123
