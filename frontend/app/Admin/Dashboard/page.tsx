@@ -24,9 +24,15 @@ export default function AdminDashboard() {
     totalClaims: 0,
     activeClaims: 0,
     pendingClaims: 0,
+    totalAgents: 0,
+    totalBranches: 0,
   });
   const [branches, setBranches] = useState<Branch[]>([]);
   const [monthlyClaims, setMonthlyClaims] = useState<MonthlyClaim[]>([]);
+  const [pendingBranchResets, setPendingBranchResets] = useState<any[]>([]);
+  const [pendingAdminResets, setPendingAdminResets] = useState<any[]>([]);
+  const [loggedAdmin, setLoggedAdmin] = useState<any | null>(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -57,6 +63,7 @@ export default function AdminDashboard() {
     }
     try {
       const parsed = JSON.parse(adminData);
+      setLoggedAdmin(parsed);
       if (parsed.email) {
         setAdminEmail(parsed.email);
       }
@@ -86,6 +93,8 @@ export default function AdminDashboard() {
         }));
         setBranches(mappedBranches);
         setMonthlyClaims(data.monthlyClaims);
+        setPendingBranchResets(data.pendingBranchResets || []);
+        setPendingAdminResets(data.pendingAdminResets || []);
       } catch (err: any) {
         console.error(err);
         setError(err.message || "Failed to load dashboard metrics");
@@ -96,7 +105,47 @@ export default function AdminDashboard() {
     fetchStats();
     const intervalId = setInterval(fetchStats, 8000);
     return () => clearInterval(intervalId);
-  }, []);
+  }, [loggedAdmin?._id]);
+
+  const handleBranchReset = async (staffId: string, action: "approve" | "reject") => {
+    setActioningId(staffId);
+    try {
+      const res = await fetch(`${API_URL}/admin/staff/password-requests/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staffId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${action} request.`);
+      
+      setPendingBranchResets(prev => prev.filter(r => r._id !== staffId));
+      alert(`Branch password request ${action}d successfully!`);
+    } catch (err: any) {
+      alert(err.message || `Failed to ${action} request.`);
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const handleAdminReset = async (adminId: string, action: "approve" | "reject") => {
+    setActioningId(adminId);
+    try {
+      const res = await fetch(`${API_URL}/admin/admins/password-requests/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${action} request.`);
+      
+      setPendingAdminResets(prev => prev.filter(a => a._id !== adminId));
+      alert(`Admin password reset ${action}d successfully!`);
+    } catch (err: any) {
+      alert(err.message || `Failed to ${action} request.`);
+    } finally {
+      setActioningId(null);
+    }
+  };
 
   // Calculate dynamic max height for bar chart to accommodate any data volume
   const maxVal = monthlyClaims.length > 0 
@@ -240,93 +289,84 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <>
-                {/* 4 Cards Grid - Desktop view */}
-                <div className="hidden lg:grid grid-cols-4 gap-6 mb-12">
+                {/* 6 Cards Grid - Fully Responsive */}
+                <div className="grid grid-cols-2 lg:grid-cols-6 gap-6 mb-12 select-none">
                   {/* Policy Holders Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Policy Holders</span>
+                      <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                      </div>
+                    </div>
                     <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.policyHolders}</span>
-                    <span className="text-slate-500 font-bold text-sm mt-1">Policy Holders</span>
                   </div>
 
                   {/* Total Claims Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Total Claims</span>
+                      <div className="p-1.5 bg-slate-100 text-slate-700 rounded-lg group-hover:scale-110 transition-transform">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                      </div>
+                    </div>
                     <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.totalClaims}</span>
-                    <span className="text-slate-500 font-bold text-sm mt-1">Total Claims</span>
                   </div>
 
                   {/* Active Claims Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.activeClaims}</span>
-                    <span className="text-slate-500 font-bold text-sm mt-1">Active Claims</span>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Active Claims</span>
+                      <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <span className="text-3xl font-black text-emerald-800 tracking-tight">{stats.activeClaims}</span>
                   </div>
 
                   {/* Pending Claims Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.pendingClaims}</span>
-                    <span className="text-slate-500 font-bold text-sm mt-1">Pending Claims</span>
-                  </div>
-                </div>
-
-                {/* 4 Cards Grid - Mobile view */}
-                <div className="grid lg:hidden grid-cols-1 gap-4 mb-8">
-                  {/* Policy Holders Card */}
-                  <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Pending Claims</span>
+                      <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       </div>
-                      <span className="text-slate-600 font-bold text-xs">Policy Holders</span>
                     </div>
-                    <span className="text-xl font-black text-blue-900 tracking-tight pr-1 flex-shrink-0">
-                      {stats.policyHolders}
-                    </span>
+                    <span className="text-3xl font-black text-amber-600 tracking-tight">{stats.pendingClaims}</span>
                   </div>
 
-                  {/* Total Claims Card */}
-                  <div className="bg-gradient-to-br from-slate-50/60 to-white rounded-[20px] border border-slate-200/80 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 rounded-xl text-slate-800 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08" />
+                  {/* Registered Agents Card */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Total Agents</span>
+                      <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                         </svg>
                       </div>
-                      <span className="text-slate-600 font-bold text-xs">Total Claims</span>
                     </div>
-                    <span className="text-xl font-black text-slate-800 tracking-tight pr-1 flex-shrink-0">
-                      {stats.totalClaims}
-                    </span>
+                    <span className="text-3xl font-black text-purple-800 tracking-tight">{stats.totalAgents}</span>
                   </div>
 
-                  {/* Active Claims Card */}
-                  <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                  {/* Registered Branches Card */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Branches</span>
+                      <div className="p-1.5 bg-cyan-50 text-cyan-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                       </div>
-                      <span className="text-slate-600 font-bold text-xs">Active Claims</span>
                     </div>
-                    <span className="text-xl font-black text-emerald-800 tracking-tight pr-1 flex-shrink-0">
-                      {stats.activeClaims}
-                    </span>
-                  </div>
-
-                  {/* Pending Claims Card */}
-                  <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
-                      </div>
-                      <span className="text-slate-600 font-bold text-xs">Pending Claims</span>
-                    </div>
-                    <span className="text-xl font-black text-amber-800 tracking-tight pr-1 flex-shrink-0">
-                      {stats.pendingClaims}
-                    </span>
+                    <span className="text-3xl font-black text-cyan-800 tracking-tight">{stats.totalBranches}</span>
                   </div>
                 </div>
 
@@ -428,6 +468,112 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
+                </div>
+
+                {/* System Request Center Section */}
+                <div className="mt-12 flex flex-col select-none">
+                  <div className="mb-6">
+                    <h2 className="text-base font-extrabold text-slate-800">
+                      System Administration Request Center
+                    </h2>
+                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
+                      Verify and authorize credentials and password resets
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    {/* Panel 1: Branch Password Resets */}
+                    <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col gap-4 shadow-sm min-h-[300px]">
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Branch Password Resets</span>
+                        <span className="text-[10px] bg-red-50 text-red-600 font-extrabold px-2 py-0.5 rounded-full border border-red-100/50">
+                          {pendingBranchResets.length} Pending
+                        </span>
+                      </div>
+
+                      <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[400px] pr-1">
+                        {pendingBranchResets.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center flex-1 py-12 text-slate-400">
+                            <span className="text-xs font-bold">All clear!</span>
+                            <span className="text-[10px] mt-0.5">No pending branch resets</span>
+                          </div>
+                        ) : (
+                          pendingBranchResets.map((staff) => (
+                            <div key={staff._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
+                              <div className="flex flex-col">
+                                <span className="text-xs font-extrabold text-slate-850">{staff.branch} Branch</span>
+                                <span className="text-[10px] text-slate-500 font-semibold mt-0.5">{staff.email}</span>
+                                <span className="text-[10px] text-slate-500 font-semibold">{staff.mobile}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleBranchReset(staff._id, "approve")}
+                                  disabled={actioningId !== null}
+                                  className="flex-1 py-1.5 bg-[#102A43] hover:bg-[#0c2033] active:scale-95 text-white text-[10px] font-black rounded-lg transition-all cursor-pointer border-none outline-none disabled:opacity-50"
+                                >
+                                  {actioningId === staff._id ? "Processing..." : "Approve"}
+                                </button>
+                                <button
+                                  onClick={() => handleBranchReset(staff._id, "reject")}
+                                  disabled={actioningId !== null}
+                                  className="flex-1 py-1.5 bg-white hover:bg-slate-50 text-slate-550 border border-slate-200 text-[10px] font-bold rounded-lg transition-all cursor-pointer outline-none disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Panel 2: Admin Password Resets */}
+                    <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col gap-4 shadow-sm min-h-[300px]">
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Admin Password Resets</span>
+                        <span className="text-[10px] bg-purple-50 text-purple-600 font-extrabold px-2 py-0.5 rounded-full border border-purple-100/50">
+                          {pendingAdminResets.length} Pending
+                        </span>
+                      </div>
+
+                      <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[400px] pr-1">
+                        {pendingAdminResets.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center flex-1 py-12 text-slate-400">
+                            <span className="text-xs font-bold">All clear!</span>
+                            <span className="text-[10px] mt-0.5">No pending admin resets</span>
+                          </div>
+                        ) : (
+                          pendingAdminResets.map((admin) => (
+                            <div key={admin._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
+                              <div className="flex flex-col">
+                                <span className="text-xs font-extrabold text-slate-850">{admin.name}</span>
+                                <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Email: {admin.email}</span>
+                                <span className="text-[10px] text-slate-500 font-semibold">NIC: {admin.nic}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleAdminReset(admin._id, "approve")}
+                                  disabled={actioningId !== null}
+                                  className="flex-1 py-1.5 bg-[#102A43] hover:bg-[#0c2033] active:scale-95 text-white text-[10px] font-black rounded-lg transition-all cursor-pointer border-none outline-none disabled:opacity-50"
+                                >
+                                  {actioningId === admin._id ? "Processing..." : "Approve"}
+                                </button>
+                                <button
+                                  onClick={() => handleAdminReset(admin._id, "reject")}
+                                  disabled={actioningId !== null}
+                                  className="flex-1 py-1.5 bg-white hover:bg-slate-50 text-slate-550 border border-slate-200 text-[10px] font-bold rounded-lg transition-all cursor-pointer outline-none disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
               </>
             )}

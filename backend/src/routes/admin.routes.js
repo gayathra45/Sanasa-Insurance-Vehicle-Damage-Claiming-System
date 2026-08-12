@@ -5,6 +5,7 @@ import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import OfficeStaff from "../models/office_staff.model.js";
 import Agent from "../models/agent.model.js";
+import AgentActivity from "../models/agent_activity.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
 
@@ -52,18 +53,45 @@ router.get("/dashboard-stats", async (req, res) => {
     oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
     const dateFilter = { createdAt: { $gte: oneMonthAgo } };
 
-    // 1. KPI Counts (last 30 days)
-    const policyHoldersCount = await User.countDocuments(dateFilter);
-    const totalClaimsCount = await Claim.countDocuments(dateFilter);
-    const activeClaimsCount = await Claim.countDocuments({ status: "In Progress", ...dateFilter });
-    const pendingClaimsCount = await Claim.countDocuments({ status: "Pending", ...dateFilter });
+    // 1. KPI Counts (last 30 days & overall)
+    const policyHoldersCount = await User.countDocuments();
+    const totalClaimsCount = await Claim.countDocuments();
+    const activeClaimsCount = await Claim.countDocuments({ status: "In Progress" });
+    const pendingClaimsCount = await Claim.countDocuments({ status: "Pending" });
 
-    // 2. Branch Performances (Temporarily set to 0, pending office staff assignment logic)
-    const branches = [
-      { name: "Galle", percentage: 0, count: 0 },
-      { name: "Matara", percentage: 0, count: 0 },
-      { name: "Anuradhapura", percentage: 0, count: 0 },
-      { name: "Embilipitiya", percentage: 0, count: 0 }
+    // Additional general stats
+    const totalAgentsCount = await Agent.countDocuments();
+    const totalBranchesCount = await OfficeStaff.countDocuments();
+
+    // 2. Branch Performances (Calculated dynamically from claims data)
+    const totalClaimsOverall = await Claim.countDocuments();
+    const claimsByBranch = await Claim.aggregate([
+      { $group: { _id: "$branch", count: { $sum: 1 } } }
+    ]);
+    const branchColorMap = {
+      Galle: "bg-red-500",
+      Matara: "bg-green-500",
+      Anuradhapura: "bg-blue-500",
+      Embilipitiya: "bg-orange-400",
+    };
+    const mappedBranches = claimsByBranch.map(cb => {
+      const name = cb._id || "Unassigned";
+      const count = cb.count;
+      const percentage = totalClaimsOverall > 0 ? Math.round((count / totalClaimsOverall) * 100) : 0;
+      return {
+        name,
+        percentage,
+        count,
+        color: branchColorMap[name] || "bg-slate-400"
+      };
+    }).sort((a, b) => b.count - a.count);
+
+    // Fallback if no branches have claims yet
+    const branches = mappedBranches.length > 0 ? mappedBranches : [
+      { name: "Galle", percentage: 0, count: 0, color: "bg-red-500" },
+      { name: "Matara", percentage: 0, count: 0, color: "bg-green-500" },
+      { name: "Anuradhapura", percentage: 0, count: 0, color: "bg-blue-500" },
+      { name: "Embilipitiya", percentage: 0, count: 0, color: "bg-orange-400" }
     ];
 
     // 3. Monthly Claims (Aggregated by month, filtered to last 30 days)
@@ -99,15 +127,27 @@ router.get("/dashboard-stats", async (req, res) => {
       };
     });
 
+    // 4. Pending Branch Staff Password Resets
+    const pendingBranchResets = await OfficeStaff.find({ resetRequestStatus: "Pending" }, { password: 0 })
+      .sort({ createdAt: -1 });
+
+    // 5. Pending Admin Password Resets
+    const pendingAdminResets = await Admin.find({ resetRequestStatus: "Pending" }, { password: 0 })
+      .sort({ createdAt: -1 });
+
     res.json({
       stats: {
         policyHolders: policyHoldersCount,
         totalClaims: totalClaimsCount,
         activeClaims: activeClaimsCount,
-        pendingClaims: pendingClaimsCount
+        pendingClaims: pendingClaimsCount,
+        totalAgents: totalAgentsCount,
+        totalBranches: totalBranchesCount
       },
       branches,
-      monthlyClaims
+      monthlyClaims,
+      pendingBranchResets,
+      pendingAdminResets
     });
   } catch (err) {
     console.error("Admin dashboard stats API error:", err);
