@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
+import { API_URL } from "@/app/config";
 
 interface Vehicle {
   numberPlate: string;
@@ -82,7 +83,7 @@ export default function RegistrationsPage() {
 
     async function loadRegistrations() {
       try {
-        const res = await fetch(`http://localhost:5000/api/office-staff/registrations?branch=${currentBranch}`);
+        const res = await fetch(`${API_URL}/office-staff/registrations?branch=${currentBranch}`);
         if (!res.ok) {
           throw new Error("Failed to fetch registrations.");
         }
@@ -106,7 +107,7 @@ export default function RegistrationsPage() {
   const handleStatusUpdate = async (id: string, newStatus: string, reason?: string) => {
     try {
       const targetReg = registrations.find(r => r._id === id);
-      const baseUrl = "http://localhost:5000/api";
+      const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/office-staff/registrations/${id}/status`, {
         method: "PATCH",
         headers: {
@@ -264,7 +265,7 @@ export default function RegistrationsPage() {
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder=""
+                      placeholder="Search by name, NIC, plate or ref..."
                       className="w-full pl-10 pr-4 py-3 rounded-full border border-slate-300 text-slate-700 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm"
                     />
                   </div>
@@ -276,72 +277,94 @@ export default function RegistrationsPage() {
                     No registrations found matching your query.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-3">
+                    {/* Table Header Row */}
+                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,2.2fr)] gap-4 px-5 py-3 text-slate-400 font-extrabold text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                      <div className="flex flex-col select-none min-w-0">Applicant Name</div>
+                      <div className="flex flex-col select-none min-w-0">NIC Number</div>
+                      <div className="flex flex-col select-none min-w-0">Vehicle Plate</div>
+                      <div className="flex flex-col select-none min-w-0">Vehicle Type</div>
+                      <div className="flex flex-col select-none min-w-0">Policy Number</div>
+                      <div className="flex flex-col select-none min-w-0">Date</div>
+                      <div className="flex flex-col select-none min-w-0 text-right">Actions</div>
+                    </div>
+
                     {filteredRegs.map((reg) => (
                       <div
                         key={reg._id}
                         onClick={() => setSelectedReg(reg)}
-                        className="bg-white border border-slate-200 hover:border-amber-400 hover:shadow-md rounded-2xl p-6 flex flex-col justify-between transition-all duration-200 cursor-pointer shadow-sm relative group"
+                        className="bg-white border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent hover:border-blue-400 border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,2.2fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden group"
                       >
-                        <div>
-                          {/* Card Header */}
-                          <div className="flex justify-between items-start mb-4 select-none">
-                            <div>
-                              <h3 className="font-black text-slate-800 text-base">
-                                {reg.firstName} {reg.lastName}
-                              </h3>
-                              <span className="text-[10px] text-slate-400 font-black tracking-wider uppercase bg-slate-100 px-2 py-1 rounded mt-1 inline-block">
-                                Ref: {reg.referenceNumber}
-                              </span>
-                            </div>
-                            <span className="bg-amber-50 text-amber-600 border border-amber-200 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wide">
-                              {reg.vehicles && reg.vehicles.length > 0 ? reg.vehicles[0].vehicleType : "No Vehicle"}
-                            </span>
+                        {/* Col 1: Applicant Name & Ref */}
+                        <div className="flex flex-col min-w-0 select-none">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="w-2 h-2 rounded-full shrink-0 bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.7)]" />
+                            <h3 className="font-black text-sm text-slate-800 whitespace-nowrap truncate">
+                              {reg.firstName} {reg.lastName}
+                            </h3>
                           </div>
-
-                          {/* Card Body Attributes */}
-                          <div className="flex flex-col text-slate-500 text-xs font-semibold gap-2 select-none">
-                            <div className="flex">
-                              <span className="w-24 flex-shrink-0 text-slate-400">NIC</span>
-                              <span>: {reg.nic}</span>
-                            </div>
-                            <div className="flex">
-                              <span className="w-24 flex-shrink-0 text-slate-400">Vehicle Plate</span>
-                              <span>: {reg.vehicles && reg.vehicles.length > 0 ? formatPlate(reg.vehicles[0].numberPlate) : "-"}</span>
-                            </div>
-                            <div className="flex">
-                              <span className="w-24 flex-shrink-0 text-slate-400">Policy No.</span>
-                              <span className="font-bold text-slate-700">: {reg.vehicles && reg.vehicles.length > 0 ? reg.vehicles[0].policyNumber : "-"}</span>
-                            </div>
-                            <div className="flex">
-                              <span className="w-24 flex-shrink-0 text-slate-400">Date</span>
-                              <span>: {formatDate(reg.createdAt)}</span>
-                            </div>
-                          </div>
+                          <span className="text-[9px] text-slate-400 font-black tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1.5 w-fit">
+                            Ref: {reg.referenceNumber}
+                          </span>
                         </div>
 
-                        {/* Card Footer Actions */}
-                        <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 flex-shrink-0">
-                          <span className="text-amber-500 font-extrabold text-[11px] group-hover:underline flex items-center gap-1 select-none">
+                        {/* Col 2: NIC */}
+                        <div className="flex flex-col min-w-0 select-none">
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">NIC</span>
+                          <span className="text-slate-700 font-semibold text-xs">{reg.nic}</span>
+                        </div>
+
+                        {/* Col 3: Vehicle Plate */}
+                        <div className="flex flex-col min-w-0 select-none">
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Vehicle Plate</span>
+                          <span className="text-slate-800 font-bold text-xs">
+                            {reg.vehicles && reg.vehicles.length > 0 ? formatPlate(reg.vehicles[0].numberPlate) : "-"}
+                          </span>
+                        </div>
+
+                        {/* Col 4: Vehicle Type */}
+                        <div className="flex flex-col min-w-0 select-none">
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Vehicle Type</span>
+                          <span className="text-slate-700 text-xs font-semibold">
+                            {reg.vehicles && reg.vehicles.length > 0 ? reg.vehicles[0].vehicleType : "No Vehicle"}
+                          </span>
+                        </div>
+
+                        {/* Col 5: Policy Number */}
+                        <div className="flex flex-col min-w-0 select-none">
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Policy No.</span>
+                          <span className="font-bold text-[#0f2d4a] text-xs">
+                            {reg.vehicles && reg.vehicles.length > 0 ? reg.vehicles[0].policyNumber : "-"}
+                          </span>
+                        </div>
+
+                        {/* Col 6: Date */}
+                        <div className="flex flex-col min-w-0 select-none">
+                          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Date</span>
+                          <span className="text-slate-600 text-xs font-semibold">{formatDate(reg.createdAt)}</span>
+                        </div>
+
+                        {/* Col 7: Actions */}
+                        <div className="flex items-center justify-between md:justify-end gap-2.5 mt-4 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-slate-100" onClick={(e) => e.stopPropagation()}>
+                          <span className="text-blue-500 font-extrabold text-[11px] group-hover:underline md:hidden select-none">
                             View Profile
                           </span>
-                          
-                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
                             <button
                               onClick={() => triggerApprove(reg)}
-                              className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-[11px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                              className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => triggerReject(reg)}
-                              className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-[11px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                              className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                             >
                               Reject
                             </button>
                             <button
                               onClick={() => setSelectedReg(reg)}
-                              className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[11px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white"
+                              className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white"
                             >
                               View
                             </button>
@@ -478,7 +501,7 @@ export default function RegistrationsPage() {
               </div>
 
               {/* Uploaded Documents */}
-              <div className="space-y-4 pb-4 select-none">
+              <div className="space-y-4 pb-4 select-none mt-6">
                 <h3 className="font-black text-slate-800 text-xs tracking-wide uppercase text-amber-500">Uploaded Documents</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
@@ -490,7 +513,7 @@ export default function RegistrationsPage() {
                     const docUrl = (selectedReg.documents as any)?.[doc.key];
                     let srcUrl = docUrl || "";
                     if (srcUrl && !srcUrl.startsWith("http") && !srcUrl.startsWith("data:")) {
-                      srcUrl = `http://localhost:5000/uploads/${srcUrl}`;
+                      srcUrl = `${API_URL.replace("/api", "")}/uploads/${srcUrl}`;
                     }
                     return (
                       <div key={doc.key} className="border border-slate-200 rounded-xl p-4 flex flex-col items-center">

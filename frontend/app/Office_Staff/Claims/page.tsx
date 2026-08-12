@@ -733,24 +733,19 @@ function OfficeStaffClaimsPageContent() {
     return cleaned.toUpperCase();
   };
 
-  const getStatusStyle = (status: string, damageType: string = "", priority: string = "") => {
-    switch (status.toLowerCase()) {
-      case "pending":
-        const dmgLower = damageType.toLowerCase();
-        const isSevere = (priority && priority.toLowerCase() === "urgent") || dmgLower.includes("fully") || dmgLower.includes("severe") || dmgLower.includes("total") || dmgLower.includes("major") || dmgLower.includes("destruction") || dmgLower.includes("write-off");
-        if (isSevere) {
-          return "bg-orange-50 text-orange-600 border border-orange-200";
-        }
-        return "bg-purple-50 text-purple-600 border border-purple-200";
-      case "in progress":
-        return "bg-blue-50 text-blue-600 border border-blue-200";
-      case "approved":
-        return "bg-emerald-50 text-emerald-600 border border-emerald-200";
-      case "rejected":
-        return "bg-red-50 text-red-600 border border-red-200";
-      default:
-        return "bg-slate-50 text-slate-600 border border-slate-200";
+  const getStatusStyle = (status: string, damageType: string = "", priority: string = "", paymentReceipt: string = "") => {
+    const s = status.toLowerCase();
+    if (s.includes("approved") || s.includes("active") || s.includes("done")) {
+      if (paymentReceipt) {
+        return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+      }
+      return "bg-blue-50 text-blue-600 border border-blue-200";
     }
+    if (s.includes("rejected") || s.includes("decline") || s.includes("cancel")) {
+      return "bg-slate-50 text-slate-500 border border-slate-200";
+    }
+    // New, Pending, In Progress (not approved or rejected yet) -> Red theme
+    return "bg-red-50 text-red-700 border border-red-200";
   };
 
   const getAgentName = (email: string) => {
@@ -929,7 +924,30 @@ function OfficeStaffClaimsPageContent() {
                     </div>
  
                     {filteredClaims.map((claim) => {
+                      const s = claim.status.toLowerCase();
                       const isUrgent = claim.priority === "Urgent" || claim.damageType.toLowerCase().includes("severe") || claim.description.toLowerCase().includes("urgent");
+                      const isApproved = s.includes("approved") || s.includes("active") || s.includes("done");
+                      const isRejected = s.includes("rejected");
+                      const isCompleted = isApproved && !!claim.paymentReceipt;
+
+                      let cardThemeClass = "";
+                      let indicatorDot = "";
+
+                      if (isCompleted) {
+                        cardThemeClass = "border-l-[6px] border-l-emerald-500 bg-gradient-to-r from-emerald-50/10 via-transparent to-transparent hover:border-emerald-400";
+                        indicatorDot = "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+                      } else if (isApproved) {
+                        cardThemeClass = "border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent hover:border-blue-400";
+                        indicatorDot = "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]";
+                      } else if (isRejected) {
+                        cardThemeClass = "border-l-[6px] border-l-slate-400 bg-gradient-to-r from-slate-50/10 via-transparent to-transparent hover:border-slate-500";
+                        indicatorDot = "bg-slate-400 shadow-[0_0_8px_rgba(148,163,184,0.5)]";
+                      } else {
+                        // Not approved and not rejected (New / Pending / In Progress / Review) -> Highlight with a red dot/border
+                        cardThemeClass = "border-l-[6px] border-l-red-500 bg-gradient-to-r from-red-50/10 via-transparent to-transparent hover:border-red-400";
+                        indicatorDot = "bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.7)]";
+                      }
+
                       return (
                         <div
                           key={claim._id}
@@ -937,17 +955,12 @@ function OfficeStaffClaimsPageContent() {
                             setSelectedClaim(claim);
                             setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                           }}
-                          className={`bg-white border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:border-[#0f2d4a] relative overflow-hidden ${
-                            isUrgent
-                              ? "border-l-4 border-l-red-500"
-                              : (claim.assignedAgent && claim.currentStep < 3 && claim.status !== "Rejected")
-                                ? "border-l-4 border-l-amber-500 bg-amber-50/10"
-                                : "border-l-4 border-l-[#0f2d4a]"
-                          }`}
+                          className={`bg-white border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${cardThemeClass}`}
                         >
                           {/* Claim ID & Date */}
                           <div className="flex flex-col select-none min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className={`w-2 h-2 rounded-full shrink-0 ${indicatorDot}`} />
                               <h3 className="font-black text-sm text-slate-800 whitespace-nowrap">
                                 {claim.claimNumber}
                               </h3>
@@ -959,7 +972,7 @@ function OfficeStaffClaimsPageContent() {
                                   title={`Reason: ${claim.manualUpdateReason}\nBy: ${claim.manualUpdateBy}\nOn: ${claim.manualUpdateAt ? formatDate(claim.manualUpdateAt) : ""}`} 
                                   className="bg-amber-100 text-amber-800 text-[8px] font-black tracking-wider uppercase px-2 py-1 rounded-md whitespace-nowrap cursor-help flex items-center gap-0.5"
                                 >
-                                  ΓÜá∩╕Å Manual Override
+                                  ⚠️ Manual Override
                                 </span>
                               )}
                             </div>
@@ -1021,8 +1034,8 @@ function OfficeStaffClaimsPageContent() {
                           {/* Status Badge */}
                           <div className="flex flex-col select-none items-center min-w-0">
                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Status</span>
-                            <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
-                              {claim.status}
+                            <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority, claim.paymentReceipt)}`}>
+                              {claim.status.toLowerCase() === "approved" && claim.paymentReceipt ? "Completed" : claim.status}
                             </span>
                           </div>
 

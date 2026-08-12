@@ -181,7 +181,7 @@ router.get("/registrations", async (req, res) => {
     }
     const registrations = await User.find(
       { branch: branch.trim(), status: { $ne: "Approved" } },
-      { password: 0, documents: 0 }
+      { password: 0 }
     ).sort({ createdAt: -1 });
     res.json({ registrations });
   } catch (err) {
