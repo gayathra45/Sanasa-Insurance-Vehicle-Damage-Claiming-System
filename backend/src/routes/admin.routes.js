@@ -392,6 +392,63 @@ router.post("/staff", async (req, res) => {
   }
 });
 
+// PUT edit office staff member details: /api/admin/staff/:id
+router.put("/staff/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, mobile, branch, province, district, area, location, staffCount } = req.body;
+
+    const staff = await OfficeStaff.findById(id);
+    if (!staff) {
+      return res.status(404).json({ error: "Office staff member not found." });
+    }
+
+    if (email && email.trim().toLowerCase() !== staff.email) {
+      const cleanEmail = email.trim().toLowerCase();
+      // Check if email already exists
+      const existingEmail = await OfficeStaff.findOne({ email: cleanEmail });
+      if (existingEmail) {
+        return res.status(400).json({ error: "An office staff account with this Email is already registered." });
+      }
+    }
+
+    if (name) staff.name = name.trim();
+    if (email) staff.email = email.trim().toLowerCase();
+    if (mobile) staff.mobile = mobile.trim();
+    if (branch) staff.branch = branch.trim();
+    if (province) staff.province = province.trim();
+    if (district) staff.district = district.trim();
+    if (area) staff.area = area.trim();
+    if (location) staff.location = location.trim();
+    if (staffCount !== undefined) staff.staffCount = Number(staffCount);
+
+    await staff.save();
+
+    const staffObj = staff.toObject();
+    delete staffObj.password;
+
+    res.json({ message: "Office staff updated successfully", staff: staffObj });
+  } catch (err) {
+    console.error("Update staff error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// DELETE office staff member: /api/admin/staff/:id
+router.delete("/staff/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const staff = await OfficeStaff.findByIdAndDelete(id);
+    if (!staff) {
+      return res.status(404).json({ error: "Office staff member not found." });
+    }
+    res.json({ message: "Office staff member deleted successfully." });
+  } catch (err) {
+    console.error("Delete staff error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 // GET all pending branch password reset requests: /api/admin/staff/password-requests
 router.get("/staff/password-requests", async (req, res) => {
   try {
