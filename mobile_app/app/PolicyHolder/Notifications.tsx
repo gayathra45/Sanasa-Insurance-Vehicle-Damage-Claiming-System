@@ -239,6 +239,14 @@ export default function NotificationsPage() {
     return unsubscribe;
   }, [navigation, loadNotificationsData]);
 
+  // Poll notifications in background for real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadNotificationsData();
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [loadNotificationsData]);
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadNotificationsData();

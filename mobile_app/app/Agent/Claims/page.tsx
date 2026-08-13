@@ -472,12 +472,28 @@ export default function AgentClaimsPage() {
 
   // Poll claims in background for real-time updates
   useEffect(() => {
-    if (!agentEmail || selectedClaim !== null) return;
-    const pollInterval = setInterval(() => {
-      fetchClaims(agentEmail);
+    if (!agentEmail) return;
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/agent/claims?email=${encodeURIComponent(agentEmail)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setClaims(data);
+            if (selectedClaim) {
+              const updated = data.find((c: Claim) => c._id === selectedClaim._id);
+              if (updated) {
+                setSelectedClaim(updated);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Background claims polling failed:", err);
+      }
     }, 7000);
     return () => clearInterval(pollInterval);
-  }, [agentEmail, selectedClaim, fetchClaims]);
+  }, [agentEmail, selectedClaim]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);

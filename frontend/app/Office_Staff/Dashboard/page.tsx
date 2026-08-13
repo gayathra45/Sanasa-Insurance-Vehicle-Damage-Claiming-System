@@ -243,6 +243,8 @@ export default function OfficeStaffDashboard() {
     }
 
     fetchStats();
+    const interval = setInterval(fetchStats, 7000);
+    return () => clearInterval(interval);
   }, []);
 
   return (

@@ -95,10 +95,19 @@ export default function PolicyHolderNotifications() {
     }
   }, []);
 
+  // 1b. Poll notifications in background silently for real-time updates
+  useEffect(() => {
+    if (!user || !user.nic) return;
+    const interval = setInterval(() => {
+      fetchNotifications(user.nic, true);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   // 2. Fetch Claims and compile notifications list
-  const fetchNotifications = async (nic: string) => {
+  const fetchNotifications = async (nic: string, silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(nic)}`, {
         cache: "no-store"
       });
@@ -195,7 +204,7 @@ export default function PolicyHolderNotifications() {
     } catch (err) {
       console.error("Error fetching notifications", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 

@@ -564,19 +564,29 @@ function OfficeStaffClaimsPageContent() {
 
   // Poll claims in background for real-time updates
   useEffect(() => {
-    if (!branch || selectedClaim !== null || showAssignModal) return;
+    if (!branch) return;
     const pollInterval = setInterval(async () => {
       try {
         const claimsRes = await fetch(`${API_URL}/office-staff/claims?branch=${branch}`);
         if (claimsRes.ok) {
           const claimsData = await claimsRes.json();
-          setClaims(claimsData.claims || []);
+          const freshClaims = claimsData.claims || [];
+          setClaims(freshClaims);
+
+          // Update the open selected claim details in real-time
+          if (selectedClaim) {
+            const updated = freshClaims.find((c: Claim) => c._id === selectedClaim._id);
+            if (updated) {
+              setSelectedClaim(updated);
+            }
+          }
         }
       } catch (err) {
         console.warn("Background claims polling failed:", err);
       }
     }, 7000);
-  }, [branch, selectedClaim, showAssignModal]);
+    return () => clearInterval(pollInterval);
+  }, [branch, selectedClaim]);
 
   // Poll agents in background for real-time status updates
   useEffect(() => {

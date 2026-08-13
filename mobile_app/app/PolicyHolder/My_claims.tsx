@@ -166,6 +166,15 @@ export default function MyClaims() {
     })();
   }, [fetchClaims]);
 
+  // Poll policy holder's claims list in background for automatic updates
+  useEffect(() => {
+    if (!userNic) return;
+    const interval = setInterval(() => {
+      fetchClaims(userNic);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [userNic, fetchClaims]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     if (userNic) fetchClaims(userNic);

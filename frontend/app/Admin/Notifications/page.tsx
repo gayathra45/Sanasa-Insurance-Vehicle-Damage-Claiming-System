@@ -143,9 +143,23 @@ export default function AdminNotifications() {
   const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
 
-  // 1. Initial load
+  // 1. Initial load & Background polling
   useEffect(() => {
     fetchNotifications();
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/notifications`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.notifications)) {
+            setNotifications(data.notifications);
+          }
+        }
+      } catch (err) {
+        console.warn("Background admin notifications polling failed:", err);
+      }
+    }, 8000);
 
     if (typeof window !== "undefined") {
       const savedReadIds = localStorage.getItem("admin_read_notification_ids");
@@ -157,6 +171,8 @@ export default function AdminNotifications() {
         }
       }
     }
+
+    return () => clearInterval(interval);
   }, []);
 
   const fetchNotifications = async () => {

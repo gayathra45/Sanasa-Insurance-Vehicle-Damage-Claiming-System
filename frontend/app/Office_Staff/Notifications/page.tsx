@@ -130,10 +130,19 @@ export default function OfficeStaffNotifications() {
     }
   }, []);
 
+  // 1b. Background polling for real-time notifications updates
+  useEffect(() => {
+    if (!branch) return;
+    const interval = setInterval(() => {
+      fetchNotificationsAndRegistrations(branch, true);
+    }, 7000);
+    return () => clearInterval(interval);
+  }, [branch]);
+
   // 2. Fetch Claims & Registrations, compile notifications dynamically
-  const fetchNotificationsAndRegistrations = async (branchName: string) => {
+  const fetchNotificationsAndRegistrations = async (branchName: string, silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const cleanBranch = branchName.trim();
       
       // Fetch Claims
@@ -257,7 +266,7 @@ export default function OfficeStaffNotifications() {
     } catch (err) {
       console.error("Error compilation of notifications", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 

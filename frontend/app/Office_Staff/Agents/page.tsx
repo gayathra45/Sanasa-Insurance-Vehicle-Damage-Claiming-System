@@ -95,11 +95,20 @@ export default function AgentsPage() {
     }
   }, [router]);
 
+  // Poll agents in background for real-time status/availability updates
+  useEffect(() => {
+    if (!branch) return;
+    const pollInterval = setInterval(() => {
+      loadAgents(branch, true);
+    }, 7000);
+    return () => clearInterval(pollInterval);
+  }, [branch]);
+
   // --- Data Loading Operations ---
   // Loads all registered Insurance Agents belonging to the specific branch.
-  const loadAgents = async (branchName: string) => {
+  const loadAgents = async (branchName: string, silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/office-staff/agents?branch=${encodeURIComponent(branchName)}`);
       if (!res.ok) {
@@ -110,7 +119,7 @@ export default function AgentsPage() {
     } catch (err: any) {
       console.error("Error loading agents:", err);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 

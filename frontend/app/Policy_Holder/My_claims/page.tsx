@@ -248,7 +248,14 @@ export default function MyClaims() {
     }
 
     // 4. Combine recently submitted claims with database claims
-    setClaims([...localClaims, ...databaseClaims]);
+    const updatedClaims = [...localClaims, ...databaseClaims];
+    setClaims(updatedClaims);
+    if (selectedClaim) {
+      const updated = updatedClaims.find(c => c.claimNumber === selectedClaim.claimNumber);
+      if (updated) {
+        setSelectedClaim(updated);
+      }
+    }
     if (showLoading) setIsLoading(false);
   };
 
@@ -258,7 +265,6 @@ export default function MyClaims() {
 
   // Poll database claims periodically in the background
   useEffect(() => {
-    if (selectedClaim !== null) return;
     const pollInterval = setInterval(() => {
       fetchClaims(false);
     }, 7000);

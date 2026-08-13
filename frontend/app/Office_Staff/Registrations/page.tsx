@@ -57,6 +57,33 @@ export default function RegistrationsPage() {
     onConfirm?: () => void;
   }>({ show: false, title: "", message: "", type: "alert" });
 
+  // Load registrations function
+  const loadRegistrations = async (currentBranch: string, silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const res = await fetch(`${API_URL}/office-staff/registrations?branch=${currentBranch}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch registrations.");
+      }
+      const data = await res.json();
+      const freshRegs = data.registrations || [];
+      setRegistrations(freshRegs);
+
+      // Keep open selected registration updated
+      if (selectedReg) {
+        const updated = freshRegs.find((r: Registration) => r._id === selectedReg._id);
+        if (updated) {
+          setSelectedReg(updated);
+        }
+      }
+    } catch (err: any) {
+      console.error("Load registrations error:", err);
+      if (!silent) setError(err.message || "Failed to load registrations.");
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
   useEffect(() => {
     let currentBranch = "";
     if (typeof window !== "undefined") {
@@ -81,26 +108,19 @@ export default function RegistrationsPage() {
       }
     }
 
-    async function loadRegistrations() {
-      try {
-        const res = await fetch(`${API_URL}/office-staff/registrations?branch=${currentBranch}`);
-        if (!res.ok) {
-          throw new Error("Failed to fetch registrations.");
-        }
-        const data = await res.json();
-        setRegistrations(data.registrations || []);
-      } catch (err: any) {
-        console.error("Load registrations error:", err);
-        setError(err.message || "Failed to load registrations.");
-      } finally {
-        setLoading(false);
-      }
-    }
-
     if (currentBranch) {
-      loadRegistrations();
+      loadRegistrations(currentBranch);
     }
   }, [router]);
+
+  // Poll registrations in background for real-time updates
+  useEffect(() => {
+    if (!branch) return;
+    const pollInterval = setInterval(() => {
+      loadRegistrations(branch, true);
+    }, 7000);
+    return () => clearInterval(pollInterval);
+  }, [branch, selectedReg]);
 
   const [rejectModal, setRejectModal] = useState<{ show: boolean; reg: Registration | null; reason: string }>({ show: false, reg: null, reason: "" });
 

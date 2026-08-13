@@ -207,6 +207,44 @@ function TrackClaimsContent() {
       loadClaims();
     }
   }, [searchParams]);
+
+  // Poll currently tracked claim in background for automatic real-time updates
+  useEffect(() => {
+    if (!trackedClaim || !trackedClaim.claimNumber) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`${API_URL}/policy-holder/track-claim?claimNumber=${encodeURIComponent(trackedClaim.claimNumber.trim().toUpperCase())}`, {
+          cache: "no-store"
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.claim) {
+            setTrackedClaim({
+              claimNumber: data.claim.claimNumber,
+              vehiclePlate: data.claim.vehiclePlate,
+              incidentDate: formatDateString(data.claim.incidentDate),
+              incidentTime: data.claim.incidentTime,
+              damageType: data.claim.damageType,
+              amount: data.claim.amount ? `Rs. ${Number(data.claim.amount).toLocaleString()}` : "Pending",
+              status: data.claim.status || "Pending",
+              description: data.claim.description,
+              location: data.claim.location,
+              officer: data.claim.assignedAgentName || data.claim.assignedAgent || "Not Assigned",
+              paymentReceipt: data.claim.paymentReceipt || "",
+              documentsRequested: data.claim.documentsRequested || false,
+              requestedDocuments: data.claim.requestedDocuments || [],
+              currentStep: data.claim.currentStep || 1,
+              messages: data.claim.messages || []
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Background track claim polling failed:", err);
+      }
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [trackedClaim?.claimNumber]);
+
   const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanId = claimId.trim().toUpperCase();

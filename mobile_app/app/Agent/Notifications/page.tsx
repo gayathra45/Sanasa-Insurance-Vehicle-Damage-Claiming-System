@@ -229,6 +229,15 @@ export default function AgentNotificationsPage() {
     })();
   }, [fetchClaims]);
 
+  // Poll claims in background for real-time notifications updates
+  useEffect(() => {
+    if (!agentEmail) return;
+    const interval = setInterval(() => {
+      fetchClaims(agentEmail);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [agentEmail, fetchClaims]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     if (agentEmail) {
