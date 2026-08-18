@@ -10,6 +10,8 @@ import Claim from "../models/claim.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { getNearestBranch } from "../utils/branch.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { analyzeAccidentDamage } from "../utils/aiAnalyzer.js";
+
 
 const router = express.Router();
 
@@ -102,6 +104,22 @@ router.post("/new-claim", async (req, res) => {
       uploadArray(drivingLicense?.rear, "claims/driving_license")
     ]);
 
+    // ==========================================
+    // --- AI Damage Analysis ---
+    // ==========================================
+    // Collect all input base64 photos into a single array for the AI
+    const allPhotos = [
+      ...(accidentPhotos?.front || []),
+      ...(accidentPhotos?.rear || []),
+      ...(accidentPhotos?.side || [])
+    ];
+
+    // Execute the AI analysis
+    let aiResult = null;
+    if (allPhotos.length > 0) {
+      aiResult = await analyzeAccidentDamage(allPhotos);
+    }
+
     // Save claim payload to MongoDB
     const newClaim = new Claim({
       claimNumber: nextClaimNum,
@@ -121,7 +139,14 @@ router.post("/new-claim", async (req, res) => {
       drivingLicense: {
         front: licenseFront,
         rear: licenseRear
-      }
+      },
+      // Save the AI Analysis findings directly in MongoDB
+      aiAnalysis: aiResult ? {
+        isAnalyzed: true,
+        damagedItems: aiResult.damagedItems,
+        overallDamagePercentage: aiResult.overallDamagePercentage,
+        summary: aiResult.summary
+      } : { isAnalyzed: false }
     });
 
     await newClaim.save();

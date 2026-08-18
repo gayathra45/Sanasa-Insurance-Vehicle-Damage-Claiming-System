@@ -12,6 +12,7 @@ import Admin from "../models/admin.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
+import { analyzeAccidentDamage } from "../utils/aiAnalyzer.js";
 
 const router = express.Router();
 
@@ -243,6 +244,54 @@ router.patch("/claims/:claimNumber", async (req, res) => {
     res.json({ message: "Claim updated successfully", claim });
   } catch (err) {
     console.error("Update claim error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST analyze claim photos with AI: /api/office-staff/claims/:claimNumber/analyze-ai
+router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    const allUrls = [
+      ...(claim.accidentPhotos?.front || []),
+      ...(claim.accidentPhotos?.rear || []),
+      ...(claim.accidentPhotos?.side || [])
+    ];
+
+    if (allUrls.length === 0) {
+      return res.status(400).json({ error: "No accident photos found to analyze." });
+    }
+
+    // Convert Cloudinary URLs to Base64 format for Gemini
+    const base64Photos = await Promise.all(
+      allUrls.map(async (url) => {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        return Buffer.from(arrayBuffer).toString("base64");
+      })
+    );
+
+    const aiResult = await analyzeAccidentDamage(base64Photos);
+    if (!aiResult) {
+      return res.status(500).json({ error: "AI analysis failed." });
+    }
+
+    claim.aiAnalysis = {
+      isAnalyzed: true,
+      damagedItems: aiResult.damagedItems,
+      overallDamagePercentage: aiResult.overallDamagePercentage,
+      summary: aiResult.summary
+    };
+
+    await claim.save();
+    res.json({ message: "AI analysis completed successfully", aiAnalysis: claim.aiAnalysis });
+  } catch (err) {
+    console.error("AI manual analysis error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });

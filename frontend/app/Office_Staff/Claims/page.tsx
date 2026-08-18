@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
@@ -72,6 +72,16 @@ interface Claim {
   manualUpdateReason?: string;
   manualUpdateAt?: string;
   manualUpdateBy?: string;
+  aiAnalysis?: {
+    isAnalyzed: boolean;
+    damagedItems?: {
+      item: string;
+      damagePercentage: number;
+      description: string;
+    }[];
+    overallDamagePercentage?: number;
+    summary?: string;
+  };
 }
 
 interface ClaimNote {
@@ -384,6 +394,7 @@ function OfficeStaffClaimsPageContent() {
   // Modal / Detail / Action states
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [showAllDetails, setShowAllDetails] = useState(false);
+  const prevClaimIdRef = useRef<string | null>(null);
   const [showNotes, setShowNotes] = useState(false);
   const [showDocStatus, setShowDocStatus] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -407,6 +418,40 @@ function OfficeStaffClaimsPageContent() {
   const [paymentReceiptFile, setPaymentReceiptFile] = useState<File | null>(null);
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
   const [isCancellingClaim, setIsCancellingClaim] = useState(false);
+
+  const [analyzingClaim, setAnalyzingClaim] = useState<string | null>(null);
+
+  const handleRunAIAnalysis = async (claimNumber: string) => {
+    try {
+      setAnalyzingClaim(claimNumber);
+      const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(claimNumber)}/analyze-ai`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setClaims((prevClaims) =>
+          prevClaims.map((c) =>
+            c.claimNumber === claimNumber
+              ? { ...c, aiAnalysis: data.aiAnalysis }
+              : c
+          )
+        );
+        setSelectedClaim((prev) =>
+          prev && prev.claimNumber === claimNumber
+            ? { ...prev, aiAnalysis: data.aiAnalysis }
+            : prev
+        );
+        alert("AI analysis completed successfully!");
+      } else {
+        alert(data.error || "Failed to run AI analysis.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred during AI analysis.");
+    } finally {
+      setAnalyzingClaim(null);
+    }
+  };
 
   const handleCancelClaim = async (claimNumber: string) => {
     const confirmCancel = window.confirm("Are you sure you want to cancel this claim? This action cannot be undone.");
@@ -629,6 +674,12 @@ function OfficeStaffClaimsPageContent() {
 
   useEffect(() => {
     if (selectedClaim) {
+      if (prevClaimIdRef.current !== selectedClaim._id) {
+        setShowAllDetails(false);
+        setShowNotes(false);
+        setShowDocStatus(false);
+        prevClaimIdRef.current = selectedClaim._id;
+      }
       setAssessmentAmount(selectedClaim.amount !== null ? selectedClaim.amount.toString() : "");
       setBankName(selectedClaim.bankName || selectedClaim.policyHolderBankDetails?.bankName || "");
       setBankBranch(selectedClaim.bankBranch || selectedClaim.policyHolderBankDetails?.branchName || "");
@@ -640,9 +691,8 @@ function OfficeStaffClaimsPageContent() {
       setManualStep("");
       setManualReason("");
       setManualUpdateByVal("");
-      setShowAllDetails(false);
-      setShowNotes(false);
-      setShowDocStatus(false);
+    } else {
+      prevClaimIdRef.current = null;
     }
   }, [selectedClaim]);
 
@@ -2610,6 +2660,53 @@ function OfficeStaffClaimsPageContent() {
                         })()}
                       </div>
                     </div>
+
+                    {/* AI Damage Analysis Section */}
+                    {selectedClaim.aiAnalysis?.isAnalyzed ? (
+                      <div className="mt-4">
+                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">🤖 AI Damage Analysis</h3>
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-left flex flex-col gap-4">
+                          <p className="text-xs font-semibold text-slate-600 leading-relaxed italic">
+                            "{selectedClaim.aiAnalysis.summary}"
+                          </p>
+                          <div className="text-xs font-bold text-slate-700">
+                            Overall Estimated Damage: <span className="text-emerald-600 font-extrabold text-sm">{selectedClaim.aiAnalysis.overallDamagePercentage}%</span>
+                          </div>
+                          
+                          <div className="border-t border-slate-200 pt-3">
+                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Damaged Items Breakdown</h4>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              {selectedClaim.aiAnalysis.damagedItems?.map((part, index) => (
+                                <div key={index} className="flex justify-between items-center border border-slate-200 bg-white p-3 rounded-xl shadow-sm">
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="text-xs font-extrabold text-slate-800">{part.item}</span>
+                                    <span className="text-[10px] text-slate-500 font-medium">{part.description}</span>
+                                  </div>
+                                  <span className="text-xs font-black px-2.5 py-1 bg-red-50 text-red-500 rounded-full">{part.damagePercentage}%</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-4 bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-6 text-center">
+                        <span className="text-2xl mb-2 block">🤖</span>
+                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-1">AI Damage Assessment Pending</h4>
+                        <p className="text-[10px] text-slate-500 mb-4 max-w-[320px] mx-auto leading-relaxed">
+                          This claim does not have AI analysis data yet. You can trigger it manually now.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleRunAIAnalysis(selectedClaim.claimNumber)}
+                          disabled={analyzingClaim === selectedClaim.claimNumber}
+                          className="bg-[#0f2d4a] hover:bg-[#1a446c] text-white text-[10px] font-extrabold px-6 py-2.5 rounded-full shadow transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                        >
+                          {analyzingClaim === selectedClaim.claimNumber ? "Analyzing Damage..." : "Run AI Damage Assessment"}
+                        </button>
+                      </div>
+                    )}
+
                   </div>
                 )}
 
@@ -3305,4 +3402,5 @@ export default function OfficeStaffClaimsPage() {
     </Suspense>
   );
 }
+
 

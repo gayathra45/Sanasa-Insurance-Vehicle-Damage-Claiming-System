@@ -8,6 +8,7 @@
     "dev": "nodemon index.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "cloudinary": "^2.10.0",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",

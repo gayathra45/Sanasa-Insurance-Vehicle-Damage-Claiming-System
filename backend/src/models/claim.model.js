@@ -64,7 +64,19 @@ const claimSchema = new mongoose.Schema({
   manualUpdateReason: { type: String, default: "" },
   manualUpdateAt: { type: Date, default: null },
   manualUpdateBy: { type: String, default: "" },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  aiAnalysis: {
+    isAnalyzed: { type: Boolean, default: false },
+    damagedItems: [
+      {
+        item: { type: String },
+        damagePercentage: { type: Number },
+        description: { type: String }
+      }
+    ],
+    overallDamagePercentage: { type: Number, default: 0 },
+    summary: { type: String, default: "" }
+  }
 });
 
 const Claim = mongoose.model("Claim", claimSchema);
