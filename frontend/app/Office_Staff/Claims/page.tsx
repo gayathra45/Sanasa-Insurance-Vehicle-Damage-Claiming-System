@@ -131,39 +131,42 @@ const parseInspectionReport = (reportText: string) => {
     let currentSection = "";
 
     lines.forEach(line => {
-      const trimmed = line.trim();
-      if (!trimmed) return;
+      const rawTrimmed = line.trim();
+      if (!rawTrimmed) return;
 
-      if (trimmed.startsWith("ΓÇó Odometer:")) {
-        odometer = trimmed.replace("ΓÇó Odometer:", "").trim();
-      } else if (trimmed.startsWith("ΓÇó Fuel Level:")) {
-        fuelLevel = trimmed.replace("ΓÇó Fuel Level:", "").trim();
-      } else if (trimmed.startsWith("ΓÇó Recommended Action:")) {
-        recommendedAction = trimmed.replace("ΓÇó Recommended Action:", "").trim();
-      } else if (trimmed.startsWith("ΓÇó Estimated Cost:")) {
-        estimatedCost = trimmed.replace("ΓÇó Estimated Cost:", "").trim();
-      } else if (trimmed.includes("[3. PRE-EXISTING DAMAGE NOTES]")) {
+      // Clean leading bullet point and any space
+      const trimmed = rawTrimmed.replace(/^([•\u2022]|ΓÇó)\s*/, "");
+
+      if (trimmed.startsWith("Odometer:")) {
+        odometer = trimmed.replace("Odometer:", "").trim();
+      } else if (trimmed.startsWith("Fuel Level:")) {
+        fuelLevel = trimmed.replace("Fuel Level:", "").trim();
+      } else if (trimmed.startsWith("Recommended Action:")) {
+        recommendedAction = trimmed.replace("Recommended Action:", "").trim();
+      } else if (trimmed.startsWith("Estimated Cost:")) {
+        estimatedCost = trimmed.replace("Estimated Cost:", "").trim();
+      } else if (rawTrimmed.includes("[3. PRE-EXISTING DAMAGE NOTES]")) {
         currentSection = "pre-existing";
-      } else if (trimmed.includes("[4. PHYSICAL INSPECTION NOTES]")) {
+      } else if (rawTrimmed.includes("[4. PHYSICAL INSPECTION NOTES]")) {
         currentSection = "physical-notes";
-      } else if (trimmed.includes("==================================") || trimmed.includes("VEHICLE CLAIM INSPECTION")) {
+      } else if (rawTrimmed.includes("==================================") || rawTrimmed.includes("VEHICLE CLAIM INSPECTION")) {
         // skip
-      } else if (trimmed.includes("[2. COMPONENT DAMAGE CHECKLIST]")) {
+      } else if (rawTrimmed.includes("[2. COMPONENT DAMAGE CHECKLIST]")) {
         currentSection = "checklist";
-      } else if (currentSection === "checklist" && trimmed.startsWith("ΓÇó ")) {
-        const parts = trimmed.substring(2).split(":");
+      } else if (currentSection === "checklist" && (rawTrimmed.startsWith("•") || rawTrimmed.startsWith("ΓÇó") || rawTrimmed.startsWith("\u2022"))) {
+        const parts = trimmed.split(":");
         if (parts.length >= 2) {
           const compName = parts[0].trim();
           const compVal = parts[1].replace("[", "").replace("]", "").trim();
           checklist[compName] = compVal;
         }
       } else if (currentSection === "pre-existing") {
-        if (!trimmed.startsWith("[")) {
-          preExistingDamage += (preExistingDamage ? "\n" : "") + trimmed;
+        if (!rawTrimmed.startsWith("[")) {
+          preExistingDamage += (preExistingDamage ? "\n" : "") + rawTrimmed;
         }
       } else if (currentSection === "physical-notes") {
-        if (!trimmed.startsWith("[")) {
-          physicalInspectionNotes += (physicalInspectionNotes ? "\n" : "") + trimmed;
+        if (!rawTrimmed.startsWith("[")) {
+          physicalInspectionNotes += (physicalInspectionNotes ? "\n" : "") + rawTrimmed;
         }
       }
     });
@@ -276,39 +279,39 @@ const renderParsedInspection = (
       {/* Metrics Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Odometer */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Odometer</span>
-          <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-slate-800">{parsed.odometer || "N/A"}</span>
+        <div className="bg-white border border-slate-150 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden min-h-[105px] border-t-4 border-t-blue-500">
+          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none select-none">Odometer</span>
+          <div className="my-2">
+            <span className="text-base lg:text-lg font-black text-slate-800 block truncate" title={parsed.odometer || "N/A"}>{parsed.odometer || "N/A"}</span>
           </div>
-          <span className="text-[9px] text-slate-400 font-semibold select-none">Total Distance Travelled</span>
+          <span className="text-[9px] text-slate-400 font-semibold select-none leading-tight block">Total Distance Travelled</span>
         </div>
 
         {/* Card 2: Fuel Level */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Fuel Level</span>
-          <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-slate-800">{parsed.fuelLevel || "N/A"}</span>
+        <div className="bg-white border border-slate-150 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden min-h-[105px] border-t-4 border-t-indigo-500">
+          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none select-none">Fuel Level</span>
+          <div className="my-2">
+            <span className="text-base lg:text-lg font-black text-slate-800 block truncate" title={parsed.fuelLevel || "N/A"}>{parsed.fuelLevel || "N/A"}</span>
           </div>
-          <span className="text-[9px] text-slate-400 font-semibold select-none">Current Tank Level</span>
+          <span className="text-[9px] text-slate-400 font-semibold select-none leading-tight block">Current Tank Level</span>
         </div>
 
         {/* Card 3: Estimated Cost */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
-          <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
+        <div className="bg-white border border-slate-150 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden min-h-[105px] border-t-4 border-t-emerald-500">
+          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none select-none">Estimated Cost</span>
+          <div className="my-2">
+            <span className="text-base lg:text-lg font-black text-emerald-600 block truncate" title={parsed.estimatedCost || "N/A"}>{parsed.estimatedCost || "N/A"}</span>
           </div>
-          <span className="text-[9px] text-slate-400 font-semibold select-none">Assessment Valuation</span>
+          <span className="text-[9px] text-slate-400 font-semibold select-none leading-tight block">Assessment Valuation</span>
         </div>
 
         {/* Card 4: Recommendation */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Recommendation</span>
-          <div className="flex items-baseline gap-1 mt-2 overflow-hidden">
-            <span className="text-[13px] font-black text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
+        <div className="bg-white border border-slate-150 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden min-h-[105px] border-t-4 border-t-violet-500">
+          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none select-none">Recommendation</span>
+          <div className="my-2">
+            <span className="text-[13px] lg:text-sm font-black text-slate-800 block truncate" title={parsed.recommendedAction || "N/A"}>{parsed.recommendedAction || "N/A"}</span>
           </div>
-          <span className="text-[9px] text-slate-400 font-semibold select-none">Suggested Action Payout</span>
+          <span className="text-[9px] text-slate-400 font-semibold select-none leading-tight block">Suggested Action Payout</span>
         </div>
       </div>
 
