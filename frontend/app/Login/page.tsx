@@ -1,19 +1,87 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import Footer from "@/app/Components/Login/Footer";
 import { API_URL } from "@/app/config";
 
+const translations = {
+  en: {
+    loginTitle: "Login",
+    nicOrEmail: "NIC or Email Address",
+    nicEmailHint: "Policy Holders: Use NIC or Email · Agents/Staff/Admins: Use Email",
+    nicEmailPlaceholder: "Enter your NIC or Email address",
+    password: "Password",
+    passwordPlaceholder: "Enter your password",
+    confirmBtn: "Confirm",
+    createAccount: "Create an Account",
+    resetPassword: "Reset Password",
+    loginFailed: "Login failed.",
+    connError: "Unable to connect to the server. Please verify the backend is running.",
+    unknownRole: "Unknown user role returned from server."
+  },
+  si: {
+    loginTitle: "ලොගින් වන්න",
+    nicOrEmail: "ජාතික හැඳුනුම්පත් අංකය හෝ විද්‍යුත් තැපෑල",
+    nicEmailHint: "ප්‍රතිපත්ති හිමියන්: හැඳුනුම්පත හෝ විද්‍යුත් තැපෑල · නියෝජිතයින්/කාර්ය මණ්ඩලය: විද්‍යුත් තැපෑල",
+    nicEmailPlaceholder: "ජාතික හැඳුනුම්පත හෝ විද්‍යුත් තැපැල් ලිපිනය ඇතුළත් කරන්න",
+    password: "මුරපදය",
+    passwordPlaceholder: "ඔබගේ මුරපදය ඇතුළත් කරන්න",
+    confirmBtn: "තහවුරු කරන්න",
+    createAccount: "ගිණුමක් සාදන්න",
+    resetPassword: "මුරපදය අලුත් කරන්න",
+    loginFailed: "ඇතුල් වීම අසාර්ථක විය.",
+    connError: "සේවාදායකයට සම්බන්ධ විය නොහැක. කරුණාකර පසුබිම් සේවාව ක්‍රියාත්මක දැයි පරීක්ෂා කරන්න.",
+    unknownRole: "සේවාදායකයෙන් නොදන්නා පරිශීලක භූමිකාවක් ලැබුණි."
+  },
+  ta: {
+    loginTitle: "உள்நுழைக",
+    nicOrEmail: "அடையாள அட்டை அல்லது மின்னஞ்சல் முகவரி",
+    nicEmailHint: "பாலிசிதாரர்கள்: அட்டை எண் அல்லது மின்னஞ்சல் · முகவர்கள்/ஊழியர்கள்: மின்னஞ்சல்",
+    nicEmailPlaceholder: "அடையாள அட்டை அல்லது மின்னஞ்சல் முகவரியை உள்ளிடவும்",
+    password: "கடவுச்சொல்",
+    passwordPlaceholder: "உங்கள் கடவுச்சொல்லை உள்ளிடவும்",
+    confirmBtn: "உறுதிப்படுத்துக",
+    createAccount: "கணக்கை உருவாக்கு",
+    resetPassword: "கடவுச்சொல்லை மீட்டமை",
+    loginFailed: "உள்நுழைவு தோல்வியடைந்தது.",
+    connError: "சேவையகத்துடன் இணைக்க முடியவில்லை. பின்னணி சேவை இயங்குகிறதா என சரிபார்க்கவும்.",
+    unknownRole: "சேவையகத்திலிருந்து அறியப்படாத பயனர் பங்கு பெறப்பட்டது."
+  }
+};
+
 export default function Login() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState("");
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   React.useEffect(() => {
     if (typeof window !== "undefined") {
@@ -37,7 +105,7 @@ export default function Login() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.error || "Login failed.");
+        setError(data.error || t.loginFailed);
         return;
       }
 
@@ -54,11 +122,11 @@ export default function Login() {
         sessionStorage.setItem("logged_in_admin", JSON.stringify(data.admin));
         router.push("/Admin/Dashboard");
       } else {
-        setError("Unknown user role returned from server.");
+        setError(t.unknownRole);
       }
     } catch (err) {
       console.error("Login request failed", err);
-      setError("Unable to connect to the server. Please verify the backend is running.");
+      setError(t.connError);
     }
   };
 
@@ -86,7 +154,7 @@ export default function Login() {
         {/* Left Side: Large Title */}
         <div className="flex flex-col items-center lg:items-start text-center lg:text-left text-white max-w-md">
           <h1 className="text-6xl md:text-8xl font-bold tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] transition-all duration-300">
-            Login
+            {t.loginTitle}
           </h1>
         </div>
 
@@ -130,10 +198,10 @@ export default function Login() {
             {/* Unified NIC / Email Input Field */}
             <div className="flex flex-col gap-2">
               <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
-                NIC or Email Address
+                {t.nicOrEmail}
               </label>
               <span className="text-[11px] text-white/60 block select-none ml-1 -mt-1.5 leading-normal">
-                Policy Holders: Use NIC or Email · Agents/Staff/Admins: Use Email
+                {t.nicEmailHint}
               </span>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
@@ -160,7 +228,7 @@ export default function Login() {
                     if (error) setError(null);
                   }}
                   className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                  placeholder="Enter your NIC or Email address"
+                  placeholder={t.nicEmailPlaceholder}
                 />
               </div>
             </div>
@@ -168,7 +236,7 @@ export default function Login() {
             {/* Password Field */}
             <div className="flex flex-col gap-2">
               <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
-                Password
+                {t.password}
               </label>
 
               <div className="relative">
@@ -196,7 +264,7 @@ export default function Login() {
                     if (error) setError(null);
                   }}
                   className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                  placeholder="Enter your password"
+                  placeholder={t.passwordPlaceholder}
                 />
                 {password.length > 0 && (
                   <button
@@ -250,7 +318,7 @@ export default function Login() {
               type="submit"
               className="mt-4 w-full max-w-[220px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-lg cursor-pointer select-none outline-none border-none"
             >
-              Confirm
+              {t.confirmBtn}
             </button>
           </form>
 
@@ -260,13 +328,13 @@ export default function Login() {
               href="/SignUp"
               className="hover:text-white hover:underline transition-all cursor-pointer"
             >
-              Create an Account
+              {t.createAccount}
             </Link>
             <Link
               href="/Reset_password"
               className="hover:text-white hover:underline transition-all cursor-pointer"
             >
-              Reset Password
+              {t.resetPassword}
             </Link>
           </div>
 

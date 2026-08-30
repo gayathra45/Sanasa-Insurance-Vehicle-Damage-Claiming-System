@@ -126,9 +126,104 @@ function getVehicleIconSvg(type: string, className = "w-5 h-5 text-white") {
   );
 }
 
+const translations = {
+  en: {
+    createAccount: "Create an Account",
+    descHint: "Follow the steps to register your account with Sanasa General Insurance.",
+    stepIndicator: "STEP 02 OF 04",
+    vehicleDetails: "Vehicle Details",
+    removeVehicle: "Remove Vehicle",
+    numberPlate: "Number Plate *",
+    vehicleType: "Vehicle Type *",
+    selectVehicleType: "Select Vehicle Type",
+    year: "Year *",
+    company: "Company *",
+    model: "Model *",
+    engineNumber: "Engine Number *",
+    chassisNumber: "Chassis Number *",
+    policyNo: "Insurance Vehicle Policy No. *",
+    addVehicleBtn: "+ Add Another Vehicle",
+    backBtn: "Back",
+    nextBtn: "Next",
+    fillAllFields: "Please fill out all required fields for Vehicle #",
+    plateAlert: " Number Plate must be an alphanumeric mix between 5 and 10 characters.",
+    yearAlert: " Year must be a 4-digit number.",
+    policyAlert: " Insurance Policy Number must start with 'SAN' followed by exactly 7 digits (e.g., SAN9876543)."
+  },
+  si: {
+    createAccount: "ගිණුමක් සාදන්න",
+    descHint: "සනස සාමාන්‍ය රක්ෂණය සමඟ ඔබේ ගිණුම ලියාපදිංචි කිරීමට පියවර අනුගමනය කරන්න.",
+    stepIndicator: "පියවර 04 න් 02 වන පියවර",
+    vehicleDetails: "වාහන විස්තර",
+    removeVehicle: "වාහනය ඉවත් කරන්න",
+    numberPlate: "ලියාපදිංචි අංකය *",
+    vehicleType: "වාහන වර්ගය *",
+    selectVehicleType: "වාහන වර්ගය තෝරන්න",
+    year: "වසර *",
+    company: "නිෂ්පාදිත සමාගම *",
+    model: "මාදිලිය *",
+    engineNumber: "එන්ජින් අංකය *",
+    chassisNumber: "චැසි අංකය *",
+    policyNo: "රක්ෂණ ඔප්පු අංකය *",
+    addVehicleBtn: "+ තවත් වාහනයක් එක් කරන්න",
+    backBtn: "ආපසු",
+    nextBtn: "ඊළඟ",
+    fillAllFields: "කරුණාකර මෙම වාහනය සඳහා සියලුම විස්තර පුරවන්න: වාහන අංක #",
+    plateAlert: " වාහන අංක තහඩුව අක්ෂර සහ ඉලක්කම් 5ත් 10ත් අතර විය යුතුය.",
+    yearAlert: " වසර ඉලක්කම් 4ක අංකයක් විය යුතුය.",
+    policyAlert: " රක්ෂණ ඔප්පු අංකය 'SAN' වලින් ආරම්භ වී ඉලක්කම් 7ක් තිබිය යුතුය (උදා: SAN9876543)."
+  },
+  ta: {
+    createAccount: "கணக்கை உருவாக்கு",
+    descHint: "சனச பொதுக் காப்பீட்டில் உங்கள் கணக்கைப் பதிவு செய்ய படிகளைப் பின்பற்றவும்.",
+    stepIndicator: "படி 02 இல் 04",
+    vehicleDetails: "வாகன விவரங்கள்",
+    removeVehicle: "வாகனத்தை நீக்கு",
+    numberPlate: "வாகன எண் *",
+    vehicleType: "வாகன வகை *",
+    selectVehicleType: "வாகன வகையைத் தேர்ந்தெடு",
+    year: "ஆண்டு *",
+    company: "தயாரிப்பு நிறுவனம் *",
+    model: "மாதிரி *",
+    engineNumber: "அச்சு எண் (Engine Number) *",
+    chassisNumber: "சட்டக எண் (Chassis Number) *",
+    policyNo: "காப்பீட்டு பாலிசி எண் *",
+    addVehicleBtn: "+ மற்றொரு வாகனத்தைச் சேர்",
+    backBtn: "முன்னால்",
+    nextBtn: "அடுத்து",
+    fillAllFields: "வாகனம் # க்கான அனைத்து விவரங்களையும் நிரப்பவும்",
+    plateAlert: " வாகன எண் 5 முதல் 10 எழுத்துகள்/இலக்கங்கள் கொண்டதாக இருக்க வேண்டும்.",
+    yearAlert: " ஆண்டு 4 இலக்க எண்ணாக இருக்க வேண்டும்.",
+    policyAlert: " காப்பீட்டு பாலிசி எண் 'SAN' இல் தொடங்கி சரியாக 7 இலக்கங்களை கொண்டிருக்க வேண்டும் (உதாரணம்: SAN9876543)."
+  }
+};
+
 export default function SignUpPage1() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
   const [validationError, setValidationError] = useState("");
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   // Loopable vehicle list state
   const [vehicles, setVehicles] = useState<Vehicle[]>([
@@ -202,24 +297,24 @@ export default function SignUpPage1() {
     for (let i = 0; i < vehicles.length; i++) {
       const v = vehicles[i];
       if (!v.numberPlate || !v.vehicleType || !v.year || !v.company || !v.model || !v.engineNumber || !v.chassisNumber || !v.policyNumber) {
-        setValidationError(`Please fill out all required fields for Vehicle #${i + 1}`);
+        setValidationError(`${t.fillAllFields}${i + 1}`);
         return;
       }
 
       const cleanPlate = v.numberPlate.replace(/[\s-]/g, "");
       if (cleanPlate.length < 5 || cleanPlate.length > 10 || !/^[A-Za-z0-9]+$/.test(cleanPlate)) {
-        setValidationError(`Vehicle #${i + 1} Number Plate must be an alphanumeric mix between 5 and 10 characters.`);
+        setValidationError(`Vehicle #${i + 1}${t.plateAlert}`);
         return;
       }
 
       if (!/^\d{4}$/.test(v.year)) {
-        setValidationError(`Vehicle #${i + 1} Year must be a 4-digit number.`);
+        setValidationError(`Vehicle #${i + 1}${t.yearAlert}`);
         return;
       }
 
       const cleanPolicy = v.policyNumber.replace(/[\s-]/g, "");
       if (!/^SAN\d{7}$/i.test(cleanPolicy)) {
-        setValidationError(`Vehicle #${i + 1} Insurance Policy Number must start with 'SAN' followed by exactly 7 digits (e.g., SAN9876543).`);
+        setValidationError(`Vehicle #${i + 1}${t.policyAlert}`);
         return;
       }
     }
@@ -266,10 +361,10 @@ export default function SignUpPage1() {
           {/* Header Title */}
           <div className="text-center select-none flex flex-col gap-2">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] leading-tight">
-              Create an Account
+              {t.createAccount}
             </h1>
             <p className="text-white/75 text-sm sm:text-base font-medium max-w-md mx-auto">
-              Follow the steps to register your account with Sanasa General Insurance.
+              {t.descHint}
             </p>
           </div>
 
@@ -304,10 +399,10 @@ export default function SignUpPage1() {
             {/* Step Label Container */}
             <div className="flex flex-col items-center md:items-start text-center md:text-left gap-0.5 mt-1">
               <span className="text-xs md:text-sm font-bold text-[#ff9800] tracking-widest uppercase">
-                STEP 02 OF 04
+                {t.stepIndicator}
               </span>
               <h2 className="text-xl md:text-2xl font-extrabold text-white">
-                Vehicle Details
+                {t.vehicleDetails}
               </h2>
             </div>
           </div>
@@ -334,7 +429,7 @@ export default function SignUpPage1() {
                 </svg>
               </div>
               <h2 className="text-white text-2xl font-bold tracking-wide select-none">
-                Vehicle Details
+                {t.vehicleDetails}
               </h2>
             </div>
 
@@ -345,7 +440,9 @@ export default function SignUpPage1() {
                   
                   {/* Vehicle Index Title and Remove Button */}
                   <div className="flex justify-between items-center select-none">
-                    <span className="text-white font-bold text-lg">Vehicle #{idx + 1} Details</span>
+                    <span className="text-white font-bold text-lg">
+                      {lang === "si" ? `වාහන අංක #${idx + 1} විස්තර` : lang === "ta" ? `வாகனம் #${idx + 1} விவரங்கள்` : `Vehicle #${idx + 1} Details`}
+                    </span>
                     {vehicles.length > 1 && (
                       <button
                         type="button"
@@ -363,7 +460,7 @@ export default function SignUpPage1() {
                     {/* Number Plate */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 flex gap-0.5 select-none">
-                        Number Plate <span className="text-red-500 font-bold">*</span>
+                        {t.numberPlate}
                       </label>
                       <input
                         type="text"
@@ -378,7 +475,7 @@ export default function SignUpPage1() {
                     {/* Vehicle Type Dropdown with custom chevron and dynamic preview */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 flex gap-0.5 select-none">
-                        Vehicle Type <span className="text-red-500 font-bold">*</span>
+                        {t.vehicleType}
                       </label>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/10 border border-white/20 text-white shrink-0">
@@ -391,7 +488,7 @@ export default function SignUpPage1() {
                             onChange={(e) => handleVehicleChange(idx, "vehicleType", e.target.value)}
                             className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none"
                           >
-                            <option value="" disabled>Select Vehicle Type</option>
+                            <option value="" disabled>{t.selectVehicleType}</option>
                             {vehicleTypes.map((type) => (
                               <option key={type} value={type}>{type}</option>
                             ))}
@@ -408,7 +505,7 @@ export default function SignUpPage1() {
                     {/* Year */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 flex gap-0.5 select-none">
-                        Year <span className="text-red-500 font-bold">*</span>
+                        {t.year}
                       </label>
                       <input
                         type="text"
@@ -423,7 +520,7 @@ export default function SignUpPage1() {
                     {/* Company */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 flex gap-0.5 select-none">
-                        Company <span className="text-red-500 font-bold">*</span>
+                        {t.company}
                       </label>
                       <input
                         type="text"
@@ -438,7 +535,7 @@ export default function SignUpPage1() {
                     {/* Model */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 flex gap-0.5 select-none">
-                        Model <span className="text-red-500 font-bold">*</span>
+                        {t.model}
                       </label>
                       <input
                         type="text"
@@ -453,7 +550,7 @@ export default function SignUpPage1() {
                     {/* Engine Number */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 flex gap-0.5 select-none">
-                        Engine Number <span className="text-red-500 font-bold">*</span>
+                        {t.engineNumber}
                       </label>
                       <input
                         type="text"
@@ -468,7 +565,7 @@ export default function SignUpPage1() {
                     {/* Chassis Number */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 flex gap-0.5 select-none">
-                        Chassis Number <span className="text-red-500 font-bold">*</span>
+                        {t.chassisNumber}
                       </label>
                       <input
                         type="text"
@@ -483,7 +580,7 @@ export default function SignUpPage1() {
                     {/* Policy Number */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 flex gap-0.5 select-none">
-                        Insurance Vehicle Policy No. <span className="text-red-500 font-bold">*</span>
+                        {t.policyNo}
                       </label>
                       <input
                         type="text"

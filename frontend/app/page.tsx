@@ -1,14 +1,94 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Navbar from "./Components/Homepage/Navbar";
 import Footer from "./Components/Homepage/Footer";
 
+const pageTranslations = {
+  en: {
+    heroTitle: "Protect Your Drive\nwith Confidence.",
+    heroDesc: "Fast Claims. Affordable Plans. Trusted Protection.",
+    login: "Login",
+    signUp: "Sign up",
+    ourServices: "Our Services",
+    trustedService: "Trusted Service",
+    fastClaim: "Fast Claim\nProcessing",
+    customerSupport: "24/7\nCustomer Support",
+    transparentPolicies: "Transparent Policies",
+    servicesDesc: "Our vehicle insurance service is built on trust, reliability, and customer satisfaction, offering fast claim processing, secure transactions, and 24/7 support to ensure a smooth experience. With affordable plans, transparent policies, and islandwide coverage, we make it easy and convenient for policyholders to manage their insurance needs with confidence and peace of mind.",
+    motorInsurance: "Our Motor Insurance",
+    motorDesc: "SANASA Vehicle Insurance provides reliable and affordable protection for your vehicle, ensuring peace of mind with fast claim processing, secure services, and islandwide support. Designed to meet the needs of policyholders, it offers a convenient and trustworthy way to manage your insurance.",
+    appSubtitle: "Introducing Insurance App",
+    appTitle: "Specifically built for our policy holders",
+    appDesc: "SANASA Vehicle Insurance App makes managing your insurance simple and convenient. Policyholders can view their policies, track claims, pay premiums, upload documents, and get 24/7 support all from a secure, user-friendly mobile platform."
+  },
+  si: {
+    heroTitle: "විශ්වාසයෙන් යුතුව\nඔබේ ගමන සුරක්ෂිත කරන්න.",
+    heroDesc: "ඉක්මන් හිමිකම්. දැරිය හැකි සැලසුම්. විශ්වාසදායී ආරක්ෂාව.",
+    login: "පිවිසෙන්න",
+    signUp: "ලියාපදිංචි වන්න",
+    ourServices: "අපගේ සේවාවන්",
+    trustedService: "විශ්වාසදායී සේවාව",
+    fastClaim: "වේගවත් හිමිකම්\nසැකසීම",
+    customerSupport: "24/7\nපාරිභෝගික සහාය",
+    transparentPolicies: "විනිවිද පෙනෙන ප්‍රතිපත්ති",
+    servicesDesc: "අපගේ වාහන රක්‍ෂණ සේවාව විශ්වාසය, විශ්වසනීයත්වය සහ පාරිභෝගික තෘප්තිය මත ගොඩනගා ඇති අතර, සුමට අත්දැකීමක් සහතික කිරීම සඳහා වේගවත් හිමිකම් සැකසීම, ආරක්ෂිත ගනුදෙනු සහ 24/7 සහාය ලබා දෙයි. දැරිය හැකි සැලසුම්, විනිවිද පෙනෙන ප්‍රතිපත්ති සහ මුළු දිවයිනම ආවරණය වන පරිදි, අපි රක්‍ෂණ හිමියන්ට තම රක්‍ෂණ අවශ්‍යතා විශ්වාසයෙන් සහ මනසේ සාමයෙන් යුතුව කළමනාකරණය කිරීම පහසු සහ පහසු කරවන්නෙමු.",
+    motorInsurance: "අපගේ මෝටර් රථ රක්‍ෂණය",
+    motorDesc: "සනස වාහන රක්‍ෂණය මඟින් ඔබේ වාහනය සඳහා විශ්වාසදායක සහ දැරිය හැකි ආරක්ෂාවක් සපයයි, වේගවත් හිමිකම් සැකසීම, ආරක්ෂිත සේවා සහ දිවයින පුරා සහාය ඇතිව මනසේ සාමය සහතික කරයි. රක්‍ෂණ හිමියන්ගේ අවශ්‍යතා සපුරාලීම සඳහා නිර්මාණය කර ඇති මෙය ඔබේ රක්‍ෂණය කළමනාකරණය කිරීම සඳහා පහසු සහ විශ්වාසදායක ක්‍රමයක් ඉදිරිපත් කරයි.",
+    appSubtitle: "රක්‍ෂණ යෙදුම හඳුන්වා දීම",
+    appTitle: "අපගේ රක්‍ෂණ හිමියන් සඳහාම විශේෂයෙන් සකසා ඇත",
+    appDesc: "සනස වාහන රක්‍ෂණ යෙදුම ඔබේ රක්‍ෂණය කළමනාකරණය කිරීම සරල සහ පහසු කරයි. රක්‍ෂණ හිමියන්ට ඔවුන්ගේ රක්‍ෂණ ප්‍රතිපත්ති බැලීමට, හිමිකම් ලුහුබැඳීමට, වාරික ගෙවීමට, ලේඛන උඩුගත කිරීමට සහ 24/7 සහාය ලබා ගැනීමට ආරක්ෂිත, පරිශීලක-හිතකාමී ජංගම වේදිකාවකින් හැකියාව ඇත."
+  },
+  ta: {
+    heroTitle: "நம்பிக்கையுடன் உங்கள்\nபயணத்தைப் பாதுகாத்திடுங்கள்.",
+    heroDesc: "விரைவான கோரிக்கைகள். மலிவு திட்டங்கள். நம்பகமான பாதுகாப்பு.",
+    login: "உள்நுழை",
+    signUp: "பதிவு செய்க",
+    ourServices: "எங்கள் சேவைகள்",
+    trustedService: "நம்பகமான சேவை",
+    fastClaim: "வேகமான கோரிக்கை\nசெயலாக்கம்",
+    customerSupport: "24/7\nவாடிக்கையாளர் ஆதரவு",
+    transparentPolicies: "வெளிப்படையான கொள்கைகள்",
+    servicesDesc: "எங்கள் வாகன காப்பீட்டு சேவை நம்பிக்கை, நம்பகத்தன்மை மற்றும் வாடிக்கையாளர் திருப்தியின் அடிப்படையில் உருவாக்கப்பட்டுள்ளது, விரைவான கோரிக்கை செயலாக்கம், பாதுகாப்பான பரிவர்த்தனைகள் மற்றும் 24/7 ஆதரவை வழங்குகிறது. மலிவான திட்டங்கள், வெளிப்படையான கொள்கைகள் மற்றும் தீவு தழுவிய பாதுகாப்புடன், பாலிசிதாரர்கள் தங்கள் காப்பீட்டுத் தேவைகளை நம்பிக்கையுடனும் மன அமைதியுடனும் நிர்வகிப்பதை நாங்கள் எளிதாக்குகிறோம்.",
+    motorInsurance: "எங்கள் மோட்டார் காப்பீடு",
+    motorDesc: "சனச வாகன காப்பீடு உங்கள் வாகனத்திற்கு நம்பகமான மற்றும் மலிவான பாதுகாப்பை வழங்குகிறது, விரைவான கோரிக்கை செயலாக்கம், பாதுகாப்பான சேவைகள் மற்றும் தீவு தழுவிய ஆதரவுடன் மன அமைதியை உறுதி செய்கிறது. பாலிசிதாரர்களின் தேவைகளைப் பூர்த்தி செய்யும் வகையில் வடிவமைக்கப்பட்டுள்ள இது, உங்கள் காப்பீட்டை நிர்வகிக்க வசதியான மற்றும் நம்பகமான வழியை வழங்குகிறது.",
+    appSubtitle: "காப்பீட்டு செயலியை அறிமுகப்படுத்துகிறோம்",
+    appTitle: "எங்கள் பாலிசிதாரர்களுக்காக பிரத்யேகமாக உருவாக்கப்பட்டது",
+    appDesc: "சனச வாகன காப்பீட்டு செயலி உங்கள் காப்பீட்டை நிர்வகிப்பதை எளிமையாகவும் வசதியாகவும் ஆக்குகிறது. பாலிசிதாரர்கள் தங்கள் பாலிசிகளைக் காணலாம், கோரிக்கைகளைக் கண்காணிக்கலாம், பிரீமியங்களைச் செலுத்தலாம், ஆவணங்களை பதிவேற்றலாம் மற்றும் 24/7 ஆதரவைப் பெறலாம், அனைத்தும் பாதுகாப்பான, பயனர் நட்பு மொபைல் தளத்திலிருந்து."
+  }
+};
+
 export default function Home() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = pageTranslations[lang];
 
   const pageContainer = "min-h-screen bg-white";
   const heroSection = "w-full flex flex-col md:flex-row items-center justify-between py-6 px-6 pb-16 md:pl-16 md:pr-0 xl:pl-24 gap-10";
   const heroTextContainer = "flex flex-col items-start pt-8 md:w-[45%] md:pr-8";
-  const heroTitle = "text-5xl md:text-[4.5rem] leading-[1.2] font-bold text-black tracking-tight mb-6";
+  const heroTitle = "text-5xl md:text-[4.5rem] leading-[1.2] font-bold text-black tracking-tight mb-6 whitespace-pre-line";
   const heroDesc = "text-lg text-gray-800 mb-16 font-medium";
   const buttonGroup = "flex gap-8";
   const ctaButton = "bg-[#00ddff] text-black font-bold text-xl py-3 px-12 rounded-full transition-colors duration-150 shadow-sm hover:bg-[#22d3ee] no-underline";
@@ -20,7 +100,7 @@ export default function Home() {
   const serviceCard = "flex-1 min-w-[calc(50%-1rem)] lg:min-w-0 bg-white border border-gray-200 rounded-[1.5rem] p-10 flex flex-col items-center text-center shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200";
   const serviceIcon = "text-gray-600 mb-6 flex items-center justify-center";
   const serviceSvg = "w-[72px] h-[72px]";
-  const serviceCardTitle = "text-lg font-bold text-gray-900 leading-snug";
+  const serviceCardTitle = "text-lg font-bold text-gray-900 leading-snug whitespace-pre-line";
   const servicesDesc = "max-w-[900px] text-center text-base text-gray-700 leading-relaxed mx-auto";
   
   const motorSection = "w-full flex flex-col";
@@ -48,20 +128,18 @@ export default function Home() {
         <div className={heroSection}>
           <div className={heroTextContainer}>
             <h1 className={heroTitle}>
-              Protect Your Drive
-              <br />
-              with Confidence.
+              {t.heroTitle}
             </h1>
             <p className={heroDesc}>
-              Fast Claims. Affordable Plans. Trusted Protection.
+              {t.heroDesc}
             </p>
 
             <div className={buttonGroup}>
               <Link href="/Login" className={ctaButton}>
-                Login
+                {t.login}
               </Link>
               <Link href="/SignUp" className={ctaButton}>
-                Sign up
+                {t.signUp}
               </Link>
             </div>
           </div>
@@ -80,7 +158,7 @@ export default function Home() {
 
         {/* --- Services Section --- */}
         <section className={servicesSection}>
-          <h2 className={servicesTitle}>Our Services</h2>
+          <h2 className={servicesTitle}>{t.ourServices}</h2>
           <div className={servicesGrid}>
             <div className={serviceCard}>
               <div className={serviceIcon}>
@@ -97,7 +175,7 @@ export default function Home() {
                   <path d="M9 12l2 2 4-4" />
                 </svg>
               </div>
-              <div className={serviceCardTitle}>Trusted Service</div>
+              <div className={serviceCardTitle}>{t.trustedService}</div>
             </div>
 
             <div className={serviceCard}>
@@ -121,9 +199,7 @@ export default function Home() {
                 </svg>
               </div>
               <div className={serviceCardTitle}>
-                Fast Claim
-                <br />
-                Processing
+                {t.fastClaim}
               </div>
             </div>
 
@@ -145,9 +221,7 @@ export default function Home() {
                 </svg>
               </div>
               <div className={serviceCardTitle}>
-                24/7
-                <br />
-                Customer Support
+                {t.customerSupport}
               </div>
             </div>
 
@@ -168,18 +242,13 @@ export default function Home() {
                 </svg>
               </div>
               <div className={serviceCardTitle}>
-                Transparent Policies
+                {t.transparentPolicies}
               </div>
             </div>
           </div>
 
           <p className={servicesDesc}>
-            Our vehicle insurance service is built on trust, reliability, and
-            customer satisfaction, offering fast claim processing, secure
-            transactions, and 24/7 support to ensure a smooth experience. With
-            affordable plans, transparent policies, and islandwide coverage, we
-            make it easy and convenient for policyholders to manage their
-            insurance needs with confidence and peace of mind.
+            {t.servicesDesc}
           </p>
         </section>
 
@@ -194,18 +263,14 @@ export default function Home() {
               style={{ objectFit: 'cover' }}
             />
             <div className={motorGradient}>
-              <h2 className={motorTitle}>Our Motor Insurance</h2>
+              <h2 className={motorTitle}>{t.motorInsurance}</h2>
             </div>
           </div>
           
           <div className={motorContent}>
             <div className={motorText}>
               <p>
-                SANASA Vehicle Insurance provides reliable and affordable
-                protection for your vehicle, ensuring peace of mind with fast claim
-                processing, secure services, and islandwide support. Designed to
-                meet the needs of policyholders, it offers a convenient and
-                trustworthy way to manage your insurance.
+                {t.motorDesc}
               </p>
             </div>
             <div className={motorImage}>
@@ -244,15 +309,12 @@ export default function Home() {
             </div>
 
             <div className={appCard}>
-              <p className={appSubtitle}>Introducing Insurance App</p>
+              <p className={appSubtitle}>{t.appSubtitle}</p>
               <h2 className={appCardTitle}>
-                Specifically built for our policy holders
+                {t.appTitle}
               </h2>
               <p className={appCardDesc}>
-                SANASA Vehicle Insurance App makes managing your insurance simple
-                and convenient. Policyholders can view their policies, track claims,
-                pay premiums, upload documents, and get 24/7 support all from a
-                secure, user-friendly mobile platform.
+                {t.appDesc}
               </p>
             </div>
           </div>

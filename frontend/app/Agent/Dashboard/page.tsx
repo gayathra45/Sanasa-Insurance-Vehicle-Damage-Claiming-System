@@ -293,10 +293,213 @@ const renderPremiumInspectionReport = (reportText: string) => {
   );
 };
 
+const translations = {
+  en: {
+    welcomeBack: "Welcome back,",
+    status: "Status",
+    active: "Active",
+    offline: "Offline",
+    assignedCountMsg: "You have {total} assigned claims today including {urgent} urgent cases. Stay safe on the road!",
+    urgentClaims: "Urgent Claims",
+    assignedClaims: "Assigned Claims",
+    completedClaims: "Completed Claims",
+    actionRequired: "Action Required: Pending Agent Document Requests",
+    viewAll: "View All",
+    claimPlate: "Claim / Plate",
+    docsReceived: "Documents Received",
+    pendingFiles: "Pending Files",
+    uploadDocs: "Upload Documents",
+    newClaims: "New Claims",
+    fetchingClaims: "Fetching claims from database...",
+    noNewClaims: "No new claims assigned to you.",
+    claimNumber: "Claim Number",
+    vehicle: "Vehicle",
+    damageType: "Damage Type",
+    location: "Location",
+    progressTime: "Progress / Time",
+    details: "Details",
+    myActivity: "My Activity",
+    loadingActivity: "Loading activity...",
+    noRecentActivity: "No recent activity.",
+    supportHelpdesk: "Support Helpdesk",
+    supportDesc: "Need assistance with an active inspection or claim payout details? Call our staff directly.",
+    line: "Line",
+    acceptAssignment: "Accept Assignment",
+    declineAssignment: "Decline Assignment",
+    claimAccepted: "Claim Assignment Accepted",
+    mobileAppNotice: "Please open the Sanasa Agent Mobile App on your smartphone to complete the physical damage evaluation, snap accident scene/license photos, and submit inspection reports.",
+    okayGotIt: "Okay, Got It",
+    setAvailability: "Set Your Availability",
+    setAvailabilityDesc: "Please select your status to start receiving claim assignments from the branch.",
+    goOnline: "Go Online (Active)",
+    remainOffline: "Remain Offline",
+    updatePassword: "Update Password",
+    updatePasswordDesc: "You are logged in with a temporary password. Please set a new secure password.",
+    currentTempPassword: "Current Temporary Password",
+    newPassword: "New Password",
+    confirmNewPassword: "Confirm New Password",
+    passwordStrength: "Password Strength",
+    setNewPassword: "Set New Password",
+    weak: "Weak",
+    medium: "Medium",
+    strong: "Strong",
+    excellent: "Excellent",
+    passReqLength: "6 to 12 characters",
+    passReqNumSpec: "Min. 1 number or special character",
+    passReqMatch: "Passwords match",
+    updating: "Updating...",
+    errorFieldReq: "Current temporary password is required.",
+    errorFieldLength: "Password must be between 6 and 12 characters.",
+    errorFieldPattern: "Password must contain at least one number or special character.",
+    errorFieldMatch: "Passwords do not match."
+  },
+  si: {
+    welcomeBack: "නැවත සාදරයෙන් පිළිගනිමු,",
+    status: "තත්ත්වය",
+    active: "ක්‍රියාකාරී",
+    offline: "නොබැඳි",
+    assignedCountMsg: "ඔබට අද දිනට හිමිකම් {total} ක් පවරා ඇති අතර ඉන් {urgent} ක් හදිසි වේ. මඟෙහි ගමන් කිරීමේදී ප්‍රවේශම් වන්න!",
+    urgentClaims: "හදිසි හිමිකම්",
+    assignedClaims: "පැවරුණු හිමිකම්",
+    completedClaims: "නිමකළ හිමිකම්",
+    actionRequired: "ක්‍රියාමාර්ගයක් අවශ්‍යයි: නියෝජිත ලේඛන උඩුගත කිරීම්",
+    viewAll: "සියල්ල බලන්න",
+    claimPlate: "හිමිකම් / අංක තහඩුව",
+    docsReceived: "ලැබුණු ලේඛන",
+    pendingFiles: "ඉතිරි ලේඛන",
+    uploadDocs: "ලේඛන උඩුගත කරන්න",
+    newClaims: "නව හිමිකම්",
+    fetchingClaims: "දත්ත සමුදායෙන් හිමිකම් ලබා ගනිමින්...",
+    noNewClaims: "ඔබට පවරා ඇති නව හිමිකම් කිසිවක් නැත.",
+    claimNumber: "හිමිකම් අංකය",
+    vehicle: "වාහනය",
+    damageType: "හානි වර්ගය",
+    location: "ස්ථානය",
+    progressTime: "ප්‍රගතිය / වේලාව",
+    details: "විස්තර",
+    myActivity: "මගේ ක්‍රියාකාරකම්",
+    loadingActivity: "ක්‍රියාකාරකම් පූරණය වෙමින් පවතී...",
+    noRecentActivity: "මෑතකාලීන ක්‍රියාකාරකම් කිසිවක් නැත.",
+    supportHelpdesk: "සහාය සේවා කවුළුව",
+    supportDesc: "හිමිකම් ගෙවීම් හෝ පරීක්ෂණ සහාය සඳහා අපගේ කාර්ය මණ්ඩලය අමතන්න.",
+    line: "ලයින්",
+    acceptAssignment: "පැවරුම පිළිගන්න",
+    declineAssignment: "පැවරුම ප්‍රතික්ෂේප කරන්න",
+    claimAccepted: "හිමිකම් පැවරුම පිළිගන්නා ලදී",
+    mobileAppNotice: "කරුණාකර ඔබගේ ජංගම දුරකථනයෙන් සනස නියෝජිත ජංගම යෙදුම (Sanasa Agent Mobile App) විවෘත කර වාහන හානි තක්සේරුව සහ පරීක්ෂණ වාර්තාව ඉදිරිපත් කරන්න.",
+    okayGotIt: "හරි, තේරුණා",
+    setAvailability: "ඔබගේ තත්ත්වය සකසන්න",
+    setAvailabilityDesc: "ශාඛාවෙන් ඔබට හිමිකම් පැවරීම ආරම්භ කිරීමට කරුණාකර ඔබගේ තත්ත්වය සක්‍රීය කරන්න.",
+    goOnline: "සක්‍රීය වන්න (Online)",
+    remainOffline: "නොබැඳිව සිටින්න",
+    updatePassword: "මුරපදය යාවත්කාලීන කරන්න",
+    updatePasswordDesc: "ඔබ ලොග් වී ඇත්තේ තාවකාලික මුරපදයකින්. කරුණාකර නව ආරක්ෂිත මුරපදයක් සකසන්න.",
+    currentTempPassword: "වත්මන් තාවකාලික මුරපදය",
+    newPassword: "නව මුරපදය",
+    confirmNewPassword: "නව මුරපදය තහවුරු කරන්න",
+    passwordStrength: "මුරපද ශක්තිමත්භාවය",
+    setNewPassword: "නව මුරපදය සකසන්න",
+    weak: "දුර්වලයි",
+    medium: "මධ්‍යස්ථයි",
+    strong: "ශක්තිමත්",
+    excellent: "විශිෂ්ටයි",
+    passReqLength: "අක්ෂර 6 ත් 12 ත් අතර",
+    passReqNumSpec: "අවම වශයෙන් 1 ඉලක්කමක් හෝ විශේෂ අක්ෂරයක්",
+    passReqMatch: "මුරපද ගැලපේ",
+    updating: "යාවත්කාලීන වෙමින් පවතී...",
+    errorFieldReq: "වත්මන් තාවකාලික මුරපදය අවශ්‍ය වේ.",
+    errorFieldLength: "මුරපදය අක්ෂර 6 ත් 12 ත් අතර විය යුතුය.",
+    errorFieldPattern: "මුරපදයේ අවම වශයෙන් එක් අංකයක් හෝ විශේෂ අක්ෂරයක් තිබිය යුතුය.",
+    errorFieldMatch: "මුරපද නොගැලපේ."
+  },
+  ta: {
+    welcomeBack: "மீண்டும் நல்வரவு,",
+    status: "நிலை",
+    active: "செயலில்",
+    offline: "ஆஃப்லைன்",
+    assignedCountMsg: "இன்று உங்களுக்கு {total} காப்பீட்டு கோரிக்கைகள் ஒதுக்கப்பட்டுள்ளன, அதில் {urgent} அவசர கோரிக்கைகள் ஆகும். பாதுகாப்பாக பயணம் செய்யுங்கள்!",
+    urgentClaims: "அவசர கோரிக்கைகள்",
+    assignedClaims: "ஒதுக்கப்பட்டவை",
+    completedClaims: "முடிவடைந்தவை",
+    actionRequired: "நடவடிக்கை தேவை: முகவர் ஆவண கோரிக்கைகள்",
+    viewAll: "அனைத்தையும் காட்டு",
+    claimPlate: "கோரிக்கை / வாகன எண்",
+    docsReceived: "பெறப்பட்ட ஆவணங்கள்",
+    pendingFiles: "நிலுவையில் உள்ள கோப்புகள்",
+    uploadDocs: "ஆவணங்களை பதிவேற்றவும்",
+    newClaims: "புதிய கோரிக்கைகள்",
+    fetchingClaims: "தரவுத்தளத்திலிருந்து கோரிக்கைகளைப் பெறுகிறது...",
+    noNewClaims: "உங்களுக்கு புதிய கோரிக்கைகள் எதுவும் ஒதுக்கப்படவில்லை.",
+    claimNumber: "கோரிக்கை எண்",
+    vehicle: "வாகனம்",
+    damageType: "சேத வகை",
+    location: "இடம்",
+    progressTime: "முன்னேற்றம் / நேரம்",
+    details: "விவரங்கள்",
+    myActivity: "எனது செயல்பாடு",
+    loadingActivity: "செயல்பாடுகள் ஏற்றப்படுகின்றன...",
+    noRecentActivity: "சமீபத்திய செயல்பாடுகள் எதுவும் இல்லை.",
+    supportHelpdesk: "ஆதரவு உதவி மையம்",
+    supportDesc: "உதவி அல்லது காப்பீட்டுத் தொகை விவரங்களுக்கு எங்கள் ஊழியர்களை நேரடியாக அழைக்கவும்.",
+    line: "வரிசை",
+    acceptAssignment: "ஒதுக்கீட்டை ஏற்றுக்கொள்",
+    declineAssignment: "ஒதுக்கீட்டை நிராகரி",
+    claimAccepted: "கோரிக்கை ஒதுக்கீடு ஏற்றுக்கொள்ளப்பட்டது",
+    mobileAppNotice: "சேத மதிப்பீட்டை முடிக்கவும், புகைப்படங்களை பதிவேற்றவும் உங்கள் ஸ்மார்ட்போனில் சனச முகவர் மொபைல் செயலியை (Sanasa Agent Mobile App) திறக்கவும்.",
+    okayGotIt: "சரி, புரிந்து கொண்டது",
+    setAvailability: "உங்களது நிலையை அமைக்கவும்",
+    setAvailabilityDesc: "கிளையிலிருந்து காப்பீட்டு கோரிக்கைகளைப் பெறத் தொடங்க உங்களது நிலையைச் செயலூக்கவும்.",
+    goOnline: "செயலில் இருங்கள் (Online)",
+    remainOffline: "ஆஃப்லைனில் இருங்கள்",
+    updatePassword: "கடவுச்சொல்லைப் புதுப்பிக்கவும்",
+    updatePasswordDesc: "நீங்கள் தற்காலிக கடவுச்சொல் மூலம் உள்நுழைந்துள்ளீர்கள். புதிய பாதுகாப்பான கடவுச்சொல்லை அமைக்கவும்.",
+    currentTempPassword: "தற்போதைய தற்காலிக கடவுச்சொல்",
+    newPassword: "புதிய கடவுச்சொல்",
+    confirmNewPassword: "புதிய கடவுச்சொல்லை உறுதிப்படுத்தவும்",
+    passwordStrength: "கடவுச்சொல் வலிமை",
+    setNewPassword: "புதிய கடவுச்சொல்லை அமைக்கவும்",
+    weak: "பலவீனமானது",
+    medium: "நடுத்தரமானது",
+    strong: "வலிமையானது",
+    excellent: "மிகவும் சிறந்தது",
+    passReqLength: "6 முதல் 12 எழுத்துக்கள்",
+    passReqNumSpec: "குறைந்தது 1 எண் அல்லது சிறப்பு எழுத்து",
+    passReqMatch: "கடவுச்சொற்கள் பொருந்துகின்றன",
+    updating: "புதுப்பிக்கப்படுகிறது...",
+    errorFieldReq: "தற்போதைய தற்காலிக கடவுச்சொல் தேவை.",
+    errorFieldLength: "கடவுச்சொல் 6 முதல் 12 எழுத்துக்களுக்குள் இருக்க வேண்டும்.",
+    errorFieldPattern: "கடவுச்சொல்லில் குறைந்தபட்சம் ஒரு எண் அல்லது சிறப்பு எழுத்து இருக்க வேண்டும்.",
+    errorFieldMatch: "கடவுச்சொற்கள் பொருந்தவில்லை."
+  }
+};
+
 export default function AgentDashboard() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
   const [agentName, setAgentName] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
   const [activeSubModal, setActiveSubModal] = useState<"documents" | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [policyHolders, setPolicyHolders] = useState<any[]>([]);
@@ -335,15 +538,15 @@ export default function AgentDashboard() {
     setPasswordError("");
     setPasswordSuccess("");
 
-    if (!passwordForm.currentPassword) return setPasswordError("Current temporary password is required.");
+    if (!passwordForm.currentPassword) return setPasswordError(t.errorFieldReq);
     if (passwordForm.newPassword.length < 6 || passwordForm.newPassword.length > 12) {
-      return setPasswordError("Password must be between 6 and 12 characters.");
+      return setPasswordError(t.errorFieldLength);
     }
     if (!/[0-9]/.test(passwordForm.newPassword) && !/[^A-Za-z0-9]/.test(passwordForm.newPassword)) {
-      return setPasswordError("Password must contain at least one number or special character.");
+      return setPasswordError(t.errorFieldPattern);
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      return setPasswordError("Passwords do not match.");
+      return setPasswordError(t.errorFieldMatch);
     }
 
     setIsUpdatingPassword(true);
@@ -919,11 +1122,11 @@ export default function AgentDashboard() {
           <div className="space-y-3">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-sm select-none">
-                Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-200">{agentName}</span>!
+                {t.welcomeBack} <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-200">{agentName}</span>!
               </h1>
               {/* Availability Status Selector */}
               <div className="flex items-center gap-2 bg-slate-950/45 border border-white/10 rounded-full p-1 self-start md:self-center select-none shadow-md">
-                <span className="text-[10px] text-slate-400 font-extrabold tracking-wider uppercase pl-3 pr-1">Status</span>
+                <span className="text-[10px] text-slate-400 font-extrabold tracking-wider uppercase pl-3 pr-1">{t.status}</span>
                 <button
                   onClick={() => toggleAvailability("Active")}
                   className={`px-4 py-2 rounded-full text-xs font-black cursor-pointer transition-all border-none flex items-center gap-1.5 ${
@@ -933,7 +1136,7 @@ export default function AgentDashboard() {
                   }`}
                 >
                   {availability === "Active" && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
-                  Active
+                  {t.active}
                 </button>
                 <button
                   onClick={() => toggleAvailability("Offline")}
@@ -944,13 +1147,12 @@ export default function AgentDashboard() {
                   }`}
                 >
                   {availability === "Offline" && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
-                  Offline
+                  {t.offline}
                 </button>
               </div>
             </div>
             <p className="text-lg md:text-xl text-slate-300 max-w-3xl leading-relaxed font-medium">
-              You have <span className="text-red-500 font-extrabold">{totalAssigned} assigned claims</span> today including{" "}
-              <span className="text-red-500 font-extrabold">{urgentCount} urgent</span> case. Stay safe on the road!
+              {t.assignedCountMsg.replace("{total}", String(totalAssigned)).replace("{urgent}", String(urgentCount))}
             </p>
           </div>
 
@@ -964,8 +1166,8 @@ export default function AgentDashboard() {
               </svg>
               {/* Stacked Text in the middle */}
               <div className="flex flex-col text-left">
-                <span className="text-xs text-red-200 opacity-90 font-bold uppercase tracking-wider">Urgent</span>
-                <span className="text-base text-white font-extrabold tracking-wide -mt-0.5">Claims</span>
+                <span className="text-xs text-red-200 opacity-90 font-bold uppercase tracking-wider">{t.urgentClaims}</span>
+                <span className="text-base text-white font-extrabold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
               </div>
               {/* Large count number on the right */}
               <span className="text-3xl font-black text-white ml-auto">{urgentCount}</span>
@@ -979,8 +1181,8 @@ export default function AgentDashboard() {
               </svg>
               {/* Stacked Text in the middle */}
               <div className="flex flex-col text-left">
-                <span className="text-xs text-cyan-200 opacity-90 font-bold uppercase tracking-wider">Assigned</span>
-                <span className="text-base text-white font-extrabold tracking-wide -mt-0.5">Claims</span>
+                <span className="text-xs text-cyan-200 opacity-90 font-bold uppercase tracking-wider">{t.assignedClaims}</span>
+                <span className="text-base text-white font-extrabold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
               </div>
               {/* Large count number on the right */}
               <span className="text-3xl font-black text-white ml-auto">{totalAssigned}</span>
@@ -994,8 +1196,8 @@ export default function AgentDashboard() {
               </svg>
               {/* Stacked Text in the middle */}
               <div className="flex flex-col text-left">
-                <span className="text-xs text-emerald-200 opacity-90 font-bold uppercase tracking-wider">Completed</span>
-                <span className="text-base text-white font-extrabold tracking-wide -mt-0.5">Claims</span>
+                <span className="text-xs text-emerald-200 opacity-90 font-bold uppercase tracking-wider">{t.completedClaims}</span>
+                <span className="text-base text-white font-extrabold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
               </div>
               {/* Large count number on the right */}
               <span className="text-3xl font-black text-white ml-auto">{completedClaims.length}</span>
@@ -1019,7 +1221,7 @@ export default function AgentDashboard() {
                   <svg className="w-5 h-5 text-red-500 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  Action Required: Pending Agent Document Requests
+                  {t.actionRequired}
                   {/* Total Pending Count Badge */}
                   <span className="bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-black px-3 py-1 rounded-full flex items-center gap-1 select-none shadow-[0_2px_8px_rgba(239,68,68,0.25)] animate-pulse">
                     {claimsWithPendingAgentRequests.length}
@@ -1027,7 +1229,7 @@ export default function AgentDashboard() {
                 </h2>
                 {claimsWithPendingAgentRequests.length > 3 && (
                   <Link href="/Agent/Documents" className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-full text-xs font-extrabold transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-1 select-none shadow-sm">
-                    View All
+                    {t.viewAll}
                     <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
@@ -1053,7 +1255,7 @@ export default function AgentDashboard() {
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center mr-2">
                         {/* Col 1: Claim ID & Plate */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Claim / Plate</span>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.claimPlate}</span>
                           <span className="text-sm font-bold text-slate-800 truncate">
                             {claim.claimNumber} · {claim.vehiclePlate}
                           </span>
@@ -1061,7 +1263,7 @@ export default function AgentDashboard() {
 
                         {/* Col 2: Received Progress */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Documents Received</span>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.docsReceived}</span>
                           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 select-none">
                             <svg className="w-4 h-4 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
@@ -1074,7 +1276,7 @@ export default function AgentDashboard() {
 
                         {/* Col 3: Pending Documents List */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Pending Files</span>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.pendingFiles}</span>
                           <div className="flex flex-wrap gap-1.5 mt-0.5">
                             {pendingDocs.map((docName, idx) => (
                               <span key={idx} className="text-[9px] font-black bg-red-50/70 text-red-600 border border-red-150 px-3 py-1 rounded-full select-none tracking-wide uppercase transition-colors hover:bg-red-100/50">
@@ -1089,7 +1291,7 @@ export default function AgentDashboard() {
                         href={`/Agent/Documents?uploadClaim=${claim.claimNumber}`}
                         className="bg-[#0f2d3a] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-black py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0 text-center no-underline"
                       >
-                        Upload Documents
+                        {t.uploadDocs}
                       </Link>
                     </div>
                   );
@@ -1105,7 +1307,7 @@ export default function AgentDashboard() {
                 <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                New Claims
+                {t.newClaims}
                 {/* Total Count Badge */}
                 <span className="bg-gradient-to-r from-slate-700 to-slate-800 text-white text-xs font-black px-3 py-1 rounded-full flex items-center justify-center select-none shadow-[0_2px_8px_rgba(15,23,42,0.12)] border border-slate-700/30">
                   {activeClaims.length}
@@ -1116,11 +1318,11 @@ export default function AgentDashboard() {
             <div className="flex flex-col gap-3">
               {loading ? (
                 <div className="text-slate-400 font-bold py-10 text-center text-sm animate-pulse">
-                  Fetching claims from database...
+                  {t.fetchingClaims}
                 </div>
               ) : activeClaims.length === 0 ? (
                 <div className="bg-white border border-slate-100 rounded-2xl p-8 text-center text-slate-500 font-semibold text-sm">
-                  No new claims assigned to you.
+                  {t.noNewClaims}
                 </div>
               ) : (
                 activeClaims.map((claim) => {
@@ -1138,7 +1340,7 @@ export default function AgentDashboard() {
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center mr-2">
                         {/* Col 1: Claim ID & Severity */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Claim Number</span>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
                           <div className="text-sm font-bold text-slate-800 truncate flex items-center gap-1.5 flex-wrap">
                             {claim.claimNumber}
                             {isUrgent ? (
@@ -1155,7 +1357,7 @@ export default function AgentDashboard() {
 
                         {/* Col 2: Vehicle */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Vehicle</span>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.vehicle}</span>
                           <span className="text-xs font-bold text-slate-700 truncate">
                             {claim.vehiclePlate} {claim.vehicleModel && <span className="font-semibold text-slate-500">({claim.vehicleModel})</span>}
                           </span>
@@ -1163,19 +1365,19 @@ export default function AgentDashboard() {
 
                         {/* Col 3: Damage Type */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Damage Type</span>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.damageType}</span>
                           <span className="text-xs font-bold text-slate-700 truncate">{claim.damageType}</span>
                         </div>
 
                         {/* Col 4: Location */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Location</span>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.location}</span>
                           <span className="text-xs font-bold text-slate-700 truncate" title={claim.location}>{claim.location}</span>
                         </div>
 
                         {/* Col 5: Progress / Time */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Progress / Time</span>
+                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.progressTime}</span>
                           <span className="text-xs font-bold text-slate-700 truncate">
                             Step {claim.currentStep} of 4 · <span className="text-slate-400 font-semibold">{claim.incidentTime}</span>
                           </span>
@@ -1186,7 +1388,7 @@ export default function AgentDashboard() {
                         onClick={() => setSelectedClaim(claim)}
                         className="bg-[#0f2d3a] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-black py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0"
                       >
-                        Details
+                        {t.details}
                       </button>
                     </div>
                   );
@@ -1204,14 +1406,14 @@ export default function AgentDashboard() {
               <svg className="w-5 h-5 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
               </svg>
-              My Activity
+              {t.myActivity}
             </h2>
 
             <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-[0_10px_35px_rgba(0,0,0,0.015)] flex flex-col gap-4 relative">
               {loading ? (
-                <div className="text-slate-400 text-center text-xs py-4 animate-pulse">Loading activity...</div>
+                <div className="text-slate-400 text-center text-xs py-4 animate-pulse">{t.loadingActivity}</div>
               ) : latestActivities.length === 0 ? (
-                <div className="text-slate-400 text-center text-xs py-4 font-semibold">No recent activity.</div>
+                <div className="text-slate-400 text-center text-xs py-4 font-semibold">{t.noRecentActivity}</div>
               ) : (
                 <div className="relative border-l border-slate-100 ml-3 pl-6 space-y-6">
                   {latestActivities.map((act) => {
@@ -1271,11 +1473,11 @@ export default function AgentDashboard() {
               <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
               </svg>
-              Support Helpdesk
+              {t.supportHelpdesk}
             </h3>
             
             <p className="text-xs text-slate-500 font-semibold text-left leading-relaxed -mt-1 select-none">
-              Need assistance with an active inspection or claim payout details? Call our staff directly.
+              {t.supportDesc}
             </p>
 
             <div className="flex flex-col gap-2.5 mt-1">
@@ -1289,7 +1491,7 @@ export default function AgentDashboard() {
                   <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 000</span>
                 </div>
                 <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
-                  Line 1
+                  {t.line} 1
                 </span>
               </a>
 
@@ -1303,7 +1505,7 @@ export default function AgentDashboard() {
                   <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 001</span>
                 </div>
                 <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
-                  Line 2
+                  {t.line} 2
                 </span>
               </a>
             </div>
@@ -2018,7 +2220,7 @@ export default function AgentDashboard() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                     </svg>
-                    Accept Assignment
+                    {t.acceptAssignment}
                   </button>
                   <button
                     type="button"
@@ -2029,7 +2231,7 @@ export default function AgentDashboard() {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Decline Assignment
+                    {t.declineAssignment}
                   </button>
                 </div>
               )}
@@ -2041,10 +2243,10 @@ export default function AgentDashboard() {
                     <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
                     </svg>
-                    Claim Assignment Accepted
+                    {t.claimAccepted}
                   </p>
                   <p className="text-emerald-600 text-xs font-semibold mt-2 leading-relaxed">
-                    Please open the <strong>Sanasa Agent Mobile App</strong> on your smartphone to complete the physical damage evaluation, snap accident scene/license photos, and submit inspection reports.
+                    {t.mobileAppNotice}
                   </p>
                 </div>
               )}
@@ -2204,7 +2406,7 @@ export default function AgentDashboard() {
               onClick={() => setShowMobileRedirect(false)}
               className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
             >
-              Okay, Got It
+              {t.okayGotIt}
             </button>
           </div>
         </div>
@@ -2221,11 +2423,11 @@ export default function AgentDashboard() {
             </div>
             
             {/* Title */}
-            <h2 className="font-extrabold text-xl text-slate-800 tracking-tight">Set Your Availability</h2>
+            <h2 className="font-extrabold text-xl text-slate-800 tracking-tight">{t.setAvailability}</h2>
             
             {/* Description */}
             <p className="text-slate-500 text-xs font-semibold mt-3.5 leading-relaxed max-w-[280px]">
-              Please select your status to start receiving claim assignments from the branch.
+              {t.setAvailabilityDesc}
             </p>
             
             {/* Buttons Container */}
@@ -2239,7 +2441,7 @@ export default function AgentDashboard() {
                 className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <span className="w-3 h-3 rounded-full bg-white animate-pulse" />
-                Go Online (Active)
+                {t.goOnline}
               </button>
               
               <button
@@ -2251,7 +2453,7 @@ export default function AgentDashboard() {
                 className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <span className="w-3 h-3 rounded-full bg-slate-400" />
-                Remain Offline
+                {t.remainOffline}
               </button>
             </div>
           </div>
@@ -2270,10 +2472,10 @@ export default function AgentDashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
                   </div>
-                  Update Password
+                  {t.updatePassword}
                 </h2>
                 <p className="text-slate-600 text-xs font-semibold mt-2 leading-relaxed">
-                  You are logged in with a temporary password. Please set a new secure password.
+                  {t.updatePasswordDesc}
                 </p>
               </div>
 
@@ -2299,7 +2501,7 @@ export default function AgentDashboard() {
                 {/* Current Password Field */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
-                    Current Temporary Password <span className="text-red-500 font-bold">*</span>
+                    {t.currentTempPassword} <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
                     type="password"
@@ -2314,7 +2516,7 @@ export default function AgentDashboard() {
                 {/* New Password Field */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
-                    New Password <span className="text-red-500 font-bold">*</span>
+                    {t.newPassword} <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
                     type="password"
@@ -2329,8 +2531,10 @@ export default function AgentDashboard() {
                   {passwordForm.newPassword && (
                     <div className="mt-1.5 flex flex-col gap-2.5 p-4 rounded-2xl bg-slate-50/90 border border-slate-200 transition-all duration-300 select-none">
                       <div className="flex justify-between items-center text-xs text-slate-800">
-                        <span className="font-extrabold">Password Strength:</span>
-                        <span className="font-extrabold uppercase tracking-wider text-slate-900">{strength.label}</span>
+                        <span className="font-extrabold">{t.passwordStrength}:</span>
+                        <span className="font-extrabold uppercase tracking-wider text-slate-900">
+                          {strength.label === "Weak" ? t.weak : strength.label === "Medium" ? t.medium : strength.label === "Strong" ? t.strong : strength.label === "Excellent" ? t.excellent : strength.label}
+                        </span>
                       </div>
                       <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                         <div className={`h-full ${strength.color} ${strength.width} transition-all duration-350 rounded-full`} />
@@ -2338,23 +2542,23 @@ export default function AgentDashboard() {
                       <div className="flex flex-col gap-1.5 text-[11px] font-bold mt-1.5">
                         <div className="flex items-center gap-1.5">
                           {passwordForm.newPassword.length >= 6 && passwordForm.newPassword.length <= 12 ? (
-                            <span className="text-emerald-600 flex items-center gap-1.5">✓ 6 to 12 characters</span>
+                            <span className="text-emerald-600 flex items-center gap-1.5">✓ {t.passReqLength}</span>
                           ) : (
-                            <span className="text-red-600 flex items-center gap-1.5">✗ 6 to 12 characters</span>
+                            <span className="text-red-600 flex items-center gap-1.5">✗ {t.passReqLength}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5">
                           {/[0-9]/.test(passwordForm.newPassword) || /[^A-Za-z0-9]/.test(passwordForm.newPassword) ? (
-                            <span className="text-emerald-600 flex items-center gap-1.5">✓ Min. 1 number or special character</span>
+                            <span className="text-emerald-600 flex items-center gap-1.5">✓ {t.passReqNumSpec}</span>
                           ) : (
-                            <span className="text-red-600 flex items-center gap-1.5">✗ Min. 1 number or special character</span>
+                            <span className="text-red-600 flex items-center gap-1.5">✗ {t.passReqNumSpec}</span>
                           )}
                         </div>
                         <div className="flex items-center gap-1.5">
                           {passwordForm.confirmPassword && passwordForm.newPassword === passwordForm.confirmPassword ? (
-                            <span className="text-emerald-600 flex items-center gap-1.5">✓ Passwords match</span>
+                            <span className="text-emerald-600 flex items-center gap-1.5">✓ {t.passReqMatch}</span>
                           ) : (
-                            <span className="text-red-600 flex items-center gap-1.5">✗ Passwords match</span>
+                            <span className="text-red-600 flex items-center gap-1.5">✗ {t.passReqMatch}</span>
                           )}
                         </div>
                       </div>
@@ -2365,7 +2569,7 @@ export default function AgentDashboard() {
                 {/* Confirm Password Field */}
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
-                    Confirm New Password <span className="text-red-500 font-bold">*</span>
+                    {t.confirmNewPassword} <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
                     type="password"
@@ -2389,10 +2593,10 @@ export default function AgentDashboard() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Updating...
+                      {t.updating}
                     </span>
                   ) : (
-                    "Set New Password"
+                    t.setNewPassword
                   )}
                 </button>
               </form>

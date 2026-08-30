@@ -45,10 +45,81 @@ interface Claim {
   additionalDocuments?: AdditionalDoc[];
 }
 
+const translations = {
+  en: {
+    title: "Document Console",
+    desc: "Access branch-requested document lists, upload repair estimates, and verify policyholder attachments",
+    urgentRequests: "Urgent Requests",
+    pendingRequests: "Pending Requests",
+    completedUploads: "Completed Uploads",
+    noRequestedDocs: "No requested documents from branch.",
+    uploadButton: "Upload",
+    viewFiles: "View Files",
+    uploadedList: "Uploaded Documents List",
+    claimNo: "Claim No",
+    vehicleNo: "Vehicle No",
+    damageType: "Damage Type",
+    status: "Status"
+  },
+  si: {
+    title: "ලේඛන කොන්සෝලය",
+    desc: "ශාඛාව මඟින් ඉල්ලා ඇති ලේඛන ලැයිස්තුව, අලුත්වැඩියා තක්සේරු උඩුගත කිරීම සහ රක්ෂණ හිමියාගේ ඇමුණුම් පරීක්ෂා කිරීම",
+    urgentRequests: "හදිසි ඉල්ලීම්",
+    pendingRequests: "ඉතිරි ඉල්ලීම්",
+    completedUploads: "නිමකළ උඩුගත කිරීම්",
+    noRequestedDocs: "ශාඛාවෙන් ඉල්ලා ඇති ලේඛන කිසිවක් නැත.",
+    uploadButton: "උඩුගත කරන්න",
+    viewFiles: "ලේඛන බලන්න",
+    uploadedList: "උඩුගත කරන ලද ලේඛන ලැයිස්තුව",
+    claimNo: "හිමිකම් අංකය",
+    vehicleNo: "වාහන අංකය",
+    damageType: "හානි වර්ගය",
+    status: "තත්ත්වය"
+  },
+  ta: {
+    title: "ஆவண மையம்",
+    desc: "கிளை கோரிய ஆவணப் பட்டியலை அணுகவும், பழுதுபார்ப்பு மதிப்பீடுகளைப் பதிவேற்றவும் மற்றும் காப்பீட்டாளர் இணைப்புகளைச் சரிபார்க்கவும்",
+    urgentRequests: "அவசர கோரிக்கைகள்",
+    pendingRequests: "நிலுவைக் கோரிக்கைகள்",
+    completedUploads: "முடிக்கப்பட்ட பதிவேற்றங்கள்",
+    noRequestedDocs: "கிளையிலிருந்து ஆவணக் கோரிக்கைகள் எதுவும் இல்லை.",
+    uploadButton: "பதிவேற்று",
+    viewFiles: "கோப்புகளைப் பார்",
+    uploadedList: "பதிவேற்றப்பட்ட ஆவணங்களின் பட்டியல்",
+    claimNo: "கோரிக்கை எண்",
+    vehicleNo: "வாகன எண்",
+    damageType: "சேத வகை",
+    status: "நிலை"
+  }
+};
+
 export default function AgentDocuments() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const [agent, setAgent] = useState<any>(null);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   // Upload Modal State
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -382,10 +453,10 @@ export default function AgentDocuments() {
         {/* Text content */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
-            Document Repository
+            {t.title}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            View verified claim documents and submit requested agent specifications
+            {t.desc}
           </p>
         </header>
       </div>
@@ -400,14 +471,14 @@ export default function AgentDocuments() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
             </svg>
             <h2 className="text-xl md:text-[24px] font-black text-slate-800 tracking-tight">
-              Action Required – Requested Documents
+              {lang === "en" ? "Action Required – Requested Documents" : lang === "si" ? "ක්‍රියාමාර්ගයක් අවශ්‍යයි – ඉල්ලා ඇති ලේඛන" : "நடவடிக்கை தேவை - கோரப்பட்ட ஆவணங்கள்"}
             </h2>
           </div>
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-slate-200 shadow-sm min-h-[140px]">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500"></div>
-              <span className="mt-3 text-slate-400 text-sm font-bold">Checking requested documents...</span>
+              <span className="mt-3 text-slate-400 text-sm font-bold">{lang === "en" ? "Checking requested documents..." : lang === "si" ? "ඉල්ලා ඇති ලේඛන පරීක්ෂා කරමින්..." : "கோரப்பட்ட ஆவணங்களைச் சரிபார்க்கிறது..."}</span>
             </div>
           ) : requestedDocsList.length === 0 ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-10 text-center shadow-sm select-none">
@@ -416,8 +487,8 @@ export default function AgentDocuments() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                 </svg>
               </div>
-              <p className="text-slate-500 font-extrabold text-[15px]">No Pending Agent Requests</p>
-              <p className="text-slate-400 text-xs font-semibold mt-1">All requested documents from your end are verified and up to date.</p>
+              <p className="text-slate-500 font-extrabold text-[15px]">{lang === "en" ? "No Pending Agent Requests" : lang === "si" ? "ප්‍රතිචාර නොදැක්වූ ඉල්ලීම් කිසිවක් නැත" : "நிலுவையில் ஆவணக் கோரிக்கைகள் இல்லை"}</p>
+              <p className="text-slate-400 text-xs font-semibold mt-1">{lang === "en" ? "All requested documents from your end are verified and up to date." : lang === "si" ? "ඔබගේ පාර්ශවයෙන් ඉල්ලා ඇති සියලුම ලේඛන සත්‍යාපනය කර යාවත්කාලීන කර ඇත." : "உங்கள் தரப்பிலிருந்து கோரப்பட்ட அனைத்து ஆவணங்களும் சரிபார்க்கப்பட்டு புதுப்பிக்கப்பட்டுள்ளன."}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-5">
@@ -436,10 +507,10 @@ export default function AgentDocuments() {
 
                     <div className="flex-1">
                       <h3 className="text-red-600 font-extrabold text-base leading-none">
-                        Document Upload Required
+                        {lang === "en" ? "Document Upload Required" : lang === "si" ? "ලේඛන උඩුගත කිරීමක් අවශ්‍යයි" : "ஆவணம் பதிவேற்றம் தேவை"}
                       </h3>
                       <p className="text-slate-600 text-sm font-semibold mt-2.5 leading-relaxed">
-                        Office staff has requested the following document(s) for claim <span className="text-slate-800 font-extrabold">{claim.claimNumber}</span> (Plate: {claim.vehiclePlate}):
+                        {lang === "en" ? "Office staff has requested the following document(s) for claim" : lang === "si" ? "කාර්ය මණ්ඩලය විසින් පහත සඳහන් ලේඛන හිමිකම් ගොනුව සඳහා ඉල්ලා ඇත" : "அலுவலக ஊழியர்கள் பின்வரும் ஆவணத்தை கோரியுள்ளனர்"} <span className="text-slate-800 font-extrabold">{claim.claimNumber}</span> (Plate: {claim.vehiclePlate}):
                       </p>
                       <div className="mt-2.5 space-y-3 pl-2.5 border-l-2 border-slate-200">
                         {getAgentPendingRequests(claim).map((docName, idx) => {
@@ -463,7 +534,7 @@ export default function AgentDocuments() {
                         })}
                       </div>
                       <p className="text-slate-400 text-xs font-bold mt-3">
-                        * Please upload the requested specifications to proceed.
+                        {lang === "en" ? "* Please upload the requested specifications to proceed." : lang === "si" ? "* ඉදිරියට යාමට කරුණාකර ඉල්ලා ඇති ලේඛන උඩුගත කරන්න." : "* தயவுசெய்து கோரப்பட்ட ஆவணங்களை பதிவேற்றவும்."}
                       </p>
                     </div>
                   </div>
@@ -473,7 +544,7 @@ export default function AgentDocuments() {
                       onClick={() => handleOpenUpload(claim)}
                       className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all duration-150 shadow-[0_4px_15px_rgba(220,38,38,0.25)] hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto text-center cursor-pointer border-none"
                     >
-                      Upload
+                      {t.uploadButton}
                     </button>
                     <span className="text-slate-400 text-[11px] font-bold self-end select-none">
                       {formatDateString(claim.createdAt)}
@@ -492,7 +563,7 @@ export default function AgentDocuments() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <h2 className="text-xl md:text-[24px] font-black text-slate-800 tracking-tight">
-              Claim Documents List
+              {lang === "en" ? "Claim Documents List" : lang === "si" ? "හිමිකම් ලේඛන ලැයිස්තුව" : "காப்பீட்டு ஆவணங்களின் பட்டியல்"}
             </h2>
           </div>
 
@@ -504,7 +575,7 @@ export default function AgentDocuments() {
             </div>
           ) : groupedClaimsList.length === 0 ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-sm select-none">
-              <p className="text-slate-400 font-bold text-sm">No documents found for your assigned claims.</p>
+              <p className="text-slate-400 font-bold text-sm">{lang === "en" ? "No documents found for your assigned claims." : lang === "si" ? "ඔබට පවරා ඇති හිමිකම් සඳහා ලේඛන කිසිවක් හමු නොවීය." : "ஒதுக்கப்பட்ட கோரிக்கைகளுக்கு ஆவணங்கள் எதுவும் இல்லை."}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -551,7 +622,7 @@ export default function AgentDocuments() {
                       }}
                       className="border border-[#0891b2] text-[#0891b2] hover:bg-[#0891b2] hover:text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 cursor-pointer bg-white"
                     >
-                      View Documents
+                      {t.viewFiles}
                     </button>
                   </div>
                 </div>

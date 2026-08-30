@@ -295,12 +295,101 @@ const renderPremiumInspectionReport = (reportText: string) => {
   );
 };
 
+const translations = {
+  en: {
+    title: "My Assigned Claims",
+    subtitle: "Real-time inspection directory and assessment generation center",
+    all: "All",
+    urgent: "Urgent",
+    new: "New",
+    pending: "Pending",
+    searchPlaceholder: "Search claim plate or policyholder details...",
+    noClaimsFound: "No Active Claims Found",
+    noClaimsFoundDesc: "We couldn't find any claims assigned to you under active search queries or filters.",
+    claimInfo: "Claim Info",
+    vehicleNo: "Vehicle No",
+    damageType: "Damage Type",
+    location: "Location",
+    policyHolder: "Policy Holder",
+    assessment: "Assessment",
+    status: "Status",
+    actions: "Actions",
+    viewDetails: "View Details",
+    claimNumber: "Claim Number"
+  },
+  si: {
+    title: "මට පවරා ඇති හිමිකම්",
+    subtitle: "සැබෑ වේලාවේ පරීක්ෂණ නාමාවලිය සහ තක්සේරු උත්පාදන මධ්‍යස්ථානය",
+    all: "සියල්ල",
+    urgent: "හදිසි",
+    new: "නව",
+    pending: "ප්‍රතිචාර නොදැක්වූ",
+    searchPlaceholder: "හිමිකම් තහඩුව හෝ රක්ෂණ හිමියාගේ විස්තර සොයන්න...",
+    noClaimsFound: "ක්‍රියාකාරී හිමිකම් කිසිවක් හමු නොවීය",
+    noClaimsFoundDesc: "සක්‍රීය සෙවුම් විමසුම් හෝ පෙරහන් යටතේ ඔබට පවරා ඇති හිමිකම් කිසිවක් අපට සොයාගත නොහැකි විය.",
+    claimInfo: "හිමිකම් තොරතුරු",
+    vehicleNo: "වාහන අංකය",
+    damageType: "හානි වර්ගය",
+    location: "ස්ථානය",
+    policyHolder: "රක්ෂණ හිමියා",
+    assessment: "තක්සේරුව",
+    status: "තත්ත්වය",
+    actions: "ක්‍රියාමාර්ග",
+    viewDetails: "විස්තර බලන්න",
+    claimNumber: "හිමිකම් අංකය"
+  },
+  ta: {
+    title: "எனக்கு ஒதுக்கப்பட்ட கோரிக்கைகள்",
+    subtitle: "நிகழ்நேர ஆய்வு அடைவு மற்றும் மதிப்பீட்டு உருவாக்க மையம்",
+    all: "அனைத்தும்",
+    urgent: "அவசரம்",
+    new: "புதியது",
+    pending: "நிலுவையில்",
+    searchPlaceholder: "கோரிக்கை வாகன எண் அல்லது காப்பீட்டாளர் விவரங்களைத் தேடுக...",
+    noClaimsFound: "செயலில் உள்ள கோரிக்கைகள் எதுவும் இல்லை",
+    noClaimsFoundDesc: "செயலில் உள்ள தேடல் வினவல்கள் அல்லது வடிப்பான்களின் கீழ் உங்களுக்கு ஒதுக்கப்பட்ட எந்தவொரு கோரிக்கையையும் எங்களால் கண்டறிய முடியவில்லை.",
+    claimInfo: "கோரிக்கை விவரம்",
+    vehicleNo: "வாகன எண்",
+    damageType: "சேத வகை",
+    location: "இடம்",
+    policyHolder: "காப்பீட்டாளர்",
+    assessment: "மதிப்பீடு",
+    status: "நிலை",
+    actions: "நடவடிக்கைகள்",
+    viewDetails: "விவரங்களைப் பார்க்க",
+    claimNumber: "கோரிக்கை எண்"
+  }
+};
+
 export default function AgentMyClaims() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
   const [agentName, setAgentName] = useState("");
   const [agentEmail, setAgentEmail] = useState("");
   const [claims, setClaims] = useState<Claim[]>([]);
   const [filteredClaims, setFilteredClaims] = useState<Claim[]>([]);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "urgent" | "new" | "pending">("all");
@@ -771,10 +860,10 @@ export default function AgentMyClaims() {
         {/* Text content */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
-            My Assigned Claims
+            {t.title}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            View claims sorted by urgency, manage pending inspections, accept new assignments, and upload estimates
+            {t.subtitle}
           </p>
         </header>
       </div>
@@ -793,7 +882,7 @@ export default function AgentMyClaims() {
             </span>
             <input
               type="text"
-              placeholder="Search Claim No, Plate, NIC or Damage..."
+              placeholder={t.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-medium"
@@ -813,7 +902,7 @@ export default function AgentMyClaims() {
               type="button"
               className="bg-cyan-600 hover:bg-cyan-700 active:scale-95 text-white py-2 px-5 rounded-full text-xs font-bold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md"
             >
-              Search
+              {lang === "en" ? "Search" : lang === "si" ? "සොයන්න" : "தேடுக"}
             </button>
           </div>
         </div>
@@ -828,7 +917,7 @@ export default function AgentMyClaims() {
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
-            All Alerts ({claims.length})
+            {t.all} ({claims.length})
           </button>
           <button
             onClick={() => setActiveTab("urgent")}
@@ -838,7 +927,7 @@ export default function AgentMyClaims() {
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
-            Urgent Claims
+            {t.urgent}
             <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "urgent" ? "bg-white/20 text-white" : "bg-red-550 text-white"
             }`}>
@@ -853,7 +942,7 @@ export default function AgentMyClaims() {
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
-            New Assignments
+            {t.new}
             <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "new" ? "bg-white/20 text-white" : "bg-amber-500 text-white"
             }`}>
@@ -868,7 +957,7 @@ export default function AgentMyClaims() {
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
-            Pending / In Progress
+            {t.pending}
             <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
               activeTab === "pending" ? "bg-white/20 text-white" : "bg-cyan-600 text-white"
             }`}>
@@ -882,15 +971,15 @@ export default function AgentMyClaims() {
           {loading ? (
             <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
-              <span className="mt-3 text-slate-400 text-sm font-bold">Syncing cases with Sanasa Database...</span>
+              <span className="mt-3 text-slate-400 text-sm font-bold">{lang === "en" ? "Syncing cases with Sanasa Database..." : lang === "si" ? "සනස දත්ත සමුදාය සමඟ සමමුහුර්ත වෙමින්..." : "சனச தரவுத்தளத்துடன் ஒத்திசைக்கிறது..."}</span>
             </div>
           ) : filteredClaims.length === 0 ? (
             <div className="bg-white border border-slate-100 rounded-[30px] p-16 text-center shadow-sm select-none">
               <svg className="w-12 h-12 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-.621-.504-1.125-1.125-1.125H9.75M8.25 21h8.25a2.25 2.25 0 002.25-2.25V5.25A2.25 2.25 0 0016.5 3H7.5A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h.75z" />
               </svg>
-              <p className="text-slate-500 font-extrabold text-sm uppercase tracking-wider">No matching claim files found.</p>
-              <p className="text-slate-400 text-xs mt-1.5 font-semibold">Try modifying your filter categories or searching query.</p>
+              <p className="text-slate-500 font-extrabold text-sm uppercase tracking-wider">{t.noClaimsFound}</p>
+              <p className="text-slate-400 text-xs mt-1.5 font-semibold">{t.noClaimsFoundDesc}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4.5">
@@ -935,7 +1024,7 @@ export default function AgentMyClaims() {
                       
                       {/* Claim Reference & Badges */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Claim Number</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
                         <div className="text-sm font-black text-slate-800 flex items-center gap-2 flex-wrap">
                           {claim.claimNumber}
                           <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full select-none tracking-wide border ${badgeStyle}`}>
@@ -946,7 +1035,7 @@ export default function AgentMyClaims() {
 
                       {/* Vehicle Details */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Vehicle ID</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t.vehicleNo}</span>
                         <span className="text-xs font-extrabold text-slate-700 truncate">
                           {claim.vehiclePlate} {claim.vehicleModel && <span className="font-semibold text-slate-500">({claim.vehicleModel})</span>}
                         </span>
@@ -954,21 +1043,21 @@ export default function AgentMyClaims() {
 
                       {/* Damage Class */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Damage Type</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t.damageType}</span>
                         <span className="text-xs font-extrabold text-slate-700 truncate">{claim.damageType}</span>
                       </div>
 
                       {/* Incident Location */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Location</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t.location}</span>
                         <span className="text-xs font-extrabold text-slate-700 truncate" title={claim.location}>{claim.location}</span>
                       </div>
 
                       {/* Date & Progress */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Progress State</span>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{lang === "en" ? "Progress State" : lang === "si" ? "ප්‍රගති තත්ත්වය" : "முன்னேற்ற நிலை"}</span>
                         <span className="text-xs font-extrabold text-slate-700 truncate">
-                          {isFinalized ? "Dossier Closed" : `Step ${claim.currentStep} of 4`} · <span className="text-slate-400 font-semibold">{formatDate(claim.createdAt)}</span>
+                          {isFinalized ? (lang === "en" ? "Dossier Closed" : lang === "si" ? "හිමිකම් ලිපිගොනුව වසා ඇත" : "கோப்பு மூடப்பட்டது") : `Step ${claim.currentStep} of 4`} · <span className="text-slate-400 font-semibold">{formatDate(claim.createdAt)}</span>
                         </span>
                       </div>
 
@@ -979,7 +1068,7 @@ export default function AgentMyClaims() {
                       onClick={() => setSelectedClaim(claim)}
                       className="bg-[#0f2d3a] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-black py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
                     >
-                      View Details
+                      {t.viewDetails}
                     </button>
                   </div>
                 );

@@ -45,9 +45,101 @@ interface Claim {
   additionalDocuments?: AdditionalDoc[];
 }
 
+const translations = {
+  en: {
+    title: "My Documents",
+    subtitle: "Requested documents and uploads",
+    requestedDocs: "Requested Documents",
+    uploadedDocs: "Uploaded Documents",
+    checkingDocs: "Checking requested documents...",
+    noRequestsTitle: "No Pending Document Requests",
+    noRequestsDesc: "All your claim documents are verified and up to date.",
+    actionRequired: "Documents Requested – Action Required",
+    uploadedBy: "Uploaded by",
+    policyHolder: "Policy Holder",
+    officialStaff: "Office Staff",
+    claimNum: "Claim #",
+    registered: "Registered",
+    viewFiles: "View Files",
+    uploadBtn: "Upload",
+    date: "Date",
+    policeReport: "Police Report",
+    additionalDoc: "Additional Document",
+    noUploadsTitle: "No Uploaded Documents",
+    noUploadsDesc: "You haven't uploaded any claim documents yet. Any photos or files you upload during claims submission or request will show up here."
+  },
+  si: {
+    title: "මගේ ලේඛන",
+    subtitle: "ඉල්ලන ලද ලේඛන සහ උඩුගත කිරීම්",
+    requestedDocs: "ඉල්ලන ලද ලේඛන",
+    uploadedDocs: "උඩුගත කරන ලද ලේඛන",
+    checkingDocs: "ඉල්ලන ලද ලේඛන පරීක්ෂා කරමින්...",
+    noRequestsTitle: "කිසිදු ලේඛන ඉල්ලීමක් නොමැත",
+    noRequestsDesc: "ඔබේ හිමිකම් ලේඛන සියල්ලම සත්‍යාපනය කර යාවත්කාලීන කර ඇත.",
+    actionRequired: "ලේඛන ඉල්ලනු ලැබ ඇත – පියවරක් ගැනීම අවශ්‍යයි",
+    uploadedBy: "උඩුගත කරන ලද්දේ",
+    policyHolder: "රක්‍ෂණ හිමියා",
+    officialStaff: "කාර්යාල කාර්ය මණ්ඩලය",
+    claimNum: "හිමිකම් අංකය",
+    registered: "ලියාපදිංචි කළ දිනය",
+    viewFiles: "ලේඛන බලන්න",
+    uploadBtn: "උඩුගත කරන්න",
+    date: "දිනය",
+    policeReport: "පොලිස් වාර්තාව",
+    additionalDoc: "අමතර ලේඛනය",
+    noUploadsTitle: "කිසිදු ලේඛනයක් උඩුගත කර නොමැත",
+    noUploadsDesc: "ඔබ තවමත් කිසිදු හිමිකම් ලේඛනයක් උඩුගත කර නැත. හිමිකම් ඉදිරිපත් කිරීමේදී හෝ ඉල්ලීම්වලදී ඔබ උඩුගත කරන සියලුම ඡායාරූප හෝ ලිපිගොනු මෙහි දර්ශනය වේ."
+  },
+  ta: {
+    title: "என் ஆவணங்கள்",
+    subtitle: "கோரப்பட்ட ஆவணங்கள் மற்றும் பதிவேற்றங்கள்",
+    requestedDocs: "கோரப்பட்ட ஆவணங்கள்",
+    uploadedDocs: "பதிவேற்றப்பட்ட ஆவணங்கள்",
+    checkingDocs: "கோரப்பட்ட ஆவணங்களைச் சரிபார்க்கிறது...",
+    noRequestsTitle: "நிலுவையில் உள்ள ஆவணக் கோரிக்கைகள் இல்லை",
+    noRequestsDesc: "உங்களது அனைத்து உரிமைக்கோரல் ஆவணங்களும் சரிபார்க்கப்பட்டு புதுப்பிக்கப்பட்டுள்ளன.",
+    actionRequired: "ஆவணங்கள் கோரப்பட்டுள்ளன - நடவடிக்கை தேவை",
+    uploadedBy: "பதிவேற்றியவர்",
+    policyHolder: "பாலிசிதாரர்",
+    officialStaff: "அலுவலக ஊழியர்கள்",
+    claimNum: "கோரிக்கை #",
+    registered: "பதிவுசெய்யப்பட்டது",
+    viewFiles: "கோப்புகளைப் பார்",
+    uploadBtn: "பதிவேற்று",
+    date: "தேதி",
+    policeReport: "போலீஸ் அறிக்கை",
+    additionalDoc: "கூடுதல் ஆவணம்",
+    noUploadsTitle: "பதிவேற்றப்பட்ட ஆவணங்கள் எதுவும் இல்லை",
+    noUploadsDesc: "நீங்கள் இன்னும் எந்த உரிமைக்கோரல் ஆவணங்களையும் பதிவேற்றவில்லை. உரிமைக்கோரல் சமர்ப்பிப்பு அல்லது கோரிக்கையின் போது நீங்கள் பதிவேற்றும் புகைப்படங்கள் அல்லது கோப்புகள் இங்கே காண்பிக்கப்படும்."
+  }
+};
+
 export default function PolicyHolderDocuments() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const [user, setUser] = useState<any>(null);
   const [claims, setClaims] = useState<Claim[]>([]);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   const getUserRequestedDocs = (claim: Claim): string[] => {
     const getRecipientForDoc = (name: string) => {
@@ -420,10 +512,10 @@ export default function PolicyHolderDocuments() {
         {/* Text content aligned automatically with the page container */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
-            My Documents
+            {t.title}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            Requested documents and uploads
+            {t.subtitle}
           </p>
         </header>
       </div>
@@ -438,14 +530,14 @@ export default function PolicyHolderDocuments() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
             </svg>
             <h2 className="text-xl md:text-[24px] font-black text-slate-800 tracking-tight">
-              Requested Documents
+              {t.requestedDocs}
             </h2>
           </div>
 
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-slate-200 shadow-sm min-h-[140px]">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500"></div>
-              <span className="mt-3 text-slate-400 text-sm font-bold">Checking requested documents...</span>
+              <span className="mt-3 text-slate-400 text-sm font-bold">{t.checkingDocs}</span>
             </div>
           ) : requestedDocsList.length === 0 ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-10 text-center shadow-sm select-none">
@@ -454,8 +546,8 @@ export default function PolicyHolderDocuments() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                 </svg>
               </div>
-              <p className="text-slate-500 font-extrabold text-[15px]">No Pending Document Requests</p>
-              <p className="text-slate-400 text-xs font-semibold mt-1">All your claim documents are verified and up to date.</p>
+              <p className="text-slate-500 font-extrabold text-[15px]">{t.noRequestsTitle}</p>
+              <p className="text-slate-400 text-xs font-semibold mt-1">{t.noRequestsDesc}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-5">
@@ -474,10 +566,10 @@ export default function PolicyHolderDocuments() {
 
                     <div className="flex-1">
                       <h3 className="text-red-600 font-extrabold text-base leading-none">
-                        Documents Requested – Action Required
+                        {t.actionRequired}
                       </h3>
                       <p className="text-slate-600 text-sm font-semibold mt-2.5 leading-relaxed">
-                        Staff has requested the following document(s) for <span className="text-slate-800 font-extrabold">{claim.claimNumber}</span>:
+                        {t.officialStaff} has requested the following document(s) for <span className="text-slate-800 font-extrabold">{claim.claimNumber}</span>:
                       </p>
                       <div className="mt-2.5 space-y-3 pl-2.5 border-l-2 border-slate-200">
                         {getUserRequestedDocs(claim).map((docName, idx) => {
@@ -511,7 +603,7 @@ export default function PolicyHolderDocuments() {
                       onClick={() => handleOpenUpload(claim)}
                       className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all duration-150 shadow-[0_4px_15px_rgba(220,38,38,0.25)] hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto text-center cursor-pointer border-none"
                     >
-                      Upload
+                      {t.uploadBtn}
                     </button>
                     <span className="text-slate-400 text-[11px] font-bold self-end select-none">
                       {formatDateString(claim.createdAt)}
@@ -530,7 +622,7 @@ export default function PolicyHolderDocuments() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
             <h2 className="text-xl md:text-[24px] font-black text-slate-800 tracking-tight">
-              Uploaded Documents
+              {t.uploadedDocs}
             </h2>
           </div>
 
@@ -542,7 +634,7 @@ export default function PolicyHolderDocuments() {
             </div>
           ) : groupedClaimsList.length === 0 ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-sm select-none">
-              <p className="text-slate-400 font-bold text-sm">You have not uploaded any claim files yet.</p>
+              <p className="text-slate-400 font-bold text-sm">{t.noUploadsTitle}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -569,7 +661,7 @@ export default function PolicyHolderDocuments() {
                             <span className="text-slate-750 font-bold">{doc.name}</span>
                             {doc.uploadedAt && (
                               <span className="text-[10px] text-slate-400 font-semibold">
-                                (Uploaded: {formatDateTimeString(doc.uploadedAt)})
+                                ({t.uploadedBy}: {formatDateTimeString(doc.uploadedAt)})
                               </span>
                             )}
                           </div>
@@ -589,7 +681,7 @@ export default function PolicyHolderDocuments() {
                       }}
                       className="border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-500 hover:text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 cursor-pointer bg-white"
                     >
-                      View
+                      {t.viewFiles}
                     </button>
                   </div>
                 </div>

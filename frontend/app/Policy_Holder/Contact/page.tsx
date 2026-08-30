@@ -5,12 +5,143 @@ import Image from "next/image";
 import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 
+const translations = {
+  en: {
+    title: "Contact Us",
+    subtitle: "Contact with Anytime with Us",
+    hotline: "Hotline",
+    hotlineVal: "+94 112 003 000 | +94 112 003 000",
+    hotlineSub: "24 Hours Hotline",
+    email: "Email",
+    emailVal: "claims@sanasainsurance.lk",
+    emailSub: "Response within 24 hours",
+    liveChat: "Live Chat",
+    liveChatVal: "Available Now",
+    liveChatSub: "Mon-Sat 9am-6pm",
+    location: "Location",
+    headOffice: "Head Office",
+    address: "No: 172, Elvitigala Mv, Colombo 8,\nSri Lanka",
+    openHours: "Open Hours",
+    hoursVal: "Monday - Friday\n8:30AM–5:15PM",
+    modalTitle: "Send Email to Claims",
+    modalSubtitle: "Our support team replies within 24 hours",
+    senderName: "Sender Name",
+    emailLabel: "Email Address",
+    nicLabel: "NIC Number",
+    recipient: "Recipient",
+    subject: "Subject",
+    subjectPlaceholder: "Enter inquiry subject...",
+    messageBody: "Message Body",
+    messagePlaceholder: "Type your message details here...",
+    cancel: "Cancel",
+    sendEmail: "Send Email",
+    sending: "Sending...",
+    subjectReq: "Subject and Message are required.",
+    sendSuccess: "Email sent successfully! The claims team will respond within 24 hours.",
+    sendFail: "Failed to send email.",
+    connError: "Unable to connect to the server."
+  },
+  si: {
+    title: "සම්බන්ධ වන්න",
+    subtitle: "ඕනෑම වේලාවක අප හා සම්බන්ධ වන්න",
+    hotline: "ක්ෂණික ඇමතුම්",
+    hotlineVal: "+94 112 003 000 | +94 112 003 000",
+    hotlineSub: "පැය 24 පුරා ක්‍රියාත්මකයි",
+    email: "විද්‍යුත් තැපෑල",
+    emailVal: "claims@sanasainsurance.lk",
+    emailSub: "පැය 24ක් ඇතුළත ප්‍රතිචාර",
+    liveChat: "සජීවී සංවාදය",
+    liveChatVal: "දැන් සම්බන්ධ විය හැක",
+    liveChatSub: "සඳුදා - සෙනසුරාදා පෙ.ව. 9 - ප.ව. 6",
+    location: "පිහිටීම",
+    headOffice: "ප්‍රධාන කාර්යාලය",
+    address: "නො: 172, ඇල්විටිගල මාවත, කොළඹ 8,\nශ්‍රී ලංකාව",
+    openHours: "වැඩ කරන වේලාවන්",
+    hoursVal: "සඳුදා - සිකුරාදා\nපෙ.ව. 8:30 – ප.ව. 5:15",
+    modalTitle: "හිමිකම් අංශයට විද්‍යුත් තැපෑලක් යවන්න",
+    modalSubtitle: "අපගේ සහාය කණ්ඩායම පැය 24ක් ඇතුළත පිළිතුරු සපයනු ඇත",
+    senderName: "යවන්නාගේ නම",
+    emailLabel: "විද්‍යුත් තැපැල් ලිපිනය",
+    nicLabel: "ජාතික හැඳුනුම්පත් අංකය",
+    recipient: "ලබන්නා",
+    subject: "මාතෘකාව",
+    subjectPlaceholder: "විමසීම් මාතෘකාව ඇතුළත් කරන්න...",
+    messageBody: "පණිවිඩය",
+    messagePlaceholder: "ඔබගේ පණිවිඩයේ විස්තර මෙහි ටයිප් කරන්න...",
+    cancel: "අවලංගු කරන්න",
+    sendEmail: "විද්‍යුත් තැපෑල යවන්න",
+    sending: "යවමින් පවතී...",
+    subjectReq: "මාතෘකාව සහ පණිවිඩය ඇතුළත් කිරීම අනිවාර්ය වේ.",
+    sendSuccess: "විද්‍යුත් තැපෑල සාර්ථකව යවන ලදී! හිමිකම් කණ්ඩායම පැය 24ක් ඇතුළත ප්‍රතිචාර දක්වනු ඇත.",
+    sendFail: "විද්‍යුත් තැපෑල යැවීම අසාර්ථක විය.",
+    connError: "සේවාදායකයට සම්බන්ධ විය නොහැක."
+  },
+  ta: {
+    title: "தொடர்பு கொள்ள",
+    subtitle: "எந்த நேரத்திலும் எங்களைத் தொடர்பு கொள்ளலாம்",
+    hotline: "உதவி எண்",
+    hotlineVal: "+94 112 003 000 | +94 112 003 000",
+    hotlineSub: "24 மணி நேர உதவி எண்",
+    email: "மின்னஞ்சல்",
+    emailVal: "claims@sanasainsurance.lk",
+    emailSub: "24 மணி நேரத்திற்குள் பதில் வழங்கப்படும்",
+    liveChat: "நேரடி அரட்டை",
+    liveChatVal: "இப்போது கிடைக்கிறது",
+    liveChatSub: "திங்கள் - சனி மு.ப. 9 - பி.ப. 6",
+    location: "இருப்பிடம்",
+    headOffice: "தலைமை அலுவலகம்",
+    address: "எண்: 172, எல்விட்டிஹல மாவத்தை, கொழும்பு 8,\nஇலங்கை",
+    openHours: "திறந்திருக்கும் நேரம்",
+    hoursVal: "திங்கள் - வெள்ளி\nமு.ப. 8:30 – பி.ப. 5:15",
+    modalTitle: "கோரிக்கைகள் பிரிவுக்கு மின்னஞ்சல் அனுப்பவும்",
+    modalSubtitle: "எங்கள் ஆதரவுக் குழு 24 மணி நேரத்திற்குள் பதிலளிக்கும்",
+    senderName: "அனுப்புநர் பெயர்",
+    emailLabel: "மின்னஞ்சல் முகவரி",
+    nicLabel: "அடையாள அட்டை எண்",
+    recipient: "பெறுநர்",
+    subject: "பொருள்",
+    subjectPlaceholder: "விசாரணைப் பொருளை உள்ளிடவும்...",
+    messageBody: "செய்தி உள்ளடக்கம்",
+    messagePlaceholder: "உங்கள் செய்தியின் விவரங்களை இங்கே தட்டச்சு செய்யவும்...",
+    cancel: "ரத்து செய்",
+    sendEmail: "மின்னஞ்சல் அனுப்பு",
+    sending: "அனுப்பப்படுகிறது...",
+    subjectReq: "பொருள் மற்றும் செய்தி தேவை.",
+    sendSuccess: "மின்னஞ்சல் வெற்றிகரமாக அனுப்பப்பட்டது! கோரிக்கைகள் குழு 24 மணி நேரத்திற்குள் பதிலளிக்கும்.",
+    sendFail: "மின்னஞ்சல் அனுப்ப முடியவில்லை.",
+    connError: "சேவையகத்துடன் இணைக்க முடியவில்லை."
+  }
+};
+
 export default function PolicyHolderContact() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [modalFeedback, setModalFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   // User details state (loaded from sessionStorage)
   const [user, setUser] = useState<{
@@ -97,10 +228,10 @@ export default function PolicyHolderContact() {
         {/* Text content aligned automatically with the page container */}
         <header className="relative z-10 h-[190px] flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
-            Contact Us
+            {t.title}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            Contact with Anytime with Us
+            {t.subtitle}
           </p>
         </header>
       </div>
@@ -120,14 +251,14 @@ export default function PolicyHolderContact() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">Hotline</h3>
+              <h3 className="font-bold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.hotline}</h3>
               <p className="text-slate-600 text-sm md:text-base font-semibold mt-1.5 tracking-wide">
-                +94 112 003 000 | +94 112 003 000
+                {t.hotlineVal}
               </p>
             </div>
           </div>
           <div className="text-red-500 hover:text-red-600 transition-colors font-bold text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
-            24 Hours Hotline
+            {t.hotlineSub}
           </div>
         </a>
 
@@ -144,14 +275,14 @@ export default function PolicyHolderContact() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">Email</h3>
+              <h3 className="font-bold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.email}</h3>
               <p className="text-slate-600 text-sm md:text-base font-semibold mt-1.5 tracking-wide">
-                claims@sanasainsurance.lk
+                {t.emailVal}
               </p>
             </div>
           </div>
           <div className="text-red-500 hover:text-red-600 transition-colors font-bold text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
-            Response within 24 hours
+            {t.emailSub}
           </div>
         </button>
 
@@ -164,14 +295,14 @@ export default function PolicyHolderContact() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-lg md:text-xl">Live Chat</h3>
+              <h3 className="font-bold text-slate-800 text-lg md:text-xl">{t.liveChat}</h3>
               <p className="text-slate-600 text-sm md:text-base font-semibold mt-1.5 tracking-wide">
-                Available Now
+                {t.liveChatVal}
               </p>
             </div>
           </div>
           <div className="text-red-500 hover:text-red-600 transition-colors font-bold text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
-            Mon-Sat 9am-6pm
+            {t.liveChatSub}
           </div>
         </div>
 
@@ -197,7 +328,7 @@ export default function PolicyHolderContact() {
           
           {/* Location Title */}
           <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-md pl-4 md:pl-8 mb-8 select-none">
-            Location
+            {t.location}
           </h2>
 
           <div className="flex flex-col md:flex-row gap-8 lg:gap-16 items-start">
@@ -220,17 +351,16 @@ export default function PolicyHolderContact() {
 
             {/* Head Office text next to map */}
             <div className="w-full md:w-[40%] lg:w-[45%] mt-4 md:mt-20 text-slate-800">
-              <h3 className="font-extrabold text-slate-900 text-lg md:text-xl mb-3 select-none">Head Office</h3>
-              <p className="text-slate-600 text-sm md:text-base font-semibold leading-relaxed">
-                No: 172, Elvitigala Mv, Colombo 8,<br />Sri Lanka
+              <h3 className="font-extrabold text-slate-900 text-lg md:text-xl mb-3 select-none">{t.headOffice}</h3>
+              <p className="text-slate-600 text-sm md:text-base font-semibold leading-relaxed whitespace-pre-line">
+                {t.address}
               </p>
               
               <hr className="border-t border-slate-300 w-full max-w-[320px] my-6" />
 
-              <h3 className="font-extrabold text-slate-900 text-lg md:text-xl mb-3 select-none">Open Hours</h3>
-              <p className="text-slate-600 text-sm md:text-base font-semibold leading-relaxed">
-                Monday - Friday<br />
-                8:30AM–5:15PM
+              <h3 className="font-extrabold text-slate-900 text-lg md:text-xl mb-3 select-none">{t.openHours}</h3>
+              <p className="text-slate-600 text-sm md:text-base font-semibold leading-relaxed whitespace-pre-line">
+                {t.hoursVal}
               </p>
             </div>
 
@@ -265,8 +395,8 @@ export default function PolicyHolderContact() {
             {/* Header */}
             <div className="px-12 py-7 border-b border-slate-100 flex justify-between items-center relative z-10 bg-white/80 backdrop-blur-md">
               <div>
-                <h3 className="text-2xl font-bold text-[#0d2a3a]">Send Email to Claims</h3>
-                <p className="text-xs text-slate-500 font-semibold mt-1">Our support team replies within 24 hours</p>
+                <h3 className="text-2xl font-bold text-[#0d2a3a]">{t.modalTitle}</h3>
+                <p className="text-xs text-slate-500 font-semibold mt-1">{t.modalSubtitle}</p>
               </div>
               <button
                 type="button"
@@ -287,15 +417,15 @@ export default function PolicyHolderContact() {
               {user && (
                 <div className="bg-[#f0f9ff]/80 border border-sky-100 rounded-[24px] p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-slate-700 font-semibold">
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Sender Name</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">{t.senderName}</span>
                     <span className="text-[#0d2a3a] text-base font-extrabold">{user.firstName} {user.lastName}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Email Address</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">{t.emailLabel}</span>
                     <span className="text-slate-800 text-sm truncate">{user.email}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">NIC Number</span>
+                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">{t.nicLabel}</span>
                     <span className="text-slate-800 text-sm">{user.nic}</span>
                   </div>
                 </div>
@@ -305,7 +435,7 @@ export default function PolicyHolderContact() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* To (Read-only) */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-[#0d2a3a] uppercase tracking-wider pl-1">Recipient</label>
+                  <label className="text-xs font-bold text-[#0d2a3a] uppercase tracking-wider pl-1">{t.recipient}</label>
                   <input
                     type="text"
                     value="claims@sanasainsurance.lk"
@@ -316,10 +446,10 @@ export default function PolicyHolderContact() {
 
                 {/* Subject */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-[#0d2a3a] uppercase tracking-wider pl-1">Subject</label>
+                  <label className="text-xs font-bold text-[#0d2a3a] uppercase tracking-wider pl-1">{t.subject}</label>
                   <input
                     type="text"
-                    placeholder="Enter inquiry subject..."
+                    placeholder={t.subjectPlaceholder}
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     required
@@ -330,9 +460,9 @@ export default function PolicyHolderContact() {
 
               {/* Message */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold text-[#0d2a3a] uppercase tracking-wider pl-1">Message Body</label>
+                <label className="text-xs font-bold text-[#0d2a3a] uppercase tracking-wider pl-1">{t.messageBody}</label>
                 <textarea
-                  placeholder="Type your message details here..."
+                  placeholder={t.messagePlaceholder}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   required
@@ -364,7 +494,7 @@ export default function PolicyHolderContact() {
                   }}
                   className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-7 py-4 rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none"
                 >
-                  Cancel
+                  {t.cancel}
                 </button>
                 <button
                   type="submit"
@@ -377,10 +507,10 @@ export default function PolicyHolderContact() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Sending...
+                      {t.sending}
                     </>
                   ) : (
-                    "Send Email"
+                    t.sendEmail
                   )}
                 </button>
               </div>

@@ -20,8 +20,154 @@ const provincesData = [
   { id: "sabaragamuwa", name: "Sabaragamuwa Province", cities: ["Ratnapura", "Kegalle", "Balangoda", "Mawanella", "Embilipitiya"] }
 ];
 
+const translations = {
+  en: {
+    createAccount: "Create an Account",
+    descHint: "Follow the steps to register your account with Sanasa General Insurance.",
+    stepIndicator: "STEP 01 OF 04",
+    personalDetails: "Personal Details",
+    firstName: "First Name *",
+    lastName: "Last Name *",
+    nicNum: "NIC Number *",
+    mobileNum: "Mobile Number *",
+    emailAddr: "Email Address *",
+    dob: "Date of Birth *",
+    resAddress: "Residential Address *",
+    province: "Province *",
+    selectProvince: "Select Province",
+    city: "City *",
+    selectCity: "Select City",
+    password: "Password *",
+    confirmPassword: "Confirm Password *",
+    bankTitle: "Bank Details (For Payouts)",
+    bankName: "Bank Name *",
+    selectBank: "Select Bank",
+    branchName: "Branch Name *",
+    selectBranch: "Select Branch",
+    accountNum: "Account Number *",
+    accountHolder: "Account Holder Name *",
+    backBtn: "Back to Login",
+    nextBtn: "Next",
+    fillAll: "Please fill out all required fields marked with *",
+    fillBank: "Please fill out all required bank details fields.",
+    nicAlert: "Please enter a valid NIC (10-12 characters/digits).",
+    mobileAlert: "Mobile number must be exactly 10 digits.",
+    emailAlert: "Please enter a valid email address.",
+    passLength: "Password must be between 6 and 12 characters.",
+    passChar: "Password must contain at least one number or special character.",
+    passMatch: "Passwords do not match!",
+    verifyFail: "Failed to verify credentials with the database.",
+    emailExist: "This email address is already registered.",
+    nicExist: "This NIC number is already registered.",
+    connError: "Could not connect to verification server. Please try again."
+  },
+  si: {
+    createAccount: "ගිණුමක් සාදන්න",
+    descHint: "සනස සාමාන්‍ය රක්ෂණය සමඟ ඔබේ ගිණුම ලියාපදිංචි කිරීමට පියවර අනුගමනය කරන්න.",
+    stepIndicator: "පියවර 04 න් 01 වන පියවර",
+    personalDetails: "පුද්ගලික විස්තර",
+    firstName: "පළමු නම *",
+    lastName: "වාසගම *",
+    nicNum: "ජාතික හැඳුනුම්පත් අංකය *",
+    mobileNum: "ජංගම දුරකථන අංකය *",
+    emailAddr: "විද්‍යුත් තැපැල් ලිපිනය *",
+    dob: "උපන් දිනය *",
+    resAddress: "පදිංචි ලිපිනය *",
+    province: "පළාත *",
+    selectProvince: "පළාත තෝරන්න",
+    city: "නගරය *",
+    selectCity: "නගරය තෝරන්න",
+    password: "මුරපදය *",
+    confirmPassword: "මුරපදය තහවුරු කරන්න *",
+    bankTitle: "බැංකු විස්තර (ගෙවීම් සඳහා)",
+    bankName: "බැංකුවේ නම *",
+    selectBank: "බැංකුව තෝරන්න",
+    branchName: "ශාඛාවේ නම *",
+    selectBranch: "ශාඛාව තෝරන්න",
+    accountNum: "ගිණුම් අංකය *",
+    accountHolder: "ගිණුම් හිමියාගේ නම *",
+    backBtn: "ලොගින් පිටුවට",
+    nextBtn: "ඊළඟ",
+    fillAll: "කරුණාකර * ලකුණු කළ සියලුම ක්ෂේත්‍ර පුරවන්න",
+    fillBank: "කරුණාකර සියලුම අනිවාර්ය බැංකු විස්තර පුරවන්න.",
+    nicAlert: "කරුණාකර වලංගු ජාතික හැඳුනුම්පත් අංකයක් ඇතුළත් කරන්න (අක්ෂර/ඉලක්කම් 10-12).",
+    mobileAlert: "ජංගම දුරකථන අංකය හරියටම ඉලක්කම් 10ක් විය යුතුය.",
+    emailAlert: "කරුණාකර වලංගු විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න.",
+    passLength: "මුරපදය අක්ෂර 6ත් 12ත් අතර විය යුතුය.",
+    passChar: "මුරපදයේ අවම වශයෙන් එක් ඉලක්කමක් හෝ විශේෂ අක්ෂරයක් තිබිය යුතුය.",
+    passMatch: "මුරපද එකිනෙකට නොගැලපේ!",
+    verifyFail: "දත්ත ගබඩාව සමඟ අක්තපත්‍ර සත්‍යාපනය කිරීමට අපොහොසත් විය.",
+    emailExist: "මෙම විද්‍යුත් තැපැල් ලිපිනය දැනටමත් ලියාපදිංචි කර ඇත.",
+    nicExist: "මෙම හැඳුනුම්පත් අංකය දැනටමත් ලියාපදිංචි කර ඇත.",
+    connError: "සත්‍යාපන සේවාදායකයට සම්බන්ධ විය නොහැක. කරුණාකර නැවත උත්සාහ කරන්න."
+  },
+  ta: {
+    createAccount: "கணக்கை உருவாக்கு",
+    descHint: "சனச பொதுக் காப்பீட்டில் உங்கள் கணக்கைப் பதிவு செய்ய படிகளைப் பின்பற்றவும்.",
+    stepIndicator: "படி 01 இல் 04",
+    personalDetails: "தனிப்பட்ட விவரங்கள்",
+    firstName: "முதல் பெயர் *",
+    lastName: "குடும்பப் பெயர் *",
+    nicNum: "அடையாள அட்டை எண் *",
+    mobileNum: "கைபேசி எண் *",
+    emailAddr: "மின்னஞ்சல் முகவரி *",
+    dob: "பிறந்த தேதி *",
+    resAddress: "வீட்டு முகவரி *",
+    province: "மாகாணம் *",
+    selectProvince: "மாகாணத்தைத் தேர்ந்தெடு",
+    city: "நகரம் *",
+    selectCity: "நகரத்தைத் தேர்ந்தெடு",
+    password: "கடவுச்சொல் *",
+    confirmPassword: "கடவுச்சொல்லை உறுதிப்படுத்துக *",
+    bankTitle: "வங்கி விவரங்கள் (பணப் பரிமாற்றத்திற்கு)",
+    bankName: "வங்கி பெயர் *",
+    selectBank: "வங்கியைத் தேர்ந்தெடு",
+    branchName: "கிளை பெயர் *",
+    selectBranch: "கிளையைத் தேர்ந்தெடு",
+    accountNum: "கணக்கு எண் *",
+    accountHolder: "கணக்கு வைத்திருப்பவர் பெயர் *",
+    backBtn: "உள்நுழைவுக்குத் திரும்பு",
+    nextBtn: "அடுத்து",
+    fillAll: "தயவுசெய்து * குறியிடப்பட்ட அனைத்து புலங்களையும் நிரப்பவும்",
+    fillBank: "தயவுசெய்து தேவையான அனைத்து வங்கி விவரங்களையும் நிரப்பவும்.",
+    nicAlert: "செல்லுபடியாகும் அடையாள அட்டை எண்ணை உள்ளிடவும் (10-12 அட்சரங்கள்/இலக்கங்கள்).",
+    mobileAlert: "கைபேசி எண் சரியாக 10 இலக்கங்களாக இருக்க வேண்டும்.",
+    emailAlert: "செல்லுபடியாகும் மின்னஞ்சல் முகவரியை உள்ளிடவும்.",
+    passLength: "கடவுச்சொல் 6 முதல் 12 எழுத்துகளுக்குள் இருக்க வேண்டும்.",
+    passChar: "கடவுச்சொல்லில் குறைந்தபட்சம் ஒரு எண் அல்லது சிறப்பு எழுத்து இருக்க வேண்டும்.",
+    passMatch: "கடவுச்சொற்கள் பொருந்தவில்லை!",
+    verifyFail: "தரவுத்தளத்துடன் நற்சான்றிதழ்களைச் சரிபார்க்க முடியவில்லை.",
+    emailExist: "இந்த மின்னஞ்சல் முகவரி ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது.",
+    nicExist: "இந்த அடையாள அட்டை எண் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது.",
+    connError: "சரிபார்ப்பு சேவையகத்துடன் இணைக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்."
+  }
+};
+
 export default function SignUp() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   // Form Fields
   const [firstName, setFirstName] = useState("");
@@ -122,12 +268,12 @@ export default function SignUp() {
     setValidationError("");
 
     if (!firstName || !lastName || !nic || !mobile || !email || !dob || !address || !province || !city || !password || !confirmPassword) {
-      setValidationError("Please fill out all required fields marked with *");
+      setValidationError(t.fillAll);
       return;
     }
 
     if (!bankName || !branchName || !accountNumber || !accountHolderName) {
-      setValidationError("Please fill out all required bank details fields.");
+      setValidationError(t.fillBank);
       return;
     }
 
@@ -135,36 +281,36 @@ export default function SignUp() {
     const cleanNic = nic.trim();
     const nicRegex = /^[0-9vVxX]{10,12}$/;
     if (!nicRegex.test(cleanNic)) {
-      setValidationError("Please enter a valid NIC (10-12 characters/digits).");
+      setValidationError(t.nicAlert);
       return;
     }
 
     // Mobile number check: exactly 10 digits
     const cleanMobile = mobile.replace(/[-+()\s]/g, "");
     if (!/^\d{10}$/.test(cleanMobile)) {
-      setValidationError("Mobile number must be exactly 10 digits.");
+      setValidationError(t.mobileAlert);
       return;
     }
 
     // Email check
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setValidationError("Please enter a valid email address.");
+      setValidationError(t.emailAlert);
       return;
     }
 
     // Password check: 6-12 characters, with conditions (numbers or special chars)
     if (password.length < 6 || password.length > 12) {
-      setValidationError("Password must be between 6 and 12 characters.");
+      setValidationError(t.passLength);
       return;
     }
     if (!/[0-9]/.test(password) && !/[^A-Za-z0-9]/.test(password)) {
-      setValidationError("Password must contain at least one number or special character.");
+      setValidationError(t.passChar);
       return;
     }
 
     if (password !== confirmPassword) {
-      setValidationError("Passwords do not match!");
+      setValidationError(t.passMatch);
       return;
     }
 
@@ -172,19 +318,19 @@ export default function SignUp() {
     try {
       const res = await fetch(`${API_URL}/signup/check?email=${encodeURIComponent(email)}&nic=${encodeURIComponent(cleanNic)}`);
       if (!res.ok) {
-        throw new Error("Failed to verify credentials with the database.");
+        throw new Error(t.verifyFail);
       }
       const data = await res.json();
       if (data.emailExists) {
-        setValidationError("This email address is already registered.");
+        setValidationError(t.emailExist);
         return;
       }
       if (data.nicExists) {
-        setValidationError("This NIC number is already registered.");
+        setValidationError(t.nicExist);
         return;
       }
     } catch (err: any) {
-      setValidationError("Could not connect to verification server. Please try again.");
+      setValidationError(t.connError);
       return;
     }
     
@@ -243,10 +389,10 @@ export default function SignUp() {
           {/* Header Title */}
           <div className="text-center select-none flex flex-col gap-2">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] leading-tight">
-              Create an Account
+              {t.createAccount}
             </h1>
             <p className="text-white/75 text-sm sm:text-base font-medium max-w-md mx-auto">
-              Follow the steps to register your account with Sanasa General Insurance.
+              {t.descHint}
             </p>
           </div>
 
@@ -271,10 +417,10 @@ export default function SignUp() {
             {/* Step Label Container */}
             <div className="flex flex-col items-center md:items-start text-center md:text-left gap-0.5 mt-1">
               <span className="text-xs md:text-sm font-bold text-[#ff9800] tracking-widest uppercase">
-                STEP 01 OF 04
+                {t.stepIndicator}
               </span>
               <h2 className="text-xl md:text-2xl font-extrabold text-white">
-                Personal Details
+                {t.personalDetails}
               </h2>
             </div>
           </div>
@@ -303,7 +449,7 @@ export default function SignUp() {
                   </svg>
                 </div>
                 <h2 className="text-white text-2xl font-bold tracking-wide select-none">
-                  Personal Details
+                  {t.personalDetails}
                 </h2>
               </div>
 
@@ -313,7 +459,7 @@ export default function SignUp() {
                 {/* First Name */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    First Name <span className="text-red-500 font-bold">*</span>
+                    {t.firstName}
                   </label>
                   <input
                     type="text"
@@ -328,7 +474,7 @@ export default function SignUp() {
                 {/* Last Name */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Last Name <span className="text-red-500 font-bold">*</span>
+                    {t.lastName}
                   </label>
                   <input
                     type="text"
@@ -343,7 +489,7 @@ export default function SignUp() {
                 {/* NIC Number */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    NIC Number <span className="text-red-500 font-bold">*</span>
+                    {t.nicNum}
                   </label>
                   <input
                     type="text"
@@ -358,7 +504,7 @@ export default function SignUp() {
                 {/* Mobile Number */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Mobile Number <span className="text-red-500 font-bold">*</span>
+                    {t.mobileNum}
                   </label>
                   <div className="relative">
                     <input
@@ -380,7 +526,7 @@ export default function SignUp() {
                 {/* Email Address */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Email Address <span className="text-red-500 font-bold">*</span>
+                    {t.emailAddr}
                   </label>
                   <input
                     type="email"
@@ -395,7 +541,7 @@ export default function SignUp() {
                 {/* Date of Birth */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Date of Birth <span className="text-red-500 font-bold">*</span>
+                    {t.dob}
                   </label>
                   <div className="relative">
                     <input
@@ -419,7 +565,7 @@ export default function SignUp() {
                 {/* Residential Address */}
                 <div className="flex flex-col gap-2 md:col-span-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Residential Address <span className="text-red-500 font-bold">*</span>
+                    {t.resAddress}
                   </label>
                   <textarea
                     required
@@ -434,7 +580,7 @@ export default function SignUp() {
                 {/* Province Selection */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Province <span className="text-red-500 font-bold">*</span>
+                    {t.province}
                   </label>
                   <div className="relative">
                     <select
@@ -443,7 +589,7 @@ export default function SignUp() {
                       onChange={(e) => setProvince(e.target.value)}
                       className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none"
                     >
-                      <option value="" disabled>Select Province</option>
+                      <option value="" disabled>{t.selectProvince}</option>
                       {provincesData.map((p) => (
                         <option key={p.id} value={p.name}>{p.name}</option>
                       ))}
@@ -459,7 +605,7 @@ export default function SignUp() {
                 {/* City Selection */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    City <span className="text-red-500 font-bold">*</span>
+                    {t.city}
                   </label>
                   <div className="relative">
                     <select
@@ -469,7 +615,7 @@ export default function SignUp() {
                       disabled={!province}
                       className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <option value="" disabled>Select City</option>
+                      <option value="" disabled>{t.selectCity}</option>
                       {activeCities.map((c) => (
                         <option key={c} value={c}>{c}</option>
                       ))}
@@ -485,7 +631,7 @@ export default function SignUp() {
                 {/* Password Field */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Password <span className="text-red-500 font-bold">*</span>
+                    {t.password}
                   </label>
                   <div className="relative">
                     <input
@@ -552,7 +698,7 @@ export default function SignUp() {
                 {/* Confirm Password */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Confirm Password <span className="text-red-500 font-bold">*</span>
+                    {t.confirmPassword}
                   </label>
                   <div className="relative">
                     <input
@@ -592,7 +738,7 @@ export default function SignUp() {
                       </svg>
                     </div>
                     <h2 className="text-white text-2xl font-bold tracking-wide select-none">
-                      Bank Details (For Payouts)
+                      {t.bankTitle}
                     </h2>
                   </div>
                   
@@ -600,7 +746,7 @@ export default function SignUp() {
                     {/* Bank Name Dropdown */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                        Bank Name <span className="text-red-500 font-bold">*</span>
+                        {t.bankName}
                       </label>
                       <div className="relative">
                         <select
@@ -612,7 +758,7 @@ export default function SignUp() {
                           }}
                           className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none"
                         >
-                          <option value="" disabled>Select Bank</option>
+                          <option value="" disabled>{t.selectBank}</option>
                           {Object.keys(sriLankaBanks).map((b) => (
                             <option key={b} value={b}>{b}</option>
                           ))}
@@ -628,7 +774,7 @@ export default function SignUp() {
                     {/* Branch Name Dropdown */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                        Branch Name <span className="text-red-500 font-bold">*</span>
+                        {t.branchName}
                       </label>
                       <div className="relative">
                         <select
@@ -638,7 +784,7 @@ export default function SignUp() {
                           onChange={(e) => setBranchName(e.target.value)}
                           className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                          <option value="" disabled>Select Branch</option>
+                          <option value="" disabled>{t.selectBranch}</option>
                           {bankName && sriLankaBanks[bankName].map((br) => (
                             <option key={br} value={br}>{br}</option>
                           ))}
@@ -654,7 +800,7 @@ export default function SignUp() {
                     {/* Account Number */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                        Account Number <span className="text-red-500 font-bold">*</span>
+                        {t.accountNum}
                       </label>
                       <input
                         type="text"
@@ -669,7 +815,7 @@ export default function SignUp() {
                     {/* Account Holder Name */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                        Account Holder Name <span className="text-red-500 font-bold">*</span>
+                        {t.accountHolder}
                       </label>
                       <input
                         type="text"
@@ -695,7 +841,7 @@ export default function SignUp() {
                 onClick={handleBackStep}
                 className="bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-base cursor-pointer select-none outline-none border-none"
               >
-                Back to Login
+                {t.backBtn}
               </button>
 
               {/* Next button */}
@@ -704,7 +850,7 @@ export default function SignUp() {
                 onClick={handleNextStep}
                 className="bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-base cursor-pointer select-none outline-none border-none"
               >
-                Next
+                {t.nextBtn}
               </button>
 
             </div>

@@ -211,8 +211,145 @@ function getResultScore(item: any, queryWords: string[]): number {
   return score;
 }
 
+const translations = {
+  en: {
+    title: "File New Claim",
+    subtitle: "Report an accident or damage incident",
+    vehicleIncident: "Vehicle & Incident",
+    selectVehicle: "Select Vehicle",
+    selectVehiclePlaceholder: "Select Vehicle",
+    incidentDate: "Incident Date",
+    incidentTime: "Incident Time",
+    incidentType: "Incident Type",
+    selectTypePlaceholder: "Select incident type",
+    typeAccident: "Accident with another vehicle",
+    typeCollision: "Single vehicle collision (e.g. tree, post)",
+    typeNatural: "Natural disaster (flood, tree fall)",
+    typeTheft: "Vandalism or theft",
+    typeOther: "Other damage",
+    descriptionLabel: "Describe what happened (minimum 10 characters) *",
+    descriptionPlaceholder: "Type incident description here...",
+    locationSearchLabel: "Search accident location or use GPS *",
+    locationPlaceholder: "Search address or location...",
+    useGps: "Use GPS Location",
+    orPin: "Or pin exact location on map",
+    otherInvolved: "Were other vehicles involved? *",
+    yes: "Yes",
+    no: "No",
+    otherCount: "Number of other vehicles involved",
+    selectCountPlaceholder: "Select number of vehicles",
+    otherVehicleHeader: "Other Vehicle",
+    plateNum: "Vehicle Plate Number *",
+    insuranceCompany: "Insurance Company *",
+    policyNum: "Policy Number *",
+    driverName: "Driver Full Name *",
+    licensePhotos: "Upload Driver's License Photos (Optional)",
+    scenePhotos: "Upload Other Vehicle/Scene Photos (Optional)",
+    nextBtn: "Next: Upload Photos & Documents",
+    fillAll: "Please fill in all required fields marked with *",
+    dateAlert: "Please select an incident date within the last 7 days."
+  },
+  si: {
+    title: "නව හිමිකම් පෑමක් ඇතුළත් කරන්න",
+    subtitle: "අනතුරක් හෝ හානියක් සිදුවීමක් වාර්තා කරන්න",
+    vehicleIncident: "වාහනය සහ අනතුර",
+    selectVehicle: "වාහනය තෝරන්න",
+    selectVehiclePlaceholder: "වාහනය තෝරන්න",
+    incidentDate: "අනතුර සිදු වූ දිනය",
+    incidentTime: "අනතුර සිදු වූ වේලාව",
+    incidentType: "අනතුරු වර්ගය",
+    selectTypePlaceholder: "අනතුරු වර්ගය තෝරන්න",
+    typeAccident: "වෙනත් වාහනයක් සමඟ සිදු වූ අනතුරක්",
+    typeCollision: "තනි වාහන ගැටීමක් (උදා: ගසක, කණුවක)",
+    typeNatural: "ස්වාභාවික විපතක් (ගංවතුර, ගසක් කඩා වැටීම)",
+    typeTheft: "මංකොල්ලකෑමක් හෝ සොරකමක්",
+    typeOther: "වෙනත් හානියක්",
+    descriptionLabel: "සිදු වූ දේ විස්තර කරන්න (අවම වශයෙන් අකුරු 10 ක්) *",
+    descriptionPlaceholder: "සිදුවීම පිළිබඳ විස්තර මෙහි ටයිප් කරන්න...",
+    locationSearchLabel: "අනතුර සිදු වූ ස්ථානය සොයන්න හෝ GPS භාවිතා කරන්න *",
+    locationPlaceholder: "ලිපිනය හෝ ස්ථානය සොයන්න...",
+    useGps: "GPS ස්ථානය භාවිතා කරන්න",
+    orPin: "නැතහොත් සිතියම මත නිවැරදි ස්ථානය ලකුණු කරන්න",
+    otherInvolved: "වෙනත් වාහන සම්බන්ධ වී තිබේද? *",
+    yes: "ඔව්",
+    no: "නැත",
+    otherCount: "සම්බන්ධ වූ වෙනත් වාහන ගණන",
+    selectCountPlaceholder: "වාහන ගණන තෝරන්න",
+    otherVehicleHeader: "වෙනත් වාහනය",
+    plateNum: "වාහන තහඩු අංකය *",
+    insuranceCompany: "රක්‍ෂණ සමාගම *",
+    policyNum: "ප්‍රතිපත්ති අංකය *",
+    driverName: "රියදුරුගේ සම්පූර්ණ නම *",
+    licensePhotos: "රියදුරු බලපත්‍රයේ ඡායාරූප උඩුගත කරන්න (අභිමත පරිදි)",
+    scenePhotos: "අනෙක් වාහනයේ/සිද්ධියේ ඡායාරූප උඩුගත කරන්න (අභිමත පරිදි)",
+    nextBtn: "ඊළඟ: ඡායාරූප සහ ලේඛන උඩුගත කරන්න",
+    fillAll: "කරුණාකර * ලකුණු කර ඇති සියලුම අනිවාර්ය ක්ෂේත්‍ර පුරවන්න",
+    dateAlert: "කරුණාකර පසුගිය දින 7 ඇතුළත සිදුවූ අනතුරු දිනයක් තෝරන්න."
+  },
+  ta: {
+    title: "புதிய கோரிக்கையைத் தாக்கல் செய்",
+    subtitle: "விபத்து அல்லது சேதச் சம்பவத்தை அறிக்கை செய்யவும்",
+    vehicleIncident: "வாகனம் & சம்பவம்",
+    selectVehicle: "வாகனத்தைத் தேர்ந்தெடுக்கவும்",
+    selectVehiclePlaceholder: "வாகனத்தைத் தேர்ந்தெடுக்கவும்",
+    incidentDate: "சம்பவத் தேதி",
+    incidentTime: "சம்பவ நேரம்",
+    incidentType: "சம்பவ வகை",
+    selectTypePlaceholder: "சம்பவ வகையைத் தேர்ந்தெடுக்கவும்",
+    typeAccident: "மற்றொரு வாகனத்துடனான விபத்து",
+    typeCollision: "ஒற்றை வாகன மோதல் (உதா: மரம், கம்பம்)",
+    typeNatural: "இயற்கை பேரழிவு (வெள்ளம், மரம் விழுதல்)",
+    typeTheft: " vandalism அல்லது திருட்டு",
+    typeOther: "இதர சேதங்கள்",
+    descriptionLabel: "நடந்ததை விவரிக்கவும் (குறைந்தது 10 எழுத்துக்கள்) *",
+    descriptionPlaceholder: "சம்பவ விவரங்களை இங்கே தட்டச்சு செய்யவும்...",
+    locationSearchLabel: "சம்பவ இடத்தைத் தேடவும் அல்லது GPS ஐப் பயன்படுத்தவும் *",
+    locationPlaceholder: "முகவரி அல்லது இடத்தைத் தேடுங்கள்...",
+    useGps: "GPS இருப்பிடத்தைப் பயன்படுத்துக",
+    orPin: "அல்லது வரைபடத்தில் சரியான இடத்தைக் குறிக்கவும்",
+    otherInvolved: "மற்ற வாகனங்கள் இதில் ஈடுபட்டதா? *",
+    yes: "ஆம்",
+    no: "இல்லை",
+    otherCount: "ஈடுபட்ட மற்ற வாகனங்களின் எண்ணிக்கை",
+    selectCountPlaceholder: "வாகனங்களின் எண்ணிக்கையைத் தேர்ந்தெடுக்கவும்",
+    otherVehicleHeader: "மற்ற வாகனம்",
+    plateNum: "வாகன எண் தகடு *",
+    insuranceCompany: "காப்பீட்டு நிறுவனம் *",
+    policyNum: "பாலிசி எண் *",
+    driverName: "ஓட்டுநரின் முழுப் பெயர் *",
+    licensePhotos: "ஓட்டுநர் உரிம புகைப்படங்களைப் பதிவேற்றவும் (விருப்பத்திற்குரியது)",
+    scenePhotos: "மற்ற வாகன/சம்பவ புகைப்படங்களைப் பதிவேற்றவும் (விருப்பத்திற்குரியது)",
+    nextBtn: "அடுத்து: புகைப்படங்கள் & ஆவணங்களைப் பதிவேற்றவும்",
+    fillAll: "தயவுசெய்து * குறியிடப்பட்ட அனைத்து கட்டாய புலங்களையும் நிரப்பவும்",
+    dateAlert: "கடந்த 7 நாட்களுக்குள் நடந்த சம்பவத் தேதியைத் தேர்ந்தெடுக்கவும்."
+  }
+};
+
 export default function FileNewClaim() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   // State for form fields
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -789,7 +926,7 @@ export default function FileNewClaim() {
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedVehicle || !incidentDate || !incidentTime || !damageType || !description || !address) {
-      alert("Please fill in all required fields marked with *");
+      alert(t.fillAll);
       return;
     }
 
@@ -801,7 +938,7 @@ export default function FileNewClaim() {
 
     const selectedDate = new Date(incidentDate);
     if (selectedDate > todayDate || selectedDate < lastWeekDate) {
-      alert("Please select an incident date within the last 7 days.");
+      alert(t.dateAlert);
       return;
     }
 

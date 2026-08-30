@@ -35,10 +35,90 @@ interface Claim {
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
 }
 
+const translations = {
+  en: {
+    title: "Track Claims",
+    subtitle: "Monitor your claim's progress in real-time",
+    idPlaceholder: "Enter Claim ID (e.g. CLM-2074-1487)",
+    trackBtn: "Track Claim",
+    searching: "Searching details...",
+    detailsTitle: "Tracking Details",
+    vehicle: "Vehicle:",
+    damageType: "Type:",
+    estAmount: "Est. Amount:",
+    date: "Date:",
+    officer: "Officer:",
+    branch: "Branch:",
+    location: "Location:",
+    description: "Description",
+    noClaimFound: "No claims found matching",
+    enterPrompt: "Please enter a valid Claim ID to retrieve coverage progress records."
+  },
+  si: {
+    title: "හිමිකම් ලුහුබැඳීම",
+    subtitle: "ඔබේ හිමිකම්වල ප්‍රගතිය සජීවීව නිරීක්ෂණය කරන්න",
+    idPlaceholder: "හිමිකම් අංකය ඇතුළත් කරන්න (උදා: CLM-2074-1487)",
+    trackBtn: "ලුහුබඳින්න",
+    searching: "තොරතුරු සොයමින්...",
+    detailsTitle: "ලුහුබැඳීමේ විස්තර",
+    vehicle: "වාහනය:",
+    damageType: "වර්ගය:",
+    estAmount: "ඇස්තමේන්තු මුදල:",
+    date: "දිනය:",
+    officer: "නිලධාරියා:",
+    branch: "ශාඛාව:",
+    location: "පිහිටීම:",
+    description: "විස්තරය",
+    noClaimFound: "ගැලපෙන හිමිකම් කිසිවක් හමු නොවීය",
+    enterPrompt: "ප්‍රගති වාර්තා ලබා ගැනීමට කරුණාකර වලංගු හිමිකම් අංකයක් ඇතුළත් කරන්න."
+  },
+  ta: {
+    title: "கோரிக்கை கண்காணிப்பு",
+    subtitle: "உரிமைக்கோரலின் முன்னேற்றத்தை நிகழ்நேரத்தில் கண்காணிக்கவும்",
+    idPlaceholder: "கோரிக்கை எண்ணை உள்ளிடவும் (உதா: CLM-2074-1487)",
+    trackBtn: "கண்காணி",
+    searching: "தகவல்களைத் தேடுகிறது...",
+    detailsTitle: "கண்காணிப்பு விவரங்கள்",
+    vehicle: "வாகனம்:",
+    damageType: "வகை:",
+    estAmount: "மதிப்பீட்டுத் தொகை:",
+    date: "தேதி:",
+    officer: "அதிகாரி:",
+    branch: "கிளை:",
+    location: "இருப்பிடம்:",
+    description: "விவரம்",
+    noClaimFound: "பொருந்தக்கூடிய கோரிக்கைகள் எதுவும் இல்லை",
+    enterPrompt: "முன்னேற்றப் பதிவுகளைப் பெற செல்லுபடியாகும் கோரிக்கை எண்ணை உள்ளிடவும்."
+  }
+};
+
 function TrackClaimsContent() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const searchParams = useSearchParams();
   const [claimId, setClaimId] = useState("");
   const [trackedClaim, setTrackedClaim] = useState<Claim | null>(null);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   const getUserRequestedDocs = (claim: Claim): string[] => {
     const getRecipientForDoc = (name: string) => {
@@ -395,10 +475,10 @@ function TrackClaimsContent() {
 
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
-            Track Claims
+            {t.title}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            Monitor your claim's progress in real-time
+            {t.subtitle}
           </p>
         </header>
       </div>
@@ -416,7 +496,7 @@ function TrackClaimsContent() {
             <input
               type="text"
               required
-              placeholder="Enter Claim ID (e.g. CLM-2074-1487)"
+              placeholder={t.idPlaceholder}
               value={claimId}
               onChange={(e) => setClaimId(e.target.value)}
               className="w-full bg-[#f1f5f9] text-slate-800 rounded-full py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-300 font-bold placeholder:text-slate-400 placeholder:font-medium shadow-inner"
@@ -426,21 +506,21 @@ function TrackClaimsContent() {
             type="submit"
             className="w-full md:w-auto bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-base py-4 px-8 rounded-full shadow-md cursor-pointer border-none transition-all duration-150 active:scale-95 whitespace-nowrap"
           >
-            Track Claim
+            {t.trackBtn}
           </button>
         </form>
 
         {/* Tracking Output Block */}
         {isLoading ? (
           <div className="text-center py-12 text-slate-500 font-bold text-lg">
-            Searching details...
+            {t.searching}
           </div>
         ) : trackedClaim ? (
           <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-[24px] shadow-lg overflow-hidden transition-all duration-300">
             {/* Header */}
             <div className="px-8 py-5 bg-slate-50 border-b border-slate-200">
               <h3 className="text-[20px] font-extrabold text-[#0f2d3a] tracking-tight leading-none">
-                Tracking Details – {trackedClaim.claimNumber}
+                {t.detailsTitle} – {trackedClaim.claimNumber}
               </h3>
             </div>
 
@@ -481,33 +561,33 @@ function TrackClaimsContent() {
               {/* 2-Column Info Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-8 px-2 border-b border-slate-100 pb-8">
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">Vehicle:</span>
+                  <span className="text-slate-400 font-bold">{t.vehicle}</span>
                   <span className="font-extrabold text-slate-800">{formatNumberPlate(trackedClaim.vehiclePlate)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">Type:</span>
+                  <span className="text-slate-400 font-bold">{t.damageType}</span>
                   <span className="font-extrabold text-slate-800">{trackedClaim.damageType}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">Est. Amount:</span>
+                  <span className="text-slate-400 font-bold">{t.estAmount}</span>
                   <span className="font-extrabold text-slate-800">
                     {trackedClaim.amount.startsWith("Rs.") ? "LKR " + trackedClaim.amount.substring(4) : trackedClaim.amount}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">Date:</span>
+                  <span className="text-slate-400 font-bold">{t.date}</span>
                   <span className="font-extrabold text-slate-800">{trackedClaim.incidentDate}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">Officer:</span>
+                  <span className="text-slate-400 font-bold">{t.officer}</span>
                   <span className="font-extrabold text-slate-800">{trackedClaim.officer || "Agent Saman"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">Branch:</span>
+                  <span className="text-slate-400 font-bold">{t.branch}</span>
                   <span className="font-extrabold text-slate-800">{trackedClaim.branch ? (trackedClaim.branch.toLowerCase().includes("branch") ? trackedClaim.branch : trackedClaim.branch + " Branch") : "Galle Branch"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">Location:</span>
+                  <span className="text-slate-400 font-bold">{t.location}</span>
                   <span className="font-extrabold text-slate-800">{trackedClaim.location || "N/A"}</span>
                 </div>
               </div>
@@ -515,7 +595,7 @@ function TrackClaimsContent() {
               {/* Incident description */}
               {trackedClaim.description && (
                 <div className="px-2 mb-6">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1.5">Description</p>
+                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1.5">{t.description}</p>
                   <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     "{trackedClaim.description}"
                   </p>
@@ -569,7 +649,7 @@ function TrackClaimsContent() {
                                         onClick={() => window.open(docUrl, "_blank")}
                                         className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
                                       >
-                                        <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                        <img src={docUrl} alt="Driver License" className="w-full h-full object-cover" />
                                       </div>
                                     );
                                   })}
@@ -580,7 +660,7 @@ function TrackClaimsContent() {
                             {/* Vehicle Photos */}
                             {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
                               <div className="pt-2 border-t border-slate-200/60">
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
+                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Vehicle Photos</span>
                                 <div className="flex flex-wrap gap-2.5">
                                   {vehicle.vehiclePhotos.map((url: string, idx: number) => {
                                     let docUrl = url;
@@ -593,7 +673,7 @@ function TrackClaimsContent() {
                                         onClick={() => window.open(docUrl, "_blank")}
                                         className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
                                       >
-                                        <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                        <img src={docUrl} alt="Vehicle" className="w-full h-full object-cover" />
                                       </div>
                                     );
                                   })}
@@ -605,7 +685,7 @@ function TrackClaimsContent() {
                       </div>
                     )
                   ) : (
-                    (trackedClaim.otherVehicleDetails.vehiclePlate || trackedClaim.otherVehicleDetails.driverName) && (
+                    trackedClaim.otherVehicleDetails && (
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
                         <div className="grid grid-cols-2 gap-4 text-left">
                           <div>
@@ -632,20 +712,20 @@ function TrackClaimsContent() {
                             <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
                             <div className="flex flex-wrap gap-2.5">
                               {trackedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
-                                let docUrl = url;
-                                if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                                  docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
-                                }
-                                return (
-                                  <div 
-                                    key={idx}
-                                    onClick={() => window.open(docUrl, "_blank")}
-                                    className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                                  >
-                                    <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
-                                  </div>
-                                );
-                              })}
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
                             </div>
                           </div>
                         )}
@@ -656,20 +736,20 @@ function TrackClaimsContent() {
                             <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
                             <div className="flex flex-wrap gap-2.5">
                               {trackedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
-                                let docUrl = url;
-                                if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                                  docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
-                                }
-                                return (
-                                  <div 
-                                    key={idx}
-                                    onClick={() => window.open(docUrl, "_blank")}
-                                    className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                                  >
-                                    <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
-                                  </div>
-                                );
-                              })}
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
                             </div>
                           </div>
                         )}
@@ -745,14 +825,14 @@ function TrackClaimsContent() {
           </div>
         ) : searchAttempted ? (
           <div className="text-center py-12 text-red-500 font-bold bg-red-50/20 border border-red-100 rounded-3xl max-w-md mx-auto animate-pulse">
-            No claim found with ID "{claimId}". Please verify your reference number.
+            {t.noClaimFound} "{claimId}". Please verify your reference number.
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400 font-semibold max-w-md mx-auto select-none">
             <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
             </svg>
-            Enter your Claim ID in the search bar above to track your claim's status.
+            {t.enterPrompt}
           </div>
         )}
 

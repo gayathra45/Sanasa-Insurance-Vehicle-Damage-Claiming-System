@@ -1,10 +1,49 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import AgentNavbar from "@/app/Components/Agent/Navbar";
 import AgentFooter from "@/app/Components/Agent/Footer";
 
+const translations = {
+  en: {
+    myProfile: "My Profile",
+    devStage: "This page is in the development stage."
+  },
+  si: {
+    myProfile: "මගේ පැතිකඩ",
+    devStage: "මෙම පිටුව සංවර්ධනය වෙමින් පවතී."
+  },
+  ta: {
+    myProfile: "என் சுயவிவரம்",
+    devStage: "இந்தப் பக்கம் இன்னும் உருவாக்கத்தில் உள்ளது."
+  }
+};
+
 export default function AgentProfile() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
       <AgentNavbar />
@@ -20,9 +59,9 @@ export default function AgentProfile() {
           </div>
 
           <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">My Profile</h2>
+            <h2 className="text-2xl font-black text-slate-800 tracking-tight">{t.myProfile}</h2>
             <p className="text-slate-500 font-semibold text-sm mt-2 leading-relaxed">
-              This page is in the development stage.
+              {t.devStage}
             </p>
           </div>
         </div>

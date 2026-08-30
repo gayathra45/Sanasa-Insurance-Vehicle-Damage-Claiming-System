@@ -137,11 +137,112 @@ function getVehicleIconContainer(type: string) {
   );
 }
 
+const translations = {
+  en: {
+    title: "My Vehicles",
+    subtitle: "Manage your registered vehicles and view coverage policies",
+    totalInsured: "Total Insured",
+    activePolicies: "Active Policies",
+    searchPlaceholder: "Search make, plate, or policy...",
+    viewDetails: "View Details",
+    addVehicle: "Add New Vehicle",
+    registerDesc: "Register another vehicle to your active policy coverage",
+    activeCoverage: "Active Coverage",
+    makeModel: "Make & Model",
+    policyNum: "Policy Number",
+    vehicleType: "Vehicle Type",
+    retrieving: "Retrieving your vehicles list...",
+    allVehicles: "All Vehicles",
+    cars: "Cars",
+    suvs: "SUVs",
+    bikes: "Motorbikes",
+    trucks: "Trucks / Lorries",
+    others: "Others",
+    noVehiclesFound: "No Vehicles Found",
+    noCategoryVehiclesFound: "No vehicles are currently registered under this category.",
+    clearSearch: "Clear Search",
+    searchNoMatch: "We couldn't find any vehicles matching"
+  },
+  si: {
+    title: "මගේ වාහන",
+    subtitle: "ඔබේ ලියාපදිංචි වාහන සහ රක්‍ෂණ ප්‍රතිපත්ති මෙතැනින් කළමනාකරණය කරන්න",
+    totalInsured: "මුළු රක්‍ෂිත ගණන",
+    activePolicies: "සක්‍රීය ප්‍රතිපත්ති",
+    searchPlaceholder: "නිෂ්පාදනය, තහඩුව හෝ රක්‍ෂණය සොයන්න...",
+    viewDetails: "විස්තර බලන්න",
+    addVehicle: "නව වාහනයක් එක් කරන්න",
+    registerDesc: "ඔබේ සක්‍රීය රක්‍ෂණ ආවරණයට වෙනත් වාහනයක් එක් කරන්න",
+    activeCoverage: "සක්‍රීය ආවරණය",
+    makeModel: "වර්ගය සහ මොඩලය",
+    policyNum: "රක්‍ෂණ ප්‍රතිපත්ති අංකය",
+    vehicleType: "වාහන වර්ගය",
+    retrieving: "ඔබගේ වාහන ලැයිස්තුව ලබා ගනිමින්...",
+    allVehicles: "සියලුම වාහන",
+    cars: "කාර්",
+    suvs: "SUVs",
+    bikes: "යතුරුපැදි",
+    trucks: "ලොරි / ට්‍රක්",
+    others: "වෙනත්",
+    noVehiclesFound: "වාහන කිසිවක් හමු නොවීය",
+    noCategoryVehiclesFound: "මෙම කාණ්ඩය යටතේ දැනට වාහන කිසිවක් ලියාපදිංචි කර නොමැත.",
+    clearSearch: "සෙවුම මකන්න",
+    searchNoMatch: "ගැලපෙන වාහන කිසිවක් හමු නොවීය"
+  },
+  ta: {
+    title: "எனது வாகனங்கள்",
+    subtitle: "பதிவுசெய்யப்பட்ட வாகனங்களை நிர்வகிக்கவும், காப்பீட்டு பாலிசிகளைப் பார்க்கவும்",
+    totalInsured: "மொத்த காப்பீடு",
+    activePolicies: "செயலில் உள்ள பாலிசிகள்",
+    searchPlaceholder: "தயாரிப்பு, தட்டு அல்லது பாலிசியைத் தேடுங்கள்...",
+    viewDetails: "விவரங்களைப் பார்",
+    addVehicle: "புதிய வாகனத்தைச் சேர்",
+    registerDesc: "செயலில் உள்ள காப்பீட்டுப் பாலிசியில் மற்றொரு வாகனத்தைப் பதிவுசெய்யவும்",
+    activeCoverage: "செயலில் உள்ள காப்பீடு",
+    makeModel: "தயாரிப்பு & மாடல்",
+    policyNum: "பாலிசி எண்",
+    vehicleType: "வாகன வகை",
+    retrieving: "உங்கள் வாகனங்களின் பட்டியலைப் பெறுகிறது...",
+    allVehicles: "அனைத்து வாகனங்கள்",
+    cars: "கார்கள்",
+    suvs: "SUVs",
+    bikes: "மோட்டார் சைக்கிள்கள்",
+    trucks: "லாரிகள் / டிரக்குகள்",
+    others: "மற்றவை",
+    noVehiclesFound: "வாகனங்கள் எதுவும் இல்லை",
+    noCategoryVehiclesFound: "இந்த வகையின் கீழ் தற்போது வாகனங்கள் எதுவும் பதிவு செய்யப்படவில்லை.",
+    clearSearch: "தேடலை நீக்கு",
+    searchNoMatch: "பொருந்தக்கூடிய வாகனங்கள் எதுவும் இல்லை"
+  }
+};
+
 export default function MyVehicles() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("All");
   const [isLoading, setIsLoading] = useState(true);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
   const [selectedVehicleForModal, setSelectedVehicleForModal] = useState<Vehicle | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
@@ -401,12 +502,12 @@ export default function MyVehicles() {
   });
 
   const categories = [
-    { id: "All", label: "All Vehicles" },
-    { id: "Car", label: "Cars" },
-    { id: "SUV", label: "SUVs" },
-    { id: "Bike", label: "Motorbikes" },
-    { id: "Truck", label: "Trucks / Lorries" },
-    { id: "Other", label: "Others" }
+    { id: "All", label: t.allVehicles },
+    { id: "Car", label: t.cars },
+    { id: "SUV", label: t.suvs },
+    { id: "Bike", label: t.bikes },
+    { id: "Truck", label: t.trucks },
+    { id: "Other", label: t.others }
   ];
 
   return (
@@ -425,10 +526,10 @@ export default function MyVehicles() {
         {/* Text content aligned automatically with the page container */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-extrabold tracking-tight leading-none">
-            My Vehicles
+            {t.title}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            Manage your registered vehicles and view coverage policies
+            {t.subtitle}
           </p>
         </header>
       </div>
@@ -460,7 +561,7 @@ export default function MyVehicles() {
             </div>
             <div>
               <h3 className="text-2xl font-black text-slate-800 leading-none">{vehicles.length}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider mt-1">Total Insured</p>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider mt-1">{t.totalInsured}</p>
             </div>
           </div>
 
@@ -475,7 +576,7 @@ export default function MyVehicles() {
               <h3 className="text-2xl font-black text-slate-800 leading-none">
                 {vehicles.filter(v => v.policyNumber).length}
               </h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider mt-1">Active Policies</p>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider mt-1">{t.activePolicies}</p>
             </div>
           </div>
         </section>
@@ -509,7 +610,7 @@ export default function MyVehicles() {
             </span>
             <input
               type="text"
-              placeholder="Search make, plate, or policy..."
+              placeholder={t.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-800 rounded-full py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-200 font-medium"
@@ -532,7 +633,7 @@ export default function MyVehicles() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            <p className="text-slate-500 font-bold text-base">Retrieving your vehicles list...</p>
+            <p className="text-slate-500 font-bold text-base">{t.retrieving}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -545,17 +646,17 @@ export default function MyVehicles() {
                   </svg>
                 </div>
                 <h4 className="text-slate-800 font-extrabold text-base mb-1">
-                  No {activeCategory === "All" ? "Vehicles" : activeCategory === "Bike" ? "Motorbikes" : activeCategory === "Truck" ? "Trucks / Lorries" : activeCategory + "s"} Found
+                  {t.noVehiclesFound}
                 </h4>
                 <p className="text-slate-400 font-semibold text-xs max-w-[240px] leading-relaxed mb-4">
-                  {searchQuery ? `We couldn't find any vehicles matching "${searchQuery}".` : `No vehicles are currently registered under this category.`}
+                  {searchQuery ? `${t.searchNoMatch} "${searchQuery}".` : t.noCategoryVehiclesFound}
                 </p>
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
                     className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-xs px-4 py-2 rounded-full transition-all cursor-pointer border-none"
                   >
-                    Clear Search
+                    {t.clearSearch}
                   </button>
                 )}
               </div>
@@ -581,7 +682,7 @@ export default function MyVehicles() {
                           </h3>
                           <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-500 bg-emerald-50/70 border border-emerald-100 rounded-full px-3 py-1 mt-1.5 select-none">
                             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            <span>Active Coverage</span>
+                            <span>{t.activeCoverage}</span>
                           </span>
                         </div>
                       </div>
@@ -595,15 +696,15 @@ export default function MyVehicles() {
                     {/* Technical details rows */}
                     <div className="flex flex-col gap-3.5 border-t border-slate-100 pt-4.5">
                       <div className="flex justify-between items-center text-sm font-semibold">
-                        <span className="text-slate-400">Make & Model</span>
+                        <span className="text-slate-400">{t.makeModel}</span>
                         <span className="text-slate-800 font-extrabold">{vehicle.company} {vehicle.model}</span>
                       </div>
                       <div className="flex justify-between items-center text-sm font-semibold">
-                        <span className="text-slate-400">Policy Number</span>
+                        <span className="text-slate-400">{t.policyNum}</span>
                         <span className="text-slate-800 font-extrabold tracking-wide">{vehicle.policyNumber || "N/A"}</span>
                       </div>
                       <div className="flex justify-between items-center text-sm font-semibold">
-                        <span className="text-slate-400">Vehicle Type</span>
+                        <span className="text-slate-400">{t.vehicleType}</span>
                         <span className="text-slate-800 font-extrabold">{vehicle.vehicleType}</span>
                       </div>
                     </div>
@@ -619,7 +720,7 @@ export default function MyVehicles() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      View Details
+                      {t.viewDetails}
                     </button>
                   </div>
                 </div>
@@ -638,9 +739,9 @@ export default function MyVehicles() {
               </div>
               <div className="text-center select-none">
                 <h4 className="text-slate-700 font-extrabold text-base mb-1 group-hover:text-[#0f2d3a] transition-all">
-                  {getAddCardTitle()}
+                  {t.addVehicle}
                 </h4>
-                <p className="text-slate-400 font-semibold text-xs max-w-[220px] leading-relaxed">Register another vehicle to your active policy coverage</p>
+                <p className="text-slate-400 font-semibold text-xs max-w-[220px] leading-relaxed">{t.registerDesc}</p>
               </div>
             </button>
           </div>

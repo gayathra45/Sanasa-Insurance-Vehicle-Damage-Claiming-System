@@ -322,11 +322,133 @@ const renderPremiumInspectionReport = (reportText: string) => {
   );
 };
 
+const translations = {
+  en: {
+    headerTitle: "My Activity & Claims",
+    headerDesc: "Manage your assigned claim files and review historical assessment timelines",
+    profileStatus: "Profile & Status",
+    performanceSummary: "Performance Summary",
+    quickGuidelines: "Quick Guidelines",
+    quickGuidelinesDesc: "Use the status tabs to view files, status, and download documents. Use the detail modal to update claim progress, upload estimates, and chat with office staff.",
+    myLastActivity: "My Last Activity",
+    claims: "Claims",
+    uploads: "Uploads",
+    chats: "Chats",
+    searchPlaceholder: "Search Claim, Plate, Damage...",
+    noClaimsFound: "No Claims Found",
+    noClaimsFoundDesc: "We couldn't find any claims assigned to you under active search queries or filters.",
+    claimPlate: "Claim / Plate",
+    claimInfo: "Claim Info",
+    vehicleNo: "Vehicle No",
+    damageType: "Damage Type",
+    location: "Location",
+    policyHolder: "Policy Holder",
+    assessment: "Assessment",
+    status: "Status",
+    actions: "Actions",
+    viewDetails: "View Details",
+    urgent: "Urgent",
+    all: "All",
+    pending: "Pending",
+    inProgress: "In Progress",
+    approved: "Approved",
+    rejected: "Rejected",
+    completed: "Completed"
+  },
+  si: {
+    headerTitle: "මගේ ක්‍රියාකාරකම් සහ හිමිකම්",
+    headerDesc: "ඔබට පවරා ඇති හිමිකම් ගොනු කළමනාකරණය කර පැරණි තක්සේරු කාලසටහන් සමාලෝචනය කරන්න",
+    profileStatus: "පැතිකඩ සහ තත්ත්වය",
+    performanceSummary: "කාර්ය සාධන සාරාංශය",
+    quickGuidelines: "ඉක්මන් මාර්ගෝපදේශ",
+    quickGuidelinesDesc: "ලේඛන බැලීමට සහ බාගත කිරීමට තත්ත්ව ටැබ් භාවිතා කරන්න. ප්‍රගතිය යාවත්කාලීන කිරීමට සහ කාර්ය මණ්ඩලය සමඟ කතාබස් කිරීමට විස්තර මොඩලය භාවිතා කරන්න.",
+    myLastActivity: "මගේ අවසන් ක්‍රියාකාරකම",
+    claims: "හිමිකම්",
+    uploads: "උඩුගත කිරීම්",
+    chats: "චැට්ස්",
+    searchPlaceholder: "හිමිකම්, තහඩුව, හානිය සොයන්න...",
+    noClaimsFound: "හිමිකම් හමු නොවීය",
+    noClaimsFoundDesc: "සක්‍රීය සෙවුම් විමසුම් හෝ පෙරහන් යටතේ ඔබට පවරා ඇති හිමිකම් කිසිවක් අපට සොයාගත නොහැකි විය.",
+    claimPlate: "හිමිකම් / අංක තහඩුව",
+    claimInfo: "හිමිකම් තොරතුරු",
+    vehicleNo: "වාහන අංකය",
+    damageType: "හානි වර්ගය",
+    location: "ස්ථානය",
+    policyHolder: "රක්ෂණ හිමියා",
+    assessment: "තක්සේරුව",
+    status: "තත්ත්වය",
+    actions: "ක්‍රියාමාර්ග",
+    viewDetails: "විස්තර බලන්න",
+    urgent: "හදිසි",
+    all: "සියල්ල",
+    pending: "ප්‍රතිචාර නොදැක්වූ",
+    inProgress: "ක්‍රියාත්මක වෙමින්",
+    approved: "අනුමතයි",
+    rejected: "ප්‍රතික්ෂේපිතයි",
+    completed: "නිමකළ"
+  },
+  ta: {
+    headerTitle: "எனது செயல்பாடு & கோரிக்கைகள்",
+    headerDesc: "உங்களுக்கு ஒதுக்கப்பட்ட கோப்புப் பதிவுகளை நிர்வகிக்கவும் மற்றும் பழைய மதிப்பீட்டு காலவரிசைகளை மதிப்பாய்வும் செய்ய",
+    profileStatus: "சுயவிவரம் மற்றும் நிலை",
+    performanceSummary: "செயல்திறன் சுருக்கம்",
+    quickGuidelines: "விரைவான வழிகாட்டுதல்கள்",
+    quickGuidelinesDesc: "கோப்புகளைப் பார்க்க, தரவிறக்க நிலைத் தாவல்களைப் பயன்படுத்தவும். முன்னேற்றத்தைப் புதுப்பிக்க, ஊழியர்களுடன் உரையாட விவரங்கள் மாதிரியைப் பயன்படுத்தவும்.",
+    myLastActivity: "எனது கடைசி செயல்பாடு",
+    claims: "கோரிக்கைகள்",
+    uploads: "பதிவேற்றங்கள்",
+    chats: "அரட்டைகள்",
+    searchPlaceholder: "கோரிக்கை, வாகன எண், சேதம் தேடுக...",
+    noClaimsFound: "கோரிக்கைகள் எதுவும் இல்லை",
+    noClaimsFoundDesc: "செயலில் உள்ள தேடல் வினவல்கள் அல்லது வடிப்பான்களின் கீழ் உங்களுக்கு ஒதுக்கப்பட்ட எந்தவொரு கோரிக்கையையும் எங்களால் கண்டறிய முடியவில்லை.",
+    claimPlate: "கோரிக்கை / வாகன எண்",
+    claimInfo: "கோரிக்கை விவரம்",
+    vehicleNo: "வாகன எண்",
+    damageType: "சேத வகை",
+    location: "இடம்",
+    policyHolder: "காப்பீட்டாளர்",
+    assessment: "மதிப்பீடு",
+    status: "நிலை",
+    actions: "நடவடிக்கைகள்",
+    viewDetails: "விவரங்களைப் பார்க்க",
+    urgent: "அவசரம்",
+    all: "அனைத்தும்",
+    pending: "நிலுவையில்",
+    inProgress: "செயல்பாட்டில்",
+    approved: "அங்கீகரிக்கப்பட்டது",
+    rejected: "நிராகரிக்கப்பட்டது",
+    completed: "முடிந்தது"
+  }
+};
+
 export default function AgentActivityPage() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
   const [agent, setAgent] = useState<any>(null);
   const [claims, setClaims] = useState<Claim[]>([]);
   const [policyHolders, setPolicyHolders] = useState<PolicyHolder[]>([]);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
   const [loading, setLoading] = useState(true);
   const [availability, setAvailability] = useState<string>("Active");
 
@@ -1023,10 +1145,10 @@ export default function AgentActivityPage() {
         {/* Header Text Content */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
-            My Activity & Claims
+            {t.headerTitle}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            Manage your assigned claim files and review historical assessment timelines
+            {t.headerDesc}
           </p>
         </header>
       </div>
@@ -1039,7 +1161,7 @@ export default function AgentActivityPage() {
           
           {/* Card 1: Profile & Status */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Profile & Status</span>
+            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">{t.profileStatus}</span>
             
             <div className="flex-1 flex items-center justify-between gap-4 mt-3">
               <div className="flex items-center gap-3.5 overflow-hidden">
@@ -1074,21 +1196,21 @@ export default function AgentActivityPage() {
 
           {/* Card 2: Performance Summary */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Performance Summary</span>
+            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">{t.performanceSummary}</span>
 
             <div className="flex-1 flex items-center mt-3">
               <div className="grid grid-cols-3 gap-3 text-center w-full">
                 <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                   <span className="text-xl font-black text-slate-800">{totalAssigned}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Claims</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.claims}</span>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                   <span className="text-xl font-black text-slate-800">{totalUploads}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Uploads</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.uploads}</span>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                   <span className="text-xl font-black text-slate-800">{totalMessages}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Chats</span>
+                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.chats}</span>
                 </div>
               </div>
             </div>
@@ -1101,10 +1223,10 @@ export default function AgentActivityPage() {
                 <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
-                Quick Guidelines
+                {t.quickGuidelines}
               </span>
               <p className="text-slate-300 text-xs font-semibold leading-relaxed mt-3">
-                Use the status tabs to view files, status, and download documents. Use the detail modal to update claim progress, upload estimates, and chat with office staff.
+                {t.quickGuidelinesDesc}
               </p>
             </div>
             <button
@@ -1115,7 +1237,7 @@ export default function AgentActivityPage() {
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4 text-white">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              My Last Activity
+              {t.myLastActivity}
             </button>
           </div>
 
@@ -1129,25 +1251,28 @@ export default function AgentActivityPage() {
                 
                 {/* Status Tabs */}
                 <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-full md:w-auto">
-                  {(["All", "Pending", "In Progress", "Approved", "Rejected", "Completed"] as const).map(tab => (
-                    <button
-                      key={tab}
-                      onClick={() => setStatusFilter(tab)}
-                      className={`px-4 py-2 rounded-lg text-xs font-black transition-all border-none outline-none cursor-pointer ${
-                        statusFilter === tab
-                          ? "bg-[#0f2d4a] text-white shadow-sm"
-                          : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
-                      }`}
-                    >
-                      {tab} ({
-                        tab === "All"
-                          ? claims.length
-                          : tab === "Completed"
-                          ? claims.filter(c => c.status === "Approved" || c.status === "Rejected").length
-                          : claims.filter(c => c.status === tab).length
-                      })
-                    </button>
-                  ))}
+                  {(["All", "Pending", "In Progress", "Approved", "Rejected", "Completed"] as const).map(tab => {
+                    const tabLabel = tab === "All" ? t.all : tab === "Pending" ? t.pending : tab === "In Progress" ? t.inProgress : tab === "Approved" ? t.approved : tab === "Rejected" ? t.rejected : tab === "Completed" ? t.completed : tab;
+                    return (
+                      <button
+                        key={tab}
+                        onClick={() => setStatusFilter(tab)}
+                        className={`px-4 py-2 rounded-lg text-xs font-black transition-all border-none outline-none cursor-pointer ${
+                          statusFilter === tab
+                            ? "bg-[#0f2d4a] text-white shadow-sm"
+                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
+                        }`}
+                      >
+                        {tabLabel} ({
+                          tab === "All"
+                            ? claims.length
+                            : tab === "Completed"
+                            ? claims.filter(c => c.status === "Approved" || c.status === "Rejected").length
+                            : claims.filter(c => c.status === tab).length
+                        })
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Search Bar */}
@@ -1161,7 +1286,7 @@ export default function AgentActivityPage() {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search Claim, Plate, Damage..."
+                    placeholder={t.searchPlaceholder}
                     className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-slate-700 placeholder:text-slate-400 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] focus:border-transparent transition-all bg-slate-50 focus:bg-white"
                   />
                 </div>
@@ -1177,23 +1302,23 @@ export default function AgentActivityPage() {
               </div>
             ) : filteredClaims.length === 0 ? (
               <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
-                <h3 className="font-extrabold text-slate-700 text-lg">No Claims Found</h3>
+                <h3 className="font-extrabold text-slate-700 text-lg">{t.noClaimsFound}</h3>
                 <p className="text-slate-400 text-xs font-semibold mt-1.5 max-w-sm leading-relaxed">
-                  We couldn't find any claims assigned to you under active search queries or filters.
+                  {t.noClaimsFoundDesc}
                 </p>
               </div>
             ) : (
               <div className="flex flex-col gap-3.5">
                 {/* Grid Table Header (Desktop Only) */}
                 <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,0.7fr)] md:items-center gap-4 px-5 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
-                  <div>Claim Info</div>
-                  <div>Vehicle No</div>
-                  <div>Damage Type</div>
-                  <div>Location</div>
-                  <div>Policy Holder</div>
-                  <div>Assessment</div>
-                  <div className="text-center">Status</div>
-                  <div className="text-right">Actions</div>
+                  <div>{t.claimInfo}</div>
+                  <div>{t.vehicleNo}</div>
+                  <div>{t.damageType}</div>
+                  <div>{t.location}</div>
+                  <div>{t.policyHolder}</div>
+                  <div>{t.assessment}</div>
+                  <div className="text-center">{t.status}</div>
+                  <div className="text-right">{t.actions}</div>
                 </div>
 
                 {/* List Cards */}
@@ -1251,14 +1376,14 @@ export default function AgentActivityPage() {
                         {typeof claim.amount === "number" ? (
                           `Rs. ${claim.amount.toLocaleString()}`
                         ) : (
-                          <span className="text-slate-400 font-normal italic text-[11px]">Not Assessed</span>
+                          <span className="text-slate-400 font-normal italic text-[11px]">{lang === "en" ? "Not Assessed" : lang === "si" ? "තක්සේරු කර නැත" : "மதிப்பிடப்படவில்லை"}</span>
                         )}
                       </div>
 
                       {/* Status Badge */}
                       <div className="flex flex-col items-center min-w-0">
                         <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
-                          {claim.status}
+                          {claim.status === "Pending" ? t.pending : claim.status === "In Progress" ? t.inProgress : claim.status === "Approved" ? t.approved : claim.status === "Rejected" ? t.rejected : claim.status}
                         </span>
                       </div>
 
@@ -1272,7 +1397,7 @@ export default function AgentActivityPage() {
                           }}
                           className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
                         >
-                          Details
+                          {t.viewDetails}
                         </button>
                       </div>
 

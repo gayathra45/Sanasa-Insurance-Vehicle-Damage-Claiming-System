@@ -53,7 +53,89 @@ interface Claim {
   additionalDocuments?: AdditionalDoc[];
 }
 
+const translations = {
+  en: {
+    title: "My Claims",
+    subtitle: "All your insurance claims",
+    profileStatus: "Profile & Status",
+    perfSummary: "Performance Summary",
+    claims: "Claims",
+    pending: "Pending",
+    completed: "Completed",
+    guidelines: "Quick Guidelines",
+    guidelineDesc: "Use the status tabs to filter your claims. Click \"View\" to check live assessment tracking, view officer details, and read message logs.",
+    searchPlaceholder: "Search claims by number, plate, type, status...",
+    all: "All",
+    statusPending: "Pending",
+    statusReview: "Review",
+    statusApproved: "Approved",
+    statusRejected: "Rejected",
+    statusCompleted: "Completed",
+    tableClaimNum: "Claim #",
+    tablePlate: "Plate #",
+    tableDate: "Date",
+    tableType: "Damage Type",
+    tableAmount: "Amount",
+    tableStatus: "Status",
+    tableAction: "Action",
+    view: "View"
+  },
+  si: {
+    title: "මගේ හිමිකම්",
+    subtitle: "ඔබේ සියලුම රක්‍ෂණ හිමිකම්",
+    profileStatus: "පැතිකඩ සහ තත්ත්වය",
+    perfSummary: "ක්‍රියාකාරී සාරාංශය",
+    claims: "හිමිකම්",
+    pending: "ප්‍රතිචාර නොලැබුණු",
+    completed: "නිම කළ",
+    guidelines: "ඉක්මන් මාර්ගෝපදේශ",
+    guidelineDesc: "ඔබේ හිමිකම් පෙරීමට තත්ත්ව ටැබ් භාවිතා කරන්න. සජීවී ඇගයීම් ලුහුබැඳීම පරීක්ෂා කිරීමට, නිලධාරී විස්තර බැලීමට සහ පණිවිඩ ලොග් කියවීමට \"බලන්න\" ක්ලික් කරන්න.",
+    searchPlaceholder: "අංකය, තහඩුව, වර්ගය, තත්ත්වය අනුව හිමිකම් සොයන්න...",
+    all: "සියල්ල",
+    statusPending: "Pending",
+    statusReview: "Review",
+    statusApproved: "Approved",
+    statusRejected: "Rejected",
+    statusCompleted: "Completed",
+    tableClaimNum: "හිමිකම් අංකය",
+    tablePlate: "තහඩු අංකය",
+    tableDate: "දිනය",
+    tableType: "හානි වර්ගය",
+    tableAmount: "මුදල",
+    tableStatus: "තත්ත්වය",
+    tableAction: "ක්‍රියාව",
+    view: "බලන්න"
+  },
+  ta: {
+    title: "என் கோரிக்கைகள்",
+    subtitle: "உங்கள் காப்பீட்டு கோரிக்கைகள் அனைத்தும்",
+    profileStatus: "சுயவிவரம் & நிலை",
+    perfSummary: "செயல்திறன் சுருக்கம்",
+    claims: "கோரிக்கைகள்",
+    pending: "நிலுவையில் உள்ளவை",
+    completed: "முடிந்தவை",
+    guidelines: "விரைவான வழிகாட்டுதல்கள்",
+    guidelineDesc: "உங்கள் கோரிக்கைகளை வடிகட்ட நிலை தாவல்களைப் பயன்படுத்தவும். நேரடி மதிப்பீட்டு கண்காணிப்பைச் சரிபார்க்க, அதிகாரி விவரங்களைக் காண மற்றும் செய்திப் பதிவுகளைப் படிக்க \"அழைக்க\" என்பதைக் கிளிக் செய்யவும்.",
+    searchPlaceholder: "எண், தட்டு, வகை, நிலை மூலம் கோரிக்கைகளைத் தேடுங்கள்...",
+    all: "அனைத்தும்",
+    statusPending: "Pending",
+    statusReview: "Review",
+    statusApproved: "Approved",
+    statusRejected: "Rejected",
+    statusCompleted: "Completed",
+    tableClaimNum: "கோரிக்கை #",
+    tablePlate: "தகடு #",
+    tableDate: "தேதி",
+    tableType: "சேத வகை",
+    tableAmount: "தொகை",
+    tableStatus: "நிலை",
+    tableAction: "செயல்",
+    view: "அழைக்க"
+  }
+};
+
 export default function MyClaims() {
+  const [lang, setLang] = useState<"en" | "si" | "ta" >("en");
   const [claims, setClaims] = useState<Claim[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
@@ -61,6 +143,28 @@ export default function MyClaims() {
   const [user, setUser] = useState<any>(null);
   const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "Review" | "Approved" | "Rejected" | "Completed">("All");
   const [isCancellingClaim, setIsCancellingClaim] = useState(false);
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   const handleCancelClaim = async (claimNumber: string) => {
     const confirmCancel = window.confirm("Are you sure you want to cancel and delete this claim? This action cannot be undone.");
@@ -421,10 +525,10 @@ export default function MyClaims() {
         {/* Text content aligned automatically with the page container */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
-            My Claims
+            {t.title}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            All your insurance claims
+            {t.subtitle}
           </p>
         </header>
       </div>
@@ -437,7 +541,7 @@ export default function MyClaims() {
           
           {/* Card 1: Profile & Status */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Profile & Status</span>
+            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">{t.profileStatus}</span>
             <div className="flex items-center gap-3.5 mt-3">
               <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-bold shrink-0">
                 <svg className="w-6 h-6 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
@@ -455,20 +559,20 @@ export default function MyClaims() {
 
           {/* Card 2: Performance Summary */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Performance Summary</span>
+            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">{t.perfSummary}</span>
 
             <div className="grid grid-cols-3 gap-3 text-center mt-3">
               <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                 <span className="text-xl font-black text-slate-800">{totalClaimsThisYear}</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Claims</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.claims}</span>
               </div>
               <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                 <span className="text-xl font-black text-slate-800">{pendingClaimsThisYear}</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Pending</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.pending}</span>
               </div>
               <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                 <span className="text-xl font-black text-slate-800">{completedClaimsThisYear}</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Completed</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.completed}</span>
               </div>
             </div>
           </div>
@@ -479,10 +583,10 @@ export default function MyClaims() {
               <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
-              Quick Guidelines
+              {t.guidelines}
             </span>
             <p className="text-slate-300 text-xs font-semibold leading-relaxed mt-3.5">
-              Use the status tabs to filter your claims. Click "View" to check live assessment tracking, view officer details, and read message logs.
+              {t.guidelineDesc}
             </p>
           </div>
 
@@ -493,44 +597,54 @@ export default function MyClaims() {
           
           {/* Status Tabs */}
           <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-full lg:w-auto">
-            {(["All", "Pending", "Review", "Approved", "Rejected", "Completed"] as const).map(tab => (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setStatusFilter(tab)}
-                className={`px-4 py-2 rounded-lg text-xs font-black transition-all border-none outline-none cursor-pointer ${
-                  statusFilter === tab
-                    ? "bg-[#0f2d4a] text-white shadow-sm"
-                    : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
-                }`}
-              >
-                {tab} ({
-                  tab === "All"
-                    ? claims.length
-                    : tab === "Completed"
-                    ? claims.filter(c => {
-                        const s = c.status.toLowerCase();
-                        return s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
-                      }).length
-                    : tab === "Pending"
-                    ? claims.filter(c => {
-                        const s = c.status.toLowerCase();
-                        return s.includes("pending") || s.includes("progress");
-                      }).length
-                    : tab === "Review"
-                    ? claims.filter(c => {
-                        const s = c.status.toLowerCase();
-                        return s.includes("review") || s.includes("submit");
-                      }).length
-                    : tab === "Approved"
-                    ? claims.filter(c => {
-                        const s = c.status.toLowerCase();
-                        return s.includes("approved") || s.includes("active") || s.includes("done");
-                      }).length
-                    : claims.filter(c => c.status.toLowerCase().includes(tab.toLowerCase())).length
-                })
-              </button>
-            ))}
+            {(["All", "Pending", "Review", "Approved", "Rejected", "Completed"] as const).map(tab => {
+              const tabLabels = {
+                All: t.all,
+                Pending: t.statusPending,
+                Review: t.statusReview,
+                Approved: t.statusApproved,
+                Rejected: t.statusRejected,
+                Completed: t.statusCompleted
+              };
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setStatusFilter(tab)}
+                  className={`px-4 py-2 rounded-lg text-xs font-black transition-all border-none outline-none cursor-pointer ${
+                    statusFilter === tab
+                      ? "bg-[#0f2d4a] text-white shadow-sm"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
+                  }`}
+                >
+                  {tabLabels[tab]} ({
+                    tab === "All"
+                      ? claims.length
+                      : tab === "Completed"
+                      ? claims.filter(c => {
+                          const s = c.status.toLowerCase();
+                          return s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
+                        }).length
+                      : tab === "Pending"
+                      ? claims.filter(c => {
+                          const s = c.status.toLowerCase();
+                          return s.includes("pending") || s.includes("progress");
+                        }).length
+                      : tab === "Review"
+                      ? claims.filter(c => {
+                          const s = c.status.toLowerCase();
+                          return s.includes("review") || s.includes("submit");
+                        }).length
+                      : tab === "Approved"
+                      ? claims.filter(c => {
+                          const s = c.status.toLowerCase();
+                          return s.includes("approved") || s.includes("active") || s.includes("done");
+                        }).length
+                      : claims.filter(c => c.status.toLowerCase().includes(tab.toLowerCase())).length
+                  })
+                </button>
+              );
+            })}
           </div>
 
           {/* Search Bar */}
@@ -544,7 +658,7 @@ export default function MyClaims() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search ID, vehicle, type, or status..."
+              placeholder={t.searchPlaceholder}
               className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 text-slate-700 placeholder:text-slate-400 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] focus:border-transparent transition-all bg-slate-50 focus:bg-white"
             />
             {searchQuery && (
@@ -566,13 +680,13 @@ export default function MyClaims() {
           
           {/* Grid Table Header (Desktop Only) */}
           <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] items-center gap-4 px-5 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
-            <div>Claim Info</div>
-            <div>Vehicle No</div>
-            <div>Date</div>
-            <div>Damage Type</div>
-            <div className="text-center">Amount</div>
-            <div className="text-center">Status</div>
-            <div className="text-right">Actions</div>
+            <div>{t.tableClaimNum}</div>
+            <div>{t.tablePlate}</div>
+            <div>{t.tableDate}</div>
+            <div>{t.tableType}</div>
+            <div className="text-center">{t.tableAmount}</div>
+            <div className="text-center">{t.tableStatus}</div>
+            <div className="text-right">{t.tableAction}</div>
           </div>
 
           {/* List Cards */}
@@ -641,7 +755,7 @@ export default function MyClaims() {
                         onClick={() => setSelectedClaim(claim)}
                         className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
                       >
-                        Details
+                        {t.view}
                       </button>
                     </div>
 
