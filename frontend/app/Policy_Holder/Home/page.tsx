@@ -127,9 +127,119 @@ function getVehicleIconContainer(type: string) {
 }
 
 
+const homeTranslations = {
+  en: {
+    welcome: "Welcome back,",
+    totalClaims: "Total Claims",
+    inProgress: "In Progress",
+    approved: "Approved",
+    myVehicles: "My Registered Vehicles",
+    notifications: "Recent Notifications & Requests",
+    activePolicy: "Active Policy",
+    coverageStatus: "Coverage Status",
+    action: "Action",
+    view: "View",
+    details: "Details",
+    downloadCertificate: "Download Cover Note",
+    noNotifications: "No notifications or reminders at this time.",
+    noVehicles: "No vehicles registered under this policy.",
+    policyActiveNote: "Your policy is active and up to date. You have",
+    policyClaimSingular: "pending claim",
+    policyClaimPlural: "pending claims",
+    policyAnd: " and ",
+    policyDocRequest: "a document request awaiting action",
+    policyCleanNote: "Your policy is active and up to date. You have no pending claims.",
+    newClaim: "New Claim",
+    trackClaim: "Track Claim",
+    accidentNote: "An accident claim with Sanasa General Insurance Company Limited is a request for compensation after an accident.",
+    supportHelpdesk: "Support Helpdesk",
+    liveSupport: "Live Support",
+    supportNeed: "Need assistance with an active claim filing, towing service, or coverage terms? Call our staff directly.",
+    line1: "Line 1",
+    line2: "Line 2"
+  },
+  si: {
+    welcome: "නැවත සාදරයෙන් පිළිගනිමු,",
+    totalClaims: "මුළු හිමිකම් ගණන",
+    inProgress: "ක්‍රියාත්මක වෙමින් පවතින",
+    approved: "අනුමත කරන ලද",
+    myVehicles: "මගේ ලියාපදිංචි වාහන",
+    notifications: "මෑත කාලීන දැනුම්දීම් සහ ඉල්ලීම්",
+    activePolicy: "සක්‍රීය රක්ෂණ ඔප්පුව",
+    coverageStatus: "රක්ෂණ ආවරණ තත්ත්වය",
+    action: "ක්‍රියාව",
+    view: "බලන්න",
+    details: "විස්තර",
+    downloadCertificate: "ආවරණ සටහන බාගත කරන්න",
+    noNotifications: "දැනට දැනුම්දීම් හෝ ඉල්ලීම් කිසිවක් නැත.",
+    noVehicles: "මෙම රක්ෂණ ඔප්පු යටතේ කිසිදු වාහනයක් ලියාපදිංචි කර නොමැත.",
+    policyActiveNote: "ඔබගේ රක්ෂණ ඔප්පුව සක්‍රීය වන අතර යාවත්කාලීන වේ. ඔබට",
+    policyClaimSingular: "හිමිකම් පෑමක් බලාපොරොත්තුවෙන් පවතී",
+    policyClaimPlural: "හිමිකම් පෑම් බලාපොරොත්තුවෙන් පවතී",
+    policyAnd: " සහ ",
+    policyDocRequest: "ක්‍රියාත්මක කිරීමට බලාපොරොත්තු වන ලේඛන ඉල්ලීමක් ඇත",
+    policyCleanNote: "ඔබගේ රක්ෂණ ඔප්පුව සක්‍රීය වන අතර යාවත්කාලීන වේ. ඔබට බලාපොරොත්තු වන හිමිකම් පෑම් නොමැත.",
+    newClaim: "නව හිමිකම්",
+    trackClaim: "හිමිකම් ලුහුබැඳීම",
+    accidentNote: "සනස සාමාන්‍ය රක්ෂණ සමාගම සමඟ අනතුරු හිමිකම් පෑමක් යනු අනතුරකින් පසු වන්දි ලබා ගැනීම සඳහා කරන ඉල්ලීමකි.",
+    supportHelpdesk: "සහාය සේවා කවුළුව",
+    liveSupport: "සජීවී සහාය",
+    supportNeed: "හිමිකම් පෑමක්, ඇදගෙන යාමේ සේවාවක් හෝ රක්ෂණ කොන්දේසි පිළිබඳ සහාය අවශ්‍යද? අපගේ කාර්ය මණ්ඩලය අමතන්න.",
+    line1: "මාර්ගය 1",
+    line2: "මාර්ගය 2"
+  },
+  ta: {
+    welcome: "மீண்டும் வருக,",
+    totalClaims: "மொத்த கோரிக்கைகள்",
+    inProgress: "செயல்முறையில்",
+    approved: "அங்கீகரிக்கப்பட்ட",
+    myVehicles: "என் பதிவு செய்யப்பட்ட வாகனங்கள்",
+    notifications: "சமீபத்திய அறிவிப்புகள் & கோரிக்கைகள்",
+    activePolicy: "செயலில் உள்ள காப்பீடு",
+    coverageStatus: "காப்பீட்டு நிலை",
+    action: "நடவடிக்கை",
+    view: "பார்வை",
+    details: "விவரங்கள்",
+    downloadCertificate: "காப்பீட்டுச் சான்றிதழைப் பதிவிறக்குக",
+    noNotifications: "நிலுவையில் உள்ள அறிவிப்புகள் எதுவும் இல்லை.",
+    noVehicles: "இந்தக் காப்பீட்டின் கீழ் வாகனங்கள் எதுவும் பதிவு செய்யப்படவில்லை.",
+    policyActiveNote: "உங்கள் காப்பீடு செயல்பாட்டில் உள்ளது. உங்களிடம்",
+    policyClaimSingular: "விண்ணப்பம் பரிசீலனையில் உள்ளது",
+    policyClaimPlural: "விண்ணப்பங்கள் பரிசீலனையில் உள்ளன",
+    policyAnd: " மற்றும் ",
+    policyDocRequest: "ஆவணங்கள் சமர்ப்பிக்க வேண்டியுள்ளது",
+    policyCleanNote: "உங்கள் காப்பீடு செயல்பாட்டில் உள்ளது. நிலுவையில் விண்ணப்பங்கள் ஏதுமில்லை.",
+    newClaim: "புதிய கோரிக்கை",
+    trackClaim: "கோரிக்கையைத் தொடர்க",
+    accidentNote: "சனச பொது காப்பீட்டு நிறுவனத்தில் விபத்துக் கோரிக்கை என்பது விபத்துக்குப் பின்னர் இழப்பீடு கோரும் ஒரு கோரிக்கையாகும்.",
+    supportHelpdesk: "உதவி மையம்",
+    liveSupport: "நேரடி உதவி",
+    supportNeed: "உதவி தேவைப்படின் எங்களை நேரடியாகத் தொடர்பு கொள்ளவும்.",
+    line1: "வரிசை 1",
+    line2: "வரிசை 2"
+  }
+};
+
 export default function PolicyHolderHome() {
   const [userName, setUserName] = useState("");
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+      if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+        setLang(savedLang);
+      }
+      const handleLangChange = (e: any) => {
+        setLang(e.detail);
+      };
+      window.addEventListener("language-changed", handleLangChange);
+      return () => window.removeEventListener("language-changed", handleLangChange);
+    }
+  }, []);
+
+  const t = homeTranslations[lang];
   const [pendingClaimsCount, setPendingClaimsCount] = useState(0);
   const [hasDocumentRequest, setHasDocumentRequest] = useState(false);
   const [totalClaimsCount, setTotalClaimsCount] = useState(0);
@@ -428,32 +538,32 @@ export default function PolicyHolderHome() {
           <div>
             <div className="inline-block border-b-3 border-[#00ddff] pb-1.5 mb-2">
               <h2 className="text-white text-xl md:text-2.5xl font-black tracking-tight">
-                Welcome back, {userName} !
+                {t.welcome} {userName} !
               </h2>
             </div>
             <p className="text-slate-200 text-[13px] md:text-sm font-semibold tracking-wide mt-1 transition-all duration-300">
               {pendingClaimsCount > 0 || hasDocumentRequest ? (
                 <>
-                  Your policy is active and up to date. You have{" "}
+                  {t.policyActiveNote}{" "}
                   {pendingClaimsCount > 0 && (
                     <>
                       <span className="text-[#ff9800] font-extrabold">
-                        {pendingClaimsCount} pending claim{pendingClaimsCount > 1 ? "s" : ""}
+                        {pendingClaimsCount} {pendingClaimsCount > 1 ? t.policyClaimPlural : t.policyClaimSingular}
                       </span>
                     </>
                   )}
-                  {pendingClaimsCount > 0 && hasDocumentRequest && " and "}
+                  {pendingClaimsCount > 0 && hasDocumentRequest && t.policyAnd}
                   {hasDocumentRequest && (
                     <>
                       <span className="text-[#ff9800] font-extrabold">
-                        a document request awaiting action
+                        {t.policyDocRequest}
                       </span>
                     </>
                   )}
                   .
                 </>
               ) : (
-                "Your policy is active and up to date. You have no pending claims."
+                t.policyCleanNote
               )}
             </p>
           </div>
@@ -461,8 +571,7 @@ export default function PolicyHolderHome() {
           {/* Central Statement */}
           <div className="my-auto max-w-4xl mx-auto text-center px-4">
               <h1 className="text-lg md:text-[24px] font-extrabold text-white leading-relaxed tracking-normal">
-                An accident claim with Sanasa General Insurance Company Limited is <br className="hidden md:inline" />
-                a request for compensation after an accident.
+                {t.accidentNote}
               </h1>
           </div>
 
@@ -473,14 +582,14 @@ export default function PolicyHolderHome() {
               className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
               style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
             >
-              New Claim
+              {t.newClaim}
             </Link>
             <Link
               href="/Policy_Holder/TrackClaims"
               className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
               style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
             >
-              Track Claim
+              {t.trackClaim}
             </Link>
           </div>
 
@@ -505,7 +614,7 @@ export default function PolicyHolderHome() {
             </div>
             <div>
               <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{totalClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">Total Claims</p>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">{t.totalClaims}</p>
             </div>
           </Link>
 
@@ -521,7 +630,7 @@ export default function PolicyHolderHome() {
             </div>
             <div>
               <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">In Progress</p>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">{t.inProgress}</p>
             </div>
           </Link>
 
@@ -538,7 +647,7 @@ export default function PolicyHolderHome() {
             </div>
             <div>
               <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">Approved</p>
+              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">{t.approved}</p>
             </div>
           </Link>
 
@@ -554,7 +663,7 @@ export default function PolicyHolderHome() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5" />
               </svg>
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
-                Notifications & Reminders
+                {t.notifications}
               </h2>
             </div>
 
@@ -653,7 +762,7 @@ export default function PolicyHolderHome() {
                 })
               ) : (
                 <div className="bg-white border border-slate-200 rounded-[24px] p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
-                  <p className="text-slate-400 font-bold text-sm">No notifications or reminders at this time.</p>
+                  <p className="text-slate-400 font-bold text-sm">{t.noNotifications}</p>
                 </div>
               )}
             </div>
@@ -667,7 +776,7 @@ export default function PolicyHolderHome() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
                 </svg>
                 <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
-                  My Vehicles
+                  {t.myVehicles}
                 </h2>
               </Link>
 
@@ -687,13 +796,13 @@ export default function PolicyHolderHome() {
                         onClick={() => setSelectedVehicleForModal(vehicle)}
                         className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-5 py-2 rounded-full transition-all bg-transparent cursor-pointer outline-none"
                       >
-                        View
+                        {t.view}
                       </button>
                     </div>
                   ))
                 ) : (
                   <div className="bg-white border border-slate-200 rounded-[22px] p-8 text-center shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-                    <p className="text-slate-400 font-bold text-sm">No vehicles registered under this policy.</p>
+                    <p className="text-slate-400 font-bold text-sm">{t.noVehicles}</p>
                   </div>
                 )}
               </div>
@@ -708,18 +817,18 @@ export default function PolicyHolderHome() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="text-[9px] font-bold text-emerald-700 tracking-wide uppercase">Live Support</span>
+                <span className="text-[9px] font-bold text-emerald-700 tracking-wide uppercase">{t.liveSupport}</span>
               </div>
 
               <h3 className="text-cyan-800 font-extrabold text-lg tracking-tight flex items-center gap-2 select-none">
                 <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
-                Support Helpdesk
+                {t.supportHelpdesk}
               </h3>
               
               <p className="text-xs text-slate-500 font-semibold text-left leading-relaxed -mt-1 select-none">
-                Need assistance with an active claim filing, towing service, or coverage terms? Call our staff directly.
+                {t.supportNeed}
               </p>
 
               <div className="flex flex-col gap-2.5 mt-1">
@@ -733,7 +842,7 @@ export default function PolicyHolderHome() {
                     <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 000</span>
                   </div>
                   <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
-                    Line 1
+                    {t.line1}
                   </span>
                 </a>
 
@@ -747,7 +856,7 @@ export default function PolicyHolderHome() {
                     <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 001</span>
                   </div>
                   <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
-                    Line 2
+                    {t.line2}
                   </span>
                 </a>
               </div>

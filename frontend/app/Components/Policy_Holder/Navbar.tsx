@@ -5,25 +5,79 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
+const translations = {
+  en: {
+    home: "Home",
+    myClaims: "My Claims",
+    documents: "Documents",
+    contact: "Contact",
+    newClaim: "New Claim",
+    myProfile: "My Profile",
+    logout: "Logout",
+  },
+  si: {
+    home: "මුල් පිටුව",
+    myClaims: "මගේ හිමිකම්",
+    documents: "ලේඛන",
+    contact: "සම්බන්ධ වන්න",
+    newClaim: "නව හිමිකම්",
+    myProfile: "මගේ පැතිකඩ",
+    logout: "පිටවීම",
+  },
+  ta: {
+    home: "முகப்பு",
+    myClaims: "என் கோரிக்கைகள்",
+    documents: "ஆவணங்கள்",
+    contact: "தொடர்பு கொள்ள",
+    newClaim: "புதிய கோரிக்கை",
+    myProfile: "என் சுயவிவரம்",
+    logout: "வெளியேறு",
+  }
+};
+
 export default function PolicyHolderNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
+  
   const lastScrollY = useRef(0);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const langMenuRef = useRef<HTMLDivElement>(null);
 
-  // Close profile dropdown when clicking outside
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (profileMenuRef.current && !profileMenuRef.current.contains(target)) {
         setProfileMenuOpen(false);
+      }
+      if (langMenuRef.current && !langMenuRef.current.contains(target)) {
+        setLangMenuOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const changeLanguage = (newLang: "en" | "si" | "ta") => {
+    setLang(newLang);
+    localStorage.setItem("language", newLang);
+    setLangMenuOpen(false);
+    // Dispatch custom event so pages can dynamically translate their contents
+    window.dispatchEvent(new CustomEvent("language-changed", { detail: newLang }));
+  };
 
   const handleLogout = () => {
     sessionStorage.clear();
@@ -64,6 +118,8 @@ export default function PolicyHolderNavbar() {
     return "text-[#333] hover:text-[#00ddff] font-bold px-6 py-2 transition-all duration-150 no-underline";
   };
 
+  const t = translations[lang];
+
   return (
     <div className="w-full h-[57px] md:h-[65px]">
       <nav
@@ -89,27 +145,69 @@ export default function PolicyHolderNavbar() {
           {/* Desktop Navigation Links */}
           <div className="hidden md:flex items-center gap-5 text-base font-bold">
             <Link href="/Policy_Holder/Home" className={getLinkClass("/Policy_Holder/Home")}>
-              Home
+              {t.home}
             </Link>
             <Link href="/Policy_Holder/My_claims" className={getLinkClass("/Policy_Holder/My_claims")}>
-              My Claims
+              {t.myClaims}
             </Link>
             <Link href="/Policy_Holder/Documents" className={getLinkClass("/Policy_Holder/Documents")}>
-              Documents
+              {t.documents}
             </Link>
             <Link href="/Policy_Holder/Contact" className={getLinkClass("/Policy_Holder/Contact")}>
-              Contact
+              {t.contact}
             </Link>
             <Link
               href="/Policy_Holder/New_Claim"
               className="bg-[#ff9800] text-white hover:bg-[#e68900] font-bold px-6 py-2 rounded-full shadow-md transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] no-underline"
             >
-              New Claim
+              {t.newClaim}
             </Link>
           </div>
 
-          {/* Right Action Icons (Notifications, Profile & Mobile Menu Toggle) */}
+          {/* Right Action Icons (Notifications, Language Selector, Profile & Mobile Menu Toggle) */}
           <div className="flex items-center gap-4">
+            {/* Language Selector Dropdown */}
+            <div className="relative" ref={langMenuRef}>
+              <button
+                onClick={() => setLangMenuOpen((prev) => !prev)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-200 text-xs font-black text-slate-700 hover:text-[#00ddff] hover:border-[#00ddff] transition-all bg-slate-50 cursor-pointer focus:outline-none select-none"
+              >
+                <span>🌐</span>
+                <span className="uppercase">{lang === "si" ? "සිං" : lang === "ta" ? "தமி" : "EN"}</span>
+                <svg className="w-3 h-3 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+
+              {langMenuOpen && (
+                <div className="absolute right-0 mt-3 w-36 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-1.5 z-50">
+                  <div className="absolute -top-2 right-6 w-4 h-4 bg-white border-l border-t border-slate-100 rotate-45" />
+                  
+                  <button
+                    onClick={() => changeLanguage("en")}
+                    className={`flex items-center justify-between w-full px-4 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#00ddff] font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-[#00ddff]" : ""}`}
+                  >
+                    <span>English</span>
+                    {lang === "en" && <span>✓</span>}
+                  </button>
+                  <button
+                    onClick={() => changeLanguage("si")}
+                    className={`flex items-center justify-between w-full px-4 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#00ddff] font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-[#00ddff]" : ""}`}
+                  >
+                    <span>සිංහල</span>
+                    {lang === "si" && <span>✓</span>}
+                  </button>
+                  <button
+                    onClick={() => changeLanguage("ta")}
+                    className={`flex items-center justify-between w-full px-4 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#00ddff] font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-[#00ddff]" : ""}`}
+                  >
+                    <span>தமிழ்</span>
+                    {lang === "ta" && <span>✓</span>}
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Notifications Bell */}
             <Link
               href="/Policy_Holder/Notifications"
@@ -166,7 +264,7 @@ export default function PolicyHolderNavbar() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    My Profile
+                    {t.myProfile}
                   </Link>
 
                   <div className="mx-4 my-1 border-t border-slate-100" />
@@ -178,7 +276,7 @@ export default function PolicyHolderNavbar() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
                     </svg>
-                    Logout
+                    {t.logout}
                   </button>
                 </div>
               )}
@@ -214,7 +312,7 @@ export default function PolicyHolderNavbar() {
                 isActive("/Policy_Holder/Home") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
-              Home
+              {t.home}
             </Link>
             <Link
               href="/Policy_Holder/My_claims"
@@ -223,7 +321,7 @@ export default function PolicyHolderNavbar() {
                 isActive("/Policy_Holder/My_claims") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
-              My Claims
+              {t.myClaims}
             </Link>
             <Link
               href="/Policy_Holder/Documents"
@@ -232,7 +330,7 @@ export default function PolicyHolderNavbar() {
                 isActive("/Policy_Holder/Documents") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
-              Documents
+              {t.documents}
             </Link>
             <Link
               href="/Policy_Holder/Contact"
@@ -241,14 +339,14 @@ export default function PolicyHolderNavbar() {
                 isActive("/Policy_Holder/Contact") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
-              Contact
+              {t.contact}
             </Link>
             <Link
               href="/Policy_Holder/New_Claim"
               onClick={() => setIsOpen(false)}
               className="bg-[#ff9800] text-white hover:bg-[#e68900] font-bold py-3 px-5 rounded-2xl shadow-md transition-all duration-150 text-center"
             >
-              New Claim
+              {t.newClaim}
             </Link>
           </div>
         )}
