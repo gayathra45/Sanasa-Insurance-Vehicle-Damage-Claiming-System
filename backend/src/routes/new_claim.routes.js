@@ -97,15 +97,51 @@ router.post("/new-claim", async (req, res) => {
       return Promise.all(arr.map(item => uploadToCloudinary(item, folder)));
     };
 
-    const [accidentFront, accidentRear, accidentSide, licenseFront, licenseRear, otherLicensePhotos, otherVehiclePhotos] = await Promise.all([
+    // 1. Upload main user photos
+    const [accidentFront, accidentRear, accidentSide, licenseFront, licenseRear] = await Promise.all([
       uploadArray(accidentPhotos?.front, "claims/accident_photos"),
       uploadArray(accidentPhotos?.rear, "claims/accident_photos"),
       uploadArray(accidentPhotos?.side, "claims/accident_photos"),
       uploadArray(drivingLicense?.front, "claims/driving_license"),
-      uploadArray(drivingLicense?.rear, "claims/driving_license"),
-      uploadArray(otherVehicleDetails?.licensePhotos, "claims/driving_license"),
-      uploadArray(otherVehicleDetails?.vehiclePhotos, "claims/accident_photos")
+      uploadArray(drivingLicense?.rear, "claims/driving_license")
     ]);
+
+    // 2. Upload other vehicles involved photos dynamically
+    let resolvedOtherVehicles = [];
+    if (otherVehicleDetails) {
+      if (Array.isArray(otherVehicleDetails)) {
+        resolvedOtherVehicles = await Promise.all(
+          otherVehicleDetails.map(async (vehicle) => {
+            const [licPhotos, vehPhotos] = await Promise.all([
+              uploadArray(vehicle.licensePhotos, "claims/driving_license"),
+              uploadArray(vehicle.vehiclePhotos, "claims/accident_photos")
+            ]);
+            return {
+              vehiclePlate: (vehicle.vehiclePlate || "").trim(),
+              insuranceCompany: (vehicle.insuranceCompany || "").trim(),
+              policyNumber: (vehicle.policyNumber || "").trim(),
+              driverName: (vehicle.driverName || "").trim(),
+              licensePhotos: licPhotos || [],
+              vehiclePhotos: vehPhotos || []
+            };
+          })
+        );
+      } else if (typeof otherVehicleDetails === "object") {
+        // Backwards compatibility for single object payload
+        const [licPhotos, vehPhotos] = await Promise.all([
+          uploadArray(otherVehicleDetails.licensePhotos, "claims/driving_license"),
+          uploadArray(otherVehicleDetails.vehiclePhotos, "claims/accident_photos")
+        ]);
+        resolvedOtherVehicles.push({
+          vehiclePlate: (otherVehicleDetails.vehiclePlate || "").trim(),
+          insuranceCompany: (otherVehicleDetails.insuranceCompany || "").trim(),
+          policyNumber: (otherVehicleDetails.policyNumber || "").trim(),
+          driverName: (otherVehicleDetails.driverName || "").trim(),
+          licensePhotos: licPhotos || [],
+          vehiclePhotos: vehPhotos || []
+        });
+      }
+    }
 
     // ==========================================
     // --- AI Damage Analysis ---
@@ -132,14 +168,7 @@ router.post("/new-claim", async (req, res) => {
       incidentTime,
       damageType,
       description,
-      otherVehicleDetails: {
-        vehiclePlate: (otherVehicleDetails?.vehiclePlate || "").trim(),
-        insuranceCompany: (otherVehicleDetails?.insuranceCompany || "").trim(),
-        policyNumber: (otherVehicleDetails?.policyNumber || "").trim(),
-        driverName: (otherVehicleDetails?.driverName || "").trim(),
-        licensePhotos: otherLicensePhotos || [],
-        vehiclePhotos: otherVehiclePhotos || []
-      },
+      otherVehicleDetails: resolvedOtherVehicles,
       location,
       branch: await getNearestBranch(location, user.branch),
       accidentPhotos: {

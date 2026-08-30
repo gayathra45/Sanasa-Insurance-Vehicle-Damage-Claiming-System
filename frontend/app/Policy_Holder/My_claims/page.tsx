@@ -821,77 +821,159 @@ export default function MyClaims() {
                 )}
 
                 {/* Other Vehicles Involved (If available) */}
-                {selectedClaim.otherVehicleDetails && (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
+                {selectedClaim.otherVehicleDetails && (
                   <div className="px-2 mb-6 text-left">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2">Other Vehicles Involved</p>
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
-                      <div className="grid grid-cols-2 gap-4 text-left">
-                        <div>
-                          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
-                          <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
-                          <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
-                          <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
-                          <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
-                        </div>
-                      </div>
-
-                      {/* License Photos */}
-                      {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
-                        <div className="pt-2 border-t border-slate-200/60">
-                          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
-                          <div className="flex flex-wrap gap-2.5">
-                            {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
-                              let docUrl = url;
-                              if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                                docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
-                              }
-                              return (
-                                <div 
-                                  key={idx}
-                                  onClick={() => window.open(docUrl, "_blank")}
-                                  className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                                >
-                                  <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
+                    {Array.isArray(selectedClaim.otherVehicleDetails) ? (
+                      selectedClaim.otherVehicleDetails.length === 0 ? (
+                        <div className="text-xs text-slate-500 italic select-none">No other vehicles involved.</div>
+                      ) : (
+                        <div className="space-y-4">
+                          {selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
+                            <div key={vIdx} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                              <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
+                              <div className="grid grid-cols-2 gap-4 text-left">
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
+                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
                                 </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Vehicle Photos */}
-                      {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
-                        <div className="pt-2 border-t border-slate-200/60">
-                          <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
-                          <div className="flex flex-wrap gap-2.5">
-                            {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
-                              let docUrl = url;
-                              if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                                docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
-                              }
-                              return (
-                                <div 
-                                  key={idx}
-                                  onClick={() => window.open(docUrl, "_blank")}
-                                  className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                                >
-                                  <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
+                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.driverName || "—"}</span>
                                 </div>
-                              );
-                            })}
-                          </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
+                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
+                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.policyNumber || "—"}</span>
+                                </div>
+                              </div>
+
+                              {/* License Photos */}
+                              {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
+                                <div className="pt-2 border-t border-slate-200/60">
+                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
+                                  <div className="flex flex-wrap gap-2.5">
+                                    {vehicle.licensePhotos.map((url: string, idx: number) => {
+                                      let docUrl = url;
+                                      if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                        docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                      }
+                                      return (
+                                        <div 
+                                          key={idx}
+                                          onClick={() => window.open(docUrl, "_blank")}
+                                          className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                        >
+                                          <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Vehicle Photos */}
+                              {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
+                                <div className="pt-2 border-t border-slate-200/60">
+                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
+                                  <div className="flex flex-wrap gap-2.5">
+                                    {vehicle.vehiclePhotos.map((url: string, idx: number) => {
+                                      let docUrl = url;
+                                      if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                        docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                      }
+                                      return (
+                                        <div 
+                                          key={idx}
+                                          onClick={() => window.open(docUrl, "_blank")}
+                                          className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                        >
+                                          <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      )}
-                    </div>
+                      )
+                    ) : (
+                      (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                          <div className="grid grid-cols-2 gap-4 text-left">
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
+                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
+                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
+                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
+                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
+                            </div>
+                          </div>
+
+                          {/* License Photos */}
+                          {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
+                            <div className="pt-2 border-t border-slate-200/60">
+                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Vehicle Photos */}
+                          {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
+                            <div className="pt-2 border-t border-slate-200/60">
+                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    )}
                   </div>
                 )}
                 {/* Messages & Notifications Section */}

@@ -9,12 +9,17 @@ const claimSchema = new mongoose.Schema({
   damageType: { type: String, required: true },
   description: { type: String, required: true },
   otherVehicleDetails: {
-    vehiclePlate: { type: String, default: "" },
-    insuranceCompany: { type: String, default: "" },
-    policyNumber: { type: String, default: "" },
-    driverName: { type: String, default: "" },
-    licensePhotos: { type: [String], default: [] },
-    vehiclePhotos: { type: [String], default: [] }
+    type: [
+      {
+        vehiclePlate: { type: String, default: "" },
+        insuranceCompany: { type: String, default: "" },
+        policyNumber: { type: String, default: "" },
+        driverName: { type: String, default: "" },
+        licensePhotos: { type: [String], default: [] },
+        vehiclePhotos: { type: [String], default: [] }
+      }
+    ],
+    default: []
   },
   location: { type: String, required: true },
   accidentPhotos: {
