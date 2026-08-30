@@ -145,10 +145,12 @@ export default function PolicyHolderNavbar() {
   };
 
   const getLinkClass = (href: string) => {
-    if (isActive(href)) {
-      return "bg-[#00ddff] text-black font-extrabold px-4 py-1.5 rounded-full shadow-sm transition-all duration-150 no-underline whitespace-nowrap text-sm md:text-[15px]";
+    const isActiveLink = isActive(href);
+    const paddingSize = lang === "en" ? "px-5 py-2 text-base" : "px-4 py-1.5 text-sm md:text-[15px]";
+    if (isActiveLink) {
+      return `bg-[#00ddff] text-black font-bold rounded-full shadow-sm transition-all duration-150 no-underline whitespace-nowrap ${paddingSize}`;
     }
-    return "text-[#333] hover:text-[#00ddff] font-extrabold px-4 py-1.5 transition-all duration-150 no-underline whitespace-nowrap text-sm md:text-[15px]";
+    return `text-[#333] hover:text-[#00ddff] font-semibold transition-all duration-150 no-underline whitespace-nowrap ${paddingSize}`;
   };
 
   const t = translations[lang];
@@ -173,8 +175,8 @@ export default function PolicyHolderNavbar() {
         }`}
       >
         {/* Top Utility Bar (Premium Navy Blue Gradient) */}
-        <div className="bg-gradient-to-r from-[#0d1b2a] via-[#102a43] to-[#0a192f] text-slate-200 py-2 px-4 sm:px-6 md:px-16 flex items-center justify-between text-xs border-b border-white/10 font-semibold select-none shadow-inner">
-          <div className="flex items-center gap-2 font-extrabold">
+        <div className="bg-gradient-to-r from-[#0d1b2a] via-[#102a43] to-[#0a192f] text-slate-200 py-2 px-6 md:px-16 flex items-center justify-between text-xs border-b border-white/10 font-semibold select-none shadow-inner w-full">
+          <div className="flex items-center gap-2 font-bold">
             <span className="flex h-2 w-2 relative flex-shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
@@ -241,7 +243,7 @@ export default function PolicyHolderNavbar() {
         </div>
 
         {/* Main Header Row */}
-        <div className="py-3 px-6 md:px-16 flex items-center justify-between max-w-7xl mx-auto">
+        <div className="py-3 px-6 md:px-16 flex items-center justify-between w-full">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/Policy_Holder/Home">
@@ -257,7 +259,7 @@ export default function PolicyHolderNavbar() {
           </div>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-3.5 text-base font-bold">
+          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-5 text-base" : "gap-3.5 text-sm md:text-[15px]"}`}>
             <Link href="/Policy_Holder/Home" className={getLinkClass("/Policy_Holder/Home")}>
               {t.home}
             </Link>
@@ -272,7 +274,9 @@ export default function PolicyHolderNavbar() {
             </Link>
             <Link
               href="/Policy_Holder/New_Claim"
-              className="bg-[#ff9800] text-white hover:bg-[#e68900] font-extrabold px-4 py-1.5 rounded-full shadow-md transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] no-underline whitespace-nowrap text-sm md:text-[15px]"
+              className={`bg-[#ff9800] text-white hover:bg-[#e68900] font-bold rounded-full shadow-md transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] no-underline whitespace-nowrap ${
+                lang === "en" ? "px-5 py-2 text-base" : "px-4 py-1.5 text-sm md:text-[15px]"
+              }`}
             >
               {t.newClaim}
             </Link>
