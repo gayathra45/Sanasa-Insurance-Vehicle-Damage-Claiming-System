@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
+import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 
 interface RegistrationItem {
   name: string;
@@ -283,11 +284,7 @@ export default function OfficeStaffDashboard() {
                 </svg>
               </button>
               {/* User Avatar Icon */}
-              <button className="relative p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-slate-500 hover:text-slate-800">
-                  <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12c0 2.754 1.14 5.244 2.98 7.03-.028-.01-.053-.024-.082-.031a.75.75 0 0 1-.502-.879C5.556 14.931 8.193 12 12 12s6.444 2.931 7.352 6.12a.75.75 0 0 1-.502.88c-.029.007-.054.02-.082.031ZM12 11.25a3.375 3.375 0 1 0 0-6.75 3.375 3.375 0 0 0 0 6.75Z" clipRule="evenodd" />
-                </svg>
-              </button>
+              <UserAvatarDropdown userType="office_staff" />
             </div>
           </header>
 

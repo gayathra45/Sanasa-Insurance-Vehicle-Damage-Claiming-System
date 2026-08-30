@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import { API_URL } from "@/app/config";
+import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 
 export default function AdminAdminsPage() {
   // Current logged in admin state
@@ -272,8 +273,11 @@ export default function AdminAdminsPage() {
                 <span className="hidden lg:inline"> — Administrators Management</span>
               </h1>
             </div>
-            <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full text-slate-600 border border-slate-200">
-              System Admin
+            <div className="flex items-center gap-5">
+              <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full text-slate-600 border border-slate-200">
+                System Admin
+              </div>
+              <UserAvatarDropdown userType="admin" />
             </div>
           </header>
 

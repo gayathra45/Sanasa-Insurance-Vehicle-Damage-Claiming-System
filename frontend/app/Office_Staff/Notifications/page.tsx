@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import Link from "next/link";
+import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import { API_URL } from "@/app/config";
 
 interface ClaimMessage {
@@ -373,6 +374,7 @@ export default function OfficeStaffNotifications() {
               <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full select-none text-slate-600 border border-slate-200">
                 {notifications.filter(n => !readIds.includes(n.id)).length} unread alerts
               </div>
+              <UserAvatarDropdown userType="office_staff" />
             </div>
           </header>
 
