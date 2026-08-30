@@ -40,6 +40,7 @@ interface Claim {
   requestedDocuments?: string[];
   documentRequestTo?: string;
   currentStep?: number;
+  branch?: string;
   otherVehicleDetails?: any;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
 }
@@ -112,7 +113,8 @@ export default function MyClaims() {
             documentsRequested: claim.documentsRequested || false,
             requestedDocuments: claim.requestedDocuments || [],
             currentStep: claim.currentStep || 1,
-            messages: claim.messages || []
+            messages: claim.messages || [],
+            branch: claim.branch
           }));
         }
       }
@@ -436,6 +438,10 @@ export default function MyClaims() {
                   <View style={styles.detailsRow}>
                     <Text style={styles.detailsLabel}>Assigned Agent</Text>
                     <Text style={styles.detailsVal}>{selectedClaim.officer || "Not Assigned"}</Text>
+                  </View>
+                  <View style={styles.detailsRow}>
+                    <Text style={styles.detailsLabel}>Branch</Text>
+                    <Text style={styles.detailsVal}>{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</Text>
                   </View>
                   {selectedClaim.location && (
                     <View style={styles.detailsRowNoBorder}>

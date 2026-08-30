@@ -780,6 +780,34 @@ export default function FileNewClaim() {
       return;
     }
 
+    const dateReg = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateReg.test(incidentDate.trim())) {
+      Alert.alert("Invalid Date Format", "Please enter the date in YYYY-MM-DD format.");
+      return;
+    }
+
+    const inputDate = new Date(incidentDate.trim());
+    if (isNaN(inputDate.getTime())) {
+      Alert.alert("Invalid Date", "Please enter a valid date.");
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const lastWeek = new Date();
+    lastWeek.setDate(today.getDate() - 7);
+    lastWeek.setHours(0, 0, 0, 0);
+
+    if (inputDate > today) {
+      Alert.alert("Future Date", "The incident date cannot be in the future.");
+      return;
+    }
+
+    if (inputDate < lastWeek) {
+      Alert.alert("Date Too Old", "The incident date must be within the last 7 days.");
+      return;
+    }
+
     if (otherVehiclesInvolved === "Yes") {
       for (let i = 0; i < otherVehicles.length; i++) {
         if (!otherVehicles[i].vehiclePlate || otherVehicles[i].vehiclePlate.trim() === "") {

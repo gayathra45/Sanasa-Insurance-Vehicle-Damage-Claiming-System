@@ -26,6 +26,7 @@ interface Claim {
   };
   location?: string;
   officer?: string;
+  branch?: string;
   paymentReceipt?: string;
   documentsRequested?: boolean;
   requestedDocuments?: string[];
@@ -159,7 +160,8 @@ function TrackClaimsContent() {
                   documentsRequested: claim.documentsRequested || false,
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
-                  messages: claim.messages || []
+                  messages: claim.messages || [],
+                  branch: claim.branch
                 }));
               }
             }
@@ -499,6 +501,10 @@ function TrackClaimsContent() {
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-bold">Officer:</span>
                   <span className="font-extrabold text-slate-800">{trackedClaim.officer || "Agent Saman"}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 font-bold">Branch:</span>
+                  <span className="font-extrabold text-slate-800">{trackedClaim.branch ? (trackedClaim.branch.toLowerCase().includes("branch") ? trackedClaim.branch : trackedClaim.branch + " Branch") : "Galle Branch"}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-bold">Location:</span>

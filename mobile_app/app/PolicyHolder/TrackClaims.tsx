@@ -38,6 +38,7 @@ interface Claim {
   documentsRequested?: boolean;
   requestedDocuments?: string[];
   documentRequestTo?: string;
+  branch?: string;
   currentStep?: number;
   otherVehicleDetails?: any;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
@@ -132,7 +133,8 @@ export default function TrackClaims() {
               documentsRequested: data.claim.documentsRequested || false,
               requestedDocuments: data.claim.requestedDocuments || [],
               currentStep: data.claim.currentStep || 1,
-              messages: data.claim.messages || []
+              messages: data.claim.messages || [],
+              branch: data.claim.branch
             });
           }
         }
@@ -171,7 +173,8 @@ export default function TrackClaims() {
                   documentsRequested: claim.documentsRequested || false,
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
-                  messages: claim.messages || []
+                  messages: claim.messages || [],
+                  branch: claim.branch
                 }));
               }
             }
@@ -434,6 +437,10 @@ export default function TrackClaims() {
               <View style={styles.detailsRow}>
                 <Text style={styles.detailsLabel}>Assigned Officer</Text>
                 <Text style={styles.detailsVal}>{trackedClaim.officer || "Not Assigned"}</Text>
+              </View>
+              <View style={styles.detailsRow}>
+                <Text style={styles.detailsLabel}>Branch</Text>
+                <Text style={styles.detailsVal}>{trackedClaim.branch ? (trackedClaim.branch.toLowerCase().includes("branch") ? trackedClaim.branch : trackedClaim.branch + " Branch") : "Galle Branch"}</Text>
               </View>
               {trackedClaim.location && (
                 <View style={styles.detailsRowNoBorder}>

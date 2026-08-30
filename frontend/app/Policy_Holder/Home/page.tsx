@@ -992,6 +992,10 @@ export default function PolicyHolderHome() {
                     <span className="font-extrabold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
                   </div>
                   <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-bold w-28 shrink-0">Branch:</span>
+                    <span className="font-extrabold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Location:</span>
                     <span className="font-extrabold text-slate-800">{selectedClaim.location || "N/A"}</span>
                   </div>

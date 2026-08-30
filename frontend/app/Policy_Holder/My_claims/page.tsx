@@ -34,6 +34,7 @@ interface Claim {
   location?: string;
   createdAt?: string;
   officer?: string;
+  branch?: string;
   paymentReceipt?: string;
   documentsRequested?: boolean;
   requestedDocuments?: string[];
@@ -212,7 +213,8 @@ export default function MyClaims() {
               accidentPhotos: claim.accidentPhotos || {},
               drivingLicense: claim.drivingLicense || {},
               additionalDocuments: claim.additionalDocuments || [],
-              createdAt: claim.createdAt || claim.incidentDate
+              createdAt: claim.createdAt || claim.incidentDate,
+              branch: claim.branch
             }));
           }
         }
@@ -803,6 +805,10 @@ export default function MyClaims() {
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Officer:</span>
                     <span className="font-extrabold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-bold w-28 shrink-0">Branch:</span>
+                    <span className="font-extrabold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Location:</span>

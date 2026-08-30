@@ -44,6 +44,7 @@ interface Claim {
   location?: string;
   officer?: string;
   documentRequestTo?: string;
+  branch?: string;
   otherVehicleDetails?: any;
   messages?: ClaimMessage[];
 }
@@ -660,10 +661,14 @@ export default function NotificationsPage() {
                     <Text style={styles.detailsLabel}>Incident Date:</Text>
                     <Text style={styles.detailsVal}>{formatDateString(selectedClaim.incidentDate)}</Text>
                   </View>
-                  <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Officer Assigned:</Text>
-                    <Text style={styles.detailsVal}>{selectedClaim.officer || "Agent Saman"}</Text>
-                  </View>
+                   <View style={styles.detailsRow}>
+                     <Text style={styles.detailsLabel}>Officer Assigned:</Text>
+                     <Text style={styles.detailsVal}>{selectedClaim.officer || "Agent Saman"}</Text>
+                   </View>
+                   <View style={styles.detailsRow}>
+                     <Text style={styles.detailsLabel}>Branch:</Text>
+                     <Text style={styles.detailsVal}>{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</Text>
+                   </View>
                   <View style={styles.detailsRowNoBorder}>
                     <Text style={styles.detailsLabel}>Location:</Text>
                     <Text style={styles.detailsVal}>{selectedClaim.location || "N/A"}</Text>

@@ -50,6 +50,7 @@ interface Claim {
   currentStep?: number;
   messages?: any[];
   otherVehicleDetails?: any;
+  branch?: string;
 }
 
 interface Notification {
@@ -1046,6 +1047,10 @@ export default function PolicyHolderDashboard() {
                   <View style={styles.detailsRow}>
                     <Text style={styles.detailsLabel}>Officer Assigned:</Text>
                     <Text style={styles.detailsVal}>{selectedClaim.officer || "Agent Saman"}</Text>
+                  </View>
+                  <View style={styles.detailsRow}>
+                    <Text style={styles.detailsLabel}>Branch:</Text>
+                    <Text style={styles.detailsVal}>{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</Text>
                   </View>
                   <View style={styles.detailsRowNoBorder}>
                     <Text style={styles.detailsLabel}>Location:</Text>

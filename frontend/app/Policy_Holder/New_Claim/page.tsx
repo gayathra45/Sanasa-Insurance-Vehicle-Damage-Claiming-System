@@ -218,6 +218,26 @@ export default function FileNewClaim() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [incidentDate, setIncidentDate] = useState("");
+
+  const getMinMaxDates = () => {
+    const today = new Date();
+    const lastWeek = new Date();
+    lastWeek.setDate(today.getDate() - 7);
+
+    const formatDateStr = (date: Date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    return {
+      max: formatDateStr(today),
+      min: formatDateStr(lastWeek)
+    };
+  };
+
+  const { min: minDate, max: maxDate } = getMinMaxDates();
   const [incidentTime, setIncidentTime] = useState("");
   const [damageType, setDamageType] = useState("");
   const [description, setDescription] = useState("");
@@ -773,6 +793,18 @@ export default function FileNewClaim() {
       return;
     }
 
+    const todayDate = new Date();
+    todayDate.setHours(23, 59, 59, 999);
+    const lastWeekDate = new Date();
+    lastWeekDate.setDate(todayDate.getDate() - 7);
+    lastWeekDate.setHours(0, 0, 0, 0);
+
+    const selectedDate = new Date(incidentDate);
+    if (selectedDate > todayDate || selectedDate < lastWeekDate) {
+      alert("Please select an incident date within the last 7 days.");
+      return;
+    }
+
     // Retrieve userNic from session storage
     let userNic = "123456789V";
     if (typeof window !== "undefined") {
@@ -893,6 +925,8 @@ export default function FileNewClaim() {
                   <input
                     type="date"
                     required
+                    min={minDate}
+                    max={maxDate}
                     value={incidentDate}
                     onChange={(e) => setIncidentDate(e.target.value)}
                     className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 pr-10 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
