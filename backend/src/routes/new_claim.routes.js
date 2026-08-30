@@ -51,6 +51,7 @@ router.post("/new-claim", async (req, res) => {
       damageType,
       description,
       location,
+      otherVehicleDetails,
       accidentPhotos,
       drivingLicense
     } = req.body;
@@ -96,12 +97,14 @@ router.post("/new-claim", async (req, res) => {
       return Promise.all(arr.map(item => uploadToCloudinary(item, folder)));
     };
 
-    const [accidentFront, accidentRear, accidentSide, licenseFront, licenseRear] = await Promise.all([
+    const [accidentFront, accidentRear, accidentSide, licenseFront, licenseRear, otherLicensePhotos, otherVehiclePhotos] = await Promise.all([
       uploadArray(accidentPhotos?.front, "claims/accident_photos"),
       uploadArray(accidentPhotos?.rear, "claims/accident_photos"),
       uploadArray(accidentPhotos?.side, "claims/accident_photos"),
       uploadArray(drivingLicense?.front, "claims/driving_license"),
-      uploadArray(drivingLicense?.rear, "claims/driving_license")
+      uploadArray(drivingLicense?.rear, "claims/driving_license"),
+      uploadArray(otherVehicleDetails?.licensePhotos, "claims/driving_license"),
+      uploadArray(otherVehicleDetails?.vehiclePhotos, "claims/accident_photos")
     ]);
 
     // ==========================================
@@ -129,6 +132,14 @@ router.post("/new-claim", async (req, res) => {
       incidentTime,
       damageType,
       description,
+      otherVehicleDetails: {
+        vehiclePlate: (otherVehicleDetails?.vehiclePlate || "").trim(),
+        insuranceCompany: (otherVehicleDetails?.insuranceCompany || "").trim(),
+        policyNumber: (otherVehicleDetails?.policyNumber || "").trim(),
+        driverName: (otherVehicleDetails?.driverName || "").trim(),
+        licensePhotos: otherLicensePhotos || [],
+        vehiclePhotos: otherVehiclePhotos || []
+      },
       location,
       branch: await getNearestBranch(location, user.branch),
       accidentPhotos: {

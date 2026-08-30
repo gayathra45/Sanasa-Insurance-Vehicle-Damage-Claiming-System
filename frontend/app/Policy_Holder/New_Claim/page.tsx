@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { compressImage } from "../../utils/imageCompressor";
 
 function formatNumberPlate(plate: string): string {
   if (!plate) return "";
@@ -220,6 +221,16 @@ export default function FileNewClaim() {
   const [incidentTime, setIncidentTime] = useState("");
   const [damageType, setDamageType] = useState("");
   const [description, setDescription] = useState("");
+  const [otherVehiclePlate, setOtherVehiclePlate] = useState("");
+  const [otherInsuranceCompany, setOtherInsuranceCompany] = useState("");
+  const [otherPolicyNumber, setOtherPolicyNumber] = useState("");
+  const [otherDriverName, setOtherDriverName] = useState("");
+  const [otherLicensePhotos, setOtherLicensePhotos] = useState<{ files: File[]; previews: string[] }>({ files: [], previews: [] });
+  const [otherLicensePhotosBase64, setOtherLicensePhotosBase64] = useState<string[]>([]);
+  const otherLicenseRef = useRef<HTMLInputElement>(null);
+  const [otherVehiclePhotos, setOtherVehiclePhotos] = useState<{ files: File[]; previews: string[] }>({ files: [], previews: [] });
+  const [otherVehiclePhotosBase64, setOtherVehiclePhotosBase64] = useState<string[]>([]);
+  const otherVehiclePhotosRef = useRef<HTMLInputElement>(null);
   const [address, setAddress] = useState("Colombo, Sri Lanka");
   const [isLocating, setIsLocating] = useState(false);
   const [latitude, setLatitude] = useState(6.9271);
@@ -243,6 +254,26 @@ export default function FileNewClaim() {
           if (draft.incidentTime) setIncidentTime(draft.incidentTime);
           if (draft.damageType) setDamageType(draft.damageType);
           if (draft.description) setDescription(draft.description);
+          if (draft.otherVehicleDetails) {
+            if (draft.otherVehicleDetails.vehiclePlate) setOtherVehiclePlate(draft.otherVehicleDetails.vehiclePlate);
+            if (draft.otherVehicleDetails.insuranceCompany) setOtherInsuranceCompany(draft.otherVehicleDetails.insuranceCompany);
+            if (draft.otherVehicleDetails.policyNumber) setOtherPolicyNumber(draft.otherVehicleDetails.policyNumber);
+            if (draft.otherVehicleDetails.driverName) setOtherDriverName(draft.otherVehicleDetails.driverName);
+            if (draft.otherVehicleDetails.licensePhotos) {
+              setOtherLicensePhotosBase64(draft.otherVehicleDetails.licensePhotos);
+              setOtherLicensePhotos({
+                files: draft.otherVehicleDetails.licensePhotos.map(() => new File([], "license.jpg", { type: "image/jpeg" })),
+                previews: draft.otherVehicleDetails.licensePhotos
+              });
+            }
+            if (draft.otherVehicleDetails.vehiclePhotos) {
+              setOtherVehiclePhotosBase64(draft.otherVehicleDetails.vehiclePhotos);
+              setOtherVehiclePhotos({
+                files: draft.otherVehicleDetails.vehiclePhotos.map(() => new File([], "vehicle.jpg", { type: "image/jpeg" })),
+                previews: draft.otherVehicleDetails.vehiclePhotos
+              });
+            }
+          }
           if (draft.address) setAddress(draft.address);
           if (draft.latitude && draft.longitude) {
             setLatitude(draft.latitude);
@@ -629,6 +660,14 @@ export default function FileNewClaim() {
       address,
       latitude,
       longitude,
+      otherVehicleDetails: {
+        vehiclePlate: otherVehiclePlate.trim(),
+        insuranceCompany: otherInsuranceCompany.trim(),
+        policyNumber: otherPolicyNumber.trim(),
+        driverName: otherDriverName.trim(),
+        licensePhotos: otherLicensePhotosBase64,
+        vehiclePhotos: otherVehiclePhotosBase64
+      },
       status: "In Progress",
       createdAt: new Date().toISOString()
     };
@@ -776,6 +815,284 @@ export default function FileNewClaim() {
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl p-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
               />
+            </div>
+          </section>
+
+          {/* Section 1B: Other Vehicles Involved (Optional) */}
+          <section className="flex flex-col gap-6 mt-4">
+            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <svg className="w-7 h-7 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4" />
+              </svg>
+              Other Vehicles Involved (Optional)
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Vehicle Number */}
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-800 text-sm font-semibold mb-1">
+                  Vehicle Number
+                </label>
+                <input
+                  type="text"
+                  value={otherVehiclePlate}
+                  onChange={(e) => setOtherVehiclePlate(e.target.value)}
+                  placeholder="e.g. WP CAA-1234"
+                  className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                />
+              </div>
+
+              {/* Driver Name */}
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-800 text-sm font-semibold mb-1">
+                  Driver Name
+                </label>
+                <input
+                  type="text"
+                  value={otherDriverName}
+                  onChange={(e) => setOtherDriverName(e.target.value)}
+                  placeholder="e.g. Sunil Perera"
+                  className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                />
+              </div>
+
+              {/* Insurance Name */}
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-800 text-sm font-semibold mb-1">
+                  Insurance Name
+                </label>
+                <input
+                  type="text"
+                  value={otherInsuranceCompany}
+                  onChange={(e) => setOtherInsuranceCompany(e.target.value)}
+                  placeholder="e.g. Sri Lanka Insurance"
+                  className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                />
+              </div>
+
+              {/* Insurance Number */}
+              <div className="flex flex-col gap-2">
+                <label className="text-slate-800 text-sm font-semibold mb-1">
+                  Insurance Number
+                </label>
+                <input
+                  type="text"
+                  value={otherPolicyNumber}
+                  onChange={(e) => setOtherPolicyNumber(e.target.value)}
+                  placeholder="e.g. POL-98765432"
+                  className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Driving License Photos Upload */}
+            <div className="flex flex-col gap-2 mt-2">
+              <label className="text-slate-800 text-sm font-semibold mb-1">
+                Other Driver's License Photos
+              </label>
+              
+              <input
+                type="file"
+                ref={otherLicenseRef}
+                multiple
+                accept="image/*"
+                onChange={async (e) => {
+                  if (e.target.files) {
+                    const selectedFiles = Array.from(e.target.files);
+                    const validFiles: File[] = [];
+                    const previews: string[] = [];
+                    const base64s: string[] = [];
+
+                    for (const file of selectedFiles) {
+                      if (file.size <= 5 * 1024 * 1024) {
+                        validFiles.push(file);
+                        previews.push(URL.createObjectURL(file));
+                        try {
+                          const base64 = await compressImage(file);
+                          base64s.push(base64);
+                        } catch (err) {
+                          console.error("Compression error", err);
+                        }
+                      } else {
+                        alert(`File "${file.name}" exceeds 5MB size limit.`);
+                      }
+                    }
+
+                    if (validFiles.length > 0) {
+                      setOtherLicensePhotos((prev) => ({
+                        files: [...prev.files, ...validFiles],
+                        previews: [...prev.previews, ...previews],
+                      }));
+                      setOtherLicensePhotosBase64((prev) => [...prev, ...base64s]);
+                    }
+                  }
+                }}
+                className="hidden"
+              />
+
+              {otherLicensePhotos.files.length === 0 ? (
+                <div
+                  onClick={() => otherLicenseRef.current?.click()}
+                  className="w-full h-[140px] bg-[#e2e8f0]/60 hover:bg-slate-200/60 border border-slate-350 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all active:scale-[0.98] select-none"
+                >
+                  <svg className="w-8 h-8 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
+                  </svg>
+                  <span className="text-slate-800 text-xs font-bold block">
+                    Upload Driver's License Photos of the other vehicle
+                  </span>
+                  <span className="text-slate-400 text-[9px] mt-1">
+                    JPG, PNG - max 5MB. Click to upload.
+                  </span>
+                </div>
+              ) : (
+                <div className="w-full bg-[#e2e8f0]/40 border border-slate-350 rounded-3xl p-3 flex flex-col gap-2 shadow-inner">
+                  <div className="grid grid-cols-4 gap-2 max-h-[100px] overflow-y-auto pr-1">
+                    {otherLicensePhotos.previews.map((preview, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300 group">
+                        <img src={preview} alt="license preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            URL.revokeObjectURL(otherLicensePhotos.previews[idx]);
+                            setOtherLicensePhotos((prev) => {
+                              const f = [...prev.files];
+                              f.splice(idx, 1);
+                              const p = [...prev.previews];
+                              p.splice(idx, 1);
+                              return { files: f, previews: p };
+                            });
+                            setOtherLicensePhotosBase64((prev) => {
+                              const b = [...prev];
+                              b.splice(idx, 1);
+                              return b;
+                            });
+                          }}
+                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold cursor-pointer border-none shadow"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center border-t border-slate-300/60 pt-2 text-[10px] font-bold text-slate-800 select-none">
+                    <span>{otherLicensePhotos.files.length} photo(s) selected</span>
+                    <button
+                      type="button"
+                      onClick={() => otherLicenseRef.current?.click()}
+                      className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[9px] font-bold py-1 px-3 rounded-full cursor-pointer border-none"
+                    >
+                      Add More
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Other Vehicle Photos Upload */}
+            <div className="flex flex-col gap-2 mt-4">
+              <label className="text-slate-800 text-sm font-semibold mb-1">
+                Other Vehicle Damage / Scene Photos
+              </label>
+              
+              <input
+                type="file"
+                ref={otherVehiclePhotosRef}
+                multiple
+                accept="image/*"
+                onChange={async (e) => {
+                  if (e.target.files) {
+                    const selectedFiles = Array.from(e.target.files);
+                    const validFiles: File[] = [];
+                    const previews: string[] = [];
+                    const base64s: string[] = [];
+
+                    for (const file of selectedFiles) {
+                      if (file.size <= 5 * 1024 * 1024) {
+                        validFiles.push(file);
+                        previews.push(URL.createObjectURL(file));
+                        try {
+                          const base64 = await compressImage(file);
+                          base64s.push(base64);
+                        } catch (err) {
+                          console.error("Compression error", err);
+                        }
+                      } else {
+                        alert(`File "${file.name}" exceeds 5MB size limit.`);
+                      }
+                    }
+
+                    if (validFiles.length > 0) {
+                      setOtherVehiclePhotos((prev) => ({
+                        files: [...prev.files, ...validFiles],
+                        previews: [...prev.previews, ...previews],
+                      }));
+                      setOtherVehiclePhotosBase64((prev) => [...prev, ...base64s]);
+                    }
+                  }
+                }}
+                className="hidden"
+              />
+
+              {otherVehiclePhotos.files.length === 0 ? (
+                <div
+                  onClick={() => otherVehiclePhotosRef.current?.click()}
+                  className="w-full h-[140px] bg-[#e2e8f0]/60 hover:bg-slate-200/60 border border-slate-350 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all active:scale-[0.98] select-none"
+                >
+                  <svg className="w-8 h-8 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
+                  </svg>
+                  <span className="text-slate-800 text-xs font-bold block">
+                    Upload Damage / Accident Photos of the other vehicle
+                  </span>
+                  <span className="text-slate-400 text-[9px] mt-1">
+                    JPG, PNG - max 5MB. Click to upload.
+                  </span>
+                </div>
+              ) : (
+                <div className="w-full bg-[#e2e8f0]/40 border border-slate-350 rounded-3xl p-3 flex flex-col gap-2 shadow-inner">
+                  <div className="grid grid-cols-4 gap-2 max-h-[100px] overflow-y-auto pr-1">
+                    {otherVehiclePhotos.previews.map((preview, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300 group">
+                        <img src={preview} alt="vehicle preview" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            URL.revokeObjectURL(otherVehiclePhotos.previews[idx]);
+                            setOtherVehiclePhotos((prev) => {
+                              const f = [...prev.files];
+                              f.splice(idx, 1);
+                              const p = [...prev.previews];
+                              p.splice(idx, 1);
+                              return { files: f, previews: p };
+                            });
+                            setOtherVehiclePhotosBase64((prev) => {
+                              const b = [...prev];
+                              b.splice(idx, 1);
+                              return b;
+                            });
+                          }}
+                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold cursor-pointer border-none shadow"
+                        >
+                          &times;
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex justify-between items-center border-t border-slate-300/60 pt-2 text-[10px] font-bold text-slate-800 select-none">
+                    <span>{otherVehiclePhotos.files.length} photo(s) selected</span>
+                    <button
+                      type="button"
+                      onClick={() => otherVehiclePhotosRef.current?.click()}
+                      className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[9px] font-bold py-1 px-3 rounded-full cursor-pointer border-none"
+                    >
+                      Add More
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 

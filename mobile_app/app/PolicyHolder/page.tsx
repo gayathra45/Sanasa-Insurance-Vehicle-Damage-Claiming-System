@@ -16,6 +16,7 @@ import {
   ImageBackground,
   Modal,
   Linking,
+  Image,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useNavigation } from "expo-router";
@@ -41,6 +42,21 @@ interface Claim {
   createdAt?: string;
   documentsRequested?: boolean;
   requestedDocuments?: string[];
+  incidentTime?: string;
+  damageType?: string;
+  description?: string;
+  location?: string;
+  officer?: string;
+  currentStep?: number;
+  messages?: any[];
+  otherVehicleDetails?: {
+    vehiclePlate?: string;
+    insuranceCompany?: string;
+    policyNumber?: string;
+    driverName?: string;
+    licensePhotos?: string[];
+    vehiclePhotos?: string[];
+  };
 }
 
 interface Notification {
@@ -1044,6 +1060,77 @@ export default function PolicyHolderDashboard() {
                   </View>
                 </View>
 
+                {/* Other Vehicle Details Section */}
+                {selectedClaim.otherVehicleDetails && typeof selectedClaim.otherVehicleDetails === "object" && (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
+                  <View style={[styles.detailsCard, { marginTop: 16 }]}>
+                    <Text style={styles.sectionSubHeader}>Other Vehicle Details</Text>
+                    {selectedClaim.otherVehicleDetails.vehiclePlate ? (
+                      <View style={styles.detailsRow}>
+                        <Text style={styles.detailsLabel}>Vehicle Plate:</Text>
+                        <Text style={styles.detailsVal}>{formatNumberPlate(selectedClaim.otherVehicleDetails.vehiclePlate)}</Text>
+                      </View>
+                    ) : null}
+                    {selectedClaim.otherVehicleDetails.driverName ? (
+                      <View style={styles.detailsRow}>
+                        <Text style={styles.detailsLabel}>Driver Name:</Text>
+                        <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.driverName}</Text>
+                      </View>
+                    ) : null}
+                    {selectedClaim.otherVehicleDetails.insuranceCompany ? (
+                      <View style={styles.detailsRow}>
+                        <Text style={styles.detailsLabel}>Insurance Name:</Text>
+                        <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.insuranceCompany}</Text>
+                      </View>
+                    ) : null}
+                    {selectedClaim.otherVehicleDetails.policyNumber ? (
+                      <View style={styles.detailsRowNoBorder}>
+                        <Text style={styles.detailsLabel}>Insurance Number:</Text>
+                        <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.policyNumber}</Text>
+                      </View>
+                    ) : null}
+
+                    {/* License Photos Grid */}
+                    {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
+                      <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                        <Text style={styles.photoSectionLabel}>Other Driver's License Photos</Text>
+                        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                          {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
+                            let docUrl = url;
+                            if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                              docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                            }
+                            return (
+                              <View key={idx} style={styles.modalPhotoWrapper}>
+                                <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                              </View>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    )}
+
+                    {/* Vehicle Damage / Scene Photos Grid */}
+                    {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
+                      <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                        <Text style={styles.photoSectionLabel}>Other Vehicle / Damage Photos</Text>
+                        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                          {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
+                            let docUrl = url;
+                            if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                              docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                            }
+                            return (
+                              <View key={idx} style={styles.modalPhotoWrapper}>
+                                <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                              </View>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                )}
+
                 {/* Incident Description */}
                 {selectedClaim.description ? (
                   <View style={styles.descriptionContainer}>
@@ -1775,5 +1862,32 @@ const styles = StyleSheet.create({
     color: "#475569",
     fontSize: 13,
     fontWeight: "800",
+  },
+  sectionSubHeader: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  photoSectionLabel: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  modalPhotoWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    overflow: "hidden",
+  },
+  modalPhotoThumb: {
+    width: "100%",
+    height: "100%",
   },
 });

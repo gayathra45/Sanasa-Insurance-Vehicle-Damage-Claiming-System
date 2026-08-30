@@ -13,6 +13,7 @@ import {
   Alert,
   ImageBackground,
   Keyboard,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -38,6 +39,14 @@ interface Claim {
   requestedDocuments?: string[];
   documentRequestTo?: string;
   currentStep?: number;
+  otherVehicleDetails?: {
+    vehiclePlate?: string;
+    insuranceCompany?: string;
+    policyNumber?: string;
+    driverName?: string;
+    licensePhotos?: string[];
+    vehiclePhotos?: string[];
+  };
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
 }
 
@@ -83,6 +92,7 @@ export default function TrackClaims() {
                 amount: data.claim.amount ? `Rs. ${Number(data.claim.amount).toLocaleString()}` : "Pending",
                 status: data.claim.status || "Pending",
                 description: data.claim.description,
+                otherVehicleDetails: data.claim.otherVehicleDetails,
                 location: data.claim.location,
                 officer: data.claim.officer || "Not Assigned",
                 documentsRequested: data.claim.documentsRequested || false,
@@ -123,6 +133,7 @@ export default function TrackClaims() {
               amount: data.claim.amount ? `Rs. ${Number(data.claim.amount).toLocaleString()}` : "Pending",
               status: data.claim.status || "Pending",
               description: data.claim.description,
+              otherVehicleDetails: data.claim.otherVehicleDetails,
               location: data.claim.location,
               officer: data.claim.officer || "Not Assigned",
               documentsRequested: data.claim.documentsRequested || false,
@@ -161,6 +172,7 @@ export default function TrackClaims() {
                   amount: claim.amount ? `Rs. ${Number(claim.amount).toLocaleString()}` : "Pending",
                   status: claim.status || "Pending",
                   description: claim.description,
+                  otherVehicleDetails: claim.otherVehicleDetails,
                   location: claim.location,
                   officer: claim.officer || "Not Assigned",
                   documentsRequested: claim.documentsRequested || false,
@@ -186,6 +198,7 @@ export default function TrackClaims() {
                   amount: "Pending",
                   status: "Pending",
                   description: parsed.description,
+                  otherVehicleDetails: parsed.otherVehicleDetails,
                   location: parsed.location,
                   officer: "Not Assigned",
                   documentsRequested: false,
@@ -242,6 +255,7 @@ export default function TrackClaims() {
             amount: data.claim.amount ? `Rs. ${Number(data.claim.amount).toLocaleString()}` : "Pending",
             status: data.claim.status || "Pending",
             description: data.claim.description,
+            otherVehicleDetails: data.claim.otherVehicleDetails,
             location: data.claim.location,
             officer: data.claim.officer || "Not Assigned",
             documentsRequested: data.claim.documentsRequested || false,
@@ -435,6 +449,77 @@ export default function TrackClaims() {
                 </View>
               )}
             </View>
+
+            {/* Other Vehicle Details Section */}
+            {trackedClaim.otherVehicleDetails && typeof trackedClaim.otherVehicleDetails === "object" && (trackedClaim.otherVehicleDetails.vehiclePlate || trackedClaim.otherVehicleDetails.driverName) && (
+              <View style={[styles.detailsCard, { marginTop: 16 }]}>
+                <Text style={styles.sectionSubHeader}>Other Vehicle Details</Text>
+                {trackedClaim.otherVehicleDetails.vehiclePlate ? (
+                  <View style={styles.detailsRow}>
+                    <Text style={styles.detailsLabel}>Vehicle Plate</Text>
+                    <Text style={styles.detailsVal}>{formatNumberPlate(trackedClaim.otherVehicleDetails.vehiclePlate)}</Text>
+                  </View>
+                ) : null}
+                {trackedClaim.otherVehicleDetails.driverName ? (
+                  <View style={styles.detailsRow}>
+                    <Text style={styles.detailsLabel}>Driver Name</Text>
+                    <Text style={styles.detailsVal}>{trackedClaim.otherVehicleDetails.driverName}</Text>
+                  </View>
+                ) : null}
+                {trackedClaim.otherVehicleDetails.insuranceCompany ? (
+                  <View style={styles.detailsRow}>
+                    <Text style={styles.detailsLabel}>Insurance Name</Text>
+                    <Text style={styles.detailsVal}>{trackedClaim.otherVehicleDetails.insuranceCompany}</Text>
+                  </View>
+                ) : null}
+                {trackedClaim.otherVehicleDetails.policyNumber ? (
+                  <View style={styles.detailsRowNoBorder}>
+                    <Text style={styles.detailsLabel}>Insurance Number</Text>
+                    <Text style={styles.detailsVal}>{trackedClaim.otherVehicleDetails.policyNumber}</Text>
+                  </View>
+                ) : null}
+
+                {/* License Photos Grid */}
+                {trackedClaim.otherVehicleDetails.licensePhotos && trackedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
+                  <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                    <Text style={styles.photoSectionLabel}>Other Driver's License Photos</Text>
+                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                      {trackedClaim.otherVehicleDetails.licensePhotos.map((url, idx) => {
+                        let docUrl = url;
+                        if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                          docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                        }
+                        return (
+                          <View key={idx} style={styles.modalPhotoWrapper}>
+                            <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                          </View>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
+
+                {/* Vehicle Damage / Scene Photos Grid */}
+                {trackedClaim.otherVehicleDetails.vehiclePhotos && trackedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
+                  <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                    <Text style={styles.photoSectionLabel}>Other Vehicle / Damage Photos</Text>
+                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                      {trackedClaim.otherVehicleDetails.vehiclePhotos.map((url, idx) => {
+                        let docUrl = url;
+                        if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                          docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                        }
+                        return (
+                          <View key={idx} style={styles.modalPhotoWrapper}>
+                            <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                          </View>
+                        );
+                      })}
+                    </ScrollView>
+                  </View>
+                )}
+              </View>
+            )}
 
             {/* Incident Description */}
             {trackedClaim.description && (
@@ -769,5 +854,32 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     lineHeight: 19,
+  },
+  sectionSubHeader: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  photoSectionLabel: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  modalPhotoWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    overflow: "hidden",
+  },
+  modalPhotoThumb: {
+    width: "100%",
+    height: "100%",
   },
 });

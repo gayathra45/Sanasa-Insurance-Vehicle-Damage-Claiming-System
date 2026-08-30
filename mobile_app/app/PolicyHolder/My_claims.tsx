@@ -14,6 +14,7 @@ import {
   Platform,
   Alert,
   ImageBackground,
+  Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
@@ -39,6 +40,14 @@ interface Claim {
   requestedDocuments?: string[];
   documentRequestTo?: string;
   currentStep?: number;
+  otherVehicleDetails?: {
+    vehiclePlate?: string;
+    insuranceCompany?: string;
+    policyNumber?: string;
+    driverName?: string;
+    licensePhotos?: string[];
+    vehiclePhotos?: string[];
+  };
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
 }
 
@@ -104,6 +113,7 @@ export default function MyClaims() {
             amount: claim.amount ? `Rs. ${Number(claim.amount).toLocaleString()}` : "Pending",
             status: claim.status || "Pending",
             description: claim.description,
+            otherVehicleDetails: claim.otherVehicleDetails,
             location: claim.location,
             officer: claim.officer || "Not Assigned",
             documentsRequested: claim.documentsRequested || false,
@@ -130,6 +140,7 @@ export default function MyClaims() {
             amount: "Pending",
             status: "Pending",
             description: parsed.description,
+            otherVehicleDetails: parsed.otherVehicleDetails,
             location: parsed.location,
             officer: "Not Assigned",
             documentsRequested: false,
@@ -440,6 +451,77 @@ export default function MyClaims() {
                     </View>
                   )}
                 </View>
+
+                {/* Other Vehicle Details Section */}
+                {selectedClaim.otherVehicleDetails && typeof selectedClaim.otherVehicleDetails === "object" && (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
+                  <View style={[styles.detailsCard, { marginTop: 16 }]}>
+                    <Text style={styles.sectionSubHeader}>Other Vehicle Details</Text>
+                    {selectedClaim.otherVehicleDetails.vehiclePlate ? (
+                      <View style={styles.detailsRow}>
+                        <Text style={styles.detailsLabel}>Vehicle Plate</Text>
+                        <Text style={styles.detailsVal}>{formatNumberPlate(selectedClaim.otherVehicleDetails.vehiclePlate)}</Text>
+                      </View>
+                    ) : null}
+                    {selectedClaim.otherVehicleDetails.driverName ? (
+                      <View style={styles.detailsRow}>
+                        <Text style={styles.detailsLabel}>Driver Name</Text>
+                        <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.driverName}</Text>
+                      </View>
+                    ) : null}
+                    {selectedClaim.otherVehicleDetails.insuranceCompany ? (
+                      <View style={styles.detailsRow}>
+                        <Text style={styles.detailsLabel}>Insurance Name</Text>
+                        <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.insuranceCompany}</Text>
+                      </View>
+                    ) : null}
+                    {selectedClaim.otherVehicleDetails.policyNumber ? (
+                      <View style={styles.detailsRowNoBorder}>
+                        <Text style={styles.detailsLabel}>Insurance Number</Text>
+                        <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.policyNumber}</Text>
+                      </View>
+                    ) : null}
+
+                    {/* License Photos Grid */}
+                    {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
+                      <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                        <Text style={styles.photoSectionLabel}>Other Driver's License Photos</Text>
+                        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                          {selectedClaim.otherVehicleDetails.licensePhotos.map((url, idx) => {
+                            let docUrl = url;
+                            if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                              docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                            }
+                            return (
+                              <View key={idx} style={styles.modalPhotoWrapper}>
+                                <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                              </View>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    )}
+
+                    {/* Vehicle Damage / Scene Photos Grid */}
+                    {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
+                      <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                        <Text style={styles.photoSectionLabel}>Other Vehicle / Damage Photos</Text>
+                        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                          {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url, idx) => {
+                            let docUrl = url;
+                            if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                              docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                            }
+                            return (
+                              <View key={idx} style={styles.modalPhotoWrapper}>
+                                <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                              </View>
+                            );
+                          })}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                )}
 
                 {/* Incident Description */}
                 {selectedClaim.description && (
@@ -787,4 +869,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   closeFooterBtnText: { fontSize: 14, color: "#ffffff", fontWeight: "800" },
+  sectionSubHeader: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  photoSectionLabel: {
+    fontSize: 11,
+    color: "#64748b",
+    fontWeight: "800",
+    textTransform: "uppercase",
+    letterSpacing: 0.3,
+  },
+  modalPhotoWrapper: {
+    width: 80,
+    height: 80,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    overflow: "hidden",
+  },
+  modalPhotoThumb: {
+    width: "100%",
+    height: "100%",
+  },
 });

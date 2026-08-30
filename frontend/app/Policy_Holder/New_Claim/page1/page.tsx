@@ -164,6 +164,7 @@ export default function UploadDocumentsPage() {
         damageType: combinedPayload.damageType || "",
         description: combinedPayload.description || "",
         location: combinedPayload.address || "Colombo, Sri Lanka",
+        otherVehicleDetails: combinedPayload.otherVehicleDetails || {},
         accidentPhotos: {
           front: frontPhotos,
           rear: rearPhotos,
