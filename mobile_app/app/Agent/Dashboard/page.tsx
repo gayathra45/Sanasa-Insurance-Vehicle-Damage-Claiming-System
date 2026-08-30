@@ -30,6 +30,7 @@ import { WebView } from "react-native-webview";
 import AgentNavbar from "../../Components/Agent/page";
 import { API_BASE_URL } from "../../_config";
 import { compressImageMobile } from "../../../utils/imageCompressor";
+import { useLanguage } from "../../../utils/translations";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -278,6 +279,7 @@ const QUICK_ACTIONS = [
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function AgentDashboard() {
+  const { lang, t } = useLanguage();
   const { claimId, step } = useLocalSearchParams<{ claimId?: string; step?: string }>();
   const [agentName, setAgentName]     = useState("");
   const [agentEmail, setAgentEmail]   = useState("");
@@ -1997,20 +1999,25 @@ ${inspectionReportText.trim()}
               <View style={[styles.dotIndicator, urgentCount > 0 && { backgroundColor: "#ef4444" }]} />
               <Text style={styles.subtitleText}>
                 {urgentCount > 0 ? (
-                  <>{"Claims today: "}
-                    <Text style={styles.highlightOrange}>{totalAssigned} assigned</Text>
+                  <>
+                    <Text>{lang === "en" ? "Claims today: " : lang === "si" ? "අද දින හිමිකම්: " : "இன்றைய கோரிக்கைகள்: "}</Text>
+                    <Text style={styles.highlightOrange}>
+                      {lang === "en" ? `${totalAssigned} assigned` : lang === "si" ? `${totalAssigned} ක් පවරා ඇත` : `${totalAssigned} ஒதுக்கப்பட்டது`}
+                    </Text>
                     {" · "}
-                    <Text style={{ color: "#ef4444", fontWeight: "800" }}>{urgentCount} urgent</Text>
+                    <Text style={{ color: "#ef4444", fontWeight: "800" }}>
+                      {lang === "en" ? `${urgentCount} urgent` : lang === "si" ? `හදිසි ${urgentCount}` : `அவசரம் ${urgentCount}`}
+                    </Text>
                   </>
                 ) : (
-                  `${totalAssigned} claim${totalAssigned !== 1 ? "s" : ""} assigned. No urgent cases.`
+                  lang === "en" ? `${totalAssigned} claim${totalAssigned !== 1 ? "s" : ""} assigned. No urgent cases.` : lang === "si" ? `හිමිකම් ${totalAssigned} ක් පවරා ඇත. හදිසි අවස්ථා නැත.` : `${totalAssigned} கோரிக்கைகள் ஒதுக்கப்பட்டுள்ளன. அவசர வழக்குகள் இல்லை.`
                 )}
               </Text>
             </View>
 
             {/* Availability Picker Row */}
             <View style={styles.availabilityRow}>
-              <Text style={styles.availabilityLabel}>Status</Text>
+              <Text style={styles.availabilityLabel}>{lang === "en" ? "Status" : lang === "si" ? "තත්ත්වය" : "நிலை"}</Text>
               <View style={styles.availabilityButtons}>
                 <TouchableOpacity
                   onPress={() => toggleAvailability("Active")}
@@ -2018,7 +2025,9 @@ ${inspectionReportText.trim()}
                   activeOpacity={0.85}
                 >
                   <View style={[styles.statusDot, { backgroundColor: availability === "Active" ? "#ffffff" : "#94a3b8" }]} />
-                  <Text style={[styles.availBtnText, availability === "Active" ? styles.availBtnTextActive : styles.availBtnTextInactive]}>Active</Text>
+                  <Text style={[styles.availBtnText, availability === "Active" ? styles.availBtnTextActive : styles.availBtnTextInactive]}>
+                    {lang === "en" ? "Active" : lang === "si" ? "ක්‍රියාකාරී" : "செயலில்"}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => toggleAvailability("Offline")}
@@ -2026,7 +2035,9 @@ ${inspectionReportText.trim()}
                   activeOpacity={0.85}
                 >
                   <View style={[styles.statusDot, { backgroundColor: availability === "Offline" ? "#ffffff" : "#94a3b8" }]} />
-                  <Text style={[styles.availBtnText, availability === "Offline" ? styles.availBtnTextOffline : styles.availBtnTextInactive]}>Offline</Text>
+                  <Text style={[styles.availBtnText, availability === "Offline" ? styles.availBtnTextOffline : styles.availBtnTextInactive]}>
+                    {lang === "en" ? "Offline" : lang === "si" ? "නොබැඳි" : "ஆஃப்லைன்"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -2050,7 +2061,7 @@ ${inspectionReportText.trim()}
                 <Text style={[styles.headerStatVal, { textShadowColor: "rgba(239, 68, 68, 0.4)", textShadowRadius: 6, textShadowOffset: { width: 0, height: 0 } }]}>
                   {urgentCount}
                 </Text>
-                <Text style={styles.headerStatLbl}>Urgent</Text>
+                <Text style={styles.headerStatLbl}>{lang === "en" ? "Urgent" : lang === "si" ? "හදිසි" : "அவசரம்"}</Text>
               </TouchableOpacity>
 
               {/* Card 2: Assigned */}
@@ -2070,7 +2081,7 @@ ${inspectionReportText.trim()}
                 <Text style={[styles.headerStatVal, { textShadowColor: "rgba(6, 182, 212, 0.4)", textShadowRadius: 6, textShadowOffset: { width: 0, height: 0 } }]}>
                   {totalAssigned}
                 </Text>
-                <Text style={styles.headerStatLbl}>Assigned</Text>
+                <Text style={styles.headerStatLbl}>{lang === "en" ? "Assigned" : lang === "si" ? "පවරා ඇති" : "ஒதுக்கப்பட்டது"}</Text>
               </TouchableOpacity>
 
               {/* Card 3: Completed */}
@@ -2090,7 +2101,7 @@ ${inspectionReportText.trim()}
                 <Text style={[styles.headerStatVal, { textShadowColor: "rgba(34, 197, 94, 0.4)", textShadowRadius: 6, textShadowOffset: { width: 0, height: 0 } }]}>
                   {completedClaims.length}
                 </Text>
-                <Text style={styles.headerStatLbl}>Completed</Text>
+                <Text style={styles.headerStatLbl}>{lang === "en" ? "Completed" : lang === "si" ? "නිමකළ" : "முடிந்தது"}</Text>
               </TouchableOpacity>
             </View>
 
@@ -2111,9 +2122,9 @@ ${inspectionReportText.trim()}
                   <Ionicons name="warning" size={20} color="#f97316" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.alertBannerTitle}>Document Upload Required</Text>
+                  <Text style={styles.alertBannerTitle}>{lang === "en" ? "Document Upload Required" : lang === "si" ? "ලේඛන උඩුගත කිරීම අවශ්‍යයි" : "ஆவணப் பதிவேற்றம் தேவை"}</Text>
                   <Text style={styles.alertBannerSub}>
-                    Awaiting agent uploads for {claimsWithPendingAgentRequests.length} claim{claimsWithPendingAgentRequests.length > 1 ? "s" : ""}. Tap to view.
+                    {lang === "en" ? `Awaiting agent uploads for ${claimsWithPendingAgentRequests.length} claim${claimsWithPendingAgentRequests.length > 1 ? "s" : ""}. Tap to view.` : lang === "si" ? `හිමිකම් ${claimsWithPendingAgentRequests.length} ක් සඳහා නියෝජිත උඩුගත කිරීම් බලාපොරොත්තුවෙන්. බැලීමට තට්ටු කරන්න.` : `காப்பீட்டு கோரிக்கைகள் ${claimsWithPendingAgentRequests.length} க்கான முகவர் பதிவேற்றங்கள் நிலுவையில் உள்ளன. பார்க்க தட்டவும்.`}
                   </Text>
                 </View>
               </View>
@@ -2133,7 +2144,7 @@ ${inspectionReportText.trim()}
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.tabBtnText, active && styles.tabBtnTextActive]}>
-                    {tab === "claims" ? "Active Claims" : "My Activity"}
+                    {tab === "claims" ? (lang === "en" ? "Active Claims" : lang === "si" ? "ක්‍රියාකාරී හිමිකම්" : "செயலில் உள்ள கோரிக்கைகள்") : (lang === "en" ? "My Activity" : lang === "si" ? "මගේ ක්‍රියාකාරකම්" : "எனது செயல்பாடுகள்")}
                   </Text>
                 </TouchableOpacity>
               );
@@ -2144,7 +2155,7 @@ ${inspectionReportText.trim()}
           <View style={{ paddingHorizontal: 16, marginTop: 4 }}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
-                {activeTab === "activity" ? "Recent Completed" : "Active Claims"}
+                {activeTab === "activity" ? (lang === "en" ? "Recent Completed" : lang === "si" ? "මෑතකදී නිමකළ" : "சமீபத்தில் முடிந்தது") : (lang === "en" ? "Active Claims" : lang === "si" ? "ක්‍රියාකාරී හිමිකම්" : "செயலில் உள்ள கோரிக்கைகள்")}
               </Text>
               <View style={styles.sectionBadge}>
                 <Text style={styles.sectionBadgeText}>{displayClaims.length}</Text>
@@ -2159,7 +2170,7 @@ ${inspectionReportText.trim()}
                   color="#cbd5e1"
                 />
                 <Text style={styles.emptyText}>
-                  {(activeTab === "claims" || activeTab === "home") ? "No active claims assigned." : "No completed claims yet."}
+                  {(activeTab === "claims" || activeTab === "home") ? (lang === "en" ? "No active claims assigned." : lang === "si" ? "පවරා ඇති ක්‍රියාකාරී හිමිකම් කිසිවක් නැත." : "செயலில் உள்ள கோரிக்கைகள் எதுவும் ஒதுக்கப்படவில்லை.") : (lang === "en" ? "No completed claims yet." : lang === "si" ? "තවමත් නිමකළ හිමිකම් කිසිවක් නැත." : "முடிந்த கோரிக்கைகள் எதுவும் இன்னும் இல்லை.")}
                 </Text>
               </View>
             ) : (
@@ -2202,7 +2213,7 @@ ${inspectionReportText.trim()}
                           <Text style={styles.claimPlateText}>{claim.vehiclePlate}</Text>
                           <View style={[styles.claimBadge, { backgroundColor: "#f0f7ff", borderColor: isCompleted ? statusColor + "30" : "#dbeafe" }]}>
                             <Text style={[styles.claimBadgeText, { color: isCompleted ? statusColor : "#1e3a8a" }]}>
-                              {isCompleted ? claim.status.toUpperCase() : sev.toUpperCase()}
+                              {isCompleted ? (claim.status === "Approved" ? (lang === "en" ? "APPROVED" : lang === "si" ? "අනුමතයි" : "அங்கீகரிக்கப்பட்டது") : (lang === "en" ? "REJECTED" : lang === "si" ? "ප්‍රතික්ෂේපිතයි" : "நிராகரிக்கப்பட்டது")) : (sev === "Urgent" ? (lang === "en" ? "URGENT" : lang === "si" ? "හදිසි" : "அவசரம்") : sev === "Medium" ? (lang === "en" ? "MEDIUM" : lang === "si" ? "මධ්‍යම" : "நடுத்தர") : (lang === "en" ? "LOW" : lang === "si" ? "අඩු" : "குறைந்த"))}
                             </Text>
                           </View>
                         </View>
@@ -2242,7 +2253,7 @@ ${inspectionReportText.trim()}
                 onPress={() => router.push("/Agent/Activity/page" as any)}
                 activeOpacity={0.8}
               >
-                <Text style={styles.viewAllBtnText}>View All Activities</Text>
+                <Text style={styles.viewAllBtnText}>{lang === "en" ? "View All Activities" : lang === "si" ? "සියලුම ක්‍රියාකාරකම් බලන්න" : "அனைத்து செயல்பாடுகளையும் காண்க"}</Text>
                 <Ionicons name="arrow-forward" size={16} color="#1e3a8a" />
               </TouchableOpacity>
             )}
@@ -2251,7 +2262,7 @@ ${inspectionReportText.trim()}
           {/* ── CONTACT SUPPORT ── */}
           <View style={{ paddingHorizontal: 16, marginTop: 28 }}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Contact Support</Text>
+              <Text style={styles.sectionTitle}>{lang === "en" ? "Contact Support" : lang === "si" ? "සහාය අමතන්න" : "ஆதரவைத் தொடர்பு கொள்ளவும்"}</Text>
             </View>
             <TouchableOpacity style={styles.supportCard} onPress={showSupportAlert} activeOpacity={0.8}>
               <LinearGradient
@@ -2265,7 +2276,7 @@ ${inspectionReportText.trim()}
                     <Ionicons name="headset" size={24} color="#ffffff" />
                   </View>
                   <View>
-                    <Text style={styles.supportLabel}>Agent Helpdesk</Text>
+                    <Text style={styles.supportLabel}>{lang === "en" ? "Agent Helpdesk" : lang === "si" ? "නියෝජිත උපකාරක පීඨය" : "முகவர் உதவிமையம்"}</Text>
                     <Text style={styles.supportSub}>+94 112 003 000 · +94 112 003 001</Text>
                   </View>
                 </View>
@@ -2279,22 +2290,28 @@ ${inspectionReportText.trim()}
           {/* ── QUICK ACTIONS ── */}
           <View style={{ paddingHorizontal: 16, marginTop: 28 }}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Quick Actions</Text>
+              <Text style={styles.sectionTitle}>{lang === "en" ? "Quick Actions" : lang === "si" ? "ඉක්මන් පියවර" : "விரைவான செயல்கள்"}</Text>
             </View>
             <View style={styles.quickGrid}>
-              {QUICK_ACTIONS.map((action, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.quickItem}
-                  onPress={() => handleQuickAction(action.label)}
-                  activeOpacity={0.75}
-                >
-                  <View style={[styles.quickIconBox, { backgroundColor: action.color + "15" }]}>
-                    <Ionicons name={action.icon as any} size={24} color={action.color} />
-                  </View>
-                  <Text style={styles.quickLabel}>{action.label}</Text>
-                </TouchableOpacity>
-              ))}
+              {QUICK_ACTIONS.map((action, idx) => {
+                const localizedLabel = action.label === "New Claims" ? (lang === "en" ? "New Claims" : lang === "si" ? "නව හිමිකම්" : "புதிய கோரிக்கைகள்")
+                  : action.label === "My Activity" ? (lang === "en" ? "My Activity" : lang === "si" ? "මගේ ක්‍රියාකාරකම්" : "எனது செயல்பாடு")
+                  : (lang === "en" ? "Support" : lang === "si" ? "සහාය" : "ஆதரவு");
+
+                return (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.quickItem}
+                    onPress={() => handleQuickAction(action.label)}
+                    activeOpacity={0.75}
+                  >
+                    <View style={[styles.quickIconBox, { backgroundColor: action.color + "15" }]}>
+                      <Ionicons name={action.icon as any} size={24} color={action.color} />
+                    </View>
+                    <Text style={styles.quickLabel}>{localizedLabel}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 

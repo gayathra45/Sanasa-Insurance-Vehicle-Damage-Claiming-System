@@ -19,7 +19,10 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../_config";
 
+import { useLanguage } from "../../utils/translations";
+
 export default function MobileLogin() {
+  const { lang, changeLang, t } = useLanguage();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -34,7 +37,7 @@ export default function MobileLogin() {
 
   const handleLogin = async () => {
     if (!loginId.trim() || !password) {
-      showAlert("Validation Error", "Please fill out both NIC/Email and Password fields.");
+      showAlert(t.login.validationError, t.login.validationMsg);
       return;
     }
 
@@ -47,7 +50,7 @@ export default function MobileLogin() {
       });
       const data = await res.json();
       if (!res.ok) {
-        showAlert("Login Failed", data.error || "Invalid credentials.");
+        showAlert(t.login.loginFailed, data.error || (lang === "en" ? "Invalid credentials." : lang === "si" ? "වැරදි මුරපදයක් හෝ පරිශීලක නාමයක්." : "தவறான நற்சான்றிதழ்கள்."));
         return;
       }
 
@@ -58,10 +61,10 @@ export default function MobileLogin() {
         await AsyncStorage.setItem("logged_in_agent", JSON.stringify(data.agent));
         router.replace("/Agent/Dashboard/page");
       } else {
-        showAlert("Access Denied", "Only Policy Holders and Agents can log in via this mobile app.");
+        showAlert(t.login.accessDenied, t.login.accessDeniedMsg);
       }
     } catch (e) {
-      showAlert("Network Error", "Could not connect to server. Please check your connection.");
+      showAlert(t.login.networkError, t.login.connMsg);
       console.error("Login error:", e);
     } finally {
       setLoggingIn(false);
@@ -108,13 +111,38 @@ export default function MobileLogin() {
 
           {/* Form Card */}
           <View style={[styles.glassCard, { maxWidth: width > 500 ? 460 : "100%" }]}>
-            <Text style={styles.cardTitle}>Login</Text>
+            {/* Language Selector pills */}
+            <View style={styles.langSelectorRow}>
+              <TouchableOpacity
+                onPress={() => changeLang("en")}
+                style={[styles.langSelectBtn, lang === "en" && styles.langSelectBtnActive]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.langSelectText, lang === "en" && styles.langSelectTextActive]}>English</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => changeLang("si")}
+                style={[styles.langSelectBtn, lang === "si" && styles.langSelectBtnActive]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.langSelectText, lang === "si" && styles.langSelectTextActive]}>සිංහල</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => changeLang("ta")}
+                style={[styles.langSelectBtn, lang === "ta" && styles.langSelectBtnActive]}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.langSelectText, lang === "ta" && styles.langSelectTextActive]}>தமிழ்</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.cardTitle}>{t.login.title}</Text>
 
             {/* Inputs Section */}
             <View style={styles.inputsSection}>
               {/* Dynamic Input (NIC / Email) */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>NIC or Email Address</Text>
+                <Text style={styles.label}>{t.login.nicOrEmail}</Text>
                 <View style={styles.inputWrapper}>
                   <Ionicons
                     name="person-outline"
@@ -124,7 +152,7 @@ export default function MobileLogin() {
                   />
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Enter your NIC or Email"
+                    placeholder={t.login.nicEmailPlaceholder}
                     placeholderTextColor="#94a3b8"
                     value={loginId}
                     onChangeText={setLoginId}
@@ -137,12 +165,12 @@ export default function MobileLogin() {
 
               {/* Password input */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>Password</Text>
+                <Text style={styles.label}>{t.login.password}</Text>
                 <View style={styles.inputWrapper}>
                   <Ionicons name="lock-closed-outline" size={20} color="#64748b" style={styles.inputIcon} />
                   <TextInput
                     style={styles.textInput}
-                    placeholder="Enter your password"
+                    placeholder={t.login.passwordPlaceholder}
                     placeholderTextColor="#94a3b8"
                     secureTextEntry={!showPassword}
                     value={password}
@@ -175,17 +203,17 @@ export default function MobileLogin() {
               {loggingIn ? (
                 <ActivityIndicator color="#fff" size="small" />
               ) : (
-                <Text style={styles.submitButtonText}>Login</Text>
+                <Text style={styles.submitButtonText}>{t.login.loginBtn}</Text>
               )}
             </TouchableOpacity>
 
             {/* Bottom Navigation Links */}
             <View style={styles.footerLinks}>
               <TouchableOpacity activeOpacity={0.7} onPress={() => router.push("/Signup/page")}>
-                <Text style={styles.linkText}>Create an Account</Text>
+                <Text style={styles.linkText}>{t.login.createAccount}</Text>
               </TouchableOpacity>
               <TouchableOpacity activeOpacity={0.7} onPress={() => router.push("/Reset_password/page")}>
-                <Text style={styles.linkText}>Reset Password</Text>
+                <Text style={styles.linkText}>{t.login.resetPassword}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -455,6 +483,36 @@ const styles = StyleSheet.create({
   alertButtonText: {
     color: "#fff",
     fontSize: 14,
+    fontWeight: "bold",
+  },
+  langSelectorRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 10,
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    paddingBottom: 16,
+  },
+  langSelectBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    borderWidth: 1.2,
+    borderColor: "rgba(255, 255, 255, 0.18)",
+  },
+  langSelectBtnActive: {
+    backgroundColor: "#ff9800",
+    borderColor: "#ff9800",
+  },
+  langSelectText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "rgba(255, 255, 255, 0.7)",
+  },
+  langSelectTextActive: {
+    color: "#ffffff",
     fontWeight: "bold",
   },
 });

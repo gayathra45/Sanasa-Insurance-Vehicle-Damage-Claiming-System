@@ -107,7 +107,10 @@ const QUICK_ACTIONS = [
   { label: "Support",     icon: "headset-outline",       route: "support",                    color: "#0f172a" },
 ];
 
+import { useLanguage } from "../../utils/translations";
+
 export default function PolicyHolderDashboard() {
+  const { lang, t } = useLanguage();
   const [userName, setUserName]       = useState("");
   const [userNic, setUserNic]         = useState("");
   const [vehicles, setVehicles]       = useState<Vehicle[]>([]);
@@ -172,19 +175,19 @@ export default function PolicyHolderDashboard() {
           notifs.push({
             id: claim.claimNumber + "-doc",
             type: "urgent",
-            title: "Documents Requested – Action Required",
-            description: `Staff has requested a ${
+            title: lang === "en" ? "Documents Requested – Action Required" : lang === "si" ? "ලේඛන ඉල්ලා ඇත – ක්‍රියාවක් අවශ්‍යයි" : "ஆவணங்கள் கோரப்பட்டுள்ளன - நடவடிக்கை தேவை",
+            description: lang === "en" ? `Staff has requested a ${
               claim.requestedDocuments && claim.requestedDocuments.length > 0
                 ? claim.requestedDocuments.join(" & ")
                 : "Police Report & Repair Estimate"
-            } for claim ${claim.claimNumber}.`,
-            subText: "Please upload within 3 days...",
+            } for claim ${claim.claimNumber}.` : lang === "si" ? `හිමිකම් අංකය ${claim.claimNumber} සඳහා ලේඛන ඉල්ලා ඇත.` : `விண்ணப்ப எண் ${claim.claimNumber} க்கான ஆவணங்கள் கோரப்பட்டுள்ளன.`,
+            subText: lang === "en" ? "Please upload within 3 days..." : lang === "si" ? "කරුණාකර දින 3ක් ඇතුළත උඩුගත කරන්න..." : "3 நாட்களுக்குள் பதிவேற்றவும்...",
             date: dateFormatted,
             isUrgent: true,
             createdAt: claim.createdAt,
             actions: [
-              { label: "Upload", route: "/PolicyHolder/MyDocs", primary: true },
-              { label: "View",   route: "/PolicyHolder/TrackClaims" },
+              { label: t.dashboard.upload, route: "/PolicyHolder/MyDocs", primary: true },
+              { label: t.dashboard.view,   route: "/PolicyHolder/TrackClaims" },
             ],
             claim: claim
           });
@@ -194,24 +197,24 @@ export default function PolicyHolderDashboard() {
           notifs.push({
             id: claim.claimNumber + "-approved",
             type: "approved",
-            title: `Claim ${claim.claimNumber} Approved!`,
-            description: `Your claim for LKR ${claim.amount ? Number(claim.amount).toLocaleString() : "85,000"} has been approved. Payment processed within 5 days.`,
+            title: lang === "en" ? `Claim ${claim.claimNumber} Approved!` : lang === "si" ? `හිමිකම් අංක ${claim.claimNumber} අනුමතයි!` : `கோரிக்கை ${claim.claimNumber} அங்கீகரிக்கப்பட்டது!`,
+            description: lang === "en" ? `Your claim for LKR ${claim.amount ? Number(claim.amount).toLocaleString() : "85,000"} has been approved. Payment processed within 5 days.` : lang === "si" ? `රු. ${claim.amount ? Number(claim.amount).toLocaleString() : "85,000"} ක වන්දි මුදලක් අනුමත කර ඇත.` : `உங்கள் கோரிக்கைக்கான இழப்பீட்டுத் தொகை அங்கீகரிக்கப்பட்டுள்ளது.`,
             date: dateFormatted,
             isUrgent: false,
             createdAt: claim.createdAt,
-            actions: [{ label: "View", route: "/PolicyHolder/TrackClaims" }],
+            actions: [{ label: t.dashboard.view, route: "/PolicyHolder/TrackClaims" }],
             claim: claim
           });
         } else if (!claim.documentsRequested) {
           notifs.push({
             id: claim.claimNumber + "-status",
             type: "status",
-            title: `Claim ${claim.claimNumber} Status: ${claim.status || "Pending"}`,
-            description: `Your claim is currently in ${claim.status || "Pending"} stage. Agent is reviewing details.`,
+            title: lang === "en" ? `Claim ${claim.claimNumber} Status: ${claim.status || "Pending"}` : lang === "si" ? `හිමිකම් අංක ${claim.claimNumber} තත්ත්වය: ${claim.status === "Pending" ? "ප්‍රතිචාර නොදැක්වූ" : claim.status === "In Progress" ? "ක්‍රියාත්මක වෙමින්" : claim.status || "ප්‍රතිචාර නොදැක්වූ"}` : `கோரிக்கை ${claim.claimNumber} நிலை: ${claim.status || "நிலுவையில்"}`,
+            description: lang === "en" ? `Your claim is currently in ${claim.status || "Pending"} stage. Agent is reviewing details.` : lang === "si" ? "ඔබගේ හිමිකම් පෑම සමාලෝචනය වෙමින් පවතී." : "உங்கள் கோரிக்கை மதிப்பாய்வு செய்யப்படுகிறது.",
             date: dateFormatted,
             isUrgent: false,
             createdAt: claim.createdAt,
-            actions: [{ label: "View", route: "/PolicyHolder/TrackClaims" }],
+            actions: [{ label: t.dashboard.view, route: "/PolicyHolder/TrackClaims" }],
             claim: claim
           });
         }
@@ -534,7 +537,7 @@ export default function PolicyHolderDashboard() {
               {/* Top bar */}
               <View style={styles.topBar}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.welcomeLabel}>Welcome back,</Text>
+                  <Text style={styles.welcomeLabel}>{t.dashboard.welcomeBack}</Text>
                   <Text style={styles.welcomeName}>{userName} 👋</Text>
                 </View>
 
@@ -570,20 +573,20 @@ export default function PolicyHolderDashboard() {
                 <Text style={styles.subtitleText} numberOfLines={2}>
                   {hasAlerts ? (
                     <>
-                      {"Policy active. "}
+                      {t.dashboard.policyActive + " "}
                       {inProgress > 0 && (
                         <Text style={styles.highlightTextOrange}>
-                          {inProgress} pending claim{inProgress > 1 ? "s" : ""}
+                          {inProgress} {inProgress > 1 ? t.dashboard.pendingClaimsPlural : t.dashboard.pendingClaims}
                         </Text>
                       )}
                       {inProgress > 0 && hasDocRequest && " · "}
                       {hasDocRequest && (
-                        <Text style={styles.highlightTextOrange}>documents awaiting action</Text>
+                        <Text style={styles.highlightTextOrange}>{t.dashboard.awaitingAction}</Text>
                       )}
                       {"."}
                     </>
                   ) : (
-                    "Your policy is active and up to date. No pending actions."
+                    t.dashboard.upToDate
                   )}
                 </Text>
               </View>
@@ -591,7 +594,7 @@ export default function PolicyHolderDashboard() {
               {/* Callout */}
               <Animated.View style={[styles.compensationCallout, { transform: [{ scale: heroPulse }] }]}>
                 <Text style={styles.calloutTitle}>
-                  An accident claim with Sanasa General Insurance Company Limited is a request for compensation after an accident.
+                  {t.dashboard.compensationCallout}
                 </Text>
               </Animated.View>
 
@@ -603,7 +606,7 @@ export default function PolicyHolderDashboard() {
                   activeOpacity={0.9}
                 >
                   <Ionicons name="add" size={20} color="#ffffff" style={{ marginRight: 6 }} />
-                  <Text style={styles.neonButtonText}>New Claim</Text>
+                  <Text style={styles.neonButtonText}>{t.dashboard.newClaim}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -612,7 +615,7 @@ export default function PolicyHolderDashboard() {
                   activeOpacity={0.9}
                 >
                   <Ionicons name="search" size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                  <Text style={styles.neonButtonText}>Track Claim</Text>
+                  <Text style={styles.neonButtonText}>{t.dashboard.trackClaim}</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -626,7 +629,7 @@ export default function PolicyHolderDashboard() {
               <Ionicons name="stats-chart" size={20} color="#f97316" />
             </View>
             <Text style={styles.statNumber}>{totalClaims}</Text>
-            <Text style={styles.statLabel}>Total Claims</Text>
+            <Text style={styles.statLabel}>{t.dashboard.totalClaimsCard}</Text>
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -636,7 +639,7 @@ export default function PolicyHolderDashboard() {
               <Ionicons name="time" size={20} color="#06b6d4" />
             </View>
             <Text style={styles.statNumber}>{inProgress}</Text>
-            <Text style={styles.statLabel}>In Progress</Text>
+            <Text style={styles.statLabel}>{t.dashboard.inProgressCard}</Text>
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -646,7 +649,7 @@ export default function PolicyHolderDashboard() {
               <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
             </View>
             <Text style={styles.statNumber}>{approved}</Text>
-            <Text style={styles.statLabel}>Approved</Text>
+            <Text style={styles.statLabel}>{t.dashboard.approvedCard}</Text>
           </TouchableOpacity>
         </View>
 
@@ -670,8 +673,8 @@ export default function PolicyHolderDashboard() {
                     <Ionicons name="folder-open" size={26} color="#ffffff" />
                   </View>
                   <View>
-                    <Text style={styles.myDocsLabel}>My Documents</Text>
-                    <Text style={styles.myDocsSub}>Policy files, NIC, License & more</Text>
+                    <Text style={styles.myDocsLabel}>{t.dashboard.myDocs}</Text>
+                    <Text style={styles.myDocsSub}>{t.dashboard.myDocsSub}</Text>
                   </View>
                 </View>
                 <View style={styles.myDocsArrow}>
@@ -688,7 +691,7 @@ export default function PolicyHolderDashboard() {
               onPress={openNotifications}
               activeOpacity={0.7}
             >
-              <Text style={styles.sectionTitle}>Notifications & Reminders</Text>
+              <Text style={styles.sectionTitle}>{t.dashboard.notificationsHeader}</Text>
               <Ionicons name="chevron-forward" size={18} color="#64748b" />
             </TouchableOpacity>
 
@@ -787,7 +790,7 @@ export default function PolicyHolderDashboard() {
             ) : (
               <View style={styles.emptyCard}>
                 <Ionicons name="notifications-off-outline" size={32} color="#cbd5e1" />
-                <Text style={styles.emptyText}>No notifications or reminders at this time.</Text>
+                <Text style={styles.emptyText}>{t.dashboard.noNotifications}</Text>
               </View>
             )}
           </View>
@@ -795,7 +798,7 @@ export default function PolicyHolderDashboard() {
           {/* ── MY VEHICLES ── */}
           <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>My Vehicles</Text>
+              <Text style={styles.sectionTitle}>{lang === "en" ? "My Vehicles" : lang === "si" ? "මගේ වාහන" : "எனது வாகனங்கள்"}</Text>
               <TouchableOpacity onPress={() => router.push("/PolicyHolder/MyVehicles" as any)}>
                 <Ionicons name="chevron-forward" size={18} color="#64748b" />
               </TouchableOpacity>
@@ -816,7 +819,7 @@ export default function PolicyHolderDashboard() {
                       style={styles.vehicleViewBtn}
                       onPress={() => router.push("/PolicyHolder/MyVehicles" as any)}
                     >
-                      <Text style={styles.vehicleViewBtnText}>View</Text>
+                      <Text style={styles.vehicleViewBtnText}>{lang === "en" ? "View" : lang === "si" ? "බලන්න" : "பார்"}</Text>
                     </TouchableOpacity>
                   </View>
                 ))}
@@ -824,20 +827,20 @@ export default function PolicyHolderDashboard() {
             ) : (
               <View style={styles.emptyCard}>
                 <Ionicons name="car-outline" size={32} color="#cbd5e1" />
-                <Text style={styles.emptyText}>No vehicles registered under this policy.</Text>
+                <Text style={styles.emptyText}>{lang === "en" ? "No vehicles registered under this policy." : lang === "si" ? "මෙම ඔප්පුව යටතේ ලියාපදිංචි වාහන කිසිවක් නැත." : "இந்த பாலிசியின் கீழ் வாகனங்கள் எதுவும் பதிவு செய்யப்படவில்லை."}</Text>
               </View>
             )}
           </View>
           {/* ── CONTACT SUPPORT ── */}
           <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Contact Support</Text>
+              <Text style={styles.sectionTitle}>{lang === "en" ? "Contact Support" : lang === "si" ? "සහාය සේවාව අමතන්න" : "ஆதரவைத் தொடர்பு கொள்ளவும்"}</Text>
             </View>
             <TouchableOpacity style={styles.supportCard} onPress={showSupportAlert} activeOpacity={0.8}>
               <View style={styles.supportContent}>
                 <Ionicons name="headset-outline" size={24} color="#0f172a" />
                 <View style={{ marginLeft: 12 }}>
-                  <Text style={styles.supportLabel}>Support</Text>
+                  <Text style={styles.supportLabel}>{lang === "en" ? "Support" : lang === "si" ? "සහාය සේවාව" : "ஆதரவு"}</Text>
                   <Text style={styles.supportSub}>Phone: +94 112 003 000{`\n`}Email: claims@sanasainsurance.lk</Text>
                 </View>
               </View>
@@ -847,11 +850,18 @@ export default function PolicyHolderDashboard() {
           {/* ── QUICK ACTIONS — bottom, clean minimal design ── */}
           <View style={{ paddingHorizontal: 16, marginTop: 28 }}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Quick Actions</Text>
+              <Text style={styles.sectionTitle}>{lang === "en" ? "Quick Actions" : lang === "si" ? "ඉක්මන් ක්‍රියාමාර්ග" : "விரைவான செயல்கள்"}</Text>
             </View>
 
             <View style={styles.quickGrid}>
-              {QUICK_ACTIONS.map((action, idx) => (
+              {[
+                { label: t.dashboard.newClaim,   icon: "add-circle-outline",   route: "/PolicyHolder/New_Claim" },
+                { label: t.myClaims.title,   icon: "document-text-outline", route: "/PolicyHolder/My_claims" },
+                { label: t.dashboard.trackClaim, icon: "locate-outline",        route: "/PolicyHolder/TrackClaims" },
+                { label: lang === "en" ? "My Vehicles" : lang === "si" ? "මගේ වාහන" : "எனது வாகனங்கள்", icon: "car-outline",           route: "/PolicyHolder/MyVehicles" },
+                { label: lang === "en" ? "My Docs" : lang === "si" ? "මගේ ලේඛන" : "எனது ஆவணங்கள்",     icon: "folder-open-outline",   route: "/PolicyHolder/MyDocs" },
+                { label: lang === "en" ? "Support" : lang === "si" ? "සහාය සේවය" : "ஆதரவு",     icon: "headset-outline",       route: "support" },
+              ].map((action, idx) => (
                 <TouchableOpacity
                   key={idx}
                   style={styles.quickItem}

@@ -85,7 +85,10 @@ function formatDateString(dateStr?: string) {
   }
 }
 
+import { useLanguage } from "../../utils/translations";
+
 export default function NotificationsPage() {
+  const { lang, t } = useLanguage();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filteredNotifs, setFilteredNotifs] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,18 +140,18 @@ export default function NotificationsPage() {
           notifs.push({
             id: claim.claimNumber + "-doc",
             type: "urgent",
-            title: "Documents Requested – Action Required",
-            description: `Staff has requested a ${
+            title: lang === "en" ? "Documents Requested – Action Required" : lang === "si" ? "ලේඛන ඉල්ලා ඇත – ක්‍රියාවක් අවශ්‍යයි" : "ஆவணங்கள் கோரப்பட்டுள்ளன - நடவடிக்கை தேவை",
+            description: lang === "en" ? `Staff has requested a ${
               claim.requestedDocuments && claim.requestedDocuments.length > 0
                 ? claim.requestedDocuments.join(" & ")
                 : "Police Report / Repair Estimate"
-            } for claim ${claim.claimNumber}.`,
-            subText: "Please upload within 3 working days to avoid settlement delays.",
+            } for claim ${claim.claimNumber}.` : lang === "si" ? `හිමිකම් අංකය ${claim.claimNumber} සඳහා ලේඛන ඉල්ලා ඇත.` : `விண்ணப்ப எண் ${claim.claimNumber} க்கான ஆவணங்கள் கோரப்பட்டுள்ளன.`,
+            subText: lang === "en" ? "Please upload within 3 working days to avoid settlement delays." : lang === "si" ? "ප්‍රමාදයන් වළක්වා ගැනීමට කරුණාකර වැඩකරන දින 3ක් ඇතුළත උඩුගත කරන්න." : "தாமதத்தைத் தவிர்க்க 3 வேலை நாட்களுக்குள் பதிவேற்றவும்.",
             date: dateFormatted,
             isUrgent: true,
             createdAt: claim.createdAt,
             route: "/PolicyHolder/MyDocs",
-            actionLabel: "Upload Documents",
+            actionLabel: lang === "en" ? "Upload Documents" : lang === "si" ? "ලේඛන උඩුගත කරන්න" : "ஆவணங்களை பதிவேற்றவும்",
             claim: claim
           });
         }
@@ -159,13 +162,13 @@ export default function NotificationsPage() {
           notifs.push({
             id: claim.claimNumber + "-approved",
             type: "approved",
-            title: `Claim ${claim.claimNumber} Approved!`,
-            description: `Your insurance claim for vehicle ${claim.vehiclePlate} has been approved. The settlement amount will be credited to your registered bank account.`,
+            title: lang === "en" ? `Claim ${claim.claimNumber} Approved!` : lang === "si" ? `හිමිකම් අංක ${claim.claimNumber} අනුමතයි!` : `கோரிக்கை ${claim.claimNumber} அங்கீகரிக்கப்பட்டது!`,
+            description: lang === "en" ? `Your insurance claim for vehicle ${claim.vehiclePlate} has been approved. The settlement amount will be credited to your registered bank account.` : lang === "si" ? `වාහන අංක ${claim.vehiclePlate} සඳහා ඔබගේ රක්ෂණ හිමිකම් පෑම අනුමත කර ඇත. වන්දි මුදල ඔබගේ බැංකු ගිණුමට බැර කරනු ඇත.` : `வாகன எண் ${claim.vehiclePlate} க்கான காப்பீட்டுக் கோரிக்கை அங்கீகரிக்கப்பட்டது.`,
             date: dateFormatted,
             isUrgent: false,
             createdAt: claim.createdAt,
             route: "/PolicyHolder/My_claims",
-            actionLabel: "View",
+            actionLabel: lang === "en" ? "View" : lang === "si" ? "බලන්න" : "பார்",
             claim: claim
           });
         } else if (!claim.documentsRequested) {
@@ -173,13 +176,13 @@ export default function NotificationsPage() {
           notifs.push({
             id: claim.claimNumber + "-status",
             type: "status",
-            title: `Claim ${claim.claimNumber} Status: ${claim.status || "Pending"}`,
-            description: `Your claim is currently in "${claim.status || "Pending"}" status. Click below to view the detailed progress tracker.`,
+            title: lang === "en" ? `Claim ${claim.claimNumber} Status: ${claim.status || "Pending"}` : lang === "si" ? `හිමිකම් අංක ${claim.claimNumber} තත්ත්වය: ${claim.status === "Pending" ? "ප්‍රතිචාර නොදැක්වූ" : claim.status === "In Progress" ? "ක්‍රියාත්මක වෙමින්" : claim.status || "ප්‍රතිචාර නොදැක්වූ"}` : `கோரிக்கை ${claim.claimNumber} நிலை: ${claim.status || "நிலுவையில்"}`,
+            description: lang === "en" ? `Your claim is currently in "${claim.status || "Pending"}" status. Click below to view the detailed progress tracker.` : lang === "si" ? `ඔබගේ හිමිකම් පෑම දැනට "${claim.status === "Pending" ? "ප්‍රතිචාර නොදැක්වූ" : claim.status === "In Progress" ? "ක්‍රියාත්මක වෙමින්" : claim.status || "ප්‍රතිචාර නොදැක්වූ"}" තත්ත්වයේ පවතී. විස්තර බැලීමට පහත ක්ලික් කරන්න.` : `உங்கள் கோரிக்கை தற்பொழுது "${claim.status || "நிலுவையில்"}" நிலையில் உள்ளது. விவரங்களைப் பார்க்க கீழே கிளிக் செய்யவும்.`,
             date: dateFormatted,
             isUrgent: false,
             createdAt: claim.createdAt,
             route: "/PolicyHolder/TrackClaims",
-            actionLabel: "View",
+            actionLabel: lang === "en" ? "View" : lang === "si" ? "බලන්න" : "பார்",
             claim: claim
           });
         }
@@ -393,11 +396,11 @@ export default function NotificationsPage() {
           <Ionicons name="arrow-back" size={22} color="#0f172a" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Notifications</Text>
+          <Text style={styles.headerTitle}>{t.notifications.title}</Text>
           <Text style={styles.headerSub}>
             {notifications.length > 0
-              ? `${notifications.filter(n => !readIds.includes(n.id)).length} unread updates`
-              : "All caught up"}
+              ? (lang === "en" ? `${notifications.filter(n => !readIds.includes(n.id)).length} unread updates` : lang === "si" ? `නොකියවූ යාවත්කාලීන ${notifications.filter(n => !readIds.includes(n.id)).length} කි` : `வாசிக்கப்படாத புதுப்பிப்புகள் ${notifications.filter(n => !readIds.includes(n.id)).length}`)
+              : t.notifications.noNotifications}
           </Text>
         </View>
         {notifications.some(n => !readIds.includes(n.id)) && (
@@ -406,7 +409,7 @@ export default function NotificationsPage() {
             onPress={markAllAsRead}
             activeOpacity={0.7}
           >
-            <Text style={styles.markAllText}>Mark Read</Text>
+            <Text style={styles.markAllText}>{lang === "en" ? "Mark Read" : lang === "si" ? "කියවූ බව ලකුණු කරන්න" : "அனைத்தையும் வாசித்ததாகக் குறிக்கவும்"}</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -415,7 +418,7 @@ export default function NotificationsPage() {
       <View style={styles.searchBarContainer}>
         <Ionicons name="search" size={18} color="#94a3b8" style={{ marginLeft: 4 }} />
         <TextInput
-          placeholder="Search notifications..."
+          placeholder={lang === "en" ? "Search notifications..." : lang === "si" ? "දැනුම්දීම් සොයන්න..." : "அறிவிப்புகளைத் தேடுக..."}
           placeholderTextColor="#94a3b8"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -440,7 +443,7 @@ export default function NotificationsPage() {
             style={[styles.tabButton, activeTab === "all" && styles.tabButtonActive]}
           >
             <Text style={[styles.tabText, activeTab === "all" && styles.tabTextActive]}>
-              All ({notifications.length})
+              {lang === "en" ? "All" : lang === "si" ? "සියල්ල" : "அனைத்தும்"} ({notifications.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -448,7 +451,7 @@ export default function NotificationsPage() {
             style={[styles.tabButton, activeTab === "unread" && styles.tabButtonActiveUnread]}
           >
             <Text style={[styles.tabText, activeTab === "unread" && styles.tabTextActiveUnread]}>
-              Unread ({notifications.filter(n => !readIds.includes(n.id)).length})
+              {lang === "en" ? "Unread" : lang === "si" ? "නොකියවූ" : "வாசிக்கப்படாதவை"} ({notifications.filter(n => !readIds.includes(n.id)).length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -456,7 +459,7 @@ export default function NotificationsPage() {
             style={[styles.tabButton, activeTab === "read" && styles.tabButtonActiveRead]}
           >
             <Text style={[styles.tabText, activeTab === "read" && styles.tabTextActiveRead]}>
-              Read ({notifications.filter(n => readIds.includes(n.id)).length})
+              {lang === "en" ? "Read" : lang === "si" ? "කියවූ" : "வாசித்தவை"} ({notifications.filter(n => readIds.includes(n.id)).length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -464,7 +467,7 @@ export default function NotificationsPage() {
             style={[styles.tabButton, activeTab === "urgent" && styles.tabButtonActiveUrgent]}
           >
             <Text style={[styles.tabText, activeTab === "urgent" && styles.tabTextActiveUrgent]}>
-              Urgent ({notifications.filter(n => n.type === "urgent").length})
+              {lang === "en" ? "Urgent" : lang === "si" ? "හදිසි" : "அவசரம்"} ({notifications.filter(n => n.type === "urgent").length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -472,7 +475,7 @@ export default function NotificationsPage() {
             style={[styles.tabButton, activeTab === "approved" && styles.tabButtonActiveApproved]}
           >
             <Text style={[styles.tabText, activeTab === "approved" && styles.tabTextActiveApproved]}>
-              Approved ({notifications.filter(n => n.type === "approved").length})
+              {lang === "en" ? "Approved" : lang === "si" ? "අනුමතයි" : "அங்கீகரிக்கப்பட்டது"} ({notifications.filter(n => n.type === "approved").length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -480,7 +483,7 @@ export default function NotificationsPage() {
             style={[styles.tabButton, activeTab === "status" && styles.tabButtonActiveStatus]}
           >
             <Text style={[styles.tabText, activeTab === "status" && styles.tabTextActiveStatus]}>
-              Status Updates ({notifications.filter(n => n.type === "status").length})
+              {lang === "en" ? "Status Updates" : lang === "si" ? "තත්ත්ව යාවත්කාලීන" : "நிலை புதுப்பிப்புகள்"} ({notifications.filter(n => n.type === "status").length})
             </Text>
           </TouchableOpacity>
         </ScrollView>
@@ -601,9 +604,9 @@ export default function NotificationsPage() {
               <View style={styles.emptyIconCircle}>
                 <Ionicons name="notifications-off-outline" size={38} color="#94a3b8" />
               </View>
-              <Text style={styles.emptyTitle}>No Notifications</Text>
+              <Text style={styles.emptyTitle}>{t.notifications.noNotifications}</Text>
               <Text style={styles.emptyDesc}>
-                No notifications match the active filter.
+                {lang === "en" ? "No notifications match the active filter." : lang === "si" ? "ක්‍රියාකාරී සෙවුමට ගැලපෙන දැනුම්දීම් කිසිවක් නැත." : "செயலில் உள்ள வடிப்பானுடன் பொருந்தக்கூடிய அறிவிப்புகள் எதுவும் இல்லை."}
               </Text>
             </View>
           )}
@@ -622,7 +625,7 @@ export default function NotificationsPage() {
             {/* Modal Header */}
             <View style={styles.modalHeaderTitleArea}>
               <Text style={styles.modalHeaderTitle} numberOfLines={1}>
-                Claim Details – {selectedClaim?.claimNumber}
+                {t.myClaims.detailsTitle} – {selectedClaim?.claimNumber}
               </Text>
               <TouchableOpacity onPress={() => setSelectedClaim(null)} style={styles.closeBtn}>
                 <Ionicons name="close" size={24} color="#64748b" />
@@ -640,73 +643,73 @@ export default function NotificationsPage() {
                 {/* Details Table */}
                 <View style={styles.detailsCard}>
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Vehicle Plate:</Text>
+                    <Text style={styles.detailsLabel}>{t.myClaims.vehicleId}:</Text>
                     <Text style={styles.detailsVal}>{formatNumberPlate(selectedClaim.vehiclePlate)}</Text>
                   </View>
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Damage Type:</Text>
+                    <Text style={styles.detailsLabel}>{t.myClaims.damageType}:</Text>
                     <Text style={styles.detailsVal}>{selectedClaim.damageType}</Text>
                   </View>
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Est. Amount:</Text>
+                    <Text style={styles.detailsLabel}>{lang === "en" ? "Est. Amount" : lang === "si" ? "තක්සේරු මුදල" : "மதிப்பீட்டுத் தொகை"}:</Text>
                     <Text style={styles.detailsVal}>
                       {selectedClaim.amount
                         ? (typeof selectedClaim.amount === "string"
                           ? (selectedClaim.amount.startsWith("Rs.") ? "LKR " + selectedClaim.amount.substring(4) : selectedClaim.amount)
                           : "LKR " + Number(selectedClaim.amount).toLocaleString())
-                        : "Pending"}
+                        : (lang === "en" ? "Pending" : lang === "si" ? "ප්‍රතිචාර නොදැක්වූ" : "நிலுவையில்")}
                     </Text>
                   </View>
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Incident Date:</Text>
+                    <Text style={styles.detailsLabel}>{t.myClaims.incidentDate}:</Text>
                     <Text style={styles.detailsVal}>{formatDateString(selectedClaim.incidentDate)}</Text>
                   </View>
                    <View style={styles.detailsRow}>
-                     <Text style={styles.detailsLabel}>Officer Assigned:</Text>
-                     <Text style={styles.detailsVal}>{selectedClaim.officer || "Agent Saman"}</Text>
+                     <Text style={styles.detailsLabel}>{lang === "en" ? "Officer Assigned" : lang === "si" ? "පවරා ඇති නිලධාරියා" : "ஒதுக்கப்பட்ட அதிகாரி"}:</Text>
+                     <Text style={styles.detailsVal}>{selectedClaim.officer === "Not Assigned" ? (lang === "en" ? "Not Assigned" : lang === "si" ? "පත් කර නැත" : "நியமிக்கப்படவில்லை") : (selectedClaim.officer || "Agent Saman")}</Text>
                    </View>
                    <View style={styles.detailsRow}>
-                     <Text style={styles.detailsLabel}>Branch:</Text>
+                     <Text style={styles.detailsLabel}>{t.myClaims.branch}:</Text>
                      <Text style={styles.detailsVal}>{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</Text>
                    </View>
                   <View style={styles.detailsRowNoBorder}>
-                    <Text style={styles.detailsLabel}>Location:</Text>
+                    <Text style={styles.detailsLabel}>{t.myClaims.location}:</Text>
                     <Text style={styles.detailsVal}>{selectedClaim.location || "N/A"}</Text>
                   </View>
                 </View>                {/* Other Vehicle Details Section */}
                 {selectedClaim.otherVehicleDetails && (
                   <View style={{ marginTop: 16, gap: 12 }}>
-                    <Text style={[styles.sectionSubHeader, { paddingHorizontal: 4 }]}>Other Vehicles Involved</Text>
+                    <Text style={[styles.sectionSubHeader, { paddingHorizontal: 4 }]}>{lang === "en" ? "Other Vehicles Involved" : lang === "si" ? "සම්බන්ධ අනෙක් වාහන" : "சம்பந்தப்பட்ட பிற வாகனங்கள்"}</Text>
                     {Array.isArray(selectedClaim.otherVehicleDetails) ? (
                       selectedClaim.otherVehicleDetails.length === 0 ? (
                         <View style={styles.detailsCard}>
-                          <Text style={[styles.detailsVal, { fontStyle: "italic", color: "#64748b" }]}>No other vehicles involved.</Text>
+                          <Text style={[styles.detailsVal, { fontStyle: "italic", color: "#64748b" }]}>{lang === "en" ? "No other vehicles involved." : lang === "si" ? "වෙනත් වාහන සම්බන්ධ වී නැත." : "பிற வாகனங்கள் எதுவும் ஈடுபடவில்லை."}</Text>
                         </View>
                       ) : (
                         selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
                           <View key={vIdx} style={styles.detailsCard}>
-                            <Text style={[styles.sectionSubHeader, { fontSize: 13, marginBottom: 8 }]}>Vehicle #{vIdx + 1}</Text>
+                            <Text style={[styles.sectionSubHeader, { fontSize: 13, marginBottom: 8 }]}>{lang === "en" ? "Vehicle" : lang === "si" ? "වාහනය" : "வாகனம்"} #{vIdx + 1}</Text>
                             {vehicle.vehiclePlate ? (
                               <View style={styles.detailsRow}>
-                                <Text style={styles.detailsLabel}>Vehicle Plate:</Text>
+                                <Text style={styles.detailsLabel}>{t.myClaims.vehicleId}:</Text>
                                 <Text style={styles.detailsVal}>{formatNumberPlate(vehicle.vehiclePlate)}</Text>
                               </View>
                             ) : null}
                             {vehicle.driverName ? (
                               <View style={styles.detailsRow}>
-                                <Text style={styles.detailsLabel}>Driver Name:</Text>
+                                <Text style={styles.detailsLabel}>{lang === "en" ? "Driver Name" : lang === "si" ? "රියදුරුගේ නම" : "ஓட்டுநர் பெயர்"}:</Text>
                                 <Text style={styles.detailsVal}>{vehicle.driverName}</Text>
                               </View>
                             ) : null}
                             {vehicle.insuranceCompany ? (
                               <View style={styles.detailsRow}>
-                                <Text style={styles.detailsLabel}>Insurance Name:</Text>
+                                <Text style={styles.detailsLabel}>{lang === "en" ? "Insurance Name" : lang === "si" ? "රක්ෂණ සමාගම" : "காப்பீட்டு நிறுவனம்"}:</Text>
                                 <Text style={styles.detailsVal}>{vehicle.insuranceCompany}</Text>
                               </View>
                             ) : null}
                             {vehicle.policyNumber ? (
                               <View style={styles.detailsRowNoBorder}>
-                                <Text style={styles.detailsLabel}>Insurance Number:</Text>
+                                <Text style={styles.detailsLabel}>{lang === "en" ? "Insurance Number" : lang === "si" ? "රක්ෂණ අංකය" : "பாலிசி எண்"}:</Text>
                                 <Text style={styles.detailsVal}>{vehicle.policyNumber}</Text>
                               </View>
                             ) : null}
@@ -714,7 +717,7 @@ export default function NotificationsPage() {
                             {/* License Photos Grid */}
                             {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
                               <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                                <Text style={styles.photoSectionLabel}>Driver's License Photos</Text>
+                                <Text style={styles.photoSectionLabel}>{lang === "en" ? "Driver's License Photos" : lang === "si" ? "රියදුරු බලපත්‍ර ඡායාරූප" : "ஓட்டுநர் உரிம புகைப்படங்கள்"}</Text>
                                 <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
                                   {vehicle.licensePhotos.map((url: string, idx: number) => {
                                     let docUrl = url;
@@ -734,7 +737,7 @@ export default function NotificationsPage() {
                             {/* Vehicle Damage / Scene Photos Grid */}
                             {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
                               <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                                <Text style={styles.photoSectionLabel}>Vehicle / Damage Photos</Text>
+                                <Text style={styles.photoSectionLabel}>{lang === "en" ? "Vehicle / Damage Photos" : lang === "si" ? "වාහන / හානි ඡායාරූප" : "வாகனம் / சேத புகைப்படங்கள்"}</Text>
                                 <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
                                   {vehicle.vehiclePhotos.map((url: string, idx: number) => {
                                     let docUrl = url;
@@ -758,25 +761,25 @@ export default function NotificationsPage() {
                         <View style={styles.detailsCard}>
                           {selectedClaim.otherVehicleDetails.vehiclePlate ? (
                             <View style={styles.detailsRow}>
-                              <Text style={styles.detailsLabel}>Vehicle Plate:</Text>
+                              <Text style={styles.detailsLabel}>{t.myClaims.vehicleId}:</Text>
                               <Text style={styles.detailsVal}>{formatNumberPlate(selectedClaim.otherVehicleDetails.vehiclePlate)}</Text>
                             </View>
                           ) : null}
                           {selectedClaim.otherVehicleDetails.driverName ? (
                             <View style={styles.detailsRow}>
-                              <Text style={styles.detailsLabel}>Driver Name:</Text>
+                              <Text style={styles.detailsLabel}>{lang === "en" ? "Driver Name" : lang === "si" ? "රියදුරුගේ නම" : "ஓட்டுநர் பெயர்"}:</Text>
                               <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.driverName}</Text>
                             </View>
                           ) : null}
                           {selectedClaim.otherVehicleDetails.insuranceCompany ? (
                             <View style={styles.detailsRow}>
-                              <Text style={styles.detailsLabel}>Insurance Name:</Text>
+                              <Text style={styles.detailsLabel}>{lang === "en" ? "Insurance Name" : lang === "si" ? "රක්ෂණ සමාගම" : "காப்பீட்டு நிறுவனம்"}:</Text>
                               <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.insuranceCompany}</Text>
                             </View>
                           ) : null}
                           {selectedClaim.otherVehicleDetails.policyNumber ? (
                             <View style={styles.detailsRowNoBorder}>
-                              <Text style={styles.detailsLabel}>Insurance Number:</Text>
+                              <Text style={styles.detailsLabel}>{lang === "en" ? "Insurance Number" : lang === "si" ? "රක්ෂණ අංකය" : "பாலிசி எண்"}:</Text>
                               <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.policyNumber}</Text>
                             </View>
                           ) : null}
@@ -784,7 +787,7 @@ export default function NotificationsPage() {
                           {/* License Photos Grid */}
                           {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
                             <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                              <Text style={styles.photoSectionLabel}>Other Driver's License Photos</Text>
+                              <Text style={styles.photoSectionLabel}>{lang === "en" ? "Driver's License Photos" : lang === "si" ? "රියදුරු බලපත්‍ර ඡායාරූප" : "ஓட்டுநர் உரிம புகைப்படங்கள்"}</Text>
                               <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
                                 {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -804,7 +807,7 @@ export default function NotificationsPage() {
                           {/* Vehicle Damage / Scene Photos Grid */}
                           {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
                             <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                              <Text style={styles.photoSectionLabel}>Other Vehicle / Damage Photos</Text>
+                              <Text style={styles.photoSectionLabel}>{lang === "en" ? "Vehicle / Damage Photos" : lang === "si" ? "වාහන / හානි ඡායාරූප" : "வாகனம் / சேத புகைப்படங்கள்"}</Text>
                               <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
                                 {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -829,14 +832,14 @@ export default function NotificationsPage() {
                 {/* Incident Description */}
                 {selectedClaim.description ? (
                   <View style={styles.descriptionContainer}>
-                    <Text style={styles.descriptionHeader}>Incident Description</Text>
+                    <Text style={styles.descriptionHeader}>{lang === "en" ? "Incident Description" : lang === "si" ? "අනතුර පිළිබඳ විස්තරය" : "விபத்து விவரம்"}</Text>
                     <Text style={styles.descriptionText}>"{selectedClaim.description}"</Text>
                   </View>
                 ) : null}
 
                 {/* Messages & Logs */}
                 <View style={styles.messagesSection}>
-                  <Text style={styles.messagesHeader}>Messages & Notifications</Text>
+                  <Text style={styles.messagesHeader}>{lang === "en" ? "Messages & Notifications" : lang === "si" ? "පණිවිඩ සහ දැනුම්දීම්" : "செய்திகள் & அறிவிப்புகள்"}</Text>
                   {(() => {
                     const filteredMessages = (selectedClaim.messages || []).filter((msg: any) => msg.recipient !== "Agent");
                     if (filteredMessages.length > 0) {
@@ -854,7 +857,7 @@ export default function NotificationsPage() {
                         </View>
                       );
                     }
-                    return <Text style={styles.noMessagesText}>No messages or notifications for this claim.</Text>;
+                    return <Text style={styles.noMessagesText}>{lang === "en" ? "No messages or notifications for this claim." : lang === "si" ? "මෙම හිමිකම් පෑම සඳහා පණිවිඩ හෝ දැනුම්දීම් කිසිවක් නැත." : "இந்த கோரிக்கைக்கு செய்திகள் அல்லது அறிவிப்புகள் எதுவும் இல்லை."}</Text>;
                   })()}
                 </View>
 
@@ -863,10 +866,10 @@ export default function NotificationsPage() {
                   <View style={styles.docRequestAlert}>
                     <View style={styles.docAlertTitleRow}>
                       <Ionicons name="warning" size={16} color="#dc2626" />
-                      <Text style={styles.docAlertTitle}>Documents Requested</Text>
+                      <Text style={styles.docAlertTitle}>{t.myClaims.documentsNeeded}</Text>
                     </View>
                     <Text style={styles.docAlertDesc}>
-                      Please upload the following files via the Documents page:
+                      {t.myClaims.documentsNeededDesc}
                     </Text>
                     <View style={styles.docItems}>
                       {getUserRequestedDocs(selectedClaim).map((doc) => (
@@ -883,7 +886,7 @@ export default function NotificationsPage() {
                          router.push("/PolicyHolder/MyDocs" as any);
                       }}
                     >
-                      <Text style={styles.uploadDocBtnText}>Go to Documents</Text>
+                      <Text style={styles.uploadDocBtnText}>{lang === "en" ? "Go to Documents" : lang === "si" ? "ලේඛන වෙත යන්න" : "ஆவணங்களுக்குச் செல்லவும்"}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -905,14 +908,14 @@ export default function NotificationsPage() {
                   }
                 }}
               >
-                <Text style={styles.modalTrackBtnText}>Track Claim</Text>
+                <Text style={styles.modalTrackBtnText}>{lang === "en" ? "Track Claim" : lang === "si" ? "හිමිකම් සොයායන්න" : "கோரிக்கையைத் தொடர்க"}</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
                 style={styles.modalCloseFooterBtn}
                 onPress={() => setSelectedClaim(null)}
               >
-                <Text style={styles.modalCloseFooterBtnText}>Close</Text>
+                <Text style={styles.modalCloseFooterBtnText}>{t.myClaims.close}</Text>
               </TouchableOpacity>
             </View>
           </View>

@@ -18,7 +18,10 @@ import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../_config";
 
+import { useLanguage } from "../../utils/translations";
+
 export default function PolicyHolderContact() {
+  const { lang, t } = useLanguage();
   const [customAlert, setCustomAlert] = useState<{
     title: string;
     message: string;
@@ -56,8 +59,8 @@ export default function PolicyHolderContact() {
     Linking.openURL("tel:+94112003000").catch((err) => {
       console.error("Failed to open dialer:", err);
       setCustomAlert({
-        title: "Error",
-        message: "Could not open dialer app. Please call +94 112 003 000 manually.",
+        title: lang === "en" ? "Error" : lang === "si" ? "දෝෂයකි" : "பிழை",
+        message: lang === "en" ? "Could not open dialer app. Please call +94 112 003 000 manually." : lang === "si" ? "දුරකථන යෙදුම විවෘත කළ නොහැක. කරුණාකර +94 112 003 000 අමතන්න." : "தொலைபேசி செயலியைத் திறக்க முடியவில்லை. கைமுறையாக அழைக்கவும்.",
         type: "warning",
       });
     });
@@ -70,8 +73,8 @@ export default function PolicyHolderContact() {
   const handleSendEmail = async () => {
     if (!subject.trim() || !message.trim()) {
       setCustomAlert({
-        title: "Validation Error",
-        message: "Subject and message are required.",
+        title: t.login.validationError,
+        message: lang === "en" ? "Subject and message are required." : lang === "si" ? "මාතෘකාව සහ පණිවිඩය අවශ්‍ය වේ." : "பொருள் மற்றும் செய்தி தேவை.",
         type: "warning",
       });
       return;
@@ -101,22 +104,22 @@ export default function PolicyHolderContact() {
         setSubject("");
         setMessage("");
         setCustomAlert({
-          title: "Email Sent! ✉️",
-          message: "Your contact request has been sent successfully. The claims team will review and reply within 24 hours.",
+          title: lang === "en" ? "Email Sent! ✉️" : lang === "si" ? "විද්‍යුත් තැපෑල යවන ලදී! ✉️" : "மின்னஞ்சல் அனுப்பப்பட்டது! ✉️",
+          message: t.contact.successMsg,
           type: "success",
         });
       } else {
         setCustomAlert({
-          title: "Error",
-          message: data.error || "Failed to send contact email. Please try again.",
+          title: lang === "en" ? "Error" : lang === "si" ? "දෝෂයකි" : "பிழை",
+          message: data.error || t.contact.errorMsg,
           type: "warning",
         });
       }
     } catch (err) {
       console.error("Failed to send contact email:", err);
       setCustomAlert({
-        title: "Network Error",
-        message: "Unable to connect to the server. Please check your network connection.",
+        title: t.login.networkError,
+        message: t.login.connMsg,
         type: "warning",
       });
     } finally {
@@ -126,8 +129,8 @@ export default function PolicyHolderContact() {
 
   const handleChatPress = () => {
     setCustomAlert({
-      title: "Live Chat 💬",
-      message: "The live chat feature is currently being developed and will be available soon!",
+      title: lang === "en" ? "Live Chat 💬" : lang === "si" ? "සජීවී සංවාදය 💬" : "நேரடி அரட்டை 💬",
+      message: lang === "en" ? "The live chat feature is currently being developed and will be available soon!" : lang === "si" ? "සජීවී සංවාද පහසුකම දැනට සංවර්ධනය වෙමින් පවතී. ළඟදීම ලබා ගත හැක!" : "நேரடி அரட்டை அம்சம் தற்போது உருவாக்கப்பட்டு வருகிறது, விரைவில் கிடைக்கும்!",
       type: "info",
     });
   };
@@ -147,8 +150,8 @@ export default function PolicyHolderContact() {
           imageStyle={styles.headerImageStyle}
         >
           <View style={styles.headerGradient}>
-            <Text style={styles.headerTitle}>Contact Us</Text>
-            <Text style={styles.headerSubtitle}>Contact with Anytime with Us</Text>
+            <Text style={styles.headerTitle}>{t.contact.title}</Text>
+            <Text style={styles.headerSubtitle}>{t.contact.subtitle}</Text>
           </View>
         </ImageBackground>
 
@@ -166,12 +169,12 @@ export default function PolicyHolderContact() {
                 <Ionicons name="call-outline" size={24} color="#0ea5e9" />
               </View>
               <View style={styles.channelInfo}>
-                <Text style={styles.channelTitle}>Hotline</Text>
+                <Text style={styles.channelTitle}>{lang === "en" ? "Hotline" : lang === "si" ? "ක්ෂණික ඇමතුම්" : "உதவி எண்"}</Text>
                 <Text style={styles.channelDetail}>+94 112 003 000</Text>
                 <Text style={styles.channelDetail}>+94 112 003 000</Text>
               </View>
             </View>
-            <Text style={styles.channelBadge}>24 Hours Hotline</Text>
+            <Text style={styles.channelBadge}>{lang === "en" ? "24 Hours Hotline" : lang === "si" ? "පැය 24 පුරා සහාය" : "24 மணிநேர சேவை"}</Text>
           </TouchableOpacity>
 
           {/* Card 2: Email */}
@@ -185,11 +188,11 @@ export default function PolicyHolderContact() {
                 <Ionicons name="mail-outline" size={24} color="#0ea5e9" />
               </View>
               <View style={styles.channelInfo}>
-                <Text style={styles.channelTitle}>Email</Text>
+                <Text style={styles.channelTitle}>{lang === "en" ? "Email" : lang === "si" ? "විද්‍යුත් තැපෑල" : "மின்னஞ்சல்"}</Text>
                 <Text style={styles.channelDetail}>claims@sanasainsurance.lk</Text>
               </View>
             </View>
-            <Text style={styles.channelBadge}>Response within 24h</Text>
+            <Text style={styles.channelBadge}>{lang === "en" ? "Response within 24h" : lang === "si" ? "පැය 24ක් තුළ ප්‍රතිචාර" : "24 மணி நேர பதில்"}</Text>
           </TouchableOpacity>
 
           {/* Card 3: Live Chat */}
@@ -203,11 +206,11 @@ export default function PolicyHolderContact() {
                 <Ionicons name="chatbubble-ellipses-outline" size={24} color="#0ea5e9" />
               </View>
               <View style={styles.channelInfo}>
-                <Text style={styles.channelTitle}>Live Chat</Text>
-                <Text style={styles.channelDetail}>Available Now</Text>
+                <Text style={styles.channelTitle}>{lang === "en" ? "Live Chat" : lang === "si" ? "සජීවී සංවාදය" : "நேரடி அரட்டை"}</Text>
+                <Text style={styles.channelDetail}>{lang === "en" ? "Available Now" : lang === "si" ? "දැන් ලබා ගත හැක" : "இப்பொழுது கிடைக்கும்"}</Text>
               </View>
             </View>
-            <Text style={styles.channelBadge}>Mon-Sat 9am-6pm</Text>
+            <Text style={styles.channelBadge}>{lang === "en" ? "Mon-Sat 9am-6pm" : lang === "si" ? "සඳුදා-සෙන 9am-6pm" : "திங்கள்-சனி 9am-6pm"}</Text>
           </TouchableOpacity>
 
         </View>
@@ -219,7 +222,7 @@ export default function PolicyHolderContact() {
               <Ionicons name="location-outline" size={22} color="#0ea5e9" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.officeLabel}>Head Office</Text>
+              <Text style={styles.officeLabel}>{lang === "en" ? "Head Office" : lang === "si" ? "ප්‍රධාන කාර්යාලය" : "தலைமை அலுவலகம்"}</Text>
               <Text style={styles.officeVal}>No: 172, Elvitigala Mv, Colombo 8, Sri Lanka</Text>
             </View>
           </View>
@@ -231,8 +234,8 @@ export default function PolicyHolderContact() {
               <Ionicons name="time-outline" size={22} color="#0ea5e9" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={styles.officeLabel}>Open Hours</Text>
-              <Text style={styles.officeVal}>Monday - Friday{"\n"}8:30AM–5:15PM</Text>
+              <Text style={styles.officeLabel}>{t.contact.officeHours}</Text>
+              <Text style={styles.officeVal}>{lang === "en" ? "Monday - Friday\n8:30AM–5:15PM" : lang === "si" ? "සඳුදා - සිකුරාදා\nපෙ.ව. 8:30–ප.ව. 5:15" : "திங்கள் - வெள்ளி\nமு.ப. 8:30–பி.ப. 5:15"}</Text>
             </View>
           </View>
         </View>
@@ -259,8 +262,8 @@ export default function PolicyHolderContact() {
             {/* Modal Header */}
             <View style={styles.modalHeader}>
               <View>
-                <Text style={styles.modalTitle}>Send Email to Claims</Text>
-                <Text style={styles.modalSubtitle}>We usually respond within 24 hours</Text>
+                <Text style={styles.modalTitle}>{t.contact.sendEmail}</Text>
+                <Text style={styles.modalSubtitle}>{lang === "en" ? "We usually respond within 24 hours" : lang === "si" ? "අපි සාමාන්‍යයෙන් පැය 24ක් ඇතුළත පිළිතුරු දෙන්නෙමු" : "நாங்கள் வழக்கமாக 24 மணி நேரத்திற்குள் பதிலளிப்போம்"}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setEmailModalVisible(false)}
@@ -276,11 +279,11 @@ export default function PolicyHolderContact() {
               {user && (
                 <View style={styles.userInfoBox}>
                   <View style={styles.userInfoRow}>
-                    <Text style={styles.userInfoLabel}>From:</Text>
+                    <Text style={styles.userInfoLabel}>{lang === "en" ? "From:" : lang === "si" ? "යවන්නා:" : "அனுப்புநர்:"}</Text>
                     <Text style={styles.userInfoValue}>{user.firstName} {user.lastName}</Text>
                   </View>
                   <View style={styles.userInfoRow}>
-                    <Text style={styles.userInfoLabel}>Email:</Text>
+                    <Text style={styles.userInfoLabel}>{lang === "en" ? "Email:" : lang === "si" ? "විද්‍යුත් තැපෑල:" : "மின்னஞ்சல்:"}</Text>
                     <Text style={styles.userInfoValue}>{user.email}</Text>
                   </View>
                   <View style={styles.userInfoRow}>
@@ -292,7 +295,7 @@ export default function PolicyHolderContact() {
 
               {/* Recipient info */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>To</Text>
+                <Text style={styles.inputLabel}>{lang === "en" ? "To" : lang === "si" ? "ලබන්නා" : "பெறுநர்"}</Text>
                 <TextInput
                   value="claims@sanasainsurance.lk"
                   editable={false}
@@ -302,9 +305,9 @@ export default function PolicyHolderContact() {
 
               {/* Subject */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Subject</Text>
+                <Text style={styles.inputLabel}>{t.contact.subject}</Text>
                 <TextInput
-                  placeholder="Enter inquiry subject..."
+                  placeholder={lang === "en" ? "Enter inquiry subject..." : lang === "si" ? "විමසීම් මාතෘකාව ඇතුළත් කරන්න..." : "விசாரணைப் பொருளை உள்ளிடவும்..."}
                   placeholderTextColor="#94a3b8"
                   value={subject}
                   onChangeText={setSubject}
@@ -314,9 +317,9 @@ export default function PolicyHolderContact() {
 
               {/* Message */}
               <View style={styles.inputContainer}>
-                <Text style={styles.inputLabel}>Message</Text>
+                <Text style={styles.inputLabel}>{t.contact.message}</Text>
                 <TextInput
-                  placeholder="Type your message details here..."
+                  placeholder={lang === "en" ? "Type your message details here..." : lang === "si" ? "ඔබගේ පණිවිඩය මෙහි ලියන්න..." : "உங்கள் செய்தி விவரங்களை இங்கே தட்டச்சு செய்யவும்..."}
                   placeholderTextColor="#94a3b8"
                   value={message}
                   onChangeText={setMessage}
@@ -333,7 +336,7 @@ export default function PolicyHolderContact() {
                   style={styles.cancelButton}
                   onPress={() => setEmailModalVisible(false)}
                 >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                  <Text style={styles.cancelButtonText}>{t.contact.cancel}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -344,7 +347,7 @@ export default function PolicyHolderContact() {
                   {isSending ? (
                     <ActivityIndicator size="small" color="#ffffff" />
                   ) : (
-                    <Text style={styles.sendButtonText}>Send Email</Text>
+                    <Text style={styles.sendButtonText}>{lang === "en" ? "Send Email" : lang === "si" ? "ඊමේල් යවන්න" : "மின்னஞ்சல் அனுப்பு"}</Text>
                   )}
                 </TouchableOpacity>
               </View>

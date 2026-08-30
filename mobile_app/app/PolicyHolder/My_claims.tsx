@@ -45,7 +45,10 @@ interface Claim {
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
 }
 
+import { useLanguage } from "../../utils/translations";
+
 export default function MyClaims() {
+  const { lang, t } = useLanguage();
   const [claims, setClaims] = useState<Claim[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
@@ -290,8 +293,8 @@ export default function MyClaims() {
           colors={["rgba(13, 42, 58, 0.95)", "rgba(13, 42, 58, 0.82)", "rgba(15, 23, 42, 0.5)"]}
           style={styles.headerGradient}
         >
-          <Text style={styles.headerTitle}>My Claims</Text>
-          <Text style={styles.headerSubtitle}>All your insurance claims in one place</Text>
+          <Text style={styles.headerTitle}>{t.myClaims.title}</Text>
+          <Text style={styles.headerSubtitle}>{lang === "en" ? "All your insurance claims in one place" : lang === "si" ? "ඔබගේ සියලුම රක්ෂණ හිමිකම් එකම ස්ථානයක" : "உங்கள் அனைத்து காப்பீட்டு கோரிக்கைகளும் ஒரே இடத்தில்"}</Text>
         </LinearGradient>
       </ImageBackground>
 
@@ -299,7 +302,7 @@ export default function MyClaims() {
       <View style={styles.searchBarContainer}>
         <Ionicons name="search" size={20} color="#64748b" style={styles.searchIcon} />
         <TextInput
-          placeholder="Search claims..."
+          placeholder={t.myClaims.searchPlaceholder}
           placeholderTextColor="#94a3b8"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -316,7 +319,7 @@ export default function MyClaims() {
       {isLoading ? (
         <View style={styles.loaderWrap}>
           <ActivityIndicator size="large" color="#0284c7" />
-          <Text style={styles.loaderText}>Loading your claims...</Text>
+          <Text style={styles.loaderText}>{lang === "en" ? "Loading your claims..." : lang === "si" ? "හිමිකම් පූර්ණය වෙමින් පවතී..." : "உங்கள் கோரிக்கைகள் ஏற்றப்படுகின்றன..."}</Text>
         </View>
       ) : (
         <ScrollView
@@ -329,11 +332,13 @@ export default function MyClaims() {
           {filteredClaims.length === 0 ? (
             <View style={styles.emptyCard}>
               <Ionicons name="document-text-outline" size={48} color="#cbd5e1" />
-              <Text style={styles.emptyText}>No claims found matching filters.</Text>
+              <Text style={styles.emptyText}>{t.myClaims.noClaims}</Text>
             </View>
           ) : (
             filteredClaims.map((claim) => {
               const statusCfg = getStatusDetails(claim.status);
+              const statusLabel = claim.status === "Pending" ? t.myClaims.notAssessed : claim.status === "In Progress" ? (lang === "en" ? "In Progress" : lang === "si" ? "ක්‍රියාත්මක වෙමින්" : "செயல்பாட்டில்") : claim.status;
+              const amountLabel = claim.amount === "Pending" ? (lang === "en" ? "Pending" : lang === "si" ? "ප්‍රතිචාර නොදැක්වූ" : "நிலுவையில்") : claim.amount;
               return (
                 <View key={claim.claimNumber} style={styles.claimCard}>
                   <View style={styles.cardHeader}>
@@ -347,7 +352,7 @@ export default function MyClaims() {
                         { backgroundColor: statusCfg.bg, borderColor: statusCfg.border }
                       ]}
                     >
-                      <Text style={[styles.statusText, { color: statusCfg.color }]}>{statusCfg.text}</Text>
+                      <Text style={[styles.statusText, { color: statusCfg.color }]}>{statusLabel}</Text>
                     </View>
                   </View>
 
@@ -364,7 +369,7 @@ export default function MyClaims() {
                     </View>
                     <View style={styles.bodyRow}>
                       <Ionicons name="cash-outline" size={16} color="#64748b" />
-                      <Text style={styles.bodyVal}>{claim.amount}</Text>
+                      <Text style={styles.bodyVal}>{amountLabel}</Text>
                     </View>
                   </View>
 
@@ -373,7 +378,7 @@ export default function MyClaims() {
                     onPress={() => setSelectedClaim(claim)}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.viewDetailsBtnText}>View Timeline & Info</Text>
+                    <Text style={styles.viewDetailsBtnText}>{t.myClaims.viewDetails}</Text>
                     <Ionicons name="arrow-forward" size={15} color="#0284c7" />
                   </TouchableOpacity>
                 </View>
@@ -396,7 +401,7 @@ export default function MyClaims() {
               {/* Modal Header */}
               <View style={styles.modalHeader}>
                 <View>
-                  <Text style={styles.modalTitle}>Claim Details</Text>
+                  <Text style={styles.modalTitle}>{t.myClaims.detailsTitle}</Text>
                   <Text style={styles.modalSubtitle}>{selectedClaim.claimNumber}</Text>
                 </View>
                 <TouchableOpacity
@@ -414,33 +419,33 @@ export default function MyClaims() {
                 {/* Details Table Card */}
                 <View style={styles.detailsCard}>
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Vehicle Plate</Text>
+                    <Text style={styles.detailsLabel}>{t.myClaims.vehicleId}</Text>
                     <Text style={styles.detailsVal}>{formatNumberPlate(selectedClaim.vehiclePlate)}</Text>
                   </View>
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Incident Type</Text>
+                    <Text style={styles.detailsLabel}>{t.myClaims.damageType}</Text>
                     <Text style={styles.detailsVal}>{selectedClaim.damageType}</Text>
                   </View>
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Incident Date</Text>
+                    <Text style={styles.detailsLabel}>{t.myClaims.incidentDate}</Text>
                     <Text style={styles.detailsVal}>{selectedClaim.incidentDate}</Text>
                   </View>
                   {selectedClaim.incidentTime && (
                     <View style={styles.detailsRow}>
-                      <Text style={styles.detailsLabel}>Incident Time</Text>
+                      <Text style={styles.detailsLabel}>{t.myClaims.incidentTime}</Text>
                       <Text style={styles.detailsVal}>{selectedClaim.incidentTime}</Text>
                     </View>
                   )}
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Est. Compensation</Text>
-                    <Text style={[styles.detailsVal, { color: "#16a34a", fontWeight: "800" }]}>{selectedClaim.amount}</Text>
+                    <Text style={styles.detailsLabel}>{t.myClaims.assessment}</Text>
+                    <Text style={[styles.detailsVal, { color: "#16a34a", fontWeight: "800" }]}>{selectedClaim.amount === "Pending" ? (lang === "en" ? "Pending" : lang === "si" ? "ප්‍රතිචාර නොදැක්වූ" : "நிலுவையில்") : selectedClaim.amount}</Text>
                   </View>
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Assigned Agent</Text>
-                    <Text style={styles.detailsVal}>{selectedClaim.officer || "Not Assigned"}</Text>
+                    <Text style={styles.detailsLabel}>{lang === "en" ? "Assigned Agent" : lang === "si" ? "පවරා ඇති නියෝජිතයා" : "ஒதுக்கப்பட்ட முகவர்"}</Text>
+                    <Text style={styles.detailsVal}>{selectedClaim.officer === "Not Assigned" ? (lang === "en" ? "Not Assigned" : lang === "si" ? "පත් කර නැත" : "நியமிக்கப்படவில்லை") : selectedClaim.officer}</Text>
                   </View>
                   <View style={styles.detailsRow}>
-                    <Text style={styles.detailsLabel}>Branch</Text>
+                    <Text style={styles.detailsLabel}>{t.myClaims.branch}</Text>
                     <Text style={styles.detailsVal}>{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</Text>
                   </View>
                   {selectedClaim.location && (
@@ -607,14 +612,14 @@ export default function MyClaims() {
                 {/* Incident Description */}
                 {selectedClaim.description && (
                   <View style={styles.descriptionContainer}>
-                    <Text style={styles.descriptionHeader}>Incident Description</Text>
+                    <Text style={styles.descriptionHeader}>{lang === "en" ? "Incident Description" : lang === "si" ? "අනතුර පිළිබඳ විස්තරය" : "விபத்து விவரம்"}</Text>
                     <Text style={styles.descriptionText}>"{selectedClaim.description}"</Text>
                   </View>
                 )}
 
                 {/* Messages & Logs */}
                 <View style={styles.messagesSection}>
-                  <Text style={styles.messagesHeader}>Messages & Updates</Text>
+                  <Text style={styles.messagesHeader}>{lang === "en" ? "Messages & Updates" : lang === "si" ? "පණිවිඩ සහ යාවත්කාලීන කිරීම්" : "செய்திகள் & புதுப்பிப்புகள்"}</Text>
                   {(() => {
                     const filteredMessages = (selectedClaim.messages || []).filter(msg => msg.recipient !== "Agent");
                     if (filteredMessages.length > 0) {
@@ -633,7 +638,7 @@ export default function MyClaims() {
                       );
                     } else {
                       return (
-                        <Text style={styles.noMessagesText}>No notifications or messages have been sent for this claim.</Text>
+                        <Text style={styles.noMessagesText}>{lang === "en" ? "No notifications or messages have been sent for this claim." : lang === "si" ? "මෙම හිමිකම් පෑම සඳහා දැනුම්දීම් හෝ පණිවිඩ කිසිවක් යවා නොමැත." : "இந்த கோரிக்கைக்கு அறிவிப்புகள் அல்லது செய்திகள் எதுவும் அனுப்பப்படவில்லை."}</Text>
                       );
                     }
                   })()}
@@ -644,10 +649,10 @@ export default function MyClaims() {
                   <View style={[styles.docRequestAlert, { marginTop: 12 }]}>
                     <View style={styles.docAlertTitleRow}>
                       <Ionicons name="alert-circle" size={18} color="#dc2626" />
-                      <Text style={styles.docAlertTitle}>Additional Documents Required</Text>
+                      <Text style={styles.docAlertTitle}>{t.myClaims.documentsNeeded}</Text>
                     </View>
                     <Text style={styles.docAlertDesc}>
-                      Staff has requested the following files to process your payout. Please submit them to your agent:
+                      {t.myClaims.documentsNeededDesc}
                     </Text>
                     <View style={styles.docItems}>
                       {getUserRequestedDocs(selectedClaim).map((doc, i) => (
@@ -664,7 +669,7 @@ export default function MyClaims() {
                         router.push("/PolicyHolder/MyDocs" as any);
                       }}
                     >
-                      <Text style={styles.uploadDocBtnText}>Go to My Documents to Upload</Text>
+                      <Text style={styles.uploadDocBtnText}>{lang === "en" ? "Go to My Documents to Upload" : lang === "si" ? "ලේඛන උඩුගත කිරීම වෙත යන්න" : "பதிவேற்ற எனது ஆவணங்களுக்குச் செல்லவும்"}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -676,7 +681,7 @@ export default function MyClaims() {
                   style={styles.closeFooterBtn}
                   onPress={() => setSelectedClaim(null)}
                 >
-                  <Text style={styles.closeFooterBtnText}>Close</Text>
+                  <Text style={styles.closeFooterBtnText}>{t.myClaims.close}</Text>
                 </TouchableOpacity>
               </View>
             </View>

@@ -44,7 +44,10 @@ interface Claim {
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
 }
 
+import { useLanguage } from "../../utils/translations";
+
 export default function TrackClaims() {
+  const { lang, t } = useLanguage();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const [claimId, setClaimId] = useState("");
   const [trackedClaim, setTrackedClaim] = useState<Claim | null>(null);
@@ -366,15 +369,15 @@ export default function TrackClaims() {
           colors={["rgba(13, 42, 58, 0.95)", "rgba(13, 42, 58, 0.82)", "rgba(15, 23, 42, 0.5)"]}
           style={styles.headerGradient}
         >
-          <Text style={styles.headerTitle}>Track Claim</Text>
-          <Text style={styles.headerSubtitle}>Monitor your claim progress in real-time</Text>
+          <Text style={styles.headerTitle}>{t.trackClaims.title}</Text>
+          <Text style={styles.headerSubtitle}>{lang === "en" ? "Monitor your claim progress in real-time" : lang === "si" ? "ඔබගේ හිමිකම් ප්‍රගතිය සජීවීව නිරීක්ෂණය කරන්න" : "நிகழ்நேரத்தில் உங்கள் கோரிக்கை முன்னேற்றத்தைக் கண்காணிக்கவும்"}</Text>
         </LinearGradient>
       </ImageBackground>
 
       {/* Track Search Bar */}
       <View style={styles.trackBarContainer}>
         <TextInput
-          placeholder="Enter Claim ID (e.g. CLM-2074-1487)"
+          placeholder={lang === "en" ? "Enter Claim ID (e.g. CLM-2074-1487)" : lang === "si" ? "හිමිකම් අංකය ඇතුළත් කරන්න" : "கோரிக்கை அடையாள எண்ணை உள்ளிடவும்"}
           placeholderTextColor="#94a3b8"
           autoCapitalize="characters"
           value={claimId}
@@ -382,7 +385,7 @@ export default function TrackClaims() {
           style={styles.trackInput}
         />
         <TouchableOpacity style={styles.trackBtn} onPress={handleTrack} activeOpacity={0.85}>
-          <Text style={styles.trackBtnText}>Track</Text>
+          <Text style={styles.trackBtnText}>{lang === "en" ? "Track" : lang === "si" ? "සොයන්න" : "தொடர்க"}</Text>
         </TouchableOpacity>
       </View>
 
@@ -390,7 +393,7 @@ export default function TrackClaims() {
         {isLoading ? (
           <View style={styles.loadingWrap}>
             <ActivityIndicator size="large" color="#0ea5e9" />
-            <Text style={styles.loadingText}>Searching claims registry...</Text>
+            <Text style={styles.loadingText}>{lang === "en" ? "Searching claims registry..." : lang === "si" ? "හිමිකම් ලේඛනාගාරය සොයමින්..." : "கோரிக்கைகள் பதிவேட்டில் தேடுகிறது..."}</Text>
           </View>
         ) : trackedClaim ? (
           <View style={styles.resultsContainer}>
@@ -399,10 +402,10 @@ export default function TrackClaims() {
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                 <View>
                   <Text style={styles.cardHeaderTitle}>{trackedClaim.claimNumber}</Text>
-                  <Text style={styles.cardHeaderSub}>Registered vehicle: {formatNumberPlate(trackedClaim.vehiclePlate)}</Text>
+                  <Text style={styles.cardHeaderSub}>{lang === "en" ? "Registered vehicle: " : lang === "si" ? "ලියාපදිංචි වාහනය: " : "பதிவுசெய்யப்பட்ட வாகனம்: "}{formatNumberPlate(trackedClaim.vehiclePlate)}</Text>
                 </View>
                 <View style={styles.badgeWrap}>
-                  <Text style={styles.badgeLabel}>{trackedClaim.status}</Text>
+                  <Text style={styles.badgeLabel}>{trackedClaim.status === "Pending" ? t.trackClaims.notAssessed : trackedClaim.status === "In Progress" ? (lang === "en" ? "In Progress" : lang === "si" ? "ක්‍රියාත්මක වෙමින්" : "செயல்பாட்டில்") : trackedClaim.status}</Text>
                 </View>
               </View>
             </View>
@@ -413,38 +416,38 @@ export default function TrackClaims() {
             {/* Details Card */}
             <View style={styles.detailsCard}>
               <View style={styles.detailsRow}>
-                <Text style={styles.detailsLabel}>Vehicle Plate</Text>
+                <Text style={styles.detailsLabel}>{t.myClaims.vehicleId}</Text>
                 <Text style={styles.detailsVal}>{formatNumberPlate(trackedClaim.vehiclePlate)}</Text>
               </View>
               <View style={styles.detailsRow}>
-                <Text style={styles.detailsLabel}>Incident Type</Text>
+                <Text style={styles.detailsLabel}>{t.myClaims.damageType}</Text>
                 <Text style={styles.detailsVal}>{trackedClaim.damageType}</Text>
               </View>
               <View style={styles.detailsRow}>
-                <Text style={styles.detailsLabel}>Incident Date</Text>
+                <Text style={styles.detailsLabel}>{t.myClaims.incidentDate}</Text>
                 <Text style={styles.detailsVal}>{trackedClaim.incidentDate}</Text>
               </View>
               {trackedClaim.incidentTime && (
                 <View style={styles.detailsRow}>
-                  <Text style={styles.detailsLabel}>Incident Time</Text>
+                  <Text style={styles.detailsLabel}>{t.myClaims.incidentTime}</Text>
                   <Text style={styles.detailsVal}>{trackedClaim.incidentTime}</Text>
                 </View>
               )}
               <View style={styles.detailsRow}>
-                <Text style={styles.detailsLabel}>Est. Compensation</Text>
-                <Text style={[styles.detailsVal, { color: "#16a34a", fontWeight: "800" }]}>{trackedClaim.amount}</Text>
+                <Text style={styles.detailsLabel}>{t.myClaims.assessment}</Text>
+                <Text style={[styles.detailsVal, { color: "#16a34a", fontWeight: "800" }]}>{trackedClaim.amount === "Pending" ? (lang === "en" ? "Pending" : lang === "si" ? "ප්‍රතිචාර නොදැක්වූ" : "நிலுவையில்") : trackedClaim.amount}</Text>
               </View>
               <View style={styles.detailsRow}>
-                <Text style={styles.detailsLabel}>Assigned Officer</Text>
-                <Text style={styles.detailsVal}>{trackedClaim.officer || "Not Assigned"}</Text>
+                <Text style={styles.detailsLabel}>{lang === "en" ? "Assigned Officer" : lang === "si" ? "පවරා ඇති නියෝජිතයා" : "ஒதுக்கப்பட்ட முகவர்"}</Text>
+                <Text style={styles.detailsVal}>{trackedClaim.officer === "Not Assigned" ? (lang === "en" ? "Not Assigned" : lang === "si" ? "පත් කර නැත" : "நியமிக்கப்படவில்லை") : trackedClaim.officer}</Text>
               </View>
               <View style={styles.detailsRow}>
-                <Text style={styles.detailsLabel}>Branch</Text>
+                <Text style={styles.detailsLabel}>{t.myClaims.branch}</Text>
                 <Text style={styles.detailsVal}>{trackedClaim.branch ? (trackedClaim.branch.toLowerCase().includes("branch") ? trackedClaim.branch : trackedClaim.branch + " Branch") : "Galle Branch"}</Text>
               </View>
               {trackedClaim.location && (
                 <View style={styles.detailsRowNoBorder}>
-                  <Text style={styles.detailsLabel}>Location</Text>
+                  <Text style={styles.detailsLabel}>{t.myClaims.location}</Text>
                   <Text style={styles.detailsVal} numberOfLines={2}>{trackedClaim.location}</Text>
                 </View>
               )}
@@ -453,37 +456,37 @@ export default function TrackClaims() {
             {/* Other Vehicle Details Section */}
             {trackedClaim.otherVehicleDetails && (
                <View style={{ marginTop: 16, gap: 12 }}>
-                 <Text style={[styles.sectionSubHeader, { paddingHorizontal: 4 }]}>Other Vehicles Involved</Text>
+                 <Text style={[styles.sectionSubHeader, { paddingHorizontal: 4 }]}>{lang === "en" ? "Other Vehicles Involved" : lang === "si" ? "සම්බන්ධ අනෙක් වාහන" : "சம்பந்தப்பட்ட பிற வாகனங்கள்"}</Text>
                  {Array.isArray(trackedClaim.otherVehicleDetails) ? (
                    trackedClaim.otherVehicleDetails.length === 0 ? (
                      <View style={styles.detailsCard}>
-                       <Text style={[styles.detailsVal, { fontStyle: "italic", color: "#64748b" }]}>No other vehicles involved.</Text>
+                       <Text style={[styles.detailsVal, { fontStyle: "italic", color: "#64748b" }]}>{lang === "en" ? "No other vehicles involved." : lang === "si" ? "වෙනත් වාහන සම්බන්ධ වී නැත." : "பிற வாகனங்கள் எதுவும் ஈடுபடவில்லை."}</Text>
                      </View>
                    ) : (
                      trackedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
                        <View key={vIdx} style={styles.detailsCard}>
-                         <Text style={[styles.sectionSubHeader, { fontSize: 13, marginBottom: 8 }]}>Vehicle #{vIdx + 1}</Text>
+                         <Text style={[styles.sectionSubHeader, { fontSize: 13, marginBottom: 8 }]}>{lang === "en" ? "Vehicle" : lang === "si" ? "වාහනය" : "வாகனம்"} #{vIdx + 1}</Text>
                          {vehicle.vehiclePlate ? (
                            <View style={styles.detailsRow}>
-                             <Text style={styles.detailsLabel}>Vehicle Plate</Text>
+                             <Text style={styles.detailsLabel}>{t.myClaims.vehicleId}</Text>
                              <Text style={styles.detailsVal}>{formatNumberPlate(vehicle.vehiclePlate)}</Text>
                            </View>
                          ) : null}
                          {vehicle.driverName ? (
                            <View style={styles.detailsRow}>
-                             <Text style={styles.detailsLabel}>Driver Name</Text>
+                             <Text style={styles.detailsLabel}>{lang === "en" ? "Driver Name" : lang === "si" ? "රියදුරුගේ නම" : "ஓட்டுநர் பெயர்"}</Text>
                              <Text style={styles.detailsVal}>{vehicle.driverName}</Text>
                            </View>
                          ) : null}
                          {vehicle.insuranceCompany ? (
                            <View style={styles.detailsRow}>
-                             <Text style={styles.detailsLabel}>Insurance Name</Text>
+                             <Text style={styles.detailsLabel}>{lang === "en" ? "Insurance Name" : lang === "si" ? "රක්ෂණ සමාගම" : "காப்பீட்டு நிறுவனம்"}</Text>
                              <Text style={styles.detailsVal}>{vehicle.insuranceCompany}</Text>
                            </View>
                          ) : null}
                          {vehicle.policyNumber ? (
                            <View style={styles.detailsRowNoBorder}>
-                             <Text style={styles.detailsLabel}>Insurance Number</Text>
+                             <Text style={styles.detailsLabel}>{lang === "en" ? "Insurance Number" : lang === "si" ? "රක්ෂණ අංකය" : "பாலிசி எண்"}</Text>
                              <Text style={styles.detailsVal}>{vehicle.policyNumber}</Text>
                            </View>
                          ) : null}
@@ -491,7 +494,7 @@ export default function TrackClaims() {
                          {/* License Photos Grid */}
                          {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
                            <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                             <Text style={styles.photoSectionLabel}>Driver's License Photos</Text>
+                             <Text style={styles.photoSectionLabel}>{lang === "en" ? "Driver's License Photos" : lang === "si" ? "රියදුරු බලපත්‍ර ඡායාරූප" : "ஓட்டுநர் உரிம புகைப்படங்கள்"}</Text>
                              <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
                                {vehicle.licensePhotos.map((url: string, idx: number) => {
                                  let docUrl = url;
@@ -511,7 +514,7 @@ export default function TrackClaims() {
                          {/* Vehicle Damage / Scene Photos Grid */}
                          {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
                            <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                             <Text style={styles.photoSectionLabel}>Vehicle / Damage Photos</Text>
+                             <Text style={styles.photoSectionLabel}>{lang === "en" ? "Vehicle / Damage Photos" : lang === "si" ? "වාහන / හානි ඡායාරූප" : "வாகனம் / சேத புகைப்படங்கள்"}</Text>
                              <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
                                {vehicle.vehiclePhotos.map((url: string, idx: number) => {
                                  let docUrl = url;
@@ -535,25 +538,25 @@ export default function TrackClaims() {
                      <View style={styles.detailsCard}>
                        {trackedClaim.otherVehicleDetails.vehiclePlate ? (
                          <View style={styles.detailsRow}>
-                           <Text style={styles.detailsLabel}>Vehicle Plate</Text>
+                           <Text style={styles.detailsLabel}>{t.myClaims.vehicleId}</Text>
                            <Text style={styles.detailsVal}>{formatNumberPlate(trackedClaim.otherVehicleDetails.vehiclePlate)}</Text>
                          </View>
                        ) : null}
                        {trackedClaim.otherVehicleDetails.driverName ? (
                          <View style={styles.detailsRow}>
-                           <Text style={styles.detailsLabel}>Driver Name</Text>
+                           <Text style={styles.detailsLabel}>{lang === "en" ? "Driver Name" : lang === "si" ? "රියදුරුගේ නම" : "ஓட்டுநர் பெயர்"}</Text>
                            <Text style={styles.detailsVal}>{trackedClaim.otherVehicleDetails.driverName}</Text>
                          </View>
                        ) : null}
                        {trackedClaim.otherVehicleDetails.insuranceCompany ? (
                          <View style={styles.detailsRow}>
-                           <Text style={styles.detailsLabel}>Insurance Name</Text>
+                           <Text style={styles.detailsLabel}>{lang === "en" ? "Insurance Name" : lang === "si" ? "රක්ෂණ සමාගම" : "காப்பீட்டு நிறுவனம்"}</Text>
                            <Text style={styles.detailsVal}>{trackedClaim.otherVehicleDetails.insuranceCompany}</Text>
                          </View>
                        ) : null}
                        {trackedClaim.otherVehicleDetails.policyNumber ? (
                          <View style={styles.detailsRowNoBorder}>
-                           <Text style={styles.detailsLabel}>Insurance Number</Text>
+                           <Text style={styles.detailsLabel}>{lang === "en" ? "Insurance Number" : lang === "si" ? "රක්ෂණ අංකය" : "பாலிசி எண்"}</Text>
                            <Text style={styles.detailsVal}>{trackedClaim.otherVehicleDetails.policyNumber}</Text>
                          </View>
                        ) : null}
@@ -561,7 +564,7 @@ export default function TrackClaims() {
                        {/* License Photos Grid */}
                        {trackedClaim.otherVehicleDetails.licensePhotos && trackedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
                          <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                           <Text style={styles.photoSectionLabel}>Other Driver's License Photos</Text>
+                           <Text style={styles.photoSectionLabel}>{lang === "en" ? "Driver's License Photos" : lang === "si" ? "රියදුරු බලපත්‍ර ඡායාරූප" : "ஓட்டுநர் உரிம புகைப்படங்கள்"}</Text>
                            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
                              {trackedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
                                let docUrl = url;
@@ -581,7 +584,7 @@ export default function TrackClaims() {
                        {/* Vehicle Damage / Scene Photos Grid */}
                        {trackedClaim.otherVehicleDetails.vehiclePhotos && trackedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
                          <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                           <Text style={styles.photoSectionLabel}>Other Vehicle / Damage Photos</Text>
+                           <Text style={styles.photoSectionLabel}>{lang === "en" ? "Vehicle / Damage Photos" : lang === "si" ? "වාහන / හානි ඡායාරූප" : "வாகனம் / சேத புகைப்படங்கள்"}</Text>
                            <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
                              {trackedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
                                let docUrl = url;
@@ -606,14 +609,14 @@ export default function TrackClaims() {
             {/* Incident Description */}
             {trackedClaim.description && (
               <View style={styles.descriptionContainer}>
-                <Text style={styles.descriptionHeader}>Claim Description</Text>
+                <Text style={styles.descriptionHeader}>{lang === "en" ? "Claim Description" : lang === "si" ? "හිමිකම් විස්තරය" : "கோரிக்கை விவரம்"}</Text>
                 <Text style={styles.descriptionText}>"{trackedClaim.description}"</Text>
               </View>
             )}
 
             {/* Messages updates list */}
             <View style={styles.messagesSection}>
-              <Text style={styles.messagesHeader}>Messages & Updates</Text>
+              <Text style={styles.messagesHeader}>{lang === "en" ? "Messages & Updates" : lang === "si" ? "පණිවිඩ සහ යාවත්කාලීන කිරීම්" : "செய்திகள் & புதுப்பிப்புகள்"}</Text>
               {(() => {
                 const filteredMessages = (trackedClaim.messages || []).filter(msg => msg.recipient !== "Agent");
                 if (filteredMessages.length > 0) {
@@ -632,7 +635,7 @@ export default function TrackClaims() {
                   );
                 } else {
                   return (
-                    <Text style={styles.noMessagesText}>No notifications or messages have been sent for this claim.</Text>
+                    <Text style={styles.noMessagesText}>{lang === "en" ? "No notifications or messages have been sent for this claim." : lang === "si" ? "මෙම හිමිකම් පෑම සඳහා දැනුම්දීම් හෝ පණිවිඩ කිසිවක් යවා නොමැත." : "இந்த கோரிக்கைக்கு அறிவிப்புகள் அல்லது செய்திகள் எதுவும் அனுப்பப்படவில்லை."}</Text>
                   );
                 }
               })()}
@@ -643,10 +646,10 @@ export default function TrackClaims() {
               <View style={[styles.docRequestAlert, { marginTop: 12 }]}>
                 <View style={styles.docAlertTitleRow}>
                   <Ionicons name="alert-circle" size={18} color="#dc2626" />
-                  <Text style={styles.docAlertTitle}>Additional Documents Required</Text>
+                  <Text style={styles.docAlertTitle}>{t.myClaims.documentsNeeded}</Text>
                 </View>
                 <Text style={styles.docAlertDesc}>
-                  The following documents are needed before we can process payout. Please submit them to your claims officer:
+                  {t.myClaims.documentsNeededDesc}
                 </Text>
                 <View style={styles.docItems}>
                   {getUserRequestedDocs(trackedClaim).map((doc, i) => (
@@ -659,10 +662,17 @@ export default function TrackClaims() {
                 <TouchableOpacity
                   style={styles.uploadDocBtn}
                   onPress={() => {
-                    Alert.alert("Submit Documents", "Please contact your assigned agent Saman at +94 112 003 000 or email files to claims-support@sanasa.lk.");
+                    Alert.alert(
+                      lang === "en" ? "Submit Documents" : lang === "si" ? "ලේඛන ඉදිරිපත් කරන්න" : "ஆவணங்களை சமர்ப்பிக்கவும்",
+                      lang === "en"
+                        ? "Please contact your assigned agent Saman at +94 112 003 000 or email files to claims-support@sanasa.lk."
+                        : lang === "si"
+                          ? "කරුණාකර ඔබගේ නියෝජිත සමන් දුරකථන අංක +94 112 003 000 හරහා සම්බන්ධ කරගන්න හෝ claims-support@sanasa.lk වෙත විද්‍යුත් තැපෑලක් එවන්න."
+                          : "உங்கள் நியமிக்கப்பட்ட முகவர் சமனை +94 112 003 000 இல் தொடர்பு கொள்ளவும் அல்லது claims-support@sanasa.lk க்கு மின்னஞ்சல் செய்யவும்."
+                    );
                   }}
                 >
-                  <Text style={styles.uploadDocBtnText}>Contact Agent to Submit</Text>
+                  <Text style={styles.uploadDocBtnText}>{lang === "en" ? "Contact Agent to Submit" : lang === "si" ? "ඉදිරිපත් කිරීමට නියෝජිතයා අමතන්න" : "சமர்ப்பிக்க முகவரைத் தொடர்பு கொள்ளவும்"}</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -670,13 +680,13 @@ export default function TrackClaims() {
         ) : searchAttempted ? (
           <View style={styles.errorContainer}>
             <Ionicons name="warning-outline" size={40} color="#dc2626" />
-            <Text style={styles.errorText}>No claim found with ID "{claimId.trim().toUpperCase()}"</Text>
-            <Text style={styles.errorDesc}>Please double check your reference number plate and try again.</Text>
+            <Text style={styles.errorText}>{lang === "en" ? `No claim found with ID "${claimId.trim().toUpperCase()}"` : lang === "si" ? `"${claimId.trim().toUpperCase()}" අංකයෙන් හිමිකම් පෑමක් හමු නොවීය` : `அடையாள எண் "${claimId.trim().toUpperCase()}" இல் கோரிக்கை எதுவும் இல்லை`}</Text>
+            <Text style={styles.errorDesc}>{lang === "en" ? "Please double check your reference number and try again." : lang === "si" ? "කරුණාකර ඔබගේ අංකය නැවත පරීක්ෂා කර බලන්න." : "உங்கள் குறிப்பு எண்ணை மீண்டும் சரிபார்த்து முயற்சிக்கவும்."}</Text>
           </View>
         ) : (
           <View style={styles.emptyContainer}>
             <Ionicons name="search-outline" size={60} color="#cbd5e1" style={{ marginBottom: 12 }} />
-            <Text style={styles.emptyText}>Enter your Claim ID in the search bar above to track your claim's status.</Text>
+            <Text style={styles.emptyText}>{lang === "en" ? "Enter your Claim ID in the search bar above to track your claim's status." : lang === "si" ? "ඔබගේ හිමිකම් පෑමේ තත්ත්වය සොයා බැලීම සඳහා ඉහත සෙවුම් තීරුවේ හිමිකම් අංකය ඇතුළත් කරන්න." : "உங்கள் கோரிக்கையின் நிலையைக் கண்காணிக்க மேலே உள்ள தேடல் பட்டியில் கோரிக்கை அடையாள எண்ணை உள்ளிடவும்."}</Text>
           </View>
         )}
       </ScrollView>
