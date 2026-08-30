@@ -2477,8 +2477,17 @@ function OfficeStaffClaimsPageContent() {
                   {/* Right Side Column */}
                   <div className="flex flex-col space-y-4">
                     <div className="space-y-2 text-sm font-bold text-slate-800">
-                      <div>
+                      <div className="flex items-center gap-2 flex-wrap">
                         Agent : <span className="font-medium text-slate-600">{selectedClaim.assignedAgent ? getAgentName(selectedClaim.assignedAgent) : "Unassigned"}</span>
+                        {(!selectedClaim.assignedAgent || selectedClaim.assignedAgent === "" || selectedClaim.assignedAgent.toLowerCase() === "unassigned") && selectedClaim.status !== "Cancelled" && (
+                          <button
+                            type="button"
+                            onClick={() => setShowAssignModal(selectedClaim)}
+                            className="bg-[#f97316] hover:bg-orange-600 active:scale-95 text-white py-1 px-3.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border-none cursor-pointer flex items-center justify-center shadow-xs"
+                          >
+                            Assign Agent
+                          </button>
+                        )}
                       </div>
                       <div>
                         Type : <span className="font-medium text-slate-600">{selectedClaim.damageType}</span>
@@ -2913,6 +2922,15 @@ function OfficeStaffClaimsPageContent() {
 
                 {/* Action Section (Orange Buttons in Row) */}
                 <div className="flex flex-wrap items-center justify-center gap-4 select-none pt-0.5 pb-4">
+                  {(!selectedClaim.assignedAgent || selectedClaim.assignedAgent === "" || selectedClaim.assignedAgent.toLowerCase() === "unassigned") && selectedClaim.status !== "Cancelled" && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAssignModal(selectedClaim)}
+                      className="bg-[#f97316] hover:bg-orange-600 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
+                    >
+                      Assign Agent
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setActiveSubModal("update_tracking")}
