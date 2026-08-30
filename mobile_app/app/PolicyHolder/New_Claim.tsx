@@ -226,12 +226,94 @@ export default function FileNewClaim() {
   const [longitude, setLongitude] = useState(79.8612);
 
   // Other vehicle details
-  const [otherVehiclePlate, setOtherVehiclePlate] = useState("");
-  const [otherInsuranceCompany, setOtherInsuranceCompany] = useState("");
-  const [otherPolicyNumber, setOtherPolicyNumber] = useState("");
-  const [otherDriverName, setOtherDriverName] = useState("");
-  const [otherLicensePhotos, setOtherLicensePhotos] = useState<PhotoState[]>([]);
-  const [otherVehiclePhotos, setOtherVehiclePhotos] = useState<PhotoState[]>([]);
+  const [otherVehiclesInvolved, setOtherVehiclesInvolved] = useState("No");
+  const [otherVehiclesCount, setOtherVehiclesCount] = useState(1);
+  const [otherVehicles, setOtherVehicles] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (otherVehiclesInvolved === "No") {
+      setOtherVehicles([]);
+      return;
+    }
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      if (next.length < otherVehiclesCount) {
+        for (let i = next.length; i < otherVehiclesCount; i++) {
+          next.push({
+            vehiclePlate: "",
+            insuranceCompany: "",
+            policyNumber: "",
+            driverName: "",
+            licensePhotos: [],
+            vehiclePhotos: []
+          });
+        }
+      } else if (next.length > otherVehiclesCount) {
+        return next.slice(0, otherVehiclesCount);
+      }
+      return next;
+    });
+  }, [otherVehiclesInvolved, otherVehiclesCount]);
+
+  const updateOtherVehicleField = (index: number, field: string, value: any) => {
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      if (next[index]) {
+        next[index] = { ...next[index], [field]: value };
+      }
+      return next;
+    });
+  };
+
+  const selectOtherVehiclePhoto = async (index: number, photoField: "licensePhotos" | "vehiclePhotos") => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert("Permission Required", "Please allow photo access to upload files.");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      allowsEditing: true,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      try {
+        const asset = result.assets[0];
+        const base64Data = await compressImageMobile(asset.uri);
+        setOtherVehicles((prev) => {
+          const next = [...prev];
+          if (next[index]) {
+            const currentPhotos = next[index][photoField] || [];
+            next[index] = {
+              ...next[index],
+              [photoField]: [
+                ...currentPhotos,
+                { uri: asset.uri, base64: base64Data }
+              ]
+            };
+          }
+          return next;
+        });
+      } catch (err) {
+        Alert.alert("Error", "Failed to compress selected image.");
+      }
+    }
+  };
+
+  const removeOtherVehiclePhoto = (index: number, photoField: "licensePhotos" | "vehiclePhotos", photoIndex: number) => {
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      if (next[index]) {
+        const currentPhotos = next[index][photoField] || [];
+        next[index] = {
+          ...next[index],
+          [photoField]: currentPhotos.filter((_: any, pIdx: number) => pIdx !== photoIndex)
+        };
+      }
+      return next;
+    });
+  };
 
   // Search suggestion state variables
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -298,17 +380,22 @@ export default function FileNewClaim() {
           if (draft.latitude) setLatitude(draft.latitude);
           if (draft.longitude) setLongitude(draft.longitude);
 
-          if (draft.otherVehicleDetails) {
-            if (draft.otherVehicleDetails.vehiclePlate) setOtherVehiclePlate(draft.otherVehicleDetails.vehiclePlate);
-            if (draft.otherVehicleDetails.insuranceCompany) setOtherInsuranceCompany(draft.otherVehicleDetails.insuranceCompany);
-            if (draft.otherVehicleDetails.policyNumber) setOtherPolicyNumber(draft.otherVehicleDetails.policyNumber);
-            if (draft.otherVehicleDetails.driverName) setOtherDriverName(draft.otherVehicleDetails.driverName);
-            if (draft.otherVehicleDetails.licensePhotos) {
-              setOtherLicensePhotos(draft.otherVehicleDetails.licensePhotos.map((b: string) => ({ uri: b, base64: b })));
-            }
-            if (draft.otherVehicleDetails.vehiclePhotos) {
-              setOtherVehiclePhotos(draft.otherVehicleDetails.vehiclePhotos.map((b: string) => ({ uri: b, base64: b })));
-            }
+          if (draft.otherVehiclesInvolved) setOtherVehiclesInvolved(draft.otherVehiclesInvolved);
+          if (draft.otherVehiclesCount) setOtherVehiclesCount(draft.otherVehiclesCount);
+          if (draft.otherVehicles) {
+            setOtherVehicles(draft.otherVehicles);
+          } else if (draft.otherVehicleDetails) {
+            // Backward compatibility fallback from single vehicle details draft
+            setOtherVehiclesInvolved("Yes");
+            setOtherVehiclesCount(1);
+            setOtherVehicles([{
+              vehiclePlate: draft.otherVehicleDetails.vehiclePlate || "",
+              insuranceCompany: draft.otherVehicleDetails.insuranceCompany || "",
+              policyNumber: draft.otherVehicleDetails.policyNumber || "",
+              driverName: draft.otherVehicleDetails.driverName || "",
+              licensePhotos: (draft.otherVehicleDetails.licensePhotos || []).map((b: string) => ({ uri: b, base64: b })),
+              vehiclePhotos: (draft.otherVehicleDetails.vehiclePhotos || []).map((b: string) => ({ uri: b, base64: b }))
+            }]);
           }
         }
       } catch (err) {
@@ -389,14 +476,9 @@ export default function FileNewClaim() {
         address,
         latitude,
         longitude,
-        otherVehicleDetails: {
-          vehiclePlate: otherVehiclePlate.trim(),
-          insuranceCompany: otherInsuranceCompany.trim(),
-          policyNumber: otherPolicyNumber.trim(),
-          driverName: otherDriverName.trim(),
-          licensePhotos: otherLicensePhotos.map(p => p.base64),
-          vehiclePhotos: otherVehiclePhotos.map(p => p.base64)
-        }
+        otherVehiclesInvolved,
+        otherVehiclesCount,
+        otherVehicles
       };
       await AsyncStorage.setItem("current_claim_draft", JSON.stringify(draft));
     })();
@@ -409,12 +491,9 @@ export default function FileNewClaim() {
     address,
     latitude,
     longitude,
-    otherVehiclePlate,
-    otherInsuranceCompany,
-    otherPolicyNumber,
-    otherDriverName,
-    otherLicensePhotos,
-    otherVehiclePhotos,
+    otherVehiclesInvolved,
+    otherVehiclesCount,
+    otherVehicles,
     userNic
   ]);
 
@@ -701,6 +780,15 @@ export default function FileNewClaim() {
       return;
     }
 
+    if (otherVehiclesInvolved === "Yes") {
+      for (let i = 0; i < otherVehicles.length; i++) {
+        if (!otherVehicles[i].vehiclePlate || otherVehicles[i].vehiclePlate.trim() === "") {
+          Alert.alert("Required Fields", `Please enter the Vehicle Number for Vehicle #${i + 1}.`);
+          return;
+        }
+      }
+    }
+
     try {
       const draft = {
         selectedVehicle,
@@ -711,14 +799,9 @@ export default function FileNewClaim() {
         address,
         latitude,
         longitude,
-        otherVehicleDetails: {
-          vehiclePlate: otherVehiclePlate.trim(),
-          insuranceCompany: otherInsuranceCompany.trim(),
-          policyNumber: otherPolicyNumber.trim(),
-          driverName: otherDriverName.trim(),
-          licensePhotos: otherLicensePhotos.map(p => p.base64),
-          vehiclePhotos: otherVehiclePhotos.map(p => p.base64)
-        }
+        otherVehiclesInvolved,
+        otherVehiclesCount,
+        otherVehicles
       };
       await AsyncStorage.setItem("current_claim_draft", JSON.stringify(draft));
     } catch (e) {
@@ -750,14 +833,14 @@ export default function FileNewClaim() {
       damageType,
       description,
       location: address,
-      otherVehicleDetails: {
-        vehiclePlate: otherVehiclePlate.trim(),
-        insuranceCompany: otherInsuranceCompany.trim(),
-        policyNumber: otherPolicyNumber.trim(),
-        driverName: otherDriverName.trim(),
-        licensePhotos: otherLicensePhotos.map(p => p.base64),
-        vehiclePhotos: otherVehiclePhotos.map(p => p.base64)
-      },
+      otherVehicleDetails: otherVehiclesInvolved === "Yes" ? otherVehicles.map(v => ({
+        vehiclePlate: (v.vehiclePlate || "").trim(),
+        insuranceCompany: (v.insuranceCompany || "").trim(),
+        policyNumber: (v.policyNumber || "").trim(),
+        driverName: (v.driverName || "").trim(),
+        licensePhotos: (v.licensePhotos || []).map((p: any) => p.base64),
+        vehiclePhotos: (v.vehiclePhotos || []).map((p: any) => p.base64)
+      })) : [],
       accidentPhotos: {
         front: accidentFront ? [accidentFront.base64] : [],
         rear: accidentRear ? [accidentRear.base64] : [],
@@ -1038,105 +1121,175 @@ export default function FileNewClaim() {
               />
             </View>
 
-            {/* Other Vehicle Details Section (Optional) */}
-            <Text style={[styles.sectionHeader, { marginTop: 24, marginBottom: 8 }]}>
-              Other Vehicle Details (Optional)
-            </Text>
-            
+            {/* Were other vehicles involved */}
             <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>Other Vehicle Number</Text>
-              <TextInput
-                placeholder="e.g. WP CAA-1234"
-                placeholderTextColor="#94a3b8"
-                value={otherVehiclePlate}
-                onChangeText={setOtherVehiclePlate}
-                style={styles.textInput}
-              />
-            </View>
-
-            <View style={styles.rowInputs}>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.fieldLabel}>Insurance Name</Text>
-                <TextInput
-                  placeholder="e.g. Ceylinco"
-                  placeholderTextColor="#94a3b8"
-                  value={otherInsuranceCompany}
-                  onChangeText={setOtherInsuranceCompany}
-                  style={styles.textInput}
-                />
-              </View>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={styles.fieldLabel}>Insurance Number</Text>
-                <TextInput
-                  placeholder="e.g. POL-98765"
-                  placeholderTextColor="#94a3b8"
-                  value={otherPolicyNumber}
-                  onChangeText={setOtherPolicyNumber}
-                  style={styles.textInput}
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>Driver Name</Text>
-              <TextInput
-                placeholder="e.g. John Doe"
-                placeholderTextColor="#94a3b8"
-                value={otherDriverName}
-                onChangeText={setOtherDriverName}
-                style={styles.textInput}
-              />
-            </View>
-
-            {/* Other Driver's License Photos */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>Other Driver's License Photos</Text>
-              <View style={styles.multiplePhotosRow}>
-                {otherLicensePhotos.map((photo, idx) => (
-                  <View key={idx} style={styles.multiplePhotoWrapper}>
-                    <Image source={{ uri: photo.uri }} style={styles.multiplePhotoThumb} />
-                    <TouchableOpacity
-                      style={styles.deletePhotoThumbBtn}
-                      onPress={() => removeMultiplePhoto(idx, setOtherLicensePhotos)}
-                    >
-                      <Ionicons name="close" size={12} color="#ffffff" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
+              <Text style={styles.fieldLabel}>Were other vehicles involved? *</Text>
+              <View style={styles.binaryToggleRow}>
                 <TouchableOpacity
-                  style={styles.addPhotoThumbBtn}
-                  onPress={() => selectMultiplePhotos(setOtherLicensePhotos)}
+                  style={[
+                    styles.binaryToggleBtn,
+                    otherVehiclesInvolved === "Yes" && styles.binaryToggleBtnActive
+                  ]}
+                  onPress={() => setOtherVehiclesInvolved("Yes")}
                 >
-                  <Ionicons name="camera" size={20} color="#64748b" />
-                  <Text style={styles.addPhotoThumbText}>Add Photo</Text>
+                  <Text
+                    style={[
+                      styles.binaryToggleText,
+                      otherVehiclesInvolved === "Yes" && styles.binaryToggleTextActive
+                    ]}
+                  >
+                    Yes
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.binaryToggleBtn,
+                    otherVehiclesInvolved === "No" && styles.binaryToggleBtnActive
+                  ]}
+                  onPress={() => setOtherVehiclesInvolved("No")}
+                >
+                  <Text
+                    style={[
+                      styles.binaryToggleText,
+                      otherVehiclesInvolved === "No" && styles.binaryToggleTextActive
+                    ]}
+                  >
+                    No
+                  </Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Other Vehicle / Scene Photos */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.fieldLabel}>Other Vehicle / Damage Photos</Text>
-              <View style={styles.multiplePhotosRow}>
-                {otherVehiclePhotos.map((photo, idx) => (
-                  <View key={idx} style={styles.multiplePhotoWrapper}>
-                    <Image source={{ uri: photo.uri }} style={styles.multiplePhotoThumb} />
+            {otherVehiclesInvolved === "Yes" && (
+              <View style={styles.inputGroup}>
+                <Text style={styles.fieldLabel}>How many vehicles were involved? *</Text>
+                <View style={styles.countToggleRow}>
+                  {[1, 2, 3, 4].map((num) => {
+                    const isActive = otherVehiclesCount === num;
+                    return (
+                      <TouchableOpacity
+                        key={num}
+                        style={[
+                          styles.countToggleBtn,
+                          isActive && styles.countToggleBtnActive
+                        ]}
+                        onPress={() => setOtherVehiclesCount(num)}
+                      >
+                        <Text
+                          style={[
+                            styles.countToggleText,
+                            isActive && styles.countToggleTextActive
+                          ]}
+                        >
+                          {num}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
+            {otherVehiclesInvolved === "Yes" && otherVehicles.map((vehicle, index) => (
+              <View key={index} style={styles.vehicleSubForm}>
+                <Text style={styles.subFormHeader}>Other Vehicle #{index + 1}</Text>
+                
+                <View style={styles.inputGroup}>
+                  <Text style={styles.fieldLabel}>Vehicle Number *</Text>
+                  <TextInput
+                    placeholder="e.g. WP CAA-1234"
+                    placeholderTextColor="#94a3b8"
+                    value={vehicle.vehiclePlate}
+                    onChangeText={(val) => updateOtherVehicleField(index, "vehiclePlate", val)}
+                    style={styles.textInput}
+                  />
+                </View>
+
+                <View style={styles.rowInputs}>
+                  <View style={[styles.inputGroup, { flex: 1 }]}>
+                    <Text style={styles.fieldLabel}>Insurance Name</Text>
+                    <TextInput
+                      placeholder="e.g. Ceylinco"
+                      placeholderTextColor="#94a3b8"
+                      value={vehicle.insuranceCompany}
+                      onChangeText={(val) => updateOtherVehicleField(index, "insuranceCompany", val)}
+                      style={styles.textInput}
+                    />
+                  </View>
+                  <View style={[styles.inputGroup, { flex: 1 }]}>
+                    <Text style={styles.fieldLabel}>Insurance Number</Text>
+                    <TextInput
+                      placeholder="e.g. POL-98765"
+                      placeholderTextColor="#94a3b8"
+                      value={vehicle.policyNumber}
+                      onChangeText={(val) => updateOtherVehicleField(index, "policyNumber", val)}
+                      style={styles.textInput}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.fieldLabel}>Driver Name</Text>
+                  <TextInput
+                    placeholder="e.g. John Doe"
+                    placeholderTextColor="#94a3b8"
+                    value={vehicle.driverName}
+                    onChangeText={(val) => updateOtherVehicleField(index, "driverName", val)}
+                    style={styles.textInput}
+                  />
+                </View>
+
+                {/* Driver License Photos */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.fieldLabel}>Driver's License Photos</Text>
+                  <View style={styles.multiplePhotosRow}>
+                    {(vehicle.licensePhotos || []).map((photo: any, pIdx: number) => (
+                      <View key={pIdx} style={styles.multiplePhotoWrapper}>
+                        <Image source={{ uri: photo.uri }} style={styles.multiplePhotoThumb} />
+                        <TouchableOpacity
+                          style={styles.deletePhotoThumbBtn}
+                          onPress={() => removeOtherVehiclePhoto(index, "licensePhotos", pIdx)}
+                        >
+                          <Ionicons name="close" size={12} color="#ffffff" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
                     <TouchableOpacity
-                      style={styles.deletePhotoThumbBtn}
-                      onPress={() => removeMultiplePhoto(idx, setOtherVehiclePhotos)}
+                      style={styles.addPhotoThumbBtn}
+                      onPress={() => selectOtherVehiclePhoto(index, "licensePhotos")}
                     >
-                      <Ionicons name="close" size={12} color="#ffffff" />
+                      <Ionicons name="camera" size={20} color="#64748b" />
+                      <Text style={styles.addPhotoThumbText}>Add Photo</Text>
                     </TouchableOpacity>
                   </View>
-                ))}
-                <TouchableOpacity
-                  style={styles.addPhotoThumbBtn}
-                  onPress={() => selectMultiplePhotos(setOtherVehiclePhotos)}
-                >
-                  <Ionicons name="camera" size={20} color="#64748b" />
-                  <Text style={styles.addPhotoThumbText}>Add Photo</Text>
-                </TouchableOpacity>
+                </View>
+
+                {/* Vehicle Photos */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.fieldLabel}>Vehicle / Damage Photos</Text>
+                  <View style={styles.multiplePhotosRow}>
+                    {(vehicle.vehiclePhotos || []).map((photo: any, pIdx: number) => (
+                      <View key={pIdx} style={styles.multiplePhotoWrapper}>
+                        <Image source={{ uri: photo.uri }} style={styles.multiplePhotoThumb} />
+                        <TouchableOpacity
+                          style={styles.deletePhotoThumbBtn}
+                          onPress={() => removeOtherVehiclePhoto(index, "vehiclePhotos", pIdx)}
+                        >
+                          <Ionicons name="close" size={12} color="#ffffff" />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    <TouchableOpacity
+                      style={styles.addPhotoThumbBtn}
+                      onPress={() => selectOtherVehiclePhoto(index, "vehiclePhotos")}
+                    >
+                      <Ionicons name="camera" size={20} color="#64748b" />
+                      <Text style={styles.addPhotoThumbText}>Add Photo</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
-            </View>
+            ))}
 
             {/* GPS and Map select buttons */}
             <View style={styles.locationButtonsRow}>
@@ -1660,5 +1813,84 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "700",
     color: "#64748b",
+  },
+  binaryToggleRow: {
+    flexDirection: "row",
+    backgroundColor: "#f1f5f9",
+    borderRadius: 99,
+    padding: 4,
+    gap: 4,
+    marginTop: 6,
+  },
+  binaryToggleBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 99,
+  },
+  binaryToggleBtnActive: {
+    backgroundColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  binaryToggleText: {
+    fontSize: 13,
+    color: "#64748b",
+    fontWeight: "700",
+  },
+  binaryToggleTextActive: {
+    color: "#0f172a",
+  },
+  countToggleRow: {
+    flexDirection: "row",
+    backgroundColor: "#f1f5f9",
+    borderRadius: 14,
+    padding: 4,
+    gap: 4,
+    marginTop: 6,
+  },
+  countToggleBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 10,
+  },
+  countToggleBtnActive: {
+    backgroundColor: "#ffffff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  countToggleText: {
+    fontSize: 13,
+    color: "#64748b",
+    fontWeight: "700",
+  },
+  countToggleTextActive: {
+    color: "#2563eb",
+  },
+  vehicleSubForm: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: "#cbd5e1",
+    padding: 16,
+    marginBottom: 20,
+    marginTop: 8,
+  },
+  subFormHeader: {
+    fontSize: 13,
+    fontWeight: "900",
+    color: "#0f172a",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: 14,
   },
 });

@@ -40,6 +40,7 @@ interface Claim {
   createdAt: string;
   severity: "Urgent" | "Medium" | "Low";
   messages: ClaimMessage[];
+  otherVehicleDetails?: any;
   priority?: string;
   inspectionReport?: string;
   inspectionSubmitted?: boolean;
@@ -1436,6 +1437,173 @@ export default function AgentMyClaims() {
                     </button>
                   </div>
                 </div>
+
+                {/* Other Vehicles Involved Section */}
+                {selectedClaim.otherVehicleDetails && (
+                  <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
+                    <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 select-none">
+                      <svg className="w-4 h-4 text-[#0f2d4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124l-.847-13.486c-.035-.56-1.178-.941-1.745-.941H3.66c-.567 0-1.71.381-1.745.941l-.847 13.486c-.04.62.469 1.124 1.09 1.124H4.5m12-5.25a2.25 2.25 0 00-2.25-2.25H9.75A2.25 2.25 0 007.5 12.75V15h9v-2.25z" />
+                      </svg>
+                      Other Vehicles Involved
+                    </h3>
+
+                    {Array.isArray(selectedClaim.otherVehicleDetails) ? (
+                      selectedClaim.otherVehicleDetails.length === 0 ? (
+                        <p className="text-xs text-slate-500 font-bold italic py-2 select-none">
+                          No other vehicles were involved in this accident.
+                        </p>
+                      ) : (
+                        <div className="space-y-4">
+                          {selectedClaim.otherVehicleDetails.map((vehicle: any, idx: number) => (
+                            <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+                              <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider select-none">
+                                Vehicle #{idx + 1} Details
+                              </h4>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                                <div>
+                                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
+                                  <p className="text-slate-800 font-extrabold mt-0.5">{formatPlate(vehicle.vehiclePlate) || "-"}</p>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
+                                  <p className="text-slate-800 font-extrabold mt-0.5">{vehicle.driverName || "-"}</p>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
+                                  <p className="text-slate-800 font-extrabold mt-0.5">{vehicle.insuranceCompany || "-"}</p>
+                                </div>
+                                <div>
+                                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
+                                  <p className="text-slate-800 font-extrabold mt-0.5">{vehicle.policyNumber || "-"}</p>
+                                </div>
+                              </div>
+
+                              {/* License & Vehicle Photos */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-3">
+                                {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
+                                  <div className="space-y-2">
+                                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">License Photos</span>
+                                    <div className="flex flex-wrap gap-2">
+                                      {vehicle.licensePhotos.map((url: string, pIdx: number) => {
+                                        let docUrl = url;
+                                        if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                          docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                        }
+                                        return (
+                                          <div
+                                            key={pIdx}
+                                            onClick={() => setPreviewImage(docUrl || null)}
+                                            className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 cursor-pointer shadow-sm hover:shadow active:scale-95 transition-all"
+                                          >
+                                            <img src={docUrl} className="w-full h-full object-cover" alt="License" />
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                                {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
+                                  <div className="space-y-2">
+                                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Damage Photos</span>
+                                    <div className="flex flex-wrap gap-2">
+                                      {vehicle.vehiclePhotos.map((url: string, pIdx: number) => {
+                                        let docUrl = url;
+                                        if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                          docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                        }
+                                        return (
+                                          <div
+                                            key={pIdx}
+                                            onClick={() => setPreviewImage(docUrl || null)}
+                                            className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 cursor-pointer shadow-sm hover:shadow active:scale-95 transition-all"
+                                          >
+                                            <img src={docUrl} className="w-full h-full object-cover" alt="Damage" />
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    ) : (
+                      (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
+                        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
+                              <p className="text-slate-800 font-extrabold mt-0.5">{formatPlate(selectedClaim.otherVehicleDetails.vehiclePlate) || "-"}</p>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
+                              <p className="text-slate-800 font-extrabold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "-"}</p>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
+                              <p className="text-slate-800 font-extrabold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "-"}</p>
+                            </div>
+                            <div>
+                              <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
+                              <p className="text-slate-800 font-extrabold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "-"}</p>
+                            </div>
+                          </div>
+
+                          {/* Photos */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-3">
+                            {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
+                              <div className="space-y-2">
+                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">License Photos</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, pIdx: number) => {
+                                    let docUrl = url;
+                                    if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                      docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                    }
+                                    return (
+                                      <div
+                                        key={pIdx}
+                                        onClick={() => setPreviewImage(docUrl || null)}
+                                        className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 cursor-pointer shadow-sm hover:shadow active:scale-95 transition-all"
+                                      >
+                                        <img src={docUrl} className="w-full h-full object-cover" alt="License" />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                            {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
+                              <div className="space-y-2">
+                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Damage Photos</span>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, pIdx: number) => {
+                                    let docUrl = url;
+                                    if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                      docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                    }
+                                    return (
+                                      <div
+                                        key={pIdx}
+                                        onClick={() => setPreviewImage(docUrl || null)}
+                                        className="w-12 h-12 rounded-lg overflow-hidden border border-slate-200 cursor-pointer shadow-sm hover:shadow active:scale-95 transition-all"
+                                      >
+                                        <img src={docUrl} className="w-full h-full object-cover" alt="Damage" />
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
 
                 {/* Policy Holder Attachments / Photos Section */}
                 {(() => {

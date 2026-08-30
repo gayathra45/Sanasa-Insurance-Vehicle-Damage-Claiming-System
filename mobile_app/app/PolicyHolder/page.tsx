@@ -49,14 +49,7 @@ interface Claim {
   officer?: string;
   currentStep?: number;
   messages?: any[];
-  otherVehicleDetails?: {
-    vehiclePlate?: string;
-    insuranceCompany?: string;
-    policyNumber?: string;
-    driverName?: string;
-    licensePhotos?: string[];
-    vehiclePhotos?: string[];
-  };
+  otherVehicleDetails?: any;
 }
 
 interface Notification {
@@ -1061,72 +1054,154 @@ export default function PolicyHolderDashboard() {
                 </View>
 
                 {/* Other Vehicle Details Section */}
-                {selectedClaim.otherVehicleDetails && typeof selectedClaim.otherVehicleDetails === "object" && (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
-                  <View style={[styles.detailsCard, { marginTop: 16 }]}>
-                    <Text style={styles.sectionSubHeader}>Other Vehicle Details</Text>
-                    {selectedClaim.otherVehicleDetails.vehiclePlate ? (
-                      <View style={styles.detailsRow}>
-                        <Text style={styles.detailsLabel}>Vehicle Plate:</Text>
-                        <Text style={styles.detailsVal}>{formatNumberPlate(selectedClaim.otherVehicleDetails.vehiclePlate)}</Text>
-                      </View>
-                    ) : null}
-                    {selectedClaim.otherVehicleDetails.driverName ? (
-                      <View style={styles.detailsRow}>
-                        <Text style={styles.detailsLabel}>Driver Name:</Text>
-                        <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.driverName}</Text>
-                      </View>
-                    ) : null}
-                    {selectedClaim.otherVehicleDetails.insuranceCompany ? (
-                      <View style={styles.detailsRow}>
-                        <Text style={styles.detailsLabel}>Insurance Name:</Text>
-                        <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.insuranceCompany}</Text>
-                      </View>
-                    ) : null}
-                    {selectedClaim.otherVehicleDetails.policyNumber ? (
-                      <View style={styles.detailsRowNoBorder}>
-                        <Text style={styles.detailsLabel}>Insurance Number:</Text>
-                        <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.policyNumber}</Text>
-                      </View>
-                    ) : null}
-
-                    {/* License Photos Grid */}
-                    {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
-                      <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                        <Text style={styles.photoSectionLabel}>Other Driver's License Photos</Text>
-                        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
-                          {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
-                            let docUrl = url;
-                            if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                              docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
-                            }
-                            return (
-                              <View key={idx} style={styles.modalPhotoWrapper}>
-                                <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                {selectedClaim.otherVehicleDetails && (
+                  <View style={{ marginTop: 16, gap: 12 }}>
+                    <Text style={[styles.sectionSubHeader, { paddingHorizontal: 4 }]}>Other Vehicles Involved</Text>
+                    {Array.isArray(selectedClaim.otherVehicleDetails) ? (
+                      selectedClaim.otherVehicleDetails.length === 0 ? (
+                        <View style={styles.detailsCard}>
+                          <Text style={[styles.detailsVal, { fontStyle: "italic", color: "#64748b" }]}>No other vehicles involved.</Text>
+                        </View>
+                      ) : (
+                        selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
+                          <View key={vIdx} style={styles.detailsCard}>
+                            <Text style={[styles.sectionSubHeader, { fontSize: 13, marginBottom: 8 }]}>Vehicle #{vIdx + 1}</Text>
+                            {vehicle.vehiclePlate ? (
+                              <View style={styles.detailsRow}>
+                                <Text style={styles.detailsLabel}>Vehicle Plate:</Text>
+                                <Text style={styles.detailsVal}>{formatNumberPlate(vehicle.vehiclePlate)}</Text>
                               </View>
-                            );
-                          })}
-                        </ScrollView>
-                      </View>
-                    )}
-
-                    {/* Vehicle Damage / Scene Photos Grid */}
-                    {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
-                      <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
-                        <Text style={styles.photoSectionLabel}>Other Vehicle / Damage Photos</Text>
-                        <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
-                          {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
-                            let docUrl = url;
-                            if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                              docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
-                            }
-                            return (
-                              <View key={idx} style={styles.modalPhotoWrapper}>
-                                <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                            ) : null}
+                            {vehicle.driverName ? (
+                              <View style={styles.detailsRow}>
+                                <Text style={styles.detailsLabel}>Driver Name:</Text>
+                                <Text style={styles.detailsVal}>{vehicle.driverName}</Text>
                               </View>
-                            );
-                          })}
-                        </ScrollView>
-                      </View>
+                            ) : null}
+                            {vehicle.insuranceCompany ? (
+                              <View style={styles.detailsRow}>
+                                <Text style={styles.detailsLabel}>Insurance Name:</Text>
+                                <Text style={styles.detailsVal}>{vehicle.insuranceCompany}</Text>
+                              </View>
+                            ) : null}
+                            {vehicle.policyNumber ? (
+                              <View style={styles.detailsRowNoBorder}>
+                                <Text style={styles.detailsLabel}>Insurance Number:</Text>
+                                <Text style={styles.detailsVal}>{vehicle.policyNumber}</Text>
+                              </View>
+                            ) : null}
+
+                            {/* License Photos Grid */}
+                            {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
+                              <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                                <Text style={styles.photoSectionLabel}>Driver's License Photos</Text>
+                                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                                  {vehicle.licensePhotos.map((url: string, idx: number) => {
+                                    let docUrl = url;
+                                    if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                      docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                    }
+                                    return (
+                                      <View key={idx} style={styles.modalPhotoWrapper}>
+                                        <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                                      </View>
+                                    );
+                                  })}
+                                </ScrollView>
+                              </View>
+                            )}
+
+                            {/* Vehicle Damage / Scene Photos Grid */}
+                            {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
+                              <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                                <Text style={styles.photoSectionLabel}>Vehicle / Damage Photos</Text>
+                                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                                  {vehicle.vehiclePhotos.map((url: string, idx: number) => {
+                                    let docUrl = url;
+                                    if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                      docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                    }
+                                    return (
+                                      <View key={idx} style={styles.modalPhotoWrapper}>
+                                        <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                                      </View>
+                                    );
+                                  })}
+                                </ScrollView>
+                              </View>
+                            )}
+                          </View>
+                        ))
+                      )
+                    ) : (
+                      (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
+                        <View style={styles.detailsCard}>
+                          {selectedClaim.otherVehicleDetails.vehiclePlate ? (
+                            <View style={styles.detailsRow}>
+                              <Text style={styles.detailsLabel}>Vehicle Plate:</Text>
+                              <Text style={styles.detailsVal}>{formatNumberPlate(selectedClaim.otherVehicleDetails.vehiclePlate)}</Text>
+                            </View>
+                          ) : null}
+                          {selectedClaim.otherVehicleDetails.driverName ? (
+                            <View style={styles.detailsRow}>
+                              <Text style={styles.detailsLabel}>Driver Name:</Text>
+                              <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.driverName}</Text>
+                            </View>
+                          ) : null}
+                          {selectedClaim.otherVehicleDetails.insuranceCompany ? (
+                            <View style={styles.detailsRow}>
+                              <Text style={styles.detailsLabel}>Insurance Name:</Text>
+                              <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.insuranceCompany}</Text>
+                            </View>
+                          ) : null}
+                          {selectedClaim.otherVehicleDetails.policyNumber ? (
+                            <View style={styles.detailsRowNoBorder}>
+                              <Text style={styles.detailsLabel}>Insurance Number:</Text>
+                              <Text style={styles.detailsVal}>{selectedClaim.otherVehicleDetails.policyNumber}</Text>
+                            </View>
+                          ) : null}
+
+                          {/* License Photos Grid */}
+                          {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
+                            <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                              <Text style={styles.photoSectionLabel}>Other Driver's License Photos</Text>
+                              <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                                {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <View key={idx} style={styles.modalPhotoWrapper}>
+                                      <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                                    </View>
+                                  );
+                                })}
+                              </ScrollView>
+                            </View>
+                          )}
+
+                          {/* Vehicle Damage / Scene Photos Grid */}
+                          {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
+                            <View style={{ marginTop: 12, borderTopWidth: 1, borderColor: "#f1f5f9", paddingTop: 10 }}>
+                              <Text style={styles.photoSectionLabel}>Other Vehicle / Damage Photos</Text>
+                              <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 6 }}>
+                                {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_BASE_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <View key={idx} style={styles.modalPhotoWrapper}>
+                                      <Image source={{ uri: docUrl }} style={styles.modalPhotoThumb} />
+                                    </View>
+                                  );
+                                })}
+                              </ScrollView>
+                            </View>
+                          )}
+                        </View>
+                      )
                     )}
                   </View>
                 )}
