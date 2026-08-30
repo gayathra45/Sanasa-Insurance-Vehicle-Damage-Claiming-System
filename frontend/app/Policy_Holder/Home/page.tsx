@@ -605,49 +605,49 @@ export default function PolicyHolderHome() {
           {/* Total Claims */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-11 h-11 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6m4 13V10m4 9V14" />
             </svg>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{totalClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">{t.totalClaims}</p>
+              <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.totalClaims}</p>
             </div>
           </Link>
 
           {/* In Progress */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-11 h-11 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">{t.inProgress}</p>
+              <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.inProgress}</p>
             </div>
           </Link>
 
           {/* Approved */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-11 h-11 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
             </svg>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">{t.approved}</p>
+              <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.approved}</p>
             </div>
           </Link>
 
@@ -794,7 +794,7 @@ export default function PolicyHolderHome() {
                       </div>
                       <button
                         onClick={() => setSelectedVehicleForModal(vehicle)}
-                        className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-5 py-2 rounded-full transition-all bg-transparent cursor-pointer outline-none"
+                        className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-4 py-1.5 rounded-full transition-all bg-transparent cursor-pointer outline-none whitespace-nowrap"
                       >
                         {t.view}
                       </button>
@@ -833,29 +833,29 @@ export default function PolicyHolderHome() {
 
               <div className="flex flex-col gap-2.5 mt-1">
                 <a href="tel:+94112003000" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-bold text-sm text-slate-800 group no-underline">
-                  <div className="flex items-center gap-2.5">
-                    <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white flex-shrink-0">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.47-5.112-3.758-6.58-6.58l1.293-.97c.362-.272.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
                       </svg>
                     </span>
-                    <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 000</span>
+                    <span className="text-slate-700 tracking-tight font-extrabold text-xs md:text-sm truncate">+94 112 003 000</span>
                   </div>
-                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
+                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200 whitespace-nowrap flex-shrink-0">
                     {t.line1}
                   </span>
                 </a>
 
                 <a href="tel:+94112003001" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-bold text-sm text-slate-800 group no-underline">
-                  <div className="flex items-center gap-2.5">
-                    <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white flex-shrink-0">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.47-5.112-3.758-6.58-6.58l1.293-.97c.362-.272.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
                       </svg>
                     </span>
-                    <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 001</span>
+                    <span className="text-slate-700 tracking-tight font-extrabold text-xs md:text-sm truncate">+94 112 003 001</span>
                   </div>
-                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
+                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200 whitespace-nowrap flex-shrink-0">
                     {t.line2}
                   </span>
                 </a>

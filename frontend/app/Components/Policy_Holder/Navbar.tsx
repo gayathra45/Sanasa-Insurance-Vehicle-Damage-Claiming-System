@@ -113,9 +113,9 @@ export default function PolicyHolderNavbar() {
 
   const getLinkClass = (href: string) => {
     if (isActive(href)) {
-      return "bg-[#00ddff] text-black font-bold px-6 py-2 rounded-full shadow-sm transition-all duration-150 no-underline";
+      return "bg-[#00ddff] text-black font-extrabold px-4 py-1.5 rounded-full shadow-sm transition-all duration-150 no-underline whitespace-nowrap text-sm md:text-[15px]";
     }
-    return "text-[#333] hover:text-[#00ddff] font-bold px-6 py-2 transition-all duration-150 no-underline";
+    return "text-[#333] hover:text-[#00ddff] font-extrabold px-4 py-1.5 transition-all duration-150 no-underline whitespace-nowrap text-sm md:text-[15px]";
   };
 
   const t = translations[lang];
@@ -143,7 +143,7 @@ export default function PolicyHolderNavbar() {
           </div>
 
           {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center gap-5 text-base font-bold">
+          <div className="hidden md:flex items-center gap-3.5 text-base font-bold">
             <Link href="/Policy_Holder/Home" className={getLinkClass("/Policy_Holder/Home")}>
               {t.home}
             </Link>
@@ -158,7 +158,7 @@ export default function PolicyHolderNavbar() {
             </Link>
             <Link
               href="/Policy_Holder/New_Claim"
-              className="bg-[#ff9800] text-white hover:bg-[#e68900] font-bold px-6 py-2 rounded-full shadow-md transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] no-underline"
+              className="bg-[#ff9800] text-white hover:bg-[#e68900] font-extrabold px-4 py-1.5 rounded-full shadow-md transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] no-underline whitespace-nowrap text-sm md:text-[15px]"
             >
               {t.newClaim}
             </Link>
