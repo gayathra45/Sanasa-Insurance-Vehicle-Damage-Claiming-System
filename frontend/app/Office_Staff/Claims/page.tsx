@@ -258,118 +258,85 @@ const renderParsedInspection = (
     });
 
   return (
-    <div className="border border-slate-200/80 rounded-[32px] overflow-hidden bg-slate-50/20 p-6 space-y-6 shadow-sm select-text text-left font-sans w-full">
-      {/* Dashboard Title */}
-      <div className="flex items-center justify-between border-b border-slate-200 pb-4 select-none">
-        <div className="flex items-center gap-3">
-          <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-          <div>
-            <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
-            <span className="text-[10px] font-bold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
-          </div>
+    <div className="space-y-6 font-sans w-full text-left">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 select-none">
+        <div>
+          <h4 className="text-base font-bold text-slate-800">Vehicle Physical Inspection Report</h4>
+          <p className="text-xs text-slate-500 mt-0.5">Detailed assessment submitted by the assigned agent</p>
         </div>
-        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-extrabold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-          </svg>
-          Verified By Agent
+        <span className="w-fit bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold px-3 py-1 rounded-md flex items-center gap-1.5 shadow-xs">
+          Verified by Agent
         </span>
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Odometer */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden min-h-[105px] border-t-4 border-t-blue-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none select-none">Odometer</span>
-          <div className="my-2">
-            <span className="text-base lg:text-lg font-black text-slate-800 block truncate" title={parsed.odometer || "N/A"}>{parsed.odometer || "N/A"}</span>
-          </div>
-          <span className="text-[9px] text-slate-400 font-semibold select-none leading-tight block">Total Distance Travelled</span>
+      {/* Details List */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 border-b border-slate-100 pb-5">
+        <div>
+          <span className="text-xs text-slate-400 block font-semibold">Odometer</span>
+          <span className="text-sm font-bold text-slate-800 mt-1 block">{parsed.odometer || "N/A"}</span>
         </div>
-
-        {/* Card 2: Fuel Level */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden min-h-[105px] border-t-4 border-t-indigo-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none select-none">Fuel Level</span>
-          <div className="my-2">
-            <span className="text-base lg:text-lg font-black text-slate-800 block truncate" title={parsed.fuelLevel || "N/A"}>{parsed.fuelLevel || "N/A"}</span>
-          </div>
-          <span className="text-[9px] text-slate-400 font-semibold select-none leading-tight block">Current Tank Level</span>
+        <div>
+          <span className="text-xs text-slate-400 block font-semibold">Fuel Level</span>
+          <span className="text-sm font-bold text-slate-800 mt-1 block">{parsed.fuelLevel || "N/A"}</span>
         </div>
-
-        {/* Card 3: Estimated Cost */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden min-h-[105px] border-t-4 border-t-emerald-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none select-none">Estimated Cost</span>
-          <div className="my-2">
-            <span className="text-base lg:text-lg font-black text-emerald-600 block truncate" title={parsed.estimatedCost || "N/A"}>{parsed.estimatedCost || "N/A"}</span>
-          </div>
-          <span className="text-[9px] text-slate-400 font-semibold select-none leading-tight block">Assessment Valuation</span>
+        <div>
+          <span className="text-xs text-slate-400 block font-semibold">Estimated Cost</span>
+          <span className="text-sm font-bold text-emerald-600 mt-1 block">{parsed.estimatedCost || "N/A"}</span>
         </div>
-
-        {/* Card 4: Recommendation */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-4 flex flex-col justify-between shadow-sm relative overflow-hidden min-h-[105px] border-t-4 border-t-violet-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider leading-none select-none">Recommendation</span>
-          <div className="my-2">
-            <span className="text-[13px] lg:text-sm font-black text-slate-800 block truncate" title={parsed.recommendedAction || "N/A"}>{parsed.recommendedAction || "N/A"}</span>
-          </div>
-          <span className="text-[9px] text-slate-400 font-semibold select-none leading-tight block">Suggested Action Payout</span>
+        <div>
+          <span className="text-xs text-slate-400 block font-semibold">Recommendation</span>
+          <span className="text-sm font-bold text-slate-800 mt-1 block">{parsed.recommendedAction || "N/A"}</span>
         </div>
       </div>
 
-      {/* Checklist & Notes Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Component Damage Checklist */}
-        <div className="bg-white border border-slate-150 rounded-2xl p-5 space-y-4 shadow-sm">
-          <div>
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
-            <div className="space-y-2">
-              {Object.entries(parsed.checklist || {}).map(([key, value]) => (
-                <div key={key} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
-                  <span className="text-slate-700 font-bold text-xs">{key}</span>
-                  {renderChecklistBadge(value)}
-                </div>
-              ))}
-            </div>
+      {/* Damage Checklist & Remarks */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Component Checklist */}
+        <div className="space-y-3">
+          <span className="text-xs text-slate-400 uppercase font-bold tracking-wider block">Component Damage Status</span>
+          <div className="space-y-2">
+            {Object.entries(parsed.checklist || {}).map(([key, value]) => (
+              <div key={key} className="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0 text-sm">
+                <span className="text-slate-600 font-medium">{key}</span>
+                <span className={`font-bold ${
+                  value === "None" ? "text-emerald-600" :
+                  value === "Minor" ? "text-amber-600" :
+                  "text-rose-600"
+                }`}>
+                  {value}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
         {/* Remarks Column */}
-        <div className="flex flex-col gap-4">
+        <div className="space-y-5">
           {parsed.preExistingDamage && parsed.preExistingDamage !== "None reported." && (
-            <div className="bg-amber-50/20 border border-amber-200/50 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
-              <span className="text-[10px] text-amber-800 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
-                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.03V3m0 0a8.001 8.001 0 00-7.797 6.138m15.594 0A8.001 8.001 0 0012 3M3.243 9.75a8.002 8.002 0 008.757 8.757m0 0A8.002 8.002 0 0020.757 9.75" />
-                </svg>
-                Pre-Existing Damage Remarks
-              </span>
-              <p className="text-slate-700 text-xs font-semibold leading-relaxed whitespace-pre-wrap">{parsed.preExistingDamage}</p>
+            <div className="space-y-1.5">
+              <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block">Pre-Existing Damage Remarks</span>
+              <p className="text-slate-600 text-xs font-semibold leading-relaxed whitespace-pre-wrap">{parsed.preExistingDamage}</p>
             </div>
           )}
 
-          <div className="bg-slate-50/50 border border-slate-200/70 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
-              <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-              </svg>
-              Physical Inspection Remarks
-            </span>
-            <p className="text-slate-700 text-xs font-semibold leading-relaxed whitespace-pre-wrap">{parsed.physicalInspectionNotes}</p>
+          <div className="space-y-1.5">
+            <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block">Physical Inspection Remarks</span>
+            <p className="text-slate-600 text-xs font-semibold leading-relaxed whitespace-pre-wrap">{parsed.physicalInspectionNotes}</p>
           </div>
         </div>
       </div>
 
       {/* Inspection Photos Grid */}
       {agentPhotos.length > 0 && (
-        <div className="bg-white border border-slate-150 rounded-2xl p-5 shadow-sm space-y-3 select-none">
-          <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block border-b border-slate-100 pb-2.5">
-            Inspection Photos ({agentPhotos.length})
-          </span>
-          <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 pt-1">
+        <div className="space-y-3 pt-4 border-t border-slate-100">
+          <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block">Inspection Photos ({agentPhotos.length})</span>
+          <div className="flex flex-wrap gap-3">
             {agentPhotos.map((photo, index) => (
               <div
                 key={index}
                 onClick={() => onPhotoClick && onPhotoClick(photo.url)}
-                className="aspect-square rounded-xl border border-slate-200 overflow-hidden cursor-zoom-in hover:scale-105 transition-all shadow-sm"
+                className="w-20 h-20 rounded-lg border border-slate-200 overflow-hidden cursor-zoom-in hover:opacity-85 transition-opacity"
                 title={photo.name}
               >
                 <img src={photo.url} alt={photo.name} className="w-full h-full object-cover" />
@@ -880,8 +847,8 @@ function OfficeStaffClaimsPageContent() {
         <OfficeStaffNavbar />
 
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
-          {/* Header welcome bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          {/* Header */}
+          <header className="bg-white border-b border-slate-200 text-slate-800 px-8 py-4 flex justify-between items-center select-none flex-shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
@@ -891,9 +858,9 @@ function OfficeStaffClaimsPageContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span>
-                <span className="hidden lg:inline"> — Claims Portal</span>
+              <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+                <span className="bg-slate-850 text-white text-xs px-3.5 py-1.5 rounded-lg font-extrabold tracking-wide">{branch} Branch</span>
+                <span className="hidden lg:inline text-slate-400 font-medium">— Claims Portal</span>
               </h1>
             </div>
             <div className="flex items-center gap-5">
@@ -911,7 +878,7 @@ function OfficeStaffClaimsPageContent() {
           <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-auto">
             {loading ? (
               <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#f59e0b]"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-slate-700"></div>
                 <span className="mt-4 text-slate-500 font-bold">Loading branch claims...</span>
               </div>
             ) : error ? (
@@ -922,26 +889,23 @@ function OfficeStaffClaimsPageContent() {
               <div className="max-w-6xl mx-auto flex flex-col gap-6">
                 
                 {/* Title */}
-                <div className="flex items-center gap-2 mb-2 select-none">
-                  <svg className="w-5 h-5 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                  </svg>
-                  <h2 className="text-lg font-black text-slate-800 tracking-wide">
+                <div className="flex items-center gap-2 select-none">
+                  <h2 className="text-lg font-bold text-slate-800">
                     Claims Management
                   </h2>
                 </div>
 
                 {/* Filters and Search Bar Container */}
-                <div className="bg-white rounded-2xl p-6 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
                   {/* Tabs */}
-                  <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-full md:w-auto">
+                  <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-lg w-full md:w-auto select-none">
                     {(["All", "Pending", "In Progress", "Approved", "Rejected"] as const).map(tab => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all border-none outline-none cursor-pointer ${
+                        className={`px-3.5 py-1.5 rounded-md text-xs font-bold transition-all border-none outline-none cursor-pointer ${
                           activeTab === tab
-                            ? "bg-[#0f2d4a] text-white shadow-sm"
+                            ? "bg-slate-800 text-white shadow-xs"
                             : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
                         }`}
                       >
@@ -952,7 +916,7 @@ function OfficeStaffClaimsPageContent() {
 
                   {/* Search input */}
                   <div className="relative w-full md:w-80">
-                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637z" />
                       </svg>
@@ -962,17 +926,20 @@ function OfficeStaffClaimsPageContent() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search Claim No, Plate or NIC..."
-                      className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-slate-700 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] focus:border-transparent transition-all"
+                      className="w-full pl-9 pr-4 py-1.5 rounded-lg border border-slate-200 text-slate-700 placeholder:text-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-slate-800 focus:border-transparent transition-all"
                     />
                   </div>
-                </div>                {/* Claims list */}
+                </div>
+
+                {/* Claims list */}
                 {filteredClaims.length === 0 ? (
-                  <div className="bg-white border border-slate-200 rounded-[20px] p-12 text-center text-slate-400 font-bold select-none shadow-sm">
+                  <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-slate-400 font-bold select-none shadow-xs">
                     No claims found in {branch} Branch under active filters.
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3 transition-all duration-300">                    {/* Header Row for Desktop */}
-                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
+                  <div className="flex flex-col gap-3">
+                    {/* Header Row for Desktop */}
+                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
                       <div className="flex flex-col select-none min-w-0">Claim Info</div>
                       <div className="flex flex-col select-none min-w-0">Vehicle No</div>
                       <div className="flex flex-col select-none min-w-0">Damage Type</div>
@@ -982,7 +949,7 @@ function OfficeStaffClaimsPageContent() {
                       <div className="flex flex-col select-none min-w-0 text-center">Status</div>
                       <div className="flex flex-col select-none min-w-0 text-right">Actions</div>
                     </div>
- 
+
                     {filteredClaims.map((claim) => {
                       const s = claim.status.toLowerCase();
                       const isUrgent = claim.priority === "Urgent" || claim.damageType.toLowerCase().includes("severe") || claim.description.toLowerCase().includes("urgent");
@@ -994,18 +961,17 @@ function OfficeStaffClaimsPageContent() {
                       let indicatorDot = "";
 
                       if (isCompleted) {
-                        cardThemeClass = "border-l-[6px] border-l-emerald-500 bg-gradient-to-r from-emerald-50/10 via-transparent to-transparent hover:border-emerald-400";
-                        indicatorDot = "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+                        cardThemeClass = "border-l-4 border-l-emerald-500 hover:bg-slate-50/40";
+                        indicatorDot = "bg-emerald-500";
                       } else if (isApproved) {
-                        cardThemeClass = "border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent hover:border-blue-400";
-                        indicatorDot = "bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]";
+                        cardThemeClass = "border-l-4 border-l-blue-500 hover:bg-slate-50/40";
+                        indicatorDot = "bg-blue-500";
                       } else if (isRejected) {
-                        cardThemeClass = "border-l-[6px] border-l-slate-400 bg-gradient-to-r from-slate-50/10 via-transparent to-transparent hover:border-slate-500";
-                        indicatorDot = "bg-slate-400 shadow-[0_0_8px_rgba(148,163,184,0.5)]";
+                        cardThemeClass = "border-l-4 border-l-slate-400 hover:bg-slate-50/40";
+                        indicatorDot = "bg-slate-400";
                       } else {
-                        // Not approved and not rejected (New / Pending / In Progress / Review) -> Highlight with a red dot/border
-                        cardThemeClass = "border-l-[6px] border-l-red-500 bg-gradient-to-r from-red-50/10 via-transparent to-transparent hover:border-red-400";
-                        indicatorDot = "bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.7)]";
+                        cardThemeClass = "border-l-4 border-l-red-500 hover:bg-slate-50/40";
+                        indicatorDot = "bg-red-500";
                       }
 
                       return (
@@ -1015,48 +981,48 @@ function OfficeStaffClaimsPageContent() {
                             setSelectedClaim(claim);
                             setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                           }}
-                          className={`bg-white border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${cardThemeClass}`}
+                          className={`bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-xs hover:border-slate-300 relative overflow-hidden ${cardThemeClass}`}
                         >
                           {/* Claim ID & Date */}
                           <div className="flex flex-col select-none min-w-0">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className={`w-2 h-2 rounded-full shrink-0 ${indicatorDot}`} />
-                              <h3 className="font-black text-sm text-slate-800 whitespace-nowrap">
+                              <h3 className="font-bold text-sm text-slate-800 whitespace-nowrap">
                                 {claim.claimNumber}
                               </h3>
                               {isUrgent && (
-                                <span className="bg-red-100 text-red-700 text-[8px] font-black tracking-wider uppercase px-2 py-1 rounded-md whitespace-nowrap">Urgent</span>
+                                <span className="bg-red-100 text-red-700 text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded whitespace-nowrap">Urgent</span>
                               )}
                               {claim.isManuallyUpdated && (
                                 <span 
                                   title={`Reason: ${claim.manualUpdateReason}\nBy: ${claim.manualUpdateBy}\nOn: ${claim.manualUpdateAt ? formatDate(claim.manualUpdateAt) : ""}`} 
-                                  className="bg-amber-100 text-amber-800 text-[8px] font-black tracking-wider uppercase px-2 py-1 rounded-md whitespace-nowrap cursor-help flex items-center gap-0.5"
+                                  className="bg-amber-100 text-amber-800 text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded whitespace-nowrap cursor-help flex items-center gap-0.5"
                                 >
-                                  ⚠️ Manual Override
+                                  Manual Override
                                 </span>
                               )}
                             </div>
-                            <span className="text-[10px] text-slate-400 font-bold tracking-wider block mt-0.5">
-                              Registered: {formatDate(claim.createdAt)}
+                            <span className="text-[10px] text-slate-400 font-bold block mt-0.5">
+                              {formatDate(claim.createdAt)}
                             </span>
                           </div>
 
                           {/* Vehicle Plate */}
                           <div className="flex flex-col select-none min-w-0">
                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Vehicle No</span>
-                            <span className="text-slate-800 font-bold text-xs">{formatPlate(claim.vehiclePlate)}</span>
+                            <span className="text-slate-700 font-bold text-xs">{formatPlate(claim.vehiclePlate)}</span>
                           </div>
 
                           {/* Damage Type */}
                           <div className="flex flex-col select-none min-w-0">
                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Damage Type</span>
-                            <span className="text-slate-700 text-xs font-semibold truncate block" title={claim.damageType}>{claim.damageType}</span>
+                            <span className="text-slate-600 text-xs font-semibold truncate block" title={claim.damageType}>{claim.damageType}</span>
                           </div>
 
                           {/* Location */}
                           <div className="flex flex-col select-none min-w-0">
                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Location</span>
-                            <span className="text-slate-700 text-xs font-semibold truncate block" title={claim.location}>{claim.location}</span>
+                            <span className="text-slate-600 text-xs font-semibold truncate block" title={claim.location}>{claim.location}</span>
                           </div>
 
                           {/* Agent Assignment */}
@@ -1065,16 +1031,15 @@ function OfficeStaffClaimsPageContent() {
                             <span className="text-xs font-semibold truncate block">
                               {claim.assignedAgent ? (
                                 <div className="flex flex-col">
-                                  <span className="text-slate-700" title={claim.assignedAgent}>{getAgentName(claim.assignedAgent)}</span>
+                                  <span className="text-slate-600 font-bold" title={claim.assignedAgent}>{getAgentName(claim.assignedAgent)}</span>
                                   {claim.currentStep < 3 && claim.status !== "Rejected" && (
-                                    <span className="inline-flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200 mt-1 w-fit animate-pulse select-none uppercase tracking-wider">
-                                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-                                      Awaiting Acceptance
+                                    <span className="inline-flex items-center gap-1 text-[9px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 mt-1 w-fit select-none uppercase tracking-wider">
+                                      Acceptance Pending
                                     </span>
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-amber-600 font-bold bg-amber-50 px-2 py-1 rounded border border-amber-200 text-[10px] inline-block w-fit">Unassigned</span>
+                                <span className="text-slate-400 font-bold bg-slate-50 px-2 py-0.5 rounded border border-slate-200 text-[10px] inline-block w-fit">Unassigned</span>
                               )}
                             </span>
                           </div>
@@ -1094,7 +1059,7 @@ function OfficeStaffClaimsPageContent() {
                           {/* Status Badge */}
                           <div className="flex flex-col select-none items-center min-w-0">
                             <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 md:hidden">Status</span>
-                            <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority, claim.paymentReceipt)}`}>
+                            <span className={`text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority, claim.paymentReceipt)}`}>
                               {claim.status.toLowerCase() === "approved" && claim.paymentReceipt ? "Completed" : claim.status}
                             </span>
                           </div>
@@ -1107,7 +1072,7 @@ function OfficeStaffClaimsPageContent() {
                                   setShowAssignModal(claim);
                                   setSelectedAgentEmail("");
                                 }}
-                                className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-[10px] px-3 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm border-none active:scale-95 whitespace-nowrap transition-all duration-300"
+                                className="bg-slate-800 hover:bg-slate-900 text-white font-bold text-[10px] px-3 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs border-none active:scale-95 whitespace-nowrap"
                               >
                                 Assign Agent
                               </button>
@@ -1122,7 +1087,7 @@ function OfficeStaffClaimsPageContent() {
                                 ]);
                                 setContactRecipient("Policy Holder");
                               }}
-                              className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-3 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap"
+                              className="border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold text-[10px] px-3 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white whitespace-nowrap"
                             >
                               Details
                             </button>
@@ -3352,7 +3317,7 @@ function OfficeStaffClaimsPageContent() {
               <button
                 type="button"
                 onClick={() => setPreviewReportText(null)}
-                className="px-6 py-3 rounded-full bg-cyan-600 hover:bg-cyan-700 text-white font-extrabold text-xs transition-colors cursor-pointer border-none shadow-sm active:scale-95"
+                className="px-6 py-3 rounded-full bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs transition-colors cursor-pointer border-none shadow-sm active:scale-95"
               >
                 Dismiss Preview
               </button>
