@@ -174,64 +174,70 @@ export default function PolicyHolderNavbar() {
           isVisible ? "top-0" : "-top-32"
         }`}
       >
-        {/* Top Utility Bar (Premium Navy Blue Gradient) */}
-        <div className="bg-gradient-to-r from-[#0d1b2a] via-[#102a43] to-[#0a192f] text-slate-200 py-2 px-6 md:px-16 flex items-center justify-between text-xs border-b border-white/10 font-semibold select-none shadow-inner w-full">
-          <div className="flex items-center gap-2 font-bold">
-            <span className="flex h-2 w-2 relative flex-shrink-0">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="tracking-tight hover:text-[#00ddff] transition-colors">
+        {/* Top Utility Bar (Calm, simple dark blue background) */}
+        <div className="bg-[#0d2a3a] border-b border-white/10 text-slate-300 py-1.5 px-6 md:px-16 flex items-center justify-between text-xs select-none w-full font-medium">
+          <div className="flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+            <span className="text-slate-200">
               <span className="hidden sm:inline">{t.hotline}</span>
               <span className="inline sm:hidden">📞 +94 112 003 000</span>
             </span>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Redesigned Branch Button */}
+            {/* Branch Button */}
             <button
               onClick={() => {
                 setSearchQuery("");
                 setBranchesModalOpen(true);
               }}
-              className="flex items-center gap-1.5 bg-white/10 hover:bg-[#00ddff] hover:text-black text-white font-extrabold px-3.5 py-1 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 border-none cursor-pointer focus:outline-none select-none text-[11px] shadow-sm"
+              className="flex items-center gap-1 text-slate-200 hover:text-[#00ddff] transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-semibold"
             >
-              <span>🏢</span>
+              <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
               <span>{t.branches}</span>
             </button>
 
-            {/* Redesigned Language Selector Capsule */}
+            {/* Divider */}
+            <span className="h-3 w-px bg-white/10" />
+
+            {/* Language Selector */}
             <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => setLangMenuOpen((prev) => !prev)}
-                className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-extrabold px-3.5 py-1 rounded-full transition-all border-none cursor-pointer focus:outline-none select-none text-[11px]"
+                className="flex items-center gap-1 text-slate-200 hover:text-[#00ddff] transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-semibold"
               >
-                <span>🌐</span>
+                <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
                 <span className="uppercase">{lang === "si" ? "සිං" : lang === "ta" ? "தமி" : "EN"}</span>
-                <svg className="w-2.5 h-2.5 opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                <svg className={`w-2.5 h-2.5 text-slate-400 transition-transform duration-200 ${langMenuOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                 </svg>
               </button>
 
               {langMenuOpen && (
-                <div className="absolute right-0 mt-2.5 w-32 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-slate-100 py-1.5 z-50 text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="absolute right-0 mt-2 w-32 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-slate-100 py-1.5 z-50 text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150">
                   <button
                     onClick={() => changeLanguage("en")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-[#00ddff] font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-[#00ddff]" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-cyan-600" : ""}`}
                   >
                     <span>English</span>
                     {lang === "en" && <span>✓</span>}
                   </button>
                   <button
                     onClick={() => changeLanguage("si")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-[#00ddff] font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-[#00ddff]" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-cyan-600" : ""}`}
                   >
                     <span>සිංහල</span>
                     {lang === "si" && <span>✓</span>}
                   </button>
                   <button
                     onClick={() => changeLanguage("ta")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-[#00ddff] font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-[#00ddff]" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-cyan-600" : ""}`}
                   >
                     <span>தமிழ்</span>
                     {lang === "ta" && <span>✓</span>}
