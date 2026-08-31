@@ -125,8 +125,8 @@ export default function Navbar() {
   const getLinkClass = (href: string) => {
     const isActiveLink = isActive(href);
     const paddingSize = lang === "en" ? "px-6 py-1.5 text-base" : "px-4.5 py-1 text-sm md:text-[15px]";
-    const activeStyles = isActiveLink ? "bg-[#00ddff] !text-black font-bold" : "font-semibold";
-    return `text-inherit no-underline transition-all duration-150 rounded-full hover:text-[#00ddff] whitespace-nowrap ${paddingSize} ${activeStyles}`;
+    const activeStyles = isActiveLink ? "bg-[#00ddff] !text-black font-bold" : "text-[#333] font-semibold";
+    return `no-underline transition-all duration-150 rounded-full hover:text-[#00ddff] whitespace-nowrap ${paddingSize} ${activeStyles}`;
   };
 
   const t = translations[lang];
