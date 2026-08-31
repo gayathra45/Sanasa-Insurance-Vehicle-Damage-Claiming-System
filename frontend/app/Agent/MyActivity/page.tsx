@@ -628,19 +628,19 @@ export default function AgentActivityPage() {
 
   const getPolicyHolderName = (nic: string) => {
     if (!nic) return "-";
-    const user = policyHolders.find(u => u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
+    const user = policyHolders.find(u => u.nic && typeof u.nic === "string" && u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
     return user ? `${user.firstName} ${user.lastName}` : "Unknown Policy Holder";
   };
 
   const getPolicyHolderContact = (nic: string) => {
     if (!nic) return "-";
-    const user = policyHolders.find(u => u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
+    const user = policyHolders.find(u => u.nic && typeof u.nic === "string" && u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
     return user ? user.mobile : "No Contact Info";
   };
 
   const getPolicyHolderEmail = (nic: string) => {
     if (!nic) return "-";
-    const user = policyHolders.find(u => u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
+    const user = policyHolders.find(u => u.nic && typeof u.nic === "string" && u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
     return user ? user.email : "-";
   };
 
@@ -786,19 +786,22 @@ export default function AgentActivityPage() {
       if (claim.messages) {
         claim.messages.forEach((msg, idx) => {
           if (msg.sender === "Agent" || msg.sender === "Agent (You)") {
+            const msgVal = msg.message || "";
             const isMilestone = 
-              msg.message.toLowerCase().includes("accepted the claim") ||
-              msg.message.toLowerCase().includes("rejected by agent") ||
-              msg.message.toLowerCase().includes("inspection report submitted") ||
-              msg.message.toLowerCase().includes("assessment approved for") ||
-              msg.message.toLowerCase().includes("claim rejected by agent");
+              typeof msgVal === "string" && (
+                msgVal.toLowerCase().includes("accepted the claim") ||
+                msgVal.toLowerCase().includes("rejected by agent") ||
+                msgVal.toLowerCase().includes("inspection report submitted") ||
+                msgVal.toLowerCase().includes("assessment approved for") ||
+                msgVal.toLowerCase().includes("claim rejected by agent")
+              );
 
             if (!isMilestone) {
               list.push({
                 id: `msg-${claim.claimNumber}-${idx}-${msg.sentAt}`,
                 type: "message",
                 title: "Message Sent",
-                description: `Sent message to Office Staff: "${msg.message}"`,
+                description: `Sent message to Office Staff: "${msgVal}"`,
                 timestamp: msg.sentAt,
                 claimNumber: claim.claimNumber,
                 vehiclePlate: claim.vehiclePlate
@@ -820,10 +823,13 @@ export default function AgentActivityPage() {
       });
 
       // 4. Claim accepted log
-      const acceptMsg = claim.messages?.find(m => 
-        m.message.toLowerCase().includes("accepted the claim") || 
-        m.message.toLowerCase().includes("accepted case")
-      );
+      const acceptMsg = claim.messages?.find(m => {
+        const msgVal = m.message || "";
+        return typeof msgVal === "string" && (
+          msgVal.toLowerCase().includes("accepted the claim") || 
+          msgVal.toLowerCase().includes("accepted case")
+        );
+      });
       if (acceptMsg) {
         list.push({
           id: `accept-${claim.claimNumber}-${acceptMsg.sentAt}`,
@@ -847,9 +853,10 @@ export default function AgentActivityPage() {
       }
 
       // 5. Inspection report submission log
-      const inspectMsg = claim.messages?.find(m => 
-        m.message.toLowerCase().includes("inspection report submitted")
-      );
+      const inspectMsg = claim.messages?.find(m => {
+        const msgVal = m.message || "";
+        return typeof msgVal === "string" && msgVal.toLowerCase().includes("inspection report submitted");
+      });
       if (inspectMsg) {
         list.push({
           id: `inspect-${claim.claimNumber}-${inspectMsg.sentAt}`,
@@ -873,10 +880,13 @@ export default function AgentActivityPage() {
       }
 
       // 6. Claim approved log
-      const approveMsg = claim.messages?.find(m => 
-        m.message.toLowerCase().includes("approved for lkr") || 
-        m.message.toLowerCase().includes("assessment approved")
-      );
+      const approveMsg = claim.messages?.find(m => {
+        const msgVal = m.message || "";
+        return typeof msgVal === "string" && (
+          msgVal.toLowerCase().includes("approved for lkr") || 
+          msgVal.toLowerCase().includes("assessment approved")
+        );
+      });
       if (approveMsg) {
         list.push({
           id: `approve-${claim.claimNumber}-${approveMsg.sentAt}`,
@@ -900,10 +910,13 @@ export default function AgentActivityPage() {
       }
 
       // 7. Claim rejected log
-      const rejectMsg = claim.messages?.find(m => 
-        m.message.toLowerCase().includes("claim rejected") || 
-        m.message.toLowerCase().includes("rejected by agent")
-      );
+      const rejectMsg = claim.messages?.find(m => {
+        const msgVal = m.message || "";
+        return typeof msgVal === "string" && (
+          msgVal.toLowerCase().includes("claim rejected") || 
+          msgVal.toLowerCase().includes("rejected by agent")
+        );
+      });
       if (rejectMsg) {
         list.push({
           id: `reject-${claim.claimNumber}-${rejectMsg.sentAt}`,
@@ -944,9 +957,9 @@ export default function AgentActivityPage() {
       matchesStatus = c.status === statusFilter;
     }
     const matchesSearch =
-      c.claimNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.vehiclePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.damageType.toLowerCase().includes(searchQuery.toLowerCase());
+      (c.claimNumber || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.vehiclePlate || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.damageType || "").toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 

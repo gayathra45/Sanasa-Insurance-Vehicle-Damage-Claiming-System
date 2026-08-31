@@ -669,19 +669,19 @@ export default function AgentDashboard() {
 
   const getPolicyHolderName = (nic: string) => {
     if (!nic) return "-";
-    const user = policyHolders.find(u => u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
+    const user = policyHolders.find(u => u.nic && typeof u.nic === "string" && u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
     return user ? `${user.firstName} ${user.lastName}` : "Unknown Policy Holder";
   };
 
   const getPolicyHolderContact = (nic: string) => {
     if (!nic) return "-";
-    const user = policyHolders.find(u => u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
+    const user = policyHolders.find(u => u.nic && typeof u.nic === "string" && u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
     return user ? user.mobile : "No Contact Info";
   };
 
   const getPolicyHolderEmail = (nic: string) => {
     if (!nic) return "-";
-    const user = policyHolders.find(u => u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
+    const user = policyHolders.find(u => u.nic && typeof u.nic === "string" && u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
     return user ? user.email : "-";
   };
 

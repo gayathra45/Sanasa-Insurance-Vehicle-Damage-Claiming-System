@@ -789,19 +789,19 @@ function OfficeStaffClaimsPageContent() {
 
   const getAgentName = (email: string) => {
     if (!email) return "";
-    const agent = agents.find(a => a.email.toLowerCase().trim() === email.toLowerCase().trim());
+    const agent = agents.find(a => a.email && typeof a.email === "string" && a.email.toLowerCase().trim() === email.toLowerCase().trim());
     return agent ? agent.name : email;
   };
 
   const getPolicyHolderName = (nic: string) => {
     if (!nic) return "-";
-    const user = policyHolders.find(u => u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
+    const user = policyHolders.find(u => u.nic && typeof u.nic === "string" && u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
     return user ? `${user.firstName} ${user.lastName}` : "Unknown Policy Holder";
   };
 
   const getPolicyHolderContact = (nic: string) => {
     if (!nic) return "-";
-    const user = policyHolders.find(u => u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
+    const user = policyHolders.find(u => u.nic && typeof u.nic === "string" && u.nic.toLowerCase().trim() === nic.toLowerCase().trim());
     return user ? user.mobile : "No Contact Info";
   };
 
