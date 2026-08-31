@@ -676,7 +676,8 @@ export default function NotificationsPage() {
                     <Text style={styles.detailsLabel}>{t.myClaims.location}:</Text>
                     <Text style={styles.detailsVal}>{selectedClaim.location || "N/A"}</Text>
                   </View>
-                </View>                {/* Other Vehicle Details Section */}
+                </View>
+                {/* Other Vehicle Details Section */}
                 {selectedClaim.otherVehicleDetails && (
                   <View style={{ marginTop: 16, gap: 12 }}>
                     <Text style={[styles.sectionSubHeader, { paddingHorizontal: 4 }]}>{lang === "en" ? "Other Vehicles Involved" : lang === "si" ? "සම්බන්ධ අනෙක් වාහන" : "சம்பந்தப்பட்ட பிற வாகனங்கள்"}</Text>

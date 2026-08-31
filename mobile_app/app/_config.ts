@@ -7,8 +7,12 @@ const getApiBaseUrl = () => {
     return `http://${ip}:5000`;
   }
   // Fallback to the current Wi-Fi adapter IP
-  return "http://192.168.18.77:5000";
+  return "http://192.168.8.100:5000";
 };
 
 
 export const API_BASE_URL = getApiBaseUrl();
+
+export default function Config() {
+  return null;
+}
