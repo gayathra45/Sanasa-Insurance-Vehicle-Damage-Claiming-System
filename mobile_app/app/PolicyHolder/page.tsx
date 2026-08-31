@@ -252,13 +252,16 @@ export default function PolicyHolderDashboard() {
 
   const fetchVehicles = useCallback(async (nic: string, currentUserObj: any) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/policy-holder/vehicles?nic=${encodeURIComponent(nic)}`);
+      const res = await fetch(`${API_BASE_URL}/api/policy-holder/vehicles?nic=${encodeURIComponent(nic)}&_=${Date.now()}`);
       if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.vehicles)) {
-          setVehicles(data.vehicles);
-          const updatedUser = { ...currentUserObj, vehicles: data.vehicles };
-          await AsyncStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
+        const contentType = res.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await res.json();
+          if (Array.isArray(data.vehicles)) {
+            setVehicles(data.vehicles);
+            const updatedUser = { ...currentUserObj, vehicles: data.vehicles };
+            await AsyncStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
+          }
         }
       }
     } catch (e) {
@@ -696,94 +699,68 @@ export default function PolicyHolderDashboard() {
             </TouchableOpacity>
 
             {notifications.length > 0 ? (
-              <View style={styles.notificationList}>
-                {notifications.slice(0, 3).map((n) => {
+              <View style={styles.compactNotifCard}>
+                {notifications.slice(0, 3).map((n, idx) => {
                   const isUrgent   = n.type === "urgent";
                   const isApproved = n.type === "approved";
                   const isRead     = readIds.includes(n.id);
 
-                  let leftBorderColor = "#2563eb";
                   let iconBgColor     = "#eff6ff";
                   let iconColor       = "#2563eb";
                   let iconName: "time" | "alert-circle" | "checkmark-circle" = "time";
 
                   if (isUrgent) {
-                    leftBorderColor = "#dc2626";
                     iconBgColor     = "#fef2f2";
                     iconColor       = "#dc2626";
                     iconName        = "alert-circle" as const;
                   } else if (isApproved) {
-                    leftBorderColor = "#16a34a";
                     iconBgColor     = "#f0fdf4";
                     iconColor       = "#16a34a";
                     iconName        = "checkmark-circle" as const;
                   }
 
-                  if (isRead) {
-                    leftBorderColor = "#cbd5e1";
-                  }
-
                   return (
-                    <TouchableOpacity
-                      key={n.id}
-                      activeOpacity={0.9}
-                      onPress={() => {
-                        setSelectedClaim(n.claim);
-                        markAsRead(n.id);
-                      }}
-                      style={[styles.notifCard, { borderLeftColor: leftBorderColor }]}
-                    >
-                      <View style={styles.notifCardBody}>
-                        <View style={styles.notifHeader}>
-                          <View style={[styles.iconCircle, { backgroundColor: iconBgColor }]}>
-                            <Ionicons name={iconName} size={16} color={iconColor} />
-                          </View>
-                          <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 6 }}>
-                            <Text style={[styles.notifTitle, isRead && { opacity: 0.65 }]}>{n.title}</Text>
-                            {!isRead && (
-                              <View style={styles.unreadDot} />
-                            )}
-                          </View>
+                    <React.Fragment key={n.id}>
+                      {idx > 0 && <View style={styles.compactSeparator} />}
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          markAsRead(n.id);
+                          if (isUrgent) {
+                            router.push("/PolicyHolder/MyDocs" as any);
+                          } else {
+                            if (n.claim?.claimNumber) {
+                              router.push({
+                                pathname: "/PolicyHolder/TrackClaims",
+                                params: { id: n.claim.claimNumber }
+                              } as any);
+                            } else {
+                              router.push("/PolicyHolder/TrackClaims" as any);
+                            }
+                          }
+                        }}
+                        style={[styles.compactNotifItem, isRead && styles.compactNotifItemRead]}
+                      >
+                        <View style={[styles.compactIconCircle, { backgroundColor: iconBgColor }]}>
+                          <Ionicons name={iconName} size={15} color={iconColor} />
                         </View>
-                        <Text style={[styles.notifDesc, isRead && { opacity: 0.7 }]}>{n.description}</Text>
-                        {n.subText && <Text style={styles.notifSubtext}>{n.subText}</Text>}
-                      </View>
+                        
+                        <View style={styles.compactTextContainer}>
+                          <View style={styles.compactRowHeader}>
+                            <Text style={[styles.compactTitle, isRead && { opacity: 0.65 }]} numberOfLines={1}>
+                              {n.title}
+                            </Text>
+                            {!isRead && <View style={styles.compactUnreadDot} />}
+                          </View>
+                          <Text style={[styles.compactDesc, isRead && { opacity: 0.7 }]} numberOfLines={1}>
+                            {n.description}
+                          </Text>
+                          <Text style={styles.compactDate}>{n.date}</Text>
+                        </View>
 
-                      <View style={styles.notifCardFooter}>
-                        <View style={styles.notifActions}>
-                          {n.actions?.map((act, i) => (
-                            <TouchableOpacity
-                              key={i}
-                              style={[
-                                styles.notifBtn,
-                                act.primary ? styles.notifBtnPrimary : styles.notifBtnSecondary,
-                              ]}
-                              onPress={() => {
-                                markAsRead(n.id);
-                                if (act.route.includes("TrackClaims")) {
-                                  router.push({
-                                    pathname: "/PolicyHolder/TrackClaims",
-                                    params: { id: n.claim.claimNumber }
-                                  } as any);
-                                } else {
-                                  router.push(act.route as any);
-                                }
-                              }}
-                            >
-                              <Text
-                                style={[
-                                  styles.notifBtnText,
-                                  act.primary ? styles.notifBtnTextPrimary : styles.notifBtnTextSecondary,
-                                ]}
-                              >
-                                {act.label}
-                              </Text>
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                        <Text style={styles.notifDate}>{n.date}</Text>
-                      </View>
-                    </TouchableOpacity>
+                        <Ionicons name="chevron-forward" size={14} color="#94a3b8" style={{ marginLeft: 8 }} />
+                      </TouchableOpacity>
+                    </React.Fragment>
                   );
                 })}
               </View>
@@ -1979,5 +1956,72 @@ const styles = StyleSheet.create({
   modalPhotoThumb: {
     width: "100%",
     height: "100%",
+  },
+  compactNotifCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 6,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  compactNotifItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+  },
+  compactNotifItemRead: {
+    opacity: 0.85,
+  },
+  compactIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  compactTextContainer: {
+    flex: 1,
+    gap: 2,
+  },
+  compactRowHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  compactTitle: {
+    fontSize: 13.5,
+    fontWeight: "800",
+    color: "#0f172a",
+    flex: 1,
+  },
+  compactUnreadDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#3b82f6",
+  },
+  compactDesc: {
+    fontSize: 12,
+    color: "#475569",
+    fontWeight: "600",
+  },
+  compactDate: {
+    fontSize: 10.5,
+    color: "#94a3b8",
+    fontWeight: "600",
+    marginTop: 1,
+  },
+  compactSeparator: {
+    height: 1,
+    backgroundColor: "#f1f5f9",
+    marginHorizontal: 12,
   },
 });

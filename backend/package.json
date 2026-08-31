@@ -4,8 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node ../update-ip.js && node index.js",
+    "dev": "node ../update-ip.js && nodemon index.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
