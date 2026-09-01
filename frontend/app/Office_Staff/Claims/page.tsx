@@ -675,6 +675,22 @@ function OfficeStaffClaimsPageContent() {
     }
   }, [selectedClaim]);
 
+  // Open Assign Agent modal with real-time fresh agents list
+  const openAssignAgentModal = (claim: Claim) => {
+    setShowAssignModal(claim);
+    setSelectedAgentEmail("");
+    setSelectedPriority(claim.priority === "Urgent" ? "Urgent" : "Normal");
+    setAssignmentMessage("");
+    if (branch) {
+      fetch(`${API_URL}/office-staff/agents?branch=${encodeURIComponent(branch)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.agents) setAgents(data.agents);
+        })
+        .catch(e => console.warn("Failed to refresh branch agents:", e));
+    }
+  };
+
   // Handle agent assignment
   const handleAssignAgent = async (
     claimNumber: string,
@@ -1076,10 +1092,7 @@ function OfficeStaffClaimsPageContent() {
                           <div className="flex items-center justify-end gap-2 flex-shrink-0 md:pl-4 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 min-w-0" onClick={(e) => e.stopPropagation()}>
                             {!claim.assignedAgent && (
                               <button
-                                onClick={() => {
-                                  setShowAssignModal(claim);
-                                  setSelectedAgentEmail("");
-                                }}
+                                onClick={() => openAssignAgentModal(claim)}
                                 className="bg-slate-800 hover:bg-slate-900 text-white font-bold text-[10px] px-3 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs border-none active:scale-95 whitespace-nowrap"
                               >
                                 Assign Agent
@@ -2925,7 +2938,7 @@ function OfficeStaffClaimsPageContent() {
                   {(!selectedClaim.assignedAgent || selectedClaim.assignedAgent === "" || selectedClaim.assignedAgent.toLowerCase() === "unassigned") && selectedClaim.status !== "Cancelled" && (
                     <button
                       type="button"
-                      onClick={() => setShowAssignModal(selectedClaim)}
+                      onClick={() => openAssignAgentModal(selectedClaim)}
                       className="bg-[#f97316] hover:bg-orange-600 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
                     >
                       Assign Agent
@@ -3328,15 +3341,21 @@ function OfficeStaffClaimsPageContent() {
 
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider ml-1">Select Branch Agent</label>
+                <div className="flex items-center justify-between ml-1">
+                  <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Branch Agent</label>
+                  <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                    Active / Online Only
+                  </span>
+                </div>
                 <select
                   value={selectedAgentEmail}
                   onChange={(e) => setSelectedAgentEmail(e.target.value)}
                   className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-bold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a]"
                 >
-                  <option value="" className="text-slate-800 bg-white">-- Choose Agent --</option>
+                  <option value="" className="text-slate-800 bg-white">-- Choose Online Agent --</option>
                   {agents
-                    .filter((agent) => agent.availability !== "Offline")
+                    .filter((agent) => (agent.availability || "Active") === "Active")
                     .map((agent) => (
                       <option key={agent._id} value={agent.email} className="text-slate-800 bg-white">
                         {agent.name} ({agent.phone || "No contact"})
@@ -3344,6 +3363,15 @@ function OfficeStaffClaimsPageContent() {
                     ))}
                 </select>
               </div>
+
+              {agents.filter((agent) => (agent.availability || "Active") === "Active").length === 0 && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-xs font-semibold flex items-center gap-2">
+                  <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                  </svg>
+                  <span>No active/online agents currently available in this branch. Agents must be logged in and set status to Active on the mobile app.</span>
+                </div>
+              )}
 
               {/* Priority Selection Section */}
               <div className="flex flex-col gap-1.5">

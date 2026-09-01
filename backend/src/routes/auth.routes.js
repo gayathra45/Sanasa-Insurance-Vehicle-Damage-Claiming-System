@@ -56,6 +56,9 @@ router.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Your account is not activated. Please check your email to set a password and activate your account." });
       }
 
+      agent.availability = "Active";
+      await agent.save();
+
       const agentObj = agent.toObject();
       delete agentObj.password;
 

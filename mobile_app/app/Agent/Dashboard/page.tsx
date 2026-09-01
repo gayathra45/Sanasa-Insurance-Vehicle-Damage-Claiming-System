@@ -447,18 +447,22 @@ export default function AgentDashboard() {
     }
   };
 
-  const toggleAvailability = async (status: "Active" | "Offline") => {
+  const toggleAvailability = async (status: "Active" | "Offline", emailParam?: string) => {
+    const targetEmail = (emailParam || agentEmail || "").trim();
+    setAvailability(status);
+    if (!targetEmail) return;
     try {
-      setAvailability(status);
       const res = await fetch(`${API_BASE_URL}/api/agent/availability`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: agentEmail, availability: status })
+        body: JSON.stringify({ email: targetEmail, availability: status, device: "Mobile App" })
       });
-      if (!res.ok) throw new Error("Failed to update availability");
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.warn("Availability update response not OK:", errData);
+      }
     } catch (e) {
       console.error("Error updating availability:", e);
-      showAlert("Error", "Failed to update availability status. Please try again.");
     }
   };
 
@@ -1521,7 +1525,8 @@ ${inspectionReportText.trim()}
         if (agent.email) {
           setAgentEmail(agent.email);
           fetchClaims(agent.email);
-          fetchAvailability(agent.email);
+          // Set to Active automatically on app load using agent.email directly
+          toggleAvailability("Active", agent.email);
           
           // Check if availability prompted for this session in AsyncStorage
           const prompted = await AsyncStorage.getItem("availability_prompted");
@@ -1538,22 +1543,16 @@ ${inspectionReportText.trim()}
     })();
   }, []);
 
-  // Set status to Offline when mobile app is minimized/closed
+  // Set status to Offline when mobile app is minimized/closed, and Active when resumed
   useEffect(() => {
     if (!agentEmail) return;
     const { AppState } = require("react-native");
     
-    const handleAppStateChange = async (nextAppState: string) => {
+    const handleAppStateChange = (nextAppState: string) => {
       if (nextAppState === "background" || nextAppState === "inactive") {
-        try {
-          await fetch(`${API_BASE_URL}/api/agent/availability`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: agentEmail, availability: "Offline" })
-          });
-        } catch (e) {
-          console.error("Error setting offline status on mobile app close:", e);
-        }
+        toggleAvailability("Offline", agentEmail);
+      } else if (nextAppState === "active") {
+        toggleAvailability("Active", agentEmail);
       }
     };
 
@@ -1687,7 +1686,15 @@ ${inspectionReportText.trim()}
       {
         text: "Logout", style: "destructive",
         onPress: async () => {
+          try {
+            await fetch(`${API_BASE_URL}/api/agent/availability`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: agentEmail, availability: "Offline" })
+            });
+          } catch (e) {}
           await AsyncStorage.removeItem("logged_in_agent");
+          await AsyncStorage.removeItem("availability_prompted");
           router.replace("/login/page");
         },
       },

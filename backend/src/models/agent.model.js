@@ -25,6 +25,7 @@ const agentSchema = new mongoose.Schema({
   birthCertificate: { type: String, default: "" },
   policeReport: { type: String, default: "" },
   status: { type: String, default: "active" },
+  availability: { type: String, enum: ["Active", "Offline"], default: "Active" },
   resetOtp: { type: String },
   resetOtpExpires: { type: Date },
   resetOtpRequestedAt: { type: Date },
