@@ -287,6 +287,7 @@ export default function AgentDashboard() {
   const [loading, setLoading]         = useState(true);
   const [refreshing, setRefreshing]   = useState(false);
   const [activeTab, setActiveTab]     = useState<"home" | "claims" | "activity">("claims");
+  const [showAllActiveClaims, setShowAllActiveClaims] = useState(false);
 
   // --- Password Modal States ---
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -1645,7 +1646,7 @@ ${inspectionReportText.trim()}
       const bS = getSeverity(b.damageType);
       if (aS === "Urgent" && bS !== "Urgent") return -1;
       if (aS !== "Urgent" && bS === "Urgent") return 1;
-      return 0;
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
     });
 
   const getAgentPendingRequests = (claim: Claim) => {
@@ -1670,7 +1671,9 @@ ${inspectionReportText.trim()}
   const urgentCount   = activeClaims.filter(c => getSeverity(c.damageType) === "Urgent").length;
   const totalAssigned = activeClaims.length;
 
-  const displayClaims = activeTab === "activity" ? completedClaims.slice(0, 3) : activeClaims;
+  const displayClaims = activeTab === "activity"
+    ? completedClaims.slice(0, 3)
+    : (showAllActiveClaims ? activeClaims : activeClaims.slice(0, 4));
 
   // ── Actions ───────────────────────────────────────────────────────────
   const onRefresh = useCallback(() => {
@@ -2158,7 +2161,9 @@ ${inspectionReportText.trim()}
                 {activeTab === "activity" ? (lang === "en" ? "Recent Completed" : lang === "si" ? "මෑතකදී නිමකළ" : "சமீபத்தில் முடிந்தது") : (lang === "en" ? "Active Claims" : lang === "si" ? "ක්‍රියාකාරී හිමිකම්" : "செயலில் உள்ள கோரிக்கைகள்")}
               </Text>
               <View style={styles.sectionBadge}>
-                <Text style={styles.sectionBadgeText}>{displayClaims.length}</Text>
+                <Text style={styles.sectionBadgeText}>
+                  {activeTab === "activity" ? completedClaims.length : activeClaims.length}
+                </Text>
               </View>
             </View>
 
@@ -2256,6 +2261,25 @@ ${inspectionReportText.trim()}
                   );
                 })}
               </View>
+            )}
+
+            {(activeTab === "claims" || activeTab === "home") && activeClaims.length > 4 && (
+              <TouchableOpacity
+                style={styles.seeMoreBtn}
+                onPress={() => setShowAllActiveClaims(!showAllActiveClaims)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.seeMoreBtnText}>
+                  {showAllActiveClaims
+                    ? (lang === "en" ? "See Less" : lang === "si" ? "අඩුවෙන් බලන්න" : "குறைவாகக் காட்டு")
+                    : (lang === "en" ? `See More (${activeClaims.length - 4} more)` : lang === "si" ? `තවත් බලන්න (${activeClaims.length - 4})` : `மேலும் பார்க்க (${activeClaims.length - 4})`)}
+                </Text>
+                <Ionicons
+                  name={showAllActiveClaims ? "chevron-up" : "chevron-down"}
+                  size={17}
+                  color="#1e3a8a"
+                />
+              </TouchableOpacity>
             )}
 
             {activeTab === "activity" && completedClaims.length > 0 && (
@@ -3734,6 +3758,26 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "600",
     color: "#94a3b8",
+  },
+  seeMoreBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#f0f7ff",
+    borderWidth: 1,
+    borderColor: "#bfdbfe",
+    borderRadius: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  seeMoreBtnText: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#1e3a8a",
+    letterSpacing: 0.2,
   },
 
   /* Support */
