@@ -220,7 +220,18 @@ router.patch("/registrations/:id/status", async (req, res) => {
 router.patch("/claims/:claimNumber", async (req, res) => {
   try {
     const { claimNumber } = req.params;
-    const { status, amount, currentStep, assignedAgent, messageText, messageSender } = req.body;
+    const { 
+      status, 
+      amount, 
+      currentStep, 
+      assignedAgent, 
+      messageText, 
+      messageSender,
+      paymentReceipt,
+      bankName,
+      bankBranch,
+      bankAccount
+    } = req.body;
 
     const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
     if (!claim) {
@@ -231,6 +242,15 @@ router.patch("/claims/:claimNumber", async (req, res) => {
     if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
     if (currentStep !== undefined) claim.currentStep = Number(currentStep);
     if (assignedAgent !== undefined) claim.assignedAgent = assignedAgent;
+    if (paymentReceipt !== undefined) {
+      claim.paymentReceipt = paymentReceipt;
+      if (paymentReceipt && (!currentStep || Number(currentStep) < 6)) {
+        claim.currentStep = 6;
+      }
+    }
+    if (bankName !== undefined) claim.bankName = bankName;
+    if (bankBranch !== undefined) claim.bankBranch = bankBranch;
+    if (bankAccount !== undefined) claim.bankAccount = bankAccount;
 
     if (messageText) {
       claim.messages.push({

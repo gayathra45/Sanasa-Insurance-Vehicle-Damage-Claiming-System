@@ -51,6 +51,7 @@ interface Claim {
   messages?: any[];
   otherVehicleDetails?: any;
   branch?: string;
+  paymentReceipt?: string;
 }
 
 interface Notification {
@@ -402,16 +403,19 @@ export default function PolicyHolderDashboard() {
     return (claim.requestedDocuments || []).filter((name: string) => getRecipientForDoc(name) === "User");
   };
 
-  const renderClaimProgress = (status: string, dbStep?: number) => {
+  const renderClaimProgress = (status: string, dbStep?: number, paymentReceipt?: string) => {
     let currentStep = dbStep || 1;
-    if (!dbStep) {
+    if (paymentReceipt) {
+      currentStep = 6;
+    } else if (!dbStep) {
       const s = status.toLowerCase();
       if (s.includes("pending") || s.includes("progress")) currentStep = 3;
       else if (s.includes("review")) currentStep = 4;
-      else if (s.includes("approved") || s.includes("done")) currentStep = 6;
+      else if (s.includes("approved") || s.includes("done")) currentStep = 5;
     }
 
     const isRejected = status.toLowerCase() === "rejected";
+    const isFullyPaid = (status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
 
     const steps = [
       { num: "01", label: "Submitted" },
@@ -429,14 +433,14 @@ export default function PolicyHolderDashboard() {
           style={[
             styles.wizardProgressLine,
             isRejected && { backgroundColor: "#ef4444" },
-            { width: `${((currentStep - 1) / 5) * 82}%` }
+            { width: isFullyPaid ? "100%" : `${((currentStep - 1) / 5) * 82}%` }
           ]}
         />
         <View style={styles.wizardStepsRow}>
           {steps.map((step, idx) => {
             const stepNum = idx + 1;
-            const isCompleted = stepNum < currentStep;
-            const isActive = stepNum === currentStep;
+            const isCompleted = isFullyPaid || stepNum < currentStep;
+            const isActive = !isFullyPaid && stepNum === currentStep;
 
             let circleStyle: any = styles.stepCircleInactive;
             let textStyle: any = styles.stepTextInactive;
@@ -452,7 +456,11 @@ export default function PolicyHolderDashboard() {
             return (
               <View key={step.num} style={styles.stepItem}>
                 <View style={[styles.stepCircle, circleStyle]}>
-                  <Text style={styles.stepNumber}>{step.num}</Text>
+                  {isCompleted ? (
+                    <Ionicons name="checkmark" size={14} color={isRejected ? "#ef4444" : "#00b050"} />
+                  ) : (
+                    <Text style={styles.stepNumber}>{step.num}</Text>
+                  )}
                 </View>
                 <Text style={[styles.stepLabel, textStyle]}>{step.label}</Text>
               </View>
@@ -1005,7 +1013,7 @@ export default function PolicyHolderDashboard() {
                 contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 40 }}
               >
                 {/* Progress tracker wizard */}
-                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
+                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep, selectedClaim.paymentReceipt)}
 
                 {/* Details Table */}
                 <View style={styles.detailsCard}>

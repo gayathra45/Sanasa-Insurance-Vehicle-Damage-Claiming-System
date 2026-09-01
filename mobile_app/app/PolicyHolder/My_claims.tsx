@@ -43,6 +43,7 @@ interface Claim {
   branch?: string;
   otherVehicleDetails?: any;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
+  paymentReceipt?: string;
 }
 
 import { useLanguage } from "../../utils/translations";
@@ -211,16 +212,19 @@ export default function MyClaims() {
     return { text: status, color: "#64748b", bg: "#f8fafc", border: "#e2e8f0" };
   };
 
-  const renderClaimProgress = (status: string, dbStep?: number) => {
+  const renderClaimProgress = (status: string, dbStep?: number, paymentReceipt?: string) => {
     let currentStep = dbStep || 1;
-    if (!dbStep) {
+    if (paymentReceipt) {
+      currentStep = 6;
+    } else if (!dbStep) {
       const s = status.toLowerCase();
       if (s.includes("pending") || s.includes("progress")) currentStep = 3;
       else if (s.includes("review")) currentStep = 4;
-      else if (s.includes("approved") || s.includes("done")) currentStep = 6;
+      else if (s.includes("approved") || s.includes("done")) currentStep = 5;
     }
 
     const isRejected = status.toLowerCase() === "rejected";
+    const isFullyPaid = (status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
 
     const steps = [
       { num: "01", label: "Submitted" },
@@ -240,15 +244,15 @@ export default function MyClaims() {
           style={[
             styles.wizardProgressLine,
             isRejected && { backgroundColor: "#ef4444" },
-            { width: `${((currentStep - 1) / 5) * 100}%` }
+            { width: isFullyPaid ? "100%" : `${((currentStep - 1) / 5) * 100}%` }
           ]}
         />
 
         <View style={styles.wizardStepsRow}>
           {steps.map((step, idx) => {
             const stepNum = idx + 1;
-            const isCompleted = stepNum < currentStep;
-            const isActive = stepNum === currentStep;
+            const isCompleted = isFullyPaid || stepNum < currentStep;
+            const isActive = !isFullyPaid && stepNum === currentStep;
 
             let circleStyle: any = styles.stepCircleInactive;
             let textStyle: any = styles.stepTextInactive;
@@ -414,7 +418,7 @@ export default function MyClaims() {
 
               <ScrollView contentContainerStyle={styles.modalScrollBody} showsVerticalScrollIndicator={false}>
                 {/* Visual Tracker Wizard */}
-                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
+                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep, selectedClaim.paymentReceipt)}
 
                 {/* Details Table Card */}
                 <View style={styles.detailsCard}>

@@ -721,18 +721,22 @@ export default function AgentNotifications() {
 
       {/* Claim Detail Modal Popup */}
       {selectedClaim && (() => {
-        const renderClaimProgress = (status: string, dbStep?: number) => {
+        const renderClaimProgress = (status: string, dbStep?: number, paymentReceipt?: string) => {
           let currentStep = dbStep || 1;
-          if (!dbStep) {
+          if (paymentReceipt) {
+            currentStep = 6;
+          } else if (!dbStep) {
             const s = status.toLowerCase();
             if (s.includes("pending") || s.includes("progress")) {
               currentStep = 3;
             } else if (s.includes("review")) {
               currentStep = 4;
             } else if (s.includes("approved") || s.includes("active") || s.includes("done")) {
-              currentStep = 6;
+              currentStep = 5;
             }
           }
+
+          const isFullyPaid = (status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
 
           const steps = [
             { num: "01", label: "Submitted" },
@@ -748,13 +752,13 @@ export default function AgentNotifications() {
               <div className="absolute top-[40px] left-[52px] right-[52px] h-[3px] bg-slate-200 z-0" />
               <div
                 className="absolute top-[40px] left-[52px] h-[3px] bg-[#00b050] z-0 transition-all duration-300"
-                style={{ width: `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
+                style={{ width: isFullyPaid ? "calc(100% - 104px)" : `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
               />
 
               {steps.map((step, idx) => {
                 const stepNum = idx + 1;
-                const isCompleted = stepNum < currentStep;
-                const isActive = stepNum === currentStep;
+                const isCompleted = isFullyPaid || stepNum < currentStep;
+                const isActive = !isFullyPaid && stepNum === currentStep;
 
                 let circleClass = "";
                 if (isCompleted) {
@@ -768,9 +772,15 @@ export default function AgentNotifications() {
                 return (
                   <div key={step.num} className="flex flex-col items-center z-10 flex-1">
                     <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-extrabold ${circleClass}`}>
-                      {step.num}
+                      {isCompleted ? (
+                        <svg className="w-5 h-5 text-[#00b050]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                        </svg>
+                      ) : (
+                        step.num
+                      )}
                     </div>
-                    <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-extrabold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
+                    <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-extrabold" : isCompleted ? "text-emerald-700 font-extrabold" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>
@@ -797,7 +807,7 @@ export default function AgentNotifications() {
               </div>
 
               <div className="p-8 flex-1 overflow-y-auto">
-                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
+                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep, selectedClaim.paymentReceipt)}
 
                 <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-6 px-2">
                   <div className="flex items-center gap-2">

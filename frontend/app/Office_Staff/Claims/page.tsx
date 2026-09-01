@@ -2394,7 +2394,8 @@ function OfficeStaffClaimsPageContent() {
                                 bankBranch: bankBranch.trim(),
                                 bankAccount: bankAccount.trim(),
                                 paymentReceipt: receiptBase64,
-                                status: "Approved"
+                                status: "Approved",
+                                currentStep: 6
                               });
 
                               alert("Claim details and bank transfer receipt updated successfully! Claim process completed.");
@@ -2887,7 +2888,7 @@ function OfficeStaffClaimsPageContent() {
                           stepStatus = "pending";
                         }
                       } else {
-                        const isPaid = selectedClaim.status === "Approved" && !!selectedClaim.paymentReceipt;
+                        const isPaid = (selectedClaim.status === "Approved" || selectedClaim.currentStep >= 6) && !!selectedClaim.paymentReceipt;
                         if (isPaid) {
                           stepStatus = "completed";
                         } else if (stepNum < selectedClaim.currentStep) {
@@ -2915,14 +2916,20 @@ function OfficeStaffClaimsPageContent() {
                         <div key={idx} className="flex flex-col items-center flex-1 relative">
                           {/* Step Circle */}
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs border-2 bg-white transition-all duration-300 ${circleStyle}`}>
-                            {stepObj.num}
+                            {stepStatus === "completed" && selectedClaim.status !== "Rejected" ? (
+                              <svg className="w-4 h-4 text-[#22c55e]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                              </svg>
+                            ) : (
+                              stepObj.num
+                            )}
                           </div>
                           {/* Step Label */}
                           <span className={`text-[10px] font-semibold mt-2 tracking-wide select-none text-center ${
                             stepStatus === "active" 
                               ? "text-[#f97316] font-extrabold" 
                               : stepStatus === "completed"
-                                ? "text-slate-700"
+                                ? "text-emerald-700 font-extrabold"
                                 : "text-slate-400"
                           }`}>
                             {stepObj.label}

@@ -131,7 +131,11 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
       requestedDocuments,
       messageText,
       messageSender,
-      uploadedDocuments
+      uploadedDocuments,
+      paymentReceipt,
+      bankName,
+      bankBranch,
+      bankAccount
     } = req.body;
 
     const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
@@ -144,6 +148,15 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
     if (currentStep !== undefined) claim.currentStep = currentStep;
     if (documentsRequested !== undefined) claim.documentsRequested = documentsRequested;
     if (requestedDocuments !== undefined) claim.requestedDocuments = requestedDocuments;
+    if (paymentReceipt !== undefined) {
+      claim.paymentReceipt = paymentReceipt;
+      if (paymentReceipt && (!currentStep || Number(currentStep) < 6)) {
+        claim.currentStep = 6;
+      }
+    }
+    if (bankName !== undefined) claim.bankName = bankName;
+    if (bankBranch !== undefined) claim.bankBranch = bankBranch;
+    if (bankAccount !== undefined) claim.bankAccount = bankAccount;
 
     if (messageText) {
       claim.messages.push({
