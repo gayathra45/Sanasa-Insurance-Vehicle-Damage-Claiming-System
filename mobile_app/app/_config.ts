@@ -2,7 +2,7 @@ import Constants from "expo-constants";
 
 const getApiBaseUrl = () => {
   const hostUri = Constants.expoConfig?.hostUri;
-  let url = "http://192.168.40.155:5000";
+  let url = "http://192.168.41.167:5000";
   if (hostUri) {
     const ip = hostUri.split(":")[0];
     url = `http://${ip}:5000`;

@@ -2198,7 +2198,7 @@ ${inspectionReportText.trim()}
                       activeOpacity={0.85}
                     >
                       {/* Left Side: Circular Status/Vehicle Icon Badge */}
-                      <View style={[styles.claimIconWrap, { backgroundColor: "#f0f7ff" }]}>
+                      <View style={[styles.claimIconWrap, { backgroundColor: isCompleted ? (statusColor + "15") : "#f0f7ff" }]}>
                         <Ionicons
                           name="car-sport"
                           size={20}
@@ -2207,39 +2207,50 @@ ${inspectionReportText.trim()}
                       </View>
 
                       {/* Right Side: Claim Details */}
-                      <View style={{ flex: 1, marginLeft: 12, paddingRight: 8 }}>
+                      <View style={{ flex: 1, marginLeft: 12 }}>
                         {/* Header Row: Plate Number and Status/Severity Badge */}
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                          <Text style={styles.claimPlateText}>{claim.vehiclePlate}</Text>
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+                          <Text style={styles.claimPlateText}>{formatNumberPlate(claim.vehiclePlate)}</Text>
                           <View style={[styles.claimBadge, { backgroundColor: "#f0f7ff", borderColor: isCompleted ? statusColor + "30" : "#dbeafe" }]}>
                             <Text style={[styles.claimBadgeText, { color: isCompleted ? statusColor : "#1e3a8a" }]}>
-                              {isCompleted ? (claim.status === "Approved" ? (lang === "en" ? "APPROVED" : lang === "si" ? "අනුමතයි" : "அங்கீகரிக்கப்பட்டது") : (lang === "en" ? "REJECTED" : lang === "si" ? "ප්‍රතික්ෂේපිතයි" : "நிராகரிக்கப்பட்டது")) : (sev === "Urgent" ? (lang === "en" ? "URGENT" : lang === "si" ? "හදිසි" : "அவசரம்") : sev === "Medium" ? (lang === "en" ? "MEDIUM" : lang === "si" ? "මධ්‍යම" : "நடுத்தர") : (lang === "en" ? "LOW" : lang === "si" ? "අඩු" : "குறைந்த"))}
+                              {isCompleted ? (claim.status === "Approved" ? (lang === "en" ? "APPROVED" : lang === "si" ? "අනුමතයි" : "அங்கீகரிக்கப்பட்டது") : (lang === "en" ? "REJECTED" : lang === "si" ? "ප්‍රතික්ෂේපිතයි" : "நිරாகரிக்கப்பட்டது")) : (sev === "Urgent" ? (lang === "en" ? "URGENT" : lang === "si" ? "හදිසි" : "அவசரம்") : sev === "Medium" ? (lang === "en" ? "MEDIUM" : lang === "si" ? "මධ්‍යම" : "நடுத்தர") : (lang === "en" ? "LOW" : lang === "si" ? "අඩු" : "குறைந்த"))}
                             </Text>
                           </View>
                         </View>
 
-                        {/* Highlighted Location & Damage Type */}
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
-                          <Ionicons name="location" size={14} color="#f97316" />
-                          <Text style={styles.claimLocationHighlightText} numberOfLines={1}>
+                        {/* Location Row */}
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 3 }}>
+                          <Ionicons name="location" size={13} color="#f97316" />
+                          <Text style={styles.claimLocationHighlightText} numberOfLines={1} ellipsizeMode="tail">
                             {claim.location}
                           </Text>
-                          <Text style={{ color: "#cbd5e1", fontWeight: "bold" }}>·</Text>
-                          <Text style={{ fontSize: 12, fontWeight: "600", color: "#64748b" }}>
+                        </View>
+
+                        {/* Damage Type Row */}
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
+                          <Ionicons name="construct-outline" size={12.5} color="#64748b" />
+                          <Text style={styles.claimDamageTypeText} numberOfLines={1} ellipsizeMode="tail">
                             {claim.damageType}
                           </Text>
                         </View>
 
-                        {/* Bottom Row: Claim ID */}
-                        <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: "#f1f5f9" }}>
-                          <Ionicons name="document-text-outline" size={12} color="#94a3b8" />
-                          <Text style={styles.claimNumberBottomText}>{claim.claimNumber}</Text>
+                        {/* Bottom Row: Claim ID & Date */}
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 7, paddingTop: 6, borderTopWidth: 1, borderTopColor: "#f1f5f9" }}>
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1, marginRight: 8 }}>
+                            <Ionicons name="document-text-outline" size={12} color="#94a3b8" />
+                            <Text style={styles.claimNumberBottomText} numberOfLines={1}>{claim.claimNumber}</Text>
+                            <Text style={{ fontSize: 10, color: "#cbd5e1" }}>•</Text>
+                            <Text style={{ fontSize: 11, color: "#94a3b8", fontWeight: "600" }}>{formatDate(claim.createdAt)}</Text>
+                          </View>
+                          <Text style={{ fontSize: 11.5, fontWeight: "800", color: claim.amount ? "#16a34a" : "#94a3b8" }}>
+                            {claim.amount ? `LKR ${Number(claim.amount).toLocaleString()}` : "Pending"}
+                          </Text>
                         </View>
                       </View>
 
                       {/* Far Right: Tap indicator arrow */}
-                      <View style={{ justifyContent: "center", alignItems: "center" }}>
-                        <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+                      <View style={{ justifyContent: "center", alignItems: "center", paddingLeft: 6 }}>
+                        <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
                       </View>
                     </TouchableOpacity>
                   );
@@ -3194,7 +3205,7 @@ ${inspectionReportText.trim()}
                         activeOpacity={0.85}
                       >
                         {/* Left Side: Circular Status/Vehicle Icon Badge */}
-                        <View style={[styles.claimIconWrap, { backgroundColor: "#f0f7ff" }]}>
+                        <View style={[styles.claimIconWrap, { backgroundColor: isCompleted ? (statusColor + "15") : "#f0f7ff" }]}>
                           <Ionicons
                             name="car-sport"
                             size={20}
@@ -3203,39 +3214,50 @@ ${inspectionReportText.trim()}
                         </View>
 
                         {/* Right Side: Claim Details */}
-                        <View style={{ flex: 1, marginLeft: 12, paddingRight: 8 }}>
+                        <View style={{ flex: 1, marginLeft: 12 }}>
                           {/* Header Row: Plate Number and Status/Severity Badge */}
-                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                            <Text style={styles.claimPlateText}>{claim.vehiclePlate}</Text>
+                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+                            <Text style={styles.claimPlateText}>{formatNumberPlate(claim.vehiclePlate)}</Text>
                             <View style={[styles.claimBadge, { backgroundColor: "#f0f7ff", borderColor: isCompleted ? statusColor + "30" : "#dbeafe" }]}>
                               <Text style={[styles.claimBadgeText, { color: isCompleted ? statusColor : "#1e3a8a" }]}>
-                                {isCompleted ? claim.status.toUpperCase() : sev.toUpperCase()}
+                                {isCompleted ? (claim.status === "Approved" ? (lang === "en" ? "APPROVED" : lang === "si" ? "අනුමතයි" : "அங்கீகரிக்கப்பட்டது") : (lang === "en" ? "REJECTED" : lang === "si" ? "ප්‍රතික්ෂේපිතයි" : "நිරாகரிக்கப்பட்டது")) : (sev === "Urgent" ? (lang === "en" ? "URGENT" : lang === "si" ? "හදිසි" : "அவசரம்") : sev === "Medium" ? (lang === "en" ? "MEDIUM" : lang === "si" ? "මධ්‍යම" : "நடுத்தர") : (lang === "en" ? "LOW" : lang === "si" ? "අඩු" : "குறைந்த"))}
                               </Text>
                             </View>
                           </View>
 
-                          {/* Highlighted Location & Damage Type */}
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 4 }}>
-                            <Ionicons name="location" size={14} color="#f97316" />
-                            <Text style={styles.claimLocationHighlightText} numberOfLines={1}>
+                          {/* Location Row */}
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 3 }}>
+                            <Ionicons name="location" size={13} color="#f97316" />
+                            <Text style={styles.claimLocationHighlightText} numberOfLines={1} ellipsizeMode="tail">
                               {claim.location}
                             </Text>
-                            <Text style={{ color: "#cbd5e1", fontWeight: "bold" }}>·</Text>
-                            <Text style={{ fontSize: 12, fontWeight: "600", color: "#64748b" }}>
+                          </View>
+
+                          {/* Damage Type Row */}
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 5, marginTop: 2 }}>
+                            <Ionicons name="construct-outline" size={12.5} color="#64748b" />
+                            <Text style={styles.claimDamageTypeText} numberOfLines={1} ellipsizeMode="tail">
                               {claim.damageType}
                             </Text>
                           </View>
 
-                          {/* Bottom Row: Claim ID */}
-                          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: "#f1f5f9" }}>
-                            <Ionicons name="document-text-outline" size={12} color="#94a3b8" />
-                            <Text style={styles.claimNumberBottomText}>{claim.claimNumber}</Text>
+                          {/* Bottom Row: Claim ID & Date */}
+                          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 7, paddingTop: 6, borderTopWidth: 1, borderTopColor: "#f1f5f9" }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1, marginRight: 8 }}>
+                              <Ionicons name="document-text-outline" size={12} color="#94a3b8" />
+                              <Text style={styles.claimNumberBottomText} numberOfLines={1}>{claim.claimNumber}</Text>
+                              <Text style={{ fontSize: 10, color: "#cbd5e1" }}>•</Text>
+                              <Text style={{ fontSize: 11, color: "#94a3b8", fontWeight: "600" }}>{formatDate(claim.createdAt)}</Text>
+                            </View>
+                            <Text style={{ fontSize: 11.5, fontWeight: "800", color: claim.amount ? "#16a34a" : "#94a3b8" }}>
+                              {claim.amount ? `LKR ${Number(claim.amount).toLocaleString()}` : "Pending"}
+                            </Text>
                           </View>
                         </View>
 
                         {/* Far Right: Tap indicator arrow */}
-                        <View style={{ justifyContent: "center", alignItems: "center" }}>
-                          <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+                        <View style={{ justifyContent: "center", alignItems: "center", paddingLeft: 6 }}>
+                          <Ionicons name="chevron-forward" size={16} color="#cbd5e1" />
                         </View>
                       </TouchableOpacity>
                     );
@@ -3697,10 +3719,16 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   claimLocationHighlightText: {
-    fontSize: 13,
-    fontWeight: "800",
-    color: "#0f172a",
-    maxWidth: 160,
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#334155",
+    flex: 1,
+  },
+  claimDamageTypeText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#64748b",
+    flex: 1,
   },
   claimNumberBottomText: {
     fontSize: 11,
