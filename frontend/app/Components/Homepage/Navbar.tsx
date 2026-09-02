@@ -276,7 +276,7 @@ export default function Navbar() {
             </Link>
             <Link
               href="/SignUp"
-              className="hidden md:inline-flex items-center justify-center font-bold text-sm md:text-[15px] px-5 py-1.5 rounded-full bg-[#00ddff] hover:bg-[#22d3ee] text-black shadow-sm hover:shadow transition-all duration-200 no-underline hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+              className="hidden md:inline-flex items-center justify-center font-bold text-sm md:text-[15px] px-5 py-1.5 rounded-full bg-[#0f3448] hover:bg-[#17465f] text-white shadow-sm hover:shadow transition-all duration-200 no-underline hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
             >
               {t.signUp}
             </Link>
@@ -339,7 +339,7 @@ export default function Navbar() {
               <Link
                 href="/SignUp"
                 onClick={() => setIsOpen(false)}
-                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl bg-[#00ddff] hover:bg-[#22d3ee] text-black shadow-sm transition-all duration-200 no-underline"
+                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl bg-[#0d2a3a] hover:bg-[#133c52] text-white shadow-sm transition-all duration-200 no-underline"
               >
                 {t.signUp}
               </Link>
