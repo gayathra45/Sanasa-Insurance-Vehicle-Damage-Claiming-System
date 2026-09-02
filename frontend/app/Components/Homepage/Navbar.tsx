@@ -128,13 +128,6 @@ export default function Navbar() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
-  const getLinkClass = (href: string) => {
-    const isActiveLink = isActive(href);
-    const paddingSize = lang === "en" ? "px-6 py-1.5 text-base" : "px-4.5 py-1 text-sm md:text-[15px]";
-    const activeStyles = isActiveLink ? "bg-[#00ddff] !text-black font-bold" : "text-[#333] font-semibold";
-    return `no-underline transition-all duration-150 rounded-full hover:text-[#00ddff] whitespace-nowrap ${paddingSize} ${activeStyles}`;
-  };
-
   const t = translations[lang];
 
   const filteredBranches = branches.filter(b => {
@@ -247,26 +240,37 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Links */}
-          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-6 text-base" : "gap-4 text-sm md:text-[15px]"}`}>
-            <Link href="/" className={getLinkClass("/")}>
-              {t.home}
-            </Link>
-            <Link href="/home/contactUs" className={getLinkClass("/home/contactUs")}>
-              {t.contactUs}
-            </Link>
-            <Link href="/home/News" className={getLinkClass("/home/News")}>
-              {t.news}
-            </Link>
-            <Link href="/home/AboutUs" className={getLinkClass("/home/AboutUs")}>
-              {t.aboutUs}
-            </Link>
+          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-8 text-base" : "gap-6 text-sm md:text-[15px]"}`}>
+            {[
+              { href: "/", label: t.home },
+              { href: "/home/contactUs", label: t.contactUs },
+              { href: "/home/News", label: t.news },
+              { href: "/home/AboutUs", label: t.aboutUs }
+            ].map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative py-2 font-bold whitespace-nowrap transition-colors duration-200 no-underline ${
+                    active ? "text-[#0d2a3a]" : "text-slate-600 hover:text-[#0284c7]"
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  {/* Underline for active selected page only */}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 w-full h-[3px] rounded-full bg-[#0d2a3a] transition-all duration-200" />
+                  )}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Action Buttons (Login, Sign Up & Mobile Hamburger) */}
           <div className="flex items-center gap-3">
             <Link
               href="/Login"
-              className="hidden md:inline-flex items-center justify-center font-bold text-sm md:text-[15px] px-5 py-1.5 rounded-full border border-slate-300 text-slate-800 hover:border-[#00ddff] hover:text-cyan-600 hover:bg-cyan-50/40 transition-all duration-200 no-underline shadow-sm"
+              className="hidden md:inline-flex items-center justify-center font-bold text-sm md:text-[15px] px-5 py-1.5 rounded-full border border-slate-300 text-slate-800 hover:border-[#0284c7] hover:text-[#0284c7] hover:bg-slate-50 transition-all duration-200 no-underline shadow-sm"
             >
               {t.login}
             </Link>
@@ -299,50 +303,36 @@ export default function Navbar() {
 
         {/* Mobile Dropdown Navigation Menu */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-3 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
-            <Link
-              href="/"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-4 rounded-2xl transition-all duration-200 ${
-                isActive("/") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.home}
-            </Link>
-            <Link
-              href="/home/contactUs"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-4 rounded-2xl transition-all duration-200 ${
-                isActive("/home/contactUs") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.contactUs}
-            </Link>
-            <Link
-              href="/home/News"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-4 rounded-2xl transition-all duration-200 ${
-                isActive("/home/News") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.news}
-            </Link>
-            <Link
-              href="/home/AboutUs"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-2.5 px-4 rounded-2xl transition-all duration-200 ${
-                isActive("/home/AboutUs") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.aboutUs}
-            </Link>
+          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-2.5 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
+            {[
+              { href: "/", label: t.home },
+              { href: "/home/contactUs", label: t.contactUs },
+              { href: "/home/News", label: t.news },
+              { href: "/home/AboutUs", label: t.aboutUs }
+            ].map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`font-bold text-base py-2.5 px-4 rounded-xl transition-all duration-200 ${
+                    active
+                      ? "bg-slate-100/90 text-[#0d2a3a] border-l-4 border-[#0d2a3a]"
+                      : "text-slate-600 hover:text-[#0284c7] hover:bg-slate-50"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
 
             {/* Mobile Auth Buttons */}
             <div className="pt-2 border-t border-slate-100 flex flex-col gap-2.5">
               <Link
                 href="/Login"
                 onClick={() => setIsOpen(false)}
-                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl border border-slate-300 text-slate-800 hover:border-[#00ddff] hover:text-cyan-600 hover:bg-slate-50 transition-all duration-200 no-underline"
+                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl border border-slate-300 text-slate-800 hover:border-[#0284c7] hover:text-[#0284c7] hover:bg-slate-50 transition-all duration-200 no-underline"
               >
                 {t.login}
               </Link>
