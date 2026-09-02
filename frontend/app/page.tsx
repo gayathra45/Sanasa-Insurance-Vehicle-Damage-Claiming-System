@@ -8,8 +8,10 @@ import Footer from "./Components/Homepage/Footer";
 
 const pageTranslations = {
   en: {
-    heroTitle: "Protect Your Drive\nwith Confidence.",
-    heroDesc: "Fast Claims. Affordable Plans. Trusted Protection.",
+    heroTitlePrefix: "Protect Your Drive\nwith ",
+    heroTitleHighlight: "Confidence.",
+    heroTitleSuffix: "",
+    heroDesc: "Fast Claims. Affordable Plans. Trusted Protection.\nGet the coverage you deserve with affordable insurance plans, quick and convenient claim processing, and dependable protection backed by a team you can trust.",
     login: "Login",
     signUp: "Sign up",
     ourServices: "Our Services",
@@ -25,8 +27,10 @@ const pageTranslations = {
     appDesc: "SANASA Vehicle Insurance App makes managing your insurance simple and convenient. Policyholders can view their policies, track claims, pay premiums, upload documents, and get 24/7 support all from a secure, user-friendly mobile platform."
   },
   si: {
-    heroTitle: "විශ්වාසයෙන් යුතුව\nඔබේ ගමන සුරක්ෂිත කරන්න.",
-    heroDesc: "ඉක්මන් හිමිකම්. දැරිය හැකි සැලසුම්. විශ්වාසදායී ආරක්ෂාව.",
+    heroTitlePrefix: "",
+    heroTitleHighlight: "විශ්වාසයෙන් යුතුව",
+    heroTitleSuffix: "\nඔබේ ගමන සුරක්ෂිත කරන්න.",
+    heroDesc: "ඉක්මන් හිමිකම්. දැරිය හැකි සැලසුම්. විශ්වාසදායී ආරක්ෂාව.\nදැරිය හැකි රක්ෂණ සැලසුම්, ඉක්මන් සහ පහසු හිමිකම් සැකසීම සහ ඔබ විශ්වාස කරන කණ්ඩායමක සුරක්ෂිතභාවය සමඟින් ඔබට ලැබිය යුතු ආවරණය ලබා ගන්න.",
     login: "පිවිසෙන්න",
     signUp: "ලියාපදිංචි වන්න",
     ourServices: "අපගේ සේවාවන්",
@@ -42,8 +46,10 @@ const pageTranslations = {
     appDesc: "සනස වාහන රක්‍ෂණ යෙදුම ඔබේ රක්‍ෂණය කළමනාකරණය කිරීම සරල සහ පහසු කරයි. රක්‍ෂණ හිමියන්ට ඔවුන්ගේ රක්‍ෂණ ප්‍රතිපත්ති බැලීමට, හිමිකම් ලුහුබැඳීමට, වාරික ගෙවීමට, ලේඛන උඩුගත කිරීමට සහ 24/7 සහාය ලබා ගැනීමට ආරක්ෂිත, පරිශීලක-හිතකාමී ජංගම වේදිකාවකින් හැකියාව ඇත."
   },
   ta: {
-    heroTitle: "நம்பிக்கையுடன் உங்கள்\nபயணத்தைப் பாதுகாத்திடுங்கள்.",
-    heroDesc: "விரைவான கோரிக்கைகள். மலிவு திட்டங்கள். நம்பகமான பாதுகாப்பு.",
+    heroTitlePrefix: "",
+    heroTitleHighlight: "நம்பிக்கையுடன்",
+    heroTitleSuffix: " உங்கள்\nபயணத்தைப் பாதுகாத்திடுங்கள்.",
+    heroDesc: "விரைவான கோரிக்கைகள். மலிவு திட்டங்கள். நம்பகமான பாதுகாப்பு.\nமலிவான காப்பீட்டுத் திட்டங்கள், விரைவான மற்றும் வசதியான கோரிக்கை செயலாக்கம் மற்றும் நீங்கள் நம்பக்கூடிய குழுவின் பாதுகாப்பைப் பெறுங்கள்.",
     login: "உள்நுழை",
     signUp: "பதிவு செய்க",
     ourServices: "எங்கள் சேவைகள்",
@@ -89,7 +95,7 @@ export default function Home() {
   const heroSection = "w-full flex flex-col md:flex-row items-center justify-between py-6 px-6 pb-16 md:pl-16 md:pr-0 xl:pl-24 gap-10";
   const heroTextContainer = "flex flex-col items-start pt-8 md:w-[45%] md:pr-8";
   const heroTitle = "text-5xl md:text-[4.5rem] leading-[1.2] font-bold text-black tracking-tight mb-6 whitespace-pre-line";
-  const heroDesc = "text-lg text-gray-800 mb-16 font-medium";
+  const heroDesc = "text-base md:text-lg text-gray-700 mb-10 font-medium leading-relaxed whitespace-pre-line";
   const buttonGroup = "flex gap-8";
   const ctaButton = "bg-[#00ddff] text-black font-bold text-xl py-3 px-12 rounded-full transition-colors duration-150 shadow-sm hover:bg-[#22d3ee] no-underline";
   const heroImage = "relative h-[400px] md:h-[550px] w-full md:w-[55%] rounded-[3rem] md:rounded-[4rem_0_0_4rem] overflow-hidden shadow-lg";
@@ -128,7 +134,11 @@ export default function Home() {
         <div className={heroSection}>
           <div className={heroTextContainer}>
             <h1 className={heroTitle}>
-              {t.heroTitle}
+              {t.heroTitlePrefix}
+              <span className="bg-gradient-to-r from-[#00bcd4] via-[#0284c7] to-[#0369a1] bg-clip-text text-transparent inline-block">
+                {t.heroTitleHighlight}
+              </span>
+              {t.heroTitleSuffix}
             </h1>
             <p className={heroDesc}>
               {t.heroDesc}
