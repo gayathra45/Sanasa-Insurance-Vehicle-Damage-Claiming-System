@@ -96,8 +96,9 @@ export default function Home() {
   const heroTextContainer = "flex flex-col items-start pt-8 md:w-[45%] md:pr-8";
   const heroTitle = "text-5xl md:text-[4.5rem] leading-[1.2] font-bold text-black tracking-tight mb-6 whitespace-pre-line";
   const heroDesc = "text-base md:text-lg text-gray-700 mb-10 font-medium leading-relaxed whitespace-pre-line";
-  const buttonGroup = "flex gap-8";
-  const ctaButton = "bg-[#00ddff] text-black font-bold text-xl py-3 px-12 rounded-full transition-colors duration-150 shadow-sm hover:bg-[#22d3ee] no-underline";
+  const buttonGroup = "flex flex-wrap gap-5 md:gap-8";
+  const heroLoginBtn = "border-2 border-slate-300 hover:border-[#0284c7] text-slate-800 hover:text-[#0284c7] hover:bg-slate-50 font-bold text-lg md:text-xl py-3 px-10 md:px-12 rounded-full transition-all duration-200 shadow-sm hover:shadow no-underline hover:-translate-y-0.5 active:translate-y-0 active:scale-95 text-center inline-flex items-center justify-center bg-white";
+  const heroSignUpBtn = "bg-[#0f3448] hover:bg-[#17465f] text-white font-bold text-lg md:text-xl py-3 px-10 md:px-12 rounded-full transition-all duration-200 shadow-md hover:shadow-lg no-underline hover:-translate-y-0.5 active:translate-y-0 active:scale-95 text-center inline-flex items-center justify-center";
   const heroImage = "relative h-[400px] md:h-[550px] w-full md:w-[55%] rounded-[3rem] md:rounded-[4rem_0_0_4rem] overflow-hidden shadow-lg";
   
   const servicesSection = "py-16 px-6 md:py-24 md:px-16 bg-white flex flex-col items-center";
@@ -145,10 +146,10 @@ export default function Home() {
             </p>
 
             <div className={buttonGroup}>
-              <Link href="/Login" className={ctaButton}>
+              <Link href="/Login" className={heroLoginBtn}>
                 {t.login}
               </Link>
-              <Link href="/SignUp" className={ctaButton}>
+              <Link href="/SignUp" className={heroSignUpBtn}>
                 {t.signUp}
               </Link>
             </div>
@@ -156,7 +157,7 @@ export default function Home() {
 
           <div className={heroImage}>
             <Image
-              src="/home1.jpg"
+              src="/login_bg.jpg"
               alt="Woman sitting in the trunk of a car looking out at a landscape"
               fill
               style={{ objectFit: "cover" }}
