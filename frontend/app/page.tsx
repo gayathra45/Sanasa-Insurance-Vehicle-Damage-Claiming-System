@@ -104,8 +104,8 @@ export default function Home() {
   const servicesSection = "py-16 px-6 md:py-24 md:px-16 bg-white flex flex-col items-center";
   const servicesTitle = "text-3xl font-bold text-black mb-12 text-center";
   const servicesGrid = "flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap justify-center lg:justify-between gap-6 w-full max-w-[1200px] mb-12";
-  const serviceCard = "flex-1 min-w-[calc(50%-1rem)] lg:min-w-0 bg-white border border-gray-200 rounded-[1.5rem] p-10 flex flex-col items-center text-center shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-200";
-  const serviceIcon = "text-gray-600 mb-6 flex items-center justify-center";
+  const serviceCard = "flex-1 min-w-[calc(50%-1rem)] lg:min-w-0 bg-white border border-gray-200 rounded-[1.5rem] p-10 flex flex-col items-center text-center shadow-sm hover:-translate-y-1 hover:shadow-md hover:border-[#0284c7]/40 transition-all duration-200 group";
+  const serviceIcon = "text-[#0284c7] mb-6 flex items-center justify-center transition-all duration-300 group-hover:scale-110";
   const serviceSvg = "w-[72px] h-[72px]";
   const serviceCardTitle = "text-lg font-bold text-gray-900 leading-snug whitespace-pre-line";
   const servicesDesc = "max-w-[900px] text-center text-base text-gray-700 leading-relaxed mx-auto";
@@ -171,6 +171,7 @@ export default function Home() {
         <section className={servicesSection}>
           <h2 className={servicesTitle}>{t.ourServices}</h2>
           <div className={servicesGrid}>
+            {/* Card 1: Trusted Service */}
             <div className={serviceCard}>
               <div className={serviceIcon}>
                 <svg
@@ -189,6 +190,7 @@ export default function Home() {
               <div className={serviceCardTitle}>{t.trustedService}</div>
             </div>
 
+            {/* Card 2: Fast Claim Processing */}
             <div className={serviceCard}>
               <div className={serviceIcon}>
                 <svg
@@ -214,6 +216,7 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Card 3: 24/7 Customer Support */}
             <div className={serviceCard}>
               <div className={serviceIcon}>
                 <svg
@@ -236,6 +239,7 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Card 4: Transparent Policies */}
             <div className={serviceCard}>
               <div className={serviceIcon}>
                 <svg
