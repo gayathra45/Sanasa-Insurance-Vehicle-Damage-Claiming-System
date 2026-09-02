@@ -16,7 +16,9 @@ const translations = {
     branchTitle: "Sanasa Insurance Branches",
     searchPlaceholder: "Search branches by city, district or address...",
     close: "Close",
-    callNow: "Call Branch"
+    callNow: "Call Branch",
+    login: "Login",
+    signUp: "Sign Up"
   },
   si: {
     home: "මුල් පිටුව",
@@ -28,7 +30,9 @@ const translations = {
     branchTitle: "සනස රක්ෂණ ශාඛා ජාලය",
     searchPlaceholder: "නගරය, දිස්ත්‍රික්කය හෝ ලිපිනය අනුව සොයන්න...",
     close: "වසන්න",
-    callNow: "ඇමතුමක් ගන්න"
+    callNow: "ඇමතුමක් ගන්න",
+    login: "පිවිසෙන්න",
+    signUp: "ලියාපදිංචි වන්න"
   },
   ta: {
     home: "முகப்பு",
@@ -40,7 +44,9 @@ const translations = {
     branchTitle: "சனச காப்பீட்டுக் கிளைகள்",
     searchPlaceholder: "நகரம் அல்லது முகவரி மூலம் தேடுங்கள்...",
     close: "மூடு",
-    callNow: "அழைக்க"
+    callNow: "அழைக்க",
+    login: "உள்நுழை",
+    signUp: "பதிவு செய்க"
   }
 };
 
@@ -256,23 +262,19 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Action Buttons (Profile & Hamburger) */}
-          <div className="flex items-center gap-4">
-            <Link href="/Login">
-              <button className="transition-colors duration-150 bg-transparent border-none cursor-pointer p-0 text-black hover:text-[#00ddff]" aria-label="User Profile">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-9 h-9"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </button>
+          {/* Action Buttons (Login, Sign Up & Mobile Hamburger) */}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/Login"
+              className="hidden md:inline-flex items-center justify-center font-bold text-sm md:text-[15px] px-5 py-1.5 rounded-full border border-slate-300 text-slate-800 hover:border-[#00ddff] hover:text-cyan-600 hover:bg-cyan-50/40 transition-all duration-200 no-underline shadow-sm"
+            >
+              {t.login}
+            </Link>
+            <Link
+              href="/SignUp"
+              className="hidden md:inline-flex items-center justify-center font-bold text-sm md:text-[15px] px-5 py-1.5 rounded-full bg-[#00ddff] hover:bg-[#22d3ee] text-black shadow-sm hover:shadow transition-all duration-200 no-underline hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+            >
+              {t.signUp}
             </Link>
 
             {/* Hamburger Menu Icon for Mobile View */}
@@ -297,11 +299,11 @@ export default function Navbar() {
 
         {/* Mobile Dropdown Navigation Menu */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-3.5 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
+          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-3 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
             <Link
               href="/"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-2.5 px-4 rounded-2xl transition-all duration-200 ${
                 isActive("/") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -310,7 +312,7 @@ export default function Navbar() {
             <Link
               href="/home/contactUs"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-2.5 px-4 rounded-2xl transition-all duration-200 ${
                 isActive("/home/contactUs") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -319,7 +321,7 @@ export default function Navbar() {
             <Link
               href="/home/News"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-2.5 px-4 rounded-2xl transition-all duration-200 ${
                 isActive("/home/News") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
@@ -328,12 +330,30 @@ export default function Navbar() {
             <Link
               href="/home/AboutUs"
               onClick={() => setIsOpen(false)}
-              className={`font-bold text-lg py-3 px-5 rounded-2xl transition-all duration-200 ${
+              className={`font-bold text-base py-2.5 px-4 rounded-2xl transition-all duration-200 ${
                 isActive("/home/AboutUs") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
               }`}
             >
               {t.aboutUs}
             </Link>
+
+            {/* Mobile Auth Buttons */}
+            <div className="pt-2 border-t border-slate-100 flex flex-col gap-2.5">
+              <Link
+                href="/Login"
+                onClick={() => setIsOpen(false)}
+                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl border border-slate-300 text-slate-800 hover:border-[#00ddff] hover:text-cyan-600 hover:bg-slate-50 transition-all duration-200 no-underline"
+              >
+                {t.login}
+              </Link>
+              <Link
+                href="/SignUp"
+                onClick={() => setIsOpen(false)}
+                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl bg-[#00ddff] hover:bg-[#22d3ee] text-black shadow-sm transition-all duration-200 no-underline"
+              >
+                {t.signUp}
+              </Link>
+            </div>
           </div>
         )}
       </nav>
