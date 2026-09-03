@@ -91,35 +91,42 @@ export default function ContactUs() {
       </section>
 
       {/* Info Section */}
-      <section className="max-w-5xl mx-auto w-full px-6 py-8 md:py-16 grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-0 relative z-10">
+      <section className="max-w-6xl mx-auto w-full px-6 py-10 md:py-16 grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-0 relative z-10">
         
         {/* Head Office */}
-        <div className="flex flex-col items-start md:px-12">
-          <div className="w-14 h-14 rounded-full bg-gray-300 flex items-center justify-center mb-6">
-             <svg className="w-7 h-7 text-white fill-current" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+        <div className="flex flex-col items-start md:px-10 group">
+          <div className="w-16 h-16 rounded-full border-2 border-[#0284c7] bg-sky-50/50 text-[#0284c7] flex items-center justify-center mb-6 group-hover:bg-[#0284c7] group-hover:text-white transition-all duration-300 shadow-sm">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+            </svg>
           </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-3">{t.headOffice}</h3>
-          <p className="text-gray-600 text-xs leading-relaxed whitespace-pre-line">{t.address}</p>
+          <h3 className="font-bold text-gray-900 text-lg md:text-xl mb-3 group-hover:text-[#0284c7] transition-colors">{t.headOffice}</h3>
+          <p className="text-gray-700 text-base md:text-[17px] leading-relaxed whitespace-pre-line">{t.address}</p>
         </div>
 
         {/* Open Hours */}
-        <div className="flex flex-col items-start md:px-12 md:border-l md:border-gray-200">
-          <div className="w-14 h-14 rounded-full bg-gray-300 flex items-center justify-center mb-6">
-            <svg className="w-7 h-7 text-white fill-current" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+        <div className="flex flex-col items-start md:px-10 md:border-l md:border-gray-200 group">
+          <div className="w-16 h-16 rounded-full border-2 border-[#0284c7] bg-sky-50/50 text-[#0284c7] flex items-center justify-center mb-6 group-hover:bg-[#0284c7] group-hover:text-white transition-all duration-300 shadow-sm">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
           </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-3">{t.openHours}</h3>
-          <p className="text-gray-600 text-xs leading-relaxed whitespace-pre-line">{t.hoursVal}</p>
+          <h3 className="font-bold text-gray-900 text-lg md:text-xl mb-3 group-hover:text-[#0284c7] transition-colors">{t.openHours}</h3>
+          <p className="text-gray-700 text-base md:text-[17px] leading-relaxed whitespace-pre-line">{t.hoursVal}</p>
         </div>
 
         {/* Hotline */}
-        <div className="flex flex-col items-start md:px-12 md:border-l md:border-gray-200">
-          <div className="w-14 h-14 rounded-full bg-gray-300 flex items-center justify-center mb-6">
-            <svg className="w-7 h-7 text-white fill-current" viewBox="0 0 24 24"><path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 00-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z"/></svg>
+        <div className="flex flex-col items-start md:px-10 md:border-l md:border-gray-200 group">
+          <div className="w-16 h-16 rounded-full border-2 border-[#0284c7] bg-sky-50/50 text-[#0284c7] flex items-center justify-center mb-6 group-hover:bg-[#0284c7] group-hover:text-white transition-all duration-300 shadow-sm">
+            <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.75" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 0 1-7.108-7.108c-.145-.44.02-.927.396-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25z" />
+            </svg>
           </div>
-          <h3 className="font-bold text-gray-800 text-sm mb-3">{t.hotline}</h3>
+          <h3 className="font-bold text-gray-900 text-lg md:text-xl mb-3 group-hover:text-[#0284c7] transition-colors">{t.hotline}</h3>
 
-          <p className="text-gray-600 text-xs leading-relaxed mb-1">{t.phone1}</p>
-          <p className="text-gray-600 text-xs leading-relaxed">{t.phone2}</p>
+          <p className="text-gray-700 text-base md:text-[17px] leading-relaxed mb-1.5 font-medium">{t.phone1}</p>
+          <p className="text-gray-700 text-base md:text-[17px] leading-relaxed">{t.phone2}</p>
         </div>
 
       </section>
