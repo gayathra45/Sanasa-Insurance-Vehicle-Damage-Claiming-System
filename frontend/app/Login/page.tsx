@@ -10,6 +10,7 @@ import { API_URL } from "@/app/config";
 const translations = {
   en: {
     loginTitle: "Login",
+    loginSubtitle: "Welcome back! Please enter your credentials to continue.",
     nicOrEmail: "NIC or Email Address",
     nicEmailHint: "Policy Holders: Use NIC or Email · Agents/Staff/Admins: Use Email",
     nicEmailPlaceholder: "Enter your NIC or Email address",
@@ -24,6 +25,7 @@ const translations = {
   },
   si: {
     loginTitle: "ලොගින් වන්න",
+    loginSubtitle: "නැවත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ තොරතුරු ඇතුළත් කරන්න.",
     nicOrEmail: "ජාතික හැඳුනුම්පත් අංකය හෝ විද්‍යුත් තැපෑල",
     nicEmailHint: "ප්‍රතිපත්ති හිමියන්: හැඳුනුම්පත හෝ විද්‍යුත් තැපෑල · නියෝජිතයින්/කාර්ය මණ්ඩලය: විද්‍යුත් තැපෑල",
     nicEmailPlaceholder: "ජාතික හැඳුනුම්පත හෝ විද්‍යුත් තැපැල් ලිපිනය ඇතුළත් කරන්න",
@@ -38,6 +40,7 @@ const translations = {
   },
   ta: {
     loginTitle: "உள்நுழைக",
+    loginSubtitle: "மீண்டும் வருக! தொடர உங்கள் விவரங்களை உள்ளிடவும்.",
     nicOrEmail: "அடையாள அட்டை அல்லது மின்னஞ்சல் முகவரி",
     nicEmailHint: "பாலிசிதாரர்கள்: அட்டை எண் அல்லது மின்னஞ்சல் · முகவர்கள்/ஊழியர்கள்: மின்னஞ்சல்",
     nicEmailPlaceholder: "அடையாள அட்டை அல்லது மின்னஞ்சல் முகவரியை உள்ளிடவும்",
@@ -149,17 +152,20 @@ export default function Login() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-300/15 blur-[120px] pointer-events-none" />
 
       {/* Main Container */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pt-12 pb-32 md:pb-40 flex flex-col lg:flex-row items-center justify-around gap-12 lg:gap-6">
+      <div className="relative z-10 w-full max-w-xl mx-auto px-6 pt-8 pb-20 md:pb-28 flex flex-col items-center justify-center">
         
-        {/* Left Side: Large Title */}
-        <div className="flex flex-col items-center lg:items-start text-center lg:text-left text-white max-w-md">
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] transition-all duration-300">
-            {t.loginTitle}
-          </h1>
-        </div>
-
-        {/* Right Side: Glass effect Login Card */}
-        <div className="w-full max-w-[500px] bg-white/10 backdrop-blur-md border border-white/20 rounded-[2.5rem] p-8 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-8 transition-all duration-500 hover:border-white/30">
+        {/* Glass effect Login Card */}
+        <div className="w-full max-w-[500px] bg-white/10 backdrop-blur-md border border-white/20 rounded-[2.5rem] p-8 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-6 transition-all duration-500 hover:border-white/30">
+          
+          {/* Top Center Title */}
+          <div className="flex flex-col items-center text-center -mt-2 mb-1">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
+              {t.loginTitle}
+            </h1>
+            <p className="text-white/70 text-sm mt-2 font-medium">
+              {t.loginSubtitle}
+            </p>
+          </div>
           
           {error && (
             <div className="flex items-start gap-3 bg-red-500/15 backdrop-blur-md border border-red-500/30 text-red-100 p-4 rounded-2xl transition-all duration-300 shadow-[0_4px_20px_rgba(239,68,68,0.2)] relative overflow-hidden">

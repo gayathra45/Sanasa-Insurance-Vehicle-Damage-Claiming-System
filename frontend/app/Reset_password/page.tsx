@@ -286,24 +286,24 @@ export default function ResetPassword() {
 
       <Navbar />
 
-      <div className="relative z-10 flex-1 w-full flex items-center justify-center py-12">
-        <div className="w-full max-w-6xl mx-auto px-6 py-12 flex flex-col lg:flex-row items-center justify-around gap-12 lg:gap-6 min-h-[550px]">
+      <div className="relative z-10 flex-1 w-full flex items-center justify-center py-8 md:py-16">
+        <div className="w-full max-w-xl mx-auto px-6 flex flex-col items-center justify-center min-h-[550px]">
 
-          {/* Left: Title */}
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left text-white max-w-md">
-            <h1 className="text-6xl md:text-8xl font-bold tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] leading-[0.9] transition-all duration-300">
-              Reset<br />Password
-            </h1>
-            <p className="mt-4 text-white/55 text-sm max-w-xs leading-relaxed">
-              {stage === "request" && "Enter your details and we'll send a verification code to your email."}
-              {stage === "otp" && <>Check your email for the code sent to <span className="text-orange-400 font-semibold">{sentEmail}</span></>}
-              {stage === "set-password" && "Identity verified. Set your new password below."}
-              {stage === "success" && "Password updated! Redirecting you to login..."}
-            </p>
-          </div>
+          {/* Card */}
+          <div className="relative w-full max-w-[520px] bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-6 transition-all duration-500 hover:border-white/30 overflow-hidden">
 
-          {/* Right: Card */}
-          <div className="relative w-full max-w-[500px] bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-6 transition-all duration-500 hover:border-white/30 overflow-hidden">
+            {/* Top Center Title */}
+            <div className="flex flex-col items-center text-center -mt-2 mb-1">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
+                Reset Password
+              </h1>
+              <p className="mt-2 text-white/75 text-sm max-w-xs sm:max-w-sm leading-relaxed">
+                {stage === "request" && "Enter your details and we'll send a verification code to your email."}
+                {stage === "otp" && <>Check your email for the code sent to <span className="text-orange-400 font-semibold">{sentEmail}</span></>}
+                {stage === "set-password" && "Identity verified. Set your new password below."}
+                {stage === "success" && "Password updated! Redirecting you to login..."}
+              </p>
+            </div>
 
             {/* Error Banner */}
             {validationError && (
