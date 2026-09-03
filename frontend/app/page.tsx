@@ -111,9 +111,6 @@ export default function Home() {
   const servicesDesc = "max-w-[900px] text-center text-base text-gray-700 leading-relaxed mx-auto";
   
   const motorSection = "w-full flex flex-col";
-  const motorImageContainer = "relative w-full h-[300px] md:h-[400px] flex";
-  const motorGradient = "absolute inset-0 z-[2] bg-gradient-to-b from-white/90 via-transparent to-black/80 flex justify-between items-end p-8 md:px-24 md:py-12";
-  const motorTitle = "text-white text-[2.5rem] md:text-[4rem] font-bold mb-8";
   const motorContent = "flex flex-col md:flex-row p-8 md:p-16 bg-white items-center gap-8 md:justify-between";
   const motorText = "flex-1 text-lg leading-relaxed text-gray-800 font-medium text-left";
   const motorImage = "flex-[1.5] flex justify-center items-center";
@@ -269,16 +266,61 @@ export default function Home() {
 
         {/* --- Motor Insurance Section --- */}
         <section className={motorSection}>
-          <div className={motorImageContainer}>
+          <div className="relative w-full h-[280px] sm:h-[340px] md:h-[400px] overflow-hidden flex select-none">
+            {/* 1. Crystal Clear HD Background Image (2000x550) */}
             <Image
-              src="/home2_h.png"
+              src="/home2.jpg"
               alt="Motor Insurance Features"
               fill
-              className="z-[1]"
-              style={{ objectFit: 'cover' }}
+              priority
+              sizes="100vw"
+              className="z-[1] object-cover object-[center_35%]"
             />
-            <div className={motorGradient}>
-              <h2 className={motorTitle}>{t.motorInsurance}</h2>
+
+            {/* 2. Vibrant Blue Color Filter Overlay */}
+            <div className="absolute inset-0 z-[2] bg-gradient-to-r from-sky-600/50 via-[#0284c7]/40 to-blue-700/50 mix-blend-color pointer-events-none" />
+            <div className="absolute inset-0 z-[2] bg-gradient-to-r from-[#0284c7]/20 via-transparent to-[#0369a1]/25 pointer-events-none" />
+
+            {/* 3. Top White Blend (Smooth transition from white section above) */}
+            <div className="absolute top-0 left-0 right-0 h-24 md:h-32 z-[3] bg-gradient-to-b from-white via-white/60 to-transparent pointer-events-none" />
+
+            {/* 4. Bottom Contrast Shadow for Title */}
+            <div className="absolute bottom-0 left-0 right-0 h-28 md:h-36 z-[3] bg-gradient-to-t from-black/60 via-black/20 to-transparent pointer-events-none" />
+
+            {/* 5. Chevron Accents on Right Side (Matching original design) */}
+            <div className="absolute right-6 sm:right-10 md:right-16 lg:right-24 bottom-4 sm:bottom-6 md:bottom-8 z-[4] pointer-events-none select-none">
+              <svg
+                className="w-32 sm:w-44 md:w-56 lg:w-64 xl:w-72 h-auto drop-shadow-[0_4px_16px_rgba(0,0,0,0.45)]"
+                viewBox="0 0 200 175"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                {/* Top Chevron (Brightest) */}
+                <path
+                  d="M 0 50 L 100 0 L 200 50 L 200 78 L 100 28 L 0 78 Z"
+                  fill="white"
+                  fillOpacity="0.95"
+                />
+                {/* Middle Chevron */}
+                <path
+                  d="M 0 98 L 100 48 L 200 98 L 200 126 L 100 76 L 0 126 Z"
+                  fill="white"
+                  fillOpacity="0.75"
+                />
+                {/* Bottom Chevron */}
+                <path
+                  d="M 0 146 L 100 96 L 200 146 L 200 174 L 100 124 L 0 174 Z"
+                  fill="white"
+                  fillOpacity="0.55"
+                />
+              </svg>
+            </div>
+
+            {/* 6. Title on Bottom Left */}
+            <div className="absolute inset-0 z-[4] flex items-end p-6 sm:p-10 md:px-16 lg:px-24 md:pb-12 pointer-events-none">
+              <h2 className="text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight drop-shadow-[0_3px_10px_rgba(0,0,0,0.7)] select-none">
+                {t.motorInsurance}
+              </h2>
             </div>
           </div>
           
