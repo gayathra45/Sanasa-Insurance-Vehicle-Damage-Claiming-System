@@ -15,6 +15,7 @@ const translations = {
     myClaims: "My Claims",
     myProfile: "My Profile",
     logout: "Logout",
+    notifications: "Notifications",
     hotline: "24H Customer Hotline: +94 112 003 000",
     branches: "Branches",
     branchTitle: "Sanasa Insurance Branches",
@@ -30,6 +31,7 @@ const translations = {
     myClaims: "මගේ හිමිකම්",
     myProfile: "මගේ පැතිකඩ",
     logout: "පිටවීම",
+    notifications: "දැනුම්දීම්",
     hotline: "24 පැය පාරිභෝගික සේවය: +94 112 003 000",
     branches: "ශාඛා",
     branchTitle: "සනස රක්ෂණ ශාඛා ජාලය",
@@ -45,6 +47,7 @@ const translations = {
     myClaims: "என் கோரிக்கைகள்",
     myProfile: "என் சுயவிவரம்",
     logout: "வெளியேறு",
+    notifications: "அறிவிப்புகள்",
     hotline: "24 மணி நேர வாடிக்கையாளர் சேவை: +94 112 003 000",
     branches: "கிளைகள்",
     branchTitle: "சனச காப்பீட்டுக் கிளைகள்",
@@ -62,12 +65,12 @@ const branches = [
   { name: { en: "Matara Branch", si: "මාතර ශාඛාව", ta: "මාத்தறை கிளை" }, phone: "+94 412 222 333", address: "Anagarika Dharmapala Mawatha, Matara" },
   { name: { en: "Kurunegala Branch", si: "කුරුණෑගල ශාඛාව", ta: "குருணாகல் கிளை" }, phone: "+94 372 222 111", address: "Colombo Road, Kurunegala" },
   { name: { en: "Gampaha Branch", si: "ගම්පහ ශාඛාව", ta: "கம்பஹா கிளை" }, phone: "+94 332 222 000", address: "Ja-Ela Road, Gampaha" },
-  { name: { en: "Anuradhapura Branch", si: "අනුරාධපුර ශාඛාව", ta: "அனுராதபுரம் கிளை" }, phone: "+94 252 222 555", address: "Maithripala Senanayake Mawatha, Anuradhapura" },
+  { name: { en: "Anuradhapura Branch", si: "අනුරාධපුර ශාඛාව", ta: "அනුராதபுரம் கிளை" }, phone: "+94 252 222 555", address: "Maithripala Senanayake Mawatha, Anuradhapura" },
   { name: { en: "Badulla Branch", si: "බදුල්ල ශාඛාව", ta: "பதுளை கிளை" }, phone: "+94 552 222 999", address: "Bandarawela Road, Badulla" },
   { name: { en: "Kalutara Branch", si: "කළුතර ශාඛාව", ta: "களுத்துறை கிளை" }, phone: "+94 342 222 777", address: "Galle Road, Kalutara" }
 ];
 
-export default function Navbar() {
+export default function AgentNavbar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -153,19 +156,10 @@ export default function Navbar() {
   }, [isOpen]);
 
   const isActive = (href: string) => {
-    if (href === "/Agent/Home") {
+    if (href === "/Agent/Dashboard") {
       return pathname === "/Agent/Dashboard" || pathname === "/Agent" || pathname === "/Agent/";
     }
     return pathname === href || pathname.startsWith(href + "/");
-  };
-
-  const getNavLinkClass = (href: string) => {
-    const isActiveLink = isActive(href);
-    const paddingSize = lang === "en" ? "px-5 py-2 text-base" : "px-4 py-1.5 text-sm md:text-[15px]";
-    if (isActiveLink) {
-      return `bg-[#00ddff] text-black font-bold rounded-full shadow-sm transition-all duration-150 no-underline whitespace-nowrap ${paddingSize}`;
-    }
-    return `text-[#333] hover:text-[#00ddff] font-semibold transition-all duration-150 no-underline whitespace-nowrap ${paddingSize}`;
   };
 
   const t = translations[lang];
@@ -181,6 +175,13 @@ export default function Navbar() {
       b.phone.includes(query)
     );
   });
+
+  const navLinks = [
+    { href: "/Agent/Dashboard", label: t.home },
+    { href: "/Agent/Documents", label: t.documents },
+    { href: "/Agent/MyActivity", label: t.myActivity },
+    { href: "/Agent/Contact", label: t.contact }
+  ];
 
   return (
     <div className="w-full h-[93px] md:h-[101px] select-none">
@@ -264,69 +265,77 @@ export default function Navbar() {
         </div>
 
         {/* Main Header Row */}
-        <div className="py-3 px-6 md:px-16 flex items-center justify-between w-full">
+        <div className="py-2.5 px-6 md:px-16 flex items-center justify-between w-full">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/Agent/Dashboard">
               <Image
                 src="/logo.png"
                 alt="Sanasa General Insurance"
-                width={110}
-                height={42}
+                width={100}
+                height={40}
                 className="object-contain h-auto"
                 priority
               />
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-6 text-base" : "gap-4 text-sm md:text-[15px]"}`}>
-            <Link href="/Agent/Dashboard" className={getNavLinkClass("/Agent/Home")}>
-              {t.home}
-            </Link>
-            <Link href="/Agent/Documents" className={getNavLinkClass("/Agent/Documents")}>
-              {t.documents}
-            </Link>
-            <Link href="/Agent/MyActivity" className={getNavLinkClass("/Agent/MyActivity")}>
-              {t.myActivity}
-            </Link>
-            <Link href="/Agent/Contact" className={getNavLinkClass("/Agent/Contact")}>
-              {t.contact}
-            </Link>
+          {/* Desktop Navigation Links — Matching Homepage Style */}
+          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-7 text-base" : "gap-5 text-sm md:text-[15px]"}`}>
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative py-2 font-bold whitespace-nowrap transition-colors duration-200 no-underline ${
+                    active ? "text-[#0d2a3a]" : "text-slate-600 hover:text-[#0284c7]"
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  {/* Underline for active selected page only */}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 w-full h-[3px] rounded-full bg-[#0d2a3a] transition-all duration-200" />
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* My Claims Pill Button */}
             <Link
               href="/Agent/MyClaims"
-              className={`bg-[#ff9800] text-white hover:bg-[#e68900] font-bold rounded-full shadow-md transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] no-underline whitespace-nowrap ${
-                lang === "en" ? "px-5 py-2 text-base" : "px-4 py-1.5 text-sm md:text-[15px]"
+              className={`inline-flex items-center justify-center font-bold bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm hover:shadow transition-all duration-200 no-underline rounded-full hover:-translate-y-0.5 active:translate-y-0 active:scale-95 ml-2 ${
+                lang === "en" ? "px-5 py-1.5 text-sm md:text-[15px]" : "px-4 py-1.5 text-xs md:text-sm"
               }`}
             >
               {t.myClaims}
             </Link>
           </div>
 
-          {/* Right Action Icons */}
-          <div className="flex items-center gap-4">
+          {/* Right Action Icons (Notifications, Profile & Mobile Hamburger) */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Notifications Bell */}
             <Link
               href="/Agent/Notifications"
-              className="relative transition-colors duration-150 p-2 text-black hover:text-[#00ddff] no-underline flex items-center justify-center"
+              className="relative p-2 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 no-underline flex items-center justify-center"
               aria-label="Notifications"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                className="w-7 h-7"
+                className="w-6 h-6"
               >
                 <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
               </svg>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white" />
             </Link>
 
             {/* Profile Dropdown */}
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
-                className="transition-colors duration-150 bg-transparent border-none cursor-pointer p-0 text-black hover:text-[#00ddff] focus:outline-none flex items-center justify-center"
+                className="p-1.5 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 bg-transparent border-none cursor-pointer focus:outline-none flex items-center justify-center"
                 aria-label="User Profile"
                 aria-expanded={profileMenuOpen}
               >
@@ -336,7 +345,7 @@ export default function Navbar() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="w-8 h-8"
+                  className="w-7 h-7"
                 >
                   <circle cx="12" cy="12" r="10" />
                   <circle cx="12" cy="10" r="3.2" fill="currentColor" stroke="none" />
@@ -347,17 +356,14 @@ export default function Navbar() {
               {/* Dropdown Menu */}
               {profileMenuOpen && (
                 <div
-                  className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2 z-50 transition-all duration-300"
-                  style={{ top: "100%" }}
+                  className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2 z-50 transition-all duration-200 animate-in fade-in slide-in-from-top-2"
                 >
-                  <div className="absolute -top-2 right-4 w-4 h-4 bg-white border-l border-t border-slate-100 rotate-45" />
-
                   <Link
                     href="/Agent/Profile"
                     onClick={() => setProfileMenuOpen(false)}
-                    className="flex items-center gap-3 px-5 py-3 text-slate-700 hover:bg-slate-50 hover:text-[#00ddff] font-semibold text-sm transition-colors no-underline"
+                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-semibold text-sm transition-colors no-underline"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     {t.myProfile}
@@ -367,9 +373,9 @@ export default function Navbar() {
 
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-5 py-3 text-red-500 hover:bg-red-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
+                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
                     </svg>
                     {t.logout}
@@ -400,55 +406,46 @@ export default function Navbar() {
 
         {/* Mobile Dropdown Navigation Menu */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-3.5 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
-            <Link
-              href="/Agent/Dashboard"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
-                isActive("/Agent/Home") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.home}
-            </Link>
-            <Link
-              href="/Agent/Documents"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
-                isActive("/Agent/Documents") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.documents}
-            </Link>
-            <Link
-              href="/Agent/MyActivity"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
-                isActive("/Agent/MyActivity") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.myActivity}
-            </Link>
-            <Link
-              href="/Agent/Contact"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
-                isActive("/Agent/Contact") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.contact}
-            </Link>
-            <Link
-              href="/Agent/MyClaims"
-              onClick={() => setIsOpen(false)}
-              className="bg-[#ff9800] text-white hover:bg-[#e68900] font-bold py-3 px-5 rounded-2xl shadow-md transition-all duration-150 text-center"
-            >
-              {t.myClaims}
-            </Link>
+          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-2.5 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`font-bold text-base py-2.5 px-4 rounded-xl transition-all duration-200 ${
+                    active
+                      ? "bg-slate-100/90 text-[#0d2a3a] border-l-4 border-[#0d2a3a]"
+                      : "text-slate-600 hover:text-[#0284c7] hover:bg-slate-50"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+
+            {/* Mobile My Claims Action */}
+            <div className="pt-2 border-t border-slate-100 flex flex-col gap-2.5">
+              <Link
+                href="/Agent/MyClaims"
+                onClick={() => setIsOpen(false)}
+                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm transition-all duration-200 no-underline"
+              >
+                {t.myClaims}
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-200 bg-transparent cursor-pointer"
+              >
+                {t.logout}
+              </button>
+            </div>
           </div>
         )}
       </nav>
 
-      {/* Redesigned Premium Glassmorphic Branches Modal Overlay matching other pages */}
+      {/* Redesigned Premium Glassmorphic Branches Modal Overlay */}
       {branchesModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-[32px] w-full max-w-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[82vh] overflow-hidden select-none animate-in fade-in zoom-in-95 duration-200 relative text-slate-800">

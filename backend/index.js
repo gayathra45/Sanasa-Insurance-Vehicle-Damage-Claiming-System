@@ -58,9 +58,13 @@ const startServer = async () => {
     });
     console.log("✅ MongoDB Connected");
 
-    app.listen(PORT, "0.0.0.0", () => {
+    const server = app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`http://localhost:${PORT}`);
+      console.log(`http://192.168.41.167:${PORT}`);
+    });
+
+    server.on("error", (err) => {
+      console.error("❌ Server listen error:", err.message);
     });
   } catch (error) {
     console.error("❌ Server error:", error.message);

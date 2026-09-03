@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import Footer from "@/app/Components/Login/Footer";
+import { API_URL } from "@/app/config";
 
 type Stage = "request" | "otp" | "set-password" | "success";
 type Role = "policy_holder" | "insurance_agent" | "office_staff" | "admin";
 
-const API = `${process.env.NEXT_PUBLIC_API_URL}/signup`;
+const API = `${API_URL}/signup`;
 
 export default function ResetPassword() {
   const router = useRouter();

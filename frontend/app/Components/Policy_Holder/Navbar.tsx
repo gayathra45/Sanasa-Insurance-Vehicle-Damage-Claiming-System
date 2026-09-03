@@ -14,6 +14,7 @@ const translations = {
     newClaim: "New Claim",
     myProfile: "My Profile",
     logout: "Logout",
+    notifications: "Notifications",
     hotline: "24H Customer Hotline: +94 112 003 000",
     branches: "Branches",
     branchTitle: "Sanasa Insurance Branches",
@@ -29,6 +30,7 @@ const translations = {
     newClaim: "නව හිමිකම්",
     myProfile: "මගේ පැතිකඩ",
     logout: "පිටවීම",
+    notifications: "දැනුම්දීම්",
     hotline: "24 පැය පාරිභෝගික සේවය: +94 112 003 000",
     branches: "ශාඛා",
     branchTitle: "සනස රක්ෂණ ශාඛා ජාලය",
@@ -44,6 +46,7 @@ const translations = {
     newClaim: "புதிய கோரிக்கை",
     myProfile: "என் சுயவிவரம்",
     logout: "வெளியேறு",
+    notifications: "அறிவிப்புகள்",
     hotline: "24 மணி நேர வாடிக்கையாளர் சேவை: +94 112 003 000",
     branches: "கிளைகள்",
     branchTitle: "சனச காப்பீட்டுக் கிளைகள்",
@@ -58,7 +61,7 @@ const branches = [
   { name: { en: "Galle Branch", si: "ගාල්ල ශාඛාව", ta: "காலி கிளை" }, phone: "+94 912 245 800", address: "Galle Road, Galle" },
   { name: { en: "Kandy Branch", si: "මහනුවර ශාඛාව", ta: "கண்டி கிளை" }, phone: "+94 812 223 456", address: "William Gopallawa Mawatha, Kandy" },
   { name: { en: "Jaffna Branch", si: "යාපනය ශාඛාව", ta: "யாழ்ப்பாணம் கிளை" }, phone: "+94 212 222 789", address: "Hospital Road, Jaffna" },
-  { name: { en: "Matara Branch", si: "මාතර ශාඛාව", ta: "மாத்தறை கிளை" }, phone: "+94 412 222 333", address: "Anagarika Dharmapala Mawatha, Matara" },
+  { name: { en: "Matara Branch", si: "මාතර ශාඛාව", ta: "මාத்தறை கிளை" }, phone: "+94 412 222 333", address: "Anagarika Dharmapala Mawatha, Matara" },
   { name: { en: "Kurunegala Branch", si: "කුරුණෑගල ශාඛාව", ta: "குருணாகல் கிளை" }, phone: "+94 372 222 111", address: "Colombo Road, Kurunegala" },
   { name: { en: "Gampaha Branch", si: "ගම්පහ ශාඛාව", ta: "கம்பஹா கிளை" }, phone: "+94 332 222 000", address: "Ja-Ela Road, Gampaha" },
   { name: { en: "Anuradhapura Branch", si: "අනුරාධපුර ශාඛාව", ta: "அனுராதபுரம் கிளை" }, phone: "+94 252 222 555", address: "Maithripala Senanayake Mawatha, Anuradhapura" },
@@ -108,7 +111,6 @@ export default function PolicyHolderNavbar() {
     setLang(newLang);
     localStorage.setItem("language", newLang);
     setLangMenuOpen(false);
-    // Dispatch custom event so pages can dynamically translate their contents
     window.dispatchEvent(new CustomEvent("language-changed", { detail: newLang }));
   };
 
@@ -139,18 +141,9 @@ export default function PolicyHolderNavbar() {
 
   const isActive = (href: string) => {
     if (href === "/Policy_Holder/Home") {
-      return pathname === "/Policy_Holder/Home" || pathname === "/Policy_Holder";
+      return pathname === "/Policy_Holder/Home" || pathname === "/Policy_Holder" || pathname === "/Policy_Holder/";
     }
     return pathname === href || pathname.startsWith(href + "/");
-  };
-
-  const getLinkClass = (href: string) => {
-    const isActiveLink = isActive(href);
-    const paddingSize = lang === "en" ? "px-5 py-2 text-base" : "px-4 py-1.5 text-sm md:text-[15px]";
-    if (isActiveLink) {
-      return `bg-[#00ddff] text-black font-bold rounded-full shadow-sm transition-all duration-150 no-underline whitespace-nowrap ${paddingSize}`;
-    }
-    return `text-[#333] hover:text-[#00ddff] font-semibold transition-all duration-150 no-underline whitespace-nowrap ${paddingSize}`;
   };
 
   const t = translations[lang];
@@ -166,6 +159,13 @@ export default function PolicyHolderNavbar() {
       b.phone.includes(query)
     );
   });
+
+  const navLinks = [
+    { href: "/Policy_Holder/Home", label: t.home },
+    { href: "/Policy_Holder/My_claims", label: t.myClaims },
+    { href: "/Policy_Holder/Documents", label: t.documents },
+    { href: "/Policy_Holder/Contact", label: t.contact }
+  ];
 
   return (
     <div className="w-full h-[93px] md:h-[101px] select-none">
@@ -249,69 +249,77 @@ export default function PolicyHolderNavbar() {
         </div>
 
         {/* Main Header Row */}
-        <div className="py-3 px-6 md:px-16 flex items-center justify-between w-full">
+        <div className="py-2.5 px-6 md:px-16 flex items-center justify-between w-full">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/Policy_Holder/Home">
               <Image
                 src="/logo.png"
                 alt="Sanasa General Insurance"
-                width={110}
-                height={42}
+                width={100}
+                height={40}
                 className="object-contain h-auto"
                 priority
               />
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-5 text-base" : "gap-3.5 text-sm md:text-[15px]"}`}>
-            <Link href="/Policy_Holder/Home" className={getLinkClass("/Policy_Holder/Home")}>
-              {t.home}
-            </Link>
-            <Link href="/Policy_Holder/My_claims" className={getLinkClass("/Policy_Holder/My_claims")}>
-              {t.myClaims}
-            </Link>
-            <Link href="/Policy_Holder/Documents" className={getLinkClass("/Policy_Holder/Documents")}>
-              {t.documents}
-            </Link>
-            <Link href="/Policy_Holder/Contact" className={getLinkClass("/Policy_Holder/Contact")}>
-              {t.contact}
-            </Link>
+          {/* Desktop Navigation Links — Matching Homepage Style */}
+          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-7 text-base" : "gap-5 text-sm md:text-[15px]"}`}>
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`relative py-2 font-bold whitespace-nowrap transition-colors duration-200 no-underline ${
+                    active ? "text-[#0d2a3a]" : "text-slate-600 hover:text-[#0284c7]"
+                  }`}
+                >
+                  <span>{link.label}</span>
+                  {/* Underline for active selected page only */}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 w-full h-[3px] rounded-full bg-[#0d2a3a] transition-all duration-200" />
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* New Claim Pill Button */}
             <Link
               href="/Policy_Holder/New_Claim"
-              className={`bg-[#ff9800] text-white hover:bg-[#e68900] font-bold rounded-full shadow-md transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] no-underline whitespace-nowrap ${
-                lang === "en" ? "px-5 py-2 text-base" : "px-4 py-1.5 text-sm md:text-[15px]"
+              className={`inline-flex items-center justify-center font-bold bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm hover:shadow transition-all duration-200 no-underline rounded-full hover:-translate-y-0.5 active:translate-y-0 active:scale-95 ml-2 ${
+                lang === "en" ? "px-5 py-1.5 text-sm md:text-[15px]" : "px-4 py-1.5 text-xs md:text-sm"
               }`}
             >
               {t.newClaim}
             </Link>
           </div>
 
-          {/* Right Action Icons */}
-          <div className="flex items-center gap-4">
+          {/* Right Action Icons (Notifications, Profile & Mobile Hamburger) */}
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Notifications Bell */}
             <Link
               href="/Policy_Holder/Notifications"
-              className="relative transition-colors duration-150 p-2 text-black hover:text-[#00ddff] no-underline flex items-center justify-center"
+              className="relative p-2 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 no-underline flex items-center justify-center"
               aria-label="Notifications"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
                 fill="currentColor"
-                className="w-7 h-7"
+                className="w-6 h-6"
               >
                 <path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
               </svg>
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white" />
             </Link>
 
             {/* Profile Dropdown */}
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
-                className="transition-colors duration-150 bg-transparent border-none cursor-pointer p-0 text-black hover:text-[#00ddff] focus:outline-none flex items-center justify-center"
+                className="p-1.5 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 bg-transparent border-none cursor-pointer focus:outline-none flex items-center justify-center"
                 aria-label="User Profile"
                 aria-expanded={profileMenuOpen}
               >
@@ -321,7 +329,7 @@ export default function PolicyHolderNavbar() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="w-8 h-8"
+                  className="w-7 h-7"
                 >
                   <circle cx="12" cy="12" r="10" />
                   <circle cx="12" cy="10" r="3.2" fill="currentColor" stroke="none" />
@@ -332,17 +340,14 @@ export default function PolicyHolderNavbar() {
               {/* Dropdown Menu */}
               {profileMenuOpen && (
                 <div
-                  className="absolute right-0 mt-3 w-52 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2 z-50 transition-all duration-300"
-                  style={{ top: "100%" }}
+                  className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2 z-50 transition-all duration-200 animate-in fade-in slide-in-from-top-2"
                 >
-                  <div className="absolute -top-2 right-4 w-4 h-4 bg-white border-l border-t border-slate-100 rotate-45" />
-
                   <Link
-                    href="/Policy_Holder/Profile"
+                    href="/Policy_Holder/Home"
                     onClick={() => setProfileMenuOpen(false)}
-                    className="flex items-center gap-3 px-5 py-3 text-slate-700 hover:bg-slate-50 hover:text-[#00ddff] font-semibold text-sm transition-colors no-underline"
+                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-semibold text-sm transition-colors no-underline"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     {t.myProfile}
@@ -352,9 +357,9 @@ export default function PolicyHolderNavbar() {
 
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-5 py-3 text-red-500 hover:bg-red-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
+                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
                     </svg>
                     {t.logout}
@@ -385,58 +390,49 @@ export default function PolicyHolderNavbar() {
 
         {/* Mobile Dropdown Navigation Menu */}
         {isOpen && (
-          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-3.5 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
-            <Link
-              href="/Policy_Holder/Home"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
-                isActive("/Policy_Holder/Home") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.home}
-            </Link>
-            <Link
-              href="/Policy_Holder/My_claims"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
-                isActive("/Policy_Holder/My_claims") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.myClaims}
-            </Link>
-            <Link
-              href="/Policy_Holder/Documents"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
-                isActive("/Policy_Holder/Documents") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.documents}
-            </Link>
-            <Link
-              href="/Policy_Holder/Contact"
-              onClick={() => setIsOpen(false)}
-              className={`font-bold text-base py-3 px-5 rounded-2xl transition-all duration-200 ${
-                isActive("/Policy_Holder/Contact") ? "bg-[#00ddff] text-black" : "text-[#333] hover:text-[#00ddff] hover:bg-slate-50"
-              }`}
-            >
-              {t.contact}
-            </Link>
-            <Link
-              href="/Policy_Holder/New_Claim"
-              onClick={() => setIsOpen(false)}
-              className="bg-[#ff9800] text-white hover:bg-[#e68900] font-bold py-3 px-5 rounded-2xl shadow-md transition-all duration-150 text-center"
-            >
-              {t.newClaim}
-            </Link>
+          <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 py-4 px-6 flex flex-col gap-2.5 shadow-[0_10px_20px_rgba(0,0,0,0.08)] z-50 transition-all duration-300">
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`font-bold text-base py-2.5 px-4 rounded-xl transition-all duration-200 ${
+                    active
+                      ? "bg-slate-100/90 text-[#0d2a3a] border-l-4 border-[#0d2a3a]"
+                      : "text-slate-600 hover:text-[#0284c7] hover:bg-slate-50"
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+
+            {/* Mobile New Claim Action */}
+            <div className="pt-2 border-t border-slate-100 flex flex-col gap-2.5">
+              <Link
+                href="/Policy_Holder/New_Claim"
+                onClick={() => setIsOpen(false)}
+                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm transition-all duration-200 no-underline"
+              >
+                + {t.newClaim}
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-200 bg-transparent cursor-pointer"
+              >
+                {t.logout}
+              </button>
+            </div>
           </div>
         )}
       </nav>
 
-      {/* Redesigned Premium Glassmorphic Branches Modal Overlay matching other pages */}
+      {/* Redesigned Premium Glassmorphic Branches Modal Overlay */}
       {branchesModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] w-full max-w-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[82vh] overflow-hidden select-none animate-in fade-in zoom-in-95 duration-200 relative">
+          <div className="bg-white rounded-[32px] w-full max-w-3xl shadow-2xl border border-slate-100 flex flex-col max-h-[82vh] overflow-hidden select-none animate-in fade-in zoom-in-95 duration-200 relative text-slate-800">
             {/* Ambient background glow inside modal */}
             <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-[#00ddff]/10 blur-3xl pointer-events-none" />
             <div className="absolute -bottom-24 -left-24 w-48 h-48 rounded-full bg-[#004f6e]/10 blur-3xl pointer-events-none" />
