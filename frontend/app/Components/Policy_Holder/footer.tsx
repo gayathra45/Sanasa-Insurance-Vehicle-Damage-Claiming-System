@@ -85,8 +85,7 @@ export default function PolicyHolderFooter() {
             </span>
           </div>
 
-          {/* Social Icons Stacked Vertically */}
-          <div className="flex flex-row md:flex-col gap-3.5 items-center justify-center md:self-end">
+          <div className="flex flex-row gap-4 items-center justify-center md:justify-end">
             {/* Facebook */}
             <a
               href="https://facebook.com"

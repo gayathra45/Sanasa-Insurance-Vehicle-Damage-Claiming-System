@@ -77,8 +77,7 @@ export default function OfficeStaffFooter() {
               </span>
             </div>
 
-            {/* Social Icons Stacked Vertically */}
-            <div className="flex flex-row md:flex-col gap-4">
+            <div className="flex flex-row gap-4 items-center justify-center md:justify-end">
               {/* Facebook Icon */}
               <a
                 href="https://facebook.com"

@@ -115,7 +115,7 @@ export default function Home() {
   const motorText = "flex-1 text-lg leading-relaxed text-gray-800 font-medium text-left";
   const motorImage = "flex-[1.5] flex justify-center items-center";
   
-  const appSection = "relative w-full min-h-[500px] md:min-h-[550px] flex items-center justify-center mt-12 overflow-hidden";
+  const appSection = "relative w-full min-h-[500px] md:min-h-[550px] flex items-center justify-center mt-12 overflow-hidden bg-slate-900";
   const appBg = "absolute inset-0 w-full h-full z-[1]";
   const appContent = "relative z-[2] flex flex-col md:flex-row items-center justify-center md:justify-between w-full max-w-[1200px] p-8 md:px-16 md:py-12 gap-8 md:gap-16";
   const appImageContainer = "flex-none md:flex-1 flex justify-center items-center";
@@ -350,8 +350,10 @@ export default function Home() {
               src="/Home_3.jpg"
               alt="Insurance App background"
               fill
-              style={{ objectFit: "cover" }}
+              sizes="100vw"
+              className="object-cover opacity-50"
             />
+            <div className="absolute inset-0 bg-black/35 pointer-events-none" />
           </div>
 
           <div className={appContent}>

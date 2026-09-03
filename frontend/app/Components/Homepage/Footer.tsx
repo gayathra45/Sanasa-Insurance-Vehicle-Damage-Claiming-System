@@ -65,7 +65,7 @@ export default function Footer({ className }: FooterProps) {
             </Link>
           </div>
 
-          <div className="flex flex-row md:flex-col gap-4 items-center md:items-end justify-center">
+          <div className="flex flex-row gap-5 items-center justify-center md:justify-end">
             {/* Facebook */}
             <a
               href="https://facebook.com"
