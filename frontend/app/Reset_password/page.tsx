@@ -271,10 +271,10 @@ export default function ResetPassword() {
     </svg>
   );
 
-  const submitBtnClass = "w-full max-w-[240px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-lg cursor-pointer select-none outline-none border-none disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2";
+  const submitBtnClass = "w-full max-w-[220px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-lg cursor-pointer select-none outline-none border-none disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2";
 
   return (
-    <div className="min-h-screen w-full flex flex-col relative">
+    <div className="min-h-screen w-full flex flex-col justify-between relative">
       {/* ── Background ── */}
       <div className="fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat bg-fixed pointer-events-none" style={{ backgroundImage: "url('/login_bg.jpg')" }} />
       <div className="fixed inset-0 z-[-9] bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
@@ -286,18 +286,18 @@ export default function ResetPassword() {
 
       <Navbar />
 
-      <div className="relative z-10 flex-1 w-full flex items-center justify-center py-8 md:py-16">
-        <div className="w-full max-w-xl mx-auto px-6 flex flex-col items-center justify-center min-h-[550px]">
+      <div className="relative z-10 flex-1 w-full flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat min-h-[calc(100vh-140px)] py-8 md:py-12">
+        <div className="relative z-10 w-full max-w-xl mx-auto px-4 sm:px-6 flex flex-col items-center justify-center my-auto">
 
           {/* Card */}
-          <div className="relative w-full max-w-[520px] bg-white/10 backdrop-blur-md border border-white/20 rounded-3xl sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-6 transition-all duration-500 hover:border-white/30 overflow-hidden">
+          <div className="w-full max-w-[500px] bg-white/10 backdrop-blur-md border border-white/20 rounded-[2.5rem] p-8 sm:p-10 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-6 transition-all duration-300 hover:border-white/30 overflow-hidden">
 
             {/* Top Center Title */}
             <div className="flex flex-col items-center text-center -mt-2 mb-1">
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
                 Reset Password
               </h1>
-              <p className="mt-2 text-white/75 text-sm max-w-xs sm:max-w-sm leading-relaxed">
+              <p className="mt-2 text-white/70 text-sm max-w-xs sm:max-w-sm leading-relaxed">
                 {stage === "request" && "Enter your details and we'll send a verification code to your email."}
                 {stage === "otp" && <>Check your email for the code sent to <span className="text-orange-400 font-semibold">{sentEmail}</span></>}
                 {stage === "set-password" && "Identity verified. Set your new password below."}
@@ -307,7 +307,7 @@ export default function ResetPassword() {
 
             {/* Error Banner */}
             {validationError && (
-              <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-start gap-3">
+              <div className="bg-red-500/15 border-l-4 border-red-500 p-3.5 rounded-2xl text-white text-sm flex items-start gap-3">
                 <svg className="w-5 h-5 shrink-0 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                 </svg>
@@ -317,7 +317,7 @@ export default function ResetPassword() {
 
             {/* ── STAGE: Request ── */}
             {stage === "request" && (
-              <form onSubmit={handleSendOtp} className="flex flex-col gap-5">
+              <form onSubmit={handleSendOtp} className="flex flex-col gap-6">
                 {/* NIC or Mobile */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
@@ -325,7 +325,7 @@ export default function ResetPassword() {
                   </label>
 
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                       </svg>
@@ -343,7 +343,7 @@ export default function ResetPassword() {
                   </label>
 
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-500">
+                    <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
                       </svg>
@@ -358,7 +358,7 @@ export default function ResetPassword() {
                   {isSubmitting ? <><Spinner /> Sending...</> : "Send OTP Code"}
                 </button>
 
-                <div className="flex justify-between items-center w-full border-t border-white/10 pt-4 text-sm text-white/70 font-medium select-none">
+                <div className="flex justify-between items-center w-full border-t border-white/10 pt-5 text-sm text-white/85 font-medium select-none">
                   <Link href="/SignUp" className="hover:text-white hover:underline transition-all">Create an Account</Link>
                   <Link href="/Login" className="hover:text-white hover:underline transition-all">Back to Login</Link>
                 </div>
@@ -432,7 +432,7 @@ export default function ResetPassword() {
               <form onSubmit={handleSetPassword} className="flex flex-col gap-5">
                 <div className="flex flex-col gap-1">
                   <h2 className="text-white text-2xl font-bold">Set New Password</h2>
-                  <p className="text-white/60 text-sm">Choose a strong new password for your account.</p>
+                  <p className="text-white/70 text-sm">Choose a strong new password for your account.</p>
                 </div>
 
                 {/* New Password */}
@@ -450,7 +450,7 @@ export default function ResetPassword() {
                   </div>
 
                   {newPassword && (
-                    <div className="flex flex-col gap-2 px-1 bg-black/15 p-3 rounded-2xl border border-white/5">
+                    <div className="flex flex-col gap-2 px-1 bg-black/15 p-3 rounded-2xl border border-white/5 mt-1">
                       <div className="flex justify-between items-center text-xs text-white/90">
                         <span className="font-semibold">Password Strength:</span>
                         <span className="font-bold uppercase tracking-wider">{strength.label}</span>
@@ -462,8 +462,8 @@ export default function ResetPassword() {
                         <span className={newPassword.length >= 6 && newPassword.length <= 12 ? "text-green-400 font-bold" : "text-red-400 font-bold"}>
                           {newPassword.length >= 6 && newPassword.length <= 12 ? "✔" : "✖"} 6 to 12 characters
                         </span>
-                        <span className={(/[0-9]/.test(newPassword) || /[^A-Za-z0-9]/.test(newPassword)) ? "text-green-400 font-bold" : "text-red-400 font-bold"}>
-                          {(/[0-9]/.test(newPassword) || /[^A-Za-z0-9]/.test(newPassword)) ? "✔" : "✖"} Min. 1 number or special character
+                        <span className={( /[0-9]/.test(newPassword) || /[^A-Za-z0-9]/.test(newPassword) ) ? "text-green-400 font-bold" : "text-red-400 font-bold"}>
+                          {( /[0-9]/.test(newPassword) || /[^A-Za-z0-9]/.test(newPassword) ) ? "✔" : "✖"} Min. 1 number or special character
                         </span>
                       </div>
                     </div>
