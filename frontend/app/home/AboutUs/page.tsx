@@ -80,32 +80,34 @@ export default function About() {
       </section>
 
       {/* Founder Section */}
-      <section className="w-full flex flex-col md:flex-row items-center justify-between py-12 md:py-20 px-6 md:px-16 gap-10 max-w-6xl mx-auto">
-        {/* Left Side - Content */}
-        <div className="flex-1 flex flex-col items-start">
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-6 leading-tight">
-            {t.founder}
-          </h2>
-          <div className="space-y-4 text-base text-gray-700 leading-relaxed">
-            <h3 className="font-bold text-gray-900 text-lg">
-              {t.founderTitle}
-            </h3>
-            <p>
-              {t.founderDesc}
-            </p>
+      <section className="w-full py-12 md:py-20 px-6 md:px-16 bg-white">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
+          {/* Left Side - Content */}
+          <div className="flex-1 flex flex-col items-start">
+            <h2 className="text-4xl md:text-5xl font-bold text-black mb-6 leading-tight">
+              {t.founder}
+            </h2>
+            <div className="space-y-4 text-base text-gray-700 leading-relaxed">
+              <h3 className="font-bold text-gray-900 text-lg">
+                {t.founderTitle}
+              </h3>
+              <p>
+                {t.founderDesc}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Right Side - Image */}
-        <div className="flex-1 flex justify-center items-center">
-          <Image
-            src="/about_1.jpg"
-            alt="Founder Dr. P.A. Kiriwandeniya"
-            width={350}
-            height={400}
-            className="object-contain rounded-lg shadow-lg"
-            priority
-          />
+          {/* Right Side - Image */}
+          <div className="flex-1 flex justify-center items-center">
+            <Image
+              src="/about_1.jpg"
+              alt="Founder Dr. P.A. Kiriwandeniya"
+              width={350}
+              height={400}
+              className="object-contain rounded-lg shadow-lg"
+              priority
+            />
+          </div>
         </div>
       </section>
 

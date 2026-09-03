@@ -74,30 +74,32 @@ export default function News() {
       </section>
 
       {/* Introducing Insurance App Section */}
-      <section className="w-full flex flex-col md:flex-row items-center justify-between py-12 md:py-20 px-6 md:px-16 gap-10 max-w-6xl mx-auto">
-        {/* Left Side - Image */}
-        <div className="flex-1 flex justify-center items-center">
-          <Image
-            src="/Home_3.1.png"
-            alt="Insurance App Introduction"
-            width={400}
-            height={500}
-            className="object-contain"
-            priority
-          />
-        </div>
+      <section className="w-full py-12 md:py-20 px-6 md:px-16 bg-white">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
+          {/* Left Side - Image */}
+          <div className="flex-1 flex justify-center items-center">
+            <Image
+              src="/Home_3.1.png"
+              alt="Insurance App Introduction"
+              width={400}
+              height={500}
+              className="object-contain"
+              priority
+            />
+          </div>
 
-        {/* Right Side - Content */}
-        <div className="flex-1 flex flex-col items-start">
-          <h2 className="text-4xl md:text-5xl font-bold text-black mb-3 leading-tight">
-            {t.appSubtitle}
-          </h2>
-          <p className="text-lg font-semibold text-gray-800 mb-6">
-            {t.appTitle}
-          </p>
-          <p className="text-base text-gray-800 leading-relaxed">
-            {t.appDesc}
-          </p>
+          {/* Right Side - Content */}
+          <div className="flex-1 flex flex-col items-start">
+            <h2 className="text-4xl md:text-5xl font-bold text-black mb-3 leading-tight">
+              {t.appSubtitle}
+            </h2>
+            <p className="text-lg font-semibold text-gray-800 mb-6">
+              {t.appTitle}
+            </p>
+            <p className="text-base text-gray-800 leading-relaxed">
+              {t.appDesc}
+            </p>
+          </div>
         </div>
       </section>
       <Footer />

@@ -332,7 +332,7 @@ export default function Home() {
             </div>
             <div className={motorImage}>
               <Image
-                src="/Home_2.1.png"
+                src="/f1.png"
                 alt="Vehicles Covered"
                 width={1000}
                 height={400}
