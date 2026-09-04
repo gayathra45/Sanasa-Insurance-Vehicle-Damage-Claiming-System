@@ -613,8 +613,8 @@ export default function PolicyHolderHome() {
             </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{totalClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.totalClaims}</p>
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{totalClaimsCount}</h3>
+              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.totalClaims}</p>
             </div>
           </Link>
 
@@ -629,8 +629,8 @@ export default function PolicyHolderHome() {
             </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.inProgress}</p>
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
+              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.inProgress}</p>
             </div>
           </Link>
 
@@ -646,8 +646,8 @@ export default function PolicyHolderHome() {
             </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.approved}</p>
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
+              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.approved}</p>
             </div>
           </Link>
 
@@ -662,7 +662,7 @@ export default function PolicyHolderHome() {
               <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5" />
               </svg>
-              <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
                 {t.notifications}
               </h2>
             </div>
@@ -687,7 +687,7 @@ export default function PolicyHolderHome() {
                         <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.522a.75.75 0 01-.297 1.228 35.754 35.754 0 01-16.142 0 .75.75 0 01-.297-1.228A9.013 9.013 0 005.25 9.75V9zm4.5 8.25a3.75 3.75 0 007.5 0H9.75z" clipRule="evenodd" />
                       </svg>
                     );
-                    titleClass = "text-red-600 font-extrabold text-base leading-none";
+                    titleClass = "text-red-600 font-semibold text-base leading-none";
                   } else if (isApproved) {
                     cardClass = "bg-emerald-50/15 border-2 border-emerald-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]";
                     iconClass = "p-2 bg-emerald-100 rounded-xl text-emerald-500 flex-shrink-0 mt-0.5";
@@ -696,7 +696,7 @@ export default function PolicyHolderHome() {
                         <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.74-5.24z" clipRule="evenodd" />
                       </svg>
                     );
-                    titleClass = "text-emerald-600 font-extrabold text-base leading-none";
+                    titleClass = "text-emerald-600 font-semibold text-base leading-none";
                   } else {
                     cardClass = "bg-blue-50/15 border-2 border-blue-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]";
                     iconClass = "p-2 bg-blue-100 rounded-xl text-blue-500 flex-shrink-0 mt-0.5";
@@ -705,7 +705,7 @@ export default function PolicyHolderHome() {
                         <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" />
                       </svg>
                     );
-                    titleClass = "text-blue-600 font-extrabold text-base leading-none";
+                    titleClass = "text-blue-600 font-semibold text-base leading-none";
                   }
 
                   return (
@@ -722,11 +722,11 @@ export default function PolicyHolderHome() {
                           <h4 className={titleClass}>
                             {notif.title}
                           </h4>
-                          <p className="text-slate-600 text-sm font-semibold mt-2 leading-relaxed">
+                          <p className="text-slate-600 text-sm font-normal mt-2 leading-relaxed">
                             {notif.description}
                           </p>
                           {notif.subText && (
-                            <p className="text-slate-400 text-xs font-bold mt-2">
+                            <p className="text-slate-500 text-xs font-normal mt-2">
                               {notif.subText}
                             </p>
                           )}
@@ -746,8 +746,8 @@ export default function PolicyHolderHome() {
                                 href={act.href}
                                 className={`${
                                   isPrimary 
-                                    ? "bg-red-600 hover:bg-red-700 text-white font-extrabold text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline shadow-sm"
-                                    : "bg-[#2f3e46] hover:bg-[#1a2327] text-white font-extrabold text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline"
+                                    ? "bg-red-600 hover:bg-red-700 text-white font-medium text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline shadow-sm"
+                                    : "bg-[#2f3e46] hover:bg-[#1a2327] text-white font-medium text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline"
                                 }`}
                               >
                                 {act.label}
@@ -755,14 +755,14 @@ export default function PolicyHolderHome() {
                             );
                           })}
                         </div>
-                        <span className="text-slate-400 text-xs font-bold">{notif.date}</span>
+                        <span className="text-slate-400 text-xs font-normal">{notif.date}</span>
                       </div>
                     </div>
                   );
                 })
               ) : (
                 <div className="bg-white border border-slate-200 rounded-[24px] p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
-                  <p className="text-slate-400 font-bold text-sm">{t.noNotifications}</p>
+                  <p className="text-slate-400 font-normal text-sm">{t.noNotifications}</p>
                 </div>
               )}
             </div>
@@ -775,7 +775,7 @@ export default function PolicyHolderHome() {
                 <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
                 </svg>
-                <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
+                <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
                   {t.myVehicles}
                 </h2>
               </Link>
@@ -788,13 +788,13 @@ export default function PolicyHolderHome() {
                       <div className="flex items-center gap-4">
                         {getVehicleIconContainer(vehicle.vehicleType)}
                         <div>
-                          <h4 className="text-slate-800 font-extrabold text-base leading-tight">{formatNumberPlate(vehicle.numberPlate)}</h4>
-                          <p className="text-slate-400 font-bold text-xs mt-0.5">{vehicle.company} {vehicle.model} {vehicle.year}</p>
+                          <h4 className="text-slate-800 font-semibold text-base leading-tight">{formatNumberPlate(vehicle.numberPlate)}</h4>
+                          <p className="text-slate-500 font-normal text-xs mt-0.5">{vehicle.company} {vehicle.model} {vehicle.year}</p>
                         </div>
                       </div>
                       <button
                         onClick={() => setSelectedVehicleForModal(vehicle)}
-                        className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-4 py-1.5 rounded-full transition-all bg-transparent cursor-pointer outline-none whitespace-nowrap"
+                        className="border border-slate-300 hover:border-slate-400 text-slate-600 font-medium text-xs px-4 py-1.5 rounded-full transition-all bg-transparent cursor-pointer outline-none whitespace-nowrap"
                       >
                         {t.view}
                       </button>
@@ -802,7 +802,7 @@ export default function PolicyHolderHome() {
                   ))
                 ) : (
                   <div className="bg-white border border-slate-200 rounded-[22px] p-8 text-center shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-                    <p className="text-slate-400 font-bold text-sm">{t.noVehicles}</p>
+                    <p className="text-slate-400 font-normal text-sm">{t.noVehicles}</p>
                   </div>
                 )}
               </div>
@@ -817,43 +817,43 @@ export default function PolicyHolderHome() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                 </span>
-                <span className="text-[9px] font-bold text-emerald-700 tracking-wide uppercase">{t.liveSupport}</span>
+                <span className="text-[9px] font-medium text-emerald-700 tracking-wide uppercase">{t.liveSupport}</span>
               </div>
 
-              <h3 className="text-cyan-800 font-extrabold text-lg tracking-tight flex items-center gap-2 select-none">
+              <h3 className="text-cyan-800 font-bold text-lg tracking-tight flex items-center gap-2 select-none">
                 <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
                 {t.supportHelpdesk}
               </h3>
               
-              <p className="text-xs text-slate-500 font-semibold text-left leading-relaxed -mt-1 select-none">
+              <p className="text-xs text-slate-500 font-normal text-left leading-relaxed -mt-1 select-none">
                 {t.supportNeed}
               </p>
 
               <div className="flex flex-col gap-2.5 mt-1">
-                <a href="tel:+94112003000" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-bold text-sm text-slate-800 group no-underline">
+                <a href="tel:+94112003000" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-medium text-sm text-slate-800 group no-underline">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white flex-shrink-0">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.47-5.112-3.758-6.58-6.58l1.293-.97c.362-.272.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
                       </svg>
                     </span>
-                    <span className="text-slate-700 tracking-tight font-extrabold text-xs md:text-sm truncate">+94 112 003 000</span>
+                    <span className="text-slate-700 tracking-tight font-medium text-xs md:text-sm truncate">+94 112 003 000</span>
                   </div>
                   <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200 whitespace-nowrap flex-shrink-0">
                     {t.line1}
                   </span>
                 </a>
 
-                <a href="tel:+94112003001" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-bold text-sm text-slate-800 group no-underline">
+                <a href="tel:+94112003001" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-medium text-sm text-slate-800 group no-underline">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white flex-shrink-0">
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.47-5.112-3.758-6.58-6.58l1.293-.97c.362-.272.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
                       </svg>
                     </span>
-                    <span className="text-slate-700 tracking-tight font-extrabold text-xs md:text-sm truncate">+94 112 003 001</span>
+                    <span className="text-slate-700 tracking-tight font-medium text-xs md:text-sm truncate">+94 112 003 001</span>
                   </div>
                   <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200 whitespace-nowrap flex-shrink-0">
                     {t.line2}
@@ -869,7 +869,7 @@ export default function PolicyHolderHome() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-black font-extrabold px-6 py-5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black">
+        <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-slate-900 font-semibold px-6 py-4 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border border-slate-900/20">
           <svg className="w-6 h-6 animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
@@ -884,7 +884,7 @@ export default function PolicyHolderHome() {
             
             {/* Modal Header */}
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-              <h2 className="text-[20px] md:text-[22px] font-extrabold text-[#0f2d3a] tracking-tight leading-none text-slate-800">
+              <h2 className="text-[20px] md:text-[22px] font-bold text-[#0f2d3a] tracking-tight leading-none text-slate-800">
                 Vehicle Specifications
               </h2>
               <button
@@ -902,47 +902,47 @@ export default function PolicyHolderHome() {
               <div className="bg-slate-50 border border-slate-200/60 rounded-[22px] p-5 mb-6 flex items-center gap-4.5 shadow-sm select-none text-slate-800">
                 {getVehicleIconContainer(selectedVehicleForModal.vehicleType)}
                 <div>
-                  <h3 className="text-[#0f2d3a] font-black text-xl leading-none tracking-tight">
+                  <h3 className="text-[#0f2d3a] font-bold text-xl leading-none tracking-tight">
                     {selectedVehicleForModal.company} {selectedVehicleForModal.model}
                   </h3>
-                  <p className="text-slate-400 font-bold text-xs mt-1.5">
+                  <p className="text-slate-500 font-normal text-xs mt-1.5">
                     Year: {selectedVehicleForModal.year} | Type: {selectedVehicleForModal.vehicleType}
                   </p>
                 </div>
               </div>
 
               {/* 2-Column Specs Layout */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-semibold text-slate-700 mb-8 px-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-normal text-slate-700 mb-8 px-2">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Number Plate</span>
-                  <span className="font-extrabold text-slate-800 text-base">{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Number Plate</span>
+                  <span className="font-semibold text-slate-800 text-base">{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Policy Number</span>
-                  <span className="font-extrabold text-slate-800 text-base tracking-wide">{selectedVehicleForModal.policyNumber || "N/A"}</span>
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Policy Number</span>
+                  <span className="font-semibold text-slate-800 text-base tracking-wide">{selectedVehicleForModal.policyNumber || "N/A"}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Engine Number</span>
-                  <span className="font-bold text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.engineNumber || "N/A"}</span>
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Engine Number</span>
+                  <span className="font-medium text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.engineNumber || "N/A"}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Chassis Number</span>
-                  <span className="font-bold text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.chassisNumber || "N/A"}</span>
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Chassis Number</span>
+                  <span className="font-medium text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.chassisNumber || "N/A"}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Insurance Coverage</span>
-                  <span className="font-extrabold text-emerald-600 flex items-center gap-1.5">
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Insurance Coverage</span>
+                  <span className="font-semibold text-emerald-600 flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
                     Active Coverage
                   </span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Renewal Cycle</span>
-                  <span className="font-extrabold text-slate-800">Annual (Jan 01 - Dec 31)</span>
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Renewal Cycle</span>
+                  <span className="font-semibold text-slate-800">Annual (Jan 01 - Dec 31)</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2 sm:col-span-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Insurance Plan Type</span>
-                  <span className="font-extrabold text-slate-800">Comprehensive Vehicle Insurance Plan</span>
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Insurance Plan Type</span>
+                  <span className="font-semibold text-slate-800">Comprehensive Vehicle Insurance Plan</span>
                 </div>
               </div>
 
@@ -951,7 +951,7 @@ export default function PolicyHolderHome() {
                 <Link
                   href={`/Policy_Holder/New_Claim?plate=${encodeURIComponent(selectedVehicleForModal.numberPlate)}`}
                   onClick={() => setSelectedVehicleForModal(null)}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -960,7 +960,7 @@ export default function PolicyHolderHome() {
                 </Link>
                 <button
                   onClick={() => handleDownloadCoverNote(selectedVehicleForModal)}
-                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-semibold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -975,7 +975,7 @@ export default function PolicyHolderHome() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedVehicleForModal(null)}
-                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
               >
                 Close
               </button>
@@ -1036,10 +1036,10 @@ export default function PolicyHolderHome() {
 
                 return (
                   <div key={step.num} className="flex flex-col items-center z-10 flex-1">
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-extrabold ${circleClass}`}>
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold ${circleClass}`}>
                       {step.num}
                     </div>
-                    <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-extrabold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
+                    <span className={`text-[11px] font-medium mt-2 leading-none ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>
@@ -1055,7 +1055,7 @@ export default function PolicyHolderHome() {
               
               {/* Modal Header Title */}
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[22px] font-extrabold text-[#0f2d3a] tracking-tight leading-none text-slate-800">
+                <h2 className="text-[22px] font-bold text-[#0f2d3a] tracking-tight leading-none text-slate-800">
                   Claim Details – {selectedClaim.claimNumber}
                 </h2>
                 <button
@@ -1073,18 +1073,18 @@ export default function PolicyHolderHome() {
                 {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
 
                 {/* 2-Column Grid matching mockup inline labels */}
-                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-6 px-2">
+                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[14px] font-normal text-slate-700 mb-6 px-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Vehicle:</span>
-                    <span className="font-extrabold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate || "")}</span>
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Vehicle:</span>
+                    <span className="font-semibold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate || "")}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Type:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.damageType}</span>
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Type:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.damageType}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Est. Amount:</span>
-                    <span className="font-extrabold text-slate-800">
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Est. Amount:</span>
+                    <span className="font-semibold text-slate-800">
                       {selectedClaim.amount
                         ? (typeof selectedClaim.amount === "string"
                           ? (selectedClaim.amount.startsWith("Rs.") ? "LKR " + selectedClaim.amount.substring(4) : selectedClaim.amount)
@@ -1093,28 +1093,28 @@ export default function PolicyHolderHome() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Date:</span>
-                    <span className="font-extrabold text-slate-800">{formatDateString(selectedClaim.incidentDate)}</span>
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Date:</span>
+                    <span className="font-semibold text-slate-800">{formatDateString(selectedClaim.incidentDate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Officer:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Officer:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Branch:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Branch:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Location:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.location || "N/A"}</span>
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Location:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.location || "N/A"}</span>
                   </div>
                 </div>
 
                 {/* Description Text (If available) */}
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Incident Description</p>
+                    <p className="text-slate-600 text-sm font-normal leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
@@ -1123,7 +1123,7 @@ export default function PolicyHolderHome() {
                 {/* Other Vehicles Involved */}
                 {selectedClaim.otherVehicleDetails && (
                   <div className="px-2 mb-6 text-left">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
+                    <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
                     {Array.isArray(selectedClaim.otherVehicleDetails) ? (
                       selectedClaim.otherVehicleDetails.length === 0 ? (
                         <div className="text-xs text-slate-500 italic select-none">No other vehicles involved.</div>
@@ -1131,30 +1131,30 @@ export default function PolicyHolderHome() {
                         <div className="space-y-4">
                           {selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
                             <div key={vIdx} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
-                              <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
+                              <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
                               <div className="grid grid-cols-2 gap-4 text-left">
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                                  <span className="block text-slate-800 text-xs font-medium mt-0.5">{vehicle.vehiclePlate || "—"}</span>
                                 </div>
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.driverName || "—"}</span>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                                  <span className="block text-slate-800 text-xs font-medium mt-0.5">{vehicle.driverName || "—"}</span>
                                 </div>
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                                  <span className="block text-slate-800 text-xs font-medium mt-0.5">{vehicle.insuranceCompany || "—"}</span>
                                 </div>
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.policyNumber || "—"}</span>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                                  <span className="block text-slate-800 text-xs font-medium mt-0.5">{vehicle.policyNumber || "—"}</span>
                                 </div>
                               </div>
 
                               {/* License Photos */}
                               {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
                                 <div className="pt-2 border-t border-slate-200/60">
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
                                   <div className="flex flex-wrap gap-2.5">
                                     {vehicle.licensePhotos.map((url: string, idx: number) => {
                                       let docUrl = url;
@@ -1178,7 +1178,7 @@ export default function PolicyHolderHome() {
                               {/* Vehicle Photos */}
                               {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
                                 <div className="pt-2 border-t border-slate-200/60">
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
                                   <div className="flex flex-wrap gap-2.5">
                                     {vehicle.vehiclePhotos.map((url: string, idx: number) => {
                                       let docUrl = url;
@@ -1207,27 +1207,27 @@ export default function PolicyHolderHome() {
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
                           <div className="grid grid-cols-2 gap-4 text-left">
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                              <span className="block text-slate-800 text-xs font-medium mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
                             </div>
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                              <span className="block text-slate-800 text-xs font-medium mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
                             </div>
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                              <span className="block text-slate-800 text-xs font-medium mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
                             </div>
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                              <span className="block text-slate-800 text-xs font-medium mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
                             </div>
                           </div>
 
                           {/* License Photos */}
                           {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
                             <div className="pt-2 border-t border-slate-200/60">
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
                               <div className="flex flex-wrap gap-2.5">
                                 {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -1251,7 +1251,7 @@ export default function PolicyHolderHome() {
                           {/* Vehicle Photos */}
                           {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
                             <div className="pt-2 border-t border-slate-200/60">
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
                               <div className="flex flex-wrap gap-2.5">
                                 {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -1279,7 +1279,7 @@ export default function PolicyHolderHome() {
 
                 {/* Messages & Notifications Section */}
                 <div className="px-2 mt-4 mb-2">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
+                  <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
                   {(() => {
                     const filteredMessages = (selectedClaim.messages || []).filter((msg: any) => msg.recipient !== "Agent");
                     if (filteredMessages.length > 0) {
@@ -1288,10 +1288,10 @@ export default function PolicyHolderHome() {
                           {filteredMessages.map((msg: any, index: number) => (
                             <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                               <div className="flex justify-between items-center text-[11px] select-none">
-                                <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
-                                <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
+                                <span className="font-semibold text-[#0f2d3a]">{msg.sender}</span>
+                                <span className="text-slate-400 font-normal">{formatDateString(msg.sentAt)}</span>
                               </div>
-                              <p className="text-slate-700 text-xs font-semibold leading-relaxed m-0">
+                              <p className="text-slate-700 text-xs font-normal leading-relaxed m-0">
                                 {msg.message}
                               </p>
                             </div>
@@ -1300,7 +1300,7 @@ export default function PolicyHolderHome() {
                       );
                     } else {
                       return (
-                        <p className="text-slate-500 text-xs italic font-medium bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
+                        <p className="text-slate-500 text-xs italic font-normal bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
                           No notifications or messages have been sent for this claim.
                         </p>
                       );
@@ -1311,8 +1311,8 @@ export default function PolicyHolderHome() {
                 {/* Warning Alert Box matching mockup */}
                 {selectedClaim.documentsRequested && getUserRequestedDocs(selectedClaim).length > 0 && (
                   <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2 mt-4">
-                    <h4 className="text-[#9c3535] font-extrabold text-sm mb-1.5">Documents Requested</h4>
-                    <p className="text-[#aa4f4f] text-[13px] font-semibold leading-relaxed mb-3">
+                    <h4 className="text-[#9c3535] font-semibold text-sm mb-1.5">Documents Requested</h4>
+                    <p className="text-[#aa4f4f] text-[13px] font-normal leading-relaxed mb-3">
                       The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
                     </p>
                     <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
@@ -1320,17 +1320,17 @@ export default function PolicyHolderHome() {
                         const note = getDocRequestNote(selectedClaim, doc);
                         const reqTime = getDocRequestTime(selectedClaim, doc);
                         return (
-                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
+                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-normal text-xs w-full">
                             <span className="w-2 h-2 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                              <span className="font-extrabold">{doc}</span>
+                              <span className="font-semibold">{doc}</span>
                               {reqTime && (
-                                <span className="text-red-600 font-extrabold">
+                                <span className="text-red-600 font-medium">
                                   (Requested: {reqTime} by {getDocRequestSender(selectedClaim, doc)})
                                 </span>
                               )}
                               {note && (
-                                <span className="col-span-1 sm:col-span-2 text-[11px] font-medium text-slate-500 italic mt-0.5 pl-0.5">
+                                <span className="col-span-1 sm:col-span-2 text-[11px] font-normal text-slate-500 italic mt-0.5 pl-0.5">
                                   Note: "{note}"
                                 </span>
                               )}
@@ -1341,7 +1341,7 @@ export default function PolicyHolderHome() {
                     </ul>
                     <Link
                       href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
-                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
                       Go to Documents
                     </Link>
@@ -1353,7 +1353,7 @@ export default function PolicyHolderHome() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>

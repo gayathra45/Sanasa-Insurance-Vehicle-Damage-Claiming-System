@@ -451,7 +451,7 @@ function TrackClaimsContent() {
 
           return (
             <div key={step.num} className="flex flex-col items-center z-10 flex-1">
-              <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-extrabold ${circleClass}`}>
+              <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-semibold ${circleClass}`}>
                 {isCompleted ? (
                   <svg className="w-5 h-5 text-[#00b050]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -460,7 +460,7 @@ function TrackClaimsContent() {
                   step.num
                 )}
               </div>
-              <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-extrabold" : isCompleted ? "text-emerald-700 font-extrabold" : "text-slate-400"}`}>
+              <span className={`text-[11px] mt-2 leading-none ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-emerald-700 font-semibold" : "text-slate-400 font-normal"}`}>
                 {step.label}
               </span>
             </div>
@@ -485,7 +485,7 @@ function TrackClaimsContent() {
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             {t.title}
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
             {t.subtitle}
           </p>
         </header>
@@ -507,12 +507,12 @@ function TrackClaimsContent() {
               placeholder={t.idPlaceholder}
               value={claimId}
               onChange={(e) => setClaimId(e.target.value)}
-              className="w-full bg-[#f1f5f9] text-slate-800 rounded-full py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-300 font-bold placeholder:text-slate-400 placeholder:font-medium shadow-inner"
+              className="w-full bg-[#f1f5f9] text-slate-800 rounded-full py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-300 font-semibold placeholder:text-slate-400 placeholder:font-normal shadow-inner"
             />
           </div>
           <button
             type="submit"
-            className="w-full md:w-auto bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-base py-4 px-8 rounded-full shadow-md cursor-pointer border-none transition-all duration-150 active:scale-95 whitespace-nowrap"
+            className="w-full md:w-auto bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-base py-4 px-8 rounded-full shadow-md cursor-pointer border-none transition-all duration-150 active:scale-95 whitespace-nowrap"
           >
             {t.trackBtn}
           </button>
@@ -520,14 +520,14 @@ function TrackClaimsContent() {
 
         {/* Tracking Output Block */}
         {isLoading ? (
-          <div className="text-center py-12 text-slate-500 font-bold text-lg">
+          <div className="text-center py-12 text-slate-500 font-medium text-lg">
             {t.searching}
           </div>
         ) : trackedClaim ? (
           <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-[24px] shadow-lg overflow-hidden transition-all duration-300">
             {/* Header */}
             <div className="px-8 py-5 bg-slate-50 border-b border-slate-200">
-              <h3 className="text-[20px] font-extrabold text-[#0f2d3a] tracking-tight leading-none">
+              <h3 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
                 {t.detailsTitle} – {trackedClaim.claimNumber}
               </h3>
             </div>
@@ -548,15 +548,15 @@ function TrackClaimsContent() {
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-[15px] font-extrabold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
-                      <p className="text-emerald-700 text-xs font-semibold mt-0.5">The branch office has submitted the transaction bank receipt.</p>
+                      <h4 className="text-[15px] font-semibold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
+                      <p className="text-emerald-700 text-xs font-normal mt-0.5">The branch office has submitted the transaction bank receipt.</p>
                     </div>
                   </div>
                   <a
                     href={trackedClaim.paymentReceipt.startsWith("http") || trackedClaim.paymentReceipt.startsWith("data:") ? trackedClaim.paymentReceipt : `${API_URL.replace("/api", "")}/uploads/${trackedClaim.paymentReceipt}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
+                    className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -567,44 +567,44 @@ function TrackClaimsContent() {
               )}
 
               {/* 2-Column Info Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-8 px-2 border-b border-slate-100 pb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-5 text-sm font-normal text-slate-700 mb-8 px-2 border-b border-slate-100 pb-8">
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">{t.vehicle}</span>
-                  <span className="font-extrabold text-slate-800">{formatNumberPlate(trackedClaim.vehiclePlate)}</span>
+                  <span className="text-slate-400 font-medium">{t.vehicle}</span>
+                  <span className="font-semibold text-slate-800">{formatNumberPlate(trackedClaim.vehiclePlate)}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">{t.damageType}</span>
-                  <span className="font-extrabold text-slate-800">{trackedClaim.damageType}</span>
+                  <span className="text-slate-400 font-medium">{t.damageType}</span>
+                  <span className="font-semibold text-slate-800">{trackedClaim.damageType}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">{t.estAmount}</span>
-                  <span className="font-extrabold text-slate-800">
+                  <span className="text-slate-400 font-medium">{t.estAmount}</span>
+                  <span className="font-semibold text-slate-800">
                     {trackedClaim.amount.startsWith("Rs.") ? "LKR " + trackedClaim.amount.substring(4) : trackedClaim.amount}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">{t.date}</span>
-                  <span className="font-extrabold text-slate-800">{trackedClaim.incidentDate}</span>
+                  <span className="text-slate-400 font-medium">{t.date}</span>
+                  <span className="font-semibold text-slate-800">{trackedClaim.incidentDate}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">{t.officer}</span>
-                  <span className="font-extrabold text-slate-800">{trackedClaim.officer || "Agent Saman"}</span>
+                  <span className="text-slate-400 font-medium">{t.officer}</span>
+                  <span className="font-semibold text-slate-800">{trackedClaim.officer || "Agent Saman"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">{t.branch}</span>
-                  <span className="font-extrabold text-slate-800">{trackedClaim.branch ? (trackedClaim.branch.toLowerCase().includes("branch") ? trackedClaim.branch : trackedClaim.branch + " Branch") : "Galle Branch"}</span>
+                  <span className="text-slate-400 font-medium">{t.branch}</span>
+                  <span className="font-semibold text-slate-800">{trackedClaim.branch ? (trackedClaim.branch.toLowerCase().includes("branch") ? trackedClaim.branch : trackedClaim.branch + " Branch") : "Galle Branch"}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-slate-400 font-bold">{t.location}</span>
-                  <span className="font-extrabold text-slate-800">{trackedClaim.location || "N/A"}</span>
+                  <span className="text-slate-400 font-medium">{t.location}</span>
+                  <span className="font-semibold text-slate-800">{trackedClaim.location || "N/A"}</span>
                 </div>
               </div>
 
               {/* Incident description */}
               {trackedClaim.description && (
                 <div className="px-2 mb-6">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1.5">{t.description}</p>
-                  <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1.5">{t.description}</p>
+                  <p className="text-slate-600 text-sm font-normal leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     "{trackedClaim.description}"
                   </p>
                 </div>
@@ -613,38 +613,38 @@ function TrackClaimsContent() {
               {/* Other Vehicles Involved */}
               {trackedClaim.otherVehicleDetails && (
                 <div className="px-2 mb-6 text-left">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
                   {Array.isArray(trackedClaim.otherVehicleDetails) ? (
                     trackedClaim.otherVehicleDetails.length === 0 ? (
-                      <div className="text-xs text-slate-500 italic select-none">No other vehicles involved.</div>
+                      <div className="text-xs text-slate-500 italic select-none font-normal">No other vehicles involved.</div>
                     ) : (
                       <div className="space-y-4">
                         {trackedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
                           <div key={vIdx} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
-                            <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
+                            <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
                             <div className="grid grid-cols-2 gap-4 text-left">
                               <div>
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
-                                <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
+                                <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                                <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
                               </div>
                               <div>
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
-                                <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.driverName || "—"}</span>
+                                <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                                <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.driverName || "—"}</span>
                               </div>
                               <div>
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
-                                <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
+                                <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                                <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
                               </div>
                               <div>
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
-                                <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.policyNumber || "—"}</span>
+                                <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                                <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.policyNumber || "—"}</span>
                               </div>
                             </div>
 
                             {/* License Photos */}
                             {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
                               <div className="pt-2 border-t border-slate-200/60">
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
+                                <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
                                 <div className="flex flex-wrap gap-2.5">
                                   {vehicle.licensePhotos.map((url: string, idx: number) => {
                                     let docUrl = url;
@@ -668,7 +668,7 @@ function TrackClaimsContent() {
                             {/* Vehicle Photos */}
                             {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
                               <div className="pt-2 border-t border-slate-200/60">
-                                <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Vehicle Photos</span>
+                                <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Vehicle Photos</span>
                                 <div className="flex flex-wrap gap-2.5">
                                   {vehicle.vehiclePhotos.map((url: string, idx: number) => {
                                     let docUrl = url;
@@ -697,27 +697,27 @@ function TrackClaimsContent() {
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
                         <div className="grid grid-cols-2 gap-4 text-left">
                           <div>
-                            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
-                            <span className="block text-slate-800 text-xs font-bold mt-0.5">{trackedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
+                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                            <span className="block text-slate-800 text-xs font-semibold mt-0.5">{trackedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
                           </div>
                           <div>
-                            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
-                            <span className="block text-slate-800 text-xs font-bold mt-0.5">{trackedClaim.otherVehicleDetails.driverName || "—"}</span>
+                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                            <span className="block text-slate-800 text-xs font-semibold mt-0.5">{trackedClaim.otherVehicleDetails.driverName || "—"}</span>
                           </div>
                           <div>
-                            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
-                            <span className="block text-slate-800 text-xs font-bold mt-0.5">{trackedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
+                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                            <span className="block text-slate-800 text-xs font-semibold mt-0.5">{trackedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
                           </div>
                           <div>
-                            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
-                            <span className="block text-slate-800 text-xs font-bold mt-0.5">{trackedClaim.otherVehicleDetails.policyNumber || "—"}</span>
+                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                            <span className="block text-slate-800 text-xs font-semibold mt-0.5">{trackedClaim.otherVehicleDetails.policyNumber || "—"}</span>
                           </div>
                         </div>
 
                         {/* License Photos */}
                         {trackedClaim.otherVehicleDetails.licensePhotos && trackedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
                           <div className="pt-2 border-t border-slate-200/60">
-                            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
+                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
                             <div className="flex flex-wrap gap-2.5">
                               {trackedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -741,7 +741,7 @@ function TrackClaimsContent() {
                         {/* Vehicle Photos */}
                         {trackedClaim.otherVehicleDetails.vehiclePhotos && trackedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
                           <div className="pt-2 border-t border-slate-200/60">
-                            <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
+                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
                             <div className="flex flex-wrap gap-2.5">
                               {trackedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -768,23 +768,23 @@ function TrackClaimsContent() {
               )}
               {/* Messages & Notifications Section */}
               <div className="px-2 mt-6">
-                <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
+                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
                 {trackedClaim.messages && trackedClaim.messages.length > 0 ? (
                   <div className="flex flex-col gap-2.5 max-h-[160px] overflow-y-auto pr-1">
                     {trackedClaim.messages.map((msg: any, index: number) => (
                       <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                         <div className="flex justify-between items-center text-[11px] select-none">
-                          <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
-                          <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
+                          <span className="font-semibold text-[#0f2d3a]">{msg.sender}</span>
+                          <span className="text-slate-400 font-normal">{formatDateString(msg.sentAt)}</span>
                         </div>
-                        <p className="text-slate-700 text-xs font-semibold leading-relaxed m-0">
+                        <p className="text-slate-700 text-xs font-normal leading-relaxed m-0">
                           {msg.message}
                         </p>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-slate-500 text-xs italic font-medium bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
+                  <p className="text-slate-500 text-xs italic font-normal bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
                     No notifications or messages have been sent for this claim.
                   </p>
                 )}
@@ -793,8 +793,8 @@ function TrackClaimsContent() {
               {/* Warning Alert Box */}
               {trackedClaim.documentsRequested && getUserRequestedDocs(trackedClaim).length > 0 && (
                 <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mt-6">
-                  <h4 className="text-[#9c3535] font-extrabold text-sm mb-1.5">Documents Requested</h4>
-                  <p className="text-[#aa4f4f] text-[13px] font-semibold leading-relaxed mb-3">
+                  <h4 className="text-[#9c3535] font-semibold text-sm mb-1.5">Documents Requested</h4>
+                  <p className="text-[#aa4f4f] text-[13px] font-normal leading-relaxed mb-3">
                     The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
                   </p>
                   <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
@@ -802,17 +802,17 @@ function TrackClaimsContent() {
                       const note = getDocRequestNote(trackedClaim, doc);
                       const reqTime = getDocRequestTime(trackedClaim, doc);
                       return (
-                        <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
+                        <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-normal text-xs w-full">
                           <span className="w-2 h-2 rounded-full bg-red-650 shrink-0 mt-1.5" />
                           <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                            <span className="font-extrabold">{doc}</span>
+                            <span className="font-semibold">{doc}</span>
                             {reqTime && (
-                              <span className="text-red-600 font-extrabold">
+                              <span className="text-red-600 font-semibold">
                                 (Requested: {reqTime} by {getDocRequestSender(trackedClaim, doc)})
                               </span>
                             )}
                             {note && (
-                              <span className="col-span-1 sm:col-span-2 text-[11px] font-medium text-slate-500 italic mt-0.5 pl-0.5">
+                              <span className="col-span-1 sm:col-span-2 text-[11px] font-normal text-slate-500 italic mt-0.5 pl-0.5">
                                 Note: "{note}"
                               </span>
                             )}
@@ -823,7 +823,7 @@ function TrackClaimsContent() {
                   </ul>
                   <Link
                     href={`/Policy_Holder/Documents?uploadClaim=${trackedClaim.claimNumber}`}
-                    className="inline-block bg-red-650 hover:bg-red-750 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    className="inline-block bg-red-650 hover:bg-red-750 text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                   >
                     Go to Documents
                   </Link>
@@ -832,11 +832,11 @@ function TrackClaimsContent() {
             </div>
           </div>
         ) : searchAttempted ? (
-          <div className="text-center py-12 text-red-500 font-bold bg-red-50/20 border border-red-100 rounded-3xl max-w-md mx-auto animate-pulse">
+          <div className="text-center py-12 text-red-500 font-medium bg-red-50/20 border border-red-100 rounded-3xl max-w-md mx-auto animate-pulse">
             {t.noClaimFound} "{claimId}". Please verify your reference number.
           </div>
         ) : (
-          <div className="text-center py-16 text-slate-400 font-semibold max-w-md mx-auto select-none">
+          <div className="text-center py-16 text-slate-400 font-normal max-w-md mx-auto select-none">
             <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
             </svg>

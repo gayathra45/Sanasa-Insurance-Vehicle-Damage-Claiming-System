@@ -390,7 +390,7 @@ export default function PolicyHolderNotifications() {
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             Notifications
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
             {loading
               ? "Loading updates..."
               : notifications.length > 0
@@ -418,7 +418,7 @@ export default function PolicyHolderNotifications() {
               placeholder="Search notifications..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-medium"
+              className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-normal"
             />
             {searchQuery && (
               <button
@@ -433,7 +433,7 @@ export default function PolicyHolderNotifications() {
             )}
             <button
               type="button"
-              className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-bold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20"
+              className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-semibold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20"
             >
               Search
             </button>
@@ -443,7 +443,7 @@ export default function PolicyHolderNotifications() {
           {notifications.some(n => !readIds.includes(n.id)) && (
             <button
               onClick={markAllAsRead}
-              className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-bold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
+              className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
             >
               <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
@@ -458,9 +458,9 @@ export default function PolicyHolderNotifications() {
         <div className="flex flex-wrap gap-2.5 mb-8 border-b border-slate-100 pb-5 select-none">
           <button
             onClick={() => setActiveTab("all")}
-            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "all"
-                ? "bg-[#0d2a3a] border-[#0d2a3a] text-white shadow-sm"
+                ? "bg-[#0d2a3a] border-[#0d2a3a] text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
@@ -468,14 +468,14 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("unread")}
-            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "unread"
-                ? "bg-sky-500 border-sky-500 text-white shadow-sm"
+                ? "bg-sky-500 border-sky-500 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Unread
-            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+            <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
               activeTab === "unread" ? "bg-white/20 text-white" : "bg-red-500 text-white"
             }`}>
               {notifications.filter((n) => !readIds.includes(n.id)).length}
@@ -483,14 +483,14 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("read")}
-            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "read"
-                ? "bg-slate-600 border-slate-600 text-white shadow-sm"
+                ? "bg-slate-600 border-slate-600 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Read
-            <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+            <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
               activeTab === "read" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
             }`}>
               {notifications.filter((n) => readIds.includes(n.id)).length}
@@ -498,9 +498,9 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("urgent")}
-            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "urgent"
-                ? "bg-red-500 border-red-500 text-white shadow-sm"
+                ? "bg-red-500 border-red-500 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
@@ -508,9 +508,9 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("approved")}
-            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "approved"
-                ? "bg-emerald-600 border-emerald-600 text-white shadow-sm"
+                ? "bg-emerald-600 border-emerald-600 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
@@ -518,9 +518,9 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("status")}
-            className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "status"
-                ? "bg-amber-500 border-amber-500 text-white shadow-sm"
+                ? "bg-amber-500 border-amber-500 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
@@ -536,7 +536,7 @@ export default function PolicyHolderNotifications() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              <p className="text-slate-500 font-semibold text-sm">Fetching notifications...</p>
+              <p className="text-slate-500 font-medium text-sm">Fetching notifications...</p>
             </div>
           ) : filteredNotifs.length > 0 ? (
             <div className="flex flex-col gap-4.5">
@@ -594,7 +594,7 @@ export default function PolicyHolderNotifications() {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3">
-                          <h4 className={`font-bold text-slate-800 text-base md:text-lg leading-snug ${isRead ? "opacity-75" : ""}`}>
+                          <h4 className={`font-semibold text-slate-800 text-base md:text-lg leading-snug ${isRead ? "opacity-75" : ""}`}>
                             {n.title}
                           </h4>
                           
@@ -604,11 +604,11 @@ export default function PolicyHolderNotifications() {
                           )}
                         </div>
 
-                        <p className="text-slate-600 text-sm md:text-base font-semibold leading-relaxed mt-2.5">
+                        <p className="text-slate-600 text-sm md:text-base font-normal leading-relaxed mt-2.5">
                           {n.description}
                         </p>
                         {n.subText && (
-                          <p className="text-xs text-slate-500 font-medium italic mt-2.5">
+                          <p className="text-xs text-slate-500 font-normal italic mt-2.5">
                             * {n.subText}
                           </p>
                         )}
@@ -628,7 +628,7 @@ export default function PolicyHolderNotifications() {
                               setSelectedClaim(n.claim);
                               markAsRead(n.id);
                             }}
-                            className={`font-bold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none ${
+                            className={`font-semibold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none ${
                               isApproved
                                 ? "bg-emerald-500 hover:bg-emerald-600 text-white"
                                 : "bg-[#0d2a3a] hover:bg-[#0284c7] text-white"
@@ -639,7 +639,7 @@ export default function PolicyHolderNotifications() {
                         ) : (
                           <Link
                             href={n.link}
-                            className={`font-bold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline ${
+                            className={`font-semibold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline ${
                               isUrgent
                                 ? "bg-red-500 hover:bg-red-600 text-white"
                                 : isApproved
@@ -657,12 +657,12 @@ export default function PolicyHolderNotifications() {
                             e.stopPropagation();
                             toggleReadStatus(n.id);
                           }}
-                          className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-bold text-xs px-5 py-3 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
+                          className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-semibold text-xs px-5 py-3 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
                         >
                           {isRead ? "Mark as Unread" : "Mark as Read"}
                         </button>
                       </div>
-                      <span className="text-xs text-slate-400 font-bold self-end sm:sm:self-center pr-2">
+                      <span className="text-xs text-slate-400 font-normal self-end sm:self-center pr-2">
                         {n.date}
                       </span>
                     </div>
@@ -680,8 +680,8 @@ export default function PolicyHolderNotifications() {
                 </svg>
               </div>
               <div>
-                <h4 className="font-extrabold text-slate-800 text-lg">No Notifications Found</h4>
-                <p className="text-slate-500 font-semibold text-sm max-w-sm mt-2 leading-relaxed">
+                <h4 className="font-semibold text-slate-800 text-lg">No Notifications Found</h4>
+                <p className="text-slate-500 font-normal text-sm max-w-sm mt-2 leading-relaxed">
                   We couldn't find any notifications matching the selected tab criteria or search keywords.
                 </p>
               </div>
@@ -752,10 +752,10 @@ export default function PolicyHolderNotifications() {
 
                 return (
                   <div key={step.num} className="flex flex-col items-center z-10 flex-1">
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-extrabold ${circleClass}`}>
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold ${circleClass}`}>
                       {step.num}
                     </div>
-                    <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-extrabold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
+                    <span className={`text-[11px] font-medium mt-2 leading-none ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>
@@ -771,12 +771,12 @@ export default function PolicyHolderNotifications() {
               
               {/* Modal Header Title */}
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[22px] font-extrabold text-[#0f2d3a] tracking-tight leading-none">
+                <h2 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
                   Claim Details – {selectedClaim.claimNumber}
                 </h2>
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="text-slate-400 hover:text-slate-600 text-2xl font-bold border-none bg-transparent cursor-pointer"
+                  className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer"
                 >
                   &times;
                 </button>
@@ -789,18 +789,18 @@ export default function PolicyHolderNotifications() {
                 {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
 
                 {/* 2-Column Grid matching mockup inline labels */}
-                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-6 px-2">
+                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-sm font-normal text-slate-700 mb-6 px-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Vehicle:</span>
-                    <span className="font-extrabold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Vehicle:</span>
+                    <span className="font-semibold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Type:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.damageType}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Type:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.damageType}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Est. Amount:</span>
-                    <span className="font-extrabold text-slate-800">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Est. Amount:</span>
+                    <span className="font-semibold text-slate-800">
                       {selectedClaim.amount
                         ? (typeof selectedClaim.amount === "string"
                           ? (selectedClaim.amount.startsWith("Rs.") ? "LKR " + selectedClaim.amount.substring(4) : selectedClaim.amount)
@@ -809,28 +809,28 @@ export default function PolicyHolderNotifications() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Date:</span>
-                    <span className="font-extrabold text-slate-800">{formatDateString(selectedClaim.incidentDate)}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Date:</span>
+                    <span className="font-semibold text-slate-800">{formatDateString(selectedClaim.incidentDate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Officer:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Officer:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Branch:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Branch:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Location:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.location || "N/A"}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Location:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.location || "N/A"}</span>
                   </div>
                 </div>
 
                 {/* Description Text (If available) */}
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Incident Description</p>
+                    <p className="text-slate-600 text-sm font-normal leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
@@ -839,38 +839,38 @@ export default function PolicyHolderNotifications() {
                 {/* Other Vehicles Involved */}
                 {selectedClaim.otherVehicleDetails && (
                   <div className="px-2 mb-6 text-left">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
                     {Array.isArray(selectedClaim.otherVehicleDetails) ? (
                       selectedClaim.otherVehicleDetails.length === 0 ? (
-                        <div className="text-xs text-slate-500 italic select-none">No other vehicles involved.</div>
+                        <div className="text-xs text-slate-500 italic select-none font-normal">No other vehicles involved.</div>
                       ) : (
                         <div className="space-y-4">
                           {selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
                             <div key={vIdx} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
-                              <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
+                              <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
                               <div className="grid grid-cols-2 gap-4 text-left">
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
                                 </div>
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.driverName || "—"}</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.driverName || "—"}</span>
                                 </div>
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
                                 </div>
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.policyNumber || "—"}</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.policyNumber || "—"}</span>
                                 </div>
                               </div>
 
                               {/* License Photos */}
                               {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
                                 <div className="pt-2 border-t border-slate-200/60">
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
                                   <div className="flex flex-wrap gap-2.5">
                                     {vehicle.licensePhotos.map((url: string, idx: number) => {
                                       let docUrl = url;
@@ -894,7 +894,7 @@ export default function PolicyHolderNotifications() {
                               {/* Vehicle Photos */}
                               {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
                                 <div className="pt-2 border-t border-slate-200/60">
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
                                   <div className="flex flex-wrap gap-2.5">
                                     {vehicle.vehiclePhotos.map((url: string, idx: number) => {
                                       let docUrl = url;
@@ -923,27 +923,27 @@ export default function PolicyHolderNotifications() {
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
                           <div className="grid grid-cols-2 gap-4 text-left">
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
                             </div>
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
                             </div>
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
                             </div>
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
                             </div>
                           </div>
 
                           {/* License Photos */}
                           {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
                             <div className="pt-2 border-t border-slate-200/60">
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
                               <div className="flex flex-wrap gap-2.5">
                                 {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -967,7 +967,7 @@ export default function PolicyHolderNotifications() {
                           {/* Vehicle Photos */}
                           {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
                             <div className="pt-2 border-t border-slate-200/60">
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
                               <div className="flex flex-wrap gap-2.5">
                                 {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -995,7 +995,7 @@ export default function PolicyHolderNotifications() {
 
                 {/* Messages & Notifications Section */}
                 <div className="px-2 mt-4 mb-2">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
                   {(() => {
                     const filteredMessages = (selectedClaim.messages || []).filter((msg: any) => msg.recipient !== "Agent");
                     if (filteredMessages.length > 0) {
@@ -1004,10 +1004,10 @@ export default function PolicyHolderNotifications() {
                           {filteredMessages.map((msg: any, index: number) => (
                             <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                               <div className="flex justify-between items-center text-[11px] select-none">
-                                <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
-                                <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
+                                <span className="font-semibold text-[#0f2d3a]">{msg.sender}</span>
+                                <span className="text-slate-400 font-normal">{formatDateString(msg.sentAt)}</span>
                               </div>
-                              <p className="text-slate-700 text-xs font-semibold leading-relaxed m-0">
+                              <p className="text-slate-700 text-xs font-normal leading-relaxed m-0">
                                 {msg.message}
                               </p>
                             </div>
@@ -1016,7 +1016,7 @@ export default function PolicyHolderNotifications() {
                       );
                     } else {
                       return (
-                        <p className="text-slate-500 text-xs italic font-medium bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
+                        <p className="text-slate-500 text-xs italic font-normal bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
                           No notifications or messages have been sent for this claim.
                         </p>
                       );
@@ -1027,8 +1027,8 @@ export default function PolicyHolderNotifications() {
                 {/* Warning Alert Box matching mockup */}
                 {selectedClaim.documentsRequested && getUserRequestedDocs(selectedClaim).length > 0 && (
                   <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2 mt-4">
-                    <h4 className="text-[#9c3535] font-extrabold text-sm mb-1.5">Documents Requested</h4>
-                    <p className="text-[#aa4f4f] text-[13px] font-semibold leading-relaxed mb-3">
+                    <h4 className="text-[#9c3535] font-semibold text-sm mb-1.5">Documents Requested</h4>
+                    <p className="text-[#aa4f4f] text-[13px] font-normal leading-relaxed mb-3">
                       The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
                     </p>
                     <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
@@ -1036,17 +1036,17 @@ export default function PolicyHolderNotifications() {
                         const note = getDocRequestNote(selectedClaim, doc);
                         const reqTime = getDocRequestTime(selectedClaim, doc);
                         return (
-                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
+                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-normal text-xs w-full">
                             <span className="w-2 h-2 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                              <span className="font-extrabold">{doc}</span>
+                              <span className="font-semibold">{doc}</span>
                               {reqTime && (
-                                <span className="text-red-600 font-extrabold">
+                                <span className="text-red-600 font-semibold">
                                   (Requested: {reqTime} by {getDocRequestSender(selectedClaim, doc)})
                                 </span>
                               )}
                               {note && (
-                                <span className="col-span-1 sm:col-span-2 text-[11px] font-medium text-slate-500 italic mt-0.5 pl-0.5">
+                                <span className="col-span-1 sm:col-span-2 text-[11px] font-normal text-slate-500 italic mt-0.5 pl-0.5">
                                   Note: "{note}"
                                 </span>
                               )}
@@ -1057,7 +1057,7 @@ export default function PolicyHolderNotifications() {
                     </ul>
                     <Link
                       href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
-                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
                       Go to Documents
                     </Link>
@@ -1069,7 +1069,7 @@ export default function PolicyHolderNotifications() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>

@@ -24,39 +24,39 @@ export default function PolicyHolderFooter() {
         {/* Center Sections - Two Navigation Columns */}
         <div className="flex flex-col sm:flex-row gap-12 md:gap-40 justify-center md:justify-center flex-1 w-full text-center sm:text-left">
           {/* Column 1 */}
-          <div className="flex flex-col gap-2.5 font-medium text-base">
-            <Link href="/Policy_Holder/Home" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+          <div className="flex flex-col gap-2.5 font-normal text-base">
+            <Link href="/Policy_Holder/Home" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               Home
             </Link>
-            <Link href="/Policy_Holder/My_claims" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+            <Link href="/Policy_Holder/My_claims" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               My Claims
             </Link>
-            <Link href="/Policy_Holder/New_Claim" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+            <Link href="/Policy_Holder/New_Claim" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               New Claims
             </Link>
-            <Link href="/Policy_Holder/Documents" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+            <Link href="/Policy_Holder/Documents" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               Documents
             </Link>
-            <Link href="/Policy_Holder/Contact" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+            <Link href="/Policy_Holder/Contact" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               Contact
             </Link>
           </div>
 
           {/* Column 2 */}
-          <div className="flex flex-col gap-2.5 font-medium text-base">
-            <Link href="/Policy_Holder/Notifications" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+          <div className="flex flex-col gap-2.5 font-normal text-base">
+            <Link href="/Policy_Holder/Notifications" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               Notifications
             </Link>
-            <Link href="/Policy_Holder/MyVehicles" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+            <Link href="/Policy_Holder/MyVehicles" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               My Vehicles
             </Link>
-            <Link href="/Policy_Holder/TrackClaims" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+            <Link href="/Policy_Holder/TrackClaims" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               Track Claims
             </Link>
-            <Link href="/Policy_Holder/HelpCentre" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+            <Link href="/Policy_Holder/HelpCentre" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               Help Centre
             </Link>
-            <Link href="/Policy_Holder/Profile" className="hover:text-white/80 transition-colors duration-150 no-underline text-white font-semibold">
+            <Link href="/Policy_Holder/Profile" className="hover:text-white text-slate-200 transition-colors duration-150 no-underline font-normal">
               My Profile
             </Link>
           </div>
@@ -80,7 +80,7 @@ export default function PolicyHolderFooter() {
                 d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.145-.44.02-.927.396-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
               />
             </svg>
-            <span className="font-bold text-base md:text-lg">
+            <span className="font-medium text-base md:text-lg">
               24 Hours : 0725 575 575
             </span>
           </div>
@@ -144,7 +144,7 @@ export default function PolicyHolderFooter() {
 
       {/* Copyright Bar */}
       <div className="max-w-7xl mx-auto text-center pt-6 mt-10 border-t border-white/15 text-[14px]">
-        <p className="m-0 font-medium">
+        <p className="m-0 font-normal text-slate-300">
           © 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
         </p>
       </div>

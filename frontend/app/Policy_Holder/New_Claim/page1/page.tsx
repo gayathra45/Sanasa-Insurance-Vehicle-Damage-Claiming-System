@@ -240,13 +240,13 @@ export default function UploadDocumentsPage() {
             <svg className="w-10 h-10 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
               <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
             </svg>
-            <span className="text-slate-800 text-[14px] font-bold block leading-tight">
+            <span className="text-slate-800 text-[14px] font-medium block leading-tight">
               {label}
             </span>
-            <span className="text-slate-600 text-[10px] mt-1.5 font-medium leading-tight">
+            <span className="text-slate-600 text-[10px] mt-1.5 font-normal leading-tight">
               {cardText}
             </span>
-            <span className="text-slate-400 text-[8px] mt-0.5 font-semibold leading-tight select-none">
+            <span className="text-slate-400 text-[8px] mt-0.5 font-normal leading-tight select-none">
               JPG,PNG - max 5MB each. Multiple Files Allowed
             </span>
           </div>
@@ -276,7 +276,7 @@ export default function UploadDocumentsPage() {
                         e.stopPropagation();
                         handleRemoveFile(idx, stateSetter);
                       }}
-                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold cursor-pointer border-none shadow"
+                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
                     >
                       &times;
                     </button>
@@ -287,13 +287,13 @@ export default function UploadDocumentsPage() {
             
             {/* Action Bar */}
             <div className="flex items-center justify-between border-t border-slate-300/60 pt-2 mt-2">
-              <span className="text-slate-800 text-[11px] font-bold">
+              <span className="text-slate-800 text-[11px] font-medium">
                 {label} ({state.files.length} selected)
               </span>
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[10px] font-bold py-1 px-3 rounded-full cursor-pointer border-none shadow-sm transition-all"
+                className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[10px] font-medium py-1 px-3 rounded-full cursor-pointer border-none shadow-sm transition-all"
               >
                 Add More
               </button>
@@ -319,7 +319,7 @@ export default function UploadDocumentsPage() {
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             File New Claim
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
             Report an accident or damage incident
           </p>
         </header>
@@ -340,7 +340,7 @@ export default function UploadDocumentsPage() {
 
             {/* Subsection 1: Accident Photos */}
             <div className="flex flex-col">
-              <h3 className="text-[17px] font-bold text-slate-800 mb-4 select-none">
+              <h3 className="text-[17px] font-semibold text-slate-800 mb-4 select-none">
                 Accident Photos <span className="text-red-500 ml-0.5">*</span>
               </h3>
               
@@ -353,7 +353,7 @@ export default function UploadDocumentsPage() {
 
             {/* Subsection 2: Driving License */}
             <div className="flex flex-col mt-4">
-              <h3 className="text-[17px] font-bold text-slate-800 mb-4 select-none">
+              <h3 className="text-[17px] font-semibold text-slate-800 mb-4 select-none">
                 Driving License <span className="text-red-500 ml-0.5">*</span>
               </h3>
 
@@ -369,7 +369,7 @@ export default function UploadDocumentsPage() {
           <div className="flex flex-row justify-between items-center mt-6 mb-10">
             <Link
               href="/Policy_Holder/New_Claim"
-              className={`bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center ${
+              className={`bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center ${
                 isSubmitting ? "pointer-events-none opacity-50" : ""
               }`}
             >
@@ -378,7 +378,7 @@ export default function UploadDocumentsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-[#0f2d3a]/50 text-white font-bold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
+              className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-[#0f2d3a]/50 text-white font-semibold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -420,20 +420,20 @@ export default function UploadDocumentsPage() {
             </div>
 
             {/* Thank You & Success messages */}
-            <h2 className="text-[25px] font-black text-[#0f2d3a] tracking-tight mt-6 leading-none">
+            <h2 className="text-[25px] font-bold text-[#0f2d3a] tracking-tight mt-6 leading-none">
               Thank You.
             </h2>
-            <p className="text-[22px] font-bold text-[#0f2d3a] tracking-tight mt-2 leading-none">
+            <p className="text-[22px] font-semibold text-[#0f2d3a] tracking-tight mt-2 leading-none">
               Application Submitted!
             </p>
 
             {/* Reference Number Pill */}
-            <div className="bg-black text-white font-extrabold text-[15px] px-8 py-3 rounded-full mt-7 shadow-md tracking-wider">
+            <div className="bg-black text-white font-bold text-[15px] px-8 py-3 rounded-full mt-7 shadow-md tracking-wider">
               {generatedClaimNumber}
             </div>
 
             {/* Sub-text description */}
-            <p className="text-slate-600 text-xs md:text-[13px] font-semibold text-center leading-relaxed mt-6 max-w-[320px] select-none">
+            <p className="text-slate-600 text-xs md:text-[13px] font-normal text-center leading-relaxed mt-6 max-w-[320px] select-none">
               Your insurance application has been received. Our office staff will review your documents.
             </p>
 
@@ -443,7 +443,7 @@ export default function UploadDocumentsPage() {
                 router.refresh();
                 router.push("/Policy_Holder/Home");
               }}
-              className="mt-9 self-start bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-extrabold text-[14px] px-8 py-4 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
+              className="mt-9 self-start bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-semibold text-[14px] px-8 py-4 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
             >
               <span>Back to Home</span>
             </button>
@@ -451,7 +451,7 @@ export default function UploadDocumentsPage() {
         </div>
       )}
 
-                  {/* Custom Popup Modal */}
+      {/* Custom Popup Modal */}
       {customPopup.show && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
@@ -477,14 +477,14 @@ export default function UploadDocumentsPage() {
                   </svg>
                 </div>
               )}
-              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
+              <h3 className="font-semibold text-base text-slate-800 tracking-tight leading-none">
                 {customPopup.title}
               </h3>
             </div>
 
             {/* Message Body */}
             <div>
-              <p className="text-slate-500 text-[13px] font-semibold leading-relaxed">
+              <p className="text-slate-500 text-[13px] font-normal leading-relaxed">
                 {customPopup.message}
               </p>
             </div>
@@ -495,7 +495,7 @@ export default function UploadDocumentsPage() {
                 <>
                   <button
                     onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-medium transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
                   >
                     Cancel
                   </button>
@@ -504,7 +504,7 @@ export default function UploadDocumentsPage() {
                       setCustomPopup({ ...customPopup, show: false });
                       if (customPopup.onConfirm) customPopup.onConfirm();
                     }}
-                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-medium shadow-md transition-all cursor-pointer border-none"
                   >
                     Confirm
                   </button>
@@ -512,7 +512,7 @@ export default function UploadDocumentsPage() {
               ) : (
                 <button
                   onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-medium shadow-md transition-all cursor-pointer border-none"
                 >
                   OK
                 </button>

@@ -1005,7 +1005,7 @@ export default function FileNewClaim() {
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             File New Claim
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
             Report an accident or damage incident
           </p>
         </header>
@@ -1028,7 +1028,7 @@ export default function FileNewClaim() {
               
               {/* Select Vehicle Dropdown */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-semibold mb-1">
+                <label className="text-slate-800 text-sm font-medium mb-1">
                   Select Vehicle <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -1036,7 +1036,7 @@ export default function FileNewClaim() {
                     required
                     value={selectedVehicle}
                     onChange={(e) => setSelectedVehicle(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all cursor-pointer"
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
                   >
                     <option value="" disabled>Select Vehicle</option>
                     {vehicles.map((v) => (
@@ -1055,7 +1055,7 @@ export default function FileNewClaim() {
 
               {/* Incident Date */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-semibold mb-1">
+                <label className="text-slate-800 text-sm font-medium mb-1">
                   Incident Date <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -1066,14 +1066,14 @@ export default function FileNewClaim() {
                     max={maxDate}
                     value={incidentDate}
                     onChange={(e) => setIncidentDate(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 pr-10 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                    className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 pr-10 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
                   />
                 </div>
               </div>
 
               {/* Incident Time */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-semibold mb-1">
+                <label className="text-slate-800 text-sm font-medium mb-1">
                   Incident Time <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -1082,14 +1082,14 @@ export default function FileNewClaim() {
                     required
                     value={incidentTime}
                     onChange={(e) => setIncidentTime(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 pr-10 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                    className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 pr-10 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
                   />
                 </div>
               </div>
 
               {/* Damage Type Dropdown */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-semibold mb-1">
+                <label className="text-slate-800 text-sm font-medium mb-1">
                   Damage Type <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -1097,7 +1097,7 @@ export default function FileNewClaim() {
                     required
                     value={damageType}
                     onChange={(e) => setDamageType(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all cursor-pointer"
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
                   >
                     <option value="" disabled>Select Damage Type</option>
                     {damageTypes.map((type) => (
@@ -1118,7 +1118,7 @@ export default function FileNewClaim() {
 
             {/* Description Textarea */}
             <div className="flex flex-col gap-2 mt-2">
-              <label className="text-slate-800 text-sm font-semibold mb-1">
+              <label className="text-slate-800 text-sm font-medium mb-1">
                 Description <span className="text-red-500 ml-0.5">*</span>
               </label>
               <textarea
@@ -1126,7 +1126,7 @@ export default function FileNewClaim() {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl p-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl p-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
               />
             </div>
           </section>
@@ -1135,14 +1135,14 @@ export default function FileNewClaim() {
           <section className="flex flex-col gap-6 mt-4">
             <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
               <svg className="w-7 h-7 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
               </svg>
               Other Vehicles Involved (Optional)
             </h2>
 
             {/* Yes / No Selector Buttons */}
             <div className="flex flex-col gap-3">
-              <label className="text-slate-800 text-sm font-semibold">
+              <label className="text-slate-800 text-sm font-medium">
                 Were other vehicles involved in the accident? <span className="text-red-500 ml-0.5">*</span>
               </label>
               <div className="flex flex-row gap-4">
@@ -1152,9 +1152,9 @@ export default function FileNewClaim() {
                     setOtherVehiclesInvolved("yes");
                     if (otherVehiclesCount === 0) handleCountChange(1);
                   }}
-                  className={`flex-1 py-4 px-6 rounded-2xl font-bold transition-all border-2 text-center cursor-pointer ${
+                  className={`flex-1 py-4 px-6 rounded-2xl font-medium transition-all border-2 text-center cursor-pointer ${
                     otherVehiclesInvolved === "yes"
-                      ? "bg-[#0d2a3a] text-white border-[#0d2a3a] shadow-md animate-pulse"
+                      ? "bg-[#0d2a3a] text-white border-[#0d2a3a] shadow-md"
                       : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                   }`}
                 >
@@ -1167,9 +1167,9 @@ export default function FileNewClaim() {
                     setOtherVehiclesCount(0);
                     setOtherVehicles([]);
                   }}
-                  className={`flex-1 py-4 px-6 rounded-2xl font-bold transition-all border-2 text-center cursor-pointer ${
+                  className={`flex-1 py-4 px-6 rounded-2xl font-medium transition-all border-2 text-center cursor-pointer ${
                     otherVehiclesInvolved === "no"
-                      ? "bg-[#0d2a3a] text-white border-[#0d2a3a] shadow-md animate-pulse"
+                      ? "bg-[#0d2a3a] text-white border-[#0d2a3a] shadow-md"
                       : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                   }`}
                 >
@@ -1181,14 +1181,14 @@ export default function FileNewClaim() {
             {/* If YES: Show Vehicle Count select dropdown */}
             {otherVehiclesInvolved === "yes" && (
               <div className="flex flex-col gap-2 mt-2 transition-all">
-                <label className="text-slate-800 text-sm font-semibold mb-1">
+                <label className="text-slate-800 text-sm font-medium mb-1">
                   How many other vehicles were involved? <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
                   <select
                     value={otherVehiclesCount}
                     onChange={(e) => handleCountChange(Number(e.target.value))}
-                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all cursor-pointer"
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
                   >
                     <option value={1}>1 Vehicle</option>
                     <option value={2}>2 Vehicles</option>
@@ -1207,58 +1207,58 @@ export default function FileNewClaim() {
             {/* Dynamic fields listing cards for each vehicle */}
             {otherVehiclesInvolved === "yes" && otherVehicles.map((vehicle, index) => (
               <div key={index} className="bg-slate-50/50 border border-slate-200 rounded-3xl p-6 mt-2 shadow-sm flex flex-col gap-6 transition-all duration-300">
-                <h3 className="font-bold text-[#0d2a3a] text-lg select-none">Other Vehicle #{index + 1} Details</h3>
+                <h3 className="font-semibold text-[#0d2a3a] text-lg select-none">Other Vehicle #{index + 1} Details</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Vehicle Plate */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-semibold mb-1">Vehicle Number <span className="text-red-500 ml-0.5">*</span></label>
+                    <label className="text-slate-800 text-sm font-medium mb-1">Vehicle Number <span className="text-red-500 ml-0.5">*</span></label>
                     <input
                       type="text"
                       required
                       value={vehicle.vehiclePlate}
                       onChange={(e) => updateOtherVehicleField(index, "vehiclePlate", e.target.value)}
                       placeholder="e.g. WP CAA-1234"
-                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
                     />
                   </div>
 
                   {/* Driver Name */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-semibold mb-1">Driver Name <span className="text-red-500 ml-0.5">*</span></label>
+                    <label className="text-slate-800 text-sm font-medium mb-1">Driver Name <span className="text-red-500 ml-0.5">*</span></label>
                     <input
                       type="text"
                       required
                       value={vehicle.driverName}
                       onChange={(e) => updateOtherVehicleField(index, "driverName", e.target.value)}
                       placeholder="e.g. Sunil Perera"
-                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
                     />
                   </div>
 
                   {/* Insurance Name */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-semibold mb-1">Insurance Name <span className="text-red-500 ml-0.5">*</span></label>
+                    <label className="text-slate-800 text-sm font-medium mb-1">Insurance Name <span className="text-red-500 ml-0.5">*</span></label>
                     <input
                       type="text"
                       required
                       value={vehicle.insuranceCompany}
                       onChange={(e) => updateOtherVehicleField(index, "insuranceCompany", e.target.value)}
                       placeholder="e.g. Sri Lanka Insurance"
-                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
                     />
                   </div>
 
                   {/* Insurance Number */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-semibold mb-1">Insurance Number <span className="text-red-500 ml-0.5">*</span></label>
+                    <label className="text-slate-800 text-sm font-medium mb-1">Insurance Number <span className="text-red-500 ml-0.5">*</span></label>
                     <input
                       type="text"
                       required
                       value={vehicle.policyNumber}
                       onChange={(e) => updateOtherVehicleField(index, "policyNumber", e.target.value)}
                       placeholder="e.g. POL-98765432"
-                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
                     />
                   </div>
                 </div>
@@ -1267,7 +1267,7 @@ export default function FileNewClaim() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Driving License Photos Upload */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-semibold mb-1">
+                    <label className="text-slate-800 text-sm font-medium mb-1">
                       Driver's License Photos
                     </label>
                     <input
@@ -1287,7 +1287,7 @@ export default function FileNewClaim() {
                         <svg className="w-8 h-8 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
                         </svg>
-                        <span className="text-slate-800 text-xs font-bold block">
+                        <span className="text-slate-800 text-xs font-medium block">
                           Upload Driver's License Photos
                         </span>
                         <span className="text-slate-400 text-[9px] mt-1">
@@ -1306,19 +1306,19 @@ export default function FileNewClaim() {
                                   e.stopPropagation();
                                   removeOtherLicensePhoto(index, photoIdx);
                                 }}
-                                className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold cursor-pointer border-none shadow"
+                                className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
                               >
                                 &times;
                               </button>
                             </div>
                           ))}
                         </div>
-                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-bold text-slate-800 select-none">
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-800 select-none">
                           <span>{vehicle.licensePhotosPreviews.length} photo(s) selected</span>
                           <button
                             type="button"
                             onClick={() => document.getElementById(`license-upload-${index}`)?.click()}
-                            className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[9px] font-bold py-1 px-3 rounded-full cursor-pointer border-none"
+                            className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[9px] font-medium py-1 px-3 rounded-full cursor-pointer border-none"
                           >
                             Add More
                           </button>
@@ -1329,7 +1329,7 @@ export default function FileNewClaim() {
 
                   {/* Other Vehicle Damage Photos Upload */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-semibold mb-1">
+                    <label className="text-slate-800 text-sm font-medium mb-1">
                       Other Vehicle Damage Photos
                     </label>
                     <input
@@ -1349,7 +1349,7 @@ export default function FileNewClaim() {
                         <svg className="w-8 h-8 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
                         </svg>
-                        <span className="text-slate-800 text-xs font-bold block">
+                        <span className="text-slate-800 text-xs font-medium block">
                           Upload Damage / Accident Photos
                         </span>
                         <span className="text-slate-400 text-[9px] mt-1">
@@ -1368,19 +1368,19 @@ export default function FileNewClaim() {
                                   e.stopPropagation();
                                   removeOtherVehiclePhoto(index, photoIdx);
                                 }}
-                                className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold cursor-pointer border-none shadow"
+                                className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
                               >
                                 &times;
                               </button>
                             </div>
                           ))}
                         </div>
-                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-bold text-slate-800 select-none">
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-800 select-none">
                           <span>{vehicle.vehiclePhotosPreviews.length} photo(s) selected</span>
                           <button
                             type="button"
                             onClick={() => document.getElementById(`vehicle-upload-${index}`)?.click()}
-                            className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[9px] font-bold py-1 px-3 rounded-full cursor-pointer border-none"
+                            className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[9px] font-medium py-1 px-3 rounded-full cursor-pointer border-none"
                           >
                             Add More
                           </button>
@@ -1404,7 +1404,7 @@ export default function FileNewClaim() {
             </h2>
 
             <div className="flex flex-col gap-2 relative">
-              <label className="text-slate-800 text-sm font-semibold mb-1">
+              <label className="text-slate-800 text-sm font-medium mb-1">
                 Enter Address or Land Mark <span className="text-red-500 ml-0.5">*</span>
               </label>
               <div className="relative w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 focus-within:bg-white border border-transparent focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10 rounded-2xl pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md">
@@ -1426,7 +1426,7 @@ export default function FileNewClaim() {
                     setTimeout(() => setShowResultsDropdown(false), 250);
                   }}
                   placeholder="Enter address or landmark..."
-                  className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-medium border-none"
+                  className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-normal border-none"
                 />
                 {address && (
                   <button
@@ -1447,7 +1447,7 @@ export default function FileNewClaim() {
                 <button
                   type="button"
                   onClick={() => geocodeAddress(address)}
-                  className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-bold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20 whitespace-nowrap"
+                  className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-medium transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20 whitespace-nowrap"
                 >
                   Search
                 </button>
@@ -1489,7 +1489,7 @@ export default function FileNewClaim() {
                           </svg>
                         </div>
                         <div className="flex flex-col min-w-0 flex-1">
-                          <span className="font-semibold text-slate-800 text-sm truncate">{mainTitle}</span>
+                          <span className="font-medium text-slate-800 text-sm truncate">{mainTitle}</span>
                           {subTitle && (
                             <span className="text-[11px] text-slate-500 truncate mt-0.5">{subTitle}</span>
                           )}
@@ -1523,13 +1523,13 @@ export default function FileNewClaim() {
                   type="button"
                   onClick={handleGPSLocation}
                   disabled={isLocating}
-                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] disabled:bg-[#0284c7]/50 text-white font-bold text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
+                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] disabled:bg-[#0284c7]/50 text-white font-medium text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
                 >
                   <svg className={`w-8 h-8 text-white ${isLocating ? "animate-pulse" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
                   </svg>
-                  <span className="font-semibold block">
+                  <span className="font-medium block">
                     {isLocating ? "Locating..." : "Use GPS"}
                   </span>
                 </button>
@@ -1541,12 +1541,12 @@ export default function FileNewClaim() {
                     setModalInitialCoords({ latitude, longitude });
                     setShowMapModal(true);
                   }}
-                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] text-white font-bold text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
+                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] text-white font-medium text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
                 >
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                   </svg>
-                  <span className="font-semibold block">
+                  <span className="font-medium block">
                     Select on Map
                   </span>
                 </button>
@@ -1560,14 +1560,14 @@ export default function FileNewClaim() {
                 <div className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-slate-100">
                   {/* Header */}
                   <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <h3 className="text-lg font-bold text-[#0d2a3a]">Select Location on Map</h3>
+                    <h3 className="text-lg font-semibold text-[#0d2a3a]">Select Location on Map</h3>
                     <button
                       type="button"
                       onClick={() => {
                         setModalInitialCoords(null);
                         setShowMapModal(false);
                       }}
-                      className="text-slate-400 hover:text-slate-700 text-xl font-bold cursor-pointer border-none bg-transparent transition-colors"
+                      className="text-slate-400 hover:text-slate-700 text-xl font-medium cursor-pointer border-none bg-transparent transition-colors"
                     >
                       ✕
                     </button>
@@ -1608,7 +1608,7 @@ export default function FileNewClaim() {
                           setTimeout(() => setShowResultsDropdown(false), 250);
                         }}
                         placeholder="Search address or landmark..."
-                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none font-medium"
+                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none font-normal"
                       />
                       {address && (
                         <button
@@ -1672,7 +1672,7 @@ export default function FileNewClaim() {
                                 </svg>
                               </div>
                               <div className="flex flex-col min-w-0 flex-1">
-                                <span className="font-semibold text-slate-800 text-xs truncate">{mainTitle}</span>
+                                <span className="font-medium text-slate-800 text-xs truncate">{mainTitle}</span>
                                 {subTitle && (
                                   <span className="text-[10px] text-slate-500 truncate mt-0.5">{subTitle}</span>
                                 )}
@@ -1713,7 +1713,7 @@ export default function FileNewClaim() {
                         setModalInitialCoords(null);
                         setShowMapModal(false);
                       }}
-                      className="bg-[#0d2a3a] hover:bg-[#0284c7] text-white font-bold text-sm px-8 py-4 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
+                      className="bg-[#0d2a3a] hover:bg-[#0284c7] text-white font-semibold text-sm px-8 py-4 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
                     >
                       Confirm Location
                     </button>
@@ -1727,13 +1727,13 @@ export default function FileNewClaim() {
           <div className="flex flex-row justify-between items-center mt-4 mb-10">
             <Link
               href="/Policy_Holder/Home"
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-10 py-4 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center"
+              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-base px-10 py-4 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center"
+              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center"
             >
               Next
             </button>

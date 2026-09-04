@@ -525,10 +525,10 @@ export default function MyVehicles() {
 
         {/* Text content aligned automatically with the page container */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-          <h1 className="text-white text-3xl md:text-[40px] font-extrabold tracking-tight leading-none">
+          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             {t.title}
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
             {t.subtitle}
           </p>
         </header>
@@ -539,7 +539,7 @@ export default function MyVehicles() {
         
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-black font-extrabold px-6 py-5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black">
+          <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-black font-semibold px-6 py-5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black">
             <svg className="w-6 h-6 animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
             </svg>
@@ -560,8 +560,8 @@ export default function MyVehicles() {
               </svg>
             </div>
             <div>
-              <h3 className="text-2xl font-black text-slate-800 leading-none">{vehicles.length}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider mt-1">{t.totalInsured}</p>
+              <h3 className="text-2xl font-bold text-slate-800 leading-none">{vehicles.length}</h3>
+              <p className="text-slate-400 font-medium text-xs uppercase tracking-wider mt-1">{t.totalInsured}</p>
             </div>
           </div>
 
@@ -573,10 +573,10 @@ export default function MyVehicles() {
               </svg>
             </div>
             <div>
-              <h3 className="text-2xl font-black text-slate-800 leading-none">
+              <h3 className="text-2xl font-bold text-slate-800 leading-none">
                 {vehicles.filter(v => v.policyNumber).length}
               </h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider mt-1">{t.activePolicies}</p>
+              <p className="text-slate-400 font-medium text-xs uppercase tracking-wider mt-1">{t.activePolicies}</p>
             </div>
           </div>
         </section>
@@ -589,9 +589,9 @@ export default function MyVehicles() {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-5 py-3 rounded-full font-bold text-[13px] md:text-sm tracking-wide transition-all outline-none border cursor-pointer select-none ${
+                className={`px-5 py-3 rounded-full font-medium text-[13px] md:text-sm tracking-wide transition-all outline-none border cursor-pointer select-none ${
                   activeCategory === cat.id
-                    ? "bg-[#00ddff] border-[#00c8e6] text-black shadow-sm"
+                    ? "bg-[#00ddff] border-[#00c8e6] text-black shadow-sm font-semibold"
                     : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
                 }`}
               >
@@ -613,7 +613,7 @@ export default function MyVehicles() {
               placeholder={t.searchPlaceholder}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-800 rounded-full py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-200 font-medium"
+              className="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-800 rounded-full py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] transition-all border border-slate-200 font-normal"
             />
             {searchQuery.length > 0 && (
               <button
@@ -633,7 +633,7 @@ export default function MyVehicles() {
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
-            <p className="text-slate-500 font-bold text-base">{t.retrieving}</p>
+            <p className="text-slate-500 font-medium text-base">{t.retrieving}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -645,16 +645,16 @@ export default function MyVehicles() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                   </svg>
                 </div>
-                <h4 className="text-slate-800 font-extrabold text-base mb-1">
+                <h4 className="text-slate-800 font-semibold text-base mb-1">
                   {t.noVehiclesFound}
                 </h4>
-                <p className="text-slate-400 font-semibold text-xs max-w-[240px] leading-relaxed mb-4">
+                <p className="text-slate-400 font-normal text-xs max-w-[240px] leading-relaxed mb-4">
                   {searchQuery ? `${t.searchNoMatch} "${searchQuery}".` : t.noCategoryVehiclesFound}
                 </p>
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-xs px-4 py-2 rounded-full transition-all cursor-pointer border-none"
+                    className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-medium text-xs px-4 py-2 rounded-full transition-all cursor-pointer border-none"
                   >
                     {t.clearSearch}
                   </button>
@@ -677,10 +677,10 @@ export default function MyVehicles() {
                       <div className="flex items-center gap-4">
                         {getVehicleIconContainer(vehicle.vehicleType)}
                         <div>
-                          <h3 className="text-slate-800 font-black text-lg md:text-xl tracking-tight leading-none">
+                          <h3 className="text-slate-800 font-bold text-lg md:text-xl tracking-tight leading-none">
                             {formatNumberPlate(vehicle.numberPlate)}
                           </h3>
-                          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-500 bg-emerald-50/70 border border-emerald-100 rounded-full px-3 py-1 mt-1.5 select-none">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 bg-emerald-50/70 border border-emerald-100 rounded-full px-3 py-1 mt-1.5 select-none">
                             <span className="w-2 h-2 rounded-full bg-emerald-500" />
                             <span>{t.activeCoverage}</span>
                           </span>
@@ -688,24 +688,24 @@ export default function MyVehicles() {
                       </div>
 
                       {/* Small visual card details pill */}
-                      <span className="text-slate-400 font-bold text-xs bg-slate-100 border border-slate-200/50 rounded-full px-3 py-1 self-start select-none">
+                      <span className="text-slate-400 font-medium text-xs bg-slate-100 border border-slate-200/50 rounded-full px-3 py-1 self-start select-none">
                         {vehicle.year}
                       </span>
                     </div>
 
                     {/* Technical details rows */}
                     <div className="flex flex-col gap-3.5 border-t border-slate-100 pt-4.5">
-                      <div className="flex justify-between items-center text-sm font-semibold">
+                      <div className="flex justify-between items-center text-sm font-normal">
                         <span className="text-slate-400">{t.makeModel}</span>
-                        <span className="text-slate-800 font-extrabold">{vehicle.company} {vehicle.model}</span>
+                        <span className="text-slate-800 font-semibold">{vehicle.company} {vehicle.model}</span>
                       </div>
-                      <div className="flex justify-between items-center text-sm font-semibold">
+                      <div className="flex justify-between items-center text-sm font-normal">
                         <span className="text-slate-400">{t.policyNum}</span>
-                        <span className="text-slate-800 font-extrabold tracking-wide">{vehicle.policyNumber || "N/A"}</span>
+                        <span className="text-slate-800 font-semibold tracking-wide">{vehicle.policyNumber || "N/A"}</span>
                       </div>
-                      <div className="flex justify-between items-center text-sm font-semibold">
+                      <div className="flex justify-between items-center text-sm font-normal">
                         <span className="text-slate-400">{t.vehicleType}</span>
-                        <span className="text-slate-800 font-extrabold">{vehicle.vehicleType}</span>
+                        <span className="text-slate-800 font-semibold">{vehicle.vehicleType}</span>
                       </div>
                     </div>
                   </div>
@@ -714,7 +714,7 @@ export default function MyVehicles() {
                   <div className="mt-6 pt-4.5 border-t border-slate-100 flex-shrink-0">
                     <button
                       onClick={() => setSelectedVehicleForModal(vehicle)}
-                      className="w-full bg-[#00ddff] hover:bg-[#00c8e6] text-black font-extrabold text-xs md:text-sm py-3 rounded-full text-center transition-all flex items-center justify-center gap-2 cursor-pointer border-none shadow-sm hover:scale-[1.02] active:scale-[0.98] outline-none"
+                      className="w-full bg-[#00ddff] hover:bg-[#00c8e6] text-black font-semibold text-xs md:text-sm py-3 rounded-full text-center transition-all flex items-center justify-center gap-2 cursor-pointer border-none shadow-sm hover:scale-[1.02] active:scale-[0.98] outline-none"
                     >
                       <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
@@ -738,10 +738,10 @@ export default function MyVehicles() {
                 </svg>
               </div>
               <div className="text-center select-none">
-                <h4 className="text-slate-700 font-extrabold text-base mb-1 group-hover:text-[#0f2d3a] transition-all">
+                <h4 className="text-slate-700 font-semibold text-base mb-1 group-hover:text-[#0f2d3a] transition-all">
                   {t.addVehicle}
                 </h4>
-                <p className="text-slate-400 font-semibold text-xs max-w-[220px] leading-relaxed">{t.registerDesc}</p>
+                <p className="text-slate-400 font-normal text-xs max-w-[220px] leading-relaxed">{t.registerDesc}</p>
               </div>
             </button>
           </div>
@@ -750,14 +750,14 @@ export default function MyVehicles() {
         {/* Supportive Help Banner */}
         <section className="bg-slate-800 border border-slate-900 rounded-[30px] p-7 mt-12 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_15px_30px_rgba(0,0,0,0.06)]">
           <div className="max-w-2xl text-center md:text-left select-none">
-            <h4 className="text-lg font-black tracking-tight mb-1 text-white">Need to update your vehicle registry?</h4>
-            <p className="text-slate-300 text-xs md:text-sm font-semibold leading-relaxed m-0">
+            <h4 className="text-lg font-bold tracking-tight mb-1 text-white">Need to update your vehicle registry?</h4>
+            <p className="text-slate-300 text-xs md:text-sm font-normal leading-relaxed m-0">
               If any of your insured vehicles are missing, or if you recently upgraded your coverage plan, please reach out to our Galle regional office staff or message your assigned insurance agent.
             </p>
           </div>
           <Link
             href="/Policy_Holder/Contact"
-            className="bg-[#ff9800] hover:bg-[#e68900] text-white font-extrabold text-sm px-8 py-4 rounded-full transition-all no-underline shadow-md whitespace-nowrap"
+            className="bg-[#ff9800] hover:bg-[#e68900] text-white font-semibold text-sm px-8 py-4 rounded-full transition-all no-underline shadow-md whitespace-nowrap"
           >
             Contact Support
           </Link>
@@ -767,17 +767,17 @@ export default function MyVehicles() {
 
       {/* Vehicle Detail Popup Modal */}
       {selectedVehicleForModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[620px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden">
             
             {/* Modal Header */}
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-              <h2 className="text-[20px] md:text-[22px] font-extrabold text-[#0f2d3a] tracking-tight leading-none">
+              <h2 className="text-[20px] md:text-[22px] font-bold text-[#0f2d3a] tracking-tight leading-none">
                 Vehicle Specifications
               </h2>
               <button
                 onClick={() => setSelectedVehicleForModal(null)}
-                className="text-slate-400 hover:text-slate-600 text-2xl font-bold border-none bg-transparent cursor-pointer outline-none"
+                className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer outline-none"
               >
                 &times;
               </button>
@@ -790,47 +790,47 @@ export default function MyVehicles() {
               <div className="bg-slate-50 border border-slate-200/60 rounded-[22px] p-5 mb-6 flex items-center gap-4.5 shadow-sm select-none">
                 {getVehicleIconContainer(selectedVehicleForModal.vehicleType)}
                 <div>
-                  <h3 className="text-[#0f2d3a] font-black text-xl leading-none tracking-tight">
+                  <h3 className="text-[#0f2d3a] font-bold text-xl leading-none tracking-tight">
                     {selectedVehicleForModal.company} {selectedVehicleForModal.model}
                   </h3>
-                  <p className="text-slate-400 font-bold text-xs mt-1.5">
+                  <p className="text-slate-400 font-medium text-xs mt-1.5">
                     Year: {selectedVehicleForModal.year} | Type: {selectedVehicleForModal.vehicleType}
                   </p>
                 </div>
               </div>
 
               {/* 2-Column Specs Layout */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-semibold text-slate-700 mb-8 px-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-normal text-slate-700 mb-8 px-2">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Number Plate</span>
-                  <span className="font-extrabold text-slate-800 text-base">{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Number Plate</span>
+                  <span className="font-semibold text-slate-800 text-base">{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Policy Number</span>
-                  <span className="font-extrabold text-slate-800 text-base tracking-wide">{selectedVehicleForModal.policyNumber || "N/A"}</span>
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Policy Number</span>
+                  <span className="font-semibold text-slate-800 text-base tracking-wide">{selectedVehicleForModal.policyNumber || "N/A"}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Engine Number</span>
-                  <span className="font-bold text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.engineNumber || "N/A"}</span>
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Engine Number</span>
+                  <span className="font-normal text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.engineNumber || "N/A"}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Chassis Number</span>
-                  <span className="font-bold text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.chassisNumber || "N/A"}</span>
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Chassis Number</span>
+                  <span className="font-normal text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.chassisNumber || "N/A"}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Insurance Coverage</span>
-                  <span className="font-extrabold text-emerald-600 flex items-center gap-1.5">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Insurance Coverage</span>
+                  <span className="font-semibold text-emerald-600 flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
                     Active Coverage
                   </span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Renewal Cycle</span>
-                  <span className="font-extrabold text-slate-800">Annual (Jan 01 - Dec 31)</span>
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Renewal Cycle</span>
+                  <span className="font-semibold text-slate-800">Annual (Jan 01 - Dec 31)</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2 sm:col-span-2">
-                  <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Insurance Plan Type</span>
-                  <span className="font-extrabold text-slate-800">Comprehensive Vehicle Insurance Plan</span>
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Insurance Plan Type</span>
+                  <span className="font-semibold text-slate-800">Comprehensive Vehicle Insurance Plan</span>
                 </div>
               </div>
 
@@ -839,7 +839,7 @@ export default function MyVehicles() {
                 <Link
                   href={`/Policy_Holder/New_Claim?plate=${encodeURIComponent(selectedVehicleForModal.numberPlate)}`}
                   onClick={() => setSelectedVehicleForModal(null)}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
@@ -848,7 +848,7 @@ export default function MyVehicles() {
                 </Link>
                 <button
                   onClick={() => handleDownloadCoverNote(selectedVehicleForModal)}
-                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-semibold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
@@ -863,7 +863,7 @@ export default function MyVehicles() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedVehicleForModal(null)}
-                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
               >
                 Close
               </button>
@@ -875,12 +875,12 @@ export default function MyVehicles() {
 
       {/* Add Vehicle Popup Modal */}
       {isAddVehicleOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[720px] max-h-[95vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden text-slate-800">
             
             {/* Modal Header */}
             <div className="px-10 pt-8 pb-4 border-b border-gray-200 flex-shrink-0">
-              <h2 className="text-2xl font-black text-black tracking-tight leading-none">
+              <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-none">
                 Add Vehicle
               </h2>
             </div>
@@ -892,7 +892,7 @@ export default function MyVehicles() {
               <div className="px-10 py-6 overflow-y-auto flex-1 flex flex-col gap-4">
                 
                 {validationError && (
-                  <div className="bg-red-50 border border-red-200 text-red-600 font-bold text-xs rounded-xl p-3 select-none">
+                  <div className="bg-red-50 border border-red-200 text-red-600 font-medium text-xs rounded-xl p-3 select-none">
                     {validationError}
                   </div>
                 )}
@@ -900,8 +900,8 @@ export default function MyVehicles() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
                   {/* Number Plate */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-black text-[13.5px] font-bold block mb-1">
-                      Number Plate <span className="text-red-500 font-bold ml-0.5">*</span>
+                    <label className="text-slate-800 text-[13.5px] font-medium block mb-1">
+                      Number Plate <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <input
                       type="text"
@@ -909,14 +909,14 @@ export default function MyVehicles() {
                       placeholder="e.g. WP-CBH-3202"
                       value={newNumberPlate}
                       onChange={(e) => setNewNumberPlate(e.target.value)}
-                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-semibold"
+                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-normal"
                     />
                   </div>
 
                   {/* Vehicle Type select with dynamic preview */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-black text-[13.5px] font-bold block mb-1">
-                      Vehicle Type <span className="text-red-500 font-bold ml-0.5">*</span>
+                    <label className="text-slate-800 text-[13.5px] font-medium block mb-1">
+                      Vehicle Type <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <div className="flex items-center gap-3">
                       <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-100 border border-slate-200 text-slate-800 shadow-inner flex-shrink-0">
@@ -925,7 +925,7 @@ export default function MyVehicles() {
                       <select
                         value={newVehicleType}
                         onChange={(e) => setNewVehicleType(e.target.value)}
-                        className="flex-1 bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-semibold cursor-pointer"
+                        className="flex-1 bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-normal cursor-pointer"
                       >
                         <option value="Car">Car</option>
                         <option value="SUV">SUV</option>
@@ -942,8 +942,8 @@ export default function MyVehicles() {
 
                   {/* Company input */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-black text-[13.5px] font-bold block mb-1">
-                      Company <span className="text-red-500 font-bold ml-0.5">*</span>
+                    <label className="text-slate-800 text-[13.5px] font-medium block mb-1">
+                      Company <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <input
                       type="text"
@@ -951,14 +951,14 @@ export default function MyVehicles() {
                       placeholder="e.g. Toyota"
                       value={newCompany}
                       onChange={(e) => setNewCompany(e.target.value)}
-                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-semibold"
+                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-normal"
                     />
                   </div>
 
                   {/* Model input */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-black text-[13.5px] font-bold block mb-1">
-                      Model <span className="text-red-500 font-bold ml-0.5">*</span>
+                    <label className="text-slate-800 text-[13.5px] font-medium block mb-1">
+                      Model <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <input
                       type="text"
@@ -966,14 +966,14 @@ export default function MyVehicles() {
                       placeholder="e.g. Corolla"
                       value={newModel}
                       onChange={(e) => setNewModel(e.target.value)}
-                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-semibold"
+                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-normal"
                     />
                   </div>
 
                   {/* Year input */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-black text-[13.5px] font-bold block mb-1">
-                      Year <span className="text-red-500 font-bold ml-0.5">*</span>
+                    <label className="text-slate-800 text-[13.5px] font-medium block mb-1">
+                      Year <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <input
                       type="text"
@@ -981,14 +981,14 @@ export default function MyVehicles() {
                       placeholder="e.g. 2020"
                       value={newYear}
                       onChange={(e) => setNewYear(e.target.value)}
-                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-semibold"
+                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-normal"
                     />
                   </div>
 
                   {/* Policy Number input */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-black text-[13.5px] font-bold block mb-1">
-                      Insurance Policy Number <span className="text-red-500 font-bold ml-0.5">*</span>
+                    <label className="text-slate-800 text-[13.5px] font-medium block mb-1">
+                      Insurance Policy Number <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <input
                       type="text"
@@ -996,14 +996,14 @@ export default function MyVehicles() {
                       placeholder="e.g. SAN12345"
                       value={newPolicyNumber}
                       onChange={(e) => setNewPolicyNumber(e.target.value)}
-                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-semibold"
+                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-normal"
                     />
                   </div>
 
                   {/* Engine Number input */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-black text-[13.5px] font-bold block mb-1">
-                      Engine Number <span className="text-red-500 font-bold ml-0.5">*</span>
+                    <label className="text-slate-800 text-[13.5px] font-medium block mb-1">
+                      Engine Number <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <input
                       type="text"
@@ -1011,14 +1011,14 @@ export default function MyVehicles() {
                       placeholder="e.g. 1NZ-FE-xxxx"
                       value={newEngineNumber}
                       onChange={(e) => setNewEngineNumber(e.target.value)}
-                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-semibold font-mono"
+                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-normal font-mono"
                     />
                   </div>
 
                   {/* Chassis Number input */}
                   <div className="flex flex-col gap-1">
-                    <label className="text-black text-[13.5px] font-bold block mb-1">
-                      Chassis Number <span className="text-red-500 font-bold ml-0.5">*</span>
+                    <label className="text-slate-800 text-[13.5px] font-medium block mb-1">
+                      Chassis Number <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <input
                       type="text"
@@ -1026,16 +1026,16 @@ export default function MyVehicles() {
                       placeholder="e.g. NZE141-xxxx"
                       value={newChassisNumber}
                       onChange={(e) => setNewChassisNumber(e.target.value)}
-                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-semibold font-mono"
+                      className="w-full bg-slate-100/90 text-slate-800 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:bg-white transition-all border border-transparent font-normal font-mono"
                     />
                   </div>
                 </div>
 
                 {/* Important warning banner */}
-                <div className="text-[11px] md:text-xs text-slate-600 font-semibold flex items-start gap-1 mt-4 select-none">
+                <div className="text-[11px] md:text-xs text-slate-600 font-normal flex items-start gap-1 mt-4 select-none">
                   <span className="text-yellow-500 mr-1 flex-shrink-0">⚠️</span>
                   <span>
-                    <strong>Important:</strong> Your vehicle will be reviewed by office staff before submit. This usually takes 1-2 business days. You&apos;ll receive an email once approved
+                    <strong className="font-semibold text-slate-700">Important:</strong> Your vehicle will be reviewed by office staff before submit. This usually takes 1-2 business days. You&apos;ll receive an email once approved
                   </span>
                 </div>
 
@@ -1046,14 +1046,14 @@ export default function MyVehicles() {
                 <button
                   type="button"
                   onClick={() => setIsAddVehicleOpen(false)}
-                  className="bg-[#19385a] hover:bg-[#11273f] text-white font-extrabold text-sm py-4 px-10 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center gap-1 hover:scale-[1.02] active:scale-[0.98]"
+                  className="bg-[#19385a] hover:bg-[#11273f] text-white font-semibold text-sm py-4 px-10 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center gap-1 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   &lt; Close
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-[#19385a] hover:bg-[#11273f] disabled:bg-slate-300 text-white font-extrabold text-sm py-4 px-12 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center gap-1 hover:scale-[1.02] active:scale-[0.98]"
+                  className="bg-[#19385a] hover:bg-[#11273f] disabled:bg-slate-300 text-white font-semibold text-sm py-4 px-12 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center gap-1 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   {isSubmitting ? "Submitting..." : "Submit >"}
                 </button>
@@ -1076,7 +1076,7 @@ export default function MyVehicles() {
 
       {/* Registration Success Modal Popup */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[460px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col items-center text-center relative overflow-hidden">
             <div className="w-16 h-16 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-[#f59e0b] mb-6 select-none">
               <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -1084,19 +1084,19 @@ export default function MyVehicles() {
               </svg>
             </div>
             
-            <h3 className="font-black text-slate-800 text-lg mb-3 tracking-tight select-none">
+            <h3 className="font-bold text-slate-800 text-lg mb-3 tracking-tight select-none">
               Registration Under Review
             </h3>
             
-            <p className="text-slate-500 text-sm font-semibold leading-relaxed mb-6 px-2">
+            <p className="text-slate-500 text-sm font-normal leading-relaxed mb-6 px-2">
               Your vehicle details have been submitted successfully. The regional branch office staff will review and verify your policy information. 
               <br /><br />
-              This process typically takes <strong className="text-slate-700 font-extrabold">1-2 business days</strong>. You will be notified via email once approved.
+              This process typically takes <strong className="text-slate-700 font-semibold">1-2 business days</strong>. You will be notified via email once approved.
             </p>
             
             <button
               onClick={() => setShowSuccessModal(false)}
-              className="w-full bg-[#19385a] hover:bg-[#11273f] text-white font-extrabold text-sm py-4 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center active:scale-[0.98] outline-none"
+              className="w-full bg-[#19385a] hover:bg-[#11273f] text-white font-semibold text-sm py-4 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center active:scale-[0.98] outline-none"
             >
               Understood
             </button>

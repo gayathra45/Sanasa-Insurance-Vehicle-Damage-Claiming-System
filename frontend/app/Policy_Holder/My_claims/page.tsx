@@ -527,7 +527,7 @@ export default function MyClaims() {
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             {t.title}
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
             {t.subtitle}
           </p>
         </header>
@@ -541,7 +541,7 @@ export default function MyClaims() {
           
           {/* Card 1: Profile & Status */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">{t.profileStatus}</span>
+            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">{t.profileStatus}</span>
             <div className="flex items-center gap-3.5 mt-3">
               <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-bold shrink-0">
                 <svg className="w-6 h-6 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
@@ -549,43 +549,43 @@ export default function MyClaims() {
                 </svg>
               </div>
               <div className="overflow-hidden">
-                <span className="block font-black text-slate-800 text-base truncate">
+                <span className="block font-semibold text-slate-800 text-base truncate">
                   {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.name || "Policy Holder")}
                 </span>
-                <span className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">NIC: {user?.nic || "N/A"}</span>
+                <span className="block text-slate-400 text-[10px] font-medium uppercase tracking-wider mt-0.5">NIC: {user?.nic || "N/A"}</span>
               </div>
             </div>
           </div>
 
           {/* Card 2: Performance Summary */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">{t.perfSummary}</span>
+            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">{t.perfSummary}</span>
 
             <div className="grid grid-cols-3 gap-3 text-center mt-3">
               <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                <span className="text-xl font-black text-slate-800">{totalClaimsThisYear}</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.claims}</span>
+                <span className="text-xl font-bold text-slate-800">{totalClaimsThisYear}</span>
+                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">{t.claims}</span>
               </div>
               <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                <span className="text-xl font-black text-slate-800">{pendingClaimsThisYear}</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.pending}</span>
+                <span className="text-xl font-bold text-slate-800">{pendingClaimsThisYear}</span>
+                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">{t.pending}</span>
               </div>
               <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                <span className="text-xl font-black text-slate-800">{completedClaimsThisYear}</span>
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.completed}</span>
+                <span className="text-xl font-bold text-slate-800">{completedClaimsThisYear}</span>
+                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">{t.completed}</span>
               </div>
             </div>
           </div>
 
           {/* Card 3: Quick Guidelines */}
           <div className="bg-slate-900 border border-slate-800 rounded-[28px] p-6 shadow-md text-white flex flex-col justify-between min-h-[140px] hover:border-slate-800 transition-all duration-200">
-            <span className="text-[10px] text-cyan-400 font-extrabold uppercase tracking-wider block flex items-center gap-1.5">
+            <span className="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider block flex items-center gap-1.5">
               <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
               </svg>
               {t.guidelines}
             </span>
-            <p className="text-slate-300 text-xs font-semibold leading-relaxed mt-3.5">
+            <p className="text-slate-300 text-xs font-normal leading-relaxed mt-3.5">
               {t.guidelineDesc}
             </p>
           </div>
@@ -611,9 +611,9 @@ export default function MyClaims() {
                   key={tab}
                   type="button"
                   onClick={() => setStatusFilter(tab)}
-                  className={`px-4 py-2 rounded-lg text-xs font-black transition-all border-none outline-none cursor-pointer ${
+                  className={`px-4 py-2 rounded-lg text-xs font-medium transition-all border-none outline-none cursor-pointer ${
                     statusFilter === tab
-                      ? "bg-[#0f2d4a] text-white shadow-sm"
+                      ? "bg-[#0f2d4a] text-white shadow-sm font-semibold"
                       : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
                   }`}
                 >
@@ -659,7 +659,7 @@ export default function MyClaims() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.searchPlaceholder}
-              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 text-slate-700 placeholder:text-slate-400 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] focus:border-transparent transition-all bg-slate-50 focus:bg-white"
+              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 text-slate-700 placeholder:text-slate-400 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] focus:border-transparent transition-all bg-slate-50 focus:bg-white"
             />
             {searchQuery && (
               <button
@@ -679,7 +679,7 @@ export default function MyClaims() {
         <div className="flex flex-col gap-6">
           
           {/* Grid Table Header (Desktop Only) */}
-          <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] items-center gap-4 px-5 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
+          <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] items-center gap-4 px-5 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
             <div>{t.tableClaimNum}</div>
             <div>{t.tablePlate}</div>
             <div>{t.tableDate}</div>
@@ -694,12 +694,12 @@ export default function MyClaims() {
             {isLoading ? (
               <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#0284c7]"></div>
-                <span className="mt-3 text-slate-400 text-sm font-bold">Loading your claims dossier...</span>
+                <span className="mt-3 text-slate-400 text-sm font-medium">Loading your claims dossier...</span>
               </div>
             ) : filteredClaims.length === 0 ? (
               <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
-                <h3 className="font-extrabold text-slate-700 text-lg">No Claims Found</h3>
-                <p className="text-slate-400 text-xs font-semibold mt-1.5 max-w-sm leading-relaxed">
+                <h3 className="font-semibold text-slate-700 text-lg">No Claims Found</h3>
+                <p className="text-slate-400 text-xs font-normal mt-1.5 max-w-sm leading-relaxed">
                   We couldn't find any claims matching the selected filters or search queries.
                 </p>
               </div>
@@ -717,29 +717,29 @@ export default function MyClaims() {
                   >
                     {/* Claim Info */}
                     <div className="flex flex-col min-w-0 select-none">
-                      <span className="font-black text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
+                      <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
                       {claim.createdAt && (
-                        <span className="text-[10px] text-slate-400 font-bold mt-1 block">Registered: {formatDateString(claim.createdAt)}</span>
+                        <span className="text-[10px] text-slate-400 font-normal mt-1 block">Registered: {formatDateString(claim.createdAt)}</span>
                       )}
                     </div>
 
                     {/* Vehicle Plate */}
-                    <div className="text-xs md:text-sm font-bold text-slate-800">
+                    <div className="text-xs md:text-sm font-semibold text-slate-800">
                       {formatNumberPlate(claim.vehiclePlate)}
                     </div>
 
                     {/* Incident Date */}
-                    <div className="text-xs md:text-sm font-semibold text-slate-700">
+                    <div className="text-xs md:text-sm font-normal text-slate-600">
                       {claim.incidentDate}
                     </div>
 
                     {/* Damage Type */}
-                    <div className="text-xs md:text-sm font-semibold text-slate-700 truncate" title={claim.damageType}>
+                    <div className="text-xs md:text-sm font-normal text-slate-600 truncate" title={claim.damageType}>
                       {claim.damageType}
                     </div>
 
                     {/* Amount */}
-                    <div className="text-xs md:text-sm font-bold text-slate-700 text-center">
+                    <div className="text-xs md:text-sm font-semibold text-slate-700 text-center">
                       {claim.amount}
                     </div>
 
@@ -753,7 +753,7 @@ export default function MyClaims() {
                       <button
                         type="button"
                         onClick={() => setSelectedClaim(claim)}
-                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-semibold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
                       >
                         {t.view}
                       </button>
@@ -834,7 +834,7 @@ export default function MyClaims() {
 
                 return (
                   <div key={step.num} className="flex flex-col items-center z-10 flex-1">
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-extrabold ${circleClass}`}>
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold ${circleClass}`}>
                       {isCompleted ? (
                         <svg className="w-5 h-5 text-[#00b050]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
@@ -843,7 +843,7 @@ export default function MyClaims() {
                         step.num
                       )}
                     </div>
-                    <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-extrabold" : isCompleted ? "text-emerald-700 font-extrabold" : "text-slate-400"}`}>
+                    <span className={`text-[11px] font-medium mt-2 leading-none ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-emerald-700 font-semibold" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>
@@ -859,12 +859,12 @@ export default function MyClaims() {
               
               {/* Modal Header Title */}
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[22px] font-extrabold text-[#0f2d3a] tracking-tight leading-none">
+                <h2 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
                   Claim Details – {selectedClaim.claimNumber}
                 </h2>
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="text-slate-400 hover:text-slate-600 text-2xl font-bold border-none bg-transparent cursor-pointer"
+                  className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer"
                 >
                   &times;
                 </button>
@@ -886,15 +886,15 @@ export default function MyClaims() {
                         </svg>
                       </div>
                       <div>
-                        <h4 className="text-[15px] font-extrabold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
-                        <p className="text-emerald-700 text-xs font-semibold mt-0.5">The branch office has submitted the transaction bank receipt.</p>
+                        <h4 className="text-[15px] font-semibold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
+                        <p className="text-emerald-700 text-xs font-normal mt-0.5">The branch office has submitted the transaction bank receipt.</p>
                       </div>
                     </div>
                     <a
                       href={selectedClaim.paymentReceipt.startsWith("http") || selectedClaim.paymentReceipt.startsWith("data:") ? selectedClaim.paymentReceipt : `${API_URL.replace("/api", "")}/uploads/${selectedClaim.paymentReceipt}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
+                      className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -905,44 +905,44 @@ export default function MyClaims() {
                 )}
 
                 {/* 2-Column Grid matching mockup inline labels */}
-                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-6 px-2">
+                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-sm font-normal text-slate-700 mb-6 px-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Vehicle:</span>
-                    <span className="font-extrabold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Vehicle:</span>
+                    <span className="font-semibold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Type:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.damageType}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Type:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.damageType}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Est. Amount:</span>
-                    <span className="font-extrabold text-slate-800">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Est. Amount:</span>
+                    <span className="font-semibold text-slate-800">
                       {selectedClaim.amount.startsWith("Rs.") ? "LKR " + selectedClaim.amount.substring(4) : selectedClaim.amount}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Date:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.incidentDate}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Date:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.incidentDate}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Officer:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Officer:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Branch:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Branch:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Location:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.location || "N/A"}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Location:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.location || "N/A"}</span>
                   </div>
                 </div>
 
                 {/* Description Text (If available) */}
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Incident Description</p>
+                    <p className="text-slate-600 text-sm font-normal leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
                   </div>
@@ -951,38 +951,38 @@ export default function MyClaims() {
                 {/* Other Vehicles Involved (If available) */}
                 {selectedClaim.otherVehicleDetails && (
                   <div className="px-2 mb-6 text-left">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
                     {Array.isArray(selectedClaim.otherVehicleDetails) ? (
                       selectedClaim.otherVehicleDetails.length === 0 ? (
-                        <div className="text-xs text-slate-500 italic select-none">No other vehicles involved.</div>
+                        <div className="text-xs text-slate-500 italic select-none font-normal">No other vehicles involved.</div>
                       ) : (
                         <div className="space-y-4">
                           {selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
                             <div key={vIdx} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
-                              <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
+                              <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
                               <div className="grid grid-cols-2 gap-4 text-left">
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
                                 </div>
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.driverName || "—"}</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.driverName || "—"}</span>
                                 </div>
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
                                 </div>
                                 <div>
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
-                                  <span className="block text-slate-800 text-xs font-bold mt-0.5">{vehicle.policyNumber || "—"}</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.policyNumber || "—"}</span>
                                 </div>
                               </div>
 
                               {/* License Photos */}
                               {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
                                 <div className="pt-2 border-t border-slate-200/60">
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
                                   <div className="flex flex-wrap gap-2.5">
                                     {vehicle.licensePhotos.map((url: string, idx: number) => {
                                       let docUrl = url;
@@ -1006,7 +1006,7 @@ export default function MyClaims() {
                               {/* Vehicle Photos */}
                               {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
                                 <div className="pt-2 border-t border-slate-200/60">
-                                  <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
                                   <div className="flex flex-wrap gap-2.5">
                                     {vehicle.vehiclePhotos.map((url: string, idx: number) => {
                                       let docUrl = url;
@@ -1035,27 +1035,27 @@ export default function MyClaims() {
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
                           <div className="grid grid-cols-2 gap-4 text-left">
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
                             </div>
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Driver Name</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
                             </div>
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Name</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
                             </div>
                             <div>
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Insurance Number</span>
-                              <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
                             </div>
                           </div>
 
                           {/* License Photos */}
                           {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
                             <div className="pt-2 border-t border-slate-200/60">
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
                               <div className="flex flex-wrap gap-2.5">
                                 {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -1079,7 +1079,7 @@ export default function MyClaims() {
                           {/* Vehicle Photos */}
                           {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
                             <div className="pt-2 border-t border-slate-200/60">
-                              <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
                               <div className="flex flex-wrap gap-2.5">
                                 {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
                                   let docUrl = url;
@@ -1106,7 +1106,7 @@ export default function MyClaims() {
                 )}
                 {/* Messages & Notifications Section */}
                 <div className="px-2 mt-4 mb-2">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
                   {(() => {
                     const filteredMessages = (selectedClaim.messages || []).filter((msg: any) => msg.recipient !== "Agent");
                     if (filteredMessages.length > 0) {
@@ -1115,10 +1115,10 @@ export default function MyClaims() {
                           {filteredMessages.map((msg: any, index: number) => (
                             <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                               <div className="flex justify-between items-center text-[11px] select-none">
-                                <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
-                                <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
+                                <span className="font-semibold text-[#0f2d3a]">{msg.sender}</span>
+                                <span className="text-slate-400 font-normal">{formatDateString(msg.sentAt)}</span>
                               </div>
-                              <p className="text-slate-700 text-xs font-semibold leading-relaxed m-0">
+                              <p className="text-slate-700 text-xs font-normal leading-relaxed m-0">
                                 {msg.message}
                               </p>
                             </div>
@@ -1127,7 +1127,7 @@ export default function MyClaims() {
                       );
                     } else {
                       return (
-                        <p className="text-slate-500 text-xs italic font-medium bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
+                        <p className="text-slate-500 text-xs italic font-normal bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
                           No notifications or messages have been sent for this claim.
                         </p>
                       );
@@ -1138,8 +1138,8 @@ export default function MyClaims() {
                 {/* Warning Alert Box matching mockup */}
                 {selectedClaim.documentsRequested && getUserRequestedDocs(selectedClaim).length > 0 && (
                   <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2 mt-4">
-                    <h4 className="text-[#9c3535] font-extrabold text-sm mb-1.5">Documents Requested</h4>
-                    <p className="text-[#aa4f4f] text-[13px] font-semibold leading-relaxed mb-3">
+                    <h4 className="text-[#9c3535] font-semibold text-sm mb-1.5">Documents Requested</h4>
+                    <p className="text-[#aa4f4f] text-[13px] font-normal leading-relaxed mb-3">
                       The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
                     </p>
                     <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
@@ -1147,17 +1147,17 @@ export default function MyClaims() {
                         const note = getDocRequestNote(selectedClaim, doc);
                         const reqTime = getDocRequestTime(selectedClaim, doc);
                         return (
-                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-bold text-xs w-full">
+                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-normal text-xs w-full">
                             <span className="w-2 h-2 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                              <span className="font-extrabold">{doc}</span>
+                              <span className="font-semibold">{doc}</span>
                               {reqTime && (
-                                <span className="text-red-600 font-extrabold">
+                                <span className="text-red-600 font-semibold">
                                   (Requested: {reqTime} by {getDocRequestSender(selectedClaim, doc)})
                                 </span>
                               )}
                               {note && (
-                                <span className="col-span-1 sm:col-span-2 text-[11px] font-medium text-slate-500 italic mt-0.5 pl-0.5">
+                                <span className="col-span-1 sm:col-span-2 text-[11px] font-normal text-slate-500 italic mt-0.5 pl-0.5">
                                   Note: "{note}"
                                 </span>
                               )}
@@ -1168,7 +1168,7 @@ export default function MyClaims() {
                     </ul>
                     <Link
                       href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
-                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
                       Go to Documents
                     </Link>
@@ -1182,7 +1182,7 @@ export default function MyClaims() {
                   <button
                     onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
                     disabled={isCancellingClaim}
-                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1195,7 +1195,7 @@ export default function MyClaims() {
 
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95 flex items-center justify-center"
+                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95 flex items-center justify-center"
                 >
                   Close
                 </button>

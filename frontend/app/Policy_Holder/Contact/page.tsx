@@ -230,7 +230,7 @@ export default function PolicyHolderContact() {
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             {t.title}
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
             {t.subtitle}
           </p>
         </header>
@@ -251,13 +251,13 @@ export default function PolicyHolderContact() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.hotline}</h3>
-              <p className="text-slate-600 text-sm md:text-base font-semibold mt-1.5 tracking-wide">
+              <h3 className="font-semibold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.hotline}</h3>
+              <p className="text-slate-600 text-sm md:text-base font-normal mt-1.5 tracking-wide">
                 {t.hotlineVal}
               </p>
             </div>
           </div>
-          <div className="text-red-500 hover:text-red-600 transition-colors font-bold text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
+          <div className="text-red-500 hover:text-red-600 transition-colors font-medium text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
             {t.hotlineSub}
           </div>
         </a>
@@ -275,13 +275,13 @@ export default function PolicyHolderContact() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.email}</h3>
-              <p className="text-slate-600 text-sm md:text-base font-semibold mt-1.5 tracking-wide">
+              <h3 className="font-semibold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.email}</h3>
+              <p className="text-slate-600 text-sm md:text-base font-normal mt-1.5 tracking-wide">
                 {t.emailVal}
               </p>
             </div>
           </div>
-          <div className="text-red-500 hover:text-red-600 transition-colors font-bold text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
+          <div className="text-red-500 hover:text-red-600 transition-colors font-medium text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
             {t.emailSub}
           </div>
         </button>
@@ -295,13 +295,13 @@ export default function PolicyHolderContact() {
               </svg>
             </div>
             <div>
-              <h3 className="font-bold text-slate-800 text-lg md:text-xl">{t.liveChat}</h3>
-              <p className="text-slate-600 text-sm md:text-base font-semibold mt-1.5 tracking-wide">
+              <h3 className="font-semibold text-slate-800 text-lg md:text-xl">{t.liveChat}</h3>
+              <p className="text-slate-600 text-sm md:text-base font-normal mt-1.5 tracking-wide">
                 {t.liveChatVal}
               </p>
             </div>
           </div>
-          <div className="text-red-500 hover:text-red-600 transition-colors font-bold text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
+          <div className="text-red-500 hover:text-red-600 transition-colors font-medium text-xs md:text-sm self-start md:self-center md:pl-0 pl-20 select-none">
             {t.liveChatSub}
           </div>
         </div>
@@ -351,15 +351,15 @@ export default function PolicyHolderContact() {
 
             {/* Head Office text next to map */}
             <div className="w-full md:w-[40%] lg:w-[45%] mt-4 md:mt-20 text-slate-800">
-              <h3 className="font-extrabold text-slate-900 text-lg md:text-xl mb-3 select-none">{t.headOffice}</h3>
-              <p className="text-slate-600 text-sm md:text-base font-semibold leading-relaxed whitespace-pre-line">
+              <h3 className="font-semibold text-slate-900 text-lg md:text-xl mb-3 select-none">{t.headOffice}</h3>
+              <p className="text-slate-600 text-sm md:text-base font-normal leading-relaxed whitespace-pre-line">
                 {t.address}
               </p>
               
               <hr className="border-t border-slate-300 w-full max-w-[320px] my-6" />
 
-              <h3 className="font-extrabold text-slate-900 text-lg md:text-xl mb-3 select-none">{t.openHours}</h3>
-              <p className="text-slate-600 text-sm md:text-base font-semibold leading-relaxed whitespace-pre-line">
+              <h3 className="font-semibold text-slate-900 text-lg md:text-xl mb-3 select-none">{t.openHours}</h3>
+              <p className="text-slate-600 text-sm md:text-base font-normal leading-relaxed whitespace-pre-line">
                 {t.hoursVal}
               </p>
             </div>
@@ -396,7 +396,7 @@ export default function PolicyHolderContact() {
             <div className="px-12 py-7 border-b border-slate-100 flex justify-between items-center relative z-10 bg-white/80 backdrop-blur-md">
               <div>
                 <h3 className="text-2xl font-bold text-[#0d2a3a]">{t.modalTitle}</h3>
-                <p className="text-xs text-slate-500 font-semibold mt-1">{t.modalSubtitle}</p>
+                <p className="text-xs text-slate-500 font-normal mt-1">{t.modalSubtitle}</p>
               </div>
               <button
                 type="button"
@@ -404,7 +404,7 @@ export default function PolicyHolderContact() {
                   setShowEmailModal(false);
                   setModalFeedback(null);
                 }}
-                className="text-slate-400 hover:text-slate-700 text-xl font-bold cursor-pointer border-none bg-transparent transition-colors p-2"
+                className="text-slate-400 hover:text-slate-700 text-xl font-medium cursor-pointer border-none bg-transparent transition-colors p-2"
               >
                 ✕
               </button>
@@ -415,17 +415,17 @@ export default function PolicyHolderContact() {
               
               {/* User info display block if logged in */}
               {user && (
-                <div className="bg-[#f0f9ff]/80 border border-sky-100 rounded-[24px] p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-slate-700 font-semibold">
+                <div className="bg-[#f0f9ff]/80 border border-sky-100 rounded-[24px] p-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-sm text-slate-700 font-normal">
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">{t.senderName}</span>
-                    <span className="text-[#0d2a3a] text-base font-extrabold">{user.firstName} {user.lastName}</span>
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">{t.senderName}</span>
+                    <span className="text-[#0d2a3a] text-base font-semibold">{user.firstName} {user.lastName}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">{t.emailLabel}</span>
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">{t.emailLabel}</span>
                     <span className="text-slate-800 text-sm truncate">{user.email}</span>
                   </div>
                   <div className="flex flex-col gap-1">
-                    <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">{t.nicLabel}</span>
+                    <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">{t.nicLabel}</span>
                     <span className="text-slate-800 text-sm">{user.nic}</span>
                   </div>
                 </div>
@@ -435,46 +435,46 @@ export default function PolicyHolderContact() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* To (Read-only) */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-[#0d2a3a] uppercase tracking-wider pl-1">{t.recipient}</label>
+                  <label className="text-xs font-semibold text-[#0d2a3a] uppercase tracking-wider pl-1">{t.recipient}</label>
                   <input
                     type="text"
                     value="claims@sanasainsurance.lk"
                     disabled
-                    className="bg-slate-100/70 text-slate-500 text-sm font-semibold px-5 py-4 rounded-2xl border border-slate-200 outline-none w-full cursor-not-allowed"
+                    className="bg-slate-100/70 text-slate-500 text-sm font-normal px-5 py-4 rounded-2xl border border-slate-200 outline-none w-full cursor-not-allowed"
                   />
                 </div>
 
                 {/* Subject */}
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-bold text-[#0d2a3a] uppercase tracking-wider pl-1">{t.subject}</label>
+                  <label className="text-xs font-semibold text-[#0d2a3a] uppercase tracking-wider pl-1">{t.subject}</label>
                   <input
                     type="text"
                     placeholder={t.subjectPlaceholder}
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     required
-                    className="bg-slate-50 hover:bg-slate-100/50 focus:bg-white text-slate-800 text-sm font-semibold px-5 py-4 rounded-2xl border border-slate-200 focus:border-[#0284c7] outline-none w-full transition-all focus:ring-4 focus:ring-sky-100"
+                    className="bg-slate-50 hover:bg-slate-100/50 focus:bg-white text-slate-800 text-sm font-normal px-5 py-4 rounded-2xl border border-slate-200 focus:border-[#0284c7] outline-none w-full transition-all focus:ring-4 focus:ring-sky-100"
                   />
                 </div>
               </div>
 
               {/* Message */}
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-bold text-[#0d2a3a] uppercase tracking-wider pl-1">{t.messageBody}</label>
+                <label className="text-xs font-semibold text-[#0d2a3a] uppercase tracking-wider pl-1">{t.messageBody}</label>
                 <textarea
                   placeholder={t.messagePlaceholder}
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   required
                   rows={6}
-                  className="bg-slate-50 hover:bg-slate-100/50 focus:bg-white text-slate-800 text-sm font-semibold px-5 py-4 rounded-2xl border border-slate-200 focus:border-[#0284c7] outline-none w-full transition-all resize-none leading-relaxed focus:ring-4 focus:ring-sky-100"
+                  className="bg-slate-50 hover:bg-slate-100/50 focus:bg-white text-slate-800 text-sm font-normal px-5 py-4 rounded-2xl border border-slate-200 focus:border-[#0284c7] outline-none w-full transition-all resize-none leading-relaxed focus:ring-4 focus:ring-sky-100"
                 />
               </div>
 
               {/* Modal Feedback banner */}
               {modalFeedback && (
                 <div
-                  className={`rounded-2xl p-4 text-xs font-semibold border ${
+                  className={`rounded-2xl p-4 text-xs font-normal border ${
                     modalFeedback.type === "success"
                       ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                       : "bg-red-50 text-red-700 border-red-100"
@@ -492,14 +492,14 @@ export default function PolicyHolderContact() {
                     setShowEmailModal(false);
                     setModalFeedback(null);
                   }}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-sm px-7 py-4 rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm px-7 py-4 rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="bg-[#0d2a3a] hover:bg-[#0284c7] disabled:bg-slate-400 text-white font-bold text-sm px-9 py-4 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-150 active:scale-[0.98] cursor-pointer border-none flex items-center justify-center gap-2 min-w-[130px]"
+                  className="bg-[#0d2a3a] hover:bg-[#0284c7] disabled:bg-slate-400 text-white font-semibold text-sm px-9 py-4 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-150 active:scale-[0.98] cursor-pointer border-none flex items-center justify-center gap-2 min-w-[130px]"
                 >
                   {isSending ? (
                     <>

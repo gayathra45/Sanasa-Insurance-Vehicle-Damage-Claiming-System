@@ -529,7 +529,7 @@ export default function PolicyHolderDocuments() {
             <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
             </svg>
-            <h2 className="text-xl md:text-[24px] font-black text-slate-800 tracking-tight">
+            <h2 className="text-xl md:text-[24px] font-bold text-slate-800 tracking-tight">
               {t.requestedDocs}
             </h2>
           </div>
@@ -537,7 +537,7 @@ export default function PolicyHolderDocuments() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-slate-200 shadow-sm min-h-[140px]">
               <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500"></div>
-              <span className="mt-3 text-slate-400 text-sm font-bold">{t.checkingDocs}</span>
+              <span className="mt-3 text-slate-400 text-sm font-medium">{t.checkingDocs}</span>
             </div>
           ) : requestedDocsList.length === 0 ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-10 text-center shadow-sm select-none">
@@ -546,8 +546,8 @@ export default function PolicyHolderDocuments() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
                 </svg>
               </div>
-              <p className="text-slate-500 font-extrabold text-[15px]">{t.noRequestsTitle}</p>
-              <p className="text-slate-400 text-xs font-semibold mt-1">{t.noRequestsDesc}</p>
+              <p className="text-slate-600 font-semibold text-[15px]">{t.noRequestsTitle}</p>
+              <p className="text-slate-400 text-xs font-normal mt-1">{t.noRequestsDesc}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-5">
@@ -565,26 +565,26 @@ export default function PolicyHolderDocuments() {
                     </div>
 
                     <div className="flex-1">
-                      <h3 className="text-red-600 font-extrabold text-base leading-none">
+                      <h3 className="text-red-600 font-semibold text-base leading-none">
                         {t.actionRequired}
                       </h3>
-                      <p className="text-slate-600 text-sm font-semibold mt-2.5 leading-relaxed">
-                        {t.officialStaff} has requested the following document(s) for <span className="text-slate-800 font-extrabold">{claim.claimNumber}</span>:
+                      <p className="text-slate-600 text-sm font-normal mt-2.5 leading-relaxed">
+                        {t.officialStaff} has requested the following document(s) for <span className="text-slate-800 font-semibold">{claim.claimNumber}</span>:
                       </p>
                       <div className="mt-2.5 space-y-3 pl-2.5 border-l-2 border-slate-200">
                         {getUserRequestedDocs(claim).map((docName, idx) => {
                           const note = getDocRequestNote(claim, docName);
                           const reqTime = getDocRequestTime(claim, docName);
                           return (
-                            <div key={idx} className="text-slate-600 text-xs font-semibold leading-relaxed grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                              <span className="text-slate-800 font-extrabold">• {docName}</span>
+                            <div key={idx} className="text-slate-600 text-xs font-normal leading-relaxed grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
+                              <span className="text-slate-800 font-semibold">• {docName}</span>
                               {reqTime && (
-                                <span className="text-red-500 font-bold">
+                                <span className="text-red-500 font-medium">
                                   (Requested: {reqTime} by {getDocRequestSender(claim, docName)})
                                 </span>
                               )}
                               {note && (
-                                <span className="col-span-1 sm:col-span-2 block text-slate-500 pl-3 font-medium italic mt-0.5">
+                                <span className="col-span-1 sm:col-span-2 block text-slate-500 pl-3 font-normal italic mt-0.5">
                                   Note: "{note}"
                                 </span>
                               )}
@@ -592,7 +592,7 @@ export default function PolicyHolderDocuments() {
                           );
                         })}
                       </div>
-                      <p className="text-slate-400 text-xs font-bold mt-3">
+                      <p className="text-slate-400 text-xs font-normal mt-3">
                         Please upload within 3 days...
                       </p>
                     </div>
@@ -601,11 +601,11 @@ export default function PolicyHolderDocuments() {
                   <div className="flex flex-col items-end justify-between self-stretch md:self-auto gap-4">
                     <button
                       onClick={() => handleOpenUpload(claim)}
-                      className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all duration-150 shadow-[0_4px_15px_rgba(220,38,38,0.25)] hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto text-center cursor-pointer border-none"
+                      className="bg-red-600 hover:bg-red-700 text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all duration-150 shadow-[0_4px_15px_rgba(220,38,38,0.25)] hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto text-center cursor-pointer border-none"
                     >
                       {t.uploadBtn}
                     </button>
-                    <span className="text-slate-400 text-[11px] font-bold self-end select-none">
+                    <span className="text-slate-400 text-[11px] font-medium self-end select-none">
                       {formatDateString(claim.createdAt)}
                     </span>
                   </div>
@@ -621,7 +621,7 @@ export default function PolicyHolderDocuments() {
             <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <h2 className="text-xl md:text-[24px] font-black text-slate-800 tracking-tight">
+            <h2 className="text-xl md:text-[24px] font-bold text-slate-800 tracking-tight">
               {t.uploadedDocs}
             </h2>
           </div>
@@ -634,7 +634,7 @@ export default function PolicyHolderDocuments() {
             </div>
           ) : groupedClaimsList.length === 0 ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-sm select-none">
-              <p className="text-slate-400 font-bold text-sm">{t.noUploadsTitle}</p>
+              <p className="text-slate-400 font-medium text-sm">{t.noUploadsTitle}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -652,15 +652,15 @@ export default function PolicyHolderDocuments() {
                     </div>
 
                     <div className="min-w-0">
-                      <h4 className="text-emerald-700 font-extrabold text-base leading-none select-none truncate">
+                      <h4 className="text-emerald-700 font-semibold text-base leading-none select-none truncate">
                         {claim.claimNumber}
                       </h4>
-                      <div className="text-slate-400 text-xs font-semibold mt-2.5 flex flex-col gap-2.5 leading-tight select-none w-full">
+                      <div className="text-slate-400 text-xs font-normal mt-2.5 flex flex-col gap-2.5 leading-tight select-none w-full">
                         {claim.docs.map((doc, dIdx) => (
                           <div key={dIdx} className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                            <span className="text-slate-750 font-bold">{doc.name}</span>
+                            <span className="text-slate-700 font-medium">{doc.name}</span>
                             {doc.uploadedAt && (
-                              <span className="text-[10px] text-slate-400 font-semibold">
+                              <span className="text-[10px] text-slate-400 font-normal">
                                 ({t.uploadedBy}: {formatDateTimeString(doc.uploadedAt)})
                               </span>
                             )}
@@ -671,7 +671,7 @@ export default function PolicyHolderDocuments() {
                   </div>
 
                   <div className="flex items-center gap-6 flex-shrink-0">
-                    <span className="hidden sm:inline text-slate-400 text-[13px] font-semibold select-none">
+                    <span className="hidden sm:inline text-slate-400 text-[13px] font-normal select-none">
                       {claim.date}
                     </span>
                     <button
@@ -679,7 +679,7 @@ export default function PolicyHolderDocuments() {
                         setUploadedListTargetClaim(claim);
                         setUploadedListModalOpen(true);
                       }}
-                      className="border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-500 hover:text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 cursor-pointer bg-white"
+                      className="border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-500 hover:text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 cursor-pointer bg-white"
                     >
                       {t.viewFiles}
                     </button>
@@ -713,7 +713,7 @@ export default function PolicyHolderDocuments() {
                   <h2 className="text-[26px] font-bold text-slate-950 tracking-tight leading-tight">
                     Claim {uploadTargetClaim.claimNumber}
                   </h2>
-                  <p className="text-slate-400 text-[14px] font-semibold mt-1">
+                  <p className="text-slate-400 text-[14px] font-normal mt-1">
                     Staff has requested a {getUserRequestedDocs(uploadTargetClaim).join(" & ")}
                   </p>
                 </div>
@@ -726,7 +726,7 @@ export default function PolicyHolderDocuments() {
                       key={docName} 
                       className="w-full border border-slate-300 rounded-full py-4 px-8 flex items-center justify-between min-h-[62px] bg-white transition-all"
                     >
-                      <span className="text-slate-800 text-[16px] font-bold select-none">
+                      <span className="text-slate-800 text-[16px] font-medium select-none">
                         {docName}
                       </span>
 
@@ -734,14 +734,14 @@ export default function PolicyHolderDocuments() {
                         {val.file === null ? (
                           <span
                             onClick={() => fileInputRefs.current[docName]?.click()}
-                            className="text-red-500 hover:text-red-600 font-extrabold text-[15px] cursor-pointer hover:underline select-none"
+                            className="text-red-500 hover:text-red-600 font-semibold text-[15px] cursor-pointer hover:underline select-none"
                           >
                             Upload
                           </span>
                         ) : (
                           <div className="flex items-center gap-2">
                             <span 
-                              className="text-emerald-600 font-bold text-sm truncate max-w-[200px]"
+                              className="text-emerald-600 font-medium text-sm truncate max-w-[200px]"
                               title={val.file.name}
                             >
                               ✓ {val.file.name}
@@ -776,14 +776,14 @@ export default function PolicyHolderDocuments() {
                   <button
                     type="button"
                     onClick={() => setUploadModalOpen(false)}
-                    className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                    className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
                   >
                     &lt; Close
                   </button>
                   <button
                     type="submit"
                     disabled={isUploading}
-                    className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-slate-400 active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none flex items-center justify-center gap-2 min-w-[140px] text-center"
+                    className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-slate-400 active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none flex items-center justify-center gap-2 min-w-[140px] text-center"
                   >
                     {isUploading ? (
                       <>
@@ -806,10 +806,10 @@ export default function PolicyHolderDocuments() {
                   </svg>
                 </div>
 
-                <h3 className="text-[22px] font-black text-[#0f2d3a] mt-5 leading-none">
+                <h3 className="text-[22px] font-bold text-[#0f2d3a] mt-5 leading-none">
                   Upload Complete!
                 </h3>
-                <p className="text-slate-600 text-[14px] font-semibold mt-2.5 max-w-[325px] leading-relaxed mx-auto">
+                <p className="text-slate-600 text-[14px] font-normal mt-2.5 max-w-[325px] leading-relaxed mx-auto">
                   Your files have been submitted successfully. Office staff will review them shortly.
                 </p>
 
@@ -822,7 +822,7 @@ export default function PolicyHolderDocuments() {
                       fetchClaims(user.nic);
                     }
                   }}
-                  className="mt-8 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-extrabold text-[14px] px-10 py-4 rounded-full transition-all duration-150 shadow-md border-none cursor-pointer"
+                  className="mt-8 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-semibold text-[14px] px-10 py-4 rounded-full transition-all duration-150 shadow-md border-none cursor-pointer"
                 >
                   Done
                 </button>
@@ -842,7 +842,7 @@ export default function PolicyHolderDocuments() {
               <h2 className="text-[26px] font-bold text-slate-950 tracking-tight leading-tight">
                 Claim {uploadedListTargetClaim.claimNumber}
               </h2>
-              <p className="text-slate-400 text-[14px] font-semibold mt-1">
+              <p className="text-slate-400 text-[14px] font-normal mt-1">
                 Uploaded Documents
               </p>
             </div>
@@ -856,11 +856,11 @@ export default function PolicyHolderDocuments() {
                   className="w-full border border-slate-200 rounded-2xl py-4 px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-[62px] bg-white hover:bg-slate-50/30 transition-all shadow-sm"
                 >
                   <div className="flex flex-col min-w-0">
-                    <span className="text-slate-800 text-[16px] font-bold select-none truncate max-w-[280px] sm:max-w-[420px]">
+                    <span className="text-slate-800 text-[16px] font-medium select-none truncate max-w-[280px] sm:max-w-[420px]">
                       {doc.name}
                     </span>
                     {doc.uploadedAt && (
-                      <span className="text-slate-400 text-xs font-semibold mt-1">
+                      <span className="text-slate-400 text-xs font-normal mt-1">
                         Uploaded on: {formatDateTimeString(doc.uploadedAt)}
                       </span>
                     )}
@@ -868,7 +868,7 @@ export default function PolicyHolderDocuments() {
 
                   <span
                     onClick={() => handleOpenView(`${doc.name} – ${uploadedListTargetClaim.claimNumber}`, doc.files, doc.uploadedAt, doc.uploadedBy)}
-                    className="text-red-500 hover:text-red-600 font-extrabold text-[15px] cursor-pointer hover:underline select-none"
+                    className="text-red-500 hover:text-red-600 font-semibold text-[15px] cursor-pointer hover:underline select-none"
                   >
                     View
                   </span>
@@ -880,7 +880,7 @@ export default function PolicyHolderDocuments() {
               <button
                 type="button"
                 onClick={() => setUploadedListModalOpen(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
                 &lt; Close
               </button>
@@ -906,19 +906,19 @@ export default function PolicyHolderDocuments() {
                     <h2 className="text-[26px] font-bold text-slate-950 tracking-tight leading-tight">
                       {docName}
                     </h2>
-                    <p className="text-slate-400 text-[14px] font-semibold mt-1">
+                    <p className="text-slate-400 text-[14px] font-normal mt-1">
                       {claimNumber ? `Claim ${claimNumber}` : ""}
                     </p>
                   </div>
                   {(viewUploadedBy || viewUploadedAt) && (
                     <div className="text-left sm:text-right select-none">
                       {viewUploadedBy && (
-                        <p className="text-[#df3d3d] font-black text-xs m-0">
+                        <p className="text-[#df3d3d] font-semibold text-xs m-0">
                           Uploaded By: {viewUploadedBy}
                         </p>
                       )}
                       {viewUploadedAt && (
-                        <p className="text-slate-400 font-bold text-[11px] mt-0.5 m-0">
+                        <p className="text-slate-400 font-normal text-[11px] mt-0.5 m-0">
                           Uploaded On: {formatDateTimeString(viewUploadedAt)}
                         </p>
                       )}
@@ -976,7 +976,7 @@ export default function PolicyHolderDocuments() {
 
               {/* Page count indicator overlay */}
               {viewModalFiles.length > 1 && (
-                <span className="absolute bottom-4 right-4 text-xs font-bold bg-black/60 text-white px-3 py-1 rounded-full">
+                <span className="absolute bottom-4 right-4 text-xs font-semibold bg-black/60 text-white px-3 py-1 rounded-full">
                   {viewCurrentIndex + 1} / {viewModalFiles.length}
                 </span>
               )}
@@ -987,7 +987,7 @@ export default function PolicyHolderDocuments() {
               <button
                 type="button"
                 onClick={() => setViewModalOpen(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
                 &lt; Close
               </button>

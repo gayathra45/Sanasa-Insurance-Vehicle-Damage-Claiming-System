@@ -193,7 +193,7 @@ export default function PolicyHolderNavbar() {
                 setSearchQuery("");
                 setBranchesModalOpen(true);
               }}
-              className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-semibold"
+              className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-medium"
             >
               <svg className="w-3.5 h-3.5 text-sky-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -208,7 +208,7 @@ export default function PolicyHolderNavbar() {
             <div className="relative" ref={langMenuRef}>
               <button
                 onClick={() => setLangMenuOpen((prev) => !prev)}
-                className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-semibold"
+                className="flex items-center gap-1 text-white hover:text-sky-100 transition-colors border-none bg-transparent cursor-pointer focus:outline-none select-none text-xs font-medium"
               >
                 <svg className="w-3.5 h-3.5 text-sky-100" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
@@ -223,21 +223,21 @@ export default function PolicyHolderNavbar() {
                 <div className="absolute right-0 mt-2 w-32 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-slate-100 py-1.5 z-50 text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150">
                   <button
                     onClick={() => changeLanguage("en")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-cyan-600" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-semibold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-cyan-600" : ""}`}
                   >
                     <span>English</span>
                     {lang === "en" && <span>✓</span>}
                   </button>
                   <button
                     onClick={() => changeLanguage("si")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-cyan-600" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-semibold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-cyan-600" : ""}`}
                   >
                     <span>සිංහල</span>
                     {lang === "si" && <span>✓</span>}
                   </button>
                   <button
                     onClick={() => changeLanguage("ta")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-cyan-600" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-semibold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-cyan-600" : ""}`}
                   >
                     <span>தமிழ்</span>
                     {lang === "ta" && <span>✓</span>}
@@ -272,7 +272,7 @@ export default function PolicyHolderNavbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative py-2 font-bold whitespace-nowrap transition-colors duration-200 no-underline ${
+                  className={`relative py-2 font-semibold whitespace-nowrap transition-colors duration-200 no-underline ${
                     active ? "text-[#0d2a3a]" : "text-slate-600 hover:text-[#0284c7]"
                   }`}
                 >
@@ -288,7 +288,7 @@ export default function PolicyHolderNavbar() {
             {/* New Claim Pill Button */}
             <Link
               href="/Policy_Holder/New_Claim"
-              className={`inline-flex items-center justify-center font-bold bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm hover:shadow transition-all duration-200 no-underline rounded-full hover:-translate-y-0.5 active:translate-y-0 active:scale-95 ml-2 ${
+              className={`inline-flex items-center justify-center font-semibold bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm hover:shadow transition-all duration-200 no-underline rounded-full hover:-translate-y-0.5 active:translate-y-0 active:scale-95 ml-2 ${
                 lang === "en" ? "px-5 py-1.5 text-sm md:text-[15px]" : "px-4 py-1.5 text-xs md:text-sm"
               }`}
             >
@@ -345,7 +345,7 @@ export default function PolicyHolderNavbar() {
                   <Link
                     href="/Policy_Holder/Home"
                     onClick={() => setProfileMenuOpen(false)}
-                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-semibold text-sm transition-colors no-underline"
+                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-medium text-sm transition-colors no-underline"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -357,7 +357,7 @@ export default function PolicyHolderNavbar() {
 
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
+                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-medium text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
@@ -398,7 +398,7 @@ export default function PolicyHolderNavbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className={`font-bold text-base py-2.5 px-4 rounded-xl transition-all duration-200 ${
+                  className={`font-semibold text-base py-2.5 px-4 rounded-xl transition-all duration-200 ${
                     active
                       ? "bg-slate-100/90 text-[#0d2a3a] border-l-4 border-[#0d2a3a]"
                       : "text-slate-600 hover:text-[#0284c7] hover:bg-slate-50"
@@ -414,13 +414,13 @@ export default function PolicyHolderNavbar() {
               <Link
                 href="/Policy_Holder/New_Claim"
                 onClick={() => setIsOpen(false)}
-                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm transition-all duration-200 no-underline"
+                className="w-full text-center font-semibold text-base py-2.5 px-4 rounded-2xl bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm transition-all duration-200 no-underline"
               >
                 + {t.newClaim}
               </Link>
               <button
                 onClick={handleLogout}
-                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-200 bg-transparent cursor-pointer"
+                className="w-full text-center font-semibold text-base py-2.5 px-4 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-200 bg-transparent cursor-pointer"
               >
                 {t.logout}
               </button>
@@ -443,12 +443,12 @@ export default function PolicyHolderNavbar() {
                 <h3 className="text-xl md:text-2xl font-bold text-[#0d2a3a] flex items-center gap-2">
                   <span>🏢</span> {t.branchTitle}
                 </h3>
-                <p className="text-[10px] md:text-xs text-slate-500 font-semibold mt-1">Find your nearest branch and contact details</p>
+                <p className="text-[10px] md:text-xs text-slate-500 font-normal mt-1">Find your nearest branch and contact details</p>
               </div>
               <button
                 type="button"
                 onClick={() => setBranchesModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 text-xl md:text-2xl font-bold cursor-pointer border-none bg-transparent transition-colors p-2"
+                className="text-slate-400 hover:text-slate-700 text-xl md:text-2xl font-medium cursor-pointer border-none bg-transparent transition-colors p-2"
               >
                 &times;
               </button>
@@ -466,7 +466,7 @@ export default function PolicyHolderNavbar() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full pl-10 md:pl-12 pr-4 py-2.5 md:py-3 rounded-2xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent transition-all shadow-inner bg-white text-slate-800 font-semibold placeholder:text-slate-400"
+                className="w-full pl-10 md:pl-12 pr-4 py-2.5 md:py-3 rounded-2xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent transition-all shadow-inner bg-white text-slate-800 font-normal placeholder:text-slate-400"
               />
             </div>
 
@@ -477,16 +477,16 @@ export default function PolicyHolderNavbar() {
                   {filteredBranches.map((b, idx) => (
                     <div key={idx} className="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-md hover:-translate-y-0.5 hover:border-[#00ddff]/60 transition-all duration-200 flex flex-col justify-between gap-4 group">
                       <div className="flex flex-col gap-2">
-                        <h4 className="text-[#0d2a3a] font-extrabold text-base md:text-[17px] tracking-tight group-hover:text-cyan-600 transition-colors">
+                        <h4 className="text-[#0d2a3a] font-semibold text-base md:text-[17px] tracking-tight group-hover:text-cyan-600 transition-colors">
                           {b.name[lang]}
                         </h4>
-                        <p className="text-slate-500 text-xs font-semibold leading-relaxed">
+                        <p className="text-slate-500 text-xs font-normal leading-relaxed">
                           📍 {b.address}
                         </p>
                       </div>
                       <a
                         href={`tel:${b.phone.replace(/\s+/g, "")}`}
-                        className="inline-flex items-center justify-center gap-2 bg-[#e0f2fe] hover:bg-[#bae6fd] text-[#0369a1] font-black text-xs no-underline mt-2 px-4 py-2.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 shadow-sm"
+                        className="inline-flex items-center justify-center gap-2 bg-[#e0f2fe] hover:bg-[#bae6fd] text-[#0369a1] font-semibold text-xs no-underline mt-2 px-4 py-2.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 shadow-sm"
                       >
                         <span>📞</span> {t.callNow}: {b.phone}
                       </a>
@@ -494,7 +494,7 @@ export default function PolicyHolderNavbar() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16 text-slate-400 font-bold select-none text-sm">
+                <div className="text-center py-16 text-slate-400 font-medium select-none text-sm">
                   No branches found matching your search.
                 </div>
               )}
@@ -504,7 +504,7 @@ export default function PolicyHolderNavbar() {
             <div className="px-6 md:px-10 py-4 md:py-5 border-t border-slate-100 flex justify-end bg-white relative z-10">
               <button
                 onClick={() => setBranchesModalOpen(false)}
-                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-xs md:text-sm px-6 md:px-8 py-2.5 md:py-3 rounded-full shadow-md hover:shadow-lg transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95 duration-150 outline-none"
+                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-semibold text-xs md:text-sm px-6 md:px-8 py-2.5 md:py-3 rounded-full shadow-md hover:shadow-lg transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95 duration-150 outline-none"
               >
                 {t.close}
               </button>
