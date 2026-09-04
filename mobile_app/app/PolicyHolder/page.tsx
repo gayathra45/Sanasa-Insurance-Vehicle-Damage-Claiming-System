@@ -1360,8 +1360,8 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   dotIndicator: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#22c55e", marginRight: 10 },
-  subtitleText: { flex: 1, fontSize: 12, color: "#e2e8f0", fontWeight: "600", lineHeight: 18 },
-  highlightTextOrange: { color: "#fb923c", fontWeight: "800" },
+  subtitleText: { flex: 1, fontSize: 12, color: "#e2e8f0", fontWeight: "400", lineHeight: 18 },
+  highlightTextOrange: { color: "#fb923c", fontWeight: "600" },
 
   compensationCallout: {
     backgroundColor: "rgba(15,23,42,0.45)",
@@ -1369,7 +1369,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 10,
     borderRadius: 8, marginVertical: 12,
   },
-  calloutTitle: { fontSize: 12.5, color: "#cbd5e1", fontWeight: "700", lineHeight: 18, fontStyle: "italic" },
+  calloutTitle: { fontSize: 12.5, color: "#cbd5e1", fontWeight: "500", lineHeight: 18, fontStyle: "normal" },
 
   neonButtonsContainer: { flexDirection: "row", justifyContent: "center", gap: 16, marginTop: 8 },
   neonButton: {

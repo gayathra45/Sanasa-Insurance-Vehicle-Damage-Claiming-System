@@ -537,17 +537,17 @@ export default function PolicyHolderHome() {
           {/* Welcome Greeting Row */}
           <div>
             <div className="inline-block border-b-3 border-[#00ddff] pb-1.5 mb-2">
-              <h2 className="text-white text-xl md:text-2.5xl font-black tracking-tight">
+              <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight">
                 {t.welcome} {userName} !
               </h2>
             </div>
-            <p className="text-slate-200 text-[13px] md:text-sm font-semibold tracking-wide mt-1 transition-all duration-300">
+            <p className="text-slate-200 text-[13px] md:text-sm font-normal tracking-wide mt-1 transition-all duration-300">
               {pendingClaimsCount > 0 || hasDocumentRequest ? (
                 <>
                   {t.policyActiveNote}{" "}
                   {pendingClaimsCount > 0 && (
                     <>
-                      <span className="text-[#ff9800] font-extrabold">
+                      <span className="text-[#ff9800] font-semibold">
                         {pendingClaimsCount} {pendingClaimsCount > 1 ? t.policyClaimPlural : t.policyClaimSingular}
                       </span>
                     </>
@@ -555,7 +555,7 @@ export default function PolicyHolderHome() {
                   {pendingClaimsCount > 0 && hasDocumentRequest && t.policyAnd}
                   {hasDocumentRequest && (
                     <>
-                      <span className="text-[#ff9800] font-extrabold">
+                      <span className="text-[#ff9800] font-semibold">
                         {t.policyDocRequest}
                       </span>
                     </>
@@ -570,7 +570,7 @@ export default function PolicyHolderHome() {
 
           {/* Central Statement */}
           <div className="my-auto max-w-4xl mx-auto text-center px-4">
-              <h1 className="text-lg md:text-[24px] font-extrabold text-white leading-relaxed tracking-normal">
+              <h1 className="text-base md:text-xl font-medium text-slate-100/90 leading-relaxed tracking-normal">
                 {t.accidentNote}
               </h1>
           </div>
@@ -579,14 +579,14 @@ export default function PolicyHolderHome() {
           <div className="flex flex-row justify-center gap-6 mt-2">
             <Link
               href="/Policy_Holder/New_Claim"
-              className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
               style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
             >
               {t.newClaim}
             </Link>
             <Link
               href="/Policy_Holder/TrackClaims"
-              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-bold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
               style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
             >
               {t.trackClaim}
