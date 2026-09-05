@@ -602,7 +602,7 @@ export default function OfficeStaffNotifications() {
                                   e.stopPropagation();
                                   toggleReadStatus(n.id);
                                 }}
-                                className="w-[120px] h-[34px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98] text-center"
+                                className="w-[120px] h-[34px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98] text-center whitespace-nowrap shrink-0"
                               >
                                 {isRead ? "Mark as Unread" : "Mark as Read"}
                               </button>
