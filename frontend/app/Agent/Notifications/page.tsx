@@ -661,14 +661,14 @@ export default function AgentNotifications() {
                                 setSelectedClaim(n.claim);
                                 markAsRead(n.id);
                               }}
-                              className="px-4 min-w-[75px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none bg-[#000080] hover:bg-[#000066] text-white shadow-xs whitespace-nowrap shrink-0"
+                              className="w-[136px] md:w-[140px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none bg-[#000080] hover:bg-[#000066] text-white shadow-xs whitespace-nowrap shrink-0"
                             >
                               View
                             </button>
                           ) : (
                             <Link
                               href={n.link}
-                              className={`px-4 min-w-[75px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline shadow-xs whitespace-nowrap shrink-0 ${
+                              className={`w-[136px] md:w-[140px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline shadow-xs whitespace-nowrap shrink-0 ${
                                 isUrgent
                                   ? "bg-red-500 hover:bg-red-600 text-white"
                                   : n.type === "decision"
@@ -685,7 +685,7 @@ export default function AgentNotifications() {
                               e.stopPropagation();
                               toggleReadStatus(n.id);
                             }}
-                            className="w-[120px] h-[34px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98] text-center whitespace-nowrap shrink-0"
+                            className="w-[136px] md:w-[140px] h-[34px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98] text-center whitespace-nowrap shrink-0"
                           >
                             {isRead ? "Mark as Unread" : "Mark as Read"}
                           </button>
