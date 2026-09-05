@@ -721,15 +721,11 @@ export default function MyClaims() {
               </div>
             ) : (
               filteredClaims.map((claim) => {
-                const s = claim.status.toLowerCase();
-                const isUrgent = s.includes("pending") || s.includes("progress") || s.includes("review") || s.includes("submit");
                 return (
                   <div
                     key={claim.claimNumber}
                     onClick={() => setSelectedClaim(claim)}
-                    className={`bg-white border border-slate-200 hover:border-[#0f2d4a] rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${
-                      isUrgent ? "border-l-4 border-l-[#0f2d4a]" : "border-l-4 border-l-slate-300"
-                    }`}
+                    className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden border-l-4 border-l-sky-400"
                   >
                     {/* Claim Info */}
                     <div className="flex flex-col min-w-0 select-none">
