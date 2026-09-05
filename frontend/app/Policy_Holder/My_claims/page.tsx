@@ -561,7 +561,7 @@ export default function MyClaims() {
                 <HugeiconsIcon icon={UserIcon} className="w-6 h-6 text-slate-600" strokeWidth={1.8} />
               </div>
               <div className="overflow-hidden">
-                <span className="block font-extrabold text-slate-900 text-lg truncate">
+                <span className="block font-semibold text-slate-800 text-base truncate">
                   {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.name || "Policy Holder")}
                 </span>
                 <span className="inline-block bg-slate-100 text-slate-600 text-[11px] font-bold px-2.5 py-0.5 rounded-md mt-1">
