@@ -561,7 +561,7 @@ export default function RegistrationsPage() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedReg(null)}
-                className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95 flex items-center justify-center"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95 flex items-center justify-center"
               >
                 Close
               </button>
@@ -702,7 +702,7 @@ export default function RegistrationsPage() {
               ) : (
                 <button
                   onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
                 >
                   OK
                 </button>

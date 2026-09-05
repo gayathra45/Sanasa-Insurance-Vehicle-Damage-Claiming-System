@@ -320,7 +320,7 @@ export default function AdminAdminsPage() {
                     setFormSuccess("");
                     setShowRegisterModal(true);
                   }}
-                  className="w-full py-4 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-2xl text-base font-bold shadow-lg shadow-slate-900/20 transition-all border-none outline-none cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-2xl text-base font-bold shadow-lg shadow-slate-900/20 transition-all border-none outline-none cursor-pointer flex items-center justify-center gap-2"
                 >
                   <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   <span>Add New Administrator</span>
@@ -520,7 +520,7 @@ export default function AdminAdminsPage() {
                 <button
                   type="submit"
                   disabled={submittingAdmin}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(15,45,58,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(0,0,128,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
                 >
                   {submittingAdmin ? (
                     <>
@@ -610,7 +610,7 @@ export default function AdminAdminsPage() {
                         <button
                           onClick={() => handleApproveRegistration(req._id)}
                           disabled={actioningAdminId !== null}
-                          className="px-5 py-2 bg-[#0f2d3a] hover:bg-[#0c242e] text-white text-xs font-extrabold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
+                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] text-white text-xs font-extrabold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
                         >
                           {actioningAdminId === req._id ? "Approving..." : "Approve & Send Credentials"}
                         </button>
@@ -624,7 +624,7 @@ export default function AdminAdminsPage() {
             <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end shrink-0 select-none">
               <button
                 onClick={() => setShowPendingModal(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0c242e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
               >
                 Close Requests
               </button>
@@ -702,7 +702,7 @@ export default function AdminAdminsPage() {
                         <button
                           onClick={() => handleApprovePasswordRequest(req._id)}
                           disabled={actioningRequestId !== null}
-                          className="px-5 py-2 bg-[#0f2d3a] hover:bg-[#0c242e] text-white text-xs font-extrabold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
+                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] text-white text-xs font-extrabold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
                         >
                           {actioningRequestId === req._id ? "Approving..." : "Approve & Send Reset OTP"}
                         </button>
@@ -716,7 +716,7 @@ export default function AdminAdminsPage() {
             <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end shrink-0 select-none">
               <button
                 onClick={() => setShowRequestsModal(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0c242e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
               >
                 Close Requests
               </button>

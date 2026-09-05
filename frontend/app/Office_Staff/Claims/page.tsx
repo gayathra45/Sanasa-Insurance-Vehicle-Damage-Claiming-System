@@ -1493,7 +1493,7 @@ function OfficeStaffClaimsPageContent() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Close
                 </button>
@@ -1663,7 +1663,7 @@ function OfficeStaffClaimsPageContent() {
                   onClick={() => {
                     setActiveSubModal(null);
                   }}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Close
                 </button>
@@ -1718,7 +1718,7 @@ function OfficeStaffClaimsPageContent() {
                     alert("Document requests sent successfully!");
                   }}
                   disabled={updatingClaim}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
                 >
                   Submit
                 </button>
@@ -1767,7 +1767,7 @@ function OfficeStaffClaimsPageContent() {
                     setActiveSubModal(null);
                     setNewMessageText("");
                   }}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Close
                 </button>
@@ -1786,7 +1786,7 @@ function OfficeStaffClaimsPageContent() {
                     alert("Internal note added successfully!");
                   }}
                   disabled={updatingClaim || !newMessageText.trim()}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
                 >
                   Submit
                 </button>
@@ -1936,7 +1936,7 @@ function OfficeStaffClaimsPageContent() {
                         }
                       }}
                       disabled={updatingClaim || !newMessageText.trim() || (contactRecipient === "Agent" && !selectedClaim.assignedAgent)}
-                      className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs px-5 py-4 rounded-xl border-none cursor-pointer disabled:opacity-50"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs px-5 py-4 rounded-xl border-none cursor-pointer disabled:opacity-50"
                     >
                       Send
                     </button>
@@ -1952,7 +1952,7 @@ function OfficeStaffClaimsPageContent() {
                     setActiveSubModal(null);
                     setNewMessageText("");
                   }}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Close
                 </button>
@@ -2082,7 +2082,7 @@ function OfficeStaffClaimsPageContent() {
                           }
                         }}
                         disabled={updatingClaim}
-                        className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
+                        className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
                       >
                         {updatingClaim ? "Processing..." : "Confirm Override"}
                       </button>
@@ -2138,7 +2138,7 @@ function OfficeStaffClaimsPageContent() {
                             alert("Advanced to Decision (Step 5) successfully!");
                           }}
                           disabled={updatingClaim}
-                          className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
+                          className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
                         >
                           {updatingClaim ? "Updating..." : "Proceed to Decision (Step 5)"}
                         </button>
@@ -2390,7 +2390,7 @@ function OfficeStaffClaimsPageContent() {
                             }
                           }}
                           disabled={updatingClaim || isUploadingReceipt}
-                          className="w-full bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer text-center select-none shadow-sm active:scale-95 disabled:opacity-50"
+                          className="w-full bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer text-center select-none shadow-sm active:scale-95 disabled:opacity-50"
                         >
                           {isUploadingReceipt ? "Uploading Receipt..." : updatingClaim ? "Completing claim..." : "Complete Claim Process"}
                         </button>
@@ -2408,7 +2408,7 @@ function OfficeStaffClaimsPageContent() {
                     setActiveSubModal(null);
                     setDecisionAction(null);
                   }}
-                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95"
                 >
                   Close
                 </button>
@@ -2522,7 +2522,7 @@ function OfficeStaffClaimsPageContent() {
                       <button
                         type="button"
                         onClick={() => setShowAllDetails(!showAllDetails)}
-                        className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
+                        className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
                       >
                         {showAllDetails ? (
                           <>
@@ -3238,7 +3238,7 @@ function OfficeStaffClaimsPageContent() {
                     setSelectedClaim(null);
                     setActiveDetailsPanel(null);
                   }}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Close
                 </button>
@@ -3261,7 +3261,7 @@ function OfficeStaffClaimsPageContent() {
                     setSelectedClaim(null);
                     setActiveDetailsPanel(null);
                   }}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Submit
                 </button>
@@ -3403,7 +3403,7 @@ function OfficeStaffClaimsPageContent() {
                   }
                 }}
                 disabled={updatingClaim || !selectedAgentEmail}
-                className="px-6 py-3 rounded-full bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold transition-all text-xs border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[#0f2d4a]/10"
+                className="px-6 py-3 rounded-full bg-[#000080] hover:bg-[#000066] text-white font-bold transition-all text-xs border-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[#0f2d4a]/10"
               >
                 Confirm Assign
               </button>

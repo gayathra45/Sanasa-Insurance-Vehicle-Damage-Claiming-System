@@ -516,7 +516,7 @@ function TrackClaimsContent() {
           </div>
           <button
             type="submit"
-            className="w-full md:w-auto bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-base py-4 px-8 rounded-full shadow-md cursor-pointer border-none transition-all duration-150 active:scale-95 whitespace-nowrap"
+            className="w-full md:w-auto bg-[#000080] hover:bg-[#000066] text-white font-semibold text-base py-4 px-8 rounded-full shadow-md cursor-pointer border-none transition-all duration-150 active:scale-95 whitespace-nowrap"
           >
             {t.trackBtn}
           </button>

@@ -667,7 +667,7 @@ export default function AddVehiclesPage() {
                                 <button
                                   onClick={() => handleVerifyVehicle(item.user.nic, item.vehicle.numberPlate, "Approve")}
                                   disabled={isProcessing}
-                                  className="flex-grow bg-[#0f2d3a] hover:bg-emerald-600 disabled:bg-slate-200 text-white font-extrabold text-[11px] py-3 rounded-full cursor-pointer transition-all duration-300 flex items-center justify-center gap-1 border-none active:scale-95 shadow-sm hover:shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:scale-[1.01]"
+                                  className="flex-grow bg-[#000080] hover:bg-emerald-600 disabled:bg-slate-200 text-white font-extrabold text-[11px] py-3 rounded-full cursor-pointer transition-all duration-300 flex items-center justify-center gap-1 border-none active:scale-95 shadow-sm hover:shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:scale-[1.01]"
                                 >
                                   {isProcessing ? "..." : (
                                     <>

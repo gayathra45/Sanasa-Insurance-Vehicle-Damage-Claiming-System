@@ -534,7 +534,7 @@ export default function MyVehicles() {
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-medium text-xs px-4 py-2 rounded-full transition-all cursor-pointer border-none"
+                    className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-xs px-4 py-2 rounded-full transition-all cursor-pointer border-none"
                   >
                     {t.clearSearch}
                   </button>

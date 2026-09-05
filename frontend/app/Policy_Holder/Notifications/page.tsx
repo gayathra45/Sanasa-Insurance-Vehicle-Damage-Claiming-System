@@ -627,7 +627,7 @@ export default function PolicyHolderNotifications() {
                             className={`font-semibold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none ${
                               isApproved
                                 ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                                : "bg-[#0d2a3a] hover:bg-[#0284c7] text-white"
+                                : "bg-[#000080] hover:bg-[#000066] text-white"
                             }`}
                           >
                             View
@@ -640,7 +640,7 @@ export default function PolicyHolderNotifications() {
                                 ? "bg-red-500 hover:bg-red-600 text-white"
                                 : isApproved
                                 ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                                : "bg-[#0d2a3a] hover:bg-[#0284c7] text-white"
+                                : "bg-[#000080] hover:bg-[#000066] text-white"
                             }`}
                           >
                             {n.actionLabel}

@@ -388,7 +388,7 @@ export default function AdminStaffPage() {
                     setFormSuccess("");
                     setShowModal(true);
                   }}
-                  className="flex-1 md:flex-none py-2.5 px-5 bg-[#0f2d3a] hover:bg-[#0b222c] hover:scale-105 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition-all border-none outline-none cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 md:flex-none py-2.5 px-5 bg-[#000080] hover:bg-[#000066] hover:scale-105 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition-all border-none outline-none cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <HugeiconsIcon icon={Add01Icon} className="w-4 h-4" strokeWidth={2.5} />
                   <span>Add New Staff</span>
@@ -513,7 +513,7 @@ export default function AdminStaffPage() {
                           </button>
                           <button
                             onClick={() => triggerEdit(staff)}
-                            className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                            className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                           >
                             Edit
                           </button>
@@ -775,7 +775,7 @@ export default function AdminStaffPage() {
                 <button
                   type="submit"
                   disabled={submittingStaff}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(15,45,58,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(0,0,128,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
                 >
                   {submittingStaff ? (
                     <>
@@ -889,7 +889,7 @@ export default function AdminStaffPage() {
                         <button
                           onClick={() => handleApproveRequest(request._id)}
                           disabled={actioningRequestId !== null}
-                          className="px-5 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white text-xs font-extrabold rounded-full shadow-md shadow-slate-900/10 transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-1.5"
+                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white text-xs font-extrabold rounded-full shadow-md shadow-slate-900/10 transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-1.5"
                         >
                           {actioningRequestId === request._id ? (
                             <>
@@ -914,7 +914,7 @@ export default function AdminStaffPage() {
             <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end shrink-0 select-none">
               <button
                 onClick={() => setShowRequestsModal(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95"
               >
                 Close Requests
               </button>
@@ -1170,7 +1170,7 @@ export default function AdminStaffPage() {
                 <button
                   type="submit"
                   disabled={submittingStaff}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(15,45,58,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(0,0,128,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
                 >
                   {submittingStaff ? (
                     <>
@@ -1276,7 +1276,7 @@ export default function AdminStaffPage() {
                     setShowViewModal(false);
                     setViewingStaff(null);
                   }}
-                  className="px-8 py-2.5 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(15,45,58,0.25)] transition-all cursor-pointer border-none outline-none"
+                  className="px-8 py-2.5 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(0,0,128,0.25)] transition-all cursor-pointer border-none outline-none"
                 >
                   Close Profile
                 </button>

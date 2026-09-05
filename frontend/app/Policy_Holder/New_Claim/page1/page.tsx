@@ -374,7 +374,7 @@ export default function UploadDocumentsPage() {
           <div className="flex flex-row justify-between items-center mt-6 mb-10">
             <Link
               href="/Policy_Holder/New_Claim"
-              className={`bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center ${
+              className={`bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center justify-center ${
                 isSubmitting ? "pointer-events-none opacity-50" : ""
               }`}
             >
@@ -383,7 +383,7 @@ export default function UploadDocumentsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-[#0f2d3a]/50 text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
+              className="bg-[#000080] hover:bg-[#000066] disabled:bg-[#000080]/50 text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(0,0,128,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -441,7 +441,7 @@ export default function UploadDocumentsPage() {
                 router.refresh();
                 router.push("/Policy_Holder/Home");
               }}
-              className="mt-9 self-start bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-medium text-[14px] px-8 py-3.5 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
+              className="mt-9 self-start bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-[14px] px-8 py-3.5 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
             >
               <span>Back to Home</span>
             </button>
@@ -504,7 +504,7 @@ export default function UploadDocumentsPage() {
               ) : (
                 <button
                   onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-medium shadow-md transition-all cursor-pointer border-none"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-medium shadow-md transition-all cursor-pointer border-none"
                 >
                   OK
                 </button>

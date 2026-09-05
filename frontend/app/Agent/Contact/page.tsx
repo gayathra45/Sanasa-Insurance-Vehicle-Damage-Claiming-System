@@ -468,7 +468,7 @@ export default function AgentContactPage() {
               <button
                 type="submit"
                 disabled={isSending}
-                className="w-full py-3 bg-[#0f2d4a] hover:bg-[#1a3d5e] active:scale-[0.98] text-white font-extrabold text-sm rounded-xl transition-all cursor-pointer border-none outline-none flex items-center justify-center gap-2 shadow-lg shadow-[#0f2d4a]/20 disabled:opacity-60"
+                className="w-full py-3 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-extrabold text-sm rounded-xl transition-all cursor-pointer border-none outline-none flex items-center justify-center gap-2 shadow-lg shadow-[#0f2d4a]/20 disabled:opacity-60"
               >
                 {isSending ? (
                   <>

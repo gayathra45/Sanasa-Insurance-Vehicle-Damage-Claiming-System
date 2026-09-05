@@ -633,7 +633,7 @@ export default function MyClaims() {
                   onClick={() => setStatusFilter(tab)}
                   className={`px-4 py-2 rounded-lg text-xs font-medium transition-all border-none outline-none cursor-pointer ${
                     statusFilter === tab
-                      ? "bg-[#0f2d4a] text-white shadow-sm font-semibold"
+                      ? "bg-[#000080] text-white shadow-sm font-semibold"
                       : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
                   }`}
                 >
@@ -1207,7 +1207,7 @@ export default function MyClaims() {
 
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95 flex items-center justify-center"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95 flex items-center justify-center"
                 >
                   Close
                 </button>

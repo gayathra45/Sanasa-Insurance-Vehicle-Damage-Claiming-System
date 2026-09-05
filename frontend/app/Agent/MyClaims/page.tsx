@@ -911,7 +911,7 @@ export default function AgentMyClaims() {
             onClick={() => setActiveTab("all")}
             className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "all"
-                ? "bg-[#0f2d3a] border-[#0f2d3a] text-white shadow-sm"
+                ? "bg-[#000080] border-[#0f2d3a] text-white shadow-sm"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
@@ -1062,7 +1062,7 @@ export default function AgentMyClaims() {
                     {/* Action button */}
                     <button
                       onClick={() => setSelectedClaim(claim)}
-                      className="bg-[#0f2d3a] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-black py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
+                      className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-black py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
                     >
                       {t.viewDetails}
                     </button>
@@ -1332,7 +1332,7 @@ export default function AgentMyClaims() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95"
                 >
                   Close
                 </button>
@@ -1489,7 +1489,7 @@ export default function AgentMyClaims() {
                     <button
                       type="button"
                       onClick={() => setActiveSubModal("documents")}
-                      className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
                     >
                       <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
                       Documents ({selectedClaim.additionalDocuments?.length || 0})

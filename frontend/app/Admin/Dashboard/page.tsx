@@ -693,7 +693,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
-                  className="w-full mt-2 bg-[#0f2d3a] hover:bg-[#0c242e] active:scale-[0.98] text-white font-extrabold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
+                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-extrabold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
                 >
                   {isUpdatingPassword ? (
                     <span className="flex items-center gap-2">

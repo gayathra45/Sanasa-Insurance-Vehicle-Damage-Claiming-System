@@ -397,7 +397,7 @@ export default function AgentsPage() {
                   setFormSuccess("");
                   setShowModal(true);
                 }}
-                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white font-bold text-sm px-6 py-3 rounded-full transition-all duration-150 shadow-md cursor-pointer border-none flex items-center justify-center gap-2 select-none"
+                className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-bold text-sm px-6 py-3 rounded-full transition-all duration-150 shadow-md cursor-pointer border-none flex items-center justify-center gap-2 select-none"
               >
                 <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
                 Register Agent
@@ -472,7 +472,7 @@ export default function AgentsPage() {
                           </div>
                           <button
                             onClick={() => setSelectedAgentDetails(agent)}
-                            className="px-5 py-2 bg-[#0f2d3a]/10 hover:bg-[#0f2d3a] hover:text-white text-[#0f2d3a] font-bold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
+                            className="px-5 py-2 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#0f2d3a] font-bold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
                           >
                             View Details
                           </button>
@@ -782,7 +782,7 @@ export default function AgentsPage() {
                 <button
                   type="submit"
                   disabled={submittingAgent}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(15,45,58,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(0,0,128,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
                 >
                   {submittingAgent ? (
                     <>
@@ -909,7 +909,7 @@ export default function AgentsPage() {
                           href={doc.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-4 py-2 bg-[#0f2d3a]/10 hover:bg-[#0f2d3a] hover:text-white text-[#0f2d3a] font-bold text-[10px] rounded-lg transition-all text-center no-underline cursor-pointer active:scale-95 shadow-sm"
+                          className="px-4 py-2 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#0f2d3a] font-bold text-[10px] rounded-lg transition-all text-center no-underline cursor-pointer active:scale-95 shadow-sm"
                         >
                           View Document
                         </a>
@@ -935,7 +935,7 @@ export default function AgentsPage() {
               </button>
               <button
                 onClick={() => setSelectedAgentDetails(null)}
-                className="px-8 py-3 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-sm font-bold shadow-md cursor-pointer border-none outline-none transition-all"
+                className="px-8 py-3 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-sm font-bold shadow-md cursor-pointer border-none outline-none transition-all"
               >
                 Close
               </button>
@@ -999,7 +999,7 @@ export default function AgentsPage() {
               ) : (
                 <button
                   onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
                 >
                   OK
                 </button>

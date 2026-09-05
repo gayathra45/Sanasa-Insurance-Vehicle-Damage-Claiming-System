@@ -1287,7 +1287,7 @@ export default function AgentDashboard() {
 
                       <Link
                         href={`/Agent/Documents?uploadClaim=${claim.claimNumber}`}
-                        className="bg-[#0f2d3a] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-black py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0 text-center no-underline"
+                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-black py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0 text-center no-underline"
                       >
                         {t.uploadDocs}
                       </Link>
@@ -1382,7 +1382,7 @@ export default function AgentDashboard() {
                       
                       <button
                         onClick={() => setSelectedClaim(claim)}
-                        className="bg-[#0f2d3a] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-black py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0"
+                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-black py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0"
                       >
                         {t.details}
                       </button>
@@ -1760,7 +1760,7 @@ export default function AgentDashboard() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Close
                 </button>
@@ -1917,7 +1917,7 @@ export default function AgentDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveSubModal("documents")}
-                      className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
                     >
                       <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
                       Documents ({selectedClaim.additionalDocuments?.length || 0})
@@ -2508,7 +2508,7 @@ export default function AgentDashboard() {
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
-                  className="w-full mt-2 bg-[#0f2d3a] hover:bg-[#0c242e] active:scale-[0.98] text-white font-extrabold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
+                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-extrabold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
                 >
                   {isUpdatingPassword ? (
                     <span className="flex items-center gap-2">

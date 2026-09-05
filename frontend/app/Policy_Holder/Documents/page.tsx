@@ -774,14 +774,14 @@ export default function PolicyHolderDocuments() {
                   <button
                     type="button"
                     onClick={() => setUploadModalOpen(false)}
-                    className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                    className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
                   >
                     &lt; Close
                   </button>
                   <button
                     type="submit"
                     disabled={isUploading}
-                    className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-slate-400 active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none flex items-center justify-center gap-2 min-w-[140px] text-center"
+                    className="bg-[#000080] hover:bg-[#000066] disabled:bg-slate-400 active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none flex items-center justify-center gap-2 min-w-[140px] text-center"
                   >
                     {isUploading ? (
                       <>
@@ -818,7 +818,7 @@ export default function PolicyHolderDocuments() {
                       fetchClaims(user.nic);
                     }
                   }}
-                  className="mt-8 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-semibold text-[14px] px-10 py-4 rounded-full transition-all duration-150 shadow-md border-none cursor-pointer"
+                  className="mt-8 bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-semibold text-[14px] px-10 py-4 rounded-full transition-all duration-150 shadow-md border-none cursor-pointer"
                 >
                   Done
                 </button>
@@ -876,7 +876,7 @@ export default function PolicyHolderDocuments() {
               <button
                 type="button"
                 onClick={() => setUploadedListModalOpen(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
                 &lt; Close
               </button>
@@ -979,7 +979,7 @@ export default function PolicyHolderDocuments() {
               <button
                 type="button"
                 onClick={() => setViewModalOpen(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
                 &lt; Close
               </button>

@@ -1158,7 +1158,7 @@ export default function FileNewClaim() {
                   }}
                   className={`flex-1 py-4 px-6 rounded-2xl font-medium transition-all border-2 text-center cursor-pointer ${
                     otherVehiclesInvolved === "yes"
-                      ? "bg-[#0d2a3a] text-white border-[#0d2a3a] shadow-md"
+                      ? "bg-[#000080] text-white border-[#000080] shadow-md"
                       : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                   }`}
                 >
@@ -1173,7 +1173,7 @@ export default function FileNewClaim() {
                   }}
                   className={`flex-1 py-4 px-6 rounded-2xl font-medium transition-all border-2 text-center cursor-pointer ${
                     otherVehiclesInvolved === "no"
-                      ? "bg-[#0d2a3a] text-white border-[#0d2a3a] shadow-md"
+                      ? "bg-[#000080] text-white border-[#000080] shadow-md"
                       : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                   }`}
                 >
@@ -1684,7 +1684,7 @@ export default function FileNewClaim() {
                         setModalInitialCoords(null);
                         setShowMapModal(false);
                       }}
-                      className="bg-[#0d2a3a] hover:bg-[#0284c7] text-white font-medium text-sm px-8 py-3.5 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm px-8 py-3.5 rounded-full shadow-[0_4px_12px_rgba(0,0,128,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
                     >
                       Confirm Location
                     </button>
@@ -1698,13 +1698,13 @@ export default function FileNewClaim() {
           <div className="flex flex-row justify-between items-center mt-4 mb-10">
             <Link
               href="/Policy_Holder/Home"
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center"
+              className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center justify-center"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center"
+              className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(0,0,128,0.25)] border-none cursor-pointer flex items-center justify-center"
             >
               Next
             </button>

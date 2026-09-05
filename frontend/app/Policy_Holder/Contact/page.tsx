@@ -498,7 +498,7 @@ export default function PolicyHolderContact() {
                 <button
                   type="submit"
                   disabled={isSending}
-                  className="bg-[#0d2a3a] hover:bg-[#0284c7] disabled:bg-slate-400 text-white font-semibold text-sm px-9 py-4 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-150 active:scale-[0.98] cursor-pointer border-none flex items-center justify-center gap-2 min-w-[130px]"
+                  className="bg-[#000080] hover:bg-[#000066] disabled:bg-slate-400 text-white font-semibold text-sm px-9 py-4 rounded-full shadow-[0_4px_12px_rgba(0,0,128,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-150 active:scale-[0.98] cursor-pointer border-none flex items-center justify-center gap-2 min-w-[130px]"
                 >
                   {isSending ? (
                     <>

@@ -1272,7 +1272,7 @@ export default function AgentActivityPage() {
                         onClick={() => setStatusFilter(tab)}
                         className={`px-4 py-2 rounded-lg text-xs font-black transition-all border-none outline-none cursor-pointer ${
                           statusFilter === tab
-                            ? "bg-[#0f2d4a] text-white shadow-sm"
+                            ? "bg-[#000080] text-white shadow-sm"
                             : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
                         }`}
                       >
@@ -1665,7 +1665,7 @@ export default function AgentActivityPage() {
                           <button
                             onClick={handleAgentUpload}
                             disabled={isAgentUploading}
-                            className="w-full bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-4 rounded-xl border-none cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 mt-1 shadow-md flex items-center justify-center gap-2"
+                            className="w-full bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-4 rounded-xl border-none cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 mt-1 shadow-md flex items-center justify-center gap-2"
                           >
                             {isAgentUploading ? "Uploading..." : "Upload Document"}
                           </button>
@@ -1681,7 +1681,7 @@ export default function AgentActivityPage() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   &lt; Close
                 </button>
@@ -1827,7 +1827,7 @@ export default function AgentActivityPage() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   &lt; Close
                 </button>
@@ -1874,7 +1874,7 @@ export default function AgentActivityPage() {
                     alert("Document requests sent successfully!");
                   }}
                   disabled={updatingClaim}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
                 >
                   Submit &gt;
                 </button>
@@ -1921,7 +1921,7 @@ export default function AgentActivityPage() {
                     setActiveSubModal(null);
                     setNewMessageText("");
                   }}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   &lt; Close
                 </button>
@@ -1940,7 +1940,7 @@ export default function AgentActivityPage() {
                     alert("Internal note added successfully!");
                   }}
                   disabled={updatingClaim || !newMessageText.trim()}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
                 >
                   Submit &gt;
                 </button>
@@ -2071,7 +2071,7 @@ export default function AgentActivityPage() {
                         }
                       }}
                       disabled={updatingClaim || !newMessageText.trim()}
-                      className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs px-5 py-4 rounded-xl border-none cursor-pointer disabled:opacity-50"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs px-5 py-4 rounded-xl border-none cursor-pointer disabled:opacity-50"
                     >
                       Send
                     </button>
@@ -2087,7 +2087,7 @@ export default function AgentActivityPage() {
                     setActiveSubModal(null);
                     setNewMessageText("");
                   }}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   &lt; Close
                 </button>
@@ -2135,7 +2135,7 @@ export default function AgentActivityPage() {
                           type="button"
                           onClick={() => handleAcceptClaim(selectedClaim.claimNumber)}
                           disabled={isAcceptingClaim}
-                          className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
+                          className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
                         >
                           {isAcceptingClaim ? "Accepting..." : "Accept Claim Assignment"}
                         </button>
@@ -2158,7 +2158,7 @@ export default function AgentActivityPage() {
                               type="button"
                               onClick={() => handleSubmitInspectionReport(selectedClaim.claimNumber)}
                               disabled={isSubmittingReport || !inspectionReportText.trim()}
-                              className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer self-end disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
+                              className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer self-end disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
                             >
                               {isSubmittingReport ? "Submitting..." : "Submit Inspection Report"}
                             </button>
@@ -2192,7 +2192,7 @@ export default function AgentActivityPage() {
                             type="button"
                             onClick={() => handleApproveAssessment(selectedClaim.claimNumber)}
                             disabled={updatingClaim || !assessmentAmount.trim()}
-                            className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer self-start disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
+                            className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer self-start disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
                           >
                             Confirm Assessment Approval
                           </button>
@@ -2254,7 +2254,7 @@ export default function AgentActivityPage() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Close
                 </button>
@@ -2546,7 +2546,7 @@ export default function AgentActivityPage() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal("documents")}
-                  className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-black text-xs py-3 px-6 rounded-full cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-2 border-none"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-black text-xs py-3 px-6 rounded-full cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-2 border-none"
                 >
                   <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
                   Upload Documents
@@ -2820,7 +2820,7 @@ export default function AgentActivityPage() {
               <button
                 type="button"
                 onClick={() => setShowActivitiesModal(false)}
-                className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
               >
                 Close
               </button>
