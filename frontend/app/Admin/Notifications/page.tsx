@@ -362,7 +362,7 @@ export default function AdminNotifications() {
                 onClick={() => setActiveTab("all")}
                 className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "all"
-                    ? "bg-[#1a365d] border-[#1a365d] text-white shadow-sm"
+                    ? "bg-[#000080] border-[#000080] text-white shadow-sm"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
@@ -629,7 +629,7 @@ export default function AdminNotifications() {
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300">
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[22px] font-extrabold text-[#1a365d] tracking-tight">
+                <h2 className="text-[22px] font-extrabold text-[#000080] tracking-tight">
                   Claim Details – {selectedClaim.claimNumber}
                 </h2>
                 <button
@@ -725,7 +725,7 @@ export default function AdminNotifications() {
                       {selectedClaim.messages.map((msg, index) => (
                         <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1">
                           <div className="flex justify-between items-center text-[11px]">
-                            <span className="font-extrabold text-[#1a365d]">{msg.sender}</span>
+                            <span className="font-extrabold text-[#000080]">{msg.sender}</span>
                             <span className="text-slate-400 font-semibold">{formatDate(msg.sentAt)}</span>
                           </div>
                           <p className="text-slate-700 text-xs font-semibold leading-relaxed m-0">{msg.message}</p>
@@ -747,7 +747,7 @@ export default function AdminNotifications() {
                 </Link>
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>
@@ -764,7 +764,7 @@ export default function AdminNotifications() {
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300">
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[22px] font-extrabold text-[#1a365d] tracking-tight">
+                <h2 className="text-[22px] font-extrabold text-[#000080] tracking-tight">
                   {isVehicleView
                     ? `Vehicle Verification – ${selectedVehicle?.numberPlate}`
                     : `Portal Registration – ${selectedUser.firstName} ${selectedUser.lastName}`}
@@ -809,7 +809,7 @@ export default function AdminNotifications() {
 
                 {isVehicleView && selectedVehicle && (
                   <div className="bg-slate-50 border border-slate-200 rounded-[20px] p-6 mb-8">
-                    <h3 className="text-sm font-extrabold text-[#1a365d] uppercase tracking-wider mb-4">Vehicle Details</h3>
+                    <h3 className="text-sm font-extrabold text-[#000080] uppercase tracking-wider mb-4">Vehicle Details</h3>
                     <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm font-semibold">
                       <div className="flex items-center gap-2">
                         <span className="text-slate-400 font-bold w-24 shrink-0">Plate:</span>
@@ -914,7 +914,7 @@ export default function AdminNotifications() {
                 </Link>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>
@@ -929,7 +929,7 @@ export default function AdminNotifications() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300">
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-              <h2 className="text-[22px] font-extrabold text-[#1a365d] tracking-tight">
+              <h2 className="text-[22px] font-extrabold text-[#000080] tracking-tight">
                 Agent Details – {selectedAgent.name} ({selectedAgent.agentId})
               </h2>
               <button
@@ -979,7 +979,7 @@ export default function AdminNotifications() {
               {/* Bank accounts information */}
               {(selectedAgent.bankName || selectedAgent.accountNumber) && (
                 <div className="bg-slate-50 border border-slate-200 rounded-[20px] p-6 mb-8">
-                  <h3 className="text-sm font-extrabold text-[#1a365d] uppercase tracking-wider mb-4">Bank Details</h3>
+                  <h3 className="text-sm font-extrabold text-[#000080] uppercase tracking-wider mb-4">Bank Details</h3>
                   <div className="grid grid-cols-2 gap-y-4 text-sm font-semibold">
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 font-bold w-24 shrink-0">Bank:</span>
@@ -1058,7 +1058,7 @@ export default function AdminNotifications() {
               </Link>
               <button
                 onClick={() => setSelectedAgent(null)}
-                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
               >
                 Close
               </button>

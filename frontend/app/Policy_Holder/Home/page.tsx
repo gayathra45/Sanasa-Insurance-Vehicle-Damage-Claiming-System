@@ -642,7 +642,7 @@ export default function PolicyHolderHome() {
                                 className={`${
                                   isPrimary 
                                     ? "bg-red-600 hover:bg-red-700 text-white font-medium text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline shadow-sm"
-                                    : "bg-[#2f3e46] hover:bg-[#1a2327] text-white font-medium text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline"
+                                    : "bg-[#000080] hover:bg-[#000066] text-white font-medium text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline shadow-sm"
                                 }`}
                               >
                                 {act.label}
@@ -861,7 +861,7 @@ export default function PolicyHolderHome() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedVehicleForModal(null)}
-                className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
               >
                 Close
               </button>
@@ -1239,7 +1239,7 @@ export default function PolicyHolderHome() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#1a365d] hover:bg-[#0f223f] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>
