@@ -7,112 +7,18 @@ import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 
-function getVehicleIconSvg(type: string, className = "w-9 h-9 text-slate-800") {
-  if (!type) type = "car";
-  const t = type.toLowerCase().trim();
-  
-  if (t.includes("suv")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 12h20M17 17h3a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3L14 4H6L3 7v8a2 2 0 0 0 2 2h3" />
-        <circle cx="7" cy="17" r="2" />
-        <path d="M9 17h6" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M7 7h6M19 10h-3" />
-      </svg>
-    );
-  }
-  if (t.includes("cab") || t.includes("pickup")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 13h13V8H7L4 11H2v2zm13 0h7V10h-7v3z" />
-        <path d="M2 13v3a1 1 0 0 0 1 1h3" />
-        <path d="M9 17h6" />
-        <path d="M19 17h2a1 1 0 0 0 1-1v-3" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("van") || t.includes("minibus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V7a2 2 0 0 1 2-2h12l5 3v7a2 2 0 0 1-2 2h-1" />
-        <path d="M2 15h3" />
-        <path d="M9 17h6" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M6 8h4v3H6V8zm6 0h3v3h-3V8z" />
-      </svg>
-    );
-  }
-  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="5" cy="16" r="3" />
-        <circle cx="19" cy="16" r="3" />
-        <path d="M5 16h8l3-7H9l-2 3M16 9h3M12 9l-3-4H6" />
-      </svg>
-    );
-  }
-  if (t.includes("three") || t.includes("rickshaw") || t.includes("tuk")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="18" cy="18" r="2" />
-        <path d="M3 18h1c.5 0 .9-.4 1-1l1-6h11c.6 0 1-.4 1-1V5h-3l-2 3H8L6 11H3v7z" />
-        <path d="M12 11v7M15 11v7" />
-      </svg>
-    );
-  }
-  if (t.includes("lorry") || t.includes("truck")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 18H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h11v13zm0-8h7l2 3v5a1 1 0 0 1-1 1h-8v-9z" />
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("bus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9M2 15h20v1a2 2 0 0 1-2 2h-1M5 18H3" />
-        <circle cx="7" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-        <path d="M4 7h3v3H4V7zm5 0h3v3H9V7zm5 0h3v3h-3V7zm5 0h2v3h-2V7z" />
-      </svg>
-    );
-  }
-  if (t.includes("tractor")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="17" r="2.5" />
-        <circle cx="17" cy="15" r="4.5" />
-        <path d="M6 17h6v-2h-3v-4h4v5" />
-        <path d="M12.5 15.5h.5M9 11l-3-4H4" />
-      </svg>
-    );
-  }
-  
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.8C2.1 11 2 11.3 2 11.5V16c0 .6.4 1 1 1h2" />
-      <circle cx="7" cy="17" r="2" />
-      <path d="M9 17h6" />
-      <circle cx="17" cy="17" r="2" />
-    </svg>
-  );
-}
-
-function getVehicleIconContainer(type: string) {
-  const svg = getVehicleIconSvg(type);
-  return (
-    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-800 shadow-sm flex-shrink-0 select-none group-hover:scale-105 group-hover:bg-[#f59e0b]/10 group-hover:border-[#f59e0b]/20 transition-all duration-300">
-      {svg}
-    </div>
-  );
-}
+import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Menu01Icon,
+  Notification01Icon,
+  File01Icon,
+  Add01Icon,
+  CheckmarkCircle01Icon,
+  Alert02Icon,
+  Tick01Icon,
+  Search01Icon
+} from "@hugeicons/core-free-icons";
 
 interface Vehicle {
   numberPlate: string;
@@ -534,9 +440,7 @@ export default function AddVehiclesPage() {
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
                 className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="hidden lg:inline">Welcome back, </span>
@@ -548,18 +452,7 @@ export default function AddVehiclesPage() {
                 href="/Office_Staff/Notifications"
                 className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="w-6 h-6 text-slate-500 hover:text-slate-800"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.65.342 3.228.96 4.658A1.875 1.875 0 0 1 18 17.25H6a1.875 1.875 0 0 1-1.71-2.842 9.06 9.06 0 0 0 .96-4.658V9ZM12 18.75a2.25 2.25 0 0 1-2.247-2.118.75.75 0 0 1 .746-.757h3a.75.75 0 0 1 .746.757A2.25 2.25 0 0 1 12 18.75Z"
-                    clipRule="evenodd"
-                  />
-                </svg>
+                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
               </Link>
               {/* User Avatar Icon */}
               <UserAvatarDropdown userType="office_staff" />
@@ -582,9 +475,7 @@ export default function AddVehiclesPage() {
                 {/* Page Path / Title */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
                   <div className="flex items-center gap-2 select-none">
-                    <svg className="w-5 h-5 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+                    <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
                     <h2 className="text-lg font-black text-slate-800 tracking-wide">
                       Add Vehicles
                     </h2>
@@ -600,9 +491,7 @@ export default function AddVehiclesPage() {
                       onClick={() => setIsAddVehicleOpen(true)}
                       className="bg-amber-500 hover:bg-amber-600 border-none text-white font-black text-xs px-5 py-3 rounded-full cursor-pointer transition-all shadow-sm active:scale-[0.98] flex items-center gap-1.5 h-[36px]"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                      </svg>
+                      <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" strokeWidth={2.5} />
                       Add Vehicle
                     </button>
 
@@ -644,18 +533,14 @@ export default function AddVehiclesPage() {
                 {/* Sub-tab Feedback Alerts */}
                 {actionSuccess && (
                   <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-2xl text-xs font-bold flex items-center gap-2 select-none transition-all duration-300">
-                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                    </svg>
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 shrink-0" strokeWidth={2.5} />
                     {actionSuccess}
                   </div>
                 )}
 
                 {actionError && (
                   <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-2 select-none transition-all duration-300">
-                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                    </svg>
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 shrink-0" strokeWidth={2.5} />
                     {actionError}
                   </div>
                 )}
@@ -672,9 +557,7 @@ export default function AddVehiclesPage() {
                     ) : pendingVehicles.length === 0 ? (
                       <div className="bg-white border border-slate-200 rounded-[28px] p-16 text-center select-none shadow-sm flex flex-col items-center justify-center gap-4 min-h-[350px] transition-all duration-300">
                         <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
-                          <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                          </svg>
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-8 h-8 text-emerald-600" strokeWidth={2} />
                         </div>
                         <h4 className="font-extrabold text-slate-700 text-base">All Caught Up!</h4>
                         <p className="text-slate-400 font-semibold text-sm max-w-sm">
@@ -788,9 +671,7 @@ export default function AddVehiclesPage() {
                                 >
                                   {isProcessing ? "..." : (
                                     <>
-                                      <svg className="w-3 h-3 text-white shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                      </svg>
+                                      <HugeiconsIcon icon={Tick01Icon} className="w-3 h-3 text-white shrink-0" strokeWidth={3} />
                                       Approve
                                     </>
                                   )}
@@ -826,9 +707,7 @@ export default function AddVehiclesPage() {
                       {/* Search Bar */}
                       <div className="relative w-full max-w-[360px] bg-slate-50 border border-slate-200 rounded-full pl-4 pr-2 py-2 flex items-center gap-2 transition-all duration-200 focus-within:bg-white focus-within:border-[#f59e0b] focus-within:ring-4 focus-within:ring-[#f59e0b]/10">
                         <span className="text-slate-400 flex items-center justify-center shrink-0">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
+                          <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
                         </span>
                         <input
                           type="text"
@@ -1039,9 +918,7 @@ export default function AddVehiclesPage() {
                 
                 {addError && (
                   <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-bold flex items-center gap-2 select-none transition-all duration-300">
-                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                    </svg>
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 shrink-0" strokeWidth={2.5} />
                     {addError}
                   </div>
                 )}

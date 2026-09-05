@@ -6,6 +6,14 @@ import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Tick01Icon,
+  Search01Icon,
+  CheckmarkCircle01Icon,
+  ViewIcon,
+  File01Icon,
+} from "@hugeicons/core-free-icons";
 
 interface Claim {
   claimNumber: string;
@@ -453,9 +461,7 @@ function TrackClaimsContent() {
             <div key={step.num} className="flex flex-col items-center z-10 flex-1">
               <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-semibold ${circleClass}`}>
                 {isCompleted ? (
-                  <svg className="w-5 h-5 text-[#00b050]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                  </svg>
+                  <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-[#00b050]" strokeWidth={3} />
                 ) : (
                   step.num
                 )}
@@ -497,9 +503,7 @@ function TrackClaimsContent() {
         <form onSubmit={handleTrack} className="flex flex-col md:flex-row gap-4 justify-center items-center mb-10 w-full max-w-xl mx-auto">
           <div className="relative w-full">
             <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2.5} />
             </span>
             <input
               type="text"
@@ -543,9 +547,7 @@ function TrackClaimsContent() {
                 <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all duration-300">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     </div>
                     <div>
                       <h4 className="text-[15px] font-semibold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
@@ -558,9 +560,7 @@ function TrackClaimsContent() {
                     rel="noopener noreferrer"
                     className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
+                    <HugeiconsIcon icon={ViewIcon} className="w-4 h-4" strokeWidth={2} />
                     View Receipt
                   </a>
                 </div>
@@ -837,9 +837,7 @@ function TrackClaimsContent() {
           </div>
         ) : (
           <div className="text-center py-16 text-slate-400 font-normal max-w-md mx-auto select-none">
-            <svg className="w-16 h-16 mx-auto text-slate-300 mb-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z" />
-            </svg>
+            <HugeiconsIcon icon={File01Icon} className="w-16 h-16 mx-auto text-slate-300 mb-4" strokeWidth={1.5} />
             {t.enterPrompt}
           </div>
         )}

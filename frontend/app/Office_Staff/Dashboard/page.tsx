@@ -3,6 +3,22 @@
 import React, { useState, useEffect } from "react";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Menu01Icon,
+  Notification01Icon,
+  AlertCircleIcon,
+  Alert02Icon,
+  UserAdd01Icon,
+  CheckmarkCircle01Icon,
+  Clock01Icon,
+  File01Icon,
+  UserMultiple02Icon,
+  BubbleChatIcon,
+  Cancel01Icon,
+  LockIcon,
+  Loading03Icon
+} from "@hugeicons/core-free-icons";
 
 interface RegistrationItem {
   name: string;
@@ -264,9 +280,7 @@ export default function OfficeStaffDashboard() {
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
                 className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="hidden lg:inline">Welcome back, </span>
@@ -279,9 +293,7 @@ export default function OfficeStaffDashboard() {
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
               <button className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-slate-500 hover:text-slate-800">
-                  <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.65.342 3.228.96 4.658A1.875 1.875 0 0 1 18 17.25H6a1.875 1.875 0 0 1-1.71-2.842 9.06 9.06 0 0 0 .96-4.658V9ZM12 18.75a2.25 2.25 0 0 1-2.247-2.118.75.75 0 0 1 .746-.757h3a.75.75 0 0 1 .746.757A2.25 2.25 0 0 1 12 18.75Z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
               </button>
               {/* User Avatar Icon */}
               <UserAvatarDropdown userType="office_staff" />
@@ -297,9 +309,7 @@ export default function OfficeStaffDashboard() {
               </div>
             ) : error ? (
               <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-red-500 font-bold bg-red-50 rounded-2xl p-8 border border-red-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-10 h-10 mb-2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                </svg>
+                <HugeiconsIcon icon={AlertCircleIcon} className="w-10 h-10 mb-2 text-red-500" strokeWidth={2} />
                 <span>{error}</span>
               </div>
             ) : (
@@ -345,9 +355,7 @@ export default function OfficeStaffDashboard() {
                   <div className="bg-gradient-to-br from-red-50/50 to-white rounded-[20px] border border-red-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-red-100/60 rounded-xl text-red-600 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                        </svg>
+                        <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-600" strokeWidth={2.5} />
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Unassigned Claims</span>
                     </div>
@@ -360,9 +368,7 @@ export default function OfficeStaffDashboard() {
                   <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                        </svg>
+                        <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 text-blue-900" strokeWidth={2.5} />
                       </div>
                       <span className="text-slate-600 font-bold text-xs">New Registrations</span>
                     </div>
@@ -375,9 +381,7 @@ export default function OfficeStaffDashboard() {
                   <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-800" strokeWidth={2.5} />
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Active Claims</span>
                     </div>
@@ -390,9 +394,7 @@ export default function OfficeStaffDashboard() {
                   <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
+                        <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-amber-800" strokeWidth={2.5} />
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Pending Claims</span>
                     </div>
@@ -408,9 +410,7 @@ export default function OfficeStaffDashboard() {
                   {/* Left Column: New Claims (8 cols) */}
                   <div className="lg:col-span-8 flex flex-col select-none">
                     <div className="flex items-center gap-2 mb-6">
-                      <svg className="w-5 h-5 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                      </svg>
+                      <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
                       <h2 className="text-lg font-black text-slate-800 tracking-wide">
                         New Claims
                       </h2>
@@ -483,9 +483,7 @@ export default function OfficeStaffDashboard() {
                   {/* Right Column: New Registration (4 cols) */}
                   <div className="lg:col-span-4 flex flex-col select-none">
                     <div className="flex items-center gap-2 mb-6">
-                      <svg className="w-5 h-5 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                      </svg>
+                      <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
                       <h2 className="text-lg font-black text-slate-800 tracking-wide">
                         New Registration
                       </h2>
@@ -523,9 +521,7 @@ export default function OfficeStaffDashboard() {
 
       {/* Floating Action Chat Button */}
       <button className="fixed bottom-24 right-8 w-14 h-14 bg-[#00ddff] hover:bg-[#00cceb] text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-50 group">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75 0 1.776.476 3.44 1.307 4.887L2.14 21.64a.75.75 0 0 0 .935.935l4.753-1.428A9.702 9.702 0 0 0 12 21.75c5.385 0 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-3 9.75a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm3.75 0a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm3.75 0a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       {selectedClaim && (
@@ -540,9 +536,7 @@ export default function OfficeStaffDashboard() {
                 onClick={() => setSelectedClaim(null)}
                 className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 hover:bg-slate-50 rounded-full transition-all"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -623,9 +617,7 @@ export default function OfficeStaffDashboard() {
               <div className="px-8 pt-8 pb-5 select-none relative flex-shrink-0 border-b border-slate-100/60 bg-slate-50/55">
                 <h2 className="font-extrabold text-xl text-slate-800 tracking-tight flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+                    <HugeiconsIcon icon={LockIcon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
                   </div>
                   Update Password
                 </h2>
@@ -638,17 +630,13 @@ export default function OfficeStaffDashboard() {
               <form onSubmit={handlePasswordChange} className="p-8 flex flex-col gap-5">
                 {passwordError && (
                   <div className="bg-red-50 text-red-600 text-xs font-bold p-4 rounded-2xl border border-red-100 flex items-center gap-3">
-                    <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500 flex-shrink-0" strokeWidth={2.5} />
                     <span>{passwordError}</span>
                   </div>
                 )}
                 {passwordSuccess && (
                   <div className="bg-emerald-50 text-emerald-600 text-xs font-bold p-4 rounded-2xl border border-emerald-100 flex items-center gap-3">
-                    <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-500 flex-shrink-0" strokeWidth={2.5} />
                     <span>{passwordSuccess}</span>
                   </div>
                 )}
@@ -742,10 +730,7 @@ export default function OfficeStaffDashboard() {
                 >
                   {isUpdatingPassword ? (
                     <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-5 w-5 text-white" strokeWidth={2} />
                       Updating...
                     </span>
                   ) : (

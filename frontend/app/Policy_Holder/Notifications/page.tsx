@@ -5,6 +5,17 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Search01Icon,
+  Cancel01Icon,
+  CheckmarkCircle01Icon,
+  Loading03Icon,
+  Clock01Icon,
+  Alert02Icon,
+  Notification01Icon,
+  BubbleChatIcon,
+} from "@hugeicons/core-free-icons";
 
 interface Claim {
   claimNumber: string;
@@ -409,9 +420,7 @@ export default function PolicyHolderNotifications() {
           {/* Search Input */}
           <div className="relative w-full max-w-[420px] bg-slate-50 hover:bg-white focus-within:bg-white border border-slate-200 rounded-full pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10">
             <span className="text-slate-400 flex items-center justify-center">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2.5} />
             </span>
             <input
               type="text"
@@ -426,9 +435,7 @@ export default function PolicyHolderNotifications() {
                 onClick={() => setSearchQuery("")}
                 className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
               </button>
             )}
             <button
@@ -445,9 +452,7 @@ export default function PolicyHolderNotifications() {
               onClick={markAllAsRead}
               className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
             >
-              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-              </svg>
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
               Mark All as Read
             </button>
           )}
@@ -532,10 +537,7 @@ export default function PolicyHolderNotifications() {
         <div className="flex flex-col gap-5 mb-10">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 bg-slate-50 border border-slate-200 rounded-[30px] gap-4">
-              <svg className="animate-spin h-8 w-8 text-[#0284c7]" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
+              <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#0284c7]" strokeWidth={2} />
               <p className="text-slate-500 font-medium text-sm">Fetching notifications...</p>
             </div>
           ) : filteredNotifs.length > 0 ? (
@@ -548,26 +550,20 @@ export default function PolicyHolderNotifications() {
                 let borderLeft = "border-l-[6px] border-l-sky-500";
                 let iconStyle = "bg-sky-50 text-sky-500";
                 let iconSvg = (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" strokeWidth={2.5} />
                 );
 
                 if (isUrgent) {
                   borderLeft = "border-l-[6px] border-l-red-500";
                   iconStyle = "bg-red-50 text-red-500";
                   iconSvg = (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
-                    </svg>
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
                   );
                 } else if (isApproved) {
                   borderLeft = "border-l-[6px] border-l-emerald-500";
                   iconStyle = "bg-emerald-50 text-emerald-500";
                   iconSvg = (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   );
                 }
 
@@ -675,9 +671,7 @@ export default function PolicyHolderNotifications() {
             /* Empty state block matching original style */
             <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-[30px] gap-6 text-center px-8 shadow-sm">
               <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.124 7.5A8.969 8.969 0 015.292 3m13.416 0a8.969 8.969 0 012.168 4.5" />
-                </svg>
+                <HugeiconsIcon icon={Notification01Icon} className="w-10 h-10" strokeWidth={1.5} />
               </div>
               <div>
                 <h4 className="font-semibold text-slate-800 text-lg">No Notifications Found</h4>
@@ -696,9 +690,7 @@ export default function PolicyHolderNotifications() {
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       {/* Claim Detail Modal Popup */}

@@ -30,112 +30,9 @@ function formatNumberPlate(plate: string): string {
   return cleaned;
 }
 
-function getVehicleIconSvg(type: string, className = "w-10 h-10 text-slate-800") {
-  if (!type) type = "car";
-  const t = type.toLowerCase().trim();
-  
-  if (t.includes("suv")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 12h20M17 17h3a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3L14 4H6L3 7v8a2 2 0 0 0 2 2h3" />
-        <circle cx="7" cy="17" r="2" />
-        <path d="M9 17h6" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M7 7h6M19 10h-3" />
-      </svg>
-    );
-  }
-  if (t.includes("cab") || t.includes("pickup")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 13h13V8H7L4 11H2v2zm13 0h7V10h-7v3z" />
-        <path d="M2 13v3a1 1 0 0 0 1 1h3" />
-        <path d="M9 17h6" />
-        <path d="M19 17h2a1 1 0 0 0 1-1v-3" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("van") || t.includes("minibus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V7a2 2 0 0 1 2-2h12l5 3v7a2 2 0 0 1-2 2h-1" />
-        <path d="M2 15h3" />
-        <path d="M9 17h6" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M6 8h4v3H6V8zm6 0h3v3h-3V8z" />
-      </svg>
-    );
-  }
-  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="5" cy="16" r="3" />
-        <circle cx="19" cy="16" r="3" />
-        <path d="M5 16h8l3-7H9l-2 3M16 9h3M12 9l-3-4H6" />
-      </svg>
-    );
-  }
-  if (t.includes("three") || t.includes("rickshaw") || t.includes("tuk")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="18" cy="18" r="2" />
-        <path d="M3 18h1c.5 0 .9-.4 1-1l1-6h11c.6 0 1-.4 1-1V5h-3l-2 3H8L6 11H3v7z" />
-        <path d="M12 11v7M15 11v7" />
-      </svg>
-    );
-  }
-  if (t.includes("lorry") || t.includes("truck")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 18H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h11v13zm0-8h7l2 3v5a1 1 0 0 1-1 1h-8v-9z" />
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("bus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9M2 15h20v1a2 2 0 0 1-2 2h-1M5 18H3" />
-        <circle cx="7" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-        <path d="M4 7h3v3H4V7zm5 0h3v3H9V7zm5 0h3v3h-3V7zm5 0h2v3h-2V7z" />
-      </svg>
-    );
-  }
-  if (t.includes("tractor")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="17" r="2.5" />
-        <circle cx="17" cy="15" r="4.5" />
-        <path d="M6 17h6v-2h-3v-4h4v5" />
-        <path d="M12.5 15.5h.5M9 11l-3-4H4" />
-      </svg>
-    );
-  }
-  
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.8C2.1 11 2 11.3 2 11.5V16c0 .6.4 1 1 1h2" />
-      <circle cx="7" cy="17" r="2" />
-      <path d="M9 17h6" />
-      <circle cx="17" cy="17" r="2" />
-    </svg>
-  );
-}
-
-function getVehicleIconContainer(type: string) {
-  const svg = getVehicleIconSvg(type);
-  return (
-    <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-800 shadow-sm transition-all group-hover:scale-105 group-hover:bg-cyan-50 group-hover:border-cyan-200">
-      {svg}
-    </div>
-  );
-}
+import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Car01Icon, SecurityCheckIcon, Search01Icon, Alert02Icon, ViewIcon, Add01Icon, AlertCircleIcon, Download01Icon, BubbleChatIcon, Clock01Icon, Loading03Icon, RefreshIcon } from "@hugeicons/core-free-icons";
 
 const translations = {
   en: {
@@ -540,9 +437,7 @@ export default function MyVehicles() {
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-black font-semibold px-6 py-5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black">
-            <svg className="w-6 h-6 animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-            </svg>
+            <HugeiconsIcon icon={RefreshIcon} className="w-6 h-6 animate-spin" strokeWidth={2.5} />
             <span>{toastMessage}</span>
           </div>
         )}
@@ -552,12 +447,7 @@ export default function MyVehicles() {
           {/* Total Vehicles Card */}
           <div className="bg-white px-6 py-5 rounded-[22px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.04)] flex items-center gap-5">
             <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center text-cyan-600 flex-shrink-0">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.8C2.1 11 2 11.3 2 11.5V16c0 .6.4 1 1 1h2" />
-                <circle cx="7" cy="17" r="2" />
-                <path d="M9 17h6" />
-                <circle cx="17" cy="17" r="2" />
-              </svg>
+              <HugeiconsIcon icon={Car01Icon} className="w-7 h-7" strokeWidth={1.8} />
             </div>
             <div>
               <h3 className="text-2xl font-bold text-slate-800 leading-none">{vehicles.length}</h3>
@@ -568,9 +458,7 @@ export default function MyVehicles() {
           {/* Active Policies Card */}
           <div className="bg-white px-6 py-5 rounded-[22px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.04)] flex items-center gap-5">
             <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center text-emerald-600 flex-shrink-0">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-              </svg>
+              <HugeiconsIcon icon={SecurityCheckIcon} className="w-7 h-7" strokeWidth={1.8} />
             </div>
             <div>
               <h3 className="text-2xl font-bold text-slate-800 leading-none">
@@ -603,10 +491,7 @@ export default function MyVehicles() {
           {/* Search bar matching design guidelines */}
           <div className="relative w-full md:max-w-[300px]">
             <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <circle cx="11" cy="11" r="8" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" />
-              </svg>
+              <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2} />
             </span>
             <input
               type="text"
@@ -629,10 +514,7 @@ export default function MyVehicles() {
         {/* Vehicles Display Grid */}
         {isLoading ? (
           <div className="text-center py-20 bg-white border border-slate-200 rounded-[30px] p-8 shadow-sm flex flex-col items-center justify-center">
-            <svg className="w-12 h-12 text-[#00ddff] animate-spin mb-4" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </svg>
+            <HugeiconsIcon icon={Loading03Icon} className="w-12 h-12 text-[#00ddff] animate-spin mb-4" strokeWidth={2} />
             <p className="text-slate-500 font-medium text-base">{t.retrieving}</p>
           </div>
         ) : (
@@ -641,9 +523,7 @@ export default function MyVehicles() {
             {filteredVehicles.length === 0 && (
               <div className="bg-white border border-slate-200 rounded-[30px] p-7 shadow-sm flex flex-col justify-center items-center text-center min-h-[280px]">
                 <div className="w-16 h-16 bg-slate-50 border border-slate-200/50 rounded-2xl flex items-center justify-center text-slate-400 mb-4">
-                  <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                  </svg>
+                  <HugeiconsIcon icon={Alert02Icon} className="w-8 h-8" strokeWidth={1.8} />
                 </div>
                 <h4 className="text-slate-800 font-semibold text-base mb-1">
                   {t.noVehiclesFound}
@@ -687,10 +567,15 @@ export default function MyVehicles() {
                         </div>
                       </div>
 
-                      {/* Small visual card details pill */}
-                      <span className="text-slate-400 font-medium text-xs bg-slate-100 border border-slate-200/50 rounded-full px-3 py-1 self-start select-none">
-                        {vehicle.year}
-                      </span>
+                      {/* Category & Year Pill */}
+                      <div className="flex flex-col items-end gap-1.5 self-start">
+                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getVehicleTheme(vehicle.vehicleType).badge} select-none`}>
+                          {vehicle.vehicleType}
+                        </span>
+                        <span className="text-slate-400 font-medium text-[11px] bg-slate-100/80 border border-slate-200/60 rounded-full px-2.5 py-0.5 select-none">
+                          {vehicle.year}
+                        </span>
+                      </div>
                     </div>
 
                     {/* Technical details rows */}
@@ -716,10 +601,7 @@ export default function MyVehicles() {
                       onClick={() => setSelectedVehicleForModal(vehicle)}
                       className="w-full bg-[#00ddff] hover:bg-[#00c8e6] text-black font-semibold text-xs md:text-sm py-3 rounded-full text-center transition-all flex items-center justify-center gap-2 cursor-pointer border-none shadow-sm hover:scale-[1.02] active:scale-[0.98] outline-none"
                     >
-                      <svg className="w-5 h-5 text-black" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
+                      <HugeiconsIcon icon={ViewIcon} className="w-5 h-5 text-black" strokeWidth={2} />
                       {t.viewDetails}
                     </button>
                   </div>
@@ -733,9 +615,7 @@ export default function MyVehicles() {
               className="bg-transparent border-2 border-dashed border-slate-300 hover:border-[#00ddff] hover:bg-slate-50/50 rounded-[30px] p-7 min-h-[280px] flex flex-col items-center justify-center gap-4 transition-all duration-300 group cursor-pointer w-full text-slate-800"
             >
               <div className="w-16 h-16 rounded-full bg-slate-100 group-hover:bg-cyan-50 flex items-center justify-center text-slate-400 group-hover:text-[#00ddff] transition-all">
-                <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
+                <HugeiconsIcon icon={Add01Icon} className="w-8 h-8" strokeWidth={2} />
               </div>
               <div className="text-center select-none">
                 <h4 className="text-slate-700 font-semibold text-base mb-1 group-hover:text-[#0f2d3a] transition-all">
@@ -841,18 +721,14 @@ export default function MyVehicles() {
                   onClick={() => setSelectedVehicleForModal(null)}
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                  </svg>
+                  <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5" strokeWidth={2} />
                   File a Claim
                 </Link>
                 <button
                   onClick={() => handleDownloadCoverNote(selectedVehicleForModal)}
                   className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-semibold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                  </svg>
+                  <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" strokeWidth={2} />
                   Cover Note
                 </button>
               </div>
@@ -919,9 +795,7 @@ export default function MyVehicles() {
                       Vehicle Type <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-slate-100 border border-slate-200 text-slate-800 shadow-inner flex-shrink-0">
-                        {getVehicleIconSvg(newVehicleType, "w-8 h-8 text-slate-700")}
-                      </div>
+                      {getVehicleIconContainer(newVehicleType, "w-12 h-12 rounded-xl")}
                       <select
                         value={newVehicleType}
                         onChange={(e) => setNewVehicleType(e.target.value)}
@@ -1066,12 +940,10 @@ export default function MyVehicles() {
 
       {/* Floating Chat Support Bubble */}
       <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-slate-900 p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-slate-900" strokeWidth={2} />
       </button>
 
       {/* Registration Success Modal Popup */}
@@ -1079,9 +951,7 @@ export default function MyVehicles() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[460px] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col items-center text-center relative overflow-hidden">
             <div className="w-16 h-16 bg-amber-50 border border-amber-200 rounded-full flex items-center justify-center text-[#f59e0b] mb-6 select-none">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+              <HugeiconsIcon icon={Clock01Icon} className="w-8 h-8 text-[#f59e0b]" strokeWidth={2} />
             </div>
             
             <h3 className="font-bold text-slate-800 text-lg mb-3 tracking-tight select-none">

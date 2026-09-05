@@ -7,6 +7,30 @@ import Footer from "@/app/Components/Agent/Footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
 import { compressImage } from "../../utils/imageCompressor";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  File01Icon,
+  Tick01Icon,
+  Alert02Icon,
+  CheckmarkCircle01Icon,
+  Edit02Icon,
+  Notification01Icon,
+  ArrowRight01Icon,
+  Task01Icon,
+  Book01Icon,
+  HelpCircleIcon,
+  Call02Icon,
+  UserIcon,
+  Image01Icon,
+  Upload01Icon,
+  Delete02Icon,
+  Car01Icon,
+  Cancel01Icon,
+  SmartPhone01Icon,
+  BubbleChatIcon,
+  SquareLock02Icon,
+  Loading03Icon,
+} from "@hugeicons/core-free-icons";
 
 // Interface representing a MongoDB Claim document
 interface ClaimMessage {
@@ -142,9 +166,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
     return (
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-inner select-text">
         <div className="flex items-center gap-2 mb-3 text-slate-400 select-none">
-          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
+          <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
         </div>
         <p className="text-slate-700 text-xs font-semibold whitespace-pre-wrap leading-relaxed">
@@ -161,23 +183,17 @@ const renderPremiumInspectionReport = (reportText: string) => {
     if (val === "None") {
       color = "text-emerald-600 bg-emerald-50/40 border-emerald-200/60";
       icon = (
-        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-        </svg>
+        <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4 text-emerald-500 flex-shrink-0" strokeWidth={3} />
       );
     } else if (val === "Minor") {
       color = "text-amber-600 bg-amber-50/40 border-amber-200/60";
       icon = (
-        <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-        </svg>
+        <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-amber-500 flex-shrink-0" strokeWidth={3} />
       );
     } else if (val === "Major") {
       color = "text-rose-600 bg-rose-50/40 border-rose-200/60";
       icon = (
-        <svg className="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.03V3m0 0a8.001 8.001 0 00-7.797 6.138m15.594 0A8.001 8.001 0 0012 3M3.243 9.75a8.002 8.002 0 008.757 8.757m0 0A8.002 8.002 0 0020.757 9.75" />
-        </svg>
+        <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-rose-500 flex-shrink-0" strokeWidth={3} />
       );
     }
 
@@ -201,9 +217,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
           </div>
         </div>
         <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-extrabold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-          </svg>
+          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
           Verified By Agent
         </span>
       </div>
@@ -269,9 +283,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
           {parsed.preExistingDamage && parsed.preExistingDamage !== "None reported." && (
             <div className="bg-amber-50/20 border border-amber-200/50 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
               <span className="text-[10px] text-amber-800 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
-                <svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.03V3m0 0a8.001 8.001 0 00-7.797 6.138m15.594 0A8.001 8.001 0 0012 3M3.243 9.75a8.002 8.002 0 008.757 8.757m0 0A8.002 8.002 0 0020.757 9.75" />
-                </svg>
+                <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
                 Pre-Existing Damage Remarks
               </span>
               <p className="text-slate-700 text-xs font-semibold leading-relaxed whitespace-pre-wrap">{parsed.preExistingDamage}</p>
@@ -280,9 +292,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
 
           <div className="bg-slate-50/50 border border-slate-200/70 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
             <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
-              <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-              </svg>
+              <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
               Physical Inspection Remarks
             </span>
             <p className="text-slate-700 text-xs font-semibold leading-relaxed whitespace-pre-wrap">{parsed.physicalInspectionNotes}</p>
@@ -1161,9 +1171,7 @@ export default function AgentDashboard() {
             {/* Urgent Card */}
             <div className="bg-gradient-to-br from-[#7f1d1d]/85 to-[#991b1b]/80 border border-red-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(239,68,68,0.15)] hover:bg-[#7f1d1d]/90 hover:scale-[1.02] hover:border-red-400 transition-all duration-300">
               {/* Siren/Alarm Light Icon on the left */}
-              <svg className="w-10 h-10 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2a1 1 0 011 1v1.085A8.005 8.005 0 0119.5 12v1H20a1 1 0 110 2h-1.05a5.002 5.002 0 01-13.9 0H4a1 1 0 110-2h.5v-1A8.005 8.005 0 0111 4.085V3a1 1 0 011-1zm0 17a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-              </svg>
+              <HugeiconsIcon icon={Notification01Icon} className="w-10 h-10 text-white flex-shrink-0" strokeWidth={2} />
               {/* Stacked Text in the middle */}
               <div className="flex flex-col text-left">
                 <span className="text-xs text-red-200 opacity-90 font-bold uppercase tracking-wider">{t.urgentClaims}</span>
@@ -1176,9 +1184,7 @@ export default function AgentDashboard() {
             {/* Assigned Card */}
             <div className="bg-gradient-to-br from-[#0e7490]/85 to-[#0891b2]/80 border border-cyan-400/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(6,182,212,0.15)] hover:bg-[#0e7490]/90 hover:scale-[1.02] hover:border-cyan-300 transition-all duration-300">
               {/* ID Badge Icon on the left */}
-              <svg className="w-9 h-9 text-white flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                <path fillRule="evenodd" d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm3 3a2 2 0 1 1 4 0 2 2 0 0 1-4 0zm0 6.5C6 13.12 8.68 13 10 13c1.32 0 4 .12 4 1.5V16H6v-1.5zM14 7h4v1.5h-4V7zm0 3h4v1.5h-4V10zm-4 7h8v1.5h-8V17z" clipRule="evenodd" />
-              </svg>
+              <HugeiconsIcon icon={File01Icon} className="w-9 h-9 text-white flex-shrink-0" strokeWidth={2} />
               {/* Stacked Text in the middle */}
               <div className="flex flex-col text-left">
                 <span className="text-xs text-cyan-200 opacity-90 font-bold uppercase tracking-wider">{t.assignedClaims}</span>
@@ -1191,9 +1197,7 @@ export default function AgentDashboard() {
             {/* Completed Card */}
             <div className="bg-gradient-to-br from-[#065f46]/85 to-[#047857]/80 border border-emerald-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(16,185,129,0.15)] hover:bg-[#065f46]/90 hover:scale-[1.02] hover:border-emerald-400 transition-all duration-300">
               {/* Checkmark Shield Icon on the left */}
-              <svg className="w-9 h-9 text-white flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-              </svg>
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-9 h-9 text-white flex-shrink-0" strokeWidth={2.5} />
               {/* Stacked Text in the middle */}
               <div className="flex flex-col text-left">
                 <span className="text-xs text-emerald-200 opacity-90 font-bold uppercase tracking-wider">{t.completedClaims}</span>
@@ -1218,9 +1222,7 @@ export default function AgentDashboard() {
             <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-red-200/40 rounded-3xl p-6 shadow-lg shadow-red-500/[0.005] relative overflow-hidden">
               <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/60 pb-3 mb-2">
                 <h2 className="text-lg font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
-                  <svg className="w-5 h-5 text-red-500 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500 animate-pulse" strokeWidth={2.5} />
                   {t.actionRequired}
                   {/* Total Pending Count Badge */}
                   <span className="bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-black px-3 py-1 rounded-full flex items-center gap-1 select-none shadow-[0_2px_8px_rgba(239,68,68,0.25)] animate-pulse">
@@ -1230,9 +1232,7 @@ export default function AgentDashboard() {
                 {claimsWithPendingAgentRequests.length > 3 && (
                   <Link href="/Agent/Documents" className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-full text-xs font-extrabold transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-1 select-none shadow-sm">
                     {t.viewAll}
-                    <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                   </Link>
                 )}
               </div>
@@ -1265,9 +1265,7 @@ export default function AgentDashboard() {
                         <div className="flex flex-col gap-1 min-w-0">
                           <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.docsReceived}</span>
                           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 select-none">
-                            <svg className="w-4 h-4 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                            </svg>
+                            <HugeiconsIcon icon={Task01Icon} className="w-4 h-4 text-cyan-600 flex-shrink-0" strokeWidth={2.2} />
                             <span>
                               <span className="text-emerald-600 font-extrabold">{uploadedDocsCount}</span> / <span className="text-slate-800 font-extrabold">{totalDocs.length}</span>
                             </span>
@@ -1304,9 +1302,7 @@ export default function AgentDashboard() {
           <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-slate-200/40 rounded-3xl p-6 shadow-lg shadow-slate-500/[0.005] relative overflow-hidden">
             <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/60 pb-3 mb-2">
               <h2 className="text-lg font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
-                <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
+                <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
                 {t.newClaims}
                 {/* Total Count Badge */}
                 <span className="bg-gradient-to-r from-slate-700 to-slate-800 text-white text-xs font-black px-3 py-1 rounded-full flex items-center justify-center select-none shadow-[0_2px_8px_rgba(15,23,42,0.12)] border border-slate-700/30">
@@ -1403,9 +1399,7 @@ export default function AgentDashboard() {
           
           <div className="flex flex-col gap-4">
             <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
-              <svg className="w-5 h-5 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-              </svg>
+              <HugeiconsIcon icon={Book01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
               {t.myActivity}
             </h2>
 
@@ -1470,9 +1464,7 @@ export default function AgentDashboard() {
             </div>
 
             <h3 className="text-cyan-800 font-extrabold text-lg tracking-tight flex items-center gap-2 select-none">
-              <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
+              <HugeiconsIcon icon={HelpCircleIcon} className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
               {t.supportHelpdesk}
             </h3>
             
@@ -1484,9 +1476,7 @@ export default function AgentDashboard() {
               <a href="tel:+94112003000" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-bold text-sm text-slate-800 group">
                 <div className="flex items-center gap-2.5">
                   <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.47-5.112-3.758-6.58-6.58l1.293-.97c.362-.272.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-                    </svg>
+                    <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2} />
                   </span>
                   <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 000</span>
                 </div>
@@ -1498,9 +1488,7 @@ export default function AgentDashboard() {
               <a href="tel:+94112003001" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-bold text-sm text-slate-800 group">
                 <div className="flex items-center gap-2.5">
                   <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white">
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.47-5.112-3.758-6.58-6.58l1.293-.97c.362-.272.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-                    </svg>
+                    <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2} />
                   </span>
                   <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 001</span>
                 </div>
@@ -1540,9 +1528,7 @@ export default function AgentDashboard() {
                   {/* Category 1: Policy Holder Documents */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
                     <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
-                      <svg className="w-4 h-4 text-[#0f2d4a]" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                      </svg>
+                      <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2} />
                       Policy Holder Documents
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1593,9 +1579,7 @@ export default function AgentDashboard() {
                               onClick={() => setPreviewImage(docUrl || null)}
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
-                              <svg className="w-5 h-5 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                              </svg>
+                              <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
                               <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
@@ -1607,9 +1591,7 @@ export default function AgentDashboard() {
                   {/* Category 2: Agent Documents & Upload Panel */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
                     <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
-                      <svg className="w-4 h-4 text-cyan-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
-                      </svg>
+                      <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-cyan-600" strokeWidth={2} />
                       Agent Documents
                     </h3>
 
@@ -1647,9 +1629,7 @@ export default function AgentDashboard() {
                                 }}
                                 className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
-                                <svg className="w-5 h-5 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                </svg>
+                                <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
                                 <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
                               </button>
                             );
@@ -1665,9 +1645,7 @@ export default function AgentDashboard() {
                               onClick={() => setPreviewImage(docUrl || null)}
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
-                              <svg className="w-5 h-5 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                              </svg>
+                              <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
                               <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
@@ -1723,9 +1701,7 @@ export default function AgentDashboard() {
                               onClick={() => agentFileInputRef.current?.click()}
                               className="w-full border-2 border-dashed border-slate-300 hover:border-red-500 rounded-2xl py-6 px-4 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-red-50/5 cursor-pointer transition-all duration-150 group"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.8" stroke="currentColor" className="w-8 h-8 text-slate-400 mb-2 group-hover:text-red-500 transition-colors">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
-                              </svg>
+                              <HugeiconsIcon icon={Upload01Icon} className="w-8 h-8 text-slate-400 mb-2 group-hover:text-red-500 transition-colors" strokeWidth={1.8} />
                               <span className="text-slate-800 text-[13px] font-bold">Select document file</span>
                               <span className="text-slate-400 text-[10px] font-semibold mt-1">Image or PDF (Max 5MB)</span>
                             </div>
@@ -1740,9 +1716,7 @@ export default function AgentDashboard() {
                                   />
                                 ) : (
                                   <div className="w-11 h-11 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-600 flex items-center justify-center">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                    </svg>
+                                    <HugeiconsIcon icon={File01Icon} className="w-5 h-5" strokeWidth={2.5} />
                                   </div>
                                 )}
                                 <div className="flex flex-col min-w-0 max-w-[200px] md:max-w-[280px]">
@@ -1760,9 +1734,7 @@ export default function AgentDashboard() {
                                 className="bg-red-550 hover:bg-red-100 text-red-500 border border-red-200 rounded-full p-2 transition-colors cursor-pointer border-none"
                                 title="Remove file"
                               >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.2" stroke="currentColor" className="w-5 h-5">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                                </svg>
+                                <HugeiconsIcon icon={Delete02Icon} className="w-5 h-5" strokeWidth={2.2} />
                               </button>
                             </div>
                           )}
@@ -1807,9 +1779,7 @@ export default function AgentDashboard() {
                 className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent"
                 title="Close"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
               </button>
 
               {/* Header: Title, Tags & Avatar */}
@@ -1854,9 +1824,7 @@ export default function AgentDashboard() {
                 {/* Column 1: Policy Holder Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
                   <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#0f2d4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-                    </svg>
+                    <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Policy Holder Details
                   </h3>
                   <div className="space-y-3">
@@ -1878,9 +1846,7 @@ export default function AgentDashboard() {
                 {/* Column 2: Vehicle Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
                   <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-[#0f2d4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124l-.847-13.486c-.035-.56-1.178-.941-1.745-.941H3.66c-.567 0-1.71.381-1.745.941l-.847 13.486c-.04.62.469 1.124 1.09 1.124H4.5m12-5.25a2.25 2.25 0 00-2.25-2.25H9.75A2.25 2.25 0 007.5 12.75V15h9v-2.25z" />
-                    </svg>
+                    <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Vehicle Details
                   </h3>
                   <div className="space-y-3">
@@ -1902,9 +1868,7 @@ export default function AgentDashboard() {
                 {/* Large Dedicated Section: Incident Details */}
                 <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
                   <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
-                    <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
+                    <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                     Incident Details & Assessment
                   </h3>
                   
@@ -1955,9 +1919,7 @@ export default function AgentDashboard() {
                       onClick={() => setActiveSubModal("documents")}
                       className="bg-[#0f2d4a] hover:bg-[#1a3d5e] text-white font-extrabold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                      </svg>
+                      <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
                       Documents ({selectedClaim.additionalDocuments?.length || 0})
                     </button>
                   </div>
@@ -1967,9 +1929,7 @@ export default function AgentDashboard() {
                 {selectedClaim.otherVehicleDetails && (
                   <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
                     <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 select-none">
-                      <svg className="w-4 h-4 text-[#0f2d4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124l-.847-13.486c-.035-.56-1.178-.941-1.745-.941H3.66c-.567 0-1.71.381-1.745.941l-.847 13.486c-.04.62.469 1.124 1.09 1.124H4.5m12-5.25a2.25 2.25 0 00-2.25-2.25H9.75A2.25 2.25 0 007.5 12.75V15h9v-2.25z" />
-                      </svg>
+                      <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                       Other Vehicles Involved
                     </h3>
 
@@ -2157,9 +2117,7 @@ export default function AgentDashboard() {
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
                       <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
-                        <svg className="w-5 h-5 text-[#0f2d4a]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                        </svg>
+                        <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-[#0f2d4a]" strokeWidth={2.5} />
                         Policy Holder Attachments & Photos
                       </h3>
 
@@ -2217,9 +2175,7 @@ export default function AgentDashboard() {
                     disabled={isAcceptingClaim}
                     className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
+                    <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     {t.acceptAssignment}
                   </button>
                   <button
@@ -2228,9 +2184,7 @@ export default function AgentDashboard() {
                     disabled={isAcceptingClaim}
                     className="flex-1 bg-red-650 hover:bg-red-750 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     {t.declineAssignment}
                   </button>
                 </div>
@@ -2240,9 +2194,7 @@ export default function AgentDashboard() {
               {selectedClaim.currentStep >= 3 && !selectedClaim.inspectionSubmitted && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                 <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-6 text-center select-none transition-all duration-300 flex-shrink-0">
                   <p className="text-emerald-800 text-xs md:text-sm font-black flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-                    </svg>
+                    <HugeiconsIcon icon={SmartPhone01Icon} className="w-5 h-5 animate-pulse" strokeWidth={2.5} />
                     {t.claimAccepted}
                   </p>
                   <p className="text-emerald-600 text-xs font-semibold mt-2 leading-relaxed">
@@ -2264,9 +2216,7 @@ export default function AgentDashboard() {
               onClick={() => setPreviewImage(null)}
               className="absolute top-3 right-3 text-white bg-slate-900/60 hover:bg-slate-900 p-2 rounded-full border border-slate-700/50 transition-all select-none cursor-pointer z-10"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
             </button>
             {previewImage.toLowerCase().endsWith(".pdf") ? (
               <iframe src={previewImage} className="w-[80vw] h-[80vh] border-none rounded-xl" title="PDF Document Preview" />
@@ -2285,9 +2235,7 @@ export default function AgentDashboard() {
             <div className="bg-[#00ddff] text-black px-5 py-4 flex justify-between items-center font-bold">
               <span className="text-[15px] tracking-tight">Agent Helpdesk Live Chat</span>
               <button onClick={() => setShowSupportChat(false)} className="text-black/70 hover:text-black bg-black/5 hover:bg-black/10 p-2 rounded-full transition-colors cursor-pointer">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -2333,20 +2281,7 @@ export default function AgentDashboard() {
           className="bg-[#00ddff] hover:bg-[#00c5e3] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl shadow-cyan-300/35 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
           aria-label="Toggle Live Helpdesk Chat"
         >
-          <svg
-            className="w-7 h-7 text-black"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a.75.75 0 0 1-1.074-.83l1.22-3.72C4.181 15.047 3 13.136 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z"
-            />
-          </svg>
+          <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-black" strokeWidth={2.2} />
         </button>
       </div>
 
@@ -2359,17 +2294,13 @@ export default function AgentDashboard() {
               onClick={() => setShowMobileRedirect(false)}
               className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all border-none bg-transparent cursor-pointer"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
             </button>
 
             {/* Glowing Mobile Icon */}
             <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 mb-5 relative">
               <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-emerald-400 opacity-20"></span>
-              <svg className="w-8 h-8 relative z-10" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
-              </svg>
+              <HugeiconsIcon icon={SmartPhone01Icon} className="w-8 h-8 relative z-10" strokeWidth={2.2} />
             </div>
 
             {/* Content */}
@@ -2417,9 +2348,7 @@ export default function AgentDashboard() {
           <div className="w-full max-w-sm bg-white border border-slate-100 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] overflow-hidden p-8 flex flex-col items-center text-center select-none zoom-in duration-200">
             {/* Header Icon */}
             <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center mb-5 text-[#f97316]">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
-              </svg>
+              <HugeiconsIcon icon={UserIcon} className="w-8 h-8" strokeWidth={2.2} />
             </div>
             
             {/* Title */}
@@ -2468,9 +2397,7 @@ export default function AgentDashboard() {
               <div className="px-8 pt-8 pb-5 select-none relative flex-shrink-0 border-b border-slate-100/60 bg-slate-50/55">
                 <h2 className="font-extrabold text-xl text-slate-800 tracking-tight flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+                    <HugeiconsIcon icon={SquareLock02Icon} className="w-5 h-5" strokeWidth={2.5} />
                   </div>
                   {t.updatePassword}
                 </h2>
@@ -2483,17 +2410,13 @@ export default function AgentDashboard() {
               <form onSubmit={handlePasswordChange} className="p-8 flex flex-col gap-5">
                 {passwordError && (
                   <div className="bg-red-50 text-red-600 text-xs font-bold p-4 rounded-2xl border border-red-100 flex items-center gap-3">
-                    <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500 flex-shrink-0" strokeWidth={2.5} />
                     <span>{passwordError}</span>
                   </div>
                 )}
                 {passwordSuccess && (
                   <div className="bg-emerald-50 text-emerald-600 text-xs font-bold p-4 rounded-2xl border border-emerald-100 flex items-center gap-3">
-                    <svg className="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-500 flex-shrink-0" strokeWidth={2.5} />
                     <span>{passwordSuccess}</span>
                   </div>
                 )}
@@ -2589,10 +2512,7 @@ export default function AgentDashboard() {
                 >
                   {isUpdatingPassword ? (
                     <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-5 w-5 text-white" strokeWidth={2.5} />
                       {t.updating}
                     </span>
                   ) : (

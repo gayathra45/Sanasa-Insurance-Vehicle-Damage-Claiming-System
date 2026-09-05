@@ -86,16 +86,37 @@ function formatDate(dateStr?: string) {
   } catch { return dateStr; }
 }
 
-function vehicleIcon(type: string) {
+function getVehicleTheme(type: string) {
   const t = (type || "").toLowerCase().trim();
-  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) return "motorbike";
-  if (t.includes("van") || t.includes("minibus")) return "van-utility";
-  if (t.includes("bus")) return "bus";
-  if (t.includes("truck") || t.includes("lorry")) return "truck";
-  if (t.includes("suv")) return "car-estate";
-  if (t.includes("tuk") || t.includes("three") || t.includes("rickshaw")) return "rickshaw";
-  if (t.includes("tractor")) return "tractor";
-  return "car-side";
+  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) {
+    return { icon: "motorbike", color: "#e11d48", bg: "#ffe4e6", border: "#fecdd3" };
+  }
+  if (t.includes("van") || t.includes("minibus")) {
+    return { icon: "van-utility", color: "#d97706", bg: "#fef3c7", border: "#fde68a" };
+  }
+  if (t.includes("bus")) {
+    return { icon: "bus", color: "#9333ea", bg: "#f3e8ff", border: "#e9d5ff" };
+  }
+  if (t.includes("truck") || t.includes("lorry")) {
+    return { icon: "truck", color: "#475569", bg: "#f1f5f9", border: "#e2e8f0" };
+  }
+  if (t.includes("suv")) {
+    return { icon: "car-estate", color: "#6366f1", bg: "#e0e7ff", border: "#c7d2fe" };
+  }
+  if (t.includes("tuk") || t.includes("three") || t.includes("rickshaw")) {
+    return { icon: "rickshaw", color: "#059669", bg: "#d1fae5", border: "#a7f3d0" };
+  }
+  if (t.includes("tractor")) {
+    return { icon: "tractor", color: "#65a30d", bg: "#ecfccb", border: "#d9f99d" };
+  }
+  if (t.includes("cab") || t.includes("pickup")) {
+    return { icon: "truck-pickup", color: "#0d9488", bg: "#ccfbf1", border: "#99f6e4" };
+  }
+  return { icon: "car-side", color: "#0284c7", bg: "#e0f2fe", border: "#bae6fd" };
+}
+
+function vehicleIcon(type: string) {
+  return getVehicleTheme(type).icon;
 }
 
 /* Quick actions — moved to bottom, clean minimal design */
@@ -793,8 +814,8 @@ export default function PolicyHolderDashboard() {
               <View style={styles.vehiclesList}>
                 {vehicles.map((v, idx) => (
                   <View key={idx} style={styles.vehicleRow}>
-                    <View style={styles.vehicleIconContainer}>
-                      <MaterialCommunityIcons name={vehicleIcon(v.vehicleType) as any} size={24} color="#0284c7" />
+                    <View style={[styles.vehicleIconContainer, { backgroundColor: getVehicleTheme(v.vehicleType).bg, borderColor: getVehicleTheme(v.vehicleType).border }]}>
+                      <MaterialCommunityIcons name={getVehicleTheme(v.vehicleType).icon as any} size={24} color={getVehicleTheme(v.vehicleType).color} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.vehiclePlate}>{formatPlate(v.numberPlate)}</Text>

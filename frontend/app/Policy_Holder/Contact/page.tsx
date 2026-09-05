@@ -4,6 +4,13 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Call02Icon,
+  Mail01Icon,
+  BubbleChatIcon,
+  Loading03Icon,
+} from "@hugeicons/core-free-icons";
 
 const translations = {
   en: {
@@ -246,9 +253,7 @@ export default function PolicyHolderContact() {
         >
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-[#00ddff] group-hover:border-[#00ddff] transition-colors shrink-0">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 0 1-7.108-7.108c-.145-.44.02-.927.396-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25z" />
-              </svg>
+              <HugeiconsIcon icon={Call02Icon} className="w-7 h-7" strokeWidth={1.8} />
             </div>
             <div>
               <h3 className="font-semibold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.hotline}</h3>
@@ -270,9 +275,7 @@ export default function PolicyHolderContact() {
         >
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-[#00ddff] group-hover:border-[#00ddff] transition-colors shrink-0">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-              </svg>
+              <HugeiconsIcon icon={Mail01Icon} className="w-7 h-7" strokeWidth={1.8} />
             </div>
             <div>
               <h3 className="font-semibold text-slate-800 text-lg md:text-xl group-hover:text-slate-900 transition-colors">{t.email}</h3>
@@ -290,9 +293,7 @@ export default function PolicyHolderContact() {
         <div className="bg-white border border-slate-200 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-200">
           <div className="flex items-center gap-6">
             <div className="w-14 h-14 rounded-full border border-slate-200 flex items-center justify-center text-slate-400 shrink-0">
-              <svg className="w-7 h-7" fill="none" stroke="currentColor" strokeWidth="1.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 9.75a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375m-13.5 3.01c0 1.6 1.123 2.994 2.707 3.227 1.087.16 2.185.283 3.293.369V21l4.184-4.183a1.14 1.14 0 0 1 .778-.332 48.294 48.294 0 0 0 5.83-.498c1.585-.233 2.708-1.626 2.708-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018Z" />
-              </svg>
+              <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7" strokeWidth={1.8} />
             </div>
             <div>
               <h3 className="font-semibold text-slate-800 text-lg md:text-xl">{t.liveChat}</h3>
@@ -376,9 +377,7 @@ export default function PolicyHolderContact() {
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       <PolicyHolderFooter />
@@ -503,10 +502,7 @@ export default function PolicyHolderContact() {
                 >
                   {isSending ? (
                     <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" strokeWidth={2} />
                       {t.sending}
                     </>
                   ) : (

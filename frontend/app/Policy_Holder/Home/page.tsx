@@ -5,6 +5,21 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Analytics01Icon,
+  Clock01Icon,
+  CheckmarkCircle01Icon,
+  Notification01Icon,
+  AlertCircleIcon,
+  Alert02Icon,
+  Car01Icon,
+  CustomerService01Icon,
+  Call02Icon,
+  RefreshIcon,
+  Download01Icon,
+  BubbleChatIcon,
+} from "@hugeicons/core-free-icons";
 
 function formatNumberPlate(plate: string): string {
   if (!plate) return "";
@@ -19,112 +34,7 @@ function formatNumberPlate(plate: string): string {
   return cleaned;
 }
 
-function getVehicleIconSvg(type: string, className = "w-9 h-9 text-black") {
-  if (!type) type = "car";
-  const t = type.toLowerCase().trim();
-  
-  if (t.includes("suv")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 12h20M17 17h3a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3L14 4H6L3 7v8a2 2 0 0 0 2 2h3" />
-        <circle cx="7" cy="17" r="2" />
-        <path d="M9 17h6" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M7 7h6M19 10h-3" />
-      </svg>
-    );
-  }
-  if (t.includes("cab") || t.includes("pickup")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 13h13V8H7L4 11H2v2zm13 0h7V10h-7v3z" />
-        <path d="M2 13v3a1 1 0 0 0 1 1h3" />
-        <path d="M9 17h6" />
-        <path d="M19 17h2a1 1 0 0 0 1-1v-3" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("van") || t.includes("minibus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V7a2 2 0 0 1 2-2h12l5 3v7a2 2 0 0 1-2 2h-1" />
-        <path d="M2 15h3" />
-        <path d="M9 17h6" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M6 8h4v3H6V8zm6 0h3v3h-3V8z" />
-      </svg>
-    );
-  }
-  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="5" cy="16" r="3" />
-        <circle cx="19" cy="16" r="3" />
-        <path d="M5 16h8l3-7H9l-2 3M16 9h3M12 9l-3-4H6" />
-      </svg>
-    );
-  }
-  if (t.includes("three") || t.includes("rickshaw") || t.includes("tuk")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="18" cy="18" r="2" />
-        <path d="M3 18h1c.5 0 .9-.4 1-1l1-6h11c.6 0 1-.4 1-1V5h-3l-2 3H8L6 11H3v7z" />
-        <path d="M12 11v7M15 11v7" />
-      </svg>
-    );
-  }
-  if (t.includes("lorry") || t.includes("truck")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 18H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h11v13zm0-8h7l2 3v5a1 1 0 0 1-1 1h-8v-9z" />
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("bus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9M2 15h20v1a2 2 0 0 1-2 2h-1M5 18H3" />
-        <circle cx="7" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-        <path d="M4 7h3v3H4V7zm5 0h3v3H9V7zm5 0h3v3h-3V7zm5 0h2v3h-2V7z" />
-      </svg>
-    );
-  }
-  if (t.includes("tractor")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="17" r="2.5" />
-        <circle cx="17" cy="15" r="4.5" />
-        <path d="M6 17h6v-2h-3v-4h4v5" />
-        <path d="M12.5 15.5h.5M9 11l-3-4H4" />
-      </svg>
-    );
-  }
-  
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.8C2.1 11 2 11.3 2 11.5V16c0 .6.4 1 1 1h2" />
-      <circle cx="7" cy="17" r="2" />
-      <path d="M9 17h6" />
-      <circle cx="17" cy="17" r="2" />
-    </svg>
-  );
-}
-
-function getVehicleIconContainer(type: string) {
-  const svg = getVehicleIconSvg(type);
-  return (
-    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white border-2 border-black text-black shadow-sm flex-shrink-0 select-none">
-      {svg}
-    </div>
-  );
-}
+import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
 
 
 const homeTranslations = {
@@ -608,9 +518,7 @@ export default function PolicyHolderHome() {
             className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-11 h-11 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6m4 13V10m4 9V14" />
-            </svg>
+              <HugeiconsIcon icon={Analytics01Icon} className="w-11 h-11 text-orange-500" strokeWidth={2} />
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{totalClaimsCount}</h3>
@@ -624,9 +532,7 @@ export default function PolicyHolderHome() {
             className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-11 h-11 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+              <HugeiconsIcon icon={Clock01Icon} className="w-11 h-11 text-cyan-500" strokeWidth={2} />
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
@@ -640,10 +546,7 @@ export default function PolicyHolderHome() {
             className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
             <div className="text-slate-400 flex-shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-11 h-11 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-            </svg>
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-11 h-11 text-emerald-500" strokeWidth={2} />
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
@@ -659,9 +562,7 @@ export default function PolicyHolderHome() {
           {/* Notifications Column */}
           <div className="lg:col-span-7">
             <div className="flex items-center gap-2.5 mb-6 select-none">
-              <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5" />
-              </svg>
+              <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
               <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
                 {t.notifications}
               </h2>
@@ -683,27 +584,21 @@ export default function PolicyHolderHome() {
                     cardClass = "bg-red-50/15 border-2 border-red-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[160px]";
                     iconClass = "p-2 bg-red-100 rounded-xl text-red-500 flex-shrink-0 mt-0.5";
                     iconSvg = (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                        <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0113.5 0v.75c0 2.123.8 4.057 2.118 5.522a.75.75 0 01-.297 1.228 35.754 35.754 0 01-16.142 0 .75.75 0 01-.297-1.228A9.013 9.013 0 005.25 9.75V9zm4.5 8.25a3.75 3.75 0 007.5 0H9.75z" clipRule="evenodd" />
-                      </svg>
+                      <HugeiconsIcon icon={AlertCircleIcon} className="w-6 h-6" strokeWidth={2} />
                     );
                     titleClass = "text-red-600 font-semibold text-base leading-none";
                   } else if (isApproved) {
                     cardClass = "bg-emerald-50/15 border-2 border-emerald-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]";
                     iconClass = "p-2 bg-emerald-100 rounded-xl text-emerald-500 flex-shrink-0 mt-0.5";
                     iconSvg = (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                        <path fillRule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.74-5.24z" clipRule="evenodd" />
-                      </svg>
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-6 h-6" strokeWidth={2} />
                     );
                     titleClass = "text-emerald-600 font-semibold text-base leading-none";
                   } else {
                     cardClass = "bg-blue-50/15 border-2 border-blue-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]";
                     iconClass = "p-2 bg-blue-100 rounded-xl text-blue-500 flex-shrink-0 mt-0.5";
                     iconSvg = (
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
-                        <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v6c0 .414.336.75.75.75h4.5a.75.75 0 000-1.5h-3.75V6z" clipRule="evenodd" />
-                      </svg>
+                      <HugeiconsIcon icon={Clock01Icon} className="w-6 h-6" strokeWidth={2} />
                     );
                     titleClass = "text-blue-600 font-semibold text-base leading-none";
                   }
@@ -772,9 +667,7 @@ export default function PolicyHolderHome() {
           <div className="lg:col-span-5 flex flex-col gap-8">
             <div>
               <Link href="/Policy_Holder/MyVehicles" className="flex items-center gap-2.5 mb-6 cursor-pointer group no-underline text-inherit select-none">
-                <svg className="w-6 h-6 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
-                </svg>
+                <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
                 <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
                   {t.myVehicles}
                 </h2>
@@ -784,17 +677,22 @@ export default function PolicyHolderHome() {
               <div className="flex flex-col gap-5">
                 {vehicles.length > 0 ? (
                   vehicles.map((vehicle, idx) => (
-                    <div key={idx} className="bg-white border border-slate-200 rounded-[22px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex items-center justify-between">
+                    <div key={idx} className="bg-white border border-slate-200/80 rounded-[22px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-300 flex items-center justify-between group">
                       <div className="flex items-center gap-4">
-                        {getVehicleIconContainer(vehicle.vehicleType)}
+                        {getVehicleIconContainer(vehicle.vehicleType, "w-14 h-14 rounded-2xl")}
                         <div>
-                          <h4 className="text-slate-800 font-semibold text-base leading-tight">{formatNumberPlate(vehicle.numberPlate)}</h4>
-                          <p className="text-slate-500 font-normal text-xs mt-0.5">{vehicle.company} {vehicle.model} {vehicle.year}</p>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-slate-800 font-bold text-base leading-tight">{formatNumberPlate(vehicle.numberPlate)}</h4>
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getVehicleTheme(vehicle.vehicleType).badge} select-none`}>
+                              {vehicle.vehicleType}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 font-normal text-xs mt-1">{vehicle.company} {vehicle.model} ({vehicle.year})</p>
                         </div>
                       </div>
                       <button
                         onClick={() => setSelectedVehicleForModal(vehicle)}
-                        className="border border-slate-300 hover:border-slate-400 text-slate-600 font-medium text-xs px-4 py-1.5 rounded-full transition-all bg-transparent cursor-pointer outline-none whitespace-nowrap"
+                        className="border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-medium text-xs px-4 py-1.5 rounded-full transition-all bg-transparent cursor-pointer outline-none whitespace-nowrap"
                       >
                         {t.view}
                       </button>
@@ -821,9 +719,7 @@ export default function PolicyHolderHome() {
               </div>
 
               <h3 className="text-cyan-800 font-bold text-lg tracking-tight flex items-center gap-2 select-none">
-                <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
+                <HugeiconsIcon icon={CustomerService01Icon} className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
                 {t.supportHelpdesk}
               </h3>
               
@@ -835,9 +731,7 @@ export default function PolicyHolderHome() {
                 <a href="tel:+94112003000" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-medium text-sm text-slate-800 group no-underline">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white flex-shrink-0">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.47-5.112-3.758-6.58-6.58l1.293-.97c.362-.272.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-                      </svg>
+                      <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2} />
                     </span>
                     <span className="text-slate-700 tracking-tight font-medium text-xs md:text-sm truncate">+94 112 003 000</span>
                   </div>
@@ -849,9 +743,7 @@ export default function PolicyHolderHome() {
                 <a href="tel:+94112003001" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-medium text-sm text-slate-800 group no-underline">
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white flex-shrink-0">
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.47-5.112-3.758-6.58-6.58l1.293-.97c.362-.272.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-                      </svg>
+                      <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2} />
                     </span>
                     <span className="text-slate-700 tracking-tight font-medium text-xs md:text-sm truncate">+94 112 003 001</span>
                   </div>
@@ -870,9 +762,7 @@ export default function PolicyHolderHome() {
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-slate-900 font-semibold px-6 py-4 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border border-slate-900/20">
-          <svg className="w-6 h-6 animate-spin" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-          </svg>
+          <HugeiconsIcon icon={RefreshIcon} className="w-6 h-6 animate-spin" strokeWidth={2.5} />
           <span>{toastMessage}</span>
         </div>
       )}
@@ -953,18 +843,14 @@ export default function PolicyHolderHome() {
                   onClick={() => setSelectedVehicleForModal(null)}
                   className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                  </svg>
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
                   File a Claim
                 </Link>
                 <button
                   onClick={() => handleDownloadCoverNote(selectedVehicleForModal)}
                   className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-semibold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                  </svg>
+                  <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   Cover Note
                 </button>
               </div>
@@ -1369,9 +1255,7 @@ export default function PolicyHolderHome() {
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       <PolicyHolderFooter />

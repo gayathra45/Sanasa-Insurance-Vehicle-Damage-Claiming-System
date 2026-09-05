@@ -7,6 +7,26 @@ import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import { compressImage } from "../../utils/imageCompressor";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Menu01Icon,
+  Notification01Icon,
+  Search01Icon,
+  File01Icon,
+  CheckmarkCircle01Icon,
+  Alert02Icon,
+  AlertCircleIcon,
+  UserIcon,
+  ArrowRight01Icon,
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  Cancel01Icon,
+  Add01Icon,
+  Delete02Icon,
+  Tick01Icon,
+  BubbleChatIcon,
+  Location01Icon
+} from "@hugeicons/core-free-icons";
 
 interface ClaimMessage {
   sender: string;
@@ -208,9 +228,7 @@ const renderParsedInspection = (
     return (
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-inner select-text">
         <div className="flex items-center gap-2 mb-3 text-slate-405 select-none">
-          <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-          </svg>
+          <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
         </div>
         <p className="text-slate-705 text-xs font-semibold whitespace-pre-wrap leading-relaxed">
@@ -227,23 +245,17 @@ const renderParsedInspection = (
     if (val === "None") {
       color = "text-emerald-600 bg-emerald-50/40 border-emerald-200/60";
       icon = (
-        <svg className="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-        </svg>
+        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-500 flex-shrink-0" strokeWidth={3} />
       );
     } else if (val === "Minor") {
       color = "text-amber-600 bg-amber-50/40 border-amber-200/60";
       icon = (
-        <svg className="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-        </svg>
+        <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-amber-500 flex-shrink-0" strokeWidth={3} />
       );
     } else if (val === "Major") {
       color = "text-rose-600 bg-rose-50/40 border-rose-200/60";
       icon = (
-        <svg className="w-4 h-4 text-rose-500 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.03V3m0 0a8.001 8.001 0 00-7.797 6.138m15.594 0A8.001 8.001 0 0012 3M3.243 9.75a8.002 8.002 0 008.757 8.757m0 0A8.002 8.002 0 0020.757 9.75" />
-        </svg>
+        <HugeiconsIcon icon={AlertCircleIcon} className="w-4 h-4 text-rose-500 flex-shrink-0" strokeWidth={3} />
       );
     }
 
@@ -878,9 +890,7 @@ function OfficeStaffClaimsPageContent() {
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
                 className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="bg-slate-850 text-white text-xs px-3.5 py-1.5 rounded-lg font-extrabold tracking-wide">{branch} Branch</span>
@@ -890,9 +900,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
               <Link href="/Office_Staff/Notifications" className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-slate-500 hover:text-slate-800">
-                  <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.65.342 3.228.96 4.658A1.875 1.875 0 0 1 18 17.25H6a1.875 1.875 0 0 1-1.71-2.842 9.06 9.06 0 0 0 .96-4.658V9ZM12 18.75a2.25 2.25 0 0 1-2.247-2.118.75.75 0 0 1 .746-.757h3a.75.75 0 0 1 .746.757A2.25 2.25 0 0 1 12 18.75Z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
               </Link>
               {/* User Avatar Icon */}
               <UserAvatarDropdown userType="office_staff" />
@@ -941,9 +949,7 @@ function OfficeStaffClaimsPageContent() {
                   {/* Search input */}
                   <div className="relative w-full md:w-80">
                     <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637z" />
-                      </svg>
+                      <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
                     </span>
                     <input
                       type="text"
@@ -1149,9 +1155,7 @@ function OfficeStaffClaimsPageContent() {
                   {/* Category 1: Policy Holder Documents */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
                     <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
-                      <svg className="w-4 h-4 text-[#0f2d4a]" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                      </svg>
+                      <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                       Policy Holder Documents
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1204,9 +1208,7 @@ function OfficeStaffClaimsPageContent() {
                               onClick={() => setPreviewImage(docUrl || null)}
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
-                              <svg className="w-5 h-5 text-slate-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                              </svg>
+                              <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
                               <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
@@ -1218,9 +1220,7 @@ function OfficeStaffClaimsPageContent() {
                   {/* Category 2: Agent Documents */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
                     <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
-                      <svg className="w-4 h-4 text-cyan-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
-                      </svg>
+                      <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-cyan-600" strokeWidth={2.5} />
                       Agent Documents
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1258,9 +1258,7 @@ function OfficeStaffClaimsPageContent() {
                                 }}
                                 className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
-                                <svg className="w-5 h-5 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                                </svg>
+                                <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
                                 <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
                               </button>
                             );
@@ -1276,9 +1274,7 @@ function OfficeStaffClaimsPageContent() {
                               onClick={() => setPreviewImage(docUrl || null)}
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
-                              <svg className="w-5 h-5 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                              </svg>
+                              <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
                               <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
@@ -1350,13 +1346,9 @@ function OfficeStaffClaimsPageContent() {
                       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
                         <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                           {hasPending ? (
-                            <svg className="w-5 h-5 text-amber-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                            </svg>
+                            <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-amber-500 animate-pulse" strokeWidth={2.5} />
                           ) : (
-                            <svg className="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                            </svg>
+                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />
                           )}
                           Requested Documents Status
                         </h3>
@@ -1551,9 +1543,7 @@ function OfficeStaffClaimsPageContent() {
                           className="absolute top-4 right-4 text-slate-400 hover:text-red-500 font-extrabold text-lg bg-transparent border-none cursor-pointer p-1 transition-colors"
                           title="Remove this document request"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                          </svg>
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-slate-400 hover:text-red-500" strokeWidth={2.5} />
                         </button>
                       )}
 
@@ -1660,9 +1650,7 @@ function OfficeStaffClaimsPageContent() {
                     onClick={handleAddRequestItem}
                     className="w-full py-4 border-2 border-dashed border-slate-300 hover:border-[#0f2d4a] rounded-2xl flex items-center justify-center gap-2 bg-slate-50/50 hover:bg-slate-50 text-xs font-bold text-slate-500 hover:text-[#0f2d4a] cursor-pointer transition-all duration-200 group"
                   >
-                    <svg className="w-4 h-4 text-slate-400 group-hover:text-[#0f2d4a] transition-colors" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
+                    <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-slate-400 group-hover:text-[#0f2d4a] transition-colors" strokeWidth={2.5} />
                     Add Another Document Request
                   </button>
                 </div>
@@ -2001,9 +1989,7 @@ function OfficeStaffClaimsPageContent() {
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-5 transition-all duration-300 text-left">
                     <div className="bg-slate-900 border border-slate-800 rounded-[24px] p-5 shadow-md text-white flex flex-col justify-between hover:border-slate-800 transition-all duration-200 select-none">
                       <span className="text-[10px] text-cyan-400 font-extrabold uppercase tracking-wider block flex items-center gap-1.5">
-                        <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                        </svg>
+                        <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-cyan-400" strokeWidth={2.2} />
                         Manual Override Guidelines
                       </span>
                       <p className="text-slate-300 text-xs font-semibold leading-relaxed mt-3">
@@ -2262,9 +2248,7 @@ function OfficeStaffClaimsPageContent() {
                         {selectedClaim.policyHolderBankDetails && (
                           <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-5 space-y-3">
                             <div className="flex items-center gap-2 text-emerald-800">
-                              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.3m-15 0V21M3 21h18" />
-                              </svg>
+                              <HugeiconsIcon icon={Location01Icon} className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />
                               <span className="text-[10px] font-black uppercase tracking-wider select-none">Registered Bank Settlement Profile</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-1">
@@ -2334,9 +2318,7 @@ function OfficeStaffClaimsPageContent() {
                           {selectedClaim.paymentReceipt ? (
                             <div className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm">
                               <span className="text-xs font-bold text-emerald-600 flex items-center gap-1.5 select-none">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2.5} />
                                 Receipt Uploaded
                               </span>
                               <button
@@ -2519,9 +2501,7 @@ function OfficeStaffClaimsPageContent() {
                           onClick={() => setPreviewReportText(selectedClaim.inspectionReport || null)}
                           className="bg-[#10b981] hover:bg-[#059669] text-white font-extrabold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
                         >
-                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                          </svg>
+                          <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
                           Inspection Report
                         </button>
                       )}
@@ -2547,16 +2527,12 @@ function OfficeStaffClaimsPageContent() {
                         {showAllDetails ? (
                           <>
                             <span>View Less Details</span>
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-                            </svg>
+                            <HugeiconsIcon icon={ArrowUp01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
                           </>
                         ) : (
                           <>
                             <span>View More Details</span>
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                            </svg>
+                            <HugeiconsIcon icon={ArrowDown01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
                           </>
                         )}
                       </button>
@@ -2800,9 +2776,7 @@ function OfficeStaffClaimsPageContent() {
                                         <span className="text-[10px] text-slate-400 font-bold">No Preview</span>
                                       )}
                                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
-                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.604 10.604z" />
-                                        </svg>
+                                        <HugeiconsIcon icon={Search01Icon} className="w-5 h-5 text-white" strokeWidth={2.5} />
                                       </div>
                                     </div>
                                   </div>
@@ -2917,9 +2891,7 @@ function OfficeStaffClaimsPageContent() {
                           {/* Step Circle */}
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs border-2 bg-white transition-all duration-300 ${circleStyle}`}>
                             {stepStatus === "completed" && selectedClaim.status !== "Rejected" ? (
-                              <svg className="w-4 h-4 text-[#22c55e]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                              </svg>
+                              <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4 text-[#22c55e]" strokeWidth={3} />
                             ) : (
                               stepObj.num
                             )}
@@ -2984,9 +2956,7 @@ function OfficeStaffClaimsPageContent() {
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-left select-none transition-all duration-300">
                     <div className={`flex items-center justify-between ${showNotes ? "border-b border-slate-200 pb-3 mb-4" : ""}`}>
                       <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                        <svg className="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
+                        <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-amber-500" strokeWidth={2.5} />
                         Internal Notes
                       </h3>
                       <div className="flex items-center gap-3">
@@ -2996,9 +2966,7 @@ function OfficeStaffClaimsPageContent() {
                           className="text-[#f97316] hover:text-orange-600 p-2 rounded-xl hover:bg-orange-50 transition-all border-none cursor-pointer flex items-center justify-center bg-transparent"
                           title="Add Note"
                         >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                          </svg>
+                          <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" strokeWidth={2.5} />
                         </button>
                         <button
                           type="button"
@@ -3018,9 +2986,7 @@ function OfficeStaffClaimsPageContent() {
                               <div key={idx} className="flex items-center justify-between py-3 px-4 bg-white border border-slate-200/70 rounded-xl hover:border-slate-300 transition-all shadow-sm">
                                 <div className="flex items-center gap-3 min-w-0">
                                   <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0">
-                                    <svg className="w-3 h-3 text-slate-500" fill="currentColor" viewBox="0 0 20 20">
-                                      <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                                    </svg>
+                                    <HugeiconsIcon icon={UserIcon} className="w-3 h-3 text-slate-500" strokeWidth={2.5} />
                                   </div>
                                   <div className="flex flex-col min-w-0">
                                     <span className="text-xs font-semibold text-slate-700">{note.text}</span>
@@ -3034,9 +3000,7 @@ function OfficeStaffClaimsPageContent() {
                           </div>
                         ) : (
                           <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-5 text-center">
-                            <svg className="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                            </svg>
+                            <HugeiconsIcon icon={File01Icon} className="w-8 h-8 text-slate-300 mx-auto mb-2" strokeWidth={1.5} />
                             <span className="text-[12px] text-slate-400 font-semibold italic">No notes added yet. Click the icon above to add a note.</span>
                           </div>
                         )}
@@ -3111,13 +3075,9 @@ function OfficeStaffClaimsPageContent() {
                         <div className={`flex items-center justify-between ${showDocStatus ? "border-b border-slate-200 pb-3 mb-4" : ""}`}>
                           <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
                             {hasPending ? (
-                              <svg className="w-5 h-5 text-amber-500 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                              </svg>
+                              <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-amber-500 animate-pulse" strokeWidth={2.5} />
                             ) : (
-                              <svg className="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
+                              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />
                             )}
                             Requested Documents Status
                           </h3>
@@ -3290,9 +3250,7 @@ function OfficeStaffClaimsPageContent() {
                     disabled={isCancellingClaim}
                     className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" strokeWidth={2.5} />
                     {isCancellingClaim ? "Cancelling..." : "Cancel Claim"}
                   </button>
                 )}
@@ -3373,9 +3331,7 @@ function OfficeStaffClaimsPageContent() {
 
               {agents.filter((agent) => (agent.availability || "Active") === "Active").length === 0 && (
                 <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-xl text-xs font-semibold flex items-center gap-2">
-                  <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                  </svg>
+                  <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-amber-500 shrink-0" strokeWidth={2.5} />
                   <span>No active/online agents currently available in this branch. Agents must be logged in and set status to Active on the mobile app.</span>
                 </div>
               )}
@@ -3474,9 +3430,7 @@ function OfficeStaffClaimsPageContent() {
               className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-colors cursor-pointer border border-white/20 select-none shadow-md"
               aria-label="Close preview"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-white" strokeWidth={2.5} />
             </button>
           </div>
         </div>
@@ -3491,18 +3445,14 @@ function OfficeStaffClaimsPageContent() {
           <div className="relative w-full max-w-2xl bg-white rounded-3xl border border-slate-200 shadow-2xl flex flex-col p-6 max-h-[85vh] animate-scale-up select-text" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4 select-none">
               <div className="flex items-center gap-2.5">
-                <svg className="w-5 h-5 text-cyan-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                </svg>
+                <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
                 <h3 className="font-extrabold text-slate-800 text-base">Vehicle Physical Inspection Report</h3>
               </div>
               <button
                 onClick={() => setPreviewReportText(null)}
                 className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-50 transition-colors cursor-pointer border-none outline-none"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-slate-400 hover:text-slate-600" strokeWidth={2.5} />
               </button>
             </div>
             <div className="overflow-y-auto flex-1 pr-1 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm">
@@ -3524,9 +3474,7 @@ function OfficeStaffClaimsPageContent() {
                   }}
                   className="px-5 py-3 rounded-full border border-[#0f2d4a] hover:bg-[#0f2d4a]/5 text-[#0f2d4a] font-extrabold text-xs transition-all cursor-pointer bg-white flex items-center gap-1.5 shadow-sm active:scale-95"
                 >
-                  <svg className="w-4 h-4 text-[#0f2d4a]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                  </svg>
+                  <HugeiconsIcon icon={BubbleChatIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                   Chat with Agent
                 </button>
               ) : (

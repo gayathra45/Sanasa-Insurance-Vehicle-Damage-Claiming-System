@@ -5,6 +5,13 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Agent/Navbar";
 import Footer from "@/app/Components/Agent/Footer";
 import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Call02Icon,
+  Mail01Icon,
+  Cancel01Icon,
+  Loading03Icon,
+} from "@hugeicons/core-free-icons";
 
 interface AgentDetails {
   name?: string;
@@ -236,9 +243,7 @@ export default function AgentContactPage() {
             >
               <div className="flex items-center gap-5">
                 <div className="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-300 transition-colors shrink-0 bg-slate-50">
-                  <svg className="w-5 h-5 text-slate-500 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 0 1-7.108-7.108c-.145-.44.02-.927.396-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25z" />
-                  </svg>
+                  <HugeiconsIcon icon={Call02Icon} className="w-5 h-5 text-slate-500 group-hover:text-emerald-500 transition-colors" strokeWidth={2.5} />
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-800 text-base md:text-lg group-hover:text-emerald-800 transition-colors">{t.hotlineTitle}</h3>
@@ -260,9 +265,7 @@ export default function AgentContactPage() {
             >
               <div className="flex items-center gap-5">
                 <div className="w-12 h-12 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-emerald-500 group-hover:border-emerald-300 transition-colors shrink-0 bg-slate-50">
-                  <svg className="w-5 h-5 text-slate-500 group-hover:text-emerald-500 transition-colors" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                  </svg>
+                  <HugeiconsIcon icon={Mail01Icon} className="w-5 h-5 text-slate-500 group-hover:text-emerald-500 transition-colors" strokeWidth={2.5} />
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-800 text-base md:text-lg group-hover:text-emerald-800 transition-colors">{t.emailTitle}</h3>
@@ -405,9 +408,7 @@ export default function AgentContactPage() {
                 }}
                 className="text-slate-400 hover:text-slate-600 bg-transparent border-none outline-none cursor-pointer"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -471,10 +472,7 @@ export default function AgentContactPage() {
               >
                 {isSending ? (
                   <>
-                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
+                    <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-4 w-4 text-white" strokeWidth={2.5} />
                     <span>{t.sending}</span>
                   </>
                 ) : (

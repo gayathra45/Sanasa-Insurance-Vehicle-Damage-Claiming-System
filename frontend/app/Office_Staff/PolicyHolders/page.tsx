@@ -3,6 +3,12 @@
 import React, { useState, useEffect } from "react";
 import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Menu01Icon,
+  Notification01Icon,
+  Alert02Icon,
+} from "@hugeicons/core-free-icons";
 
 export default function OfficeStaffPolicyHolders() {
   const [branch, setBranch] = useState("Galle");
@@ -38,9 +44,7 @@ export default function OfficeStaffPolicyHolders() {
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
                 className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">
@@ -53,9 +57,7 @@ export default function OfficeStaffPolicyHolders() {
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
               <button className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-slate-500 hover:text-slate-800">
-                  <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.65.342 3.228.96 4.658A1.875 1.875 0 0 1 18 17.25H6a1.875 1.875 0 0 1-1.71-2.842 9.06 9.06 0 0 0 .96-4.658V9ZM12 18.75a2.25 2.25 0 0 1-2.247-2.118.75.75 0 0 1 .746-.757h3a.75.75 0 0 1 .746.757A2.25 2.25 0 0 1 12 18.75Z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
               </button>
               {/* User Avatar Icon */}
               <UserAvatarDropdown userType="office_staff" />
@@ -65,11 +67,7 @@ export default function OfficeStaffPolicyHolders() {
           <main className="flex-1 p-4 lg:p-8 bg-slate-50 flex items-center justify-center">
             <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-xl max-w-md w-full text-center flex flex-col items-center gap-6">
               <div className="w-20 h-20 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-inner select-none">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-10 h-10 animate-pulse">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L3 20h18L12 2Z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 14h10" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 10h6" />
-                </svg>
+                <HugeiconsIcon icon={Alert02Icon} className="w-10 h-10 animate-pulse" strokeWidth={1.5} />
               </div>
 
               <div>

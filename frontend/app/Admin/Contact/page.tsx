@@ -3,6 +3,8 @@
 import React from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Menu01Icon, Call02Icon } from "@hugeicons/core-free-icons";
 
 export default function AdminContactPage() {
   return (
@@ -18,9 +20,7 @@ export default function AdminContactPage() {
                 onClick={() => window.dispatchEvent(new CustomEvent("open-admin-mobile-menu"))}
                 className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               {/* Mobile page title */}
               <h1 className="lg:hidden text-lg font-bold text-slate-800 tracking-tight">
@@ -43,9 +43,7 @@ export default function AdminContactPage() {
           <main className="flex-1 p-6 lg:p-8 bg-slate-50 flex flex-col gap-6 items-center justify-center">
             <div className="bg-white border border-slate-200 rounded-[32px] p-10 max-w-lg w-full text-center shadow-md select-none">
               <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-400">
-                <svg className="w-10 h-10 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.802-5.122-4.1-6.924-6.924l1.293-.97c.362-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                </svg>
+                <HugeiconsIcon icon={Call02Icon} className="w-10 h-10 text-slate-400" strokeWidth={2} />
               </div>
               <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Contact Page</h2>
               <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6">

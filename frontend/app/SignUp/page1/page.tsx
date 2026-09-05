@@ -28,103 +28,9 @@ const vehicleTypes = [
   "Tractor"
 ];
 
-function getVehicleIconSvg(type: string, className = "w-5 h-5 text-white") {
-  if (!type) type = "car";
-  const t = type.toLowerCase().trim();
-  
-  if (t.includes("suv")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 12h20M17 17h3a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3L14 4H6L3 7v8a2 2 0 0 0 2 2h3" />
-        <circle cx="7" cy="17" r="2" />
-        <path d="M9 17h6" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M7 7h6M19 10h-3" />
-      </svg>
-    );
-  }
-  if (t.includes("cab") || t.includes("pickup")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 13h13V8H7L4 11H2v2zm13 0h7V10h-7v3z" />
-        <path d="M2 13v3a1 1 0 0 0 1 1h3" />
-        <path d="M9 17h6" />
-        <path d="M19 17h2a1 1 0 0 0 1-1v-3" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("van") || t.includes("minibus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V7a2 2 0 0 1 2-2h12l5 3v7a2 2 0 0 1-2 2h-1" />
-        <path d="M2 15h3" />
-        <path d="M9 17h6" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M6 8h4v3H6V8zm6 0h3v3h-3V8z" />
-      </svg>
-    );
-  }
-  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="5" cy="16" r="3" />
-        <circle cx="19" cy="16" r="3" />
-        <path d="M5 16h8l3-7H9l-2 3M16 9h3M12 9l-3-4H6" />
-      </svg>
-    );
-  }
-  if (t.includes("three") || t.includes("rickshaw") || t.includes("tuk")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="18" cy="18" r="2" />
-        <path d="M3 18h1c.5 0 .9-.4 1-1l1-6h11c.6 0 1-.4 1-1V5h-3l-2 3H8L6 11H3v7z" />
-        <path d="M12 11v7M15 11v7" />
-      </svg>
-    );
-  }
-  if (t.includes("lorry") || t.includes("truck")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 18H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h11v13zm0-8h7l2 3v5a1 1 0 0 1-1 1h-8v-9z" />
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("bus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9M2 15h20v1a2 2 0 0 1-2 2h-1M5 18H3" />
-        <circle cx="7" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-        <path d="M4 7h3v3H4V7zm5 0h3v3H9V7zm5 0h3v3h-3V7zm5 0h2v3h-2V7z" />
-      </svg>
-    );
-  }
-  if (t.includes("tractor")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="17" r="2.5" />
-        <circle cx="17" cy="15" r="4.5" />
-        <path d="M6 17h6v-2h-3v-4h4v5" />
-        <path d="M12.5 15.5h.5M9 11l-3-4H4" />
-      </svg>
-    );
-  }
-  
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.8C2.1 11 2 11.3 2 11.5V16c0 .6.4 1 1 1h2" />
-      <circle cx="7" cy="17" r="2" />
-      <path d="M9 17h6" />
-      <circle cx="17" cy="17" r="2" />
-    </svg>
-  );
-}
+import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AlertCircleIcon, Car01Icon, ArrowDown01Icon } from "@hugeicons/core-free-icons";
 
 const translations = {
   en: {
@@ -413,9 +319,7 @@ export default function SignUpPage1() {
             {/* Show Validation Error Banner if present */}
             {validationError && (
               <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-center gap-3 animate-pulse">
-                <svg className="w-5 h-5 shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5 shrink-0 text-red-400" strokeWidth={2} />
                 <span>{validationError}</span>
               </div>
             )}
@@ -424,9 +328,7 @@ export default function SignUpPage1() {
             <div className="flex items-center gap-3 border-b border-white/15 pb-4">
               <div className="w-10 h-10 rounded-2xl bg-orange-500/20 flex items-center justify-center border border-orange-400/40 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.25)]">
                 {/* Car Icon */}
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM18.75 18.75a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0ZM3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5M5.25 6.75V4.5a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 .75.75v2.25" />
-                </svg>
+                <HugeiconsIcon icon={Car01Icon} className="w-6 h-6" strokeWidth={2} />
               </div>
               <h2 className="text-white text-2xl font-bold tracking-wide select-none">
                 {t.vehicleDetails}
@@ -494,9 +396,7 @@ export default function SignUpPage1() {
                             ))}
                           </select>
                           <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-700">
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                            </svg>
+                            <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2} />
                           </span>
                         </div>
                       </div>

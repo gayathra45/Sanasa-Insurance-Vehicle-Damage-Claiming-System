@@ -5,6 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import Navbar from "./Components/Homepage/Navbar";
 import Footer from "./Components/Homepage/Footer";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  SecurityCheckIcon,
+  FlashIcon,
+  CustomerService01Icon,
+  FileCheckIcon
+} from "@hugeicons/core-free-icons";
 
 const pageTranslations = {
   en: {
@@ -171,18 +178,7 @@ export default function Home() {
             {/* Card 1: Trusted Service */}
             <div className={serviceCard}>
               <div className={serviceIcon}>
-                <svg
-                  className={serviceSvg}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="M9 12l2 2 4-4" />
-                </svg>
+                <HugeiconsIcon icon={SecurityCheckIcon} className={serviceSvg} strokeWidth={1.5} />
               </div>
               <div className={serviceCardTitle}>{t.trustedService}</div>
             </div>
@@ -190,23 +186,7 @@ export default function Home() {
             {/* Card 2: Fast Claim Processing */}
             <div className={serviceCard}>
               <div className={serviceIcon}>
-                <svg
-                  className={serviceSvg}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="12" cy="12" r="8" />
-                  <path d="M12 4V2" />
-                  <path d="M12 12l2.5 2.5" />
-                  <path d="M4 12H2" />
-                  <path d="M6.34 6.34L4.93 4.93" />
-                  <path d="M6.34 17.66l-1.41 1.41" />
-                  <path d="M22 12h-2" />
-                </svg>
+                <HugeiconsIcon icon={FlashIcon} className={serviceSvg} strokeWidth={1.5} />
               </div>
               <div className={serviceCardTitle}>
                 {t.fastClaim}
@@ -216,20 +196,7 @@ export default function Home() {
             {/* Card 3: 24/7 Customer Support */}
             <div className={serviceCard}>
               <div className={serviceIcon}>
-                <svg
-                  className={serviceSvg}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
+                <HugeiconsIcon icon={CustomerService01Icon} className={serviceSvg} strokeWidth={1.5} />
               </div>
               <div className={serviceCardTitle}>
                 {t.customerSupport}
@@ -239,19 +206,7 @@ export default function Home() {
             {/* Card 4: Transparent Policies */}
             <div className={serviceCard}>
               <div className={serviceIcon}>
-                <svg
-                  className={serviceSvg}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                  <path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1Z" />
-                  <path d="m9 14 2 2 4-4" />
-                </svg>
+                <HugeiconsIcon icon={FileCheckIcon} className={serviceSvg} strokeWidth={1.5} />
               </div>
               <div className={serviceCardTitle}>
                 {t.transparentPolicies}

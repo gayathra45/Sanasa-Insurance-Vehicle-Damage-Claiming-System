@@ -6,6 +6,18 @@ import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { compressImage } from "../../utils/imageCompressor";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Car01Icon,
+  ArrowDown01Icon,
+  Camera01Icon,
+  Location01Icon,
+  Cancel01Icon,
+  MapIcon,
+  Search01Icon,
+  Gps01Icon,
+  BubbleChatIcon,
+} from "@hugeicons/core-free-icons";
 
 function formatNumberPlate(plate: string): string {
   if (!plate) return "";
@@ -1018,9 +1030,7 @@ export default function FileNewClaim() {
           {/* Section 1: Vehicle & Incident */}
           <section className="flex flex-col gap-6">
             <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <svg className="w-7 h-7 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
-              </svg>
+              <HugeiconsIcon icon={Car01Icon} className="w-7 h-7 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
               Vehicle & Incident
             </h2>
 
@@ -1046,9 +1056,7 @@ export default function FileNewClaim() {
                     ))}
                   </select>
                   <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
+                    <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   </span>
                 </div>
               </div>
@@ -1107,9 +1115,7 @@ export default function FileNewClaim() {
                     ))}
                   </select>
                   <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
+                    <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   </span>
                 </div>
               </div>
@@ -1134,9 +1140,7 @@ export default function FileNewClaim() {
           {/* Section 1B: Other Vehicles Involved (Optional) */}
           <section className="flex flex-col gap-6 mt-4">
             <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <svg className="w-7 h-7 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
-              </svg>
+              <HugeiconsIcon icon={Car01Icon} className="w-7 h-7 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
               Other Vehicles Involved (Optional)
             </h2>
 
@@ -1196,9 +1200,7 @@ export default function FileNewClaim() {
                     <option value={4}>4 Vehicles</option>
                   </select>
                   <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
+                    <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   </span>
                 </div>
               </div>
@@ -1284,9 +1286,7 @@ export default function FileNewClaim() {
                         onClick={() => document.getElementById(`license-upload-${index}`)?.click()}
                         className="w-full h-[140px] bg-white hover:bg-slate-100 border border-slate-300 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all active:scale-[0.98] select-none"
                       >
-                        <svg className="w-8 h-8 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
-                        </svg>
+                        <HugeiconsIcon icon={Camera01Icon} className="w-8 h-8 text-slate-500 mb-2" strokeWidth={1.8} />
                         <span className="text-slate-800 text-xs font-medium block">
                           Upload Driver's License Photos
                         </span>
@@ -1346,9 +1346,7 @@ export default function FileNewClaim() {
                         onClick={() => document.getElementById(`vehicle-upload-${index}`)?.click()}
                         className="w-full h-[140px] bg-white hover:bg-slate-100 border border-slate-300 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all active:scale-[0.98] select-none"
                       >
-                        <svg className="w-8 h-8 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
-                        </svg>
+                        <HugeiconsIcon icon={Camera01Icon} className="w-8 h-8 text-slate-500 mb-2" strokeWidth={1.8} />
                         <span className="text-slate-800 text-xs font-medium block">
                           Upload Damage / Accident Photos
                         </span>
@@ -1396,10 +1394,7 @@ export default function FileNewClaim() {
           {/* Section 2: Incident Location */}
           <section className="flex flex-col gap-6 mt-8">
             <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <svg className="w-7 h-7 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-              </svg>
+              <HugeiconsIcon icon={Location01Icon} className="w-7 h-7 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
               Incident Location
             </h2>
 
@@ -1439,9 +1434,7 @@ export default function FileNewClaim() {
                     }}
                     className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1 flex items-center justify-center"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
                   </button>
                 )}
                 <button
@@ -1483,10 +1476,7 @@ export default function FileNewClaim() {
                         title={result.display_name}
                       >
                         <div className="mt-0.5 bg-slate-100 text-slate-500 rounded-full p-2 flex items-center justify-center flex-shrink-0">
-                          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
-                          </svg>
+                          <HugeiconsIcon icon={Location01Icon} className="w-4 h-4 text-slate-500" strokeWidth={2.5} />
                         </div>
                         <div className="flex flex-col min-w-0 flex-1">
                           <span className="font-medium text-slate-800 text-sm truncate">{mainTitle}</span>
@@ -1525,10 +1515,7 @@ export default function FileNewClaim() {
                   disabled={isLocating}
                   className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] disabled:bg-[#0284c7]/50 text-white font-medium text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
                 >
-                  <svg className={`w-8 h-8 text-white ${isLocating ? "animate-pulse" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
-                  </svg>
+                  <HugeiconsIcon icon={Location01Icon} className={`w-8 h-8 text-white ${isLocating ? "animate-pulse" : ""}`} strokeWidth={2} />
                   <span className="font-medium block">
                     {isLocating ? "Locating..." : "Use GPS"}
                   </span>
@@ -1543,9 +1530,7 @@ export default function FileNewClaim() {
                   }}
                   className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] text-white font-medium text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
                 >
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
+                  <HugeiconsIcon icon={MapIcon} className="w-8 h-8 text-white" strokeWidth={2} />
                   <span className="font-medium block">
                     Select on Map
                   </span>
@@ -1587,9 +1572,7 @@ export default function FileNewClaim() {
                     {/* Floating Geocoding Search Panel */}
                     <div className="absolute top-4 left-4 right-4 z-20 max-w-md bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-full pl-5 pr-1.5 py-2 shadow-[0_10px_25px_-5px_rgba(15,23,42,0.15)] flex items-center gap-2 transition-all">
                       <span className="text-slate-400 flex items-center justify-center pointer-events-none">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2.5} />
                       </span>
                       <input
                         type="text"
@@ -1630,9 +1613,7 @@ export default function FileNewClaim() {
                         className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white p-3 rounded-full transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20"
                         title="Search"
                       >
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-white" strokeWidth={3} />
                       </button>
                     </div>
 
@@ -1666,10 +1647,7 @@ export default function FileNewClaim() {
                               title={result.display_name}
                             >
                               <div className="mt-0.5 bg-slate-100 text-slate-500 rounded-full p-2 flex items-center justify-center flex-shrink-0">
-                                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
-                                </svg>
+                                <HugeiconsIcon icon={Location01Icon} className="w-4 h-4 text-slate-500" strokeWidth={2.5} />
                               </div>
                               <div className="flex flex-col min-w-0 flex-1">
                                 <span className="font-medium text-slate-800 text-xs truncate">{mainTitle}</span>
@@ -1691,14 +1669,7 @@ export default function FileNewClaim() {
                       className="absolute top-4 right-4 z-10 w-12 h-12 bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 hover:text-sky-600 rounded-2xl shadow-xl flex items-center justify-center border border-slate-200/60 cursor-pointer transition-all duration-150 active:scale-95 disabled:bg-slate-100"
                       title="Locate Me"
                     >
-                      <svg className={`w-6 h-6 ${isLocating ? "animate-pulse text-sky-500" : "text-slate-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                        <line x1="2" x2="5" y1="12" y2="12" />
-                        <line x1="19" x2="22" y1="12" y2="12" />
-                        <line x1="12" x2="12" y1="2" y2="5" />
-                        <line x1="12" x2="12" y1="19" y2="22" />
-                        <circle cx="12" cy="12" r="7" />
-                        <circle cx="12" cy="12" r="2" fill="currentColor" />
-                      </svg>
+                      <HugeiconsIcon icon={Gps01Icon} className={`w-6 h-6 ${isLocating ? "animate-pulse text-sky-500" : "text-slate-600"}`} strokeWidth={2.5} />
                     </button>
 
 
@@ -1748,9 +1719,7 @@ export default function FileNewClaim() {
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       <PolicyHolderFooter />

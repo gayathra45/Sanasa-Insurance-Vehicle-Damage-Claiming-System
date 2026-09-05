@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import LoginFooter from "@/app/Components/Login/Footer";
-
 import { compressImage } from "../../utils/imageCompressor";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AlertCircleIcon, Upload01Icon, IdCardIcon, File01Icon, LicenseIcon, Tick01Icon, Alert02Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 
 const translations = {
   en: {
@@ -354,9 +355,7 @@ export default function SignUpPage2() {
             {/* Show Validation Error Banner if present */}
             {validationError && (
               <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-center gap-3 animate-pulse">
-                <svg className="w-5 h-5 flex-shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5 flex-shrink-0 text-red-400" strokeWidth={2} />
                 <span>{validationError}</span>
               </div>
             )}
@@ -364,9 +363,7 @@ export default function SignUpPage2() {
             {/* Form Title & Icon */}
             <div className="flex items-center gap-3 border-b border-white/15 pb-4">
               <div className="w-10 h-10 rounded-2xl bg-orange-500/20 flex items-center justify-center border border-orange-400/40 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.25)]">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
-                </svg>
+                <HugeiconsIcon icon={Upload01Icon} className="w-6 h-6" strokeWidth={2} />
               </div>
               <h2 className="text-white text-2xl font-bold tracking-wide select-none">
                 {t.uploadTitle}
@@ -404,18 +401,8 @@ export default function SignUpPage2() {
 
                   {nicFrontStatus === "idle" && (
                     <div className="flex flex-col items-center gap-2 text-white/85">
-                      <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center p-2 mb-2">
-                        <svg className="w-10 h-10" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect x="4" y="14" width="56" height="36" rx="4" fill="#ffffff" stroke="#2c3e50" strokeWidth="2.5"/>
-                          <rect x="4" y="14" width="56" height="7" rx="1" fill="#e74c3c"/>
-                          <circle cx="10" cy="17.5" r="1.5" fill="white"/>
-                          <rect x="10" y="27" width="14" height="17" rx="2" fill="#ebf5fb" stroke="#2980b9" strokeWidth="1.5"/>
-                          <circle cx="17" cy="32.5" r="3" fill="#2980b9"/>
-                          <path d="M11 42.5 C11 39.5, 23 39.5, 23 42.5" fill="#2980b9" />
-                          <line x1="30" y1="29" x2="52" y2="29" stroke="#2c3e50" strokeWidth="2" strokeLinecap="round"/>
-                          <line x1="30" y1="35" x2="48" y2="35" stroke="#2c3e50" strokeWidth="2" strokeLinecap="round"/>
-                          <line x1="30" y1="41" x2="44" y2="41" stroke="#2c3e50" strokeWidth="2" strokeLinecap="round"/>
-                        </svg>
+                      <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center p-2 mb-2 text-orange-400">
+                        <HugeiconsIcon icon={IdCardIcon} className="w-8 h-8" strokeWidth={1.8} />
                       </div>
                       <span className="font-bold text-sm">{t.nicFront}</span>
                       <span className="text-xs text-white/50">{t.required}</span>
@@ -424,10 +411,7 @@ export default function SignUpPage2() {
 
                   {nicFrontStatus === "uploading" && (
                     <div className="w-full flex flex-col items-center gap-4 px-4">
-                      <svg className="animate-spin h-8 w-8 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-orange-400" strokeWidth={2} />
                       <div className="w-full">
                         <div className="flex justify-between text-xs text-white mb-1">
                           <span>{t.uploadingFront}</span>
@@ -443,9 +427,7 @@ export default function SignUpPage2() {
                   {nicFrontStatus === "done" && nicFront && (
                     <div className="flex flex-col items-center gap-3 w-full px-4">
                       <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center border border-green-400/40 text-green-400 shadow-[0_0_15px_rgba(74,222,128,0.25)]">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75l6 6 9-13.5" />
-                        </svg>
+                        <HugeiconsIcon icon={Tick01Icon} className="w-6 h-6" strokeWidth={2.5} />
                       </div>
                       <span className="text-white text-sm font-bold truncate max-w-[200px]">{nicFront.name}</span>
                       <span className="text-xs text-green-400 font-semibold uppercase tracking-wider">{t.uploadCompleted}</span>
@@ -493,18 +475,8 @@ export default function SignUpPage2() {
 
                   {nicBackStatus === "idle" && (
                     <div className="flex flex-col items-center gap-2 text-white/85">
-                      <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center p-2 mb-2">
-                        <svg className="w-10 h-10" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect x="4" y="14" width="56" height="36" rx="4" fill="#ffffff" stroke="#2c3e50" strokeWidth="2.5"/>
-                          <rect x="4" y="14" width="56" height="7" rx="1" fill="#e74c3c"/>
-                          <circle cx="10" cy="17.5" r="1.5" fill="white"/>
-                          <rect x="10" y="27" width="14" height="17" rx="2" fill="#ebf5fb" stroke="#2980b9" strokeWidth="1.5"/>
-                          <circle cx="17" cy="32.5" r="3" fill="#2980b9"/>
-                          <path d="M11 42.5 C11 39.5, 23 39.5, 23 42.5" fill="#2980b9" />
-                          <line x1="30" y1="29" x2="52" y2="29" stroke="#2c3e50" strokeWidth="2" strokeLinecap="round"/>
-                          <line x1="30" y1="35" x2="48" y2="35" stroke="#2c3e50" strokeWidth="2" strokeLinecap="round"/>
-                          <line x1="30" y1="41" x2="44" y2="41" stroke="#2c3e50" strokeWidth="2" strokeLinecap="round"/>
-                        </svg>
+                      <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center p-2 mb-2 text-orange-400">
+                        <HugeiconsIcon icon={IdCardIcon} className="w-8 h-8" strokeWidth={1.8} />
                       </div>
                       <span className="font-bold text-sm">{t.nicBack}</span>
                       <span className="text-xs text-white/50">{t.required}</span>
@@ -513,10 +485,7 @@ export default function SignUpPage2() {
 
                   {nicBackStatus === "uploading" && (
                     <div className="w-full flex flex-col items-center gap-4 px-4">
-                      <svg className="animate-spin h-8 w-8 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-orange-400" strokeWidth={2} />
                       <div className="w-full">
                         <div className="flex justify-between text-xs text-white mb-1">
                           <span>{t.uploadingBack}</span>
@@ -532,9 +501,7 @@ export default function SignUpPage2() {
                   {nicBackStatus === "done" && nicBack && (
                     <div className="flex flex-col items-center gap-3 w-full px-4">
                       <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center border border-green-400/40 text-green-400 shadow-[0_0_15px_rgba(74,222,128,0.25)]">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75l6 6 9-13.5" />
-                        </svg>
+                        <HugeiconsIcon icon={Tick01Icon} className="w-6 h-6" strokeWidth={2.5} />
                       </div>
                       <span className="text-white text-sm font-bold truncate max-w-[200px]">{nicBack.name}</span>
                       <span className="text-xs text-green-400 font-semibold uppercase tracking-wider">{t.uploadCompleted}</span>
@@ -582,14 +549,8 @@ export default function SignUpPage2() {
 
                   {vehicleRegStatus === "idle" && (
                     <div className="flex flex-col items-center gap-2 text-white/85">
-                      <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center p-2 mb-2">
-                        <svg className="w-10 h-10" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M14 10 H38 L48 20 V54 C48 56.2 46.2 58 44 58 H14 C11.8 58 10 56.2 10 54 V14 C10 11.8 11.8 10 14 10 Z" fill="#ffffff" stroke="#2c3e50" strokeWidth="2.5" strokeLinejoin="round"/>
-                          <path d="M38 10 V20 H48" fill="#ffffff" stroke="#2c3e50" strokeWidth="2.5" strokeLinejoin="round"/>
-                          <line x1="18" y1="28" x2="40" y2="28" stroke="#2c3e50" strokeWidth="2.5" strokeLinecap="round"/>
-                          <line x1="18" y1="37" x2="36" y2="37" stroke="#2c3e50" strokeWidth="2.5" strokeLinecap="round"/>
-                          <line x1="18" y1="46" x2="40" y2="46" stroke="#2c3e50" strokeWidth="2.5" strokeLinecap="round"/>
-                        </svg>
+                      <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center p-2 mb-2 text-orange-400">
+                        <HugeiconsIcon icon={File01Icon} className="w-8 h-8" strokeWidth={1.8} />
                       </div>
                       <span className="font-bold text-sm">{t.vehicleReg}</span>
                       <span className="text-xs text-white/50">{t.required}</span>
@@ -598,10 +559,7 @@ export default function SignUpPage2() {
 
                   {vehicleRegStatus === "uploading" && (
                     <div className="w-full flex flex-col items-center gap-4 px-4">
-                      <svg className="animate-spin h-8 w-8 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-orange-400" strokeWidth={2} />
                       <div className="w-full">
                         <div className="flex justify-between text-xs text-white mb-1">
                           <span>{t.uploadingReg}</span>
@@ -617,9 +575,7 @@ export default function SignUpPage2() {
                   {vehicleRegStatus === "done" && vehicleReg && (
                     <div className="flex flex-col items-center gap-3 w-full px-4">
                       <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center border border-green-400/40 text-green-400 shadow-[0_0_15px_rgba(74,222,128,0.25)]">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75l6 6 9-13.5" />
-                        </svg>
+                        <HugeiconsIcon icon={Tick01Icon} className="w-6 h-6" strokeWidth={2.5} />
                       </div>
                       <span className="text-white text-sm font-bold truncate max-w-[200px]">{vehicleReg.name}</span>
                       <span className="text-xs text-green-400 font-semibold uppercase tracking-wider">{t.uploadCompleted}</span>
@@ -667,14 +623,8 @@ export default function SignUpPage2() {
 
                   {revenueLicenseStatus === "idle" && (
                     <div className="flex flex-col items-center gap-2 text-white/85">
-                      <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center p-2 mb-2">
-                        <svg className="w-10 h-10" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M14 10 H38 L48 20 V54 C48 56.2 46.2 58 44 58 H14 C11.8 58 10 56.2 10 54 V14 C10 11.8 11.8 10 14 10 Z" fill="#ffffff" stroke="#2c3e50" strokeWidth="2.5" strokeLinejoin="round"/>
-                          <path d="M38 10 V20 H48" fill="#ffffff" stroke="#2c3e50" strokeWidth="2.5" strokeLinejoin="round"/>
-                          <line x1="18" y1="28" x2="40" y2="28" stroke="#2c3e50" strokeWidth="2.5" strokeLinecap="round"/>
-                          <line x1="18" y1="37" x2="36" y2="37" stroke="#2c3e50" strokeWidth="2.5" strokeLinecap="round"/>
-                          <line x1="18" y1="46" x2="40" y2="46" stroke="#2c3e50" strokeWidth="2.5" strokeLinecap="round"/>
-                        </svg>
+                      <div className="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center p-2 mb-2 text-orange-400">
+                        <HugeiconsIcon icon={LicenseIcon} className="w-8 h-8" strokeWidth={1.8} />
                       </div>
                       <span className="font-bold text-sm">{t.revenueLicense}</span>
                       <span className="text-xs text-white/50">{t.required}</span>
@@ -683,10 +633,7 @@ export default function SignUpPage2() {
 
                   {revenueLicenseStatus === "uploading" && (
                     <div className="w-full flex flex-col items-center gap-4 px-4">
-                      <svg className="animate-spin h-8 w-8 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-orange-400" strokeWidth={2} />
                       <div className="w-full">
                         <div className="flex justify-between text-xs text-white mb-1">
                           <span>{t.uploadingRev}</span>
@@ -702,9 +649,7 @@ export default function SignUpPage2() {
                   {revenueLicenseStatus === "done" && revenueLicense && (
                     <div className="flex flex-col items-center gap-3 w-full px-4">
                       <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center border border-green-400/40 text-green-400 shadow-[0_0_15px_rgba(74,222,128,0.25)]">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75l6 6 9-13.5" />
-                        </svg>
+                        <HugeiconsIcon icon={Tick01Icon} className="w-6 h-6" strokeWidth={2.5} />
                       </div>
                       <span className="text-white text-sm font-bold truncate max-w-[200px]">{revenueLicense.name}</span>
                       <span className="text-xs text-green-400 font-semibold uppercase tracking-wider">{t.uploadCompleted}</span>

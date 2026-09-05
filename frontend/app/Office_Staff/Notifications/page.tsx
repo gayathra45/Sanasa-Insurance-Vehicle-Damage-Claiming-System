@@ -5,6 +5,19 @@ import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import Link from "next/link";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Menu01Icon,
+  Search01Icon,
+  Cancel01Icon,
+  CheckmarkCircle01Icon,
+  Loading03Icon,
+  Clock01Icon,
+  Alert02Icon,
+  UserMultiple02Icon,
+  BubbleChatIcon,
+  Notification01Icon
+} from "@hugeicons/core-free-icons";
 
 interface ClaimMessage {
   sender: string;
@@ -360,9 +373,7 @@ export default function OfficeStaffNotifications() {
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
                 className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span>
@@ -386,9 +397,7 @@ export default function OfficeStaffNotifications() {
               {/* Search Bar */}
               <div className="relative w-full max-w-[420px] bg-slate-50 border border-slate-200 rounded-full pl-5 pr-2 py-2 flex items-center gap-3 transition-all duration-200 focus-within:bg-white focus-within:border-[#f59e0b] focus-within:ring-4 focus-within:ring-[#f59e0b]/10">
                 <span className="text-slate-400 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                  <HugeiconsIcon icon={Search01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
                 </span>
                 <input
                   type="text"
@@ -403,9 +412,7 @@ export default function OfficeStaffNotifications() {
                     onClick={() => setSearchQuery("")}
                     className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 text-slate-400 hover:text-slate-600" strokeWidth={2.5} />
                   </button>
                 )}
               </div>
@@ -416,9 +423,7 @@ export default function OfficeStaffNotifications() {
                   onClick={markAllAsRead}
                   className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-extrabold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
                 >
-                  <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-                  </svg>
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
                   Mark All as Read
                 </button>
               )}
@@ -492,10 +497,7 @@ export default function OfficeStaffNotifications() {
             <div className="flex flex-col gap-4">
               {loading ? (
                 <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-[28px] gap-4 shadow-sm">
-                  <svg className="animate-spin h-8 w-8 text-[#f59e0b]" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
+                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#f59e0b]" strokeWidth={2} />
                   <p className="text-slate-400 font-black text-sm">Loading alerts...</p>
                 </div>
               ) : filteredNotifs.length > 0 ? (
@@ -506,34 +508,26 @@ export default function OfficeStaffNotifications() {
                   let borderLeft = "border-l-[6px] border-l-amber-500";
                   let iconStyle = "bg-amber-50 text-amber-600";
                   let iconSvg = (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-amber-600" strokeWidth={2.5} />
                   );
 
                   if (isUrgent) {
                     borderLeft = "border-l-[6px] border-l-red-500";
                     iconStyle = "bg-red-50 text-red-600";
                     iconSvg = (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
-                      </svg>
+                      <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-600" strokeWidth={2.5} />
                     );
                   } else if (n.type === "decision") {
                     borderLeft = "border-l-[6px] border-l-emerald-500";
                     iconStyle = "bg-emerald-50 text-emerald-600";
                     iconSvg = (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                      </svg>
+                      <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />
                     );
                   } else if (n.type === "message") {
                     borderLeft = "border-l-[6px] border-l-blue-500";
                     iconStyle = "bg-blue-50 text-blue-600";
                     iconSvg = (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l3.055-3.643c.196-.29.516-.475.866-.501a41.8 41.8 0 0 0 3.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0 0 12 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
-                      </svg>
+                      <HugeiconsIcon icon={BubbleChatIcon} className="w-5 h-5 text-blue-600" strokeWidth={2.5} />
                     );
                   }
 
@@ -616,9 +610,7 @@ export default function OfficeStaffNotifications() {
               ) : (
                 <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-[28px] gap-6 text-center px-8 shadow-sm">
                   <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.124 7.5A8.969 8.969 0 015.292 3m13.416 0a8.969 8.969 0 012.168 4.5" />
-                    </svg>
+                    <HugeiconsIcon icon={Notification01Icon} className="w-8 h-8 text-slate-400" strokeWidth={1.8} />
                   </div>
                   <div>
                     <h4 className="font-black text-slate-700 text-lg">No Notifications Found</h4>

@@ -5,6 +5,18 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  UserIcon,
+  Alert02Icon,
+  Search01Icon,
+  Cancel01Icon,
+  BubbleChatIcon,
+  Tick01Icon,
+  CheckmarkCircle01Icon,
+  ViewIcon,
+  Delete02Icon,
+} from "@hugeicons/core-free-icons";
 
 interface AdditionalDoc {
   name: string;
@@ -544,9 +556,7 @@ export default function MyClaims() {
             <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">{t.profileStatus}</span>
             <div className="flex items-center gap-3.5 mt-3">
               <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-bold shrink-0">
-                <svg className="w-6 h-6 text-slate-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={UserIcon} className="w-6 h-6 text-slate-400" strokeWidth={1.8} />
               </div>
               <div className="overflow-hidden">
                 <span className="block font-semibold text-slate-800 text-base truncate">
@@ -580,9 +590,7 @@ export default function MyClaims() {
           {/* Card 3: Quick Guidelines */}
           <div className="bg-slate-900 border border-slate-800 rounded-[28px] p-6 shadow-md text-white flex flex-col justify-between min-h-[140px] hover:border-slate-800 transition-all duration-200">
             <span className="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider block flex items-center gap-1.5">
-              <svg className="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-              </svg>
+              <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-cyan-400" strokeWidth={2.2} />
               {t.guidelines}
             </span>
             <p className="text-slate-300 text-xs font-normal leading-relaxed mt-3.5">
@@ -650,9 +658,7 @@ export default function MyClaims() {
           {/* Search Bar */}
           <div className="relative w-full lg:w-80">
             <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.637 10.637z" />
-              </svg>
+              <HugeiconsIcon icon={Search01Icon} className="w-4 h-4" strokeWidth={2.5} />
             </span>
             <input
               type="text"
@@ -667,9 +673,7 @@ export default function MyClaims() {
                 onClick={() => setSearchQuery("")}
                 className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
               </button>
             )}
           </div>
@@ -774,9 +778,7 @@ export default function MyClaims() {
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       {/* Claim Detail Modal Popup */}
@@ -836,9 +838,7 @@ export default function MyClaims() {
                   <div key={step.num} className="flex flex-col items-center z-10 flex-1">
                     <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold ${circleClass}`}>
                       {isCompleted ? (
-                        <svg className="w-5 h-5 text-[#00b050]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
+                        <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-[#00b050]" strokeWidth={3} />
                       ) : (
                         step.num
                       )}
@@ -881,9 +881,7 @@ export default function MyClaims() {
                   <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all duration-300">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2.5} />
                       </div>
                       <div>
                         <h4 className="text-[15px] font-semibold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
@@ -896,9 +894,7 @@ export default function MyClaims() {
                       rel="noopener noreferrer"
                       className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
+                      <HugeiconsIcon icon={ViewIcon} className="w-4 h-4" strokeWidth={2} />
                       View Receipt
                     </a>
                   </div>
@@ -1184,9 +1180,7 @@ export default function MyClaims() {
                     disabled={isCancellingClaim}
                     className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" strokeWidth={2.5} />
                     {isCancellingClaim ? "Cancelling Claim..." : "Cancel Claim"}
                   </button>
                 ) : (

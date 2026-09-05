@@ -6,6 +6,17 @@ import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { compressImage } from "../../../utils/imageCompressor";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Camera01Icon,
+  PlayIcon,
+  Upload01Icon,
+  Loading03Icon,
+  BubbleChatIcon,
+  Tick01Icon,
+  CheckmarkCircle01Icon,
+  Alert02Icon,
+} from "@hugeicons/core-free-icons";
 
 interface FileUploadState {
   files: File[];
@@ -237,9 +248,7 @@ export default function UploadDocumentsPage() {
             onClick={() => inputRef.current?.click()}
             className="w-full h-[170px] bg-[#e2e8f0]/60 hover:bg-slate-200/60 border border-slate-300 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-150 active:scale-[0.97] select-none shadow-sm"
           >
-            <svg className="w-10 h-10 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
-            </svg>
+            <HugeiconsIcon icon={Camera01Icon} className="w-10 h-10 text-slate-500 mb-2" strokeWidth={1.8} />
             <span className="text-slate-800 text-[14px] font-medium block leading-tight">
               {label}
             </span>
@@ -262,9 +271,7 @@ export default function UploadDocumentsPage() {
                   <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300 group">
                     {isVideo ? (
                       <div className="w-full h-full flex items-center justify-center bg-slate-800 text-white">
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                        <HugeiconsIcon icon={PlayIcon} className="w-6 h-6" strokeWidth={2} />
                       </div>
                     ) : (
                       <img src={preview} alt="upload preview" className="w-full h-full object-cover" />
@@ -332,9 +339,7 @@ export default function UploadDocumentsPage() {
           {/* Section: Upload Documents */}
           <section className="flex flex-col gap-8">
             <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <svg className="w-7 h-7 text-slate-700 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
-              </svg>
+              <HugeiconsIcon icon={Upload01Icon} className="w-7 h-7 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
               Upload Documents
             </h2>
 
@@ -382,10 +387,7 @@ export default function UploadDocumentsPage() {
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-5 w-5 text-white" strokeWidth={2} />
                   Submitting...
                 </span>
               ) : (
@@ -403,9 +405,7 @@ export default function UploadDocumentsPage() {
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       {/* Success Modal Popup matching the mockup exactly */}
@@ -414,9 +414,7 @@ export default function UploadDocumentsPage() {
           <div className="bg-[#e2e8f0] border border-slate-300 rounded-[35px] md:rounded-[45px] w-full max-w-[480px] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col items-center select-none relative transition-all duration-300">
             {/* Green Check Circle */}
             <div className="w-20 h-20 bg-[#00b050] rounded-full flex items-center justify-center shadow-md select-none">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
+              <HugeiconsIcon icon={Tick01Icon} className="w-10 h-10 text-white" strokeWidth={4.5} />
             </div>
 
             {/* Thank You & Success messages */}
@@ -460,21 +458,15 @@ export default function UploadDocumentsPage() {
             <div className="flex items-center gap-3.5">
               {customPopup.type === "success" ? (
                 <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2.5} />
                 </div>
               ) : customPopup.type === "confirm" ? (
                 <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
                 </div>
               ) : (
                 <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
                 </div>
               )}
               <h3 className="font-semibold text-base text-slate-800 tracking-tight leading-none">

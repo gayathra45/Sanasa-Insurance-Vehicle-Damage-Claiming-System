@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import AgentNavbar from "@/app/Components/Agent/Navbar";
 import AgentFooter from "@/app/Components/Agent/Footer";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Alert02Icon } from "@hugeicons/core-free-icons";
 
 const translations = {
   en: {
@@ -51,11 +53,7 @@ export default function AgentProfile() {
       <main className="grow flex items-center justify-center p-8 bg-slate-50 min-h-[500px]">
         <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-xl max-w-md w-full text-center flex flex-col items-center gap-6">
           <div className="w-20 h-20 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-inner select-none">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-10 h-10 animate-pulse">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2L3 20h18L12 2Z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 14h10" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 10h6" />
-            </svg>
+            <HugeiconsIcon icon={Alert02Icon} className="w-10 h-10 animate-pulse text-blue-600" strokeWidth={1.8} />
           </div>
 
           <div>

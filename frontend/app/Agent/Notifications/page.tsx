@@ -5,6 +5,19 @@ import Navbar from "@/app/Components/Agent/Navbar";
 import Footer from "@/app/Components/Agent/Footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Search01Icon,
+  Cancel01Icon,
+  CheckmarkCircle01Icon,
+  Loading03Icon,
+  Time02Icon,
+  Alert02Icon,
+  BubbleChatIcon,
+  File01Icon,
+  Notification01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 
 interface ClaimMessage {
   sender: string;
@@ -422,9 +435,7 @@ export default function AgentNotifications() {
           {/* Search Input */}
           <div className="relative w-full max-w-[420px] bg-slate-50 hover:bg-white focus-within:bg-white border border-slate-200 rounded-full pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10">
             <span className="text-slate-400 flex items-center justify-center">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2.5} />
             </span>
             <input
               type="text"
@@ -439,9 +450,7 @@ export default function AgentNotifications() {
                 onClick={() => setSearchQuery("")}
                 className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
               </button>
             )}
             <button
@@ -458,9 +467,7 @@ export default function AgentNotifications() {
               onClick={markAllAsRead}
               className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-bold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
             >
-              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-              </svg>
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
               Mark All as Read
             </button>
           )}
@@ -555,10 +562,7 @@ export default function AgentNotifications() {
         <div className="flex flex-col gap-5 mb-10">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 bg-slate-50 border border-slate-200 rounded-[30px] gap-4">
-              <svg className="animate-spin h-8 w-8 text-[#0891b2]" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-              </svg>
+              <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#0891b2]" strokeWidth={2.5} />
               <p className="text-slate-500 font-semibold text-sm">Fetching notifications...</p>
             </div>
           ) : filteredNotifs.length > 0 ? (
@@ -570,45 +574,32 @@ export default function AgentNotifications() {
                 let borderLeft = "border-l-[6px] border-l-cyan-500";
                 let iconStyle = "bg-cyan-50 text-cyan-500";
                 let iconSvg = (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <HugeiconsIcon icon={Time02Icon} className="w-5 h-5" strokeWidth={2.5} />
                 );
 
                 if (isUrgent) {
                   borderLeft = "border-l-[6px] border-l-red-500";
                   iconStyle = "bg-red-50 text-red-500";
                   iconSvg = (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286zm0 13.036h.008v.008H12v-.008z" />
-                    </svg>
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
                   );
                 } else if (n.type === "decision") {
                   borderLeft = "border-l-[6px] border-l-emerald-500";
                   iconStyle = "bg-emerald-50 text-emerald-500";
                   iconSvg = (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   );
                 } else if (n.type === "staff_message") {
                   borderLeft = "border-l-[6px] border-l-purple-500";
                   iconStyle = "bg-purple-50 text-purple-500";
                   iconSvg = (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501c1.153-.086 2.294-.213 3.423-.379 1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v5.018z" />
-                    </svg>
+                    <HugeiconsIcon icon={BubbleChatIcon} className="w-5 h-5" strokeWidth={2.5} />
                   );
                 }
 
                 if (n.id.includes("-doc-request")) {
                   iconSvg = (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                      <polyline points="14 2 14 8 20 8" />
-                      <line x1="16" y1="13" x2="8" y2="13" />
-                      <line x1="16" y1="17" x2="8" y2="17" />
-                    </svg>
+                    <HugeiconsIcon icon={File01Icon} className="w-5 h-5" strokeWidth={2} />
                   );
                 }
 
@@ -703,9 +694,7 @@ export default function AgentNotifications() {
           ) : (
             <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-[30px] gap-6 text-center px-8 shadow-sm">
               <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
-                <svg className="w-10 h-10" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.124 7.5A8.969 8.969 0 015.292 3m13.416 0a8.969 8.969 0 012.168 4.5" />
-                </svg>
+                <HugeiconsIcon icon={Notification01Icon} className="w-10 h-10" strokeWidth={1.5} />
               </div>
               <div>
                 <h4 className="font-extrabold text-slate-800 text-lg">No Notifications Found</h4>
@@ -773,9 +762,7 @@ export default function AgentNotifications() {
                   <div key={step.num} className="flex flex-col items-center z-10 flex-1">
                     <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-extrabold ${circleClass}`}>
                       {isCompleted ? (
-                        <svg className="w-5 h-5 text-[#00b050]" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                        </svg>
+                        <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-[#00b050]" strokeWidth={3} />
                       ) : (
                         step.num
                       )}

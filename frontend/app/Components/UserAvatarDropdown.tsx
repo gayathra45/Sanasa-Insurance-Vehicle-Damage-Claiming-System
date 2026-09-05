@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { UserCircleIcon, Logout01Icon } from "@hugeicons/core-free-icons";
 
 interface UserAvatarDropdownProps {
   userType: "admin" | "office_staff";
@@ -44,13 +46,11 @@ export default function UserAvatarDropdown({ userType }: UserAvatarDropdownProps
     <div className="relative" ref={profileMenuRef}>
       <button
         onClick={() => setProfileMenuOpen((prev) => !prev)}
-        className="relative p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
+        className="relative p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center text-slate-500 hover:text-slate-800"
         aria-label="User Profile"
         aria-expanded={profileMenuOpen}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-slate-500 hover:text-slate-800">
-          <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12c0 2.754 1.14 5.244 2.98 7.03-.028-.01-.053-.024-.082-.031a.75.75 0 0 1-.502-.879C5.556 14.931 8.193 12 12 12s6.444 2.931 7.352 6.12a.75.75 0 0 1-.502.88c-.029.007-.054.02-.082.031ZM12 11.25a3.375 3.375 0 1 0 0-6.75 3.375 3.375 0 0 0 0 6.75Z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={UserCircleIcon} className="w-8 h-8" strokeWidth={1.8} />
       </button>
 
       {/* Dropdown Menu */}
@@ -87,9 +87,7 @@ export default function UserAvatarDropdown({ userType }: UserAvatarDropdownProps
             onClick={handleLogout}
             className="flex items-center gap-3 w-full px-5 py-3 text-red-500 hover:bg-red-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-            </svg>
+            <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5 text-red-500" strokeWidth={2} />
             Logout
           </button>
         </div>

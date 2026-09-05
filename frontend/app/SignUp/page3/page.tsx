@@ -19,103 +19,9 @@ function formatNumberPlate(plate: string): string {
   return cleaned;
 }
 
-function getVehicleIconSvg(type: string, className = "w-5 h-5 text-white") {
-  if (!type) type = "car";
-  const t = type.toLowerCase().trim();
-  
-  if (t.includes("suv")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 12h20M17 17h3a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3L14 4H6L3 7v8a2 2 0 0 0 2 2h3" />
-        <circle cx="7" cy="17" r="2" />
-        <path d="M9 17h6" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M7 7h6M19 10h-3" />
-      </svg>
-    );
-  }
-  if (t.includes("cab") || t.includes("pickup")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 13h13V8H7L4 11H2v2zm13 0h7V10h-7v3z" />
-        <path d="M2 13v3a1 1 0 0 0 1 1h3" />
-        <path d="M9 17h6" />
-        <path d="M19 17h2a1 1 0 0 0 1-1v-3" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("van") || t.includes("minibus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V7a2 2 0 0 1 2-2h12l5 3v7a2 2 0 0 1-2 2h-1" />
-        <path d="M2 15h3" />
-        <path d="M9 17h6" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M6 8h4v3H6V8zm6 0h3v3h-3V8z" />
-      </svg>
-    );
-  }
-  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="5" cy="16" r="3" />
-        <circle cx="19" cy="16" r="3" />
-        <path d="M5 16h8l3-7H9l-2 3M16 9h3M12 9l-3-4H6" />
-      </svg>
-    );
-  }
-  if (t.includes("three") || t.includes("rickshaw") || t.includes("tuk")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="18" cy="18" r="2" />
-        <path d="M3 18h1c.5 0 .9-.4 1-1l1-6h11c.6 0 1-.4 1-1V5h-3l-2 3H8L6 11H3v7z" />
-        <path d="M12 11v7M15 11v7" />
-      </svg>
-    );
-  }
-  if (t.includes("lorry") || t.includes("truck")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 18H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h11v13zm0-8h7l2 3v5a1 1 0 0 1-1 1h-8v-9z" />
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("bus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9M2 15h20v1a2 2 0 0 1-2 2h-1M5 18H3" />
-        <circle cx="7" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-        <path d="M4 7h3v3H4V7zm5 0h3v3H9V7zm5 0h3v3h-3V7zm5 0h2v3h-2V7z" />
-      </svg>
-    );
-  }
-  if (t.includes("tractor")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="17" r="2.5" />
-        <circle cx="17" cy="15" r="4.5" />
-        <path d="M6 17h6v-2h-3v-4h4v5" />
-        <path d="M12.5 15.5h.5M9 11l-3-4H4" />
-      </svg>
-    );
-  }
-  
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.8C2.1 11 2 11.3 2 11.5V16c0 .6.4 1 1 1h2" />
-      <circle cx="7" cy="17" r="2" />
-      <path d="M9 17h6" />
-      <circle cx="17" cy="17" r="2" />
-    </svg>
-  );
-}
+import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AlertCircleIcon, FileCheckIcon, CheckmarkCircle01Icon, Tick01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 
 interface Vehicle {
   numberPlate: string;
@@ -488,9 +394,7 @@ export default function SignUpPage3() {
             {/* Show Validation Error Banner if present */}
             {validationError && (
               <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-center gap-3 animate-pulse">
-                <svg className="w-5 h-5 shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5 shrink-0 text-red-400" strokeWidth={2} />
                 <span>{validationError}</span>
               </div>
             )}
@@ -498,9 +402,7 @@ export default function SignUpPage3() {
             {/* Form Title & Icon */}
             <div className="flex items-center gap-3 border-b border-white/15 pb-4">
               <div className="w-10 h-10 rounded-2xl bg-orange-500/20 flex items-center justify-center border border-orange-400/40 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.25)]">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-.621-.504-1.125-1.125-1.125H9.75M8.25 21h8.25M8.25 21h-2.25A2.25 2.25 0 0 1 3.75 18.75V7.5A2.25 2.25 0 0 1 6 5.25h12A2.25 2.25 0 0 1 20.25 7.5v11.25A2.25 2.25 0 0 1 18 21h-2.25" />
-                </svg>
+                <HugeiconsIcon icon={FileCheckIcon} className="w-6 h-6" strokeWidth={2} />
               </div>
               <h2 className="text-white text-2xl font-bold tracking-wide select-none">
                 {t.reviewTitle}
@@ -602,7 +504,7 @@ export default function SignUpPage3() {
                   <div className="min-w-0">
                     <span className="text-white/50 font-medium text-xs uppercase block select-none">{t.kycFront}</span>
                     <span className="text-green-400 font-bold flex items-center gap-1.5 w-full min-w-0">
-                      <svg className="w-4 h-4 text-green-400 shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-green-400 shrink-0" strokeWidth={2.5} />
                       <span className="shrink-0">{t.verified}</span>
                       <span className="truncate min-w-0 block" title={nicFrontName || "nic_front.png"}>
                         {nicFrontName || "nic_front.png"}
@@ -612,7 +514,7 @@ export default function SignUpPage3() {
                   <div className="min-w-0">
                     <span className="text-white/50 font-medium text-xs uppercase block select-none">{t.kycBack}</span>
                     <span className="text-green-400 font-bold flex items-center gap-1.5 w-full min-w-0">
-                      <svg className="w-4 h-4 text-green-400 shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-green-400 shrink-0" strokeWidth={2.5} />
                       <span className="shrink-0">{t.verified}</span>
                       <span className="truncate min-w-0 block" title={nicBackName || "nic_back.png"}>
                         {nicBackName || "nic_back.png"}
@@ -622,7 +524,7 @@ export default function SignUpPage3() {
                   <div className="min-w-0">
                     <span className="text-white/50 font-medium text-xs uppercase block select-none">{t.vehicleReg}</span>
                     <span className="text-green-400 font-bold flex items-center gap-1.5 w-full min-w-0">
-                      <svg className="w-4 h-4 text-green-400 shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-green-400 shrink-0" strokeWidth={2.5} />
                       <span className="shrink-0">{t.verified}</span>
                       <span className="truncate min-w-0 block" title={vehicleRegName || "vehicle_registration.png"}>
                         {vehicleRegName || "vehicle_registration.png"}
@@ -632,7 +534,7 @@ export default function SignUpPage3() {
                   <div className="min-w-0">
                     <span className="text-white/50 font-medium text-xs uppercase block select-none">{t.revenueLicense}</span>
                     <span className="text-green-400 font-bold flex items-center gap-1.5 w-full min-w-0">
-                      <svg className="w-4 h-4 text-green-400 shrink-0 fill-current" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-green-400 shrink-0" strokeWidth={2.5} />
                       <span className="shrink-0">{t.verified}</span>
                       <span className="truncate min-w-0 block" title={revenueLicenseName || "revenue_license.png"}>
                         {revenueLicenseName || "revenue_license.png"}
@@ -694,10 +596,7 @@ export default function SignUpPage3() {
               >
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-5 w-5 text-white" strokeWidth={2} />
                     <span>{t.submitting}</span>
                   </>
                 ) : (
@@ -714,9 +613,7 @@ export default function SignUpPage3() {
                   
                   {/* Big Glowing Success Checkmark */}
                   <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center border border-green-400/40 shadow-[0_0_20px_rgba(74,222,128,0.4)] animate-[pulse_1.5s_infinite] shrink-0">
-                    <svg className="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
+                    <HugeiconsIcon icon={Tick01Icon} className="w-8 h-8 text-green-400" strokeWidth={3} />
                   </div>
                   
                   {/* Done Title */}
@@ -734,10 +631,7 @@ export default function SignUpPage3() {
 
                   {/* Redirection indicator */}
                   <div className="flex items-center gap-2 mt-6 text-xs text-orange-400 font-bold uppercase tracking-widest select-none">
-                    <svg className="animate-spin h-4 w-4 text-orange-400" xmlns="http://www.w3.org/2500/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-4 w-4 text-orange-400" strokeWidth={2} />
                     {t.redirecting}
                   </div>
                 </div>

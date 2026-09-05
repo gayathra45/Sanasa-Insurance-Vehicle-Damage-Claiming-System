@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import Footer from "@/app/Components/Login/Footer";
 import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { AlertCircleIcon, UserIcon, Mail01Icon, ViewIcon, ViewOffSlashIcon, Tick01Icon, ArrowRight01Icon, Loading03Icon } from "@hugeicons/core-free-icons";
 
 type Stage = "request" | "otp" | "set-password" | "success";
 type Role = "policy_holder" | "insurance_agent" | "office_staff" | "admin";
@@ -253,23 +255,11 @@ export default function ResetPassword() {
   };
 
   /* ── EYE ICON SVGS ───────────────────────────────────────────────────────── */
-  const EyeOff = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-    </svg>
-  );
-  const EyeOn = () => (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-    </svg>
-  );
+  const EyeOff = () => <HugeiconsIcon icon={ViewOffSlashIcon} className="w-5 h-5" strokeWidth={2} />;
+  const EyeOn = () => <HugeiconsIcon icon={ViewIcon} className="w-5 h-5" strokeWidth={2} />;
 
   const Spinner = () => (
-    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-    </svg>
+    <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-5 w-5" strokeWidth={2} />
   );
 
   const submitBtnClass = "w-full max-w-[220px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-lg cursor-pointer select-none outline-none border-none disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2";
@@ -309,9 +299,7 @@ export default function ResetPassword() {
             {/* Error Banner */}
             {validationError && (
               <div className="bg-red-500/15 border-l-4 border-red-500 p-3.5 rounded-2xl text-white text-sm flex items-start gap-3">
-                <svg className="w-5 h-5 shrink-0 text-red-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5 shrink-0 text-red-400 mt-0.5" strokeWidth={2} />
                 <span>{validationError}</span>
               </div>
             )}
@@ -327,9 +315,7 @@ export default function ResetPassword() {
 
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                      </svg>
+                      <HugeiconsIcon icon={UserIcon} className="w-5 h-5" strokeWidth={2} />
                     </span>
                     <input type="text" required value={loginId} onChange={(e) => setLoginId(e.target.value)}
                       className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
@@ -345,9 +331,7 @@ export default function ResetPassword() {
 
                   <div className="relative">
                     <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" /><polyline points="22,6 12,13 2,6" />
-                      </svg>
+                      <HugeiconsIcon icon={Mail01Icon} className="w-5 h-5" strokeWidth={2} />
                     </span>
                     <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                       className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
@@ -371,9 +355,7 @@ export default function ResetPassword() {
               <form onSubmit={handleVerifyOtp} className="flex flex-col gap-6">
                 <div className="flex flex-col items-center gap-3 text-center">
                   <div className="w-16 h-16 rounded-full bg-orange-500/20 flex items-center justify-center border border-orange-400/40 shadow-[0_0_25px_rgba(249,115,22,0.35)]">
-                    <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                    </svg>
+                    <HugeiconsIcon icon={Mail01Icon} className="w-8 h-8 text-orange-400" strokeWidth={2} />
                   </div>
                   <div>
                     <h3 className="text-white text-xl font-bold">Verification Code</h3>
@@ -500,9 +482,7 @@ export default function ResetPassword() {
                 <div className="flex flex-col items-center max-w-sm w-full gap-6">
                   {/* Simple Success Checkmark (Green) */}
                   <div className="w-20 h-20 bg-green-500/20 rounded-full flex items-center justify-center border border-green-400/40 shadow-[0_0_30px_rgba(74,222,128,0.4)] animate-[pulse_1.5s_infinite]">
-                    <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                    </svg>
+                    <HugeiconsIcon icon={Tick01Icon} className="w-10 h-10 text-green-400" strokeWidth={3} />
                   </div>
 
                   <div className="flex flex-col gap-3">
@@ -532,9 +512,7 @@ export default function ResetPassword() {
                     className="w-full max-w-[200px] py-3 bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white rounded-full font-bold shadow-lg shadow-orange-500/25 active:scale-95 hover:scale-[1.03] transition-all flex items-center justify-center gap-2 border-none outline-none cursor-pointer"
                   >
                     <span>Go to Login</span>
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                    </svg>
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
                   </button>
                 </div>
               </div>

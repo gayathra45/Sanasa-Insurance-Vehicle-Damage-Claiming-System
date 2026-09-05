@@ -6,6 +6,22 @@ import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import { sriLankaBanks } from "../../utils/banks";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Menu01Icon,
+  Notification01Icon,
+  UserMultiple02Icon,
+  Search01Icon,
+  Add01Icon,
+  UserIcon,
+  Cancel01Icon,
+  Alert02Icon,
+  CheckmarkCircle01Icon,
+  Upload01Icon,
+  Location01Icon,
+  Loading03Icon,
+  Delete02Icon
+} from "@hugeicons/core-free-icons";
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "-";
@@ -312,9 +328,7 @@ export default function AgentsPage() {
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
                 className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">
@@ -327,9 +341,7 @@ export default function AgentsPage() {
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
               <button className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-slate-500 hover:text-slate-800">
-                  <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.65.342 3.228.96 4.658A1.875 1.875 0 0 1 18 17.25H6a1.875 1.875 0 0 1-1.71-2.842 9.06 9.06 0 0 0 .96-4.658V9ZM12 18.75a2.25 2.25 0 0 1-2.247-2.118.75.75 0 0 1 .746-.757h3a.75.75 0 0 1 .746.757A2.25 2.25 0 0 1 12 18.75Z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
               </button>
               {/* User Avatar Icon */}
               <UserAvatarDropdown userType="office_staff" />
@@ -340,9 +352,7 @@ export default function AgentsPage() {
             
             {/* Page Header Title */}
             <div className="flex items-center gap-2.5 mb-2 select-none">
-              <svg className="w-6 h-6 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.109A11.947 11.947 0 0112 21c-2.17 0-4.207-.576-5.963-1.584v-.109A6 6 0 0112 13.5c1.47 0 2.837.525 3.9 1.398M12 12a3 3 0 100-6 3 3 0 000 6zm6.5-3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zM5.058 15.05A6 6 0 001.5 19.5a9.379 9.379 0 002.625.372c.866 0 1.7-.117 2.492-.338A9.39 9.39 0 0012 18.75c-.328-.507-.566-1.077-.696-1.687A11.947 11.947 0 006 18c0-.623.095-1.223.27-1.786a4.126 4.126 0 00-6.19 2.535M7.5 9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-              </svg>
+              <HugeiconsIcon icon={UserMultiple02Icon} className="w-6 h-6 text-slate-700 shrink-0" strokeWidth={2.5} />
               <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
                 Insurance Agents
               </h2>
@@ -354,9 +364,7 @@ export default function AgentsPage() {
               {/* Search Bar */}
               <div className="relative flex-1 max-w-md bg-slate-50 hover:bg-slate-100 focus-within:bg-white border border-slate-200 rounded-full pl-5 pr-2 py-2 flex items-center gap-3 transition-all duration-200 focus-within:shadow-md focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/10">
                 <span className="text-slate-400 flex items-center justify-center">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                  <HugeiconsIcon icon={Search01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
                 </span>
                 <input
                   type="text"
@@ -391,9 +399,7 @@ export default function AgentsPage() {
                 }}
                 className="bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white font-bold text-sm px-6 py-3 rounded-full transition-all duration-150 shadow-md cursor-pointer border-none flex items-center justify-center gap-2 select-none"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-4 h-4 text-white">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                </svg>
+                <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
                 Register Agent
               </button>
             </div>
@@ -407,9 +413,7 @@ export default function AgentsPage() {
                 </div>
               ) : filteredAgents.length === 0 ? (
                 <div className="bg-white border border-slate-100 rounded-[30px] p-16 text-center shadow-sm select-none">
-                  <svg className="w-12 h-12 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                  </svg>
+                  <HugeiconsIcon icon={UserIcon} className="w-12 h-12 text-slate-300 mx-auto mb-4" strokeWidth={1.8} />
                   <p className="text-slate-500 font-extrabold text-sm uppercase tracking-wider">No Insurance Agents Registered.</p>
                   <p className="text-slate-400 text-xs mt-1.5 font-semibold">Click "Register Agent" to onboard your first field officer.</p>
                 </div>
@@ -502,9 +506,7 @@ export default function AgentsPage() {
                 onClick={() => setShowModal(false)}
                 className="text-slate-400 hover:text-slate-650 bg-transparent border-none outline-none cursor-pointer transition-colors p-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6 text-slate-400 hover:text-slate-600" strokeWidth={2.5} />
               </button>
             </div>
             
@@ -515,17 +517,13 @@ export default function AgentsPage() {
             <form onSubmit={handleFormSubmit} className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-6 text-left">
               {formError && (
                 <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 shrink-0">
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 shrink-0" strokeWidth={2.5} />
                   <span>{formError}</span>
                 </div>
               )}
               {formSuccess && (
                 <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 shrink-0">
-                  <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 shrink-0" strokeWidth={2.5} />
                   <span>{formSuccess}</span>
                 </div>
               )}
@@ -705,9 +703,7 @@ export default function AgentsPage() {
                           onChange={(e) => setNicFront(e.target.files?.[0] || null)}
                           className="absolute inset-0 opacity-0 cursor-pointer"
                         />
-                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
+                        <HugeiconsIcon icon={Upload01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
                       </div>
                     </div>
 
@@ -724,9 +720,7 @@ export default function AgentsPage() {
                           onChange={(e) => setNicBack(e.target.files?.[0] || null)}
                           className="absolute inset-0 opacity-0 cursor-pointer"
                         />
-                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
+                        <HugeiconsIcon icon={Upload01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
                       </div>
                     </div>
 
@@ -743,9 +737,7 @@ export default function AgentsPage() {
                           onChange={(e) => setBirthCertificate(e.target.files?.[0] || null)}
                           className="absolute inset-0 opacity-0 cursor-pointer"
                         />
-                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
+                        <HugeiconsIcon icon={Upload01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
                       </div>
                     </div>
 
@@ -762,9 +754,7 @@ export default function AgentsPage() {
                           onChange={(e) => setPoliceReport(e.target.files?.[0] || null)}
                           className="absolute inset-0 opacity-0 cursor-pointer"
                         />
-                        <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
+                        <HugeiconsIcon icon={Upload01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
                       </div>
                     </div>
                   </div>
@@ -773,9 +763,7 @@ export default function AgentsPage() {
                 {/* Read-only Branch Info Accent Card */}
                 <div className="flex items-center gap-3.5 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl select-none shrink-0">
                   <div className="w-9 h-9 rounded-xl bg-slate-200/60 text-slate-600 flex items-center justify-center shrink-0">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
+                    <HugeiconsIcon icon={Location01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2} />
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Assigned Branch</span>
@@ -798,10 +786,7 @@ export default function AgentsPage() {
                 >
                   {submittingAgent ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-4 w-4 text-white" strokeWidth={2} />
                       <span>Registering...</span>
                     </>
                   ) : (
@@ -945,9 +930,7 @@ export default function AgentsPage() {
                 }}
                 className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
               >
-                <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                 Delete Agent
               </button>
               <button
@@ -970,21 +953,15 @@ export default function AgentsPage() {
             <div className="flex items-center gap-3.5">
               {customPopup.type === "success" ? (
                 <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />
                 </div>
               ) : customPopup.type === "confirm" ? (
                 <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-amber-500" strokeWidth={2.5} />
                 </div>
               ) : (
                 <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500" strokeWidth={2.5} />
                 </div>
               )}
               <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
@@ -1125,10 +1102,7 @@ export default function AgentsPage() {
                 >
                   {submittingDelete ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-4 w-4 text-white" strokeWidth={2} />
                       <span>Deleting...</span>
                     </>
                   ) : (
