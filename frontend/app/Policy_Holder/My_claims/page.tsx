@@ -8,7 +8,6 @@ import { API_URL } from "@/app/config";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UserIcon,
-  Alert02Icon,
   Search01Icon,
   Cancel01Icon,
   BubbleChatIcon,
@@ -16,6 +15,9 @@ import {
   CheckmarkCircle01Icon,
   ViewIcon,
   Delete02Icon,
+  Analytics01Icon,
+  File01Icon,
+  Time02Icon,
 } from "@hugeicons/core-free-icons";
 
 interface AdditionalDoc {
@@ -74,8 +76,6 @@ const translations = {
     claims: "Claims",
     pending: "Pending",
     completed: "Completed",
-    guidelines: "Quick Guidelines",
-    guidelineDesc: "Use the status tabs to filter your claims. Click \"View\" to check live assessment tracking, view officer details, and read message logs.",
     searchPlaceholder: "Search claims by number, plate, type, status...",
     all: "All",
     statusPending: "Pending",
@@ -100,8 +100,6 @@ const translations = {
     claims: "හිමිකම්",
     pending: "ප්‍රතිචාර නොලැබුණු",
     completed: "නිම කළ",
-    guidelines: "ඉක්මන් මාර්ගෝපදේශ",
-    guidelineDesc: "ඔබේ හිමිකම් පෙරීමට තත්ත්ව ටැබ් භාවිතා කරන්න. සජීවී ඇගයීම් ලුහුබැඳීම පරීක්ෂා කිරීමට, නිලධාරී විස්තර බැලීමට සහ පණිවිඩ ලොග් කියවීමට \"බලන්න\" ක්ලික් කරන්න.",
     searchPlaceholder: "අංකය, තහඩුව, වර්ගය, තත්ත්වය අනුව හිමිකම් සොයන්න...",
     all: "සියල්ල",
     statusPending: "Pending",
@@ -126,8 +124,6 @@ const translations = {
     claims: "கோரிக்கைகள்",
     pending: "நிலுவையில் உள்ளவை",
     completed: "முடிந்தவை",
-    guidelines: "விரைவான வழிகாட்டுதல்கள்",
-    guidelineDesc: "உங்கள் கோரிக்கைகளை வடிகட்ட நிலை தாவல்களைப் பயன்படுத்தவும். நேரடி மதிப்பீட்டு கண்காணிப்பைச் சரிபார்க்க, அதிகாரி விவரங்களைக் காண மற்றும் செய்திப் பதிவுகளைப் படிக்க \"அழைக்க\" என்பதைக் கிளிக் செய்யவும்.",
     searchPlaceholder: "எண், தட்டு, வகை, நிலை மூலம் கோரிக்கைகளைத் தேடுங்கள்...",
     all: "அனைத்தும்",
     statusPending: "Pending",
@@ -549,53 +545,69 @@ export default function MyClaims() {
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 flex flex-col gap-8">
         
         {/* Top Overview Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 select-none">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
           
           {/* Card 1: Profile & Status */}
-          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">{t.profileStatus}</span>
-            <div className="flex items-center gap-3.5 mt-3">
-              <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-bold shrink-0">
-                <HugeiconsIcon icon={UserIcon} className="w-6 h-6 text-slate-400" strokeWidth={1.8} />
+          <div className="bg-white border border-slate-200/80 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[150px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block">{t.profileStatus}</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active Account
+              </span>
+            </div>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200/70 border border-slate-200 flex items-center justify-center text-slate-600 font-bold shrink-0 shadow-inner">
+                <HugeiconsIcon icon={UserIcon} className="w-6 h-6 text-slate-600" strokeWidth={1.8} />
               </div>
               <div className="overflow-hidden">
-                <span className="block font-semibold text-slate-800 text-base truncate">
+                <span className="block font-extrabold text-slate-900 text-lg truncate">
                   {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.name || "Policy Holder")}
                 </span>
-                <span className="block text-slate-400 text-[10px] font-medium uppercase tracking-wider mt-0.5">NIC: {user?.nic || "N/A"}</span>
+                <span className="inline-block bg-slate-100 text-slate-600 text-[11px] font-bold px-2.5 py-0.5 rounded-md mt-1">
+                  NIC: {user?.nic || "N/A"}
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Card 2: Performance Summary */}
-          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">{t.perfSummary}</span>
+          {/* Card 2: Performance Summary (Clean Common White Design) */}
+          <div className="bg-white border border-slate-200/80 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[150px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block">{t.perfSummary}</span>
+              <span className="text-[11px] font-semibold text-slate-400">
+                This Year ({new Date().getFullYear()})
+              </span>
+            </div>
 
-            <div className="grid grid-cols-3 gap-3 text-center mt-3">
-              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                <span className="text-xl font-bold text-slate-800">{totalClaimsThisYear}</span>
-                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">{t.claims}</span>
+            <div className="grid grid-cols-3 gap-3 text-center mt-2">
+              {/* Total Claims */}
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{t.claims}</span>
+                </div>
+                <span className="text-2xl font-extrabold text-slate-900">{totalClaimsThisYear}</span>
               </div>
-              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                <span className="text-xl font-bold text-slate-800">{pendingClaimsThisYear}</span>
-                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">{t.pending}</span>
+
+              {/* Pending */}
+              <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-amber-700 mb-1">
+                  <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 text-amber-600" strokeWidth={2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">{t.pending}</span>
+                </div>
+                <span className="text-2xl font-extrabold text-amber-600">{pendingClaimsThisYear}</span>
               </div>
-              <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                <span className="text-xl font-bold text-slate-800">{completedClaimsThisYear}</span>
-                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-wider mt-0.5">{t.completed}</span>
+
+              {/* Completed */}
+              <div className="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-emerald-700 mb-1">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">{t.completed}</span>
+                </div>
+                <span className="text-2xl font-extrabold text-emerald-600">{completedClaimsThisYear}</span>
               </div>
             </div>
-          </div>
-
-          {/* Card 3: Quick Guidelines */}
-          <div className="bg-slate-900 border border-slate-800 rounded-[28px] p-6 shadow-md text-white flex flex-col justify-between min-h-[140px] hover:border-slate-800 transition-all duration-200">
-            <span className="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider block flex items-center gap-1.5">
-              <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-cyan-400" strokeWidth={2.2} />
-              {t.guidelines}
-            </span>
-            <p className="text-slate-300 text-xs font-normal leading-relaxed mt-3.5">
-              {t.guidelineDesc}
-            </p>
           </div>
 
         </div>
