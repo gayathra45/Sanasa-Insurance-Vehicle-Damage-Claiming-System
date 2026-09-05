@@ -579,19 +579,19 @@ export default function PolicyHolderNotifications() {
                       setSelectedClaim(n.claim);
                       markAsRead(n.id);
                     }}
-                    className={`rounded-2xl border border-slate-200/80 p-4 md:py-4 md:px-5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer ${borderLeft} ${
+                    className={`rounded-2xl border border-slate-200/80 p-3.5 md:py-3.5 md:px-5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer ${borderLeft} ${
                       isRead ? "bg-slate-50/50 hover:bg-slate-100/60" : "bg-white hover:bg-slate-50/50"
                     }`}
                   >
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-4">
                       
-                      {/* Left Info Area: Icon + Title & Description */}
-                      <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconStyle} mt-0.5`}>
+                      {/* Left Info Area: Centered Icon + Title & Description */}
+                      <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconStyle}`}>
                           {iconSvg}
                         </div>
 
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
                           <div className="flex flex-wrap items-center gap-2">
                             <h4 className={`font-semibold text-sm md:text-[15px] leading-snug ${isRead ? "text-slate-600" : "text-slate-800"}`}>
                               {n.title}
@@ -604,7 +604,7 @@ export default function PolicyHolderNotifications() {
                             )}
                           </div>
 
-                          <p className="text-slate-600 text-xs md:text-sm font-normal leading-relaxed mt-1">
+                          <p className="text-slate-600 text-xs md:text-sm font-normal leading-relaxed mt-0.5">
                             {n.description}
                           </p>
 
@@ -616,15 +616,11 @@ export default function PolicyHolderNotifications() {
                         </div>
                       </div>
 
-                      {/* Right Action Area: Buttons + Date */}
+                      {/* Right Action Area: Fixed-width Buttons + Aligned Date */}
                       <div
                         onClick={(e) => e.stopPropagation()} // Prevent triggering card click / modal popup
-                        className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100"
+                        className="flex items-center justify-between md:justify-end gap-2.5 md:gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100"
                       >
-                        <span className="text-xs text-slate-400 font-normal whitespace-nowrap order-1 md:order-2 md:pl-2">
-                          {n.date}
-                        </span>
-
                         <div className="flex items-center gap-2 order-2 md:order-1">
                           {n.actionLabel === "View" ? (
                             <button
@@ -632,7 +628,7 @@ export default function PolicyHolderNotifications() {
                                 setSelectedClaim(n.claim);
                                 markAsRead(n.id);
                               }}
-                              className={`font-semibold text-xs px-4 py-2 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none shadow-xs ${
+                              className={`w-[70px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none shadow-xs ${
                                 isApproved
                                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                                   : isUrgent
@@ -645,7 +641,7 @@ export default function PolicyHolderNotifications() {
                           ) : (
                             <Link
                               href={n.link}
-                              className={`font-semibold text-xs px-4 py-2 rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline shadow-xs ${
+                              className={`w-[70px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline shadow-xs ${
                                 isUrgent
                                   ? "bg-red-500 hover:bg-red-600 text-white"
                                   : isApproved
@@ -657,17 +653,21 @@ export default function PolicyHolderNotifications() {
                             </Link>
                           )}
 
-                          {/* Read/Unread toggler button */}
+                          {/* Read/Unread toggler button with fixed width for straight column alignment */}
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               toggleReadStatus(n.id);
                             }}
-                            className="bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs px-3.5 py-2 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
+                            className="w-[120px] h-[34px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98] text-center"
                           >
                             {isRead ? "Mark as Unread" : "Mark as Read"}
                           </button>
                         </div>
+
+                        <span className="w-[84px] text-xs text-slate-400 font-normal whitespace-nowrap text-left md:text-right order-1 md:order-2">
+                          {n.date}
+                        </span>
                       </div>
 
                     </div>
