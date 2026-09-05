@@ -1029,8 +1029,8 @@ export default function FileNewClaim() {
           
           {/* Section 1: Vehicle & Incident */}
           <section className="flex flex-col gap-6">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <HugeiconsIcon icon={Car01Icon} className="w-7 h-7 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+            <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
               Vehicle & Incident
             </h2>
 
@@ -1038,7 +1038,7 @@ export default function FileNewClaim() {
               
               {/* Select Vehicle Dropdown */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-medium mb-1">
+                <label className="text-slate-700 text-sm font-medium mb-1">
                   Select Vehicle <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -1063,7 +1063,7 @@ export default function FileNewClaim() {
 
               {/* Incident Date */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-medium mb-1">
+                <label className="text-slate-700 text-sm font-medium mb-1">
                   Incident Date <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -1081,7 +1081,7 @@ export default function FileNewClaim() {
 
               {/* Incident Time */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-medium mb-1">
+                <label className="text-slate-700 text-sm font-medium mb-1">
                   Incident Time <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -1097,7 +1097,7 @@ export default function FileNewClaim() {
 
               {/* Damage Type Dropdown */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-medium mb-1">
+                <label className="text-slate-700 text-sm font-medium mb-1">
                   Damage Type <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -1124,7 +1124,7 @@ export default function FileNewClaim() {
 
             {/* Description Textarea */}
             <div className="flex flex-col gap-2 mt-2">
-              <label className="text-slate-800 text-sm font-medium mb-1">
+              <label className="text-slate-700 text-sm font-medium mb-1">
                 Description <span className="text-red-500 ml-0.5">*</span>
               </label>
               <textarea
@@ -1139,14 +1139,14 @@ export default function FileNewClaim() {
 
           {/* Section 1B: Other Vehicles Involved (Optional) */}
           <section className="flex flex-col gap-6 mt-4">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <HugeiconsIcon icon={Car01Icon} className="w-7 h-7 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+            <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
               Other Vehicles Involved (Optional)
             </h2>
 
             {/* Yes / No Selector Buttons */}
             <div className="flex flex-col gap-3">
-              <label className="text-slate-800 text-sm font-medium">
+              <label className="text-slate-700 text-sm font-medium">
                 Were other vehicles involved in the accident? <span className="text-red-500 ml-0.5">*</span>
               </label>
               <div className="flex flex-row gap-4">
@@ -1185,7 +1185,7 @@ export default function FileNewClaim() {
             {/* If YES: Show Vehicle Count select dropdown */}
             {otherVehiclesInvolved === "yes" && (
               <div className="flex flex-col gap-2 mt-2 transition-all">
-                <label className="text-slate-800 text-sm font-medium mb-1">
+                <label className="text-slate-700 text-sm font-medium mb-1">
                   How many other vehicles were involved? <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -1209,12 +1209,12 @@ export default function FileNewClaim() {
             {/* Dynamic fields listing cards for each vehicle */}
             {otherVehiclesInvolved === "yes" && otherVehicles.map((vehicle, index) => (
               <div key={index} className="bg-slate-50/50 border border-slate-200 rounded-3xl p-6 mt-2 shadow-sm flex flex-col gap-6 transition-all duration-300">
-                <h3 className="font-semibold text-[#0d2a3a] text-lg select-none">Other Vehicle #{index + 1} Details</h3>
+                <h3 className="font-medium text-[#0d2a3a] text-base select-none">Other Vehicle #{index + 1} Details</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Vehicle Plate */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-medium mb-1">Vehicle Number <span className="text-red-500 ml-0.5">*</span></label>
+                    <label className="text-slate-700 text-sm font-medium mb-1">Vehicle Number <span className="text-red-500 ml-0.5">*</span></label>
                     <input
                       type="text"
                       required
@@ -1227,7 +1227,7 @@ export default function FileNewClaim() {
 
                   {/* Driver Name */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-medium mb-1">Driver Name <span className="text-red-500 ml-0.5">*</span></label>
+                    <label className="text-slate-700 text-sm font-medium mb-1">Driver Name <span className="text-red-500 ml-0.5">*</span></label>
                     <input
                       type="text"
                       required
@@ -1240,7 +1240,7 @@ export default function FileNewClaim() {
 
                   {/* Insurance Name */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-medium mb-1">Insurance Name <span className="text-red-500 ml-0.5">*</span></label>
+                    <label className="text-slate-700 text-sm font-medium mb-1">Insurance Name <span className="text-red-500 ml-0.5">*</span></label>
                     <input
                       type="text"
                       required
@@ -1253,7 +1253,7 @@ export default function FileNewClaim() {
 
                   {/* Insurance Number */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-medium mb-1">Insurance Number <span className="text-red-500 ml-0.5">*</span></label>
+                    <label className="text-slate-700 text-sm font-medium mb-1">Insurance Number <span className="text-red-500 ml-0.5">*</span></label>
                     <input
                       type="text"
                       required
@@ -1269,7 +1269,7 @@ export default function FileNewClaim() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Driving License Photos Upload */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-medium mb-1">
+                    <label className="text-slate-700 text-sm font-medium mb-1">
                       Driver's License Photos
                     </label>
                     <input
@@ -1287,7 +1287,7 @@ export default function FileNewClaim() {
                         className="w-full h-[140px] bg-white hover:bg-slate-100 border border-slate-300 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all active:scale-[0.98] select-none"
                       >
                         <HugeiconsIcon icon={Camera01Icon} className="w-8 h-8 text-slate-500 mb-2" strokeWidth={1.8} />
-                        <span className="text-slate-800 text-xs font-medium block">
+                        <span className="text-slate-700 text-xs font-medium block">
                           Upload Driver's License Photos
                         </span>
                         <span className="text-slate-400 text-[9px] mt-1">
@@ -1313,7 +1313,7 @@ export default function FileNewClaim() {
                             </div>
                           ))}
                         </div>
-                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-800 select-none">
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-700 select-none">
                           <span>{vehicle.licensePhotosPreviews.length} photo(s) selected</span>
                           <button
                             type="button"
@@ -1329,7 +1329,7 @@ export default function FileNewClaim() {
 
                   {/* Other Vehicle Damage Photos Upload */}
                   <div className="flex flex-col gap-2">
-                    <label className="text-slate-800 text-sm font-medium mb-1">
+                    <label className="text-slate-700 text-sm font-medium mb-1">
                       Other Vehicle Damage Photos
                     </label>
                     <input
@@ -1347,7 +1347,7 @@ export default function FileNewClaim() {
                         className="w-full h-[140px] bg-white hover:bg-slate-100 border border-slate-300 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all active:scale-[0.98] select-none"
                       >
                         <HugeiconsIcon icon={Camera01Icon} className="w-8 h-8 text-slate-500 mb-2" strokeWidth={1.8} />
-                        <span className="text-slate-800 text-xs font-medium block">
+                        <span className="text-slate-700 text-xs font-medium block">
                           Upload Damage / Accident Photos
                         </span>
                         <span className="text-slate-400 text-[9px] mt-1">
@@ -1373,7 +1373,7 @@ export default function FileNewClaim() {
                             </div>
                           ))}
                         </div>
-                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-800 select-none">
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-700 select-none">
                           <span>{vehicle.vehiclePhotosPreviews.length} photo(s) selected</span>
                           <button
                             type="button"
@@ -1393,13 +1393,13 @@ export default function FileNewClaim() {
 
           {/* Section 2: Incident Location */}
           <section className="flex flex-col gap-6 mt-8">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <HugeiconsIcon icon={Location01Icon} className="w-7 h-7 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+            <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <HugeiconsIcon icon={Location01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
               Incident Location
             </h2>
 
             <div className="flex flex-col gap-2 relative">
-              <label className="text-slate-800 text-sm font-medium mb-1">
+              <label className="text-slate-700 text-sm font-medium mb-1">
                 Enter Address or Land Mark <span className="text-red-500 ml-0.5">*</span>
               </label>
               <div className="relative w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 focus-within:bg-white border border-transparent focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10 rounded-2xl pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md">
@@ -1545,7 +1545,7 @@ export default function FileNewClaim() {
                 <div className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-slate-100">
                   {/* Header */}
                   <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <h3 className="text-lg font-semibold text-[#0d2a3a]">Select Location on Map</h3>
+                    <h3 className="text-base font-semibold text-[#0d2a3a]">Select Location on Map</h3>
                     <button
                       type="button"
                       onClick={() => {
@@ -1684,7 +1684,7 @@ export default function FileNewClaim() {
                         setModalInitialCoords(null);
                         setShowMapModal(false);
                       }}
-                      className="bg-[#0d2a3a] hover:bg-[#0284c7] text-white font-semibold text-sm px-8 py-4 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
+                      className="bg-[#0d2a3a] hover:bg-[#0284c7] text-white font-medium text-sm px-8 py-3.5 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
                     >
                       Confirm Location
                     </button>
@@ -1698,13 +1698,13 @@ export default function FileNewClaim() {
           <div className="flex flex-row justify-between items-center mt-4 mb-10">
             <Link
               href="/Policy_Holder/Home"
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-base px-10 py-4 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center"
+              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center"
+              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center"
             >
               Next
             </button>

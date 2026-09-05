@@ -338,14 +338,14 @@ export default function UploadDocumentsPage() {
           
           {/* Section: Upload Documents */}
           <section className="flex flex-col gap-8">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <HugeiconsIcon icon={Upload01Icon} className="w-7 h-7 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+            <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <HugeiconsIcon icon={Upload01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
               Upload Documents
             </h2>
 
             {/* Subsection 1: Accident Photos */}
             <div className="flex flex-col">
-              <h3 className="text-[17px] font-semibold text-slate-800 mb-4 select-none">
+              <h3 className="text-base font-medium text-slate-800 mb-3 select-none">
                 Accident Photos <span className="text-red-500 ml-0.5">*</span>
               </h3>
               
@@ -358,7 +358,7 @@ export default function UploadDocumentsPage() {
 
             {/* Subsection 2: Driving License */}
             <div className="flex flex-col mt-4">
-              <h3 className="text-[17px] font-semibold text-slate-800 mb-4 select-none">
+              <h3 className="text-base font-medium text-slate-800 mb-3 select-none">
                 Driving License <span className="text-red-500 ml-0.5">*</span>
               </h3>
 
@@ -374,7 +374,7 @@ export default function UploadDocumentsPage() {
           <div className="flex flex-row justify-between items-center mt-6 mb-10">
             <Link
               href="/Policy_Holder/New_Claim"
-              className={`bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-semibold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center ${
+              className={`bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center ${
                 isSubmitting ? "pointer-events-none opacity-50" : ""
               }`}
             >
@@ -383,7 +383,7 @@ export default function UploadDocumentsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-[#0f2d3a]/50 text-white font-semibold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
+              className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-[#0f2d3a]/50 text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -418,15 +418,15 @@ export default function UploadDocumentsPage() {
             </div>
 
             {/* Thank You & Success messages */}
-            <h2 className="text-[25px] font-bold text-[#0f2d3a] tracking-tight mt-6 leading-none">
+            <h2 className="text-xl font-semibold text-[#0f2d3a] tracking-tight mt-6 leading-none">
               Thank You.
             </h2>
-            <p className="text-[22px] font-semibold text-[#0f2d3a] tracking-tight mt-2 leading-none">
+            <p className="text-lg font-medium text-[#0f2d3a] tracking-tight mt-2 leading-none">
               Application Submitted!
             </p>
 
             {/* Reference Number Pill */}
-            <div className="bg-black text-white font-bold text-[15px] px-8 py-3 rounded-full mt-7 shadow-md tracking-wider">
+            <div className="bg-black text-white font-semibold text-[14px] px-7 py-2.5 rounded-full mt-7 shadow-md tracking-wider">
               {generatedClaimNumber}
             </div>
 
@@ -441,7 +441,7 @@ export default function UploadDocumentsPage() {
                 router.refresh();
                 router.push("/Policy_Holder/Home");
               }}
-              className="mt-9 self-start bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-semibold text-[14px] px-8 py-4 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
+              className="mt-9 self-start bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-medium text-[14px] px-8 py-3.5 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
             >
               <span>Back to Home</span>
             </button>
