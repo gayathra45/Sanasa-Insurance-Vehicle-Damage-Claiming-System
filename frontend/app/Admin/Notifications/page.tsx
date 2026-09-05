@@ -605,8 +605,8 @@ export default function AdminNotifications() {
       </div>
 
       {/* Floating Support Button */}
-      <button className="fixed bottom-24 right-8 w-14 h-14 bg-[#00ddff] hover:bg-[#00cceb] text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-50">
-        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7" strokeWidth={2.2} />
+      <button className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center" aria-label="Chat support">
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       {/* 1. Claim Detail Modal Popup */}

@@ -7,11 +7,13 @@ import Footer from "@/app/Components/Agent/Footer";
 import { API_URL } from "@/app/config";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  BubbleChatIcon,
   Call02Icon,
   Mail01Icon,
   Cancel01Icon,
   Loading03Icon,
   ArrowDown01Icon,
+
 } from "@hugeicons/core-free-icons";
 
 interface AgentDetails {
@@ -482,6 +484,15 @@ export default function AgentContactPage() {
           </div>
         </div>
       )}
+
+      
+      {/* Floating Chat Bubble Button */}
+      <button
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        aria-label="Chat support"
+      >
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+      </button>
 
       <Footer />
     </div>

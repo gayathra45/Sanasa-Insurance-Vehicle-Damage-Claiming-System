@@ -2278,10 +2278,10 @@ export default function AgentDashboard() {
         {/* Chat Toggle Button */}
         <button
           onClick={() => setShowSupportChat(!showSupportChat)}
-          className="bg-[#00ddff] hover:bg-[#00c5e3] text-white w-14 h-14 rounded-full flex items-center justify-center shadow-xl shadow-cyan-300/35 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer"
+          className="bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
           aria-label="Toggle Live Helpdesk Chat"
         >
-          <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-black" strokeWidth={2.2} />
+          <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
         </button>
       </div>
 

@@ -4,7 +4,9 @@ import React, { useState, useEffect } from "react";
 import AgentNavbar from "@/app/Components/Agent/Navbar";
 import AgentFooter from "@/app/Components/Agent/Footer";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon } from "@hugeicons/core-free-icons";
+import {
+  BubbleChatIcon, Alert02Icon 
+} from "@hugeicons/core-free-icons";
 
 const translations = {
   en: {
@@ -64,6 +66,15 @@ export default function AgentProfile() {
           </div>
         </div>
       </main>
+
+      
+      {/* Floating Chat Bubble Button */}
+      <button
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        aria-label="Chat support"
+      >
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+      </button>
 
       <AgentFooter />
     </div>
