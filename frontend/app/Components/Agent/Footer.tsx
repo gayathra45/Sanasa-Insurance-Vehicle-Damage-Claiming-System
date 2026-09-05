@@ -52,7 +52,7 @@ export default function Footer() {
         {/* Right Section - Helpline & Social Icons */}
         <div className="flex-1 flex flex-col md:flex-row justify-between items-start md:items-start gap-6">
           {/* 24 Hours Helpline */}
-          <div className="flex items-center gap-2.5 text-lg font-bold md:ml-auto">
+          <div className="flex items-center gap-2.5 text-lg font-semibold md:ml-auto">
             <HugeiconsIcon icon={Call02Icon} className="w-6 h-6 text-white" strokeWidth={2} />
             <span>24 Hours : 0725 575 575</span>
           </div>

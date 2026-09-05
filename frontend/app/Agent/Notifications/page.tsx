@@ -413,7 +413,7 @@ export default function AgentNotifications() {
 
         {/* Text Content */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+          <h1 className="text-white text-3xl md:text-[40px] font-semibold tracking-tight leading-none">
             Notifications Center
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
@@ -455,7 +455,7 @@ export default function AgentNotifications() {
             )}
             <button
               type="button"
-              className="bg-[#0891b2] hover:bg-[#06738f] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-bold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md"
+              className="bg-[#0891b2] hover:bg-[#06738f] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-semibold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md"
             >
               Search
             </button>
@@ -465,7 +465,7 @@ export default function AgentNotifications() {
           {notifications.some(n => !readIds.includes(n.id)) && (
             <button
               onClick={markAllAsRead}
-              className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-bold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
+              className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
             >
               <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
               Mark All as Read
@@ -770,14 +770,14 @@ export default function AgentNotifications() {
 
                 return (
                   <div key={step.num} className="flex flex-col items-center z-10 flex-1">
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold ${circleClass}`}>
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-semibold ${circleClass}`}>
                       {isCompleted ? (
                         <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-[#00b050]" strokeWidth={3} />
                       ) : (
                         step.num
                       )}
                     </div>
-                    <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-bold" : isCompleted ? "text-emerald-700 font-bold" : "text-slate-400"}`}>
+                    <span className={`text-[11px] font-semibold mt-2 leading-none ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-emerald-700 font-bold" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>
@@ -792,12 +792,12 @@ export default function AgentNotifications() {
             <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
               
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[22px] font-bold text-[#0f2d3a] tracking-tight leading-none text-slate-800">
+                <h2 className="text-[22px] font-semibold text-[#0f2d3a] tracking-tight leading-none text-slate-800">
                   Claim Details – {selectedClaim.claimNumber}
                 </h2>
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="text-slate-400 hover:text-slate-600 text-2xl font-bold border-none bg-transparent cursor-pointer"
+                  className="text-slate-400 hover:text-slate-600 text-2xl font-semibold border-none bg-transparent cursor-pointer"
                 >
                   &times;
                 </button>
@@ -808,36 +808,36 @@ export default function AgentNotifications() {
 
                 <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-6 px-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Vehicle Plate:</span>
+                    <span className="text-slate-400 font-semibold w-28 shrink-0">Vehicle Plate:</span>
                     <span className="font-bold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Damage Type:</span>
+                    <span className="text-slate-400 font-semibold w-28 shrink-0">Damage Type:</span>
                     <span className="font-bold text-slate-800">{selectedClaim.damageType}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Evaluated Amount:</span>
+                    <span className="text-slate-400 font-semibold w-28 shrink-0">Evaluated Amount:</span>
                     <span className="font-bold text-slate-800">
                       {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Evaluated"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Incident Date:</span>
+                    <span className="text-slate-400 font-semibold w-28 shrink-0">Incident Date:</span>
                     <span className="font-bold text-slate-800">{formatDate(selectedClaim.incidentDate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Policy Holder NIC:</span>
+                    <span className="text-slate-400 font-semibold w-28 shrink-0">Policy Holder NIC:</span>
                     <span className="font-bold text-slate-800">{selectedClaim.userNic}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Location:</span>
+                    <span className="text-slate-400 font-semibold w-28 shrink-0">Location:</span>
                     <span className="font-bold text-slate-800">{selectedClaim.location || "N/A"}</span>
                   </div>
                 </div>
 
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Incident Description</p>
                     <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       "{selectedClaim.description}"
                     </p>
@@ -846,7 +846,7 @@ export default function AgentNotifications() {
 
                 {selectedClaim.inspectionReport && (
                   <div className="px-2 mb-6">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Submitted Inspection Report</p>
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Submitted Inspection Report</p>
                     <p className="text-slate-600 text-sm font-medium leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-2xl border border-slate-100">
                       {selectedClaim.inspectionReport}
                     </p>
@@ -854,7 +854,7 @@ export default function AgentNotifications() {
                 )}
 
                 <div className="px-2 mt-4 mb-2">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Messages Log</p>
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Messages Log</p>
                   {selectedClaim.messages && selectedClaim.messages.length > 0 ? (
                     <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
                       {selectedClaim.messages.map((msg, index) => (

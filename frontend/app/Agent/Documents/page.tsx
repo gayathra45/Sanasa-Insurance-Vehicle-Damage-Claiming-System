@@ -465,7 +465,7 @@ export default function AgentDocuments() {
 
         {/* Text content */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+          <h1 className="text-white text-3xl md:text-[40px] font-semibold tracking-tight leading-none">
             {t.title}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
@@ -496,7 +496,7 @@ export default function AgentDocuments() {
               <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 text-emerald-500">
                 <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-7 h-7" strokeWidth={2.5} />
               </div>
-              <p className="text-slate-500 font-bold text-[15px]">{lang === "en" ? "No Pending Agent Requests" : lang === "si" ? "ප්‍රතිචාර නොදැක්වූ ඉල්ලීම් කිසිවක් නැත" : "நிலுவையில் ஆவணக் கோரிக்கைகள் இல்லை"}</p>
+              <p className="text-slate-500 font-semibold text-[15px]">{lang === "en" ? "No Pending Agent Requests" : lang === "si" ? "ප්‍රතිචාර නොදැක්වූ ඉල්ලීම් කිසිවක් නැත" : "நிலுவையில் ஆவணக் கோரிக்கைகள் இல்லை"}</p>
               <p className="text-slate-400 text-xs font-semibold mt-1">{lang === "en" ? "All requested documents from your end are verified and up to date." : lang === "si" ? "ඔබගේ පාර්ශවයෙන් ඉල්ලා ඇති සියලුම ලේඛන සත්‍යාපනය කර යාවත්කාලීන කර ඇත." : "உங்கள் தரப்பிலிருந்து கோரப்பட்ட அனைத்து ஆவணங்களும் சரிபார்க்கப்பட்டு புதுப்பிக்கப்பட்டுள்ளன."}</p>
             </div>
           ) : (
@@ -513,11 +513,11 @@ export default function AgentDocuments() {
                     </div>
 
                     <div className="flex-1">
-                      <h3 className="text-red-600 font-bold text-base leading-none">
+                      <h3 className="text-red-600 font-semibold text-base leading-none">
                         {lang === "en" ? "Document Upload Required" : lang === "si" ? "ලේඛන උඩුගත කිරීමක් අවශ්‍යයි" : "ஆவணம் பதிவேற்றம் தேவை"}
                       </h3>
                       <p className="text-slate-600 text-sm font-semibold mt-2.5 leading-relaxed">
-                        {lang === "en" ? "Office staff has requested the following document(s) for claim" : lang === "si" ? "කාර්ය මණ්ඩලය විසින් පහත සඳහන් ලේඛන හිමිකම් ගොනුව සඳහා ඉල්ලා ඇත" : "அலுவலக ஊழியர்கள் பின்வரும் ஆவணத்தை கோரியுள்ளனர்"} <span className="text-slate-800 font-bold">{claim.claimNumber}</span> (Plate: {claim.vehiclePlate}):
+                        {lang === "en" ? "Office staff has requested the following document(s) for claim" : lang === "si" ? "කාර්ය මණ්ඩලය විසින් පහත සඳහන් ලේඛන හිමිකම් ගොනුව සඳහා ඉල්ලා ඇත" : "அலுவலக ஊழியர்கள் பின்வரும் ஆவணத்தை கோரியுள்ளனர்"} <span className="text-slate-800 font-semibold">{claim.claimNumber}</span> (Plate: {claim.vehiclePlate}):
                       </p>
                       <div className="mt-2.5 space-y-3 pl-2.5 border-l-2 border-slate-200">
                         {getAgentPendingRequests(claim).map((docName, idx) => {
@@ -525,7 +525,7 @@ export default function AgentDocuments() {
                           const reqTime = getDocRequestTime(claim, docName);
                           return (
                             <div key={idx} className="text-slate-600 text-xs font-semibold leading-relaxed grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                              <span className="text-slate-800 font-bold">• {docName}</span>
+                              <span className="text-slate-800 font-semibold">• {docName}</span>
                               {reqTime && (
                                 <span className="text-red-500 font-bold">
                                   (Requested: {reqTime} by {getDocRequestSender(claim, docName)})
@@ -553,7 +553,7 @@ export default function AgentDocuments() {
                     >
                       {t.uploadButton}
                     </button>
-                    <span className="text-slate-400 text-[11px] font-bold self-end select-none">
+                    <span className="text-slate-400 text-[11px] font-semibold self-end select-none">
                       {formatDateString(claim.createdAt)}
                     </span>
                   </div>
@@ -580,7 +580,7 @@ export default function AgentDocuments() {
             </div>
           ) : groupedClaimsList.length === 0 ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-sm select-none">
-              <p className="text-slate-400 font-bold text-sm">{lang === "en" ? "No documents found for your assigned claims." : lang === "si" ? "ඔබට පවරා ඇති හිමිකම් සඳහා ලේඛන කිසිවක් හමු නොවීය." : "ஒதுக்கப்பட்ட கோரிக்கைகளுக்கு ஆவணங்கள் எதுவும் இல்லை."}</p>
+              <p className="text-slate-400 font-semibold text-sm">{lang === "en" ? "No documents found for your assigned claims." : lang === "si" ? "ඔබට පවරා ඇති හිමිකම් සඳහා ලේඛන කිසිවක් හමු නොවීය." : "ஒதுக்கப்பட்ட கோரிக்கைகளுக்கு ஆவணங்கள் எதுவும் இல்லை."}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-4">
@@ -602,7 +602,7 @@ export default function AgentDocuments() {
                       <div className="text-slate-400 text-xs font-semibold mt-2.5 flex flex-col gap-2.5 leading-tight select-none w-full">
                         {claim.docs.map((doc, dIdx) => (
                           <div key={dIdx} className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                            <span className="text-slate-700 font-bold">{doc.name}</span>
+                            <span className="text-slate-700 font-semibold">{doc.name}</span>
                             {doc.uploadedAt && (
                               <span className="text-[10px] text-slate-400 font-semibold">
                                 (Uploaded: {formatDateTimeString(doc.uploadedAt)})
@@ -644,7 +644,7 @@ export default function AgentDocuments() {
             {!uploadSuccess ? (
               <form onSubmit={handleUploadSubmit} className="flex flex-col">
                 <div className="select-none text-left">
-                  <h2 className="text-[26px] font-bold text-slate-950 tracking-tight leading-tight">
+                  <h2 className="text-[26px] font-semibold text-slate-950 tracking-tight leading-tight">
                     Claim {uploadTargetClaim.claimNumber}
                   </h2>
                   <p className="text-slate-400 text-[14px] font-semibold mt-1">
@@ -660,7 +660,7 @@ export default function AgentDocuments() {
                       key={docName} 
                       className="w-full border border-slate-300 rounded-full py-4 px-8 flex items-center justify-between min-h-[62px] bg-white transition-all"
                     >
-                      <span className="text-slate-800 text-[16px] font-bold select-none">
+                      <span className="text-slate-800 text-[16px] font-semibold select-none">
                         {docName}
                       </span>
 
@@ -675,7 +675,7 @@ export default function AgentDocuments() {
                         ) : (
                           <div className="flex items-center gap-2">
                             <span 
-                              className="text-emerald-600 font-bold text-sm truncate max-w-[200px]"
+                              className="text-emerald-600 font-semibold text-sm truncate max-w-[200px]"
                               title={val.file.name}
                             >
                               ✓ {val.file.name}
@@ -769,7 +769,7 @@ export default function AgentDocuments() {
           <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative transition-all duration-300 max-h-[90vh] overflow-y-auto">
 
             <div className="select-none text-left">
-              <h2 className="text-[26px] font-bold text-slate-950 tracking-tight leading-tight">
+              <h2 className="text-[26px] font-semibold text-slate-950 tracking-tight leading-tight">
                 Claim {uploadedListTargetClaim.claimNumber}
               </h2>
               <p className="text-slate-400 text-[14px] font-semibold mt-1">
@@ -786,7 +786,7 @@ export default function AgentDocuments() {
                   className="w-full border border-slate-200 rounded-2xl py-4 px-8 flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-h-[62px] bg-white hover:bg-slate-50/30 transition-all shadow-sm"
                 >
                   <div className="flex flex-col min-w-0">
-                    <span className="text-slate-800 text-[16px] font-bold select-none truncate max-w-[280px] sm:max-w-[420px]">
+                    <span className="text-slate-800 text-[16px] font-semibold select-none truncate max-w-[280px] sm:max-w-[420px]">
                       {doc.name}
                     </span>
                     {doc.uploadedAt && (
@@ -833,7 +833,7 @@ export default function AgentDocuments() {
               return (
                 <div className="select-none text-left flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
                   <div>
-                    <h2 className="text-[26px] font-bold text-slate-950 tracking-tight leading-tight">
+                    <h2 className="text-[26px] font-semibold text-slate-950 tracking-tight leading-tight">
                       {docName}
                     </h2>
                     <p className="text-slate-400 text-[14px] font-semibold mt-1">
@@ -848,7 +848,7 @@ export default function AgentDocuments() {
                         </p>
                       )}
                       {viewUploadedAt && (
-                        <p className="text-slate-400 font-bold text-[11px] mt-0.5 m-0">
+                        <p className="text-slate-400 font-semibold text-[11px] mt-0.5 m-0">
                           Uploaded On: {formatDateTimeString(viewUploadedAt)}
                         </p>
                       )}

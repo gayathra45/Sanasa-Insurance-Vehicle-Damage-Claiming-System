@@ -250,21 +250,21 @@ export default function AgentNavbar() {
                 <div className="absolute right-0 mt-2 w-32 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-slate-100 py-1.5 z-50 text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150">
                   <button
                     onClick={() => changeLanguage("en")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-cyan-600" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-semibold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-cyan-600" : ""}`}
                   >
                     <span>English</span>
                     {lang === "en" && <span>✓</span>}
                   </button>
                   <button
                     onClick={() => changeLanguage("si")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-cyan-600" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-semibold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-cyan-600" : ""}`}
                   >
                     <span>සිංහල</span>
                     {lang === "si" && <span>✓</span>}
                   </button>
                   <button
                     onClick={() => changeLanguage("ta")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-cyan-600" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-semibold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-cyan-600" : ""}`}
                   >
                     <span>தமிழ்</span>
                     {lang === "ta" && <span>✓</span>}
@@ -441,7 +441,7 @@ export default function AgentNavbar() {
             {/* Modal Header */}
             <div className="px-6 md:px-10 py-5 md:py-6 border-b border-slate-100 flex justify-between items-center relative z-10 bg-white/80 backdrop-blur-md">
               <div>
-                <h3 className="text-xl md:text-2xl font-bold text-[#0d2a3a] flex items-center gap-2">
+                <h3 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] flex items-center gap-2">
                   <HugeiconsIcon icon={Building04Icon} className="w-6 h-6 text-cyan-600" strokeWidth={2} /> {t.branchTitle}
                 </h3>
                 <p className="text-[10px] md:text-xs text-slate-500 font-semibold mt-1">Find your nearest branch and contact details</p>
@@ -449,7 +449,7 @@ export default function AgentNavbar() {
               <button
                 type="button"
                 onClick={() => setBranchesModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 text-xl md:text-2xl font-bold cursor-pointer border-none bg-transparent transition-colors p-2 flex items-center justify-center"
+                className="text-slate-400 hover:text-slate-700 text-xl md:text-2xl font-semibold cursor-pointer border-none bg-transparent transition-colors p-2 flex items-center justify-center"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2} />
               </button>
@@ -494,7 +494,7 @@ export default function AgentNavbar() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16 text-slate-400 font-bold select-none text-sm">
+                <div className="text-center py-16 text-slate-400 font-semibold select-none text-sm">
                   No branches found matching your search.
                 </div>
               )}

@@ -218,7 +218,7 @@ export default function AgentContactPage() {
 
         {/* Header Text Content */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+          <h1 className="text-white text-3xl md:text-[40px] font-semibold tracking-tight leading-none">
             {t.title}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
@@ -417,7 +417,7 @@ export default function AgentContactPage() {
             <form onSubmit={handleSendEmail} className="p-8 flex flex-col gap-5">
               {modalFeedback && (
                 <div
-                  className={`text-xs font-bold px-4 py-3 rounded-xl border ${
+                  className={`text-xs font-semibold px-4 py-3 rounded-xl border ${
                     modalFeedback.type === "success"
                       ? "bg-emerald-50 text-emerald-600 border-emerald-100"
                       : "bg-red-50 text-red-600 border-red-100"

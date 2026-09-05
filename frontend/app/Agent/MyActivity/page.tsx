@@ -192,7 +192,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-inner select-text">
         <div className="flex items-center gap-2 mb-3 text-slate-400 select-none">
           <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
         </div>
         <p className="text-slate-700 text-xs font-semibold whitespace-pre-wrap leading-relaxed">
           {parsed.rawText}
@@ -238,10 +238,10 @@ const renderPremiumInspectionReport = (reportText: string) => {
           <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
           <div>
             <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
-            <span className="text-[10px] font-bold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
+            <span className="text-[10px] font-semibold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
           </div>
         </div>
-        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-bold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-semibold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
           <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
           Verified By Agent
         </span>
@@ -251,7 +251,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Odometer */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Odometer</span>
+          <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest leading-none select-none">Odometer</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-semibold text-slate-800">{parsed.odometer || "N/A"}</span>
           </div>
@@ -260,7 +260,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
 
         {/* Card 2: Fuel Level */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Fuel Level</span>
+          <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest leading-none select-none">Fuel Level</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-semibold text-slate-800">{parsed.fuelLevel || "N/A"}</span>
           </div>
@@ -269,7 +269,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
 
         {/* Card 3: Estimated Cost */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
+          <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-semibold text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
           </div>
@@ -278,7 +278,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
 
         {/* Card 4: Recommendation */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Recommendation</span>
+          <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest leading-none select-none">Recommendation</span>
           <div className="flex items-baseline gap-1 mt-2 overflow-hidden">
             <span className="text-[13px] font-semibold text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
           </div>
@@ -291,11 +291,11 @@ const renderPremiumInspectionReport = (reportText: string) => {
         {/* Component Damage Checklist */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 space-y-4 shadow-sm">
           <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
+            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
             <div className="space-y-2">
               {Object.entries(parsed.checklist || {}).map(([key, value]) => (
                 <div key={key} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
-                  <span className="text-slate-600 font-bold text-xs">{key}</span>
+                  <span className="text-slate-600 font-semibold text-xs">{key}</span>
                   {renderBadge(value)}
                 </div>
               ))}
@@ -1163,7 +1163,7 @@ export default function AgentActivityPage() {
 
         {/* Header Text Content */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+          <h1 className="text-white text-3xl md:text-[40px] font-semibold tracking-tight leading-none">
             {t.headerTitle}
           </h1>
           <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
@@ -1180,16 +1180,16 @@ export default function AgentActivityPage() {
           
           {/* Card 1: Profile & Status */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">{t.profileStatus}</span>
+            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">{t.profileStatus}</span>
             
             <div className="flex-1 flex items-center justify-between gap-4 mt-3">
               <div className="flex items-center gap-3.5 overflow-hidden">
-                <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-bold shrink-0">
+                <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-semibold shrink-0">
                   <HugeiconsIcon icon={UserIcon} className="w-6 h-6 text-slate-400" strokeWidth={2} />
                 </div>
                 <div className="overflow-hidden">
                   <span className="block font-semibold text-slate-800 text-base truncate">{agent?.name || "Insurance Agent"}</span>
-                  <span className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">ID: {agent?.agentId || "N/A"}</span>
+                  <span className="block text-slate-400 text-[10px] font-semibold uppercase tracking-wider mt-0.5">ID: {agent?.agentId || "N/A"}</span>
                 </div>
               </div>
 
@@ -1213,21 +1213,21 @@ export default function AgentActivityPage() {
 
           {/* Card 2: Performance Summary */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">{t.performanceSummary}</span>
+            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">{t.performanceSummary}</span>
 
             <div className="flex-1 flex items-center mt-3">
               <div className="grid grid-cols-3 gap-3 text-center w-full">
                 <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                   <span className="text-xl font-semibold text-slate-800">{totalAssigned}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.claims}</span>
+                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{t.claims}</span>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                   <span className="text-xl font-semibold text-slate-800">{totalUploads}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.uploads}</span>
+                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{t.uploads}</span>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
                   <span className="text-xl font-semibold text-slate-800">{totalMessages}</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.chats}</span>
+                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{t.chats}</span>
                 </div>
               </div>
             </div>
@@ -1236,7 +1236,7 @@ export default function AgentActivityPage() {
           {/* Card 3: Quick Guidelines */}
           <div className="bg-slate-900 border border-slate-800 rounded-[28px] p-6 shadow-md text-white flex flex-col justify-between min-h-[140px] hover:border-slate-800 transition-all duration-200">
             <div>
-              <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block flex items-center gap-1.5">
+              <span className="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider block flex items-center gap-1.5">
                 <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-cyan-400" strokeWidth={2.2} />
                 {t.quickGuidelines}
               </span>
@@ -1358,11 +1358,11 @@ export default function AgentActivityPage() {
                             <span className="bg-red-100 text-red-700 text-[8px] font-semibold tracking-wider uppercase px-2 py-1 rounded-md whitespace-nowrap animate-pulse">Urgent</span>
                           )}
                         </div>
-                        <span className="text-[10px] text-slate-400 font-bold mt-1 block">Registered: {formatDate(claim.createdAt)}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold mt-1 block">Registered: {formatDate(claim.createdAt)}</span>
                       </div>
 
                       {/* Vehicle Plate */}
-                      <div className="text-xs md:text-sm font-bold text-slate-800">
+                      <div className="text-xs md:text-sm font-semibold text-slate-800">
                         {formatPlate(claim.vehiclePlate)}
                       </div>
 
@@ -1378,12 +1378,12 @@ export default function AgentActivityPage() {
 
                       {/* Policy Holder */}
                       <div className="flex flex-col min-w-0">
-                        <span className="text-xs font-bold text-slate-800 truncate">{getPolicyHolderName(claim.userNic)}</span>
-                        <span className="text-[10px] text-slate-400 font-bold mt-0.5">NIC: {claim.userNic}</span>
+                        <span className="text-xs font-semibold text-slate-800 truncate">{getPolicyHolderName(claim.userNic)}</span>
+                        <span className="text-[10px] text-slate-400 font-semibold mt-0.5">NIC: {claim.userNic}</span>
                       </div>
 
                       {/* Assessment */}
-                      <div className="text-xs font-bold text-slate-700">
+                      <div className="text-xs font-semibold text-slate-700">
                         {typeof claim.amount === "number" ? (
                           `Rs. ${claim.amount.toLocaleString()}`
                         ) : (
@@ -1406,7 +1406,7 @@ export default function AgentActivityPage() {
                             setSelectedClaim(claim);
                             setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                           }}
-                          className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-bold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                          className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-semibold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
                         >
                           {t.viewDetails}
                         </button>
@@ -1485,7 +1485,7 @@ export default function AgentActivityPage() {
                         });
 
                         if (phDocs.length === 0) {
-                          return <p className="text-xs text-slate-400 font-bold italic select-none col-span-2 py-2">No policy holder documents.</p>;
+                          return <p className="text-xs text-slate-400 font-semibold italic select-none col-span-2 py-2">No policy holder documents.</p>;
                         }
 
                         return phDocs.map((doc, idx) => {
@@ -1501,7 +1501,7 @@ export default function AgentActivityPage() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-semibold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1536,7 +1536,7 @@ export default function AgentActivityPage() {
                         });
 
                         if (agentDocs.length === 0) {
-                          return <p className="text-xs text-slate-400 font-bold italic select-none col-span-2 py-2">No agent documents uploaded.</p>;
+                          return <p className="text-xs text-slate-400 font-semibold italic select-none col-span-2 py-2">No agent documents uploaded.</p>;
                         }
 
                         return agentDocs.map((doc, idx) => {
@@ -1551,7 +1551,7 @@ export default function AgentActivityPage() {
                                 className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
                                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                                <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
+                                <span className="text-xs font-semibold text-slate-700 truncate">{doc.name}</span>
                               </button>
                             );
                           }
@@ -1567,7 +1567,7 @@ export default function AgentActivityPage() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-semibold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1577,10 +1577,10 @@ export default function AgentActivityPage() {
                     {/* Agent File Upload Panel */}
                     {selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                       <div className="border-t border-slate-200/60 pt-4 flex flex-col gap-4">
-                        <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider select-none">Upload Claim Document</span>
+                        <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider select-none">Upload Claim Document</span>
                         
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Document Type</label>
+                          <label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">Document Type</label>
                           <div className="flex flex-wrap gap-2">
                             {["Repair Estimate", "Inspection Photos", "Damage Assessment", "Other"].map((type) => {
                               const isSelected = agentUploadDocName === type;
@@ -1589,7 +1589,7 @@ export default function AgentActivityPage() {
                                   key={type}
                                   type="button"
                                   onClick={() => setAgentUploadDocName(type)}
-                                  className={`px-4 py-2 rounded-full text-[11px] font-bold transition-all border cursor-pointer select-none ${
+                                  className={`px-4 py-2 rounded-full text-[11px] font-semibold transition-all border cursor-pointer select-none ${
                                     isSelected
                                       ? "bg-[#0f2d4a] border-[#0f2d4a] text-white shadow-sm"
                                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -1603,7 +1603,7 @@ export default function AgentActivityPage() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">File Attachment</label>
+                          <label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">File Attachment</label>
                           
                           <input
                             type="file"
@@ -1623,7 +1623,7 @@ export default function AgentActivityPage() {
                               className="w-full border-2 border-dashed border-slate-350 hover:border-[#0f2d4a] rounded-2xl py-6 px-4 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-slate-50 cursor-pointer transition-all duration-150 group select-none"
                             >
                               <HugeiconsIcon icon={Upload01Icon} className="w-8 h-8 text-slate-400 mb-2 group-hover:text-[#0f2d4a] transition-colors" strokeWidth={1.8} />
-                              <span className="text-slate-800 text-[13px] font-bold">Select document file</span>
+                              <span className="text-slate-800 text-[13px] font-semibold">Select document file</span>
                               <span className="text-slate-400 text-[10px] font-semibold mt-1">Image or PDF (Max 5MB)</span>
                             </div>
                           ) : (
@@ -1641,7 +1641,7 @@ export default function AgentActivityPage() {
                                   </div>
                                 )}
                                 <div className="flex flex-col min-w-0 max-w-[200px] md:max-w-[280px]">
-                                  <span className="text-emerald-800 text-[13px] font-bold truncate">
+                                  <span className="text-emerald-800 text-[13px] font-semibold truncate">
                                     {agentUploadFile.name}
                                   </span>
                                   <span className="text-slate-400 text-[10px] font-semibold mt-0.5">
@@ -1741,7 +1741,7 @@ export default function AgentActivityPage() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider ml-1 select-none">Request From :</label>
+                          <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider ml-1 select-none">Request From :</label>
                           <div className="flex gap-4 p-3 bg-white border border-slate-200 rounded-xl">
                             <label className="flex items-center gap-1.5 cursor-pointer select-none">
                               <input
@@ -1752,19 +1752,19 @@ export default function AgentActivityPage() {
                                 }}
                                 className="w-4 h-4 accent-[#0f2d4a]"
                               />
-                              <span className="text-xs font-bold text-slate-700">Policy Holder</span>
+                              <span className="text-xs font-semibold text-slate-700">Policy Holder</span>
                             </label>
                           </div>
                         </div>
 
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider ml-1 select-none">Document Type :</label>
+                          <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider ml-1 select-none">Document Type :</label>
                           <select
                             value={item.docType}
                             onChange={(e) => {
                               setRequestItems(prev => prev.map((it, idx) => idx === index ? { ...it, docType: e.target.value } : it));
                             }}
-                            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a]"
+                            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a]"
                           >
                             <option value="NIC Front Page">NIC Front Page</option>
                             <option value="NIC Back Page">NIC Back Page</option>
@@ -1781,7 +1781,7 @@ export default function AgentActivityPage() {
 
                       {item.docType === "Custom / Other" && (
                         <div className="flex flex-col gap-1.5 transition-all duration-300">
-                          <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider ml-1 select-none">Custom Document Name :</label>
+                          <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider ml-1 select-none">Custom Document Name :</label>
                           <input
                             type="text"
                             required
@@ -1790,13 +1790,13 @@ export default function AgentActivityPage() {
                               setRequestItems(prev => prev.map((it, idx) => idx === index ? { ...it, customName: e.target.value } : it));
                             }}
                             placeholder="E.g. Bank Book PDF, Towing Receipt..."
-                            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a]"
+                            className="w-full px-4 py-3 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a]"
                           />
                         </div>
                       )}
 
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider ml-1 select-none">Instructions / Note :</label>
+                        <label className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider ml-1 select-none">Instructions / Note :</label>
                         <textarea
                           rows={2}
                           value={item.note}
@@ -1804,7 +1804,7 @@ export default function AgentActivityPage() {
                             setRequestItems(prev => prev.map((it, idx) => idx === index ? { ...it, note: e.target.value } : it));
                           }}
                           placeholder="E.g. Please upload a clear photo of the document..."
-                          className="w-full p-4 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] resize-none"
+                          className="w-full p-4 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] resize-none"
                         />
                       </div>
                     </div>
@@ -1815,7 +1815,7 @@ export default function AgentActivityPage() {
                     onClick={() => {
                       setRequestItems(prev => [...prev, { recipient: "User", docType: "NIC Front Page", customName: "", note: "" }]);
                     }}
-                    className="w-full py-4 border-2 border-dashed border-slate-355 hover:border-[#0f2d4a] rounded-2xl flex items-center justify-center gap-2 bg-slate-50/50 hover:bg-slate-50 text-xs font-bold text-slate-500 hover:text-[#0f2d4a] cursor-pointer transition-all duration-200 group"
+                    className="w-full py-4 border-2 border-dashed border-slate-355 hover:border-[#0f2d4a] rounded-2xl flex items-center justify-center gap-2 bg-slate-50/50 hover:bg-slate-50 text-xs font-semibold text-slate-500 hover:text-[#0f2d4a] cursor-pointer transition-all duration-200 group"
                   >
                     Add Another Document Request
                   </button>
@@ -1901,13 +1901,13 @@ export default function AgentActivityPage() {
 
                 <div className="space-y-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[13px] font-bold text-slate-800 ml-1 select-none">Add Note :</label>
+                    <label className="text-[13px] font-semibold text-slate-800 ml-1 select-none">Add Note :</label>
                     <textarea
                       rows={5}
                       value={newMessageText}
                       onChange={(e) => setNewMessageText(e.target.value)}
                       placeholder="Enter internal text note..."
-                      className="w-full p-4 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder:text-slate-400 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] resize-none border border-slate-200/50"
+                      className="w-full p-4 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] resize-none border border-slate-200/50"
                     />
                   </div>
                 </div>
@@ -1967,16 +1967,16 @@ export default function AgentActivityPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 select-none">
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Policy Holder</span>
-                    <h5 className="text-xs font-bold text-slate-800">{getPolicyHolderName(selectedClaim.userNic)}</h5>
+                    <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider block">Policy Holder</span>
+                    <h5 className="text-xs font-semibold text-slate-800">{getPolicyHolderName(selectedClaim.userNic)}</h5>
                     <div className="text-[11px] text-slate-600 font-semibold">
                       <p>NIC: {selectedClaim.userNic}</p>
                       <p>Phone: {getPolicyHolderContact(selectedClaim.userNic)}</p>
                     </div>
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Office Staff</span>
-                    <h5 className="text-xs font-bold text-slate-800">Branch Operations</h5>
+                    <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider block">Office Staff</span>
+                    <h5 className="text-xs font-semibold text-slate-800">Branch Operations</h5>
                     <div className="text-[11px] text-slate-600 font-semibold">
                       <p>Branch: {selectedClaim.branch || "Branch Office"}</p>
                     </div>
@@ -2039,7 +2039,7 @@ export default function AgentActivityPage() {
                           }`}>
                             <p className="font-semibold leading-relaxed break-words whitespace-pre-wrap">{msg.message}</p>
                           </div>
-                          <span className="text-[9px] text-slate-400 font-bold mt-1 select-none px-1">
+                          <span className="text-[9px] text-slate-400 font-semibold mt-1 select-none px-1">
                             {msg.sender} · {formatMessageTime(msg.sentAt)}
                           </span>
                         </div>
@@ -2056,7 +2056,7 @@ export default function AgentActivityPage() {
                       value={newMessageText}
                       onChange={(e) => setNewMessageText(e.target.value)}
                       placeholder={`Type a message to ${contactRecipient === "Policy Holder" ? "Policy Holder" : "Office Staff"}...`}
-                      className="flex-1 p-3 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder:text-slate-400 focus:outline-none bg-slate-50 focus:ring-2 focus:ring-[#0f2d4a] resize-none"
+                      className="flex-1 p-3 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 focus:outline-none bg-slate-50 focus:ring-2 focus:ring-[#0f2d4a] resize-none"
                     />
                     <button
                       type="button"
@@ -2144,7 +2144,7 @@ export default function AgentActivityPage() {
 
                     {selectedClaim.currentStep === 3 && (
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block select-none">Submit Inspection Details</span>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">Submit Inspection Details</span>
                         {!selectedClaim.inspectionSubmitted ? (
                           <div className="flex flex-col gap-3">
                             <textarea
@@ -2152,7 +2152,7 @@ export default function AgentActivityPage() {
                               value={inspectionReportText}
                               onChange={(e) => setInspectionReportText(e.target.value)}
                               placeholder="Describe structural frame damage, mechanical engine issues, tire statuses, or repair estimations..."
-                              className="w-full p-4 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] resize-none"
+                              className="w-full p-4 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 placeholder:text-slate-400 bg-white focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] resize-none"
                             />
                             <button
                               type="button"
@@ -2173,13 +2173,13 @@ export default function AgentActivityPage() {
 
                     {(selectedClaim.currentStep === 4 || selectedClaim.currentStep === 5) && (
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
-                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block select-none">Assessment & Approval</span>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">Assessment & Approval</span>
                         <div className="flex flex-col gap-3.5">
                           <p className="text-slate-550 text-xs font-semibold leading-relaxed">
                             Input the evaluated damage assessment amount below and confirm approval to proceed to the payment step.
                           </p>
                           <div className="flex flex-col gap-1.5">
-                            <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Assessment Amount (LKR) :</label>
+                            <label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">Assessment Amount (LKR) :</label>
                             <input
                               type="number"
                               value={assessmentAmount}
@@ -2317,25 +2317,25 @@ export default function AgentActivityPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-sm font-semibold select-none leading-relaxed flex-1 overflow-y-auto pr-1">
                 {/* Column 1: Agent Assignment & Info */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-cyan-600" strokeWidth={2.5} />
                     Agent Assignment Info
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[125px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Assigned Agent</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Assigned Agent</span>
                       <span className="text-slate-700 font-semibold truncate">: {selectedClaim.assignedAgent || "-"}</span>
                     </div>
                     <div className="grid grid-cols-[125px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Branch Office</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Branch Office</span>
                       <span className="text-slate-700 font-semibold truncate">: {selectedClaim.branch || "-"}</span>
                     </div>
                     <div className="grid grid-cols-[125px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Assignment Date</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Assignment Date</span>
                       <span className="text-slate-700 font-semibold truncate">: {formatDate(selectedClaim.createdAt)}</span>
                     </div>
                     <div className="grid grid-cols-[125px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Policyholder NIC</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Policyholder NIC</span>
                       <span className="text-slate-700 font-semibold truncate">: {selectedClaim.userNic}</span>
                     </div>
                   </div>
@@ -2343,21 +2343,21 @@ export default function AgentActivityPage() {
 
                 {/* Column 2: Vehicle Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Vehicle Details
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[110px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Vehicle No</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Vehicle No</span>
                       <span className="text-slate-700 font-semibold truncate">: {formatPlate(selectedClaim.vehiclePlate)}</span>
                     </div>
                     <div className="grid grid-cols-[110px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Severity</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Severity</span>
                       <span className="text-slate-700 font-semibold truncate">: {selectedClaim.severity || getSeverity(selectedClaim.damageType)}</span>
                     </div>
                     <div className="grid grid-cols-[110px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Priority</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Priority</span>
                       <span className="text-slate-700 font-semibold truncate">: {selectedClaim.priority || "Medium"}</span>
                     </div>
                   </div>
@@ -2365,7 +2365,7 @@ export default function AgentActivityPage() {
 
                 {/* Large Dedicated Section: Incident Details */}
                 <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                     Incident Details & Assessment
                   </h3>
@@ -2373,29 +2373,29 @@ export default function AgentActivityPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2">
-                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Damage Type</span>
+                        <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Damage Type</span>
                         <span className="text-slate-700 font-semibold truncate">: {selectedClaim.damageType || "-"}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
-                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Incident Date</span>
+                        <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Incident Date</span>
                         <span className="text-slate-700 font-semibold truncate">: {claimDateString(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
-                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Est. Amount</span>
+                        <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Est. Amount</span>
                         <span className="text-slate-700 font-semibold truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2 items-start">
-                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Location</span>
+                        <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Location</span>
                         <span className="text-slate-700 font-semibold whitespace-normal break-words leading-relaxed">: {selectedClaim.location || "-"}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="border-t border-slate-200 pt-3 flex flex-col gap-1">
-                    <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Incident Description</span>
+                    <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Incident Description</span>
                     <span className="text-slate-900 font-semibold break-words leading-relaxed whitespace-pre-wrap mt-1">
                       {selectedClaim.description || "No description provided."}
                     </span>
@@ -2403,7 +2403,7 @@ export default function AgentActivityPage() {
 
                   {selectedClaim.rejectionReason && (
                     <div className="flex flex-col gap-1 border-t border-slate-200/60 pt-3 mt-3">
-                      <span className="text-red-500 font-bold uppercase tracking-wider text-[10px]">Rejection / Rejection reason</span>
+                      <span className="text-red-500 font-semibold uppercase tracking-wider text-[10px]">Rejection / Rejection reason</span>
                       <span className="text-red-650 font-bold mt-1 text-sm">
                         {selectedClaim.rejectionReason}
                       </span>
@@ -2444,13 +2444,13 @@ export default function AgentActivityPage() {
 
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                      <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                      <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                         <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-[#0f2d4a]" strokeWidth={2.5} />
                         Policy Holder Attachments & Photos
                       </h3>
 
                       {attachments.length === 0 ? (
-                        <p className="text-xs text-slate-500 font-bold italic select-none py-2">
+                        <p className="text-xs text-slate-500 font-semibold italic select-none py-2">
                           No driving license or accident photos attached to this claim dossier.
                         </p>
                       ) : (
@@ -2490,13 +2490,13 @@ export default function AgentActivityPage() {
                   const agentDocs = (selectedClaim.additionalDocuments || []).filter(doc => doc.uploadedBy === "Agent");
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                      <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                      <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                         <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
                         Agent Uploaded Documents
                       </h3>
 
                       {agentDocs.length === 0 ? (
-                        <p className="text-xs text-slate-500 font-bold italic select-none py-2">
+                        <p className="text-xs text-slate-500 font-semibold italic select-none py-2">
                           No repair estimates or assessment documents uploaded by the agent.
                         </p>
                       ) : (
@@ -2681,7 +2681,7 @@ export default function AgentActivityPage() {
 
             {/* Quick Steps */}
             <div className="w-full bg-slate-50 border border-slate-200/60 rounded-2xl p-4 mt-5 text-left space-y-2.5">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block select-none">Next Steps:</span>
+              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">Next Steps:</span>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">1</span>
                 <span className="leading-relaxed">Launch the Sanasa Agent app on your phone.</span>
@@ -2720,7 +2720,7 @@ export default function AgentActivityPage() {
             <div className="px-8 pt-6 pb-2 select-none bg-white">
               <h2 className="text-[22px] font-semibold text-slate-900 tracking-tight leading-none flex items-center gap-2">
                 <span>🕒 Last Activity Logs</span>
-                <span className="text-xs text-slate-400 font-bold tracking-normal">(App & Web)</span>
+                <span className="text-xs text-slate-400 font-semibold tracking-normal">(App & Web)</span>
               </h2>
             </div>
             <div className="border-b border-black mx-8 mb-4" />
@@ -2728,7 +2728,7 @@ export default function AgentActivityPage() {
             {/* Body */}
             <div className="px-8 pb-6 flex-1 overflow-y-auto space-y-4">
               {loadingActivities ? (
-                <div className="flex flex-col items-center justify-center h-64 text-slate-400 font-bold italic">
+                <div className="flex flex-col items-center justify-center h-64 text-slate-400 font-semibold italic">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2d4a] mb-3"></div>
                   Loading last activities...
                 </div>
@@ -2804,7 +2804,7 @@ export default function AgentActivityPage() {
                           <p className="text-xs text-slate-500 font-semibold mt-1 leading-normal">
                             {act.details}
                           </p>
-                          <span className="text-[9px] text-slate-400 font-bold block mt-1">
+                          <span className="text-[9px] text-slate-400 font-semibold block mt-1">
                             {formatDateTime(act.createdAt)}
                           </span>
                         </div>

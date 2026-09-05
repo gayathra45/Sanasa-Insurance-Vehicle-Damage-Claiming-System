@@ -167,7 +167,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-inner select-text">
         <div className="flex items-center gap-2 mb-3 text-slate-400 select-none">
           <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
         </div>
         <p className="text-slate-700 text-xs font-semibold whitespace-pre-wrap leading-relaxed">
           {parsed.rawText}
@@ -213,10 +213,10 @@ const renderPremiumInspectionReport = (reportText: string) => {
           <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
           <div>
             <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
-            <span className="text-[10px] font-bold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
+            <span className="text-[10px] font-semibold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
           </div>
         </div>
-        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-bold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-semibold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
           <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
           Verified By Agent
         </span>
@@ -226,7 +226,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Odometer */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Odometer</span>
+          <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest leading-none select-none">Odometer</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-semibold text-slate-800">{parsed.odometer || "N/A"}</span>
           </div>
@@ -235,7 +235,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
 
         {/* Card 2: Fuel Level */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Fuel Level</span>
+          <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest leading-none select-none">Fuel Level</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-semibold text-slate-800">{parsed.fuelLevel || "N/A"}</span>
           </div>
@@ -244,7 +244,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
 
         {/* Card 3: Estimated Cost */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
+          <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
           <div className="flex items-baseline gap-1 mt-2">
             <span className="text-[17px] font-semibold text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
           </div>
@@ -253,7 +253,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
 
         {/* Card 4: Recommendation */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
-          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Recommendation</span>
+          <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest leading-none select-none">Recommendation</span>
           <div className="flex items-baseline gap-1 mt-2 overflow-hidden">
             <span className="text-[13px] font-semibold text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
           </div>
@@ -266,11 +266,11 @@ const renderPremiumInspectionReport = (reportText: string) => {
         {/* Component Damage Checklist */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 space-y-4 shadow-sm">
           <div>
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
+            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
             <div className="space-y-2">
               {Object.entries(parsed.checklist || {}).map(([key, value]) => (
                 <div key={key} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
-                  <span className="text-slate-700 font-bold text-xs">{key}</span>
+                  <span className="text-slate-700 font-semibold text-xs">{key}</span>
                   {renderBadge(value)}
                 </div>
               ))}
@@ -1160,7 +1160,7 @@ export default function AgentDashboard() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/35 backdrop-blur-sm select-none">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/35 backdrop-blur-sm select-none">
                   <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
                   Sanasa Field Evaluator
                 </span>
@@ -1178,7 +1178,7 @@ export default function AgentDashboard() {
 
             {/* Availability Status Selector */}
             <div className="flex items-center gap-1 bg-slate-950/80 backdrop-blur-xl border border-white/15 rounded-full p-1 self-start md:self-center select-none shadow-xl">
-              <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase pl-2.5 pr-1">{t.status}</span>
+              <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase pl-2.5 pr-1">{t.status}</span>
               <button
                 onClick={() => toggleAvailability("Active")}
                 className={`px-3.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 border-none flex items-center gap-1.5 ${
@@ -1223,7 +1223,7 @@ export default function AgentDashboard() {
                     <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-white" strokeWidth={2.2} />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-100/90 block">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-100/90 block">
                       {t.urgentClaims}
                     </span>
                     <span className="text-xs font-semibold text-white/95 truncate block">
@@ -1232,7 +1232,7 @@ export default function AgentDashboard() {
                   </div>
                 </div>
 
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-xs flex-shrink-0">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-xs flex-shrink-0">
                   {urgentCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
                   {t.priority || "Priority"}
                 </span>
@@ -1241,7 +1241,7 @@ export default function AgentDashboard() {
               {/* Bottom Row: Number Count & Action Link */}
               <div className="mt-3.5 pt-2.5 border-t border-white/20 flex items-center justify-between relative z-10">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-none">
+                  <span className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-none">
                     {urgentCount}
                   </span>
                   <span className="text-[11px] font-medium text-rose-100">
@@ -1271,7 +1271,7 @@ export default function AgentDashboard() {
                     <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-white" strokeWidth={2.2} />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-100/90 block">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-sky-100/90 block">
                       {t.assignedClaims}
                     </span>
                     <span className="text-xs font-semibold text-white/95 truncate block">
@@ -1280,7 +1280,7 @@ export default function AgentDashboard() {
                   </div>
                 </div>
 
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-xs flex-shrink-0">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-xs flex-shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-white" />
                   {t.inProgress || "In Progress"}
                 </span>
@@ -1289,7 +1289,7 @@ export default function AgentDashboard() {
               {/* Bottom Row: Number Count & Action Link */}
               <div className="mt-3.5 pt-2.5 border-t border-white/20 flex items-center justify-between relative z-10">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-none">
+                  <span className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-none">
                     {totalAssigned}
                   </span>
                   <span className="text-[11px] font-medium text-sky-100">
@@ -1319,7 +1319,7 @@ export default function AgentDashboard() {
                     <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-white" strokeWidth={2.2} />
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-100/90 block">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-100/90 block">
                       {t.completedClaims}
                     </span>
                     <span className="text-xs font-semibold text-white/95 truncate block">
@@ -1328,7 +1328,7 @@ export default function AgentDashboard() {
                   </div>
                 </div>
 
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-xs flex-shrink-0">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-xs flex-shrink-0">
                   <span className="w-1.5 h-1.5 rounded-full bg-white" />
                   {t.completed || "Completed"}
                 </span>
@@ -1337,7 +1337,7 @@ export default function AgentDashboard() {
               {/* Bottom Row: Number Count & Action Link */}
               <div className="mt-3.5 pt-2.5 border-t border-white/20 flex items-center justify-between relative z-10">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-none">
+                  <span className="text-2xl md:text-3xl font-bold text-white tracking-tight leading-none">
                     {completedClaims.length}
                   </span>
                   <span className="text-[11px] font-medium text-emerald-100">
@@ -1366,7 +1366,7 @@ export default function AgentDashboard() {
           {claimsWithPendingAgentRequests.length > 0 && (
             <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-red-200/40 rounded-3xl p-6 shadow-lg shadow-red-500/[0.005] relative overflow-hidden">
               <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/60 pb-3 mb-2">
-                <h2 className="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
+                <h2 className="text-lg font-semibold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
                   <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500 animate-pulse" strokeWidth={2.5} />
                   {t.actionRequired}
                   {/* Total Pending Count Badge */}
@@ -1375,7 +1375,7 @@ export default function AgentDashboard() {
                   </span>
                 </h2>
                 {claimsWithPendingAgentRequests.length > 3 && (
-                  <Link href="/Agent/Documents" className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-1 select-none shadow-sm">
+                  <Link href="/Agent/Documents" className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-full text-xs font-semibold transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-1 select-none shadow-sm">
                     {t.viewAll}
                     <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                   </Link>
@@ -1400,26 +1400,26 @@ export default function AgentDashboard() {
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center mr-2">
                         {/* Col 1: Claim ID & Plate */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.claimPlate}</span>
-                          <span className="text-sm font-bold text-slate-800 truncate">
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.claimPlate}</span>
+                          <span className="text-sm font-semibold text-slate-800 truncate">
                             {claim.claimNumber} · {claim.vehiclePlate}
                           </span>
                         </div>
 
                         {/* Col 2: Received Progress */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.docsReceived}</span>
-                          <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 select-none">
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.docsReceived}</span>
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 select-none">
                             <HugeiconsIcon icon={Task01Icon} className="w-4 h-4 text-cyan-600 flex-shrink-0" strokeWidth={2.2} />
                             <span>
-                              <span className="text-emerald-600 font-bold">{uploadedDocsCount}</span> / <span className="text-slate-800 font-bold">{totalDocs.length}</span>
+                              <span className="text-emerald-600 font-semibold">{uploadedDocsCount}</span> / <span className="text-slate-800 font-semibold">{totalDocs.length}</span>
                             </span>
                           </div>
                         </div>
 
                         {/* Col 3: Pending Documents List */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.pendingFiles}</span>
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.pendingFiles}</span>
                           <div className="flex flex-wrap gap-1.5 mt-0.5">
                             {pendingDocs.map((docName, idx) => (
                               <span key={idx} className="text-[9px] font-semibold bg-red-50/70 text-red-600 border border-red-150 px-3 py-1 rounded-full select-none tracking-wide uppercase transition-colors hover:bg-red-100/50">
@@ -1446,7 +1446,7 @@ export default function AgentDashboard() {
           {/* New Claims Section */}
           <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-slate-200/40 rounded-3xl p-6 shadow-lg shadow-slate-500/[0.005] relative overflow-hidden">
             <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/60 pb-3 mb-2">
-              <h2 className="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
+              <h2 className="text-lg font-semibold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
                 {t.newClaims}
                 {/* Total Count Badge */}
@@ -1458,7 +1458,7 @@ export default function AgentDashboard() {
 
             <div className="flex flex-col gap-3">
               {loading ? (
-                <div className="text-slate-400 font-bold py-10 text-center text-sm animate-pulse">
+                <div className="text-slate-400 font-semibold py-10 text-center text-sm animate-pulse">
                   {t.fetchingClaims}
                 </div>
               ) : activeClaims.length === 0 ? (
@@ -1481,8 +1481,8 @@ export default function AgentDashboard() {
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center mr-2">
                         {/* Col 1: Claim ID & Severity */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
-                          <div className="text-sm font-bold text-slate-800 truncate flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
+                          <div className="text-sm font-semibold text-slate-800 truncate flex items-center gap-1.5 flex-wrap">
                             {claim.claimNumber}
                             {isUrgent ? (
                               <span className="text-[9px] font-semibold uppercase bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full select-none tracking-wide">
@@ -1498,28 +1498,28 @@ export default function AgentDashboard() {
 
                         {/* Col 2: Vehicle */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.vehicle}</span>
-                          <span className="text-xs font-bold text-slate-700 truncate">
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.vehicle}</span>
+                          <span className="text-xs font-semibold text-slate-700 truncate">
                             {claim.vehiclePlate} {claim.vehicleModel && <span className="font-semibold text-slate-500">({claim.vehicleModel})</span>}
                           </span>
                         </div>
 
                         {/* Col 3: Damage Type */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.damageType}</span>
-                          <span className="text-xs font-bold text-slate-700 truncate">{claim.damageType}</span>
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.damageType}</span>
+                          <span className="text-xs font-semibold text-slate-700 truncate">{claim.damageType}</span>
                         </div>
 
                         {/* Col 4: Location */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.location}</span>
-                          <span className="text-xs font-bold text-slate-700 truncate" title={claim.location}>{claim.location}</span>
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.location}</span>
+                          <span className="text-xs font-semibold text-slate-700 truncate" title={claim.location}>{claim.location}</span>
                         </div>
 
                         {/* Col 5: Progress / Time */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.progressTime}</span>
-                          <span className="text-xs font-bold text-slate-700 truncate">
+                          <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.progressTime}</span>
+                          <span className="text-xs font-semibold text-slate-700 truncate">
                             Step {claim.currentStep} of 4 · <span className="text-slate-400 font-semibold">{claim.incidentTime}</span>
                           </span>
                         </div>
@@ -1543,7 +1543,7 @@ export default function AgentDashboard() {
         <div className="flex flex-col gap-8">
           
           <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
+            <h2 className="text-2xl font-semibold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
               <HugeiconsIcon icon={Book01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
               {t.myActivity}
             </h2>
@@ -1581,7 +1581,7 @@ export default function AgentDashboard() {
                         <div className="flex justify-between items-center flex-wrap gap-2">
                           <div className="flex flex-col min-w-0">
                             <span className="font-bold text-sm text-slate-800 tracking-tight transition-colors group-hover:text-cyan-600">{act.claimNumber}</span>
-                            <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase mt-0.5">{act.vehiclePlate}</span>
+                            <span className="text-[10px] text-slate-400 font-semibold tracking-wider uppercase mt-0.5">{act.vehiclePlate}</span>
                           </div>
 
                           <span className={`px-3 py-1 rounded-full text-[10px] font-semibold border tracking-wide uppercase ${badgeBg}`}>
@@ -1605,7 +1605,7 @@ export default function AgentDashboard() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-[9px] font-bold text-emerald-700 tracking-wide uppercase">Live Support</span>
+              <span className="text-[9px] font-semibold text-emerald-700 tracking-wide uppercase">Live Support</span>
             </div>
 
             <h3 className="text-cyan-800 font-bold text-lg tracking-tight flex items-center gap-2 select-none">
@@ -1709,7 +1709,7 @@ export default function AgentDashboard() {
                         });
 
                         if (phDocs.length === 0) {
-                          return <p className="text-xs text-slate-400 font-bold italic select-none col-span-2 py-2">No policy holder documents.</p>;
+                          return <p className="text-xs text-slate-400 font-semibold italic select-none col-span-2 py-2">No policy holder documents.</p>;
                         }
 
                         return phDocs.map((doc, idx) => {
@@ -1725,7 +1725,7 @@ export default function AgentDashboard() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-semibold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1760,7 +1760,7 @@ export default function AgentDashboard() {
                         });
 
                         if (agentDocs.length === 0) {
-                          return <p className="text-xs text-slate-400 font-bold italic select-none col-span-2 py-2">No agent documents uploaded.</p>;
+                          return <p className="text-xs text-slate-400 font-semibold italic select-none col-span-2 py-2">No agent documents uploaded.</p>;
                         }
 
                         return agentDocs.map((doc, idx) => {
@@ -1775,7 +1775,7 @@ export default function AgentDashboard() {
                                 className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
                                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                                <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
+                                <span className="text-xs font-semibold text-slate-700 truncate">{doc.name}</span>
                               </button>
                             );
                           }
@@ -1791,7 +1791,7 @@ export default function AgentDashboard() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-semibold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1801,10 +1801,10 @@ export default function AgentDashboard() {
                     {/* Agent File Upload Panel */}
                     {selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                       <div className="border-t border-slate-200/60 pt-4 flex flex-col gap-4">
-                        <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider select-none">Upload Claim Document</span>
+                        <span className="text-[11px] text-slate-500 font-semibold uppercase tracking-wider select-none">Upload Claim Document</span>
                         
                         <div className="flex flex-col gap-1.5">
-                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Document Type</label>
+                          <label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">Document Type</label>
                           <div className="flex flex-wrap gap-2">
                             {["Repair Estimate", "Inspection Photos", "Damage Assessment", "Other"].map((type) => {
                               const isSelected = agentUploadDocName === type;
@@ -1813,7 +1813,7 @@ export default function AgentDashboard() {
                                   key={type}
                                   type="button"
                                   onClick={() => setAgentUploadDocName(type)}
-                                  className={`px-4 py-2 rounded-full text-xs font-bold transition-all border cursor-pointer select-none ${
+                                  className={`px-4 py-2 rounded-full text-xs font-semibold transition-all border cursor-pointer select-none ${
                                     isSelected
                                       ? "bg-red-650 border-red-650 text-white shadow-sm"
                                       : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -1827,7 +1827,7 @@ export default function AgentDashboard() {
                         </div>
 
                         <div className="flex flex-col gap-2">
-                          <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">File Attachment</label>
+                          <label className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">File Attachment</label>
                           
                           <input
                             type="file"
@@ -1847,7 +1847,7 @@ export default function AgentDashboard() {
                               className="w-full border-2 border-dashed border-slate-300 hover:border-red-500 rounded-2xl py-6 px-4 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-red-50/5 cursor-pointer transition-all duration-150 group"
                             >
                               <HugeiconsIcon icon={Upload01Icon} className="w-8 h-8 text-slate-400 mb-2 group-hover:text-red-500 transition-colors" strokeWidth={1.8} />
-                              <span className="text-slate-800 text-[13px] font-bold">Select document file</span>
+                              <span className="text-slate-800 text-[13px] font-semibold">Select document file</span>
                               <span className="text-slate-400 text-[10px] font-semibold mt-1">Image or PDF (Max 5MB)</span>
                             </div>
                           ) : (
@@ -1865,7 +1865,7 @@ export default function AgentDashboard() {
                                   </div>
                                 )}
                                 <div className="flex flex-col min-w-0 max-w-[200px] md:max-w-[280px]">
-                                  <span className="text-emerald-800 text-[13px] font-bold truncate">
+                                  <span className="text-emerald-800 text-[13px] font-semibold truncate">
                                     {agentUploadFile.name}
                                   </span>
                                   <span className="text-slate-400 text-[10px] font-semibold mt-0.5">
@@ -1968,21 +1968,21 @@ export default function AgentDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-sm font-semibold select-none leading-relaxed flex-1 overflow-y-auto pr-1">
                 {/* Column 1: Policy Holder Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Policy Holder Details
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Email</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Email</span>
                       <span className="text-slate-700 font-semibold truncate">: {getPolicyHolderEmail(selectedClaim.userNic)}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">NIC</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">NIC</span>
                       <span className="text-slate-700 font-semibold truncate">: {selectedClaim.userNic}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Contact</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Contact</span>
                       <span className="text-slate-700 font-semibold truncate">: {getPolicyHolderContact(selectedClaim.userNic)}</span>
                     </div>
                   </div>
@@ -1990,21 +1990,21 @@ export default function AgentDashboard() {
 
                 {/* Column 2: Vehicle Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Vehicle Details
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Vehicle No</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Vehicle No</span>
                       <span className="text-slate-700 font-semibold truncate">: {formatPlate(selectedClaim.vehiclePlate)}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Branch</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Branch</span>
                       <span className="text-slate-700 font-semibold truncate">: {selectedClaim.branch || "-"}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
-                      <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Assigned Agent</span>
+                      <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Assigned Agent</span>
                       <span className="text-slate-700 font-semibold truncate">: {agentName || selectedClaim.assignedAgent || "-"}</span>
                     </div>
                   </div>
@@ -2012,7 +2012,7 @@ export default function AgentDashboard() {
 
                 {/* Large Dedicated Section: Incident Details */}
                 <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                     Incident Details & Assessment
                   </h3>
@@ -2020,29 +2020,29 @@ export default function AgentDashboard() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2">
-                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Damage Type</span>
+                        <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Damage Type</span>
                         <span className="text-slate-700 font-semibold truncate">: {selectedClaim.damageType || "-"}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
-                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Incident Date</span>
+                        <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Incident Date</span>
                         <span className="text-slate-700 font-semibold truncate">: {formatDate(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
-                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Est. Amount</span>
+                        <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Est. Amount</span>
                         <span className="text-slate-700 font-semibold truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2 items-start">
-                        <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Location</span>
+                        <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Location</span>
                         <span className="text-slate-700 font-semibold whitespace-normal break-words leading-relaxed">: {selectedClaim.location || "-"}</span>
                       </div>
                     </div>
                   </div>
 
                   <div className="border-t border-slate-200 pt-3 flex flex-col gap-1">
-                    <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Incident Description</span>
+                    <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Incident Description</span>
                     <span className="text-slate-900 font-semibold break-words leading-relaxed whitespace-pre-wrap mt-1">
                       {selectedClaim.description || "No description provided."}
                     </span>
@@ -2050,7 +2050,7 @@ export default function AgentDashboard() {
 
                   {selectedClaim.rejectionReason && (
                     <div className="flex flex-col gap-1 border-t border-slate-200/60 pt-3 mt-3">
-                      <span className="text-red-500 font-bold uppercase tracking-wider text-[10px]">Rejection Reason</span>
+                      <span className="text-red-500 font-semibold uppercase tracking-wider text-[10px]">Rejection Reason</span>
                       <span className="text-red-650 font-bold mt-1 text-sm">
                         {selectedClaim.rejectionReason}
                       </span>
@@ -2073,14 +2073,14 @@ export default function AgentDashboard() {
                 {/* Other Vehicles Involved Section */}
                 {selectedClaim.otherVehicleDetails && (
                   <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                    <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 select-none">
+                    <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                       Other Vehicles Involved
                     </h3>
 
                     {Array.isArray(selectedClaim.otherVehicleDetails) ? (
                       selectedClaim.otherVehicleDetails.length === 0 ? (
-                        <p className="text-xs text-slate-500 font-bold italic py-2 select-none">
+                        <p className="text-xs text-slate-500 font-semibold italic py-2 select-none">
                           No other vehicles were involved in this accident.
                         </p>
                       ) : (
@@ -2092,20 +2092,20 @@ export default function AgentDashboard() {
                               </h4>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <div>
-                                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
-                                  <p className="text-slate-800 font-bold mt-0.5">{formatPlate(vehicle.vehiclePlate) || "-"}</p>
+                                  <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
+                                  <p className="text-slate-800 font-semibold mt-0.5">{formatPlate(vehicle.vehiclePlate) || "-"}</p>
                                 </div>
                                 <div>
-                                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
-                                  <p className="text-slate-800 font-bold mt-0.5">{vehicle.driverName || "-"}</p>
+                                  <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
+                                  <p className="text-slate-800 font-semibold mt-0.5">{vehicle.driverName || "-"}</p>
                                 </div>
                                 <div>
-                                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
-                                  <p className="text-slate-800 font-bold mt-0.5">{vehicle.insuranceCompany || "-"}</p>
+                                  <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
+                                  <p className="text-slate-800 font-semibold mt-0.5">{vehicle.insuranceCompany || "-"}</p>
                                 </div>
                                 <div>
-                                  <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
-                                  <p className="text-slate-800 font-bold mt-0.5">{vehicle.policyNumber || "-"}</p>
+                                  <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
+                                  <p className="text-slate-800 font-semibold mt-0.5">{vehicle.policyNumber || "-"}</p>
                                 </div>
                               </div>
 
@@ -2113,7 +2113,7 @@ export default function AgentDashboard() {
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-3">
                                 {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
                                   <div className="space-y-2">
-                                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">License Photos</span>
+                                    <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">License Photos</span>
                                     <div className="flex flex-wrap gap-2">
                                       {vehicle.licensePhotos.map((url: string, pIdx: number) => {
                                         let docUrl = url;
@@ -2135,7 +2135,7 @@ export default function AgentDashboard() {
                                 )}
                                 {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
                                   <div className="space-y-2">
-                                    <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Damage Photos</span>
+                                    <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Damage Photos</span>
                                     <div className="flex flex-wrap gap-2">
                                       {vehicle.vehiclePhotos.map((url: string, pIdx: number) => {
                                         let docUrl = url;
@@ -2165,20 +2165,20 @@ export default function AgentDashboard() {
                         <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                             <div>
-                              <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
-                              <p className="text-slate-800 font-bold mt-0.5">{formatPlate(selectedClaim.otherVehicleDetails.vehiclePlate) || "-"}</p>
+                              <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
+                              <p className="text-slate-800 font-semibold mt-0.5">{formatPlate(selectedClaim.otherVehicleDetails.vehiclePlate) || "-"}</p>
                             </div>
                             <div>
-                              <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
-                              <p className="text-slate-800 font-bold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "-"}</p>
+                              <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
+                              <p className="text-slate-800 font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "-"}</p>
                             </div>
                             <div>
-                              <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
-                              <p className="text-slate-800 font-bold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "-"}</p>
+                              <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
+                              <p className="text-slate-800 font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "-"}</p>
                             </div>
                             <div>
-                              <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
-                              <p className="text-slate-800 font-bold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "-"}</p>
+                              <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
+                              <p className="text-slate-800 font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "-"}</p>
                             </div>
                           </div>
 
@@ -2186,7 +2186,7 @@ export default function AgentDashboard() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-3">
                             {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
                               <div className="space-y-2">
-                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">License Photos</span>
+                                <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">License Photos</span>
                                 <div className="flex flex-wrap gap-2">
                                   {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, pIdx: number) => {
                                     let docUrl = url;
@@ -2208,7 +2208,7 @@ export default function AgentDashboard() {
                             )}
                             {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
                               <div className="space-y-2">
-                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Damage Photos</span>
+                                <span className="text-slate-400 font-semibold uppercase tracking-wider text-[9px] select-none">Damage Photos</span>
                                 <div className="flex flex-wrap gap-2">
                                   {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, pIdx: number) => {
                                     let docUrl = url;
@@ -2261,13 +2261,13 @@ export default function AgentDashboard() {
 
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                      <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                      <h3 className="text-slate-800 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                         <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-[#0f2d4a]" strokeWidth={2.5} />
                         Policy Holder Attachments & Photos
                       </h3>
 
                       {attachments.length === 0 ? (
-                        <p className="text-xs text-slate-500 font-bold italic select-none py-2">
+                        <p className="text-xs text-slate-500 font-semibold italic select-none py-2">
                           No driving license or accident photos attached to this claim dossier.
                         </p>
                       ) : (
@@ -2395,7 +2395,7 @@ export default function AgentDashboard() {
                       : "bg-white text-slate-800 self-start border border-slate-100 rounded-tl-none"
                   }`}
                 >
-                  <div className="font-bold text-[9px] uppercase opacity-75 mb-0.5">{log.sender}</div>
+                  <div className="font-semibold text-[$1px] uppercase opacity-75 mb-0.5">{log.sender}</div>
                   <div className="font-semibold text-xs leading-normal">{log.text}</div>
                 </div>
               ))}
@@ -2458,7 +2458,7 @@ export default function AgentDashboard() {
 
             {/* Quick Steps */}
             <div className="w-full bg-slate-50 border border-slate-200/60 rounded-2xl p-4 mt-5 text-left space-y-2.5">
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block select-none">Next Steps:</span>
+              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">Next Steps:</span>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">1</span>
                 <span className="leading-relaxed">Launch the Sanasa Agent app on your phone.</span>
@@ -2524,7 +2524,7 @@ export default function AgentDashboard() {
                   sessionStorage.setItem("availability_prompted", "true");
                   setShowAvailabilityModal(false);
                 }}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-4 rounded-xl border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs py-4 rounded-xl border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <span className="w-3 h-3 rounded-full bg-slate-400" />
                 {t.remainOffline}
@@ -2600,14 +2600,14 @@ export default function AgentDashboard() {
                     <div className="mt-1.5 flex flex-col gap-2.5 p-4 rounded-2xl bg-slate-50/90 border border-slate-200 transition-all duration-300 select-none">
                       <div className="flex justify-between items-center text-xs text-slate-800">
                         <span className="font-bold">{t.passwordStrength}:</span>
-                        <span className="font-bold uppercase tracking-wider text-slate-900">
+                        <span className="font-semibold uppercase tracking-wider text-slate-900">
                           {strength.label === "Weak" ? t.weak : strength.label === "Medium" ? t.medium : strength.label === "Strong" ? t.strong : strength.label === "Excellent" ? t.excellent : strength.label}
                         </span>
                       </div>
                       <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                         <div className={`h-full ${strength.color} ${strength.width} transition-all duration-350 rounded-full`} />
                       </div>
-                      <div className="flex flex-col gap-1.5 text-[11px] font-bold mt-1.5">
+                      <div className="flex flex-col gap-1.5 text-[11px] font-semibold mt-1.5">
                         <div className="flex items-center gap-1.5">
                           {passwordForm.newPassword.length >= 6 && passwordForm.newPassword.length <= 12 ? (
                             <span className="text-emerald-600 flex items-center gap-1.5">✓ {t.passReqLength}</span>
