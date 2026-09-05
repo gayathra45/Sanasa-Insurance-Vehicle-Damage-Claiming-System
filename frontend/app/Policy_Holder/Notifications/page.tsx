@@ -463,9 +463,9 @@ export default function PolicyHolderNotifications() {
         <div className="flex flex-wrap gap-2.5 mb-8 border-b border-slate-100 pb-5 select-none">
           <button
             onClick={() => setActiveTab("all")}
-            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "all"
-                ? "bg-[#0d2a3a] border-[#0d2a3a] text-white shadow-sm font-semibold"
+                ? "bg-[#000080] border-[#000080] text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
@@ -473,14 +473,14 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("unread")}
-            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "unread"
                 ? "bg-sky-500 border-sky-500 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Unread
-            <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
               activeTab === "unread" ? "bg-white/20 text-white" : "bg-red-500 text-white"
             }`}>
               {notifications.filter((n) => !readIds.includes(n.id)).length}
@@ -488,14 +488,14 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("read")}
-            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === "read"
                 ? "bg-slate-600 border-slate-600 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
             }`}
           >
             Read
-            <span className={`text-[10px] font-semibold px-2 py-1 rounded-full ${
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
               activeTab === "read" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
             }`}>
               {notifications.filter((n) => readIds.includes(n.id)).length}
@@ -503,7 +503,7 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("urgent")}
-            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "urgent"
                 ? "bg-red-500 border-red-500 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -513,7 +513,7 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("approved")}
-            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "approved"
                 ? "bg-emerald-600 border-emerald-600 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -523,7 +523,7 @@ export default function PolicyHolderNotifications() {
           </button>
           <button
             onClick={() => setActiveTab("status")}
-            className={`font-medium text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
               activeTab === "status"
                 ? "bg-amber-500 border-amber-500 text-white shadow-sm font-semibold"
                 : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
@@ -534,41 +534,41 @@ export default function PolicyHolderNotifications() {
         </div>
 
         {/* Notifications Container */}
-        <div className="flex flex-col gap-5 mb-10">
+        <div className="flex flex-col gap-3.5 mb-10">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 bg-slate-50 border border-slate-200 rounded-[30px] gap-4">
+            <div className="flex flex-col items-center justify-center py-20 bg-slate-50 border border-slate-200 rounded-2xl gap-4">
               <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#0284c7]" strokeWidth={2} />
               <p className="text-slate-500 font-medium text-sm">Fetching notifications...</p>
             </div>
           ) : filteredNotifs.length > 0 ? (
-            <div className="flex flex-col gap-4.5">
+            <div className="flex flex-col gap-3">
               {filteredNotifs.map((n) => {
                 const isUrgent = n.type === "urgent";
                 const isApproved = n.type === "approved";
                 const isRead = readIds.includes(n.id);
 
-                let borderLeft = "border-l-[6px] border-l-sky-500";
-                let iconStyle = "bg-sky-50 text-sky-500";
+                let borderLeft = "border-l-4 border-l-sky-400";
+                let iconStyle = "bg-sky-50 text-sky-600";
                 let iconSvg = (
-                  <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                  <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" strokeWidth={2} />
                 );
 
                 if (isUrgent) {
-                  borderLeft = "border-l-[6px] border-l-red-500";
-                  iconStyle = "bg-red-50 text-red-500";
+                  borderLeft = "border-l-4 border-l-rose-500";
+                  iconStyle = "bg-rose-50 text-rose-600";
                   iconSvg = (
-                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2} />
                   );
                 } else if (isApproved) {
-                  borderLeft = "border-l-[6px] border-l-emerald-500";
-                  iconStyle = "bg-emerald-50 text-emerald-500";
+                  borderLeft = "border-l-4 border-l-emerald-500";
+                  iconStyle = "bg-emerald-50 text-emerald-600";
                   iconSvg = (
-                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2} />
                   );
                 }
 
                 if (isRead) {
-                  borderLeft = "border-l-[6px] border-l-slate-300";
+                  borderLeft = "border-l-4 border-l-slate-200";
                 }
 
                 return (
@@ -579,90 +579,98 @@ export default function PolicyHolderNotifications() {
                       setSelectedClaim(n.claim);
                       markAsRead(n.id);
                     }}
-                    className={`bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-200 cursor-pointer ${borderLeft}`}
+                    className={`rounded-2xl border border-slate-200/80 p-4 md:py-4 md:px-5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer ${borderLeft} ${
+                      isRead ? "bg-slate-50/50 hover:bg-slate-100/60" : "bg-white hover:bg-slate-50/50"
+                    }`}
                   >
-                    {/* Top Row with detail info */}
-                    <div className="p-6 md:p-8 flex items-start gap-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
                       
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconStyle}`}>
-                        {iconSvg}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3">
-                          <h4 className={`font-semibold text-slate-800 text-base md:text-lg leading-snug ${isRead ? "opacity-75" : ""}`}>
-                            {n.title}
-                          </h4>
-                          
-                          {/* Unread indicator dot */}
-                          {!isRead && (
-                            <span className="w-3 h-3 bg-sky-500 rounded-full border border-white" title="Unread Alert" />
-                          )}
+                      {/* Left Info Area: Icon + Title & Description */}
+                      <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconStyle} mt-0.5`}>
+                          {iconSvg}
                         </div>
 
-                        <p className="text-slate-600 text-sm md:text-base font-normal leading-relaxed mt-2.5">
-                          {n.description}
-                        </p>
-                        {n.subText && (
-                          <p className="text-xs text-slate-500 font-normal italic mt-2.5">
-                            * {n.subText}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className={`font-semibold text-sm md:text-[15px] leading-snug ${isRead ? "text-slate-600" : "text-slate-800"}`}>
+                              {n.title}
+                            </h4>
+                            
+                            {!isRead && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 border border-sky-200/60">
+                                New
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-slate-600 text-xs md:text-sm font-normal leading-relaxed mt-1">
+                            {n.description}
                           </p>
-                        )}
+
+                          {n.subText && (
+                            <p className="text-[11px] text-slate-400 font-normal italic mt-0.5">
+                              * {n.subText}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
-                    </div>
+                      {/* Right Action Area: Buttons + Date */}
+                      <div
+                        onClick={(e) => e.stopPropagation()} // Prevent triggering card click / modal popup
+                        className="flex items-center justify-between md:justify-end gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100"
+                      >
+                        <span className="text-xs text-slate-400 font-normal whitespace-nowrap order-1 md:order-2 md:pl-2">
+                          {n.date}
+                        </span>
 
-                    {/* Bottom Actions footer */}
-                    <div
-                      onClick={(e) => e.stopPropagation()} // Stop propagation so clicking buttons doesn't trigger modal popup
-                      className="bg-slate-50/50 px-6 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
-                    >
-                      <div className="flex flex-wrap items-center gap-3.5 pl-0 md:pl-14">
-                        {n.actionLabel === "View" ? (
+                        <div className="flex items-center gap-2 order-2 md:order-1">
+                          {n.actionLabel === "View" ? (
+                            <button
+                              onClick={() => {
+                                setSelectedClaim(n.claim);
+                                markAsRead(n.id);
+                              }}
+                              className={`font-semibold text-xs px-4 py-2 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none shadow-xs ${
+                                isApproved
+                                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  : isUrgent
+                                  ? "bg-red-500 hover:bg-red-600 text-white"
+                                  : "bg-[#000080] hover:bg-[#000066] text-white"
+                              }`}
+                            >
+                              View
+                            </button>
+                          ) : (
+                            <Link
+                              href={n.link}
+                              className={`font-semibold text-xs px-4 py-2 rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline shadow-xs ${
+                                isUrgent
+                                  ? "bg-red-500 hover:bg-red-600 text-white"
+                                  : isApproved
+                                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  : "bg-[#000080] hover:bg-[#000066] text-white"
+                              }`}
+                            >
+                              {n.actionLabel}
+                            </Link>
+                          )}
+
+                          {/* Read/Unread toggler button */}
                           <button
-                            onClick={() => {
-                              setSelectedClaim(n.claim);
-                              markAsRead(n.id);
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleReadStatus(n.id);
                             }}
-                            className={`font-semibold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none ${
-                              isApproved
-                                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                                : "bg-[#000080] hover:bg-[#000066] text-white"
-                            }`}
+                            className="bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs px-3.5 py-2 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
                           >
-                            View
+                            {isRead ? "Mark as Unread" : "Mark as Read"}
                           </button>
-                        ) : (
-                          <Link
-                            href={n.link}
-                            className={`font-semibold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline ${
-                              isUrgent
-                                ? "bg-red-500 hover:bg-red-600 text-white"
-                                : isApproved
-                                ? "bg-emerald-500 hover:bg-emerald-600 text-white"
-                                : "bg-[#000080] hover:bg-[#000066] text-white"
-                            }`}
-                          >
-                            {n.actionLabel}
-                          </Link>
-                        )}
-
-                        {/* Read/Unread toggler button */}
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleReadStatus(n.id);
-                          }}
-                          className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-semibold text-xs px-5 py-3 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
-                        >
-                          {isRead ? "Mark as Unread" : "Mark as Read"}
-                        </button>
+                        </div>
                       </div>
-                      <span className="text-xs text-slate-400 font-normal self-end sm:self-center pr-2">
-                        {n.date}
-                      </span>
-                    </div>
 
+                    </div>
                   </div>
                 );
               })}
