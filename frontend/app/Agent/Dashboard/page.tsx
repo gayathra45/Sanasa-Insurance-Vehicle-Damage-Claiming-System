@@ -313,6 +313,15 @@ const translations = {
     urgentClaims: "Urgent Claims",
     assignedClaims: "Assigned Claims",
     completedClaims: "Completed Claims",
+    priority: "Priority",
+    inProgress: "In Progress",
+    completed: "Completed",
+    urgentDesc: "Requires immediate attention",
+    assignedDesc: "Active in workflow",
+    completedDesc: "Evaluations finalized",
+    viewClaims: "View",
+    manageClaims: "Manage",
+    historyClaims: "History",
     actionRequired: "Action Required: Pending Agent Document Requests",
     viewAll: "View All",
     claimPlate: "Claim / Plate",
@@ -372,6 +381,15 @@ const translations = {
     urgentClaims: "හදිසි හිමිකම්",
     assignedClaims: "පැවරුණු හිමිකම්",
     completedClaims: "නිමකළ හිමිකම්",
+    priority: "ප්‍රමුඛතාවය",
+    inProgress: "ක්‍රියාත්මක",
+    completed: "නිමකළ",
+    urgentDesc: "ක්ෂණික ක්‍රියාමාර්ග අවශ්‍යයි",
+    assignedDesc: "සක්‍රීය පැවරුම්",
+    completedDesc: "තක්සේරු නිමකළ",
+    viewClaims: "බලන්න",
+    manageClaims: "කළමනාකරණය",
+    historyClaims: "ඉතිහාසය",
     actionRequired: "ක්‍රියාමාර්ගයක් අවශ්‍යයි: නියෝජිත ලේඛන උඩුගත කිරීම්",
     viewAll: "සියල්ල බලන්න",
     claimPlate: "හිමිකම් / අංක තහඩුව",
@@ -431,6 +449,15 @@ const translations = {
     urgentClaims: "அவசர கோரிக்கைகள்",
     assignedClaims: "ஒதுக்கப்பட்டவை",
     completedClaims: "முடிவடைந்தவை",
+    priority: "முன்னுரிமை",
+    inProgress: "செயலில்",
+    completed: "முடிவடைந்தது",
+    urgentDesc: "உடனடி நடவடிக்கை தேவை",
+    assignedDesc: "செயலில் உள்ளவை",
+    completedDesc: "முடிவடைந்தவை",
+    viewClaims: "காண்க",
+    manageClaims: "நிர்வகி",
+    historyClaims: "வரலாறு",
     actionRequired: "நடவடிக்கை தேவை: முகவர் ஆவண கோரிக்கைகள்",
     viewAll: "அனைத்தையும் காட்டு",
     claimPlate: "கோரிக்கை / வாகன எண்",
@@ -1116,96 +1143,214 @@ export default function AgentDashboard() {
       <Navbar />
 
       {/* Main Banner Area */}
-      <div className="w-full relative overflow-hidden bg-slate-900 text-white py-14 md:py-20 px-6 md:px-16 flex flex-col justify-center rounded-b-[4rem] shadow-2xl">
-        {/* Background Image with Dark Overlay */}
+      <div className="w-full relative overflow-hidden bg-gradient-to-b from-slate-950 via-[#0b1c30] to-[#071320] text-white pt-8 pb-10 px-6 md:px-12 flex flex-col justify-center rounded-b-[2rem] md:rounded-b-[3rem] shadow-2xl border-b border-slate-800/60">
+        {/* Subtle Background Pattern & Ambient Glow */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40 mix-blend-multiply transition-all duration-750 ease-out"
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 mix-blend-luminosity transition-all duration-750 ease-out"
           style={{ backgroundImage: "url('/newclaim1.webp')" }}
         />
-        <div className="absolute inset-0 bg-gradient-to-tr from-slate-950 via-slate-900/90 to-cyan-950/40 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-[#0b1c30]/90 to-slate-950/95 pointer-events-none" />
 
-        {/* Ambient Floating Glow Circles */}
-        <div className="absolute top-[-20%] right-[-10%] w-[45%] h-[60%] rounded-full bg-cyan-400/10 blur-[130px] pointer-events-none animate-pulse duration-10000" />
-        <div className="absolute bottom-[-10%] left-[5%] w-[40%] h-[50%] rounded-full bg-red-500/10 blur-[120px] pointer-events-none animate-pulse duration-8000" />
+        {/* Ambient Luminous Spheres */}
+        <div className="absolute -top-24 right-[12%] w-72 h-72 rounded-full bg-cyan-500/10 blur-[100px] pointer-events-none" />
+        <div className="absolute -bottom-20 left-[10%] w-72 h-72 rounded-full bg-indigo-600/10 blur-[110px] pointer-events-none" />
 
-        <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col gap-8">
-          <div className="space-y-3">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white drop-shadow-sm select-none">
-                {t.welcomeBack} <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-200">{agentName}</span>!
-              </h1>
-              {/* Availability Status Selector */}
-              <div className="flex items-center gap-2 bg-slate-950/45 border border-white/10 rounded-full p-1 self-start md:self-center select-none shadow-md">
-                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase pl-3 pr-1">{t.status}</span>
-                <button
-                  onClick={() => toggleAvailability("Active")}
-                  className={`px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all border-none flex items-center gap-1.5 ${
-                    availability === "Active"
-                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
-                      : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                  }`}
-                >
-                  {availability === "Active" && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
-                  {t.active}
-                </button>
-                <button
-                  onClick={() => toggleAvailability("Offline")}
-                  className={`px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all border-none flex items-center gap-1.5 ${
-                    availability === "Offline"
-                      ? "bg-red-500 text-white shadow-md shadow-red-500/30"
-                      : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5"
-                  }`}
-                >
-                  {availability === "Offline" && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
-                  {t.offline}
-                </button>
+        <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col gap-5 md:gap-6">
+          {/* Header Row: Agent Info & Availability Status */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/35 backdrop-blur-sm select-none">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                  Sanasa Field Evaluator
+                </span>
+                <span className="text-xs text-slate-500 font-medium select-none">•</span>
+                <span className="text-xs text-slate-300 font-medium select-none">ID: AGT-2026</span>
               </div>
+
+              <h1 className="text-xl md:text-2xl font-semibold tracking-tight text-white select-none">
+                {t.welcomeBack} <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-cyan-300">{agentName}</span>
+              </h1>
+              <p className="text-xs text-slate-300/90 max-w-2xl font-normal leading-relaxed">
+                {t.assignedCountMsg.replace("{total}", String(totalAssigned)).replace("{urgent}", String(urgentCount))}
+              </p>
             </div>
-            <p className="text-lg md:text-xl text-slate-300 max-w-3xl leading-relaxed font-medium">
-              {t.assignedCountMsg.replace("{total}", String(totalAssigned)).replace("{urgent}", String(urgentCount))}
-            </p>
+
+            {/* Availability Status Selector */}
+            <div className="flex items-center gap-1 bg-slate-950/80 backdrop-blur-xl border border-white/15 rounded-full p-1 self-start md:self-center select-none shadow-xl">
+              <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase pl-2.5 pr-1">{t.status}</span>
+              <button
+                onClick={() => toggleAvailability("Active")}
+                className={`px-3.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 border-none flex items-center gap-1.5 ${
+                  availability === "Active"
+                    ? "bg-emerald-500 text-white shadow-[0_2px_10px_rgba(16,185,129,0.4)]"
+                    : "bg-transparent text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {availability === "Active" && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
+                {t.active}
+              </button>
+              <button
+                onClick={() => toggleAvailability("Offline")}
+                className={`px-3.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition-all duration-200 border-none flex items-center gap-1.5 ${
+                  availability === "Offline"
+                    ? "bg-rose-500 text-white shadow-[0_2px_10px_rgba(244,63,94,0.4)]"
+                    : "bg-transparent text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {availability === "Offline" && <span className="w-2 h-2 rounded-full bg-white animate-pulse" />}
+                {t.offline}
+              </button>
+            </div>
           </div>
 
-          {/* Floating Metric Badges - Placed below the text in a row */}
-          <div className="flex flex-wrap gap-6 mt-2">
-            {/* Urgent Card */}
-            <div className="bg-gradient-to-br from-[#7f1d1d]/85 to-[#991b1b]/80 border border-red-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(239,68,68,0.15)] hover:bg-[#7f1d1d]/90 hover:scale-[1.02] hover:border-red-400 transition-all duration-300">
-              {/* Siren/Alarm Light Icon on the left */}
-              <HugeiconsIcon icon={Notification01Icon} className="w-10 h-10 text-white flex-shrink-0" strokeWidth={2} />
-              {/* Stacked Text in the middle */}
-              <div className="flex flex-col text-left">
-                <span className="text-xs text-red-200 opacity-90 font-bold uppercase tracking-wider">{t.urgentClaims}</span>
-                <span className="text-base text-white font-bold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
-              </div>
-              {/* Large count number on the right */}
-              <span className="text-3xl font-semibold text-white ml-auto">{urgentCount}</span>
-            </div>
+          {/* 3 Compact, Colorful & Ultra-Stylish Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mt-1">
+            
+            {/* Card 1: Urgent Claims - Radiant Rose Gradient */}
+            <Link
+              href="/Agent/MyClaims"
+              className="group relative overflow-hidden bg-gradient-to-br from-[#e11d48] via-[#f43f5e] to-[#fb7185] text-white rounded-2xl p-4 md:p-5 shadow-[0_10px_25px_rgba(225,29,72,0.32)] hover:shadow-[0_16px_35px_rgba(225,29,72,0.45)] hover:-translate-y-1 transition-all duration-300 no-underline cursor-pointer flex flex-col justify-between"
+            >
+              {/* Decorative Translucent Glass Rings */}
+              <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/15 rounded-full blur-xs pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+              <div className="absolute right-10 -top-8 w-20 h-20 bg-white/10 rounded-full blur-xs pointer-events-none" />
 
-            {/* Assigned Card */}
-            <div className="bg-gradient-to-br from-[#0e7490]/85 to-[#0891b2]/80 border border-cyan-400/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(6,182,212,0.15)] hover:bg-[#0e7490]/90 hover:scale-[1.02] hover:border-cyan-300 transition-all duration-300">
-              {/* ID Badge Icon on the left */}
-              <HugeiconsIcon icon={File01Icon} className="w-9 h-9 text-white flex-shrink-0" strokeWidth={2} />
-              {/* Stacked Text in the middle */}
-              <div className="flex flex-col text-left">
-                <span className="text-xs text-cyan-200 opacity-90 font-bold uppercase tracking-wider">{t.assignedClaims}</span>
-                <span className="text-base text-white font-bold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
-              </div>
-              {/* Large count number on the right */}
-              <span className="text-3xl font-semibold text-white ml-auto">{totalAssigned}</span>
-            </div>
+              {/* Top Row: Icon, Title & Badge */}
+              <div className="flex items-center justify-between gap-2 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform duration-300">
+                    <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 text-white" strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-100/90 block">
+                      {t.urgentClaims}
+                    </span>
+                    <span className="text-xs font-semibold text-white/95 truncate block">
+                      {t.urgentDesc || "Requires immediate action"}
+                    </span>
+                  </div>
+                </div>
 
-            {/* Completed Card */}
-            <div className="bg-gradient-to-br from-[#065f46]/85 to-[#047857]/80 border border-emerald-500/40 rounded-2xl px-6 py-4 flex items-center gap-5 w-64 shadow-[0_10px_30px_rgba(16,185,129,0.15)] hover:bg-[#065f46]/90 hover:scale-[1.02] hover:border-emerald-400 transition-all duration-300">
-              {/* Checkmark Shield Icon on the left */}
-              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-9 h-9 text-white flex-shrink-0" strokeWidth={2.5} />
-              {/* Stacked Text in the middle */}
-              <div className="flex flex-col text-left">
-                <span className="text-xs text-emerald-200 opacity-90 font-bold uppercase tracking-wider">{t.completedClaims}</span>
-                <span className="text-base text-white font-bold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-xs flex-shrink-0">
+                  {urgentCount > 0 && <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />}
+                  {t.priority || "Priority"}
+                </span>
               </div>
-              {/* Large count number on the right */}
-              <span className="text-3xl font-semibold text-white ml-auto">{completedClaims.length}</span>
-            </div>
+
+              {/* Bottom Row: Number Count & Action Link */}
+              <div className="mt-3.5 pt-2.5 border-t border-white/20 flex items-center justify-between relative z-10">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-none">
+                    {urgentCount}
+                  </span>
+                  <span className="text-[11px] font-medium text-rose-100">
+                    {urgentCount === 1 ? "Case pending" : "Cases pending"}
+                  </span>
+                </div>
+                
+                <div className="w-6 h-6 rounded-full bg-white/20 group-hover:bg-white text-white group-hover:text-rose-600 flex items-center justify-center transition-all duration-200">
+                  <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={2.5} />
+                </div>
+              </div>
+            </Link>
+
+            {/* Card 2: Assigned Claims - Electric Sky Blue Gradient */}
+            <Link
+              href="/Agent/MyClaims"
+              className="group relative overflow-hidden bg-gradient-to-br from-[#0284c7] via-[#0ea5e9] to-[#38bdf8] text-white rounded-2xl p-4 md:p-5 shadow-[0_10px_25px_rgba(14,165,233,0.32)] hover:shadow-[0_16px_35px_rgba(14,165,233,0.45)] hover:-translate-y-1 transition-all duration-300 no-underline cursor-pointer flex flex-col justify-between"
+            >
+              {/* Decorative Translucent Glass Rings */}
+              <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/15 rounded-full blur-xs pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+              <div className="absolute right-10 -top-8 w-20 h-20 bg-white/10 rounded-full blur-xs pointer-events-none" />
+
+              {/* Top Row: Icon, Title & Badge */}
+              <div className="flex items-center justify-between gap-2 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform duration-300">
+                    <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-white" strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-100/90 block">
+                      {t.assignedClaims}
+                    </span>
+                    <span className="text-xs font-semibold text-white/95 truncate block">
+                      {t.assignedDesc || "Active in workflow"}
+                    </span>
+                  </div>
+                </div>
+
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-xs flex-shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  {t.inProgress || "In Progress"}
+                </span>
+              </div>
+
+              {/* Bottom Row: Number Count & Action Link */}
+              <div className="mt-3.5 pt-2.5 border-t border-white/20 flex items-center justify-between relative z-10">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-none">
+                    {totalAssigned}
+                  </span>
+                  <span className="text-[11px] font-medium text-sky-100">
+                    Total Assigned
+                  </span>
+                </div>
+                
+                <div className="w-6 h-6 rounded-full bg-white/20 group-hover:bg-white text-white group-hover:text-sky-600 flex items-center justify-center transition-all duration-200">
+                  <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={2.5} />
+                </div>
+              </div>
+            </Link>
+
+            {/* Card 3: Completed Claims - Radiant Emerald Mint Gradient */}
+            <Link
+              href="/Agent/MyActivity"
+              className="group relative overflow-hidden bg-gradient-to-br from-[#059669] via-[#10b981] to-[#34d399] text-white rounded-2xl p-4 md:p-5 shadow-[0_10px_25px_rgba(16,185,129,0.32)] hover:shadow-[0_16px_35px_rgba(16,185,129,0.45)] hover:-translate-y-1 transition-all duration-300 no-underline cursor-pointer flex flex-col justify-between"
+            >
+              {/* Decorative Translucent Glass Rings */}
+              <div className="absolute -right-6 -bottom-6 w-28 h-28 bg-white/15 rounded-full blur-xs pointer-events-none group-hover:scale-125 transition-transform duration-500" />
+              <div className="absolute right-10 -top-8 w-20 h-20 bg-white/10 rounded-full blur-xs pointer-events-none" />
+
+              {/* Top Row: Icon, Title & Badge */}
+              <div className="flex items-center justify-between gap-2 relative z-10">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white shadow-sm group-hover:scale-110 transition-transform duration-300">
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-white" strokeWidth={2.2} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-100/90 block">
+                      {t.completedClaims}
+                    </span>
+                    <span className="text-xs font-semibold text-white/95 truncate block">
+                      {t.completedDesc || "Evaluations finalized"}
+                    </span>
+                  </div>
+                </div>
+
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-xs flex-shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                  {t.completed || "Completed"}
+                </span>
+              </div>
+
+              {/* Bottom Row: Number Count & Action Link */}
+              <div className="mt-3.5 pt-2.5 border-t border-white/20 flex items-center justify-between relative z-10">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-none">
+                    {completedClaims.length}
+                  </span>
+                  <span className="text-[11px] font-medium text-emerald-100">
+                    Closed Cases
+                  </span>
+                </div>
+                
+                <div className="w-6 h-6 rounded-full bg-white/20 group-hover:bg-white text-white group-hover:text-emerald-600 flex items-center justify-center transition-all duration-200">
+                  <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" strokeWidth={2.5} />
+                </div>
+              </div>
+            </Link>
+
           </div>
 
         </div>
