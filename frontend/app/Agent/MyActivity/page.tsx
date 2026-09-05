@@ -1175,83 +1175,81 @@ export default function AgentActivityPage() {
       {/* Main Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 relative z-20 flex flex-col gap-8">
         
-        {/* Top Overview Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 select-none">
+        {/* Top Overview Cards Grid - 2 Columns (Matching Policy Holder Layout) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
           
           {/* Card 1: Profile & Status */}
-          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">{t.profileStatus}</span>
-            
-            <div className="flex-1 flex items-center justify-between gap-4 mt-3">
-              <div className="flex items-center gap-3.5 overflow-hidden">
-                <div className="w-12 h-12 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-semibold shrink-0">
-                  <HugeiconsIcon icon={UserIcon} className="w-6 h-6 text-slate-400" strokeWidth={2} />
-                </div>
-                <div className="overflow-hidden">
-                  <span className="block font-semibold text-slate-800 text-base truncate">{agent?.name || "Insurance Agent"}</span>
-                  <span className="block text-slate-400 text-[10px] font-semibold uppercase tracking-wider mt-0.5">ID: {agent?.agentId || "N/A"}</span>
-                </div>
-              </div>
-
-              <div>
-                {availability === "Offline" ? (
-                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-semibold uppercase bg-[#ef4444] text-white shadow-sm">
-                    Offline
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-semibold uppercase bg-[#10b981] text-white shadow-sm">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                    </span>
-                    Active
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Performance Summary */}
-          <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">{t.performanceSummary}</span>
-
-            <div className="flex-1 flex items-center mt-3">
-              <div className="grid grid-cols-3 gap-3 text-center w-full">
-                <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                  <span className="text-xl font-semibold text-slate-800">{totalAssigned}</span>
-                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{t.claims}</span>
-                </div>
-                <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                  <span className="text-xl font-semibold text-slate-800">{totalUploads}</span>
-                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{t.uploads}</span>
-                </div>
-                <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                  <span className="text-xl font-semibold text-slate-800">{totalMessages}</span>
-                  <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider mt-0.5">{t.chats}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 3: Quick Guidelines */}
-          <div className="bg-slate-900 border border-slate-800 rounded-[28px] p-6 shadow-md text-white flex flex-col justify-between min-h-[140px] hover:border-slate-800 transition-all duration-200">
-            <div>
-              <span className="text-[10px] text-cyan-400 font-semibold uppercase tracking-wider block flex items-center gap-1.5">
-                <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-cyan-400" strokeWidth={2.2} />
-                {t.quickGuidelines}
+          <div className="bg-white border border-slate-200/80 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[150px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">{t.profileStatus}</span>
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold ${
+                availability === "Offline"
+                  ? "bg-rose-50 text-rose-700 border border-rose-200/60"
+                  : "bg-emerald-50 text-emerald-700 border border-emerald-200/60"
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  availability === "Offline" ? "bg-rose-500" : "bg-emerald-500 animate-pulse"
+                }`} />
+                {availability === "Offline" ? "Offline Status" : "Active Evaluator"}
               </span>
-              <p className="text-slate-300 text-xs font-semibold leading-relaxed mt-3">
-                {t.quickGuidelinesDesc}
-              </p>
             </div>
-            <button
-              type="button"
-              onClick={fetchAndShowLastActivities}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5 shrink-0 mt-4 w-fit"
-            >
-              <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-              {t.myLastActivity}
-            </button>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200/70 border border-slate-200 flex items-center justify-center text-slate-600 font-semibold shrink-0 shadow-inner">
+                <HugeiconsIcon icon={UserIcon} className="w-6 h-6 text-slate-600" strokeWidth={1.8} />
+              </div>
+              <div className="overflow-hidden">
+                <span className="block font-semibold text-slate-800 text-base truncate">
+                  {agent?.name || "Insurance Agent"}
+                </span>
+                <span className="inline-block bg-slate-100 text-slate-600 text-[11px] font-semibold px-2.5 py-0.5 rounded-md mt-1">
+                  ID: {agent?.agentId || "AGT-2026"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Performance Summary (Clean Common White Design Matching Policy Holder) */}
+          <div className="bg-white border border-slate-200/80 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[150px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider block">{t.performanceSummary}</span>
+              <button
+                type="button"
+                onClick={fetchAndShowLastActivities}
+                className="text-[11px] font-semibold text-[#000080] hover:text-[#000066] hover:underline bg-transparent border-none p-0 cursor-pointer flex items-center gap-1"
+              >
+                <HugeiconsIcon icon={Time02Icon} className="w-3.5 h-3.5 text-[#000080]" strokeWidth={2.2} />
+                {t.myLastActivity || "Activity Timeline"}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-center mt-2">
+              {/* Total Claims */}
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2} />
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">{t.claims}</span>
+                </div>
+                <span className="text-2xl font-bold text-slate-900">{claims.length}</span>
+              </div>
+
+              {/* In Progress */}
+              <div className="bg-sky-50/70 border border-sky-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-sky-700 mb-1">
+                  <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 text-sky-600" strokeWidth={2} />
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-sky-700">{t.inProgress}</span>
+                </div>
+                <span className="text-2xl font-bold text-sky-600">{claims.filter(c => c.status !== "Approved" && c.status !== "Rejected").length}</span>
+              </div>
+
+              {/* Completed */}
+              <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-blue-800 mb-1">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-blue-600" strokeWidth={2} />
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-blue-800">{t.completed}</span>
+                </div>
+                <span className="text-2xl font-bold text-blue-900">{claims.filter(c => c.status === "Approved" || c.status === "Rejected").length}</span>
+              </div>
+            </div>
           </div>
 
         </div>
