@@ -1307,25 +1307,25 @@ export default function AgentActivityPage() {
             {loading ? (
               <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
-                <span className="mt-3 text-slate-400 text-sm font-bold">Fetching claims dossier...</span>
+                <span className="mt-3 text-slate-400 text-sm font-medium">Fetching claims dossier...</span>
               </div>
             ) : filteredClaims.length === 0 ? (
               <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
-                <h3 className="font-bold text-slate-700 text-lg">{t.noClaimsFound}</h3>
-                <p className="text-slate-400 text-xs font-semibold mt-1.5 max-w-sm leading-relaxed">
+                <h3 className="font-semibold text-slate-700 text-lg">{t.noClaimsFound}</h3>
+                <p className="text-slate-400 text-xs font-normal mt-1.5 max-w-sm leading-relaxed">
                   {t.noClaimsFoundDesc}
                 </p>
               </div>
             ) : (
               <div className="flex flex-col gap-3.5">
                 {/* Grid Table Header (Desktop Only) */}
-                <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,0.7fr)] md:items-center gap-4 px-5 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
+                <div className="hidden md:grid md:grid-cols-[minmax(140px,1.5fr)_minmax(100px,1fr)_minmax(140px,1.4fr)_minmax(150px,1.4fr)_minmax(150px,1.4fr)_minmax(100px,1fr)_minmax(110px,1fr)_minmax(100px,1fr)] items-center gap-4 px-6 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider select-none">
                   <div>{t.claimInfo}</div>
                   <div>{t.vehicleNo}</div>
                   <div>{t.damageType}</div>
                   <div>{t.location}</div>
                   <div>{t.policyHolder}</div>
-                  <div>{t.assessment}</div>
+                  <div className="text-center">{t.assessment}</div>
                   <div className="text-center">{t.status}</div>
                   <div className="text-right">{t.actions}</div>
                 </div>
@@ -1340,48 +1340,48 @@ export default function AgentActivityPage() {
                         setSelectedClaim(claim);
                         setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                       }}
-                      className={`bg-white border border-slate-200 hover:border-[#0f2d4a] rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,0.7fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${
+                      className={`bg-white border border-slate-200/90 hover:border-[#000080]/60 rounded-2xl px-6 py-4 flex flex-col md:grid md:grid-cols-[minmax(140px,1.5fr)_minmax(100px,1fr)_minmax(140px,1.4fr)_minmax(150px,1.4fr)_minmax(150px,1.4fr)_minmax(100px,1fr)_minmax(110px,1fr)_minmax(100px,1fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${
                         claim.inspectionSubmitted || claim.status === "Approved" || claim.status === "Rejected"
-                          ? "border-l-4 border-l-emerald-500"
+                          ? "border-l-[5px] border-l-emerald-500"
                           : isUrgent
-                          ? "border-l-4 border-l-red-500"
-                          : "border-l-4 border-l-[#0f2d4a]"
+                          ? "border-l-[5px] border-l-red-500"
+                          : "border-l-[5px] border-l-[#000080]"
                       }`}
                     >
-                      {/* Claim Info */}
+                      {/* 1. Claim Info */}
                       <div className="flex flex-col min-w-0 select-none">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
                           {isUrgent && (
-                            <span className="bg-red-100 text-red-700 text-[8px] font-semibold tracking-wider uppercase px-2 py-1 rounded-md whitespace-nowrap animate-pulse">Urgent</span>
+                            <span className="bg-red-100 text-red-700 text-[8px] font-bold tracking-wider uppercase px-2 py-0.5 rounded whitespace-nowrap animate-pulse">Urgent</span>
                           )}
                         </div>
-                        <span className="text-[10px] text-slate-400 font-semibold mt-1 block">Registered: {formatDate(claim.createdAt)}</span>
+                        <span className="text-[10px] text-slate-400 font-medium mt-0.5 block">Registered: {formatDate(claim.createdAt)}</span>
                       </div>
 
-                      {/* Vehicle Plate */}
-                      <div className="text-xs md:text-sm font-semibold text-slate-800">
+                      {/* 2. Vehicle Plate */}
+                      <div className="text-xs md:text-sm font-semibold text-slate-800 truncate">
                         {formatPlate(claim.vehiclePlate)}
                       </div>
 
-                      {/* Damage type */}
+                      {/* 3. Damage Type */}
                       <div className="text-xs md:text-sm font-semibold text-slate-700 truncate" title={claim.damageType}>
                         {claim.damageType}
                       </div>
 
-                      {/* Location */}
+                      {/* 4. Location */}
                       <div className="text-xs md:text-sm font-semibold text-slate-700 truncate" title={claim.location}>
                         {claim.location || "-"}
                       </div>
 
-                      {/* Policy Holder */}
+                      {/* 5. Policy Holder */}
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-semibold text-slate-800 truncate">{getPolicyHolderName(claim.userNic)}</span>
-                        <span className="text-[10px] text-slate-400 font-semibold mt-0.5">NIC: {claim.userNic}</span>
+                        <span className="text-[10px] text-slate-400 font-medium mt-0.5">NIC: {claim.userNic}</span>
                       </div>
 
-                      {/* Assessment */}
-                      <div className="text-xs font-semibold text-slate-700">
+                      {/* 6. Assessment */}
+                      <div className="text-xs font-semibold text-slate-700 text-center">
                         {typeof claim.amount === "number" ? (
                           `Rs. ${claim.amount.toLocaleString()}`
                         ) : (
@@ -1389,22 +1389,22 @@ export default function AgentActivityPage() {
                         )}
                       </div>
 
-                      {/* Status Badge */}
-                      <div className="flex flex-col items-center min-w-0">
-                        <span className={`text-[9px] font-semibold px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
+                      {/* 7. Status Badge */}
+                      <div className="flex items-center justify-center min-w-0">
+                        <span className={`text-[9px] font-semibold px-3 py-1 rounded-full uppercase tracking-wider block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
                           {claim.status === "Pending" ? t.pending : claim.status === "In Progress" ? t.inProgress : claim.status === "Approved" ? t.approved : claim.status === "Rejected" ? t.rejected : claim.status}
                         </span>
                       </div>
 
-                      {/* Action */}
-                      <div className="text-left md:text-right" onClick={(e) => e.stopPropagation()}>
+                      {/* 8. Action */}
+                      <div className="flex items-center justify-end" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={() => {
                             setSelectedClaim(claim);
                             setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                           }}
-                          className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-semibold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                          className="bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold text-xs px-3.5 py-1.5 rounded-xl transition-all cursor-pointer focus:outline-none shadow-xs whitespace-nowrap active:scale-95"
                         >
                           {t.viewDetails}
                         </button>
@@ -1417,9 +1417,7 @@ export default function AgentActivityPage() {
             )}
 
         </div>
-
-
-      </main>
+            </main>
 
       {/* Detailed Claim Modal & Sub-modals (Matching Branch Claims Portal layout) */}
       {selectedClaim && (
