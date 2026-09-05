@@ -437,9 +437,9 @@ function TrackClaimsContent() {
         {/* Background Grey Line */}
         <div className="absolute top-[40px] left-[52px] right-[52px] h-[3px] bg-slate-200 z-0" />
         
-        {/* Active Green Line */}
+        {/* Active Blue Progress Line */}
         <div
-          className="absolute top-[40px] left-[52px] h-[3px] bg-[#00b050] z-0 transition-all duration-300"
+          className="absolute top-[40px] left-[52px] h-[3px] bg-gradient-to-r from-sky-400 to-[#0f2d4a] z-0 transition-all duration-300"
           style={{ width: isFullyPaid ? "calc(100% - 104px)" : `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
         />
 
@@ -450,9 +450,9 @@ function TrackClaimsContent() {
 
           let circleClass = "";
           if (isCompleted) {
-            circleClass = "border-[#00b050] text-[#00b050] bg-white";
+            circleClass = "border-blue-600 text-blue-600 bg-blue-50/50";
           } else if (isActive) {
-            circleClass = "border-blue-500 text-blue-500 bg-[#e8f0fe]";
+            circleClass = "border-sky-500 text-sky-600 bg-sky-50 ring-4 ring-sky-100";
           } else {
             circleClass = "border-slate-300 text-slate-400 bg-white";
           }
@@ -461,12 +461,12 @@ function TrackClaimsContent() {
             <div key={step.num} className="flex flex-col items-center z-10 flex-1">
               <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-semibold ${circleClass}`}>
                 {isCompleted ? (
-                  <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-[#00b050]" strokeWidth={3} />
+                  <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-blue-600" strokeWidth={3} />
                 ) : (
                   step.num
                 )}
               </div>
-              <span className={`text-[11px] mt-2 leading-none ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-emerald-700 font-semibold" : "text-slate-400 font-normal"}`}>
+              <span className={`text-[11px] mt-2 leading-none ${isActive ? "text-sky-600 font-bold" : isCompleted ? "text-blue-900 font-semibold" : "text-slate-400 font-normal"}`}>
                 {step.label}
               </span>
             </div>

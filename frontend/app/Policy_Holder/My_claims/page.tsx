@@ -432,7 +432,7 @@ export default function MyClaims() {
     }
     // Fallback default badge
     return (
-      <span className="text-slate-500 bg-slate-50/45 border border-slate-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
+      <span className="text-slate-500 bg-slate-50 border border-slate-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
         {status}
       </span>
     );
@@ -591,21 +591,21 @@ export default function MyClaims() {
               </div>
 
               {/* Pending */}
-              <div className="bg-amber-50/60 border border-amber-100 rounded-2xl p-3 flex flex-col justify-center items-center">
-                <div className="flex items-center gap-1.5 text-amber-700 mb-1">
-                  <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 text-amber-600" strokeWidth={2} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700">{t.pending}</span>
+              <div className="bg-sky-50/70 border border-sky-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-sky-700 mb-1">
+                  <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 text-sky-600" strokeWidth={2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-sky-700">{t.pending}</span>
                 </div>
-                <span className="text-2xl font-extrabold text-amber-600">{pendingClaimsThisYear}</span>
+                <span className="text-2xl font-extrabold text-sky-600">{pendingClaimsThisYear}</span>
               </div>
 
               {/* Completed */}
-              <div className="bg-emerald-50/60 border border-emerald-100 rounded-2xl p-3 flex flex-col justify-center items-center">
-                <div className="flex items-center gap-1.5 text-emerald-700 mb-1">
-                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">{t.completed}</span>
+              <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-blue-800 mb-1">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-blue-600" strokeWidth={2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">{t.completed}</span>
                 </div>
-                <span className="text-2xl font-extrabold text-emerald-600">{completedClaimsThisYear}</span>
+                <span className="text-2xl font-extrabold text-blue-900">{completedClaimsThisYear}</span>
               </div>
             </div>
           </div>
@@ -721,11 +721,21 @@ export default function MyClaims() {
               </div>
             ) : (
               filteredClaims.map((claim) => {
+                const s = claim.status.toLowerCase();
+                let borderLeftColor = "border-l-4 border-l-sky-400";
+                if (s.includes("review") || s.includes("submit")) {
+                  borderLeftColor = "border-l-4 border-l-blue-600";
+                } else if (s.includes("approved") || s.includes("active") || s.includes("done")) {
+                  borderLeftColor = "border-l-4 border-l-[#0f2d4a]";
+                } else if (s.includes("rejected")) {
+                  borderLeftColor = "border-l-4 border-l-slate-300";
+                }
+
                 return (
                   <div
                     key={claim.claimNumber}
                     onClick={() => setSelectedClaim(claim)}
-                    className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden border-l-4 border-l-sky-400"
+                    className={`bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${borderLeftColor}`}
                   >
                     {/* Claim Info */}
                     <div className="flex flex-col min-w-0 select-none">
@@ -822,9 +832,9 @@ export default function MyClaims() {
               {/* Background Grey Line */}
               <div className="absolute top-[40px] left-[52px] right-[52px] h-[3px] bg-slate-200 z-0" />
               
-              {/* Active Green Line */}
+              {/* Active Blue Progress Line */}
               <div
-                className="absolute top-[40px] left-[52px] h-[3px] bg-[#00b050] z-0 transition-all duration-300"
+                className="absolute top-[40px] left-[52px] h-[3px] bg-gradient-to-r from-sky-400 to-[#0f2d4a] z-0 transition-all duration-300"
                 style={{ width: isFullyPaid ? "calc(100% - 104px)" : `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
               />
 
@@ -835,9 +845,9 @@ export default function MyClaims() {
 
                 let circleClass = "";
                 if (isCompleted) {
-                  circleClass = "border-[#00b050] text-[#00b050] bg-white";
+                  circleClass = "border-blue-600 text-blue-600 bg-blue-50/50";
                 } else if (isActive) {
-                  circleClass = "border-blue-500 text-blue-500 bg-[#e8f0fe]";
+                  circleClass = "border-sky-500 text-sky-600 bg-sky-50 ring-4 ring-sky-100";
                 } else {
                   circleClass = "border-slate-300 text-slate-400 bg-white";
                 }
@@ -846,12 +856,12 @@ export default function MyClaims() {
                   <div key={step.num} className="flex flex-col items-center z-10 flex-1">
                     <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold ${circleClass}`}>
                       {isCompleted ? (
-                        <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-[#00b050]" strokeWidth={3} />
+                        <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-blue-600" strokeWidth={3} />
                       ) : (
                         step.num
                       )}
                     </div>
-                    <span className={`text-[11px] font-medium mt-2 leading-none ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-emerald-700 font-semibold" : "text-slate-400"}`}>
+                    <span className={`text-[11px] font-medium mt-2 leading-none ${isActive ? "text-sky-600 font-bold" : isCompleted ? "text-blue-900 font-semibold" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>
