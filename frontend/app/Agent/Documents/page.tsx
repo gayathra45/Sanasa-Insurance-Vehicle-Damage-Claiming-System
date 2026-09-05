@@ -708,7 +708,7 @@ export default function AgentDocuments() {
                     onClick={() => setUploadModalOpen(false)}
                     className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
                   >
-                    &lt; Close
+                    Close
                   </button>
                   <button
                     type="submit"
@@ -721,7 +721,7 @@ export default function AgentDocuments() {
                         <span>Submitting Documents...</span>
                       </>
                     ) : (
-                      <span>Submit Documents &gt;</span>
+                      <span>Submit Documents</span>
                     )}
                   </button>
                 </div>
@@ -810,7 +810,7 @@ export default function AgentDocuments() {
                 onClick={() => setUploadedListModalOpen(false)}
                 className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
-                &lt; Close
+                Close
               </button>
             </div>
 
@@ -911,7 +911,7 @@ export default function AgentDocuments() {
                 onClick={() => setViewModalOpen(false)}
                 className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
-                &lt; Close
+                Close
               </button>
             </div>
 

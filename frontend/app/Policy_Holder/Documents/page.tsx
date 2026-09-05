@@ -776,7 +776,7 @@ export default function PolicyHolderDocuments() {
                     onClick={() => setUploadModalOpen(false)}
                     className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
                   >
-                    &lt; Close
+                    Close
                   </button>
                   <button
                     type="submit"
@@ -789,7 +789,7 @@ export default function PolicyHolderDocuments() {
                         <span>Submitting...</span>
                       </>
                     ) : (
-                      <span>Submit &gt;</span>
+                      <span>Submit</span>
                     )}
                   </button>
                 </div>
@@ -878,7 +878,7 @@ export default function PolicyHolderDocuments() {
                 onClick={() => setUploadedListModalOpen(false)}
                 className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
-                &lt; Close
+                Close
               </button>
             </div>
 
@@ -981,7 +981,7 @@ export default function PolicyHolderDocuments() {
                 onClick={() => setViewModalOpen(false)}
                 className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
               >
-                &lt; Close
+                Close
               </button>
             </div>
 

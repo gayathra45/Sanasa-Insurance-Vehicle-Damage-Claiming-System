@@ -1683,7 +1683,7 @@ export default function AgentActivityPage() {
                   onClick={() => setActiveSubModal(null)}
                   className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
-                  &lt; Close
+                  Close
                 </button>
                 <button
                   type="button"
@@ -1695,7 +1695,7 @@ export default function AgentActivityPage() {
                   }}
                   className="bg-[#f97316] hover:bg-orange-600 text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
-                  Request Document &gt;
+                  Request Document
                 </button>
               </div>
             </div>
@@ -1829,7 +1829,7 @@ export default function AgentActivityPage() {
                   onClick={() => setActiveSubModal(null)}
                   className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
-                  &lt; Close
+                  Close
                 </button>
                 <button
                   type="button"
@@ -1876,7 +1876,7 @@ export default function AgentActivityPage() {
                   disabled={updatingClaim}
                   className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
                 >
-                  Submit &gt;
+                  Submit
                 </button>
               </div>
             </div>
@@ -1923,7 +1923,7 @@ export default function AgentActivityPage() {
                   }}
                   className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
-                  &lt; Close
+                  Close
                 </button>
                 <button
                   type="button"
@@ -1942,7 +1942,7 @@ export default function AgentActivityPage() {
                   disabled={updatingClaim || !newMessageText.trim()}
                   className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
                 >
-                  Submit &gt;
+                  Submit
                 </button>
               </div>
             </div>
@@ -2089,7 +2089,7 @@ export default function AgentActivityPage() {
                   }}
                   className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
-                  &lt; Close
+                  Close
                 </button>
               </div>
             </div>

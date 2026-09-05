@@ -922,7 +922,7 @@ export default function MyVehicles() {
                   onClick={() => setIsAddVehicleOpen(false)}
                   className="bg-[#19385a] hover:bg-[#11273f] text-white font-semibold text-sm py-4 px-10 rounded-full transition-all cursor-pointer border-none shadow-md flex items-center justify-center gap-1 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  &lt; Close
+                  Close
                 </button>
                 <button
                   type="submit"

@@ -11,6 +11,7 @@ import {
   Mail01Icon,
   Cancel01Icon,
   Loading03Icon,
+  ArrowDown01Icon,
 } from "@hugeicons/core-free-icons";
 
 interface AgentDetails {
@@ -301,9 +302,7 @@ export default function AgentContactPage() {
                       <span className="font-bold text-slate-700 text-sm md:text-base group-hover:text-emerald-600 transition-colors">
                         {faq.q}
                       </span>
-                      <span className={`text-emerald-500 font-extrabold text-sm transition-transform duration-200 ${isOpen ? "rotate-90" : ""}`}>
-                        &gt;
-                      </span>
+                      <HugeiconsIcon icon={ArrowDown01Icon} className={`w-4 h-4 text-emerald-500 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} strokeWidth={2.5} />
                     </button>
                     {isOpen && (
                       <div className="px-6 pb-5 pt-1 text-slate-500 text-xs md:text-sm font-semibold leading-relaxed border-t border-slate-100">
