@@ -378,8 +378,9 @@ export default function AgentMapRoutePage() {
           minZoom: 4
         }).setView(agentCoords, 12);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          maxZoom: 18
+        L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+          attribution: '© Google Maps',
+          maxZoom: 20
         }).addTo(map);
 
         L.marker(agentCoords, {

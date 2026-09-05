@@ -183,7 +183,6 @@ const htmlContent = `<!DOCTYPE html>
     <div id="layer-menu" class="hidden">
       <div class="layer-option active" data-layer="voyager">Standard</div>
       <div class="layer-option" data-layer="satellite">Satellite</div>
-      <div class="layer-option" data-layer="terrain">Terrain</div>
     </div>
   </div>
   <script>
@@ -209,19 +208,14 @@ const htmlContent = `<!DOCTYPE html>
     }).addTo(map);
 
     var layers = {
-      voyager: L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '© OSM © CARTO',
-        maxNativeZoom: 18,
+      voyager: L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        attribution: '© Google Maps',
+        maxNativeZoom: 20,
         maxZoom: 21
       }),
-      satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri',
-        maxNativeZoom: 18,
-        maxZoom: 21
-      }),
-      terrain: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
-        attribution: '© Esri',
-        maxNativeZoom: 18,
+      satellite: L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+        attribution: '© Google Maps',
+        maxNativeZoom: 20,
         maxZoom: 21
       })
     };
