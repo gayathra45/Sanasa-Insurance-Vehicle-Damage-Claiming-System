@@ -192,7 +192,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-inner select-text">
         <div className="flex items-center gap-2 mb-3 text-slate-400 select-none">
           <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
         </div>
         <p className="text-slate-700 text-xs font-semibold whitespace-pre-wrap leading-relaxed">
           {parsed.rawText}
@@ -223,7 +223,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
     }
 
     return (
-      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
+      <span className={`px-3 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
         {icon}
         {val}
       </span>
@@ -237,11 +237,11 @@ const renderPremiumInspectionReport = (reportText: string) => {
         <div className="flex items-center gap-3">
           <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
           <div>
-            <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
+            <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
             <span className="text-[10px] font-bold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
           </div>
         </div>
-        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-extrabold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-bold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
           <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
           Verified By Agent
         </span>
@@ -251,36 +251,36 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Odometer */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Odometer</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Odometer</span>
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-slate-800">{parsed.odometer || "N/A"}</span>
+            <span className="text-[17px] font-semibold text-slate-800">{parsed.odometer || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Total Distance Travelled</span>
         </div>
 
         {/* Card 2: Fuel Level */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Fuel Level</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Fuel Level</span>
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-slate-800">{parsed.fuelLevel || "N/A"}</span>
+            <span className="text-[17px] font-semibold text-slate-800">{parsed.fuelLevel || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Current Tank Level</span>
         </div>
 
         {/* Card 3: Estimated Cost */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
+            <span className="text-[17px] font-semibold text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Assessment Valuation</span>
         </div>
 
         {/* Card 4: Recommendation */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Recommendation</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Recommendation</span>
           <div className="flex items-baseline gap-1 mt-2 overflow-hidden">
-            <span className="text-[13px] font-black text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
+            <span className="text-[13px] font-semibold text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Suggested Action Payout</span>
         </div>
@@ -291,7 +291,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         {/* Component Damage Checklist */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 space-y-4 shadow-sm">
           <div>
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
             <div className="space-y-2">
               {Object.entries(parsed.checklist || {}).map(([key, value]) => (
                 <div key={key} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
@@ -307,7 +307,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         <div className="flex flex-col gap-4">
           {parsed.preExistingDamage && parsed.preExistingDamage !== "None reported." && (
             <div className="bg-amber-50/20 border border-amber-200/50 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
-              <span className="text-[10px] text-amber-800 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
+              <span className="text-[10px] text-amber-800 font-semibold uppercase tracking-wider flex items-center gap-1.5 select-none">
                 <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
                 Pre-Existing Damage Remarks
               </span>
@@ -316,7 +316,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
           )}
 
           <div className="bg-slate-50/50 border border-slate-200/70 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5 select-none">
               <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-slate-500" strokeWidth={2.5} />
               Physical Inspection Remarks
             </span>
@@ -1180,7 +1180,7 @@ export default function AgentActivityPage() {
           
           {/* Card 1: Profile & Status */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">{t.profileStatus}</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">{t.profileStatus}</span>
             
             <div className="flex-1 flex items-center justify-between gap-4 mt-3">
               <div className="flex items-center gap-3.5 overflow-hidden">
@@ -1188,18 +1188,18 @@ export default function AgentActivityPage() {
                   <HugeiconsIcon icon={UserIcon} className="w-6 h-6 text-slate-400" strokeWidth={2} />
                 </div>
                 <div className="overflow-hidden">
-                  <span className="block font-black text-slate-800 text-base truncate">{agent?.name || "Insurance Agent"}</span>
+                  <span className="block font-semibold text-slate-800 text-base truncate">{agent?.name || "Insurance Agent"}</span>
                   <span className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">ID: {agent?.agentId || "N/A"}</span>
                 </div>
               </div>
 
               <div>
                 {availability === "Offline" ? (
-                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase bg-[#ef4444] text-white shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-semibold uppercase bg-[#ef4444] text-white shadow-sm">
                     Offline
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase bg-[#10b981] text-white shadow-sm">
+                  <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-semibold uppercase bg-[#10b981] text-white shadow-sm">
                     <span className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                       <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
@@ -1213,20 +1213,20 @@ export default function AgentActivityPage() {
 
           {/* Card 2: Performance Summary */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col min-h-[140px] hover:border-slate-350 transition-all duration-200">
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">{t.performanceSummary}</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">{t.performanceSummary}</span>
 
             <div className="flex-1 flex items-center mt-3">
               <div className="grid grid-cols-3 gap-3 text-center w-full">
                 <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                  <span className="text-xl font-black text-slate-800">{totalAssigned}</span>
+                  <span className="text-xl font-semibold text-slate-800">{totalAssigned}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.claims}</span>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                  <span className="text-xl font-black text-slate-800">{totalUploads}</span>
+                  <span className="text-xl font-semibold text-slate-800">{totalUploads}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.uploads}</span>
                 </div>
                 <div className="bg-slate-50 border border-slate-200/50 rounded-2xl p-3 flex flex-col justify-center">
-                  <span className="text-xl font-black text-slate-800">{totalMessages}</span>
+                  <span className="text-xl font-semibold text-slate-800">{totalMessages}</span>
                   <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">{t.chats}</span>
                 </div>
               </div>
@@ -1236,7 +1236,7 @@ export default function AgentActivityPage() {
           {/* Card 3: Quick Guidelines */}
           <div className="bg-slate-900 border border-slate-800 rounded-[28px] p-6 shadow-md text-white flex flex-col justify-between min-h-[140px] hover:border-slate-800 transition-all duration-200">
             <div>
-              <span className="text-[10px] text-cyan-400 font-extrabold uppercase tracking-wider block flex items-center gap-1.5">
+              <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block flex items-center gap-1.5">
                 <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-cyan-400" strokeWidth={2.2} />
                 {t.quickGuidelines}
               </span>
@@ -1247,7 +1247,7 @@ export default function AgentActivityPage() {
             <button
               type="button"
               onClick={fetchAndShowLastActivities}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs px-5 py-3 rounded-xl transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5 shrink-0 mt-4 w-fit"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-5 py-3 rounded-xl transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5 shrink-0 mt-4 w-fit"
             >
               <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
               {t.myLastActivity}
@@ -1270,7 +1270,7 @@ export default function AgentActivityPage() {
                       <button
                         key={tab}
                         onClick={() => setStatusFilter(tab)}
-                        className={`px-4 py-2 rounded-lg text-xs font-black transition-all border-none outline-none cursor-pointer ${
+                        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all border-none outline-none cursor-pointer ${
                           statusFilter === tab
                             ? "bg-[#000080] text-white shadow-sm"
                             : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
@@ -1313,7 +1313,7 @@ export default function AgentActivityPage() {
               </div>
             ) : filteredClaims.length === 0 ? (
               <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
-                <h3 className="font-extrabold text-slate-700 text-lg">{t.noClaimsFound}</h3>
+                <h3 className="font-bold text-slate-700 text-lg">{t.noClaimsFound}</h3>
                 <p className="text-slate-400 text-xs font-semibold mt-1.5 max-w-sm leading-relaxed">
                   {t.noClaimsFoundDesc}
                 </p>
@@ -1321,7 +1321,7 @@ export default function AgentActivityPage() {
             ) : (
               <div className="flex flex-col gap-3.5">
                 {/* Grid Table Header (Desktop Only) */}
-                <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,0.7fr)] md:items-center gap-4 px-5 py-2 text-[10px] font-black text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
+                <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.7fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,0.7fr)] md:items-center gap-4 px-5 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
                   <div>{t.claimInfo}</div>
                   <div>{t.vehicleNo}</div>
                   <div>{t.damageType}</div>
@@ -1353,9 +1353,9 @@ export default function AgentActivityPage() {
                       {/* Claim Info */}
                       <div className="flex flex-col min-w-0 select-none">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="font-black text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
+                          <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
                           {isUrgent && (
-                            <span className="bg-red-100 text-red-700 text-[8px] font-black tracking-wider uppercase px-2 py-1 rounded-md whitespace-nowrap animate-pulse">Urgent</span>
+                            <span className="bg-red-100 text-red-700 text-[8px] font-semibold tracking-wider uppercase px-2 py-1 rounded-md whitespace-nowrap animate-pulse">Urgent</span>
                           )}
                         </div>
                         <span className="text-[10px] text-slate-400 font-bold mt-1 block">Registered: {formatDate(claim.createdAt)}</span>
@@ -1393,7 +1393,7 @@ export default function AgentActivityPage() {
 
                       {/* Status Badge */}
                       <div className="flex flex-col items-center min-w-0">
-                        <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
+                        <span className={`text-[9px] font-semibold px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority)}`}>
                           {claim.status === "Pending" ? t.pending : claim.status === "In Progress" ? t.inProgress : claim.status === "Approved" ? t.approved : claim.status === "Rejected" ? t.rejected : claim.status}
                         </span>
                       </div>
@@ -1406,7 +1406,7 @@ export default function AgentActivityPage() {
                             setSelectedClaim(claim);
                             setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                           }}
-                          className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                          className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-bold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
                         >
                           {t.viewDetails}
                         </button>
@@ -1432,7 +1432,7 @@ export default function AgentActivityPage() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Documents - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1448,7 +1448,7 @@ export default function AgentActivityPage() {
                 <div className="space-y-6">
                   {/* Category 1: Policy Holder Documents */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                    <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
+                    <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2} />
                       Policy Holder Documents
                     </h3>
@@ -1501,7 +1501,7 @@ export default function AgentActivityPage() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1511,7 +1511,7 @@ export default function AgentActivityPage() {
 
                   {/* Category 2: Agent Documents & Upload Panel */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                    <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
+                    <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-cyan-600" strokeWidth={2} />
                       Agent Documents
                     </h3>
@@ -1551,7 +1551,7 @@ export default function AgentActivityPage() {
                                 className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
                                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                                <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                                <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                               </button>
                             );
                           }
@@ -1567,7 +1567,7 @@ export default function AgentActivityPage() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1577,7 +1577,7 @@ export default function AgentActivityPage() {
                     {/* Agent File Upload Panel */}
                     {selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                       <div className="border-t border-slate-200/60 pt-4 flex flex-col gap-4">
-                        <span className="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider select-none">Upload Claim Document</span>
+                        <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider select-none">Upload Claim Document</span>
                         
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Document Type</label>
@@ -1665,7 +1665,7 @@ export default function AgentActivityPage() {
                           <button
                             onClick={handleAgentUpload}
                             disabled={isAgentUploading}
-                            className="w-full bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-4 rounded-xl border-none cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 mt-1 shadow-md flex items-center justify-center gap-2"
+                            className="w-full bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs py-3 px-4 rounded-xl border-none cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 mt-1 shadow-md flex items-center justify-center gap-2"
                           >
                             {isAgentUploading ? "Uploading..." : "Upload Document"}
                           </button>
@@ -1706,7 +1706,7 @@ export default function AgentActivityPage() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Request Documents - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1726,17 +1726,17 @@ export default function AgentActivityPage() {
                         <button
                           type="button"
                           onClick={() => setRequestItems(prev => prev.filter((_, idx) => idx !== index))}
-                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 font-extrabold text-lg bg-transparent border-none cursor-pointer p-1 transition-colors"
+                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 font-bold text-lg bg-transparent border-none cursor-pointer p-1 transition-colors"
                         >
                           <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
                         </button>
                       )}
 
                       <div className="flex items-center gap-2 select-none mb-1">
-                        <span className="w-6 h-6 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center text-xs font-black">
+                        <span className="w-6 h-6 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center text-xs font-semibold">
                           {String(index + 1).padStart(2, '0')}
                         </span>
-                        <h4 className="text-slate-800 font-black text-xs uppercase tracking-wider">Document #{index + 1}</h4>
+                        <h4 className="text-slate-800 font-semibold text-xs uppercase tracking-wider">Document #{index + 1}</h4>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1887,7 +1887,7 @@ export default function AgentActivityPage() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Add Note - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1953,7 +1953,7 @@ export default function AgentActivityPage() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Contact - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1968,7 +1968,7 @@ export default function AgentActivityPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 select-none">
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Policy Holder</span>
-                    <h5 className="text-xs font-extrabold text-slate-800">{getPolicyHolderName(selectedClaim.userNic)}</h5>
+                    <h5 className="text-xs font-bold text-slate-800">{getPolicyHolderName(selectedClaim.userNic)}</h5>
                     <div className="text-[11px] text-slate-600 font-semibold">
                       <p>NIC: {selectedClaim.userNic}</p>
                       <p>Phone: {getPolicyHolderContact(selectedClaim.userNic)}</p>
@@ -1976,7 +1976,7 @@ export default function AgentActivityPage() {
                   </div>
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Office Staff</span>
-                    <h5 className="text-xs font-extrabold text-slate-800">Branch Operations</h5>
+                    <h5 className="text-xs font-bold text-slate-800">Branch Operations</h5>
                     <div className="text-[11px] text-slate-600 font-semibold">
                       <p>Branch: {selectedClaim.branch || "Branch Office"}</p>
                     </div>
@@ -1988,7 +1988,7 @@ export default function AgentActivityPage() {
                   <button
                     type="button"
                     onClick={() => setContactRecipient("Policy Holder")}
-                    className={`py-2 px-6 rounded-full text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
+                    className={`py-2 px-6 rounded-full text-xs font-semibold tracking-wide uppercase transition-all border cursor-pointer ${
                       contactRecipient === "Policy Holder"
                         ? "bg-[#0f2d4a] text-white border-transparent shadow-sm"
                         : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-105"
@@ -1999,7 +1999,7 @@ export default function AgentActivityPage() {
                   <button
                     type="button"
                     onClick={() => setContactRecipient("Office Staff")}
-                    className={`py-2 px-6 rounded-full text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
+                    className={`py-2 px-6 rounded-full text-xs font-semibold tracking-wide uppercase transition-all border cursor-pointer ${
                       contactRecipient === "Office Staff"
                         ? "bg-[#0f2d4a] text-white border-transparent shadow-sm"
                         : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-105"
@@ -2071,7 +2071,7 @@ export default function AgentActivityPage() {
                         }
                       }}
                       disabled={updatingClaim || !newMessageText.trim()}
-                      className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs px-5 py-4 rounded-xl border-none cursor-pointer disabled:opacity-50"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs px-5 py-4 rounded-xl border-none cursor-pointer disabled:opacity-50"
                     >
                       Send
                     </button>
@@ -2100,7 +2100,7 @@ export default function AgentActivityPage() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Update Tracking - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -2135,7 +2135,7 @@ export default function AgentActivityPage() {
                           type="button"
                           onClick={() => handleAcceptClaim(selectedClaim.claimNumber)}
                           disabled={isAcceptingClaim}
-                          className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
+                          className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs py-3 px-6 rounded-xl cursor-pointer disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
                         >
                           {isAcceptingClaim ? "Accepting..." : "Accept Claim Assignment"}
                         </button>
@@ -2144,7 +2144,7 @@ export default function AgentActivityPage() {
 
                     {selectedClaim.currentStep === 3 && (
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
-                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block select-none">Submit Inspection Details</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block select-none">Submit Inspection Details</span>
                         {!selectedClaim.inspectionSubmitted ? (
                           <div className="flex flex-col gap-3">
                             <textarea
@@ -2158,7 +2158,7 @@ export default function AgentActivityPage() {
                               type="button"
                               onClick={() => handleSubmitInspectionReport(selectedClaim.claimNumber)}
                               disabled={isSubmittingReport || !inspectionReportText.trim()}
-                              className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer self-end disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
+                              className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs py-3 px-6 rounded-xl cursor-pointer self-end disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
                             >
                               {isSubmittingReport ? "Submitting..." : "Submit Inspection Report"}
                             </button>
@@ -2173,7 +2173,7 @@ export default function AgentActivityPage() {
 
                     {(selectedClaim.currentStep === 4 || selectedClaim.currentStep === 5) && (
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-4">
-                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block select-none">Assessment & Approval</span>
+                        <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block select-none">Assessment & Approval</span>
                         <div className="flex flex-col gap-3.5">
                           <p className="text-slate-550 text-xs font-semibold leading-relaxed">
                             Input the evaluated damage assessment amount below and confirm approval to proceed to the payment step.
@@ -2192,7 +2192,7 @@ export default function AgentActivityPage() {
                             type="button"
                             onClick={() => handleApproveAssessment(selectedClaim.claimNumber)}
                             disabled={updatingClaim || !assessmentAmount.trim()}
-                            className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-6 rounded-xl cursor-pointer self-start disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
+                            className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs py-3 px-6 rounded-xl cursor-pointer self-start disabled:opacity-50 select-none shadow-sm active:scale-95 transition-all"
                           >
                             Confirm Assessment Approval
                           </button>
@@ -2203,21 +2203,21 @@ export default function AgentActivityPage() {
                     {selectedClaim.currentStep === 6 && (
                       <div className="space-y-4">
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-2 select-none leading-relaxed">
-                          <h3 className="text-xs font-black text-slate-800 border-b pb-1.5 uppercase tracking-wide">
+                          <h3 className="text-xs font-semibold text-slate-800 border-b pb-1.5 uppercase tracking-wide">
                             Payment Details
                           </h3>
                           <div className="grid grid-cols-2 gap-y-2 text-xs font-semibold text-slate-700">
                             <div>
-                              <span className="text-[9px] text-slate-400 uppercase font-black tracking-wide block">Bank Name</span>
-                              <span className="text-slate-900 font-extrabold block mt-0.5">{selectedClaim.bankName || "-"}</span>
+                              <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wide block">Bank Name</span>
+                              <span className="text-slate-900 font-bold block mt-0.5">{selectedClaim.bankName || "-"}</span>
                             </div>
                             <div>
-                              <span className="text-[9px] text-slate-400 uppercase font-black tracking-wide block">Branch Name</span>
-                              <span className="text-slate-900 font-extrabold block mt-0.5">{selectedClaim.bankBranch || "-"}</span>
+                              <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wide block">Branch Name</span>
+                              <span className="text-slate-900 font-bold block mt-0.5">{selectedClaim.bankBranch || "-"}</span>
                             </div>
                             <div className="col-span-2">
-                              <span className="text-[9px] text-slate-400 uppercase font-black tracking-wide block">Account Number</span>
-                              <span className="text-slate-900 font-extrabold block mt-0.5">{selectedClaim.bankAccount || "-"}</span>
+                              <span className="text-[9px] text-slate-400 uppercase font-semibold tracking-wide block">Account Number</span>
+                              <span className="text-slate-900 font-bold block mt-0.5">{selectedClaim.bankAccount || "-"}</span>
                             </div>
                           </div>
                         </div>
@@ -2237,7 +2237,7 @@ export default function AgentActivityPage() {
                                 }
                                 setPreviewImage(docUrl || null);
                               }}
-                              className="text-xs font-extrabold text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer"
+                              className="text-xs font-bold text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer"
                             >
                               View Receipt File
                             </button>
@@ -2279,14 +2279,14 @@ export default function AgentActivityPage() {
               {/* Header: Title, Tags & Avatar */}
               <div className="flex items-start justify-between gap-4">
                 <div className="overflow-hidden">
-                  <h2 className="font-black text-slate-800 text-xl tracking-tight truncate">
+                  <h2 className="font-semibold text-slate-800 text-xl tracking-tight truncate">
                     {getPolicyHolderName(selectedClaim.userNic)}
                   </h2>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider">
+                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider">
                       ID: {selectedClaim.claimNumber}
                     </span>
-                    <span className={`border rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                    <span className={`border rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
                       selectedClaim.status.toLowerCase() === "pending"
                         ? "border-amber-300 text-amber-700 bg-amber-50/50"
                         : selectedClaim.status.toLowerCase() === "in progress"
@@ -2317,55 +2317,55 @@ export default function AgentActivityPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-sm font-semibold select-none leading-relaxed flex-1 overflow-y-auto pr-1">
                 {/* Column 1: Agent Assignment & Info */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-cyan-600" strokeWidth={2.5} />
                     Agent Assignment Info
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[125px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Assigned Agent</span>
-                      <span className="text-slate-700 font-black truncate">: {selectedClaim.assignedAgent || "-"}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {selectedClaim.assignedAgent || "-"}</span>
                     </div>
                     <div className="grid grid-cols-[125px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Branch Office</span>
-                      <span className="text-slate-700 font-black truncate">: {selectedClaim.branch || "-"}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {selectedClaim.branch || "-"}</span>
                     </div>
                     <div className="grid grid-cols-[125px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Assignment Date</span>
-                      <span className="text-slate-700 font-black truncate">: {formatDate(selectedClaim.createdAt)}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {formatDate(selectedClaim.createdAt)}</span>
                     </div>
                     <div className="grid grid-cols-[125px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Policyholder NIC</span>
-                      <span className="text-slate-700 font-black truncate">: {selectedClaim.userNic}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {selectedClaim.userNic}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Column 2: Vehicle Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Vehicle Details
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[110px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Vehicle No</span>
-                      <span className="text-slate-700 font-black truncate">: {formatPlate(selectedClaim.vehiclePlate)}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {formatPlate(selectedClaim.vehiclePlate)}</span>
                     </div>
                     <div className="grid grid-cols-[110px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Severity</span>
-                      <span className="text-slate-700 font-black truncate">: {selectedClaim.severity || getSeverity(selectedClaim.damageType)}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {selectedClaim.severity || getSeverity(selectedClaim.damageType)}</span>
                     </div>
                     <div className="grid grid-cols-[110px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Priority</span>
-                      <span className="text-slate-700 font-black truncate">: {selectedClaim.priority || "Medium"}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {selectedClaim.priority || "Medium"}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Large Dedicated Section: Incident Details */}
                 <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                  <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                     Incident Details & Assessment
                   </h3>
@@ -2374,22 +2374,22 @@ export default function AgentActivityPage() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Damage Type</span>
-                        <span className="text-slate-700 font-black truncate">: {selectedClaim.damageType || "-"}</span>
+                        <span className="text-slate-700 font-semibold truncate">: {selectedClaim.damageType || "-"}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Incident Date</span>
-                        <span className="text-slate-700 font-black truncate">: {claimDateString(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
+                        <span className="text-slate-700 font-semibold truncate">: {claimDateString(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Est. Amount</span>
-                        <span className="text-slate-700 font-black truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
+                        <span className="text-slate-700 font-semibold truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2 items-start">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Location</span>
-                        <span className="text-slate-700 font-black whitespace-normal break-words leading-relaxed">: {selectedClaim.location || "-"}</span>
+                        <span className="text-slate-700 font-semibold whitespace-normal break-words leading-relaxed">: {selectedClaim.location || "-"}</span>
                       </div>
                     </div>
                   </div>
@@ -2404,7 +2404,7 @@ export default function AgentActivityPage() {
                   {selectedClaim.rejectionReason && (
                     <div className="flex flex-col gap-1 border-t border-slate-200/60 pt-3 mt-3">
                       <span className="text-red-500 font-bold uppercase tracking-wider text-[10px]">Rejection / Rejection reason</span>
-                      <span className="text-red-650 font-extrabold mt-1 text-sm">
+                      <span className="text-red-650 font-bold mt-1 text-sm">
                         {selectedClaim.rejectionReason}
                       </span>
                     </div>
@@ -2444,7 +2444,7 @@ export default function AgentActivityPage() {
 
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                      <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                      <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                         <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-[#0f2d4a]" strokeWidth={2.5} />
                         Policy Holder Attachments & Photos
                       </h3>
@@ -2473,7 +2473,7 @@ export default function AgentActivityPage() {
                                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
                                   />
                                 </div>
-                                <span className="text-[9px] text-slate-500 font-black text-center mt-2 uppercase tracking-wider truncate w-full px-1">
+                                <span className="text-[9px] text-slate-500 font-semibold text-center mt-2 uppercase tracking-wider truncate w-full px-1">
                                   {doc.name}
                                 </span>
                               </div>
@@ -2490,7 +2490,7 @@ export default function AgentActivityPage() {
                   const agentDocs = (selectedClaim.additionalDocuments || []).filter(doc => doc.uploadedBy === "Agent");
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                      <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                      <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                         <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
                         Agent Uploaded Documents
                       </h3>
@@ -2517,7 +2517,7 @@ export default function AgentActivityPage() {
                                   {isPdf ? (
                                     <div className="flex flex-col items-center gap-1 text-red-505">
                                       <HugeiconsIcon icon={File01Icon} className="w-8 h-8 text-red-500" strokeWidth={2.2} />
-                                      <span className="text-[8px] font-black uppercase tracking-wider text-red-500">PDF Document</span>
+                                      <span className="text-[8px] font-semibold uppercase tracking-wider text-red-500">PDF Document</span>
                                     </div>
                                   ) : (
                                     <img
@@ -2527,7 +2527,7 @@ export default function AgentActivityPage() {
                                     />
                                   )}
                                 </div>
-                                <span className="text-[9px] text-slate-500 font-black text-center mt-2 uppercase tracking-wider truncate w-full px-1">
+                                <span className="text-[9px] text-slate-500 font-semibold text-center mt-2 uppercase tracking-wider truncate w-full px-1">
                                   {doc.name}
                                 </span>
                               </div>
@@ -2546,7 +2546,7 @@ export default function AgentActivityPage() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal("documents")}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-black text-xs py-3 px-6 rounded-full cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-2 border-none"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-xs py-3 px-6 rounded-full cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-2 border-none"
                 >
                   <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
                   Upload Documents
@@ -2554,7 +2554,7 @@ export default function AgentActivityPage() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal("add_note")}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs py-3 px-6 rounded-full cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-2 border-none"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-3 px-6 rounded-full cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-2 border-none"
                 >
                   <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4" strokeWidth={2.5} />
                   Add Note
@@ -2562,7 +2562,7 @@ export default function AgentActivityPage() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal("contact")}
-                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-black text-xs py-3 px-6 rounded-full cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-2 border-none"
+                  className="bg-cyan-600 hover:bg-cyan-700 text-white font-semibold text-xs py-3 px-6 rounded-full cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-2 border-none"
                 >
                   <HugeiconsIcon icon={BubbleChatIcon} className="w-5 h-5" strokeWidth={2.5} />
                   Chat / Contact
@@ -2576,7 +2576,7 @@ export default function AgentActivityPage() {
                     type="button"
                     onClick={() => handleAcceptClaim(selectedClaim.claimNumber)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
                     <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     Accept
@@ -2585,7 +2585,7 @@ export default function AgentActivityPage() {
                     type="button"
                     onClick={() => handleDeclineClaim(selectedClaim.claimNumber)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-semibold text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
                     <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     Reject
@@ -2596,7 +2596,7 @@ export default function AgentActivityPage() {
               {/* Status Banner for Accepted (In Progress / Approved) Claims */}
               {selectedClaim.currentStep >= 3 && !selectedClaim.inspectionSubmitted && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                 <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-6 text-center select-none transition-all duration-300">
-                  <p className="text-emerald-800 text-xs md:text-sm font-black flex items-center justify-center gap-2">
+                  <p className="text-emerald-800 text-xs md:text-sm font-semibold flex items-center justify-center gap-2">
                     <HugeiconsIcon icon={SmartPhone01Icon} className="w-5 h-5 animate-pulse" strokeWidth={2.5} />
                     Claim Assignment Accepted
                   </p>
@@ -2609,7 +2609,7 @@ export default function AgentActivityPage() {
               {/* Status Banner for Rejected Claims */}
               {selectedClaim.status.toLowerCase() === "rejected" && (
                 <div className="w-full bg-red-50 border border-red-200 rounded-2xl p-4 mt-6 flex flex-col items-center text-center select-none gap-3 transition-all duration-300">
-                  <p className="text-red-800 text-xs md:text-sm font-black flex items-center justify-center gap-2">
+                  <p className="text-red-800 text-xs md:text-sm font-semibold flex items-center justify-center gap-2">
                     <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     Claim Assignment Declined
                   </p>
@@ -2622,7 +2622,7 @@ export default function AgentActivityPage() {
                       setSelectedClaim(null);
                       router.push("/Agent/Contact");
                     }}
-                    className="bg-red-600 hover:bg-red-700 text-white font-black text-xs py-3 px-6 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all text-center border-none"
+                    className="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs py-3 px-6 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all text-center border-none"
                   >
                     Contact Branch Support
                   </button>
@@ -2672,7 +2672,7 @@ export default function AgentActivityPage() {
             </div>
 
             {/* Content */}
-            <h3 className="text-slate-900 font-black text-xl tracking-tight leading-none">
+            <h3 className="text-slate-900 font-semibold text-xl tracking-tight leading-none">
               Claim Accepted Successfully!
             </h3>
             <p className="text-slate-500 text-xs md:text-sm font-semibold mt-4 leading-relaxed">
@@ -2681,7 +2681,7 @@ export default function AgentActivityPage() {
 
             {/* Quick Steps */}
             <div className="w-full bg-slate-50 border border-slate-200/60 rounded-2xl p-4 mt-5 text-left space-y-2.5">
-              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block select-none">Next Steps:</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block select-none">Next Steps:</span>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">1</span>
                 <span className="leading-relaxed">Launch the Sanasa Agent app on your phone.</span>
@@ -2703,7 +2703,7 @@ export default function AgentActivityPage() {
             {/* Close Button */}
             <button
               onClick={() => setShowMobileRedirect(false)}
-              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
+              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-bold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
             >
               Okay, Got It
             </button>
@@ -2718,7 +2718,7 @@ export default function AgentActivityPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[650px] h-[550px] max-h-[85vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
             {/* Header */}
             <div className="px-8 pt-6 pb-2 select-none bg-white">
-              <h2 className="text-[22px] font-black text-slate-900 tracking-tight leading-none flex items-center gap-2">
+              <h2 className="text-[22px] font-semibold text-slate-900 tracking-tight leading-none flex items-center gap-2">
                 <span>🕒 Last Activity Logs</span>
                 <span className="text-xs text-slate-400 font-bold tracking-normal">(App & Web)</span>
               </h2>
@@ -2792,10 +2792,10 @@ export default function AgentActivityPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className="font-extrabold text-sm text-slate-800 leading-tight">
+                            <span className="font-bold text-sm text-slate-800 leading-tight">
                               {act.action}
                             </span>
-                            <span className={`text-[8px] font-black px-2 py-1 rounded-md uppercase tracking-wider ${
+                            <span className={`text-[8px] font-semibold px-2 py-1 rounded-md uppercase tracking-wider ${
                               isMobileApp ? "bg-purple-100 text-purple-700 border border-purple-200" : "bg-cyan-100 text-cyan-700 border border-cyan-200"
                             }`}>
                               {act.device}

@@ -31,29 +31,29 @@ export default function OfficeStaffFooter() {
           <div className="flex flex-row gap-12 md:gap-24 flex-1 justify-center md:justify-start md:pl-20">
             {/* Column 1 */}
             <div className="flex flex-col gap-3.5">
-              <Link href="/Office_Staff/Dashboard" className="hover:text-slate-200 transition-colors font-extrabold text-base no-underline">
+              <Link href="/Office_Staff/Dashboard" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
                 Home
               </Link>
-              <Link href="/Office_Staff/Claims" className="hover:text-slate-200 transition-colors font-extrabold text-base no-underline">
+              <Link href="/Office_Staff/Claims" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
                 Claims
               </Link>
-              <Link href="/Office_Staff/Registrations" className="hover:text-slate-200 transition-colors font-extrabold text-base no-underline">
+              <Link href="/Office_Staff/Registrations" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
                 Registrations
               </Link>
-              <Link href="/Office_Staff/Contact" className="hover:text-slate-200 transition-colors font-extrabold text-base no-underline">
+              <Link href="/Office_Staff/Contact" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
                 Contact
               </Link>
             </div>
 
             {/* Column 2 */}
             <div className="flex flex-col gap-3.5">
-              <Link href="/Office_Staff/PolicyHolders" className="hover:text-slate-200 transition-colors font-extrabold text-base no-underline">
+              <Link href="/Office_Staff/PolicyHolders" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
                 Policy Holders
               </Link>
-              <Link href="/Office_Staff/Agents" className="hover:text-slate-200 transition-colors font-extrabold text-base no-underline">
+              <Link href="/Office_Staff/Agents" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
                 Agents
               </Link>
-              <Link href="/Office_Staff/Reports" className="hover:text-slate-200 transition-colors font-extrabold text-base no-underline">
+              <Link href="/Office_Staff/Reports" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
                 Reports
               </Link>
             </div>
@@ -67,7 +67,7 @@ export default function OfficeStaffFooter() {
               <div className="bg-white/10 p-3 rounded-full flex items-center justify-center">
                 <HugeiconsIcon icon={Call02Icon} className="w-6 h-6 text-white" strokeWidth={2} />
               </div>
-              <span className="font-black text-[15px] tracking-wide whitespace-nowrap">
+              <span className="font-semibold text-[15px] tracking-wide whitespace-nowrap">
                 24 Hours : 0725 575 575
               </span>
             </div>

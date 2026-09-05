@@ -285,7 +285,7 @@ export default function ResetPassword() {
 
             {/* Top Center Title */}
             <div className="flex flex-col items-center text-center -mt-2 mb-1">
-              <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
+              <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
                 Reset Password
               </h1>
               <p className="mt-2 text-white/70 text-sm max-w-xs sm:max-w-sm leading-relaxed">
@@ -486,7 +486,7 @@ export default function ResetPassword() {
                   </div>
 
                   <div className="flex flex-col gap-3">
-                    <h3 className="text-white text-3xl font-extrabold tracking-tight drop-shadow-md">Password Updated!</h3>
+                    <h3 className="text-white text-3xl font-bold tracking-tight drop-shadow-md">Password Updated!</h3>
                     <p className="text-white/80 text-sm leading-relaxed">
                       Your password has been changed successfully. You can now access your account.
                     </p>

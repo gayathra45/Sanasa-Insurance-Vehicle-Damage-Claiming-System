@@ -291,7 +291,7 @@ export default function ActivateAgent() {
                   </div>
 
                   <div>
-                    <h3 className="text-white text-3xl font-extrabold tracking-tight">Activated!</h3>
+                    <h3 className="text-white text-3xl font-bold tracking-tight">Activated!</h3>
                     <p className="text-white/80 text-sm mt-3 leading-relaxed">
                       Your agent account has been activated successfully. You can now login.
                     </p>

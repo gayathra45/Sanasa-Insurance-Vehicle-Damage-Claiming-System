@@ -167,7 +167,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-inner select-text">
         <div className="flex items-center gap-2 mb-3 text-slate-400 select-none">
           <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
         </div>
         <p className="text-slate-700 text-xs font-semibold whitespace-pre-wrap leading-relaxed">
           {parsed.rawText}
@@ -198,7 +198,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
     }
 
     return (
-      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
+      <span className={`px-3 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
         {icon}
         {val}
       </span>
@@ -212,11 +212,11 @@ const renderPremiumInspectionReport = (reportText: string) => {
         <div className="flex items-center gap-3">
           <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
           <div>
-            <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
+            <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
             <span className="text-[10px] font-bold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
           </div>
         </div>
-        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-extrabold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-bold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
           <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
           Verified By Agent
         </span>
@@ -226,36 +226,36 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Odometer */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Odometer</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Odometer</span>
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-slate-800">{parsed.odometer || "N/A"}</span>
+            <span className="text-[17px] font-semibold text-slate-800">{parsed.odometer || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Total Distance Travelled</span>
         </div>
 
         {/* Card 2: Fuel Level */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Fuel Level</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Fuel Level</span>
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-slate-800">{parsed.fuelLevel || "N/A"}</span>
+            <span className="text-[17px] font-semibold text-slate-800">{parsed.fuelLevel || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Current Tank Level</span>
         </div>
 
         {/* Card 3: Estimated Cost */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
+            <span className="text-[17px] font-semibold text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Assessment Valuation</span>
         </div>
 
         {/* Card 4: Recommendation */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Recommendation</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Recommendation</span>
           <div className="flex items-baseline gap-1 mt-2 overflow-hidden">
-            <span className="text-[13px] font-black text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
+            <span className="text-[13px] font-semibold text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Suggested Action Payout</span>
         </div>
@@ -266,7 +266,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         {/* Component Damage Checklist */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 space-y-4 shadow-sm">
           <div>
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
             <div className="space-y-2">
               {Object.entries(parsed.checklist || {}).map(([key, value]) => (
                 <div key={key} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
@@ -282,7 +282,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         <div className="flex flex-col gap-4">
           {parsed.preExistingDamage && parsed.preExistingDamage !== "None reported." && (
             <div className="bg-amber-50/20 border border-amber-200/50 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
-              <span className="text-[10px] text-amber-800 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
+              <span className="text-[10px] text-amber-800 font-semibold uppercase tracking-wider flex items-center gap-1.5 select-none">
                 <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
                 Pre-Existing Damage Remarks
               </span>
@@ -291,7 +291,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
           )}
 
           <div className="bg-slate-50/50 border border-slate-200/70 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5 select-none">
               <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
               Physical Inspection Remarks
             </span>
@@ -1131,15 +1131,15 @@ export default function AgentDashboard() {
         <div className="relative z-10 max-w-7xl mx-auto w-full flex flex-col gap-8">
           <div className="space-y-3">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white drop-shadow-sm select-none">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-white drop-shadow-sm select-none">
                 {t.welcomeBack} <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-200">{agentName}</span>!
               </h1>
               {/* Availability Status Selector */}
               <div className="flex items-center gap-2 bg-slate-950/45 border border-white/10 rounded-full p-1 self-start md:self-center select-none shadow-md">
-                <span className="text-[10px] text-slate-400 font-extrabold tracking-wider uppercase pl-3 pr-1">{t.status}</span>
+                <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase pl-3 pr-1">{t.status}</span>
                 <button
                   onClick={() => toggleAvailability("Active")}
-                  className={`px-4 py-2 rounded-full text-xs font-black cursor-pointer transition-all border-none flex items-center gap-1.5 ${
+                  className={`px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all border-none flex items-center gap-1.5 ${
                     availability === "Active"
                       ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30"
                       : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5"
@@ -1150,7 +1150,7 @@ export default function AgentDashboard() {
                 </button>
                 <button
                   onClick={() => toggleAvailability("Offline")}
-                  className={`px-4 py-2 rounded-full text-xs font-black cursor-pointer transition-all border-none flex items-center gap-1.5 ${
+                  className={`px-4 py-2 rounded-full text-xs font-semibold cursor-pointer transition-all border-none flex items-center gap-1.5 ${
                     availability === "Offline"
                       ? "bg-red-500 text-white shadow-md shadow-red-500/30"
                       : "bg-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5"
@@ -1175,10 +1175,10 @@ export default function AgentDashboard() {
               {/* Stacked Text in the middle */}
               <div className="flex flex-col text-left">
                 <span className="text-xs text-red-200 opacity-90 font-bold uppercase tracking-wider">{t.urgentClaims}</span>
-                <span className="text-base text-white font-extrabold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
+                <span className="text-base text-white font-bold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
               </div>
               {/* Large count number on the right */}
-              <span className="text-3xl font-black text-white ml-auto">{urgentCount}</span>
+              <span className="text-3xl font-semibold text-white ml-auto">{urgentCount}</span>
             </div>
 
             {/* Assigned Card */}
@@ -1188,10 +1188,10 @@ export default function AgentDashboard() {
               {/* Stacked Text in the middle */}
               <div className="flex flex-col text-left">
                 <span className="text-xs text-cyan-200 opacity-90 font-bold uppercase tracking-wider">{t.assignedClaims}</span>
-                <span className="text-base text-white font-extrabold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
+                <span className="text-base text-white font-bold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
               </div>
               {/* Large count number on the right */}
-              <span className="text-3xl font-black text-white ml-auto">{totalAssigned}</span>
+              <span className="text-3xl font-semibold text-white ml-auto">{totalAssigned}</span>
             </div>
 
             {/* Completed Card */}
@@ -1201,10 +1201,10 @@ export default function AgentDashboard() {
               {/* Stacked Text in the middle */}
               <div className="flex flex-col text-left">
                 <span className="text-xs text-emerald-200 opacity-90 font-bold uppercase tracking-wider">{t.completedClaims}</span>
-                <span className="text-base text-white font-extrabold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
+                <span className="text-base text-white font-bold tracking-wide -mt-0.5">{lang === "en" ? "Claims" : ""}</span>
               </div>
               {/* Large count number on the right */}
-              <span className="text-3xl font-black text-white ml-auto">{completedClaims.length}</span>
+              <span className="text-3xl font-semibold text-white ml-auto">{completedClaims.length}</span>
             </div>
           </div>
 
@@ -1221,16 +1221,16 @@ export default function AgentDashboard() {
           {claimsWithPendingAgentRequests.length > 0 && (
             <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-red-200/40 rounded-3xl p-6 shadow-lg shadow-red-500/[0.005] relative overflow-hidden">
               <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/60 pb-3 mb-2">
-                <h2 className="text-lg font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
+                <h2 className="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
                   <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500 animate-pulse" strokeWidth={2.5} />
                   {t.actionRequired}
                   {/* Total Pending Count Badge */}
-                  <span className="bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-black px-3 py-1 rounded-full flex items-center gap-1 select-none shadow-[0_2px_8px_rgba(239,68,68,0.25)] animate-pulse">
+                  <span className="bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 select-none shadow-[0_2px_8px_rgba(239,68,68,0.25)] animate-pulse">
                     {claimsWithPendingAgentRequests.length}
                   </span>
                 </h2>
                 {claimsWithPendingAgentRequests.length > 3 && (
-                  <Link href="/Agent/Documents" className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-full text-xs font-extrabold transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-1 select-none shadow-sm">
+                  <Link href="/Agent/Documents" className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 hover:scale-105 active:scale-95 flex items-center gap-1 select-none shadow-sm">
                     {t.viewAll}
                     <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                   </Link>
@@ -1255,7 +1255,7 @@ export default function AgentDashboard() {
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center mr-2">
                         {/* Col 1: Claim ID & Plate */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.claimPlate}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.claimPlate}</span>
                           <span className="text-sm font-bold text-slate-800 truncate">
                             {claim.claimNumber} · {claim.vehiclePlate}
                           </span>
@@ -1263,21 +1263,21 @@ export default function AgentDashboard() {
 
                         {/* Col 2: Received Progress */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.docsReceived}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.docsReceived}</span>
                           <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 select-none">
                             <HugeiconsIcon icon={Task01Icon} className="w-4 h-4 text-cyan-600 flex-shrink-0" strokeWidth={2.2} />
                             <span>
-                              <span className="text-emerald-600 font-extrabold">{uploadedDocsCount}</span> / <span className="text-slate-800 font-extrabold">{totalDocs.length}</span>
+                              <span className="text-emerald-600 font-bold">{uploadedDocsCount}</span> / <span className="text-slate-800 font-bold">{totalDocs.length}</span>
                             </span>
                           </div>
                         </div>
 
                         {/* Col 3: Pending Documents List */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.pendingFiles}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.pendingFiles}</span>
                           <div className="flex flex-wrap gap-1.5 mt-0.5">
                             {pendingDocs.map((docName, idx) => (
-                              <span key={idx} className="text-[9px] font-black bg-red-50/70 text-red-600 border border-red-150 px-3 py-1 rounded-full select-none tracking-wide uppercase transition-colors hover:bg-red-100/50">
+                              <span key={idx} className="text-[9px] font-semibold bg-red-50/70 text-red-600 border border-red-150 px-3 py-1 rounded-full select-none tracking-wide uppercase transition-colors hover:bg-red-100/50">
                                 {docName}
                               </span>
                             ))}
@@ -1287,7 +1287,7 @@ export default function AgentDashboard() {
 
                       <Link
                         href={`/Agent/Documents?uploadClaim=${claim.claimNumber}`}
-                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-black py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0 text-center no-underline"
+                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-semibold py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0 text-center no-underline"
                       >
                         {t.uploadDocs}
                       </Link>
@@ -1301,11 +1301,11 @@ export default function AgentDashboard() {
           {/* New Claims Section */}
           <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-slate-200/40 rounded-3xl p-6 shadow-lg shadow-slate-500/[0.005] relative overflow-hidden">
             <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/60 pb-3 mb-2">
-              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
+              <h2 className="text-lg font-bold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
                 {t.newClaims}
                 {/* Total Count Badge */}
-                <span className="bg-gradient-to-r from-slate-700 to-slate-800 text-white text-xs font-black px-3 py-1 rounded-full flex items-center justify-center select-none shadow-[0_2px_8px_rgba(15,23,42,0.12)] border border-slate-700/30">
+                <span className="bg-gradient-to-r from-slate-700 to-slate-800 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center justify-center select-none shadow-[0_2px_8px_rgba(15,23,42,0.12)] border border-slate-700/30">
                   {activeClaims.length}
                 </span>
               </h2>
@@ -1336,15 +1336,15 @@ export default function AgentDashboard() {
                       <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center mr-2">
                         {/* Col 1: Claim ID & Severity */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
                           <div className="text-sm font-bold text-slate-800 truncate flex items-center gap-1.5 flex-wrap">
                             {claim.claimNumber}
                             {isUrgent ? (
-                              <span className="text-[9px] font-black uppercase bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full select-none tracking-wide">
+                              <span className="text-[9px] font-semibold uppercase bg-red-50 text-red-600 border border-red-200 px-3 py-1 rounded-full select-none tracking-wide">
                                 Urgent
                               </span>
                             ) : (
-                              <span className="text-[9px] font-black uppercase bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1 rounded-full select-none tracking-wide">
+                              <span className="text-[9px] font-semibold uppercase bg-cyan-50 text-cyan-700 border border-cyan-200 px-3 py-1 rounded-full select-none tracking-wide">
                                 {severity}
                               </span>
                             )}
@@ -1353,7 +1353,7 @@ export default function AgentDashboard() {
 
                         {/* Col 2: Vehicle */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.vehicle}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.vehicle}</span>
                           <span className="text-xs font-bold text-slate-700 truncate">
                             {claim.vehiclePlate} {claim.vehicleModel && <span className="font-semibold text-slate-500">({claim.vehicleModel})</span>}
                           </span>
@@ -1361,19 +1361,19 @@ export default function AgentDashboard() {
 
                         {/* Col 3: Damage Type */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.damageType}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.damageType}</span>
                           <span className="text-xs font-bold text-slate-700 truncate">{claim.damageType}</span>
                         </div>
 
                         {/* Col 4: Location */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.location}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.location}</span>
                           <span className="text-xs font-bold text-slate-700 truncate" title={claim.location}>{claim.location}</span>
                         </div>
 
                         {/* Col 5: Progress / Time */}
                         <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">{t.progressTime}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t.progressTime}</span>
                           <span className="text-xs font-bold text-slate-700 truncate">
                             Step {claim.currentStep} of 4 · <span className="text-slate-400 font-semibold">{claim.incidentTime}</span>
                           </span>
@@ -1382,7 +1382,7 @@ export default function AgentDashboard() {
                       
                       <button
                         onClick={() => setSelectedClaim(claim)}
-                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-black py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0"
+                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-semibold py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0"
                       >
                         {t.details}
                       </button>
@@ -1398,7 +1398,7 @@ export default function AgentDashboard() {
         <div className="flex flex-col gap-8">
           
           <div className="flex flex-col gap-4">
-            <h2 className="text-2xl font-extrabold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
+            <h2 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
               <HugeiconsIcon icon={Book01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
               {t.myActivity}
             </h2>
@@ -1435,11 +1435,11 @@ export default function AgentDashboard() {
 
                         <div className="flex justify-between items-center flex-wrap gap-2">
                           <div className="flex flex-col min-w-0">
-                            <span className="font-extrabold text-sm text-slate-800 tracking-tight transition-colors group-hover:text-cyan-600">{act.claimNumber}</span>
-                            <span className="text-[10px] text-slate-400 font-extrabold tracking-wider uppercase mt-0.5">{act.vehiclePlate}</span>
+                            <span className="font-bold text-sm text-slate-800 tracking-tight transition-colors group-hover:text-cyan-600">{act.claimNumber}</span>
+                            <span className="text-[10px] text-slate-400 font-bold tracking-wider uppercase mt-0.5">{act.vehiclePlate}</span>
                           </div>
 
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-black border tracking-wide uppercase ${badgeBg}`}>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-semibold border tracking-wide uppercase ${badgeBg}`}>
                             {act.status}
                           </span>
                         </div>
@@ -1463,7 +1463,7 @@ export default function AgentDashboard() {
               <span className="text-[9px] font-bold text-emerald-700 tracking-wide uppercase">Live Support</span>
             </div>
 
-            <h3 className="text-cyan-800 font-extrabold text-lg tracking-tight flex items-center gap-2 select-none">
+            <h3 className="text-cyan-800 font-bold text-lg tracking-tight flex items-center gap-2 select-none">
               <HugeiconsIcon icon={HelpCircleIcon} className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
               {t.supportHelpdesk}
             </h3>
@@ -1478,7 +1478,7 @@ export default function AgentDashboard() {
                   <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white">
                     <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2} />
                   </span>
-                  <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 000</span>
+                  <span className="text-slate-700 tracking-tight font-bold">+94 112 003 000</span>
                 </div>
                 <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
                   {t.line} 1
@@ -1490,7 +1490,7 @@ export default function AgentDashboard() {
                   <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white">
                     <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2} />
                   </span>
-                  <span className="text-slate-700 tracking-tight font-extrabold">+94 112 003 001</span>
+                  <span className="text-slate-700 tracking-tight font-bold">+94 112 003 001</span>
                 </div>
                 <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200">
                   {t.line} 2
@@ -1511,7 +1511,7 @@ export default function AgentDashboard() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Documents - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1527,7 +1527,7 @@ export default function AgentDashboard() {
                 <div className="space-y-6">
                   {/* Category 1: Policy Holder Documents */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                    <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
+                    <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2} />
                       Policy Holder Documents
                     </h3>
@@ -1580,7 +1580,7 @@ export default function AgentDashboard() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1590,7 +1590,7 @@ export default function AgentDashboard() {
 
                   {/* Category 2: Agent Documents & Upload Panel */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                    <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
+                    <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-cyan-600" strokeWidth={2} />
                       Agent Documents
                     </h3>
@@ -1630,7 +1630,7 @@ export default function AgentDashboard() {
                                 className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
                                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                                <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                                <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                               </button>
                             );
                           }
@@ -1646,7 +1646,7 @@ export default function AgentDashboard() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1656,7 +1656,7 @@ export default function AgentDashboard() {
                     {/* Agent File Upload Panel */}
                     {selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                       <div className="border-t border-slate-200/60 pt-4 flex flex-col gap-4">
-                        <span className="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider select-none">Upload Claim Document</span>
+                        <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider select-none">Upload Claim Document</span>
                         
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Document Type</label>
@@ -1744,7 +1744,7 @@ export default function AgentDashboard() {
                           <button
                             onClick={handleAgentUpload}
                             disabled={isAgentUploading}
-                            className="w-full bg-red-650 hover:bg-red-700 text-white font-extrabold text-xs py-3 px-4 rounded-xl border-none cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 mt-1 shadow-md flex items-center justify-center gap-2"
+                            className="w-full bg-red-650 hover:bg-red-700 text-white font-bold text-xs py-3 px-4 rounded-xl border-none cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 mt-1 shadow-md flex items-center justify-center gap-2"
                           >
                             {isAgentUploading ? "Uploading..." : "Upload Document to Claim"}
                           </button>
@@ -1785,14 +1785,14 @@ export default function AgentDashboard() {
               {/* Header: Title, Tags & Avatar */}
               <div className="flex items-start justify-between gap-4">
                 <div className="overflow-hidden">
-                  <h2 className="font-black text-slate-800 text-xl tracking-tight truncate">
+                  <h2 className="font-semibold text-slate-800 text-xl tracking-tight truncate">
                     {getPolicyHolderName(selectedClaim.userNic)}
                   </h2>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider">
+                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider">
                       ID: {selectedClaim.claimNumber}
                     </span>
-                    <span className={`border rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                    <span className={`border rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
                       selectedClaim.status.toLowerCase() === "pending"
                         ? "border-amber-300 text-amber-700 bg-amber-50/50"
                         : selectedClaim.status.toLowerCase() === "in progress"
@@ -1823,51 +1823,51 @@ export default function AgentDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-sm font-semibold select-none leading-relaxed flex-1 overflow-y-auto pr-1">
                 {/* Column 1: Policy Holder Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Policy Holder Details
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Email</span>
-                      <span className="text-slate-700 font-black truncate">: {getPolicyHolderEmail(selectedClaim.userNic)}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {getPolicyHolderEmail(selectedClaim.userNic)}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">NIC</span>
-                      <span className="text-slate-700 font-black truncate">: {selectedClaim.userNic}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {selectedClaim.userNic}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Contact</span>
-                      <span className="text-slate-700 font-black truncate">: {getPolicyHolderContact(selectedClaim.userNic)}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {getPolicyHolderContact(selectedClaim.userNic)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Column 2: Vehicle Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Vehicle Details
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Vehicle No</span>
-                      <span className="text-slate-700 font-black truncate">: {formatPlate(selectedClaim.vehiclePlate)}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {formatPlate(selectedClaim.vehiclePlate)}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Branch</span>
-                      <span className="text-slate-700 font-black truncate">: {selectedClaim.branch || "-"}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {selectedClaim.branch || "-"}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Assigned Agent</span>
-                      <span className="text-slate-700 font-black truncate">: {agentName || selectedClaim.assignedAgent || "-"}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {agentName || selectedClaim.assignedAgent || "-"}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Large Dedicated Section: Incident Details */}
                 <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                  <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                     Incident Details & Assessment
                   </h3>
@@ -1876,22 +1876,22 @@ export default function AgentDashboard() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Damage Type</span>
-                        <span className="text-slate-700 font-black truncate">: {selectedClaim.damageType || "-"}</span>
+                        <span className="text-slate-700 font-semibold truncate">: {selectedClaim.damageType || "-"}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Incident Date</span>
-                        <span className="text-slate-700 font-black truncate">: {formatDate(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
+                        <span className="text-slate-700 font-semibold truncate">: {formatDate(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Est. Amount</span>
-                        <span className="text-slate-700 font-black truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
+                        <span className="text-slate-700 font-semibold truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2 items-start">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Location</span>
-                        <span className="text-slate-700 font-black whitespace-normal break-words leading-relaxed">: {selectedClaim.location || "-"}</span>
+                        <span className="text-slate-700 font-semibold whitespace-normal break-words leading-relaxed">: {selectedClaim.location || "-"}</span>
                       </div>
                     </div>
                   </div>
@@ -1906,7 +1906,7 @@ export default function AgentDashboard() {
                   {selectedClaim.rejectionReason && (
                     <div className="flex flex-col gap-1 border-t border-slate-200/60 pt-3 mt-3">
                       <span className="text-red-500 font-bold uppercase tracking-wider text-[10px]">Rejection Reason</span>
-                      <span className="text-red-650 font-extrabold mt-1 text-sm">
+                      <span className="text-red-650 font-bold mt-1 text-sm">
                         {selectedClaim.rejectionReason}
                       </span>
                     </div>
@@ -1917,7 +1917,7 @@ export default function AgentDashboard() {
                     <button
                       type="button"
                       onClick={() => setActiveSubModal("documents")}
-                      className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
                     >
                       <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
                       Documents ({selectedClaim.additionalDocuments?.length || 0})
@@ -1928,7 +1928,7 @@ export default function AgentDashboard() {
                 {/* Other Vehicles Involved Section */}
                 {selectedClaim.otherVehicleDetails && (
                   <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                    <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 select-none">
+                    <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                       Other Vehicles Involved
                     </h3>
@@ -1942,25 +1942,25 @@ export default function AgentDashboard() {
                         <div className="space-y-4">
                           {selectedClaim.otherVehicleDetails.map((vehicle: any, idx: number) => (
                             <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-                              <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider select-none">
+                              <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">
                                 Vehicle #{idx + 1} Details
                               </h4>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <div>
                                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
-                                  <p className="text-slate-800 font-extrabold mt-0.5">{formatPlate(vehicle.vehiclePlate) || "-"}</p>
+                                  <p className="text-slate-800 font-bold mt-0.5">{formatPlate(vehicle.vehiclePlate) || "-"}</p>
                                 </div>
                                 <div>
                                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
-                                  <p className="text-slate-800 font-extrabold mt-0.5">{vehicle.driverName || "-"}</p>
+                                  <p className="text-slate-800 font-bold mt-0.5">{vehicle.driverName || "-"}</p>
                                 </div>
                                 <div>
                                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
-                                  <p className="text-slate-800 font-extrabold mt-0.5">{vehicle.insuranceCompany || "-"}</p>
+                                  <p className="text-slate-800 font-bold mt-0.5">{vehicle.insuranceCompany || "-"}</p>
                                 </div>
                                 <div>
                                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
-                                  <p className="text-slate-800 font-extrabold mt-0.5">{vehicle.policyNumber || "-"}</p>
+                                  <p className="text-slate-800 font-bold mt-0.5">{vehicle.policyNumber || "-"}</p>
                                 </div>
                               </div>
 
@@ -2021,19 +2021,19 @@ export default function AgentDashboard() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                             <div>
                               <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
-                              <p className="text-slate-800 font-extrabold mt-0.5">{formatPlate(selectedClaim.otherVehicleDetails.vehiclePlate) || "-"}</p>
+                              <p className="text-slate-800 font-bold mt-0.5">{formatPlate(selectedClaim.otherVehicleDetails.vehiclePlate) || "-"}</p>
                             </div>
                             <div>
                               <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
-                              <p className="text-slate-800 font-extrabold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "-"}</p>
+                              <p className="text-slate-800 font-bold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "-"}</p>
                             </div>
                             <div>
                               <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
-                              <p className="text-slate-800 font-extrabold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "-"}</p>
+                              <p className="text-slate-800 font-bold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "-"}</p>
                             </div>
                             <div>
                               <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
-                              <p className="text-slate-800 font-extrabold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "-"}</p>
+                              <p className="text-slate-800 font-bold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "-"}</p>
                             </div>
                           </div>
 
@@ -2116,7 +2116,7 @@ export default function AgentDashboard() {
 
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                      <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                      <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                         <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-[#0f2d4a]" strokeWidth={2.5} />
                         Policy Holder Attachments & Photos
                       </h3>
@@ -2145,7 +2145,7 @@ export default function AgentDashboard() {
                                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
                                   />
                                 </div>
-                                <span className="text-[9px] text-slate-500 font-black text-center mt-2 uppercase tracking-wider truncate w-full px-1">
+                                <span className="text-[9px] text-slate-500 font-semibold text-center mt-2 uppercase tracking-wider truncate w-full px-1">
                                   {doc.name}
                                 </span>
                               </div>
@@ -2173,7 +2173,7 @@ export default function AgentDashboard() {
                     type="button"
                     onClick={() => handleAcceptClaim(selectedClaim._id)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
                     <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     {t.acceptAssignment}
@@ -2182,7 +2182,7 @@ export default function AgentDashboard() {
                     type="button"
                     onClick={() => handleDeclineClaim(selectedClaim._id, selectedClaim.claimNumber)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-semibold text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
                     <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     {t.declineAssignment}
@@ -2193,7 +2193,7 @@ export default function AgentDashboard() {
               {/* Status Banner for Accepted (In Progress / Approved) Claims */}
               {selectedClaim.currentStep >= 3 && !selectedClaim.inspectionSubmitted && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                 <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-6 text-center select-none transition-all duration-300 flex-shrink-0">
-                  <p className="text-emerald-800 text-xs md:text-sm font-black flex items-center justify-center gap-2">
+                  <p className="text-emerald-800 text-xs md:text-sm font-semibold flex items-center justify-center gap-2">
                     <HugeiconsIcon icon={SmartPhone01Icon} className="w-5 h-5 animate-pulse" strokeWidth={2.5} />
                     {t.claimAccepted}
                   </p>
@@ -2250,7 +2250,7 @@ export default function AgentDashboard() {
                       : "bg-white text-slate-800 self-start border border-slate-100 rounded-tl-none"
                   }`}
                 >
-                  <div className="font-extrabold text-[9px] uppercase opacity-75 mb-0.5">{log.sender}</div>
+                  <div className="font-bold text-[9px] uppercase opacity-75 mb-0.5">{log.sender}</div>
                   <div className="font-semibold text-xs leading-normal">{log.text}</div>
                 </div>
               ))}
@@ -2267,7 +2267,7 @@ export default function AgentDashboard() {
               />
               <button
                 type="submit"
-                className="bg-[#00ddff] text-black font-extrabold text-xs px-4 py-3 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all"
+                className="bg-[#00ddff] text-black font-bold text-xs px-4 py-3 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all"
               >
                 Send
               </button>
@@ -2304,7 +2304,7 @@ export default function AgentDashboard() {
             </div>
 
             {/* Content */}
-            <h3 className="text-slate-900 font-black text-xl tracking-tight leading-none">
+            <h3 className="text-slate-900 font-semibold text-xl tracking-tight leading-none">
               Claim Accepted Successfully!
             </h3>
             <p className="text-slate-500 text-xs md:text-sm font-semibold mt-4 leading-relaxed">
@@ -2313,7 +2313,7 @@ export default function AgentDashboard() {
 
             {/* Quick Steps */}
             <div className="w-full bg-slate-50 border border-slate-200/60 rounded-2xl p-4 mt-5 text-left space-y-2.5">
-              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block select-none">Next Steps:</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block select-none">Next Steps:</span>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">1</span>
                 <span className="leading-relaxed">Launch the Sanasa Agent app on your phone.</span>
@@ -2335,7 +2335,7 @@ export default function AgentDashboard() {
             {/* Close Button */}
             <button
               onClick={() => setShowMobileRedirect(false)}
-              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
+              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-bold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
             >
               {t.okayGotIt}
             </button>
@@ -2352,7 +2352,7 @@ export default function AgentDashboard() {
             </div>
             
             {/* Title */}
-            <h2 className="font-extrabold text-xl text-slate-800 tracking-tight">{t.setAvailability}</h2>
+            <h2 className="font-bold text-xl text-slate-800 tracking-tight">{t.setAvailability}</h2>
             
             {/* Description */}
             <p className="text-slate-500 text-xs font-semibold mt-3.5 leading-relaxed max-w-[280px]">
@@ -2367,7 +2367,7 @@ export default function AgentDashboard() {
                   sessionStorage.setItem("availability_prompted", "true");
                   setShowAvailabilityModal(false);
                 }}
-                className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white font-bold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md shadow-emerald-500/10 hover:shadow-emerald-500/20 active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <span className="w-3 h-3 rounded-full bg-white animate-pulse" />
                 {t.goOnline}
@@ -2379,7 +2379,7 @@ export default function AgentDashboard() {
                   sessionStorage.setItem("availability_prompted", "true");
                   setShowAvailabilityModal(false);
                 }}
-                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
+                className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-4 rounded-xl border-none cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2"
               >
                 <span className="w-3 h-3 rounded-full bg-slate-400" />
                 {t.remainOffline}
@@ -2395,7 +2395,7 @@ export default function AgentDashboard() {
             <div className="overflow-y-auto flex-1 flex flex-col">
               {/* Header */}
               <div className="px-8 pt-8 pb-5 select-none relative flex-shrink-0 border-b border-slate-100/60 bg-slate-50/55">
-                <h2 className="font-extrabold text-xl text-slate-800 tracking-tight flex items-center gap-3">
+                <h2 className="font-bold text-xl text-slate-800 tracking-tight flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                     <HugeiconsIcon icon={SquareLock02Icon} className="w-5 h-5" strokeWidth={2.5} />
                   </div>
@@ -2423,7 +2423,7 @@ export default function AgentDashboard() {
 
                 {/* Current Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     {t.currentTempPassword} <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -2438,7 +2438,7 @@ export default function AgentDashboard() {
 
                 {/* New Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     {t.newPassword} <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -2454,8 +2454,8 @@ export default function AgentDashboard() {
                   {passwordForm.newPassword && (
                     <div className="mt-1.5 flex flex-col gap-2.5 p-4 rounded-2xl bg-slate-50/90 border border-slate-200 transition-all duration-300 select-none">
                       <div className="flex justify-between items-center text-xs text-slate-800">
-                        <span className="font-extrabold">{t.passwordStrength}:</span>
-                        <span className="font-extrabold uppercase tracking-wider text-slate-900">
+                        <span className="font-bold">{t.passwordStrength}:</span>
+                        <span className="font-bold uppercase tracking-wider text-slate-900">
                           {strength.label === "Weak" ? t.weak : strength.label === "Medium" ? t.medium : strength.label === "Strong" ? t.strong : strength.label === "Excellent" ? t.excellent : strength.label}
                         </span>
                       </div>
@@ -2491,7 +2491,7 @@ export default function AgentDashboard() {
 
                 {/* Confirm Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     {t.confirmNewPassword} <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -2508,7 +2508,7 @@ export default function AgentDashboard() {
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
-                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-extrabold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
+                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-bold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
                 >
                   {isUpdatingPassword ? (
                     <span className="flex items-center gap-2">

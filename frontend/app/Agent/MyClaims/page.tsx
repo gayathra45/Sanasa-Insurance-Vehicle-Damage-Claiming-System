@@ -161,7 +161,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-inner select-text">
         <div className="flex items-center gap-2 mb-3 text-slate-400 select-none">
           <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
         </div>
         <p className="text-slate-700 text-xs font-semibold whitespace-pre-wrap leading-relaxed">
           {parsed.rawText}
@@ -192,7 +192,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
     }
 
     return (
-      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
+      <span className={`px-3 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
         {icon}
         {val}
       </span>
@@ -206,11 +206,11 @@ const renderPremiumInspectionReport = (reportText: string) => {
         <div className="flex items-center gap-3">
           <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
           <div>
-            <h4 className="text-sm font-black text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
+            <h4 className="text-sm font-semibold text-slate-800 uppercase tracking-wider leading-none">Vehicle Inspection Report</h4>
             <span className="text-[10px] font-bold text-slate-400 block mt-1 tracking-wider">OFFICIAL PHYSICAL ASSESSMENT SUMMARY</span>
           </div>
         </div>
-        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-extrabold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
+        <span className="bg-emerald-50 border border-emerald-200/60 text-emerald-700 text-[10px] font-bold tracking-wider uppercase px-4 py-1 rounded-full flex items-center gap-1.5 shadow-sm">
           <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
           Verified By Agent
         </span>
@@ -220,36 +220,36 @@ const renderPremiumInspectionReport = (reportText: string) => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Odometer */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-blue-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Odometer</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Odometer</span>
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-slate-800">{parsed.odometer || "N/A"}</span>
+            <span className="text-[17px] font-semibold text-slate-800">{parsed.odometer || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Total Distance Travelled</span>
         </div>
 
         {/* Card 2: Fuel Level */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-indigo-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Fuel Level</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Fuel Level</span>
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-slate-800">{parsed.fuelLevel || "N/A"}</span>
+            <span className="text-[17px] font-semibold text-slate-800">{parsed.fuelLevel || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Current Tank Level</span>
         </div>
 
         {/* Card 3: Estimated Cost */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-emerald-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Estimated Cost</span>
           <div className="flex items-baseline gap-1 mt-2">
-            <span className="text-[17px] font-black text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
+            <span className="text-[17px] font-semibold text-emerald-600">{parsed.estimatedCost || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Assessment Valuation</span>
         </div>
 
         {/* Card 4: Recommendation */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative overflow-hidden h-[95px] border-t-4 border-t-violet-500">
-          <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-widest leading-none select-none">Recommendation</span>
+          <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest leading-none select-none">Recommendation</span>
           <div className="flex items-baseline gap-1 mt-2 overflow-hidden">
-            <span className="text-[13px] font-black text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
+            <span className="text-[13px] font-semibold text-slate-800 truncate" title={parsed.recommendedAction}>{parsed.recommendedAction || "N/A"}</span>
           </div>
           <span className="text-[9px] text-slate-400 font-semibold select-none">Suggested Action Payout</span>
         </div>
@@ -260,7 +260,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         {/* Component Damage Checklist */}
         <div className="bg-white border border-slate-150 rounded-2xl p-5 space-y-4 shadow-sm">
           <div>
-            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block border-b border-slate-100 pb-2.5 mb-3 select-none">Component Damage Checklist</span>
             <div className="space-y-2">
               {Object.entries(parsed.checklist || {}).map(([key, value]) => (
                 <div key={key} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
@@ -276,7 +276,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
         <div className="flex flex-col gap-4">
           {parsed.preExistingDamage && parsed.preExistingDamage !== "None reported." && (
             <div className="bg-amber-50/20 border border-amber-200/50 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
-              <span className="text-[10px] text-amber-800 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
+              <span className="text-[10px] text-amber-800 font-semibold uppercase tracking-wider flex items-center gap-1.5 select-none">
                 <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-amber-600" strokeWidth={2.5} />
                 Pre-Existing Damage Remarks
               </span>
@@ -285,7 +285,7 @@ const renderPremiumInspectionReport = (reportText: string) => {
           )}
 
           <div className="bg-slate-50/50 border border-slate-200/70 rounded-2xl p-5 shadow-sm space-y-2.5 flex-1">
-            <span className="text-[10px] text-slate-500 font-black uppercase tracking-wider flex items-center gap-1.5 select-none">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider flex items-center gap-1.5 select-none">
               <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
               Physical Inspection Remarks
             </span>
@@ -974,7 +974,7 @@ export default function AgentMyClaims() {
           ) : filteredClaims.length === 0 ? (
             <div className="bg-white border border-slate-100 rounded-[30px] p-16 text-center shadow-sm select-none">
               <HugeiconsIcon icon={File01Icon} className="w-12 h-12 text-slate-300 mx-auto mb-4" strokeWidth={1.8} />
-              <p className="text-slate-500 font-extrabold text-sm uppercase tracking-wider">{t.noClaimsFound}</p>
+              <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">{t.noClaimsFound}</p>
               <p className="text-slate-400 text-xs mt-1.5 font-semibold">{t.noClaimsFoundDesc}</p>
             </div>
           ) : (
@@ -1020,10 +1020,10 @@ export default function AgentMyClaims() {
                       
                       {/* Claim Reference & Badges */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
-                        <div className="text-sm font-black text-slate-800 flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
+                        <div className="text-sm font-semibold text-slate-800 flex items-center gap-2 flex-wrap">
                           {claim.claimNumber}
-                          <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full select-none tracking-wide border ${badgeStyle}`}>
+                          <span className={`text-[9px] font-semibold uppercase px-3 py-1 rounded-full select-none tracking-wide border ${badgeStyle}`}>
                             {badgeLabel}
                           </span>
                         </div>
@@ -1031,28 +1031,28 @@ export default function AgentMyClaims() {
 
                       {/* Vehicle Details */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t.vehicleNo}</span>
-                        <span className="text-xs font-extrabold text-slate-700 truncate">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.vehicleNo}</span>
+                        <span className="text-xs font-bold text-slate-700 truncate">
                           {claim.vehiclePlate} {claim.vehicleModel && <span className="font-semibold text-slate-500">({claim.vehicleModel})</span>}
                         </span>
                       </div>
 
                       {/* Damage Class */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t.damageType}</span>
-                        <span className="text-xs font-extrabold text-slate-700 truncate">{claim.damageType}</span>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.damageType}</span>
+                        <span className="text-xs font-bold text-slate-700 truncate">{claim.damageType}</span>
                       </div>
 
                       {/* Incident Location */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{t.location}</span>
-                        <span className="text-xs font-extrabold text-slate-700 truncate" title={claim.location}>{claim.location}</span>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.location}</span>
+                        <span className="text-xs font-bold text-slate-700 truncate" title={claim.location}>{claim.location}</span>
                       </div>
 
                       {/* Date & Progress */}
                       <div className="flex flex-col gap-1 min-w-0">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{lang === "en" ? "Progress State" : lang === "si" ? "ප්‍රගති තත්ත්වය" : "முன்னேற்ற நிலை"}</span>
-                        <span className="text-xs font-extrabold text-slate-700 truncate">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{lang === "en" ? "Progress State" : lang === "si" ? "ප්‍රගති තත්ත්වය" : "முன்னேற்ற நிலை"}</span>
+                        <span className="text-xs font-bold text-slate-700 truncate">
                           {isFinalized ? (lang === "en" ? "Dossier Closed" : lang === "si" ? "හිමිකම් ලිපිගොනුව වසා ඇත" : "கோப்பு மூடப்பட்டது") : `Step ${claim.currentStep} of 4`} · <span className="text-slate-400 font-semibold">{formatDate(claim.createdAt)}</span>
                         </span>
                       </div>
@@ -1062,7 +1062,7 @@ export default function AgentMyClaims() {
                     {/* Action button */}
                     <button
                       onClick={() => setSelectedClaim(claim)}
-                      className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-black py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
+                      className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-semibold py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
                     >
                       {t.viewDetails}
                     </button>
@@ -1083,7 +1083,7 @@ export default function AgentMyClaims() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Documents - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1099,7 +1099,7 @@ export default function AgentMyClaims() {
                 <div className="space-y-6">
                   {/* Category 1: Policy Holder Documents */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                    <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
+                    <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2} />
                       Policy Holder Documents
                     </h3>
@@ -1152,7 +1152,7 @@ export default function AgentMyClaims() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1162,7 +1162,7 @@ export default function AgentMyClaims() {
 
                   {/* Category 2: Agent Documents & Upload Panel */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                    <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
+                    <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-cyan-600" strokeWidth={2} />
                       Agent Documents
                     </h3>
@@ -1202,7 +1202,7 @@ export default function AgentMyClaims() {
                                 className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
                                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                                <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                                <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                               </button>
                             );
                           }
@@ -1218,7 +1218,7 @@ export default function AgentMyClaims() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1228,7 +1228,7 @@ export default function AgentMyClaims() {
                     {/* Agent File Upload Panel */}
                     {selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                       <div className="border-t border-slate-200/60 pt-4 flex flex-col gap-4">
-                        <span className="text-[11px] text-slate-500 font-extrabold uppercase tracking-wider select-none">Upload Claim Document</span>
+                        <span className="text-[11px] text-slate-500 font-bold uppercase tracking-wider select-none">Upload Claim Document</span>
                         
                         <div className="flex flex-col gap-1.5">
                           <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Document Type</label>
@@ -1316,7 +1316,7 @@ export default function AgentMyClaims() {
                           <button
                             onClick={handleAgentUpload}
                             disabled={isAgentUploading}
-                            className="w-full bg-red-650 hover:bg-red-700 text-white font-extrabold text-xs py-3 px-4 rounded-xl border-none cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 mt-1 shadow-md flex items-center justify-center gap-2"
+                            className="w-full bg-red-650 hover:bg-red-700 text-white font-bold text-xs py-3 px-4 rounded-xl border-none cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 mt-1 shadow-md flex items-center justify-center gap-2"
                           >
                             {isAgentUploading ? "Uploading..." : "Upload Document to Claim"}
                           </button>
@@ -1357,14 +1357,14 @@ export default function AgentMyClaims() {
               {/* Header: Title, Tags & Avatar */}
               <div className="flex items-start justify-between gap-4">
                 <div className="overflow-hidden">
-                  <h2 className="font-black text-slate-800 text-xl tracking-tight truncate">
+                  <h2 className="font-semibold text-slate-800 text-xl tracking-tight truncate">
                     {getPolicyHolderName(selectedClaim.userNic)}
                   </h2>
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider">
+                    <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider">
                       ID: {selectedClaim.claimNumber}
                     </span>
-                    <span className={`border rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 ${
+                    <span className={`border rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
                       selectedClaim.status.toLowerCase() === "pending"
                         ? "border-amber-300 text-amber-700 bg-amber-50/50"
                         : selectedClaim.status.toLowerCase() === "in progress"
@@ -1395,51 +1395,51 @@ export default function AgentMyClaims() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs md:text-sm font-semibold select-none leading-relaxed flex-1 overflow-y-auto pr-1">
                 {/* Column 1: Policy Holder Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Policy Holder Details
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Email</span>
-                      <span className="text-slate-700 font-black truncate">: {getPolicyHolderEmail(selectedClaim.userNic)}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {getPolicyHolderEmail(selectedClaim.userNic)}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">NIC</span>
-                      <span className="text-slate-700 font-black truncate">: {selectedClaim.userNic}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {selectedClaim.userNic}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Contact</span>
-                      <span className="text-slate-700 font-black truncate">: {getPolicyHolderContact(selectedClaim.userNic)}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {getPolicyHolderContact(selectedClaim.userNic)}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Column 2: Vehicle Details */}
                 <div className="space-y-3.5 bg-slate-50 border border-slate-200 p-5 rounded-2xl">
-                  <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                     Vehicle Details
                   </h3>
                   <div className="space-y-3">
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Vehicle No</span>
-                      <span className="text-slate-700 font-black truncate">: {formatPlate(selectedClaim.vehiclePlate)}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {formatPlate(selectedClaim.vehiclePlate)}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Branch</span>
-                      <span className="text-slate-700 font-black truncate">: {selectedClaim.branch || "-"}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {selectedClaim.branch || "-"}</span>
                     </div>
                     <div className="grid grid-cols-[100px_1fr] gap-2">
                       <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Assigned Agent</span>
-                      <span className="text-slate-700 font-black truncate">: {agentName || selectedClaim.assignedAgent || "-"}</span>
+                      <span className="text-slate-700 font-semibold truncate">: {agentName || selectedClaim.assignedAgent || "-"}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Large Dedicated Section: Incident Details */}
                 <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                  <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                  <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                     <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                     Incident Details & Assessment
                   </h3>
@@ -1448,22 +1448,22 @@ export default function AgentMyClaims() {
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Damage Type</span>
-                        <span className="text-slate-700 font-black truncate">: {selectedClaim.damageType || "-"}</span>
+                        <span className="text-slate-700 font-semibold truncate">: {selectedClaim.damageType || "-"}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Incident Date</span>
-                        <span className="text-slate-700 font-black truncate">: {formatDate(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
+                        <span className="text-slate-700 font-semibold truncate">: {formatDate(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Est. Amount</span>
-                        <span className="text-slate-700 font-black truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
+                        <span className="text-slate-700 font-semibold truncate">: {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
                       </div>
                     </div>
 
                     <div className="space-y-3">
                       <div className="grid grid-cols-[110px_1fr] gap-2 items-start">
                         <span className="text-slate-500 font-bold uppercase tracking-wider text-[10px]">Location</span>
-                        <span className="text-slate-700 font-black whitespace-normal break-words leading-relaxed">: {selectedClaim.location || "-"}</span>
+                        <span className="text-slate-700 font-semibold whitespace-normal break-words leading-relaxed">: {selectedClaim.location || "-"}</span>
                       </div>
                     </div>
                   </div>
@@ -1478,7 +1478,7 @@ export default function AgentMyClaims() {
                   {selectedClaim.rejectionReason && (
                     <div className="flex flex-col gap-1 border-t border-slate-200/60 pt-3 mt-3">
                       <span className="text-red-500 font-bold uppercase tracking-wider text-[10px]">Rejection Reason</span>
-                      <span className="text-red-650 font-extrabold mt-1 text-sm">
+                      <span className="text-red-650 font-bold mt-1 text-sm">
                         {selectedClaim.rejectionReason}
                       </span>
                     </div>
@@ -1489,7 +1489,7 @@ export default function AgentMyClaims() {
                     <button
                       type="button"
                       onClick={() => setActiveSubModal("documents")}
-                      className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs py-3 px-5 rounded-xl cursor-pointer shadow-sm active:scale-95 transition-all flex items-center gap-1.5"
                     >
                       <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
                       Documents ({selectedClaim.additionalDocuments?.length || 0})
@@ -1500,7 +1500,7 @@ export default function AgentMyClaims() {
                 {/* Other Vehicles Involved Section */}
                 {selectedClaim.otherVehicleDetails && (
                   <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                    <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 select-none">
+                    <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                       Other Vehicles Involved
                     </h3>
@@ -1514,25 +1514,25 @@ export default function AgentMyClaims() {
                         <div className="space-y-4">
                           {selectedClaim.otherVehicleDetails.map((vehicle: any, idx: number) => (
                             <div key={idx} className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
-                              <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider select-none">
+                              <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">
                                 Vehicle #{idx + 1} Details
                               </h4>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                                 <div>
                                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
-                                  <p className="text-slate-800 font-extrabold mt-0.5">{formatPlate(vehicle.vehiclePlate) || "-"}</p>
+                                  <p className="text-slate-800 font-bold mt-0.5">{formatPlate(vehicle.vehiclePlate) || "-"}</p>
                                 </div>
                                 <div>
                                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
-                                  <p className="text-slate-800 font-extrabold mt-0.5">{vehicle.driverName || "-"}</p>
+                                  <p className="text-slate-800 font-bold mt-0.5">{vehicle.driverName || "-"}</p>
                                 </div>
                                 <div>
                                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
-                                  <p className="text-slate-800 font-extrabold mt-0.5">{vehicle.insuranceCompany || "-"}</p>
+                                  <p className="text-slate-800 font-bold mt-0.5">{vehicle.insuranceCompany || "-"}</p>
                                 </div>
                                 <div>
                                   <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
-                                  <p className="text-slate-800 font-extrabold mt-0.5">{vehicle.policyNumber || "-"}</p>
+                                  <p className="text-slate-800 font-bold mt-0.5">{vehicle.policyNumber || "-"}</p>
                                 </div>
                               </div>
 
@@ -1593,19 +1593,19 @@ export default function AgentMyClaims() {
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                             <div>
                               <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Vehicle No</span>
-                              <p className="text-slate-800 font-extrabold mt-0.5">{formatPlate(selectedClaim.otherVehicleDetails.vehiclePlate) || "-"}</p>
+                              <p className="text-slate-800 font-bold mt-0.5">{formatPlate(selectedClaim.otherVehicleDetails.vehiclePlate) || "-"}</p>
                             </div>
                             <div>
                               <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Driver Name</span>
-                              <p className="text-slate-800 font-extrabold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "-"}</p>
+                              <p className="text-slate-800 font-bold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "-"}</p>
                             </div>
                             <div>
                               <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Insurance Company</span>
-                              <p className="text-slate-800 font-extrabold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "-"}</p>
+                              <p className="text-slate-800 font-bold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "-"}</p>
                             </div>
                             <div>
                               <span className="text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">Policy Number</span>
-                              <p className="text-slate-800 font-extrabold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "-"}</p>
+                              <p className="text-slate-800 font-bold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "-"}</p>
                             </div>
                           </div>
 
@@ -1688,7 +1688,7 @@ export default function AgentMyClaims() {
 
                   return (
                     <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">
-                      <h3 className="text-slate-800 font-extrabold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
+                      <h3 className="text-slate-800 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 pb-2 mb-3 flex items-center gap-2">
                         <HugeiconsIcon icon={Image01Icon} className="w-5 h-5 text-[#0f2d4a]" strokeWidth={2.5} />
                         Policy Holder Attachments & Photos
                       </h3>
@@ -1717,7 +1717,7 @@ export default function AgentMyClaims() {
                                     className="w-full h-full object-cover group-hover:scale-105 transition-all duration-300"
                                   />
                                 </div>
-                                <span className="text-[9px] text-slate-500 font-black text-center mt-2 uppercase tracking-wider truncate w-full px-1">
+                                <span className="text-[9px] text-slate-500 font-semibold text-center mt-2 uppercase tracking-wider truncate w-full px-1">
                                   {doc.name}
                                 </span>
                               </div>
@@ -1745,7 +1745,7 @@ export default function AgentMyClaims() {
                     type="button"
                     onClick={() => handleAcceptClaim(selectedClaim._id)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
                     <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     Accept Assignment
@@ -1754,7 +1754,7 @@ export default function AgentMyClaims() {
                     type="button"
                     onClick={() => handleDeclineClaim(selectedClaim._id, selectedClaim.claimNumber)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-black text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-semibold text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
                     <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     Decline Assignment
@@ -1765,7 +1765,7 @@ export default function AgentMyClaims() {
               {/* Status Banner for Accepted (In Progress / Approved) Claims */}
               {selectedClaim.currentStep >= 3 && !selectedClaim.inspectionSubmitted && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
                 <div className="w-full bg-emerald-50 border border-emerald-200 rounded-2xl p-4 mt-6 text-center select-none transition-all duration-300 flex-shrink-0">
-                  <p className="text-emerald-800 text-xs md:text-sm font-black flex items-center justify-center gap-2">
+                  <p className="text-emerald-800 text-xs md:text-sm font-semibold flex items-center justify-center gap-2">
                     <HugeiconsIcon icon={SmartPhone01Icon} className="w-5 h-5 animate-pulse" strokeWidth={2.5} />
                     Claim Assignment Accepted
                   </p>
@@ -1815,7 +1815,7 @@ export default function AgentMyClaims() {
               <HugeiconsIcon icon={SmartPhone01Icon} className="w-8 h-8 relative z-10" strokeWidth={2.2} />
             </div>
 
-            <h3 className="text-slate-900 font-black text-xl tracking-tight leading-none">
+            <h3 className="text-slate-900 font-semibold text-xl tracking-tight leading-none">
               Claim Accepted Successfully!
             </h3>
             <p className="text-slate-500 text-xs md:text-sm font-semibold mt-4 leading-relaxed">
@@ -1823,7 +1823,7 @@ export default function AgentMyClaims() {
             </p>
 
             <div className="w-full bg-slate-50 border border-slate-200/60 rounded-2xl p-4 mt-5 text-left space-y-2.5">
-              <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block select-none">Next Steps:</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block select-none">Next Steps:</span>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">1</span>
                 <span className="leading-relaxed">Launch the Sanasa Agent app on your phone.</span>
@@ -1844,7 +1844,7 @@ export default function AgentMyClaims() {
 
             <button
               onClick={() => setShowMobileRedirect(false)}
-              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
+              className="w-full mt-6 bg-[#0f2d4a] hover:bg-[#193d61] text-white font-bold text-xs py-4 rounded-xl border-none cursor-pointer shadow-md hover:shadow-slate-900/10 active:scale-95 transition-all select-none"
             >
               Okay, Got It
             </button>

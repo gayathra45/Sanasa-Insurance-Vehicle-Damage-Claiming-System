@@ -28,7 +28,7 @@ export default function AdminClaimsPage() {
               </h1>
               {/* Desktop welcome title */}
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin Portal</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">Admin Portal</span>
                 <span className="hidden lg:inline"> — Claims Management</span>
               </h1>
             </div>
@@ -45,7 +45,7 @@ export default function AdminClaimsPage() {
               <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-400">
                 <HugeiconsIcon icon={SecurityCheckIcon} className="w-10 h-10 text-slate-400" strokeWidth={2} />
               </div>
-              <h2 className="text-2xl font-black text-slate-800 mb-3 tracking-tight">Claims Page</h2>
+              <h2 className="text-2xl font-semibold text-slate-800 mb-3 tracking-tight">Claims Page</h2>
               <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6">
                 This section is currently under active development. Standard Admin controls for managing claim reports will be integrated shortly.
               </p>

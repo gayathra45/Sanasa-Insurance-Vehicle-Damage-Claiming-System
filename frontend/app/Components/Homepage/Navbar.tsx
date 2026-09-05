@@ -205,21 +205,21 @@ export default function Navbar() {
                 <div className="absolute right-0 mt-2 w-32 bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.15)] border border-slate-100 py-1.5 z-50 text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150">
                   <button
                     onClick={() => changeLanguage("en")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-cyan-600" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-cyan-600" : ""}`}
                   >
                     <span>English</span>
                     {lang === "en" && <span>✓</span>}
                   </button>
                   <button
                     onClick={() => changeLanguage("si")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-cyan-600" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-cyan-600" : ""}`}
                   >
                     <span>සිංහල</span>
                     {lang === "si" && <span>✓</span>}
                   </button>
                   <button
                     onClick={() => changeLanguage("ta")}
-                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-extrabold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-cyan-600" : ""}`}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-cyan-600" : ""}`}
                   >
                     <span>தமிழ்</span>
                     {lang === "ta" && <span>✓</span>}
@@ -397,7 +397,7 @@ export default function Navbar() {
                   {filteredBranches.map((b, idx) => (
                     <div key={idx} className="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-md hover:-translate-y-0.5 hover:border-[#00ddff]/60 transition-all duration-200 flex flex-col justify-between gap-4 group">
                       <div className="flex flex-col gap-2">
-                        <h4 className="text-[#0d2a3a] font-extrabold text-base md:text-[17px] tracking-tight group-hover:text-cyan-600 transition-colors">
+                        <h4 className="text-[#0d2a3a] font-bold text-base md:text-[17px] tracking-tight group-hover:text-cyan-600 transition-colors">
                           {b.name[lang]}
                         </h4>
                         <p className="text-slate-500 text-xs font-semibold leading-relaxed flex items-start gap-1.5">
@@ -407,7 +407,7 @@ export default function Navbar() {
                       </div>
                       <a
                         href={`tel:${b.phone.replace(/\s+/g, "")}`}
-                        className="inline-flex items-center justify-center gap-2 bg-[#e0f2fe] hover:bg-[#bae6fd] text-[#0369a1] font-black text-xs no-underline mt-2 px-4 py-2.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 shadow-sm"
+                        className="inline-flex items-center justify-center gap-2 bg-[#e0f2fe] hover:bg-[#bae6fd] text-[#0369a1] font-semibold text-xs no-underline mt-2 px-4 py-2.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 shadow-sm"
                       >
                         <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5" strokeWidth={2} /> {t.callNow}: {b.phone}
                       </a>
@@ -425,7 +425,7 @@ export default function Navbar() {
             <div className="px-6 md:px-10 py-4 md:py-5 border-t border-slate-100 flex justify-end bg-white relative z-10">
               <button
                 onClick={() => setBranchesModalOpen(false)}
-                className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs md:text-sm px-6 md:px-8 py-2.5 md:py-3 rounded-full shadow-md hover:shadow-lg transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95 duration-150 outline-none"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs md:text-sm px-6 md:px-8 py-2.5 md:py-3 rounded-full shadow-md hover:shadow-lg transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95 duration-150 outline-none"
               >
                 {t.close}
               </button>

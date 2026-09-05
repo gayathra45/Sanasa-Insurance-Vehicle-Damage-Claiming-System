@@ -67,14 +67,14 @@ export default function UserAvatarDropdown({ userType }: UserAvatarDropdownProps
             <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
               Logged in as
             </span>
-            <span className="text-sm font-black text-slate-800 truncate">
+            <span className="text-sm font-semibold text-slate-800 truncate">
               {userInfo?.name || (userType === "admin" ? "Admin User" : "Staff User")}
             </span>
             <span className="text-xs font-semibold text-slate-500 truncate">
               {userInfo?.email || ""}
             </span>
             {userInfo?.branch && (
-              <span className="text-[10px] mt-1 bg-slate-100 text-slate-700 font-extrabold px-2 py-0.5 rounded-md w-fit">
+              <span className="text-[10px] mt-1 bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded-md w-fit">
                 {userInfo.branch} Branch
               </span>
             )}

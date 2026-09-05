@@ -444,7 +444,7 @@ export default function AddVehiclesPage() {
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="hidden lg:inline">Welcome back, </span>
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">{branch} Branch</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">{branch} Branch</span>
               </h1>
             </div>
             <div className="flex items-center gap-5">
@@ -476,7 +476,7 @@ export default function AddVehiclesPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
                   <div className="flex items-center gap-2 select-none">
                     <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                    <h2 className="text-lg font-black text-slate-800 tracking-wide">
+                    <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
                       Add Vehicles
                     </h2>
                     <span className="text-slate-300 font-light mx-1">/</span>
@@ -489,7 +489,7 @@ export default function AddVehiclesPage() {
                   <div className="flex flex-wrap items-center gap-3.5 select-none self-start md:self-auto">
                     <button
                       onClick={() => setIsAddVehicleOpen(true)}
-                      className="bg-amber-500 hover:bg-amber-600 border-none text-white font-black text-xs px-5 py-3 rounded-full cursor-pointer transition-all shadow-sm active:scale-[0.98] flex items-center gap-1.5 h-[36px]"
+                      className="bg-amber-500 hover:bg-amber-600 border-none text-white font-semibold text-xs px-5 py-3 rounded-full cursor-pointer transition-all shadow-sm active:scale-[0.98] flex items-center gap-1.5 h-[36px]"
                     >
                       <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" strokeWidth={2.5} />
                       Add Vehicle
@@ -498,7 +498,7 @@ export default function AddVehiclesPage() {
                     <div className="flex bg-slate-200/60 p-2 rounded-full">
                       <button
                         onClick={() => setActiveMenuTab("pending")}
-                        className={`font-black text-xs px-5 py-2 rounded-full border-none transition-all cursor-pointer flex items-center gap-2 relative ${
+                        className={`font-semibold text-xs px-5 py-2 rounded-full border-none transition-all cursor-pointer flex items-center gap-2 relative ${
                           activeMenuTab === "pending"
                             ? "bg-slate-800 text-white shadow-sm"
                             : "bg-transparent hover:text-slate-800 text-slate-500"
@@ -506,14 +506,14 @@ export default function AddVehiclesPage() {
                       >
                         Pending Approvals
                         {pendingVehicles.length > 0 && (
-                          <span className="text-[10px] font-black bg-red-500 text-white px-2 py-1 rounded-full">
+                          <span className="text-[10px] font-semibold bg-red-500 text-white px-2 py-1 rounded-full">
                             {pendingVehicles.length}
                           </span>
                         )}
                       </button>
                       <button
                         onClick={() => setActiveMenuTab("confirmed")}
-                        className={`font-black text-xs px-5 py-2 rounded-full border-none transition-all cursor-pointer ${
+                        className={`font-semibold text-xs px-5 py-2 rounded-full border-none transition-all cursor-pointer ${
                           activeMenuTab === "confirmed"
                             ? "bg-slate-800 text-white shadow-sm"
                             : "bg-transparent hover:text-slate-800 text-slate-500"
@@ -521,7 +521,7 @@ export default function AddVehiclesPage() {
                       >
                         Confirmed Vehicles
                         {filteredConfirmed.length > 0 && (
-                          <span className="ml-1 text-[10px] font-black bg-slate-300 text-slate-700 px-2 py-1 rounded-full">
+                          <span className="ml-1 text-[10px] font-semibold bg-slate-300 text-slate-700 px-2 py-1 rounded-full">
                             {filteredConfirmed.length}
                           </span>
                         )}
@@ -559,7 +559,7 @@ export default function AddVehiclesPage() {
                         <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
                           <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-8 h-8 text-emerald-600" strokeWidth={2} />
                         </div>
-                        <h4 className="font-extrabold text-slate-700 text-base">All Caught Up!</h4>
+                        <h4 className="font-bold text-slate-700 text-base">All Caught Up!</h4>
                         <p className="text-slate-400 font-semibold text-sm max-w-sm">
                           There are currently no pending vehicle registration verification requests for the {branch} Branch.
                         </p>
@@ -589,16 +589,16 @@ export default function AddVehiclesPage() {
                                         const parts = getPlateParts(item.vehicle.numberPlate);
                                         return (
                                           <div className="inline-flex items-center bg-[#f8fafc] border border-slate-350 rounded-md shadow-sm overflow-hidden font-mono leading-none">
-                                            <div className="bg-blue-600 text-white font-sans font-black text-[8px] px-2 py-2 border-r border-slate-250 flex items-center justify-center shrink-0">
+                                            <div className="bg-blue-600 text-white font-sans font-semibold text-[8px] px-2 py-2 border-r border-slate-250 flex items-center justify-center shrink-0">
                                               {parts.province}
                                             </div>
-                                            <div className="text-slate-900 font-black text-[12px] px-3 py-1 tracking-wider uppercase bg-white">
+                                            <div className="text-slate-900 font-semibold text-[12px] px-3 py-1 tracking-wider uppercase bg-white">
                                               {parts.number}
                                             </div>
                                           </div>
                                         );
                                       })()}
-                                      <span className="inline-flex items-center gap-1 text-[9px] font-black text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full uppercase tracking-wider mt-1.5 block w-fit">
+                                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full uppercase tracking-wider mt-1.5 block w-fit">
                                         <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
                                         Pending
                                       </span>
@@ -615,15 +615,15 @@ export default function AddVehiclesPage() {
                                 <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 font-semibold text-xs text-slate-700">
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Make & Model</span>
-                                    <span className="text-slate-800 font-extrabold">{item.vehicle.company} {item.vehicle.model}</span>
+                                    <span className="text-slate-800 font-bold">{item.vehicle.company} {item.vehicle.model}</span>
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Vehicle Type</span>
-                                    <span className="text-slate-800 font-extrabold">{item.vehicle.vehicleType}</span>
+                                    <span className="text-slate-800 font-bold">{item.vehicle.vehicleType}</span>
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Policy Number</span>
-                                    <span className="text-[#f59e0b] font-black font-mono bg-amber-50 border border-amber-100 rounded px-2 py-1 shadow-sm">{item.vehicle.policyNumber}</span>
+                                    <span className="text-[#f59e0b] font-semibold font-mono bg-amber-50 border border-amber-100 rounded px-2 py-1 shadow-sm">{item.vehicle.policyNumber}</span>
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Engine Number</span>
@@ -639,7 +639,7 @@ export default function AddVehiclesPage() {
                                 <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 mt-4 font-semibold text-xs text-slate-700">
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Owner Name</span>
-                                    <span className="text-slate-800 font-extrabold">{item.user.firstName} {item.user.lastName}</span>
+                                    <span className="text-slate-800 font-bold">{item.user.firstName} {item.user.lastName}</span>
                                   </div>
                                   <div className="flex justify-between items-center">
                                     <span className="text-slate-400">Owner NIC</span>
@@ -660,14 +660,14 @@ export default function AddVehiclesPage() {
                               <div className="flex items-center gap-2 border-t border-slate-100 pt-4 mt-5 select-none shrink-0 w-full justify-between">
                                 <button
                                   onClick={() => setSelectedUserForModal(item.user)}
-                                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 font-extrabold text-[11px] px-4 py-3 rounded-full transition-all active:scale-95 shadow-sm hover:scale-[1.01]"
+                                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 font-bold text-[11px] px-4 py-3 rounded-full transition-all active:scale-95 shadow-sm hover:scale-[1.01]"
                                 >
                                   Profile
                                 </button>
                                 <button
                                   onClick={() => handleVerifyVehicle(item.user.nic, item.vehicle.numberPlate, "Approve")}
                                   disabled={isProcessing}
-                                  className="flex-grow bg-[#000080] hover:bg-emerald-600 disabled:bg-slate-200 text-white font-extrabold text-[11px] py-3 rounded-full cursor-pointer transition-all duration-300 flex items-center justify-center gap-1 border-none active:scale-95 shadow-sm hover:shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:scale-[1.01]"
+                                  className="flex-grow bg-[#000080] hover:bg-emerald-600 disabled:bg-slate-200 text-white font-bold text-[11px] py-3 rounded-full cursor-pointer transition-all duration-300 flex items-center justify-center gap-1 border-none active:scale-95 shadow-sm hover:shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:scale-[1.01]"
                                 >
                                   {isProcessing ? "..." : (
                                     <>
@@ -679,7 +679,7 @@ export default function AddVehiclesPage() {
                                 <button
                                   onClick={() => handleVerifyVehicle(item.user.nic, item.vehicle.numberPlate, "Reject")}
                                   disabled={isProcessing}
-                                  className="bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 text-slate-500 hover:text-red-650 font-extrabold text-[11px] px-3 py-3 rounded-full cursor-pointer transition-all duration-250 active:scale-95 outline-none shadow-sm hover:scale-[1.01]"
+                                  className="bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 text-slate-500 hover:text-red-650 font-bold text-[11px] px-3 py-3 rounded-full cursor-pointer transition-all duration-250 active:scale-95 outline-none shadow-sm hover:scale-[1.01]"
                                 >
                                   Reject
                                 </button>
@@ -696,7 +696,7 @@ export default function AddVehiclesPage() {
                   <div className="bg-white p-6 border border-slate-200 rounded-[28px] shadow-sm flex flex-col gap-6 transition-all duration-300">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 select-none">
                       <div>
-                        <h3 className="font-black text-slate-800 text-base">
+                        <h3 className="font-semibold text-slate-800 text-base">
                           All Verified Branch Vehicles
                         </h3>
                         <p className="text-slate-400 font-semibold text-xs mt-1">
@@ -728,19 +728,19 @@ export default function AddVehiclesPage() {
                         <table className="min-w-full divide-y divide-slate-200 select-none text-left">
                           <thead className="bg-slate-50">
                             <tr>
-                              <th className="px-5 py-3 text-slate-400 font-extrabold text-[11px] uppercase">Plate Number</th>
-                              <th className="px-5 py-3 text-slate-400 font-extrabold text-[11px] uppercase">Type</th>
-                              <th className="px-5 py-3 text-slate-400 font-extrabold text-[11px] uppercase">Make & Model</th>
-                              <th className="px-5 py-3 text-slate-400 font-extrabold text-[11px] uppercase">Policy No</th>
-                              <th className="px-5 py-3 text-slate-400 font-extrabold text-[11px] uppercase">Policy Holder (Owner)</th>
-                              <th className="px-5 py-3 text-slate-400 font-extrabold text-[11px] uppercase">Engine / Chassis</th>
-                              <th className="px-5 py-3 text-slate-400 font-extrabold text-[11px] uppercase">Actions</th>
+                              <th className="px-5 py-3 text-slate-400 font-bold text-[11px] uppercase">Plate Number</th>
+                              <th className="px-5 py-3 text-slate-400 font-bold text-[11px] uppercase">Type</th>
+                              <th className="px-5 py-3 text-slate-400 font-bold text-[11px] uppercase">Make & Model</th>
+                              <th className="px-5 py-3 text-slate-400 font-bold text-[11px] uppercase">Policy No</th>
+                              <th className="px-5 py-3 text-slate-400 font-bold text-[11px] uppercase">Policy Holder (Owner)</th>
+                              <th className="px-5 py-3 text-slate-400 font-bold text-[11px] uppercase">Engine / Chassis</th>
+                              <th className="px-5 py-3 text-slate-400 font-bold text-[11px] uppercase">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-slate-100 font-semibold text-xs text-slate-700">
                             {filteredConfirmed.map((item, idx) => (
                               <tr key={idx} className="hover:bg-slate-50/50">
-                                <td className="px-5 py-5 font-black text-slate-800">
+                                <td className="px-5 py-5 font-semibold text-slate-800">
                                   {formatNumberPlate(item.vehicle.numberPlate)}
                                 </td>
                                 <td className="px-5 py-5 text-slate-600">
@@ -765,7 +765,7 @@ export default function AddVehiclesPage() {
                                 <td className="px-5 py-5">
                                   <button
                                     onClick={() => setSelectedUserForModal(item.user)}
-                                    className="text-[10px] font-extrabold text-[#f59e0b] hover:text-[#d97706] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 border border-[#f59e0b]/20 px-3 py-2 rounded-full cursor-pointer transition-all outline-none"
+                                    className="text-[10px] font-bold text-[#f59e0b] hover:text-[#d97706] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 border border-[#f59e0b]/20 px-3 py-2 rounded-full cursor-pointer transition-all outline-none"
                                   >
                                     View Owner
                                   </button>
@@ -792,7 +792,7 @@ export default function AddVehiclesPage() {
             
             {/* Modal Header */}
             <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 flex-shrink-0 select-none">
-              <h2 className="text-lg font-black text-slate-800 tracking-tight leading-none">
+              <h2 className="text-lg font-semibold text-slate-800 tracking-tight leading-none">
                 Policy Holder Details
               </h2>
               <button
@@ -808,15 +808,15 @@ export default function AddVehiclesPage() {
               
               {/* Profile Card Header */}
               <div className="bg-slate-50 border border-slate-200/50 rounded-[22px] p-5 mb-6 flex items-center gap-4.5 shadow-sm select-none">
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-amber-500 text-white text-xl font-black shadow-sm select-none">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-amber-500 text-white text-xl font-semibold shadow-sm select-none">
                   {selectedUserForModal.firstName.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="text-slate-800 font-black text-lg leading-none tracking-tight">
+                  <h3 className="text-slate-800 font-semibold text-lg leading-none tracking-tight">
                     {selectedUserForModal.firstName} {selectedUserForModal.lastName}
                   </h3>
                   <p className="text-slate-400 font-bold text-xs mt-1.5">
-                    Ref: {selectedUserForModal.referenceNumber} | Status: <span className="font-extrabold text-amber-500">{selectedUserForModal.status}</span>
+                    Ref: {selectedUserForModal.referenceNumber} | Status: <span className="font-bold text-amber-500">{selectedUserForModal.status}</span>
                   </p>
                 </div>
               </div>
@@ -825,27 +825,27 @@ export default function AddVehiclesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm font-semibold text-slate-700 mb-6 px-2 select-none">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">NIC Number</span>
-                  <span className="font-extrabold text-slate-800 text-sm">{selectedUserForModal.nic}</span>
+                  <span className="font-bold text-slate-800 text-sm">{selectedUserForModal.nic}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Date of Birth</span>
-                  <span className="font-extrabold text-slate-800 text-sm">{selectedUserForModal.dob || "N/A"}</span>
+                  <span className="font-bold text-slate-800 text-sm">{selectedUserForModal.dob || "N/A"}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Mobile Number</span>
-                  <span className="font-extrabold text-slate-800 text-sm">{selectedUserForModal.mobile}</span>
+                  <span className="font-bold text-slate-800 text-sm">{selectedUserForModal.mobile}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Email Address</span>
-                  <span className="font-extrabold text-slate-800 text-sm">{selectedUserForModal.email}</span>
+                  <span className="font-bold text-slate-800 text-sm">{selectedUserForModal.email}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Province</span>
-                  <span className="font-extrabold text-slate-800 text-sm">{selectedUserForModal.province || "N/A"}</span>
+                  <span className="font-bold text-slate-800 text-sm">{selectedUserForModal.province || "N/A"}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">City</span>
-                  <span className="font-extrabold text-slate-800 text-sm">{selectedUserForModal.city || "N/A"}</span>
+                  <span className="font-bold text-slate-800 text-sm">{selectedUserForModal.city || "N/A"}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2 sm:col-span-2">
                   <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Residential Address</span>
@@ -855,13 +855,13 @@ export default function AddVehiclesPage() {
 
               {/* Registered Vehicles List */}
               <div className="select-none">
-                <h4 className="font-black text-slate-800 text-sm mb-3">Registered Vehicles ({selectedUserForModal.vehicles?.length || 0})</h4>
+                <h4 className="font-semibold text-slate-800 text-sm mb-3">Registered Vehicles ({selectedUserForModal.vehicles?.length || 0})</h4>
                 {selectedUserForModal.vehicles && selectedUserForModal.vehicles.length > 0 ? (
                   <div className="flex flex-col gap-3 max-h-[180px] overflow-y-auto pr-1">
                     {selectedUserForModal.vehicles.map((v: any, i: number) => (
                       <div key={i} className="flex justify-between items-center bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs">
                         <div>
-                          <div className="font-black text-slate-800">{formatNumberPlate(v.numberPlate)}</div>
+                          <div className="font-semibold text-slate-800">{formatNumberPlate(v.numberPlate)}</div>
                           <div className="text-slate-400 font-semibold mt-0.5">{v.company} {v.model} ({v.year})</div>
                         </div>
                         <span className={`px-3 py-1 rounded-full font-bold text-[10px] ${
@@ -885,7 +885,7 @@ export default function AddVehiclesPage() {
             <div className="px-8 py-5 bg-slate-50 border-t border-slate-150 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedUserForModal(null)}
-                className="bg-slate-800 hover:bg-slate-900 border-none text-white font-black text-xs px-6 py-3 rounded-full transition-all cursor-pointer outline-none"
+                className="bg-slate-800 hover:bg-slate-900 border-none text-white font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer outline-none"
               >
                 Close Profile
               </button>
@@ -902,7 +902,7 @@ export default function AddVehiclesPage() {
             
             {/* Modal Header */}
             <div className="px-10 pt-8 pb-5 border-b border-slate-100 flex-shrink-0 select-none">
-              <h2 className="text-xl font-black text-slate-800 tracking-tight leading-none">
+              <h2 className="text-xl font-semibold text-slate-800 tracking-tight leading-none">
                 Register New Vehicle
               </h2>
               <p className="text-slate-400 font-semibold text-xs mt-2">
@@ -1063,14 +1063,14 @@ export default function AddVehiclesPage() {
                 <button
                   type="button"
                   onClick={handleCancelAddVehicle}
-                  className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 text-slate-600 font-black text-xs px-6 py-3 rounded-full transition-all cursor-pointer outline-none"
+                  className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 text-slate-600 font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer outline-none"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={addSubmitting}
-                  className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 border-none text-white font-black text-xs px-8 py-3 rounded-full cursor-pointer transition-all shadow-sm active:scale-[0.98]"
+                  className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 border-none text-white font-semibold text-xs px-8 py-3 rounded-full cursor-pointer transition-all shadow-sm active:scale-[0.98]"
                 >
                   {addSubmitting ? "Registering..." : "Register Vehicle"}
                 </button>

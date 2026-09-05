@@ -341,7 +341,7 @@ export default function AdminStaffPage() {
               </h1>
               {/* Desktop welcome title */}
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin Portal</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">Admin Portal</span>
                 <span className="hidden lg:inline"> — Office Staff Management</span>
               </h1>
             </div>
@@ -414,7 +414,7 @@ export default function AdminStaffPage() {
 
             {/* Staff Table Grid Section */}
             {loadingStaff ? (
-              <div className="bg-white border border-slate-200 rounded-[20px] p-24 text-center text-slate-400 font-extrabold text-sm uppercase tracking-wider select-none shadow-sm flex flex-col items-center justify-center gap-3">
+              <div className="bg-white border border-slate-200 rounded-[20px] p-24 text-center text-slate-400 font-bold text-sm uppercase tracking-wider select-none shadow-sm flex flex-col items-center justify-center gap-3">
                 <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-7 w-7 text-blue-500" strokeWidth={2.5} />
                 <span>Loading Office Staff Directory...</span>
               </div>
@@ -443,7 +443,7 @@ export default function AdminStaffPage() {
               return (
                 <div className="flex flex-col gap-3">
                   {/* Table Header */}
-                  <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,2.1fr)] gap-4 px-5 py-3 text-slate-500 font-extrabold text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                  <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,2.1fr)] gap-4 px-5 py-3 text-slate-500 font-bold text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
                     <div>Branch & Profile</div>
                     <div>District / Province</div>
                     <div>Office Location</div>
@@ -462,7 +462,7 @@ export default function AdminStaffPage() {
                       <div className="flex flex-col min-w-0 select-none">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="w-2 h-2 rounded-full shrink-0 bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.7)]" />
-                          <h3 className="font-black text-sm text-slate-800 whitespace-nowrap truncate">
+                          <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
                             {staff.branch} Branch
                           </h3>
                         </div>
@@ -497,7 +497,7 @@ export default function AdminStaffPage() {
                       {/* Col 5: Staff Count */}
                       <div className="flex flex-col min-w-0 select-none">
                         <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Staff Count</span>
-                        <span className="bg-slate-100 text-slate-800 font-black text-xs px-2.5 py-1 rounded-md w-fit text-center">
+                        <span className="bg-slate-100 text-slate-800 font-semibold text-xs px-2.5 py-1 rounded-md w-fit text-center">
                           {staff.staffCount} members
                         </span>
                       </div>
@@ -507,19 +507,19 @@ export default function AdminStaffPage() {
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => triggerView(staff)}
-                            className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm border border-slate-200"
+                            className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-bold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm border border-slate-200"
                           >
                             View
                           </button>
                           <button
                             onClick={() => triggerEdit(staff)}
-                            className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                            className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-bold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteStaff(staff._id)}
-                            className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                            className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                           >
                             Delete
                           </button>
@@ -542,7 +542,7 @@ export default function AdminStaffPage() {
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Register New Branch
                 </h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
@@ -577,7 +577,7 @@ export default function AdminStaffPage() {
 
               {/* Section 1: Branch Operational Profile */}
               <div className="flex flex-col gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-5">
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">
                   1. Branch Profile Details
                 </span>
 
@@ -702,7 +702,7 @@ export default function AdminStaffPage() {
 
               {/* Section 2: Administrator Staff Credentials */}
               <div className="flex flex-col gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-5">
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">
                   2. Administrator Profile & Credentials
                 </span>
 
@@ -800,7 +800,7 @@ export default function AdminStaffPage() {
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Branch Password Reset Requests
                 </h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
@@ -823,7 +823,7 @@ export default function AdminStaffPage() {
               {loadingRequests ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-3 select-none">
                   <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#0f2d3a]" strokeWidth={2.5} />
-                  <p className="text-xs text-slate-400 font-extrabold uppercase tracking-wider">Fetching password requests...</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Fetching password requests...</p>
                 </div>
               ) : passwordRequests.length === 0 ? (
                 <div className="text-center py-20 flex flex-col items-center justify-center text-slate-400 select-none bg-slate-50 border border-slate-100 rounded-3xl">
@@ -843,11 +843,11 @@ export default function AdminStaffPage() {
                             <HugeiconsIcon icon={Key01Icon} className="w-5 h-5" strokeWidth={2.5} />
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-slate-800 text-sm leading-tight truncate max-w-[190px]">{request.name}</h3>
-                            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mt-1">{request.branch} Branch Office</span>
+                            <h3 className="font-bold text-slate-800 text-sm leading-tight truncate max-w-[190px]">{request.name}</h3>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mt-1">{request.branch} Branch Office</span>
                           </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black tracking-wider uppercase select-none flex items-center gap-1 animate-pulse">
+                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-semibold tracking-wider uppercase select-none flex items-center gap-1 animate-pulse">
                           <span className="w-2 h-2 rounded-full bg-amber-500" />
                           Pending Reset
                         </span>
@@ -889,7 +889,7 @@ export default function AdminStaffPage() {
                         <button
                           onClick={() => handleApproveRequest(request._id)}
                           disabled={actioningRequestId !== null}
-                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white text-xs font-extrabold rounded-full shadow-md shadow-slate-900/10 transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-1.5"
+                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white text-xs font-bold rounded-full shadow-md shadow-slate-900/10 transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-1.5"
                         >
                           {actioningRequestId === request._id ? (
                             <>
@@ -931,7 +931,7 @@ export default function AdminStaffPage() {
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Edit Office Staff Details
                 </h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
@@ -969,7 +969,7 @@ export default function AdminStaffPage() {
 
               {/* Section 1: Branch Operational Profile */}
               <div className="flex flex-col gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-5">
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">
                   1. Branch Profile Details
                 </span>
 
@@ -1094,7 +1094,7 @@ export default function AdminStaffPage() {
 
               {/* Section 2: Administrator Staff Credentials */}
               <div className="flex flex-col gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-5">
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">
                   2. Administrator Profile & Credentials
                 </span>
 
@@ -1195,7 +1195,7 @@ export default function AdminStaffPage() {
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   {viewingStaff.branch} Branch Profile
                 </h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
@@ -1220,13 +1220,13 @@ export default function AdminStaffPage() {
             <div className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-5 text-left">
               {/* Branch Profile Name Card */}
               <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-1">
-                <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest block">Profile Name</span>
-                <span className="text-base font-black text-slate-800">{viewingStaff.name}</span>
+                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Profile Name</span>
+                <span className="text-base font-semibold text-slate-800">{viewingStaff.name}</span>
               </div>
 
               {/* Grid 1: Location details */}
               <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-4">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Location & Geography</span>
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Location & Geography</span>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Province</span>
@@ -1242,7 +1242,7 @@ export default function AdminStaffPage() {
                   </div>
                   <div>
                     <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Staff Count</span>
-                    <span className="text-[#0f2d4a] text-xs font-extrabold">{viewingStaff.staffCount} members</span>
+                    <span className="text-[#0f2d4a] text-xs font-bold">{viewingStaff.staffCount} members</span>
                   </div>
                 </div>
                 <div className="mt-1">
@@ -1255,7 +1255,7 @@ export default function AdminStaffPage() {
 
               {/* Grid 2: Contact Info */}
               <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-4">
-                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Contact Details</span>
+                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Contact Details</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Email Address</span>

@@ -168,7 +168,7 @@ export default function Login() {
             
             {/* Top Center Title */}
             <div className="flex flex-col items-center text-center -mt-2 mb-1">
-              <h1 className="text-4xl md:text-5xl font-extrabold text-white tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
+              <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
                 {t.loginTitle}
               </h1>
               <p className="text-white/70 text-sm mt-2 font-medium">

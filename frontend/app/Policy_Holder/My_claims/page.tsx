@@ -587,7 +587,7 @@ export default function MyClaims() {
                   <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2} />
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{t.claims}</span>
                 </div>
-                <span className="text-2xl font-extrabold text-slate-900">{totalClaimsThisYear}</span>
+                <span className="text-2xl font-bold text-slate-900">{totalClaimsThisYear}</span>
               </div>
 
               {/* Pending */}
@@ -596,7 +596,7 @@ export default function MyClaims() {
                   <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 text-sky-600" strokeWidth={2} />
                   <span className="text-[11px] font-bold uppercase tracking-wider text-sky-700">{t.pending}</span>
                 </div>
-                <span className="text-2xl font-extrabold text-sky-600">{pendingClaimsThisYear}</span>
+                <span className="text-2xl font-bold text-sky-600">{pendingClaimsThisYear}</span>
               </div>
 
               {/* Completed */}
@@ -605,7 +605,7 @@ export default function MyClaims() {
                   <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-blue-600" strokeWidth={2} />
                   <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">{t.completed}</span>
                 </div>
-                <span className="text-2xl font-extrabold text-blue-900">{completedClaimsThisYear}</span>
+                <span className="text-2xl font-bold text-blue-900">{completedClaimsThisYear}</span>
               </div>
             </div>
           </div>

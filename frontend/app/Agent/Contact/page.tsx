@@ -233,7 +233,7 @@ export default function AgentContactPage() {
           
           {/* Contact Cards */}
           <div className="flex flex-col gap-5">
-            <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight select-none">
+            <h2 className="text-xl md:text-2xl font-semibold text-slate-800 tracking-tight select-none">
               {t.commChannels}
             </h2>
 
@@ -253,7 +253,7 @@ export default function AgentContactPage() {
                   </p>
                 </div>
               </div>
-              <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-1 rounded-full font-black text-[10px] uppercase self-start md:self-center select-none">
+              <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-1 rounded-full font-semibold text-[10px] uppercase self-start md:self-center select-none">
                 {t.hotlineBadge}
               </div>
             </a>
@@ -275,7 +275,7 @@ export default function AgentContactPage() {
                   </p>
                 </div>
               </div>
-              <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-1 rounded-full font-black text-[10px] uppercase self-start md:self-center select-none">
+              <div className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-4 py-1 rounded-full font-semibold text-[10px] uppercase self-start md:self-center select-none">
                 {t.emailBadge}
               </div>
             </button>
@@ -283,7 +283,7 @@ export default function AgentContactPage() {
 
           {/* FAQ Section */}
           <div className="flex flex-col gap-4">
-            <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight select-none">
+            <h2 className="text-xl md:text-2xl font-semibold text-slate-800 tracking-tight select-none">
               {t.faqTitle}
             </h2>
             <div className="flex flex-col gap-3 select-none">
@@ -322,7 +322,7 @@ export default function AgentContactPage() {
           
           {/* Office hours card */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col gap-4">
-            <h3 className="font-black text-slate-800 text-base border-b border-slate-100 pb-3 flex items-center gap-2">
+            <h3 className="font-semibold text-slate-800 text-base border-b border-slate-100 pb-3 flex items-center gap-2">
               <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
               {lang === "en" ? "Office Working Hours" : lang === "si" ? "කාර්යාලීය රාජකාරි වේලාවන්" : "அலுவலக வேலை நேரம்"}
             </h3>
@@ -341,32 +341,32 @@ export default function AgentContactPage() {
               </div>
               <hr className="border-t border-slate-100 my-2" />
               <div className="text-[11px] text-slate-400 leading-relaxed">
-                <span className="font-extrabold text-slate-500">{lang === "en" ? "Notice:" : lang === "si" ? "දැනුම්දීම:" : "அறிவிப்பு:"}</span> {lang === "en" ? "General administrative queries will be reviewed during office hours. Urgent road accidents must be immediately reported to our priority hotline." : lang === "si" ? "පොදු පරිපාලන විමසීම් කාර්යාල වේලාවන් තුළ සමාලෝචනය කෙරේ. හදිසි මාර්ග අනතුරු වහාම අපගේ ප්‍රමුඛතා ඇමතුම් අංකයට වාර්තා කළ යුතුය." : "பொதுவான நிர்வாக வினவல்கள் அலுவலக நேரங்களில் பரிசீலிக்கப்படும். அவசர வீதி விபத்துக்கள் உடனடியாக எமது முன்னுரிமை உதவி எண்ணிற்கு அறிவிக்கப்பட வேண்டும்."}
+                <span className="font-bold text-slate-500">{lang === "en" ? "Notice:" : lang === "si" ? "දැනුම්දීම:" : "அறிவிப்பு:"}</span> {lang === "en" ? "General administrative queries will be reviewed during office hours. Urgent road accidents must be immediately reported to our priority hotline." : lang === "si" ? "පොදු පරිපාලන විමසීම් කාර්යාල වේලාවන් තුළ සමාලෝචනය කෙරේ. හදිසි මාර්ග අනතුරු වහාම අපගේ ප්‍රමුඛතා ඇමතුම් අංකයට වාර්තා කළ යුතුය." : "பொதுவான நிர்வாக வினவல்கள் அலுவலக நேரங்களில் பரிசீலிக்கப்படும். அவசர வீதி விபத்துக்கள் உடனடியாக எமது முன்னுரிமை உதவி எண்ணிற்கு அறிவிக்கப்பட வேண்டும்."}
               </div>
             </div>
           </div>
 
           {/* Regional Branches details */}
           <div className="bg-white border border-slate-200 rounded-[28px] p-6 shadow-sm flex flex-col gap-4">
-            <h3 className="font-black text-slate-800 text-base border-b border-slate-100 pb-3">
+            <h3 className="font-semibold text-slate-800 text-base border-b border-slate-100 pb-3">
               {lang === "en" ? "Regional Branch Offices" : lang === "si" ? "ප්‍රාදේශීය ශාඛා කාර්යාල" : "பிராந்திய கிளை அலுவலகங்கள்"}
             </h3>
             
             <div className="space-y-4">
               <div>
-                <span className="block font-black text-slate-800 text-xs uppercase tracking-wide">{lang === "en" ? "Colombo Central Branch" : lang === "si" ? "කොළඹ ප්‍රධාන ශාඛාව" : "கொழும்பு மத்திய கிளை"}</span>
+                <span className="block font-semibold text-slate-800 text-xs uppercase tracking-wide">{lang === "en" ? "Colombo Central Branch" : lang === "si" ? "කොළඹ ප්‍රධාන ශාඛාව" : "கொழும்பு மத்திய கிளை"}</span>
                 <span className="block text-slate-500 text-xs font-semibold mt-1">Tel: +94 112 889 000</span>
                 <span className="block text-slate-400 text-xs mt-0.5">Email: colombo@sanasainsurance.lk</span>
               </div>
 
               <div className="border-t border-slate-100 pt-3">
-                <span className="block font-black text-slate-800 text-xs uppercase tracking-wide">{lang === "en" ? "Galle District Branch" : lang === "si" ? "ගාල්ල දිස්ත්‍රික් ශාඛාව" : "காலி மாவட்ட கிளை"}</span>
+                <span className="block font-semibold text-slate-800 text-xs uppercase tracking-wide">{lang === "en" ? "Galle District Branch" : lang === "si" ? "ගාල්ල දිස්ත්‍රික් ශාඛාව" : "காலி மாவட்ட கிளை"}</span>
                 <span className="block text-slate-500 text-xs font-semibold mt-1">Tel: +94 912 244 500</span>
                 <span className="block text-slate-400 text-xs mt-0.5">Email: galle@sanasainsurance.lk</span>
               </div>
 
               <div className="border-t border-slate-100 pt-3">
-                <span className="block font-black text-slate-800 text-xs uppercase tracking-wide">{lang === "en" ? "Matara City Branch" : lang === "si" ? "මාතර නගර ශාඛාව" : "மாத்தறை நகர கிளை"}</span>
+                <span className="block font-semibold text-slate-800 text-xs uppercase tracking-wide">{lang === "en" ? "Matara City Branch" : lang === "si" ? "මාතර නගර ශාඛාව" : "மாத்தறை நகர கிளை"}</span>
                 <span className="block text-slate-500 text-xs font-semibold mt-1">Tel: +94 412 233 400</span>
                 <span className="block text-slate-400 text-xs mt-0.5">Email: matara@sanasainsurance.lk</span>
               </div>
@@ -375,7 +375,7 @@ export default function AgentContactPage() {
 
           {/* Head office card */}
           <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-[28px] p-6 shadow-md text-white">
-            <h3 className="font-black text-white text-base border-b border-slate-800 pb-3">
+            <h3 className="font-semibold text-white text-base border-b border-slate-800 pb-3">
               {lang === "en" ? "Headquarters Location" : lang === "si" ? "ප්‍රධාන කාර්යාලයීය පිහිටීම" : "தலைமையக இருப்பிடம்"}
             </h3>
             <p className="text-slate-300 text-xs font-semibold mt-3.5 leading-relaxed">
@@ -396,7 +396,7 @@ export default function AgentContactPage() {
           <div className="bg-white rounded-[32px] w-full max-w-lg shadow-2xl border border-slate-300 overflow-hidden transform scale-100 transition-all select-none">
             {/* Header */}
             <div className="px-8 pt-6 pb-4 flex justify-between items-center bg-white border-b border-slate-100">
-              <h2 className="font-extrabold text-xl text-slate-800">
+              <h2 className="font-bold text-xl text-slate-800">
                 {t.sendSupportReq}
               </h2>
               <button
@@ -428,18 +428,18 @@ export default function AgentContactPage() {
               {/* Agent metadata view fields (read-only) */}
               <div className="grid grid-cols-2 gap-4 bg-slate-50 border border-slate-200/60 p-4 rounded-2xl text-xs font-semibold text-slate-500">
                 <div>
-                  <span className="block text-slate-400 text-[10px] uppercase font-black tracking-wide">{lang === "en" ? "Agent Name" : lang === "si" ? "නියෝජිතයාගේ නම" : "முகவர் பெயர்"}</span>
+                  <span className="block text-slate-400 text-[10px] uppercase font-semibold tracking-wide">{lang === "en" ? "Agent Name" : lang === "si" ? "නියෝජිතයාගේ නම" : "முகவர் பெயர்"}</span>
                   <span className="text-slate-700 truncate block mt-0.5">{agent?.name || "N/A"}</span>
                 </div>
                 <div>
-                  <span className="block text-slate-400 text-[10px] uppercase font-black tracking-wide">{lang === "en" ? "Agent ID" : lang === "si" ? "නියෝජිත හැඳුනුම්පත" : "முகவர் ஐடி"}</span>
+                  <span className="block text-slate-400 text-[10px] uppercase font-semibold tracking-wide">{lang === "en" ? "Agent ID" : lang === "si" ? "නියෝජිත හැඳුනුම්පත" : "முகவர் ஐடி"}</span>
                   <span className="text-slate-700 truncate block mt-0.5">{agent?.agentId || "N/A"}</span>
                 </div>
               </div>
 
               {/* Subject */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-black text-slate-800 uppercase tracking-wide">{t.subject}</label>
+                <label className="text-xs font-semibold text-slate-800 uppercase tracking-wide">{t.subject}</label>
                 <input
                   type="text"
                   required
@@ -452,7 +452,7 @@ export default function AgentContactPage() {
 
               {/* Message */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-black text-slate-800 uppercase tracking-wide">{t.messageDetails}</label>
+                <label className="text-xs font-semibold text-slate-800 uppercase tracking-wide">{t.messageDetails}</label>
                 <textarea
                   required
                   rows={4}
@@ -467,7 +467,7 @@ export default function AgentContactPage() {
               <button
                 type="submit"
                 disabled={isSending}
-                className="w-full py-3 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-extrabold text-sm rounded-xl transition-all cursor-pointer border-none outline-none flex items-center justify-center gap-2 shadow-lg shadow-[#0f2d4a]/20 disabled:opacity-60"
+                className="w-full py-3 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-bold text-sm rounded-xl transition-all cursor-pointer border-none outline-none flex items-center justify-center gap-2 shadow-lg shadow-[#0f2d4a]/20 disabled:opacity-60"
               >
                 {isSending ? (
                   <>

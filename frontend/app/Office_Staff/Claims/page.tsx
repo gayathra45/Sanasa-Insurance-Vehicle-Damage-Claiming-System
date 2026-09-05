@@ -229,7 +229,7 @@ const renderParsedInspection = (
       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 shadow-inner select-text">
         <div className="flex items-center gap-2 mb-3 text-slate-405 select-none">
           <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Raw Inspection Report Text</span>
         </div>
         <p className="text-slate-705 text-xs font-semibold whitespace-pre-wrap leading-relaxed">
           {parsed.rawText}
@@ -260,7 +260,7 @@ const renderParsedInspection = (
     }
 
     return (
-      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
+      <span className={`px-3 py-1 rounded-full text-[9px] font-semibold uppercase tracking-wider border flex items-center gap-1.5 select-none ${color}`}>
         {icon}
         {val}
       </span>
@@ -893,7 +893,7 @@ function OfficeStaffClaimsPageContent() {
                 <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-lg font-bold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="bg-slate-850 text-white text-xs px-3.5 py-1.5 rounded-lg font-extrabold tracking-wide">{branch} Branch</span>
+                <span className="bg-slate-850 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold tracking-wide">{branch} Branch</span>
                 <span className="hidden lg:inline text-slate-400 font-medium">— Claims Portal</span>
               </h1>
             </div>
@@ -1021,12 +1021,12 @@ function OfficeStaffClaimsPageContent() {
                                 {claim.claimNumber}
                               </h3>
                               {isUrgent && (
-                                <span className="bg-red-100 text-red-700 text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded whitespace-nowrap">Urgent</span>
+                                <span className="bg-red-100 text-red-700 text-[8px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded whitespace-nowrap">Urgent</span>
                               )}
                               {claim.isManuallyUpdated && (
                                 <span 
                                   title={`Reason: ${claim.manualUpdateReason}\nBy: ${claim.manualUpdateBy}\nOn: ${claim.manualUpdateAt ? formatDate(claim.manualUpdateAt) : ""}`} 
-                                  className="bg-amber-100 text-amber-800 text-[8px] font-black tracking-wider uppercase px-2 py-0.5 rounded whitespace-nowrap cursor-help flex items-center gap-0.5"
+                                  className="bg-amber-100 text-amber-800 text-[8px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded whitespace-nowrap cursor-help flex items-center gap-0.5"
                                 >
                                   Manual Override
                                 </span>
@@ -1138,7 +1138,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Documents - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1154,7 +1154,7 @@ function OfficeStaffClaimsPageContent() {
                 <div className="space-y-6">
                   {/* Category 1: Policy Holder Documents */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                    <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
+                    <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                       Policy Holder Documents
                     </h3>
@@ -1209,7 +1209,7 @@ function OfficeStaffClaimsPageContent() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1219,7 +1219,7 @@ function OfficeStaffClaimsPageContent() {
 
                   {/* Category 2: Agent Documents */}
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                    <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
+                    <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-cyan-600" strokeWidth={2.5} />
                       Agent Documents
                     </h3>
@@ -1259,7 +1259,7 @@ function OfficeStaffClaimsPageContent() {
                                 className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
                                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                                <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                                <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                               </button>
                             );
                           }
@@ -1275,7 +1275,7 @@ function OfficeStaffClaimsPageContent() {
                               className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                             >
                               <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600 flex-shrink-0" strokeWidth={2.5} />
-                              <span className="text-xs font-extrabold text-slate-700 truncate">{doc.name}</span>
+                              <span className="text-xs font-bold text-slate-700 truncate">{doc.name}</span>
                             </button>
                           );
                         });
@@ -1344,7 +1344,7 @@ function OfficeStaffClaimsPageContent() {
 
                     return (
                       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-4">
-                        <h3 className="text-sm font-black text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
+                        <h3 className="text-sm font-semibold text-slate-800 border-b border-slate-200 pb-2 uppercase tracking-wider flex items-center gap-2 select-none">
                           {hasPending ? (
                             <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-amber-500 animate-pulse" strokeWidth={2.5} />
                           ) : (
@@ -1355,7 +1355,7 @@ function OfficeStaffClaimsPageContent() {
 
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 select-none">
-                            <span className="text-[10px] bg-blue-100 text-blue-800 font-black tracking-wider uppercase px-2 py-1 rounded border border-blue-200">
+                            <span className="text-[10px] bg-blue-100 text-blue-800 font-semibold tracking-wider uppercase px-2 py-1 rounded border border-blue-200">
                               Policy Holder Requests
                             </span>
                           </div>
@@ -1373,7 +1373,7 @@ function OfficeStaffClaimsPageContent() {
                                         item.status === "Pending" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
                                       }`} />
                                       <div className="flex flex-col min-w-0">
-                                        <span className="text-xs font-extrabold text-slate-800 truncate">{item.name}</span>
+                                        <span className="text-xs font-bold text-slate-800 truncate">{item.name}</span>
                                         <span className="text-[9px] text-slate-400 font-bold leading-none mt-0.5">
                                           {item.status === "Pending" ? (
                                             `Requested: ${requestedAt}`
@@ -1384,7 +1384,7 @@ function OfficeStaffClaimsPageContent() {
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                      <span className={`text-[8px] font-black uppercase px-2 py-1 rounded select-none border ${
+                                      <span className={`text-[8px] font-semibold uppercase px-2 py-1 rounded select-none border ${
                                         item.status === "Pending"
                                           ? "bg-amber-100/80 text-amber-800 border-amber-200"
                                           : "bg-emerald-100/80 text-emerald-800 border-emerald-200"
@@ -1401,7 +1401,7 @@ function OfficeStaffClaimsPageContent() {
                                             }
                                             setPreviewImage(docUrl || null);
                                           }}
-                                          className="text-[10px] font-black text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
+                                          className="text-[10px] font-semibold text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
                                         >
                                           View
                                         </button>
@@ -1420,7 +1420,7 @@ function OfficeStaffClaimsPageContent() {
 
                         <div className="space-y-3 pt-4 border-t border-slate-200/60">
                           <div className="flex items-center gap-2 select-none">
-                            <span className="text-[10px] bg-cyan-100 text-cyan-800 font-black tracking-wider uppercase px-2 py-1 rounded border border-cyan-200">
+                            <span className="text-[10px] bg-cyan-100 text-cyan-800 font-semibold tracking-wider uppercase px-2 py-1 rounded border border-cyan-200">
                               Agent Requests
                             </span>
                           </div>
@@ -1438,7 +1438,7 @@ function OfficeStaffClaimsPageContent() {
                                         item.status === "Pending" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
                                       }`} />
                                       <div className="flex flex-col min-w-0">
-                                        <span className="text-xs font-extrabold text-slate-800 truncate">{item.name}</span>
+                                        <span className="text-xs font-bold text-slate-800 truncate">{item.name}</span>
                                         <span className="text-[9px] text-slate-400 font-bold leading-none mt-0.5">
                                           {item.status === "Pending" ? (
                                             `Requested: ${requestedAt}`
@@ -1449,7 +1449,7 @@ function OfficeStaffClaimsPageContent() {
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-3">
-                                      <span className={`text-[8px] font-black uppercase px-2 py-1 rounded select-none border ${
+                                      <span className={`text-[8px] font-semibold uppercase px-2 py-1 rounded select-none border ${
                                         item.status === "Pending"
                                           ? "bg-amber-100/80 text-amber-800 border-amber-200"
                                           : "bg-emerald-100/80 text-emerald-800 border-emerald-200"
@@ -1466,7 +1466,7 @@ function OfficeStaffClaimsPageContent() {
                                             }
                                             setPreviewImage(docUrl || null);
                                           }}
-                                          className="text-[10px] font-black text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
+                                          className="text-[10px] font-semibold text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
                                         >
                                           View
                                         </button>
@@ -1518,7 +1518,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Request Documents - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1540,7 +1540,7 @@ function OfficeStaffClaimsPageContent() {
                         <button
                           type="button"
                           onClick={() => handleRemoveRequestItem(index)}
-                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 font-extrabold text-lg bg-transparent border-none cursor-pointer p-1 transition-colors"
+                          className="absolute top-4 right-4 text-slate-400 hover:text-red-500 font-bold text-lg bg-transparent border-none cursor-pointer p-1 transition-colors"
                           title="Remove this document request"
                         >
                           <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-slate-400 hover:text-red-500" strokeWidth={2.5} />
@@ -1548,10 +1548,10 @@ function OfficeStaffClaimsPageContent() {
                       )}
 
                       <div className="flex items-center gap-2 select-none mb-1">
-                        <span className="w-6 h-6 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center text-xs font-black">
+                        <span className="w-6 h-6 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center text-xs font-semibold">
                           {String(index + 1).padStart(2, '0')}
                         </span>
-                        <h4 className="text-slate-800 font-black text-xs uppercase tracking-wider">Document #{index + 1}</h4>
+                        <h4 className="text-slate-800 font-semibold text-xs uppercase tracking-wider">Document #{index + 1}</h4>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1731,7 +1731,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Add Note - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1799,7 +1799,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Contact - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1816,7 +1816,7 @@ function OfficeStaffClaimsPageContent() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 select-none">
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Policy Holder</span>
-                    <h5 className="text-xs font-extrabold text-slate-800">{getPolicyHolderName(selectedClaim.userNic)}</h5>
+                    <h5 className="text-xs font-bold text-slate-800">{getPolicyHolderName(selectedClaim.userNic)}</h5>
                     <div className="text-[11px] text-slate-600 font-semibold">
                       <p>NIC: {selectedClaim.userNic}</p>
                       <p>Phone: {getPolicyHolderContact(selectedClaim.userNic)}</p>
@@ -1826,7 +1826,7 @@ function OfficeStaffClaimsPageContent() {
                     <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Assigned Agent</span>
                     {selectedClaim.assignedAgent ? (
                       <>
-                        <h5 className="text-xs font-extrabold text-slate-800">{getAgentName(selectedClaim.assignedAgent)}</h5>
+                        <h5 className="text-xs font-bold text-slate-800">{getAgentName(selectedClaim.assignedAgent)}</h5>
                         <div className="text-[11px] text-slate-600 font-semibold">
                           <p>Email: {selectedClaim.assignedAgent}</p>
                           {(() => {
@@ -1846,7 +1846,7 @@ function OfficeStaffClaimsPageContent() {
                   <button
                     type="button"
                     onClick={() => setContactRecipient("Policy Holder")}
-                    className={`flex-1 md:flex-none py-2 px-6 rounded-full text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
+                    className={`flex-1 md:flex-none py-2 px-6 rounded-full text-xs font-semibold tracking-wide uppercase transition-all border cursor-pointer ${
                       contactRecipient === "Policy Holder"
                         ? "bg-[#0f2d4a] text-white border-transparent shadow-sm"
                         : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
@@ -1857,7 +1857,7 @@ function OfficeStaffClaimsPageContent() {
                   <button
                     type="button"
                     onClick={() => setContactRecipient("Agent")}
-                    className={`flex-1 md:flex-none py-2 px-6 rounded-full text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
+                    className={`flex-1 md:flex-none py-2 px-6 rounded-full text-xs font-semibold tracking-wide uppercase transition-all border cursor-pointer ${
                       contactRecipient === "Agent"
                         ? "bg-[#0f2d4a] text-white border-transparent shadow-sm"
                         : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
@@ -1936,7 +1936,7 @@ function OfficeStaffClaimsPageContent() {
                         }
                       }}
                       disabled={updatingClaim || !newMessageText.trim() || (contactRecipient === "Agent" && !selectedClaim.assignedAgent)}
-                      className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs px-5 py-4 rounded-xl border-none cursor-pointer disabled:opacity-50"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs px-5 py-4 rounded-xl border-none cursor-pointer disabled:opacity-50"
                     >
                       Send
                     </button>
@@ -1965,7 +1965,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Update Tracking - {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -1979,7 +1979,7 @@ function OfficeStaffClaimsPageContent() {
                   <button
                     type="button"
                     onClick={() => setIsManualMode(!isManualMode)}
-                    className="bg-[#f97316] hover:bg-orange-600 text-white font-extrabold text-[11px] px-4 py-2 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
+                    className="bg-[#f97316] hover:bg-orange-600 text-white font-bold text-[11px] px-4 py-2 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
                   >
                     {isManualMode ? "\u2699\uFE0F Standard Flow" : "\u270D\uFE0F Update Manually"}
                   </button>
@@ -1988,7 +1988,7 @@ function OfficeStaffClaimsPageContent() {
                 {isManualMode ? (
                   <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 space-y-5 transition-all duration-300 text-left">
                     <div className="bg-slate-900 border border-slate-800 rounded-[24px] p-5 shadow-md text-white flex flex-col justify-between hover:border-slate-800 transition-all duration-200 select-none">
-                      <span className="text-[10px] text-cyan-400 font-extrabold uppercase tracking-wider block flex items-center gap-1.5">
+                      <span className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider block flex items-center gap-1.5">
                         <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-cyan-400" strokeWidth={2.2} />
                         Manual Override Guidelines
                       </span>
@@ -2082,7 +2082,7 @@ function OfficeStaffClaimsPageContent() {
                           }
                         }}
                         disabled={updatingClaim}
-                        className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
+                        className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
                       >
                         {updatingClaim ? "Processing..." : "Confirm Override"}
                       </button>
@@ -2138,7 +2138,7 @@ function OfficeStaffClaimsPageContent() {
                             alert("Advanced to Decision (Step 5) successfully!");
                           }}
                           disabled={updatingClaim}
-                          className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
+                          className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
                         >
                           {updatingClaim ? "Updating..." : "Proceed to Decision (Step 5)"}
                         </button>
@@ -2151,7 +2151,7 @@ function OfficeStaffClaimsPageContent() {
                           <button
                             type="button"
                             onClick={() => setDecisionAction("Approve")}
-                            className={`flex-1 py-3 px-6 rounded-xl text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
+                            className={`flex-1 py-3 px-6 rounded-xl text-xs font-semibold tracking-wide uppercase transition-all border cursor-pointer ${
                               decisionAction === "Approve"
                                 ? "bg-emerald-600 text-white border-transparent shadow-sm"
                                 : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
@@ -2162,7 +2162,7 @@ function OfficeStaffClaimsPageContent() {
                           <button
                             type="button"
                             onClick={() => setDecisionAction("Reject")}
-                            className={`flex-1 py-3 px-6 rounded-xl text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
+                            className={`flex-1 py-3 px-6 rounded-xl text-xs font-semibold tracking-wide uppercase transition-all border cursor-pointer ${
                               decisionAction === "Reject"
                                 ? "bg-red-600 text-white border-transparent shadow-sm"
                                 : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
@@ -2200,7 +2200,7 @@ function OfficeStaffClaimsPageContent() {
                                 alert("Claim approved and advanced to Payment step!");
                               }}
                               disabled={updatingClaim}
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
                             >
                               {updatingClaim ? "Processing..." : "Confirm Approval"}
                             </button>
@@ -2234,7 +2234,7 @@ function OfficeStaffClaimsPageContent() {
                                 alert("Claim has been rejected.");
                               }}
                               disabled={updatingClaim}
-                              className="bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
+                              className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer disabled:opacity-50"
                             >
                               {updatingClaim ? "Processing..." : "Confirm Rejection"}
                             </button>
@@ -2249,23 +2249,23 @@ function OfficeStaffClaimsPageContent() {
                           <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-5 space-y-3">
                             <div className="flex items-center gap-2 text-emerald-800">
                               <HugeiconsIcon icon={Location01Icon} className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />
-                              <span className="text-[10px] font-black uppercase tracking-wider select-none">Registered Bank Settlement Profile</span>
+                              <span className="text-[10px] font-semibold uppercase tracking-wider select-none">Registered Bank Settlement Profile</span>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-1">
                               <div>
-                                <span className="block text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Account Holder Name</span>
+                                <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider select-none">Account Holder Name</span>
                                 <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.policyHolderBankDetails.accountHolderName || "N/A"}</span>
                               </div>
                               <div>
-                                <span className="block text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Bank Name</span>
+                                <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider select-none">Bank Name</span>
                                 <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.policyHolderBankDetails.bankName || "N/A"}</span>
                               </div>
                               <div>
-                                <span className="block text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Branch Name</span>
+                                <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider select-none">Branch Name</span>
                                 <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.policyHolderBankDetails.branchName || "N/A"}</span>
                               </div>
                               <div>
-                                <span className="block text-[9px] text-slate-400 font-extrabold uppercase tracking-wider select-none">Account Number</span>
+                                <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider select-none">Account Number</span>
                                 <span className="block text-slate-800 text-xs font-bold mt-0.5">{selectedClaim.policyHolderBankDetails.accountNumber || "N/A"}</span>
                               </div>
                             </div>
@@ -2273,7 +2273,7 @@ function OfficeStaffClaimsPageContent() {
                         )}
 
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-                          <h3 className="text-sm font-black text-slate-800 border-b pb-2 uppercase tracking-wide">
+                          <h3 className="text-sm font-semibold text-slate-800 border-b pb-2 uppercase tracking-wide">
                             Confirm Payout Details
                           </h3>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -2311,7 +2311,7 @@ function OfficeStaffClaimsPageContent() {
                         </div>
 
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4">
-                          <h3 className="text-sm font-black text-slate-800 border-b pb-2 uppercase tracking-wide">
+                          <h3 className="text-sm font-semibold text-slate-800 border-b pb-2 uppercase tracking-wide">
                             Payment Receipt
                           </h3>
                           
@@ -2330,7 +2330,7 @@ function OfficeStaffClaimsPageContent() {
                                   }
                                   setPreviewImage(docUrl || null);
                                 }}
-                                className="text-xs font-extrabold text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer"
+                                className="text-xs font-bold text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer"
                               >
                                 View Receipt File
                               </button>
@@ -2346,7 +2346,7 @@ function OfficeStaffClaimsPageContent() {
                                     setPaymentReceiptFile(e.target.files[0]);
                                   }
                                 }}
-                                className="text-xs font-semibold text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-extrabold file:bg-slate-200 file:text-slate-800 file:cursor-pointer"
+                                className="text-xs font-semibold text-slate-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-[11px] file:font-bold file:bg-slate-200 file:text-slate-800 file:cursor-pointer"
                               />
                             </div>
                           )}
@@ -2390,7 +2390,7 @@ function OfficeStaffClaimsPageContent() {
                             }
                           }}
                           disabled={updatingClaim || isUploadingReceipt}
-                          className="w-full bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-4 rounded-xl border-none cursor-pointer text-center select-none shadow-sm active:scale-95 disabled:opacity-50"
+                          className="w-full bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs py-4 rounded-xl border-none cursor-pointer text-center select-none shadow-sm active:scale-95 disabled:opacity-50"
                         >
                           {isUploadingReceipt ? "Uploading Receipt..." : updatingClaim ? "Completing claim..." : "Complete Claim Process"}
                         </button>
@@ -2421,7 +2421,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Modal Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   {selectedClaim.claimNumber}
                 </h2>
               </div>
@@ -2433,7 +2433,7 @@ function OfficeStaffClaimsPageContent() {
                   <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-left transition-all duration-300 select-none">
                     <span className="text-xl">ΓÜá∩╕Å</span>
                     <div className="flex-1">
-                      <h4 className="text-xs font-black text-amber-800 uppercase tracking-wide">Manual Override Active</h4>
+                      <h4 className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Manual Override Active</h4>
                       <p className="text-xs text-amber-700 font-semibold mt-1">
                         Reason: <span className="font-bold text-slate-800">{selectedClaim.manualUpdateReason}</span>
                       </p>
@@ -2479,7 +2479,7 @@ function OfficeStaffClaimsPageContent() {
                           <button
                             type="button"
                             onClick={() => setShowAssignModal(selectedClaim)}
-                            className="bg-[#f97316] hover:bg-orange-600 active:scale-95 text-white py-1 px-3.5 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border-none cursor-pointer flex items-center justify-center shadow-xs"
+                            className="bg-[#f97316] hover:bg-orange-600 active:scale-95 text-white py-1 px-3.5 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all border-none cursor-pointer flex items-center justify-center shadow-xs"
                           >
                             Assign Agent
                           </button>
@@ -2489,7 +2489,7 @@ function OfficeStaffClaimsPageContent() {
                         Type : <span className="font-medium text-slate-600">{selectedClaim.damageType}</span>
                       </div>
                       <div>
-                        Status : <span className={selectedClaim.priority === "Urgent" || selectedClaim.status === "Rejected" ? "text-red-500 font-extrabold" : "font-medium text-slate-600"}>{selectedClaim.status}</span>
+                        Status : <span className={selectedClaim.priority === "Urgent" || selectedClaim.status === "Rejected" ? "text-red-500 font-bold" : "font-medium text-slate-600"}>{selectedClaim.status}</span>
                       </div>
                     </div>
 
@@ -2499,7 +2499,7 @@ function OfficeStaffClaimsPageContent() {
                         <button
                           type="button"
                           onClick={() => setPreviewReportText(selectedClaim.inspectionReport || null)}
-                          className="bg-[#10b981] hover:bg-[#059669] text-white font-extrabold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
+                          className="bg-[#10b981] hover:bg-[#059669] text-white font-bold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
                         >
                           <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
                           Inspection Report
@@ -2508,21 +2508,21 @@ function OfficeStaffClaimsPageContent() {
                       <button
                         type="button"
                         onClick={() => setActiveSubModal("documents")}
-                        className="bg-[#00c5ff] hover:bg-[#00b0e6] text-white font-extrabold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95"
+                        className="bg-[#00c5ff] hover:bg-[#00b0e6] text-white font-bold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95"
                       >
                         Documents
                       </button>
                       <button
                         type="button"
                         onClick={() => setActiveSubModal("contact")}
-                        className="bg-[#00c5ff] hover:bg-[#00b0e6] text-white font-extrabold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95"
+                        className="bg-[#00c5ff] hover:bg-[#00b0e6] text-white font-bold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95"
                       >
                         Contact
                       </button>
                       <button
                         type="button"
                         onClick={() => setShowAllDetails(!showAllDetails)}
-                        className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
+                        className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
                       >
                         {showAllDetails ? (
                           <>
@@ -2546,7 +2546,7 @@ function OfficeStaffClaimsPageContent() {
                     
                     {/* Claim Description Section */}
                     <div>
-                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">Claim Description</h3>
+                      <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-3 select-none">Claim Description</h3>
                       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-left">
                         <p className="text-xs font-semibold text-slate-600 leading-relaxed whitespace-pre-line text-left">
                           {selectedClaim.description || "No description provided."}
@@ -2557,7 +2557,7 @@ function OfficeStaffClaimsPageContent() {
                     {/* Other Vehicles Involved Section */}
                     {selectedClaim.otherVehicleDetails && (
                       <div>
-                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">Other Vehicles Involved</h3>
+                        <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-3 select-none">Other Vehicles Involved</h3>
                         {Array.isArray(selectedClaim.otherVehicleDetails) ? (
                           selectedClaim.otherVehicleDetails.length === 0 ? (
                             <div className="text-xs text-slate-500 italic select-none">No other vehicles involved.</div>
@@ -2565,7 +2565,7 @@ function OfficeStaffClaimsPageContent() {
                             <div className="space-y-4">
                               {selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
                                 <div key={vIdx} className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 text-left">
-                                  <h4 className="text-xs font-black text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
+                                  <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
                                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-left">
                                     <div>
                                       <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider select-none">Vehicle Number</span>
@@ -2713,7 +2713,7 @@ function OfficeStaffClaimsPageContent() {
 
                     {/* Uploaded Documents & Photos Section */}
                     <div>
-                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">Uploaded Documents & Photos</h3>
+                      <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-3 select-none">Uploaded Documents & Photos</h3>
                       <div className="text-left">
                         {(() => {
                           const phDocs: { name: string; url: string }[] = [];
@@ -2758,7 +2758,7 @@ function OfficeStaffClaimsPageContent() {
                                 }
                                 return (
                                   <div key={idx} className="flex flex-col gap-1.5">
-                                    <span className="text-[10px] font-extrabold text-slate-500 truncate select-none">{doc.name}</span>
+                                    <span className="text-[10px] font-bold text-slate-500 truncate select-none">{doc.name}</span>
                                     <div 
                                       onClick={() => setPreviewImage(docUrl || null)}
                                       className="aspect-[4/3] rounded-xl border border-slate-200 overflow-hidden bg-slate-100 cursor-pointer hover:opacity-90 active:scale-98 transition-all relative group shadow-sm flex items-center justify-center"
@@ -2791,25 +2791,25 @@ function OfficeStaffClaimsPageContent() {
                     {/* AI Damage Analysis Section */}
                     {selectedClaim.aiAnalysis?.isAnalyzed ? (
                       <div className="mt-4">
-                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider mb-3 select-none">🤖 AI Damage Analysis</h3>
+                        <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider mb-3 select-none">🤖 AI Damage Analysis</h3>
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 text-left flex flex-col gap-4">
                           <p className="text-xs font-semibold text-slate-600 leading-relaxed italic">
                             "{selectedClaim.aiAnalysis.summary}"
                           </p>
                           <div className="text-xs font-bold text-slate-700">
-                            Overall Estimated Damage: <span className="text-emerald-600 font-extrabold text-sm">{selectedClaim.aiAnalysis.overallDamagePercentage}%</span>
+                            Overall Estimated Damage: <span className="text-emerald-600 font-bold text-sm">{selectedClaim.aiAnalysis.overallDamagePercentage}%</span>
                           </div>
                           
                           <div className="border-t border-slate-200 pt-3">
-                            <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-2">Damaged Items Breakdown</h4>
+                            <h4 className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Damaged Items Breakdown</h4>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               {selectedClaim.aiAnalysis.damagedItems?.map((part, index) => (
                                 <div key={index} className="flex justify-between items-center border border-slate-200 bg-white p-3 rounded-xl shadow-sm">
                                   <div className="flex flex-col gap-0.5">
-                                    <span className="text-xs font-extrabold text-slate-800">{part.item}</span>
+                                    <span className="text-xs font-bold text-slate-800">{part.item}</span>
                                     <span className="text-[10px] text-slate-500 font-medium">{part.description}</span>
                                   </div>
-                                  <span className="text-xs font-black px-2.5 py-1 bg-red-50 text-red-500 rounded-full">{part.damagePercentage}%</span>
+                                  <span className="text-xs font-semibold px-2.5 py-1 bg-red-50 text-red-500 rounded-full">{part.damagePercentage}%</span>
                                 </div>
                               ))}
                             </div>
@@ -2819,7 +2819,7 @@ function OfficeStaffClaimsPageContent() {
                     ) : (
                       <div className="mt-4 bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-6 text-center">
                         <span className="text-2xl mb-2 block">🤖</span>
-                        <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider mb-1">AI Damage Assessment Pending</h4>
+                        <h4 className="text-xs font-semibold text-slate-800 uppercase tracking-wider mb-1">AI Damage Assessment Pending</h4>
                         <p className="text-[10px] text-slate-500 mb-4 max-w-[320px] mx-auto leading-relaxed">
                           This claim does not have AI analysis data yet. You can trigger it manually now.
                         </p>
@@ -2827,7 +2827,7 @@ function OfficeStaffClaimsPageContent() {
                           type="button"
                           onClick={() => handleRunAIAnalysis(selectedClaim.claimNumber)}
                           disabled={analyzingClaim === selectedClaim.claimNumber}
-                          className="bg-[#0f2d4a] hover:bg-[#1a446c] text-white text-[10px] font-extrabold px-6 py-2.5 rounded-full shadow transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                          className="bg-[#0f2d4a] hover:bg-[#1a446c] text-white text-[10px] font-bold px-6 py-2.5 rounded-full shadow transition-all active:scale-95 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                         >
                           {analyzingClaim === selectedClaim.claimNumber ? "Analyzing Damage..." : "Run AI Damage Assessment"}
                         </button>
@@ -2881,7 +2881,7 @@ function OfficeStaffClaimsPageContent() {
                           : "text-[#22c55e] border-[#22c55e] shadow-sm shadow-[#22c55e]/10";
                       } else if (stepStatus === "active") {
                         // Orange border/text and slightly highlighted bg for the active stage
-                        circleStyle = "text-[#f97316] border-[#f97316] shadow-sm shadow-[#f97316]/20 bg-orange-50 font-black scale-105";
+                        circleStyle = "text-[#f97316] border-[#f97316] shadow-sm shadow-[#f97316]/20 bg-orange-50 font-semibold scale-105";
                       } else {
                         circleStyle = "text-[#0f2d4a]/40 border-[#0f2d4a]/20";
                       }
@@ -2899,9 +2899,9 @@ function OfficeStaffClaimsPageContent() {
                           {/* Step Label */}
                           <span className={`text-[10px] font-semibold mt-2 tracking-wide select-none text-center ${
                             stepStatus === "active" 
-                              ? "text-[#f97316] font-extrabold" 
+                              ? "text-[#f97316] font-bold" 
                               : stepStatus === "completed"
-                                ? "text-emerald-700 font-extrabold"
+                                ? "text-emerald-700 font-bold"
                                 : "text-slate-400"
                           }`}>
                             {stepObj.label}
@@ -2918,7 +2918,7 @@ function OfficeStaffClaimsPageContent() {
                     <button
                       type="button"
                       onClick={() => openAssignAgentModal(selectedClaim)}
-                      className="bg-[#f97316] hover:bg-orange-600 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
+                      className="bg-[#f97316] hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
                     >
                       Assign Agent
                     </button>
@@ -2926,7 +2926,7 @@ function OfficeStaffClaimsPageContent() {
                   <button
                     type="button"
                     onClick={() => setActiveSubModal("update_tracking")}
-                    className="bg-[#f97316] hover:bg-orange-600 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
+                    className="bg-[#f97316] hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
                   >
                     Update Tracking
                   </button>
@@ -2938,14 +2938,14 @@ function OfficeStaffClaimsPageContent() {
                       ]);
                       setActiveSubModal("request_docs");
                     }}
-                    className="bg-[#f97316] hover:bg-orange-600 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
+                    className="bg-[#f97316] hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
                   >
                     Request Documents
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveSubModal("add_note")}
-                    className="bg-[#f97316] hover:bg-orange-600 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
+                    className="bg-[#f97316] hover:bg-orange-600 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95"
                   >
                     Add Note
                   </button>
@@ -2955,7 +2955,7 @@ function OfficeStaffClaimsPageContent() {
                 <div className="border-t border-slate-100 pt-5">
                   <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-left select-none transition-all duration-300">
                     <div className={`flex items-center justify-between ${showNotes ? "border-b border-slate-200 pb-3 mb-4" : ""}`}>
-                      <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                      <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                         <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-amber-500" strokeWidth={2.5} />
                         Internal Notes
                       </h3>
@@ -2971,7 +2971,7 @@ function OfficeStaffClaimsPageContent() {
                         <button
                           type="button"
                           onClick={() => setShowNotes(!showNotes)}
-                          className="text-cyan-600 hover:text-cyan-700 font-extrabold text-[11px] bg-transparent border-none cursor-pointer flex items-center gap-1 select-none"
+                          className="text-cyan-600 hover:text-cyan-700 font-bold text-[11px] bg-transparent border-none cursor-pointer flex items-center gap-1 select-none"
                         >
                           {showNotes ? "See Less" : "See More"}
                         </button>
@@ -3073,7 +3073,7 @@ function OfficeStaffClaimsPageContent() {
                     <div className="border-t border-slate-100 pt-5">
                       <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 text-left select-none transition-all duration-300">
                         <div className={`flex items-center justify-between ${showDocStatus ? "border-b border-slate-200 pb-3 mb-4" : ""}`}>
-                          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                          <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wider flex items-center gap-2">
                             {hasPending ? (
                               <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-amber-500 animate-pulse" strokeWidth={2.5} />
                             ) : (
@@ -3084,7 +3084,7 @@ function OfficeStaffClaimsPageContent() {
                           <button
                             type="button"
                             onClick={() => setShowDocStatus(!showDocStatus)}
-                            className="text-cyan-600 hover:text-cyan-700 font-extrabold text-[11px] bg-transparent border-none cursor-pointer flex items-center gap-1 select-none"
+                            className="text-cyan-600 hover:text-cyan-700 font-bold text-[11px] bg-transparent border-none cursor-pointer flex items-center gap-1 select-none"
                           >
                             {showDocStatus ? "See Less" : "See More"}
                           </button>
@@ -3094,7 +3094,7 @@ function OfficeStaffClaimsPageContent() {
                           <div className="space-y-4 pt-2 transition-all duration-300 text-left">
                             <div className="space-y-3">
                               <div className="flex items-center gap-2 select-none">
-                                <span className="text-[10px] bg-blue-100 text-blue-800 font-black tracking-wider uppercase px-2 py-1 rounded border border-blue-200">
+                                <span className="text-[10px] bg-blue-100 text-blue-800 font-semibold tracking-wider uppercase px-2 py-1 rounded border border-blue-200">
                                   Policy Holder Requests
                                 </span>
                               </div>
@@ -3112,7 +3112,7 @@ function OfficeStaffClaimsPageContent() {
                                             item.status === "Pending" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
                                           }`} />
                                           <div className="flex flex-col min-w-0">
-                                            <span className="text-xs font-extrabold text-slate-800 truncate">{item.name}</span>
+                                            <span className="text-xs font-bold text-slate-800 truncate">{item.name}</span>
                                             <span className="text-[9px] text-slate-400 font-bold leading-none mt-0.5">
                                               {item.status === "Pending" ? (
                                                 `Requested: ${requestedAt}`
@@ -3123,7 +3123,7 @@ function OfficeStaffClaimsPageContent() {
                                           </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                          <span className={`text-[8px] font-black uppercase px-2 py-1 rounded select-none border ${
+                                          <span className={`text-[8px] font-semibold uppercase px-2 py-1 rounded select-none border ${
                                             item.status === "Pending"
                                               ? "bg-amber-100/80 text-amber-800 border-amber-200"
                                               : "bg-emerald-100/80 text-emerald-800 border-emerald-200"
@@ -3140,7 +3140,7 @@ function OfficeStaffClaimsPageContent() {
                                                 }
                                                 setPreviewImage(docUrl || null);
                                               }}
-                                              className="text-[10px] font-black text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
+                                              className="text-[10px] font-semibold text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
                                             >
                                               View
                                             </button>
@@ -3159,7 +3159,7 @@ function OfficeStaffClaimsPageContent() {
 
                             <div className="space-y-3 pt-4 border-t border-slate-200/60">
                               <div className="flex items-center gap-2 select-none">
-                                <span className="text-[10px] bg-cyan-100 text-cyan-800 font-black tracking-wider uppercase px-2 py-1 rounded border border-cyan-200">
+                                <span className="text-[10px] bg-cyan-100 text-cyan-800 font-semibold tracking-wider uppercase px-2 py-1 rounded border border-cyan-200">
                                   Agent Requests
                                 </span>
                               </div>
@@ -3177,7 +3177,7 @@ function OfficeStaffClaimsPageContent() {
                                             item.status === "Pending" ? "bg-amber-500 animate-pulse" : "bg-emerald-500"
                                           }`} />
                                           <div className="flex flex-col min-w-0">
-                                            <span className="text-xs font-extrabold text-slate-800 truncate">{item.name}</span>
+                                            <span className="text-xs font-bold text-slate-800 truncate">{item.name}</span>
                                             <span className="text-[9px] text-slate-400 font-bold leading-none mt-0.5">
                                               {item.status === "Pending" ? (
                                                 `Requested: ${requestedAt}`
@@ -3188,7 +3188,7 @@ function OfficeStaffClaimsPageContent() {
                                           </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                          <span className={`text-[8px] font-black uppercase px-2 py-1 rounded select-none border ${
+                                          <span className={`text-[8px] font-semibold uppercase px-2 py-1 rounded select-none border ${
                                             item.status === "Pending"
                                               ? "bg-amber-100/80 text-amber-800 border-amber-200"
                                               : "bg-emerald-100/80 text-emerald-800 border-emerald-200"
@@ -3205,7 +3205,7 @@ function OfficeStaffClaimsPageContent() {
                                                 }
                                                 setPreviewImage(docUrl || null);
                                               }}
-                                              className="text-[10px] font-black text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
+                                              className="text-[10px] font-semibold text-cyan-600 hover:text-cyan-700 bg-transparent border-none cursor-pointer hover:underline"
                                             >
                                               View
                                             </button>
@@ -3248,7 +3248,7 @@ function OfficeStaffClaimsPageContent() {
                     type="button"
                     onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
                     disabled={isCancellingClaim}
-                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-bold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
                   >
                     <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" strokeWidth={2.5} />
                     {isCancellingClaim ? "Cancelling..." : "Cancel Claim"}
@@ -3275,7 +3275,7 @@ function OfficeStaffClaimsPageContent() {
       {showAssignModal && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[20px] w-full max-w-[450px] shadow-2xl p-6 flex flex-col relative select-none transition-all duration-300">
-            <h3 className="font-black text-[#0f2d4a] text-lg mb-1">Assign Agent</h3>
+            <h3 className="font-semibold text-[#0f2d4a] text-lg mb-1">Assign Agent</h3>
              <p className="text-xs text-slate-400 font-bold mb-5">Assign an active agent from {branch} Branch to claim {showAssignModal.claimNumber}.</p>
             
             {/* Claim Quick Details Card */}
@@ -3283,19 +3283,19 @@ function OfficeStaffClaimsPageContent() {
               <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                 <div>
                   <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Vehicle Plate</span>
-                  <span className="text-slate-800 font-extrabold">{formatPlate(showAssignModal.vehiclePlate)}</span>
+                  <span className="text-slate-800 font-bold">{formatPlate(showAssignModal.vehiclePlate)}</span>
                 </div>
                 <div>
                   <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Damage Type</span>
-                  <span className="text-slate-800 font-extrabold">{showAssignModal.damageType}</span>
+                  <span className="text-slate-800 font-bold">{showAssignModal.damageType}</span>
                 </div>
                 <div>
                   <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Location</span>
-                  <span className="text-slate-800 font-extrabold truncate block" title={showAssignModal.location}>{showAssignModal.location}</span>
+                  <span className="text-slate-800 font-bold truncate block" title={showAssignModal.location}>{showAssignModal.location}</span>
                 </div>
                 <div>
                   <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block">Incident Date / Time</span>
-                  <span className="text-slate-800 font-extrabold">{claimDateString(showAssignModal.incidentDate)} @ {showAssignModal.incidentTime}</span>
+                  <span className="text-slate-800 font-bold">{claimDateString(showAssignModal.incidentDate)} @ {showAssignModal.incidentTime}</span>
                 </div>
               </div>
               <div className="border-t border-slate-200 pt-2 mt-1">
@@ -3308,7 +3308,7 @@ function OfficeStaffClaimsPageContent() {
               <div className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between ml-1">
                   <label className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Select Branch Agent</label>
-                  <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
+                  <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
                     Active / Online Only
                   </span>
@@ -3343,7 +3343,7 @@ function OfficeStaffClaimsPageContent() {
                   <button
                     type="button"
                     onClick={() => setSelectedPriority("Normal")}
-                    className={`flex-1 py-2 px-4 rounded-xl text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
+                    className={`flex-1 py-2 px-4 rounded-xl text-xs font-semibold tracking-wide uppercase transition-all border cursor-pointer ${
                       selectedPriority === "Normal"
                         ? "bg-[#0f2d4a] text-white border-transparent shadow-sm"
                         : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
@@ -3354,7 +3354,7 @@ function OfficeStaffClaimsPageContent() {
                   <button
                     type="button"
                     onClick={() => setSelectedPriority("Urgent")}
-                    className={`flex-1 py-2 px-4 rounded-xl text-xs font-black tracking-wide uppercase transition-all border cursor-pointer ${
+                    className={`flex-1 py-2 px-4 rounded-xl text-xs font-semibold tracking-wide uppercase transition-all border cursor-pointer ${
                       selectedPriority === "Urgent"
                         ? "bg-red-600 text-white border-transparent shadow-sm shadow-red-600/10"
                         : "bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100"
@@ -3446,7 +3446,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-4 select-none">
               <div className="flex items-center gap-2.5">
                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
-                <h3 className="font-extrabold text-slate-800 text-base">Vehicle Physical Inspection Report</h3>
+                <h3 className="font-bold text-slate-800 text-base">Vehicle Physical Inspection Report</h3>
               </div>
               <button
                 onClick={() => setPreviewReportText(null)}
@@ -3472,7 +3472,7 @@ function OfficeStaffClaimsPageContent() {
                     setContactRecipient("Agent");
                     setActiveSubModal("contact");
                   }}
-                  className="px-5 py-3 rounded-full border border-[#0f2d4a] hover:bg-[#0f2d4a]/5 text-[#0f2d4a] font-extrabold text-xs transition-all cursor-pointer bg-white flex items-center gap-1.5 shadow-sm active:scale-95"
+                  className="px-5 py-3 rounded-full border border-[#0f2d4a] hover:bg-[#0f2d4a]/5 text-[#0f2d4a] font-bold text-xs transition-all cursor-pointer bg-white flex items-center gap-1.5 shadow-sm active:scale-95"
                 >
                   <HugeiconsIcon icon={BubbleChatIcon} className="w-4 h-4 text-[#0f2d4a]" strokeWidth={2.5} />
                   Chat with Agent

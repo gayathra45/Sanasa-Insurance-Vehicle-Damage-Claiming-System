@@ -282,7 +282,7 @@ export default function AdminAdminsPage() {
                 <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin Portal</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">Admin Portal</span>
                 <span className="hidden lg:inline"> — Administrators Management</span>
               </h1>
             </div>
@@ -305,7 +305,7 @@ export default function AdminAdminsPage() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">System Administrators</h2>
+                <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">System Administrators</h2>
                 <p className="text-slate-500 font-semibold text-sm mt-2 leading-relaxed">
                   Register new system administrators, approve registration requests, and dispatch secure password resets.
                 </p>
@@ -364,7 +364,7 @@ export default function AdminAdminsPage() {
             <div className="bg-white rounded-3xl border border-slate-100 shadow-lg max-w-4xl w-full overflow-hidden">
               <div className="p-6 border-b border-slate-100 select-none bg-slate-50/75 flex justify-between items-center">
                 <div>
-                  <h3 className="font-extrabold text-slate-800 text-base">Active Administrators</h3>
+                  <h3 className="font-bold text-slate-800 text-base">Active Administrators</h3>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Authorized system admins directory</p>
                 </div>
                 <button
@@ -400,7 +400,7 @@ export default function AdminAdminsPage() {
                     <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
                       {activeAdmins.map((admin) => (
                         <tr key={admin._id} className="hover:bg-slate-50/75 transition-colors">
-                          <td className="py-4 px-6 font-extrabold text-slate-800">{admin.name}</td>
+                          <td className="py-4 px-6 font-bold text-slate-800">{admin.name}</td>
                           <td className="py-4 px-6 text-slate-600 select-all">{admin.email}</td>
                           <td className="py-4 px-6 text-slate-600">{admin.mobile}</td>
                           <td className="py-4 px-6 text-slate-600 uppercase">{admin.nic}</td>
@@ -424,7 +424,7 @@ export default function AdminAdminsPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Register Admin Request</h2>
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Register Admin Request</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Define new admin profile for approval</p>
               </div>
               <button
@@ -452,7 +452,7 @@ export default function AdminAdminsPage() {
               )}
 
               <div className="flex flex-col gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-5">
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">Admin Profile Details</span>
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">Admin Profile Details</span>
 
                 {/* Name */}
                 <div className="flex flex-col gap-1.5">
@@ -543,7 +543,7 @@ export default function AdminAdminsPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Pending Admin Requests</h2>
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Pending Admin Requests</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Approve new admins to join the system</p>
               </div>
               <button
@@ -560,7 +560,7 @@ export default function AdminAdminsPage() {
               {loadingPending ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-3">
                   <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#0f2d3a]" strokeWidth={2.5} />
-                  <p className="text-xs text-slate-400 font-extrabold uppercase tracking-wider animate-pulse">Loading pending registrations...</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider animate-pulse">Loading pending registrations...</p>
                 </div>
               ) : pendingAdmins.length === 0 ? (
                 <div className="text-center py-20 flex flex-col items-center justify-center text-slate-400 select-none bg-slate-50 border border-slate-100 rounded-3xl">
@@ -577,11 +577,11 @@ export default function AdminAdminsPage() {
                             <HugeiconsIcon icon={UserIcon} className="w-5 h-5" strokeWidth={2.5} />
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-slate-800 text-sm leading-tight truncate max-w-[195px]">{req.name}</h3>
-                            <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mt-1">Registered by another admin</span>
+                            <h3 className="font-bold text-slate-800 text-sm leading-tight truncate max-w-[195px]">{req.name}</h3>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mt-1">Registered by another admin</span>
                           </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-[9px] font-black tracking-wider uppercase">Pending Approval</span>
+                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-[9px] font-semibold tracking-wider uppercase">Pending Approval</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-xs border-t border-b border-slate-200/60 py-4 font-semibold text-slate-700">
@@ -610,7 +610,7 @@ export default function AdminAdminsPage() {
                         <button
                           onClick={() => handleApproveRegistration(req._id)}
                           disabled={actioningAdminId !== null}
-                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] text-white text-xs font-extrabold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
+                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] text-white text-xs font-bold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
                         >
                           {actioningAdminId === req._id ? "Approving..." : "Approve & Send Credentials"}
                         </button>
@@ -639,7 +639,7 @@ export default function AdminAdminsPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Admin Password Requests</h2>
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Admin Password Requests</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Review, approve and dispatch reset codes to admins</p>
               </div>
               <button
@@ -656,7 +656,7 @@ export default function AdminAdminsPage() {
               {loadingRequests ? (
                 <div className="flex flex-col items-center justify-center py-24 gap-3">
                   <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#0f2d3a]" strokeWidth={2.5} />
-                  <p className="text-xs text-slate-400 font-extrabold uppercase tracking-wider animate-pulse">Loading password requests...</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider animate-pulse">Loading password requests...</p>
                 </div>
               ) : passwordRequests.length === 0 ? (
                 <div className="text-center py-20 flex flex-col items-center justify-center text-slate-400 select-none bg-slate-50 border border-slate-100 rounded-3xl">
@@ -673,11 +673,11 @@ export default function AdminAdminsPage() {
                             <HugeiconsIcon icon={Key01Icon} className="w-5 h-5" strokeWidth={2.5} />
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-slate-800 text-sm leading-tight truncate max-w-[195px]">{req.name}</h3>
-                            <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mt-1">System Administrator</span>
+                            <h3 className="font-bold text-slate-800 text-sm leading-tight truncate max-w-[195px]">{req.name}</h3>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mt-1">System Administrator</span>
                           </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black tracking-wider uppercase select-none animate-pulse">Pending Reset</span>
+                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-semibold tracking-wider uppercase select-none animate-pulse">Pending Reset</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-xs border-t border-b border-slate-200/60 py-4 font-semibold text-slate-700">
@@ -702,7 +702,7 @@ export default function AdminAdminsPage() {
                         <button
                           onClick={() => handleApprovePasswordRequest(req._id)}
                           disabled={actioningRequestId !== null}
-                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] text-white text-xs font-extrabold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
+                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] text-white text-xs font-bold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
                         >
                           {actioningRequestId === req._id ? "Approving..." : "Approve & Send Reset OTP"}
                         </button>

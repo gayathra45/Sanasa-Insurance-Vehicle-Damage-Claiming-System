@@ -128,7 +128,7 @@ export default function Home() {
   const appImageContainer = "flex-none md:flex-1 flex justify-center items-center";
   const appCard = "flex-1 bg-white/98 p-8 md:p-10 rounded-3xl text-slate-900 text-center md:text-left shadow-2xl";
   const appSubtitle = "text-xs font-bold tracking-[0.15em] uppercase text-slate-500 mb-3";
-  const appCardTitle = "text-[1.75rem] md:text-4xl leading-[1.2] font-extrabold text-slate-900 mb-4";
+  const appCardTitle = "text-[1.75rem] md:text-4xl leading-[1.2] font-bold text-slate-900 mb-4";
   const appCardDesc = "text-[0.95rem] leading-[1.7] text-slate-600";
 
   return (

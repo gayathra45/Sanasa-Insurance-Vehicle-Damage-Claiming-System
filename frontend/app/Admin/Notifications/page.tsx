@@ -301,7 +301,7 @@ export default function AdminNotifications() {
               </h1>
               {/* Desktop welcome title */}
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">Admin</span>
                 <span> — Notifications Panel</span>
               </h1>
             </div>
@@ -360,9 +360,9 @@ export default function AdminNotifications() {
             <div className="flex flex-wrap gap-2.5 mb-8 border-b border-slate-100 pb-5 select-none">
               <button
                 onClick={() => setActiveTab("all")}
-                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "all"
-                    ? "bg-[#000080] border-[#000080] text-white shadow-sm"
+                    ? "bg-[#000080] border-[#000080] text-white shadow-sm font-semibold"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
@@ -370,14 +370,14 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("unread")}
-                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === "unread"
-                    ? "bg-[#f59e0b] border-[#f59e0b] text-white shadow-sm"
+                    ? "bg-amber-500 border-amber-500 text-white shadow-sm font-semibold"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
                 Unread
-                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                   activeTab === "unread" ? "bg-white/20 text-white" : "bg-red-500 text-white"
                 }`}>
                   {notifications.filter((n) => !readIds.includes(n.id)).length}
@@ -385,14 +385,14 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("read")}
-                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === "read"
-                    ? "bg-slate-600 border-slate-600 text-white shadow-sm"
+                    ? "bg-slate-600 border-slate-600 text-white shadow-sm font-semibold"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
                 Read
-                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
                   activeTab === "read" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
                 }`}>
                   {notifications.filter((n) => readIds.includes(n.id)).length}
@@ -400,9 +400,9 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("claims")}
-                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "claims"
-                    ? "bg-[#3b82f6] border-[#3b82f6] text-white shadow-sm"
+                    ? "bg-sky-500 border-sky-500 text-white shadow-sm font-semibold"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
@@ -410,9 +410,9 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("policy_holders")}
-                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "policy_holders"
-                    ? "bg-[#10b981] border-[#10b981] text-white shadow-sm"
+                    ? "bg-emerald-600 border-emerald-600 text-white shadow-sm font-semibold"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
@@ -420,9 +420,9 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("agents")}
-                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "agents"
-                    ? "bg-[#a855f7] border-[#a855f7] text-white shadow-sm"
+                    ? "bg-purple-600 border-purple-600 text-white shadow-sm font-semibold"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
@@ -430,9 +430,9 @@ export default function AdminNotifications() {
               </button>
               <button
                 onClick={() => setActiveTab("staff_messages")}
-                className={`font-bold text-sm px-6 py-3 rounded-full border border-solid transition-all cursor-pointer ${
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
                   activeTab === "staff_messages"
-                    ? "bg-purple-600 border-purple-600 text-white shadow-sm"
+                    ? "bg-pink-600 border-pink-600 text-white shadow-sm font-semibold"
                     : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
                 }`}
               >
@@ -441,57 +441,57 @@ export default function AdminNotifications() {
             </div>
 
             {/* List Content */}
-            <div className="flex flex-col gap-5 mb-10">
+            <div className="flex flex-col gap-3.5 mb-10">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-slate-50 border border-slate-200 rounded-[30px] gap-4">
-                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#f59e0b]" strokeWidth={2.5} />
-                  <p className="text-slate-500 font-semibold text-sm">Fetching notifications...</p>
+                <div className="flex flex-col items-center justify-center py-20 bg-slate-50 border border-slate-200 rounded-2xl gap-4">
+                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#f59e0b]" strokeWidth={2} />
+                  <p className="text-slate-500 font-medium text-sm">Fetching notifications...</p>
                 </div>
               ) : filteredNotifs.length > 0 ? (
-                <div className="flex flex-col gap-4.5">
+                <div className="flex flex-col gap-3">
                   {filteredNotifs.map((n) => {
                     const isRead = readIds.includes(n.id);
                     const isUrgent = n.type === "urgent";
 
-                    let borderLeft = "border-l-[6px] border-l-slate-400";
+                    let borderLeft = "border-l-4 border-l-slate-400";
                     let iconStyle = "bg-slate-50 text-slate-500";
                     let iconSvg = (
-                      <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
+                      <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2} />
                     );
 
                     if (n.category === "claims") {
                       if (isUrgent) {
-                        borderLeft = "border-l-[6px] border-l-red-500";
-                        iconStyle = "bg-red-50 text-red-500";
+                        borderLeft = "border-l-4 border-l-rose-500";
+                        iconStyle = "bg-rose-50 text-rose-600";
                       } else {
-                        borderLeft = "border-l-[6px] border-l-blue-500";
-                        iconStyle = "bg-blue-50 text-blue-500";
+                        borderLeft = "border-l-4 border-l-sky-400";
+                        iconStyle = "bg-sky-50 text-sky-600";
                         iconSvg = (
-                          <HugeiconsIcon icon={File01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                          <HugeiconsIcon icon={File01Icon} className="w-5 h-5" strokeWidth={2} />
                         );
                       }
                     } else if (n.category === "policy_holders") {
-                      borderLeft = "border-l-[6px] border-l-emerald-500";
-                      iconStyle = "bg-emerald-50 text-emerald-500";
+                      borderLeft = "border-l-4 border-l-emerald-500";
+                      iconStyle = "bg-emerald-50 text-emerald-600";
                       iconSvg = (
-                        <HugeiconsIcon icon={UserIcon} className="w-5 h-5" strokeWidth={2.5} />
+                        <HugeiconsIcon icon={UserIcon} className="w-5 h-5" strokeWidth={2} />
                       );
                     } else if (n.category === "agents") {
-                      borderLeft = "border-l-[6px] border-l-purple-500";
-                      iconStyle = "bg-purple-50 text-purple-500";
+                      borderLeft = "border-l-4 border-l-purple-500";
+                      iconStyle = "bg-purple-50 text-purple-600";
                       iconSvg = (
-                        <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5" strokeWidth={2.5} />
+                        <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5" strokeWidth={2} />
                       );
                     } else if (n.category === "staff_messages") {
-                      borderLeft = "border-l-[6px] border-l-pink-500";
-                      iconStyle = "bg-pink-50 text-pink-500";
+                      borderLeft = "border-l-4 border-l-pink-500";
+                      iconStyle = "bg-pink-50 text-pink-600";
                       iconSvg = (
-                        <HugeiconsIcon icon={BubbleChatIcon} className="w-5 h-5" strokeWidth={2.5} />
+                        <HugeiconsIcon icon={BubbleChatIcon} className="w-5 h-5" strokeWidth={2} />
                       );
                     }
 
                     if (isRead) {
-                      borderLeft = "border-l-[6px] border-l-slate-300";
+                      borderLeft = "border-l-4 border-l-slate-200";
                     }
 
                     return (
@@ -508,72 +508,79 @@ export default function AdminNotifications() {
                             setSelectedAgent(n.agent);
                           }
                         }}
-                        className={`bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-md transition-all duration-200 cursor-pointer ${borderLeft}`}
+                        className={`rounded-2xl border border-slate-200/80 p-3.5 md:py-3.5 md:px-5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer ${borderLeft} ${
+                          isRead ? "bg-slate-50/50 hover:bg-slate-100/60" : "bg-white hover:bg-slate-50/50"
+                        }`}
                       >
-                        {/* Upper info section */}
-                        <div className="p-6 md:p-8 flex items-start gap-4">
-                          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconStyle}`}>
-                            {iconSvg}
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3">
-                              <h4 className={`font-bold text-slate-800 text-base md:text-lg leading-snug ${isRead ? "opacity-75" : ""}`}>
-                                {n.title}
-                              </h4>
-                              {!isRead && (
-                                <span className="w-3 h-3 bg-[#f59e0b] rounded-full border border-white" title="Unread Alert" />
-                              )}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-4">
+                          
+                          {/* Left Info Area: Centered Icon + Title & Description */}
+                          <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconStyle}`}>
+                              {iconSvg}
                             </div>
-                            <p className="text-slate-600 text-sm md:text-base font-semibold leading-relaxed mt-2.5">
-                              {n.description}
-                            </p>
-                          </div>
-                        </div>
 
-                        {/* Lower Action section */}
-                        <div
-                          onClick={(e) => e.stopPropagation()}
-                          className="bg-slate-50/50 px-6 py-5 border-t border-slate-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3"
-                        >
-                          <div className="flex flex-wrap items-center gap-3.5 pl-0 md:pl-14">
-                            <button
-                              onClick={() => {
-                                markAsRead(n.id);
-                                if (n.claim) {
-                                  setSelectedClaim(n.claim);
-                                } else if (n.user) {
-                                  setSelectedUser(n.user);
-                                  setSelectedVehicle(n.vehicle || null);
-                                } else if (n.agent) {
-                                  setSelectedAgent(n.agent);
-                                }
-                              }}
-                              className={`font-bold text-xs md:text-sm px-6 py-3 rounded-full transition-all duration-150 active:scale-[0.98] text-center cursor-pointer border-none text-white ${
-                                n.category === "claims"
-                                  ? (isUrgent ? "bg-red-500 hover:bg-red-600" : "bg-blue-600 hover:bg-blue-700")
-                                  : n.category === "policy_holders"
-                                  ? "bg-emerald-600 hover:bg-emerald-700"
-                                  : "bg-purple-600 hover:bg-purple-700"
-                              }`}
-                            >
-                              {n.actionLabel}
-                            </button>
-
-                            {/* Mark read toggle */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleReadStatus(n.id);
-                              }}
-                              className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 hover:border-slate-400 text-slate-600 font-bold text-xs px-5 py-3 rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98]"
-                            >
-                              {isRead ? "Mark as Unread" : "Mark as Read"}
-                            </button>
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className={`font-semibold text-sm md:text-[15px] leading-snug ${isRead ? "text-slate-600" : "text-slate-800"}`}>
+                                  {n.title}
+                                </h4>
+                                {!isRead && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700 border border-amber-200/60">
+                                    New
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-slate-600 text-xs md:text-sm font-normal leading-relaxed mt-0.5">
+                                {n.description}
+                              </p>
+                            </div>
                           </div>
-                          <span className="text-xs text-slate-400 font-bold self-end sm:self-center pr-2">
-                            {formatDate(n.date)}
-                          </span>
+
+                          {/* Right Action Area: Fixed-width Buttons + Aligned Date */}
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center justify-between md:justify-end gap-2.5 md:gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100"
+                          >
+                            <div className="flex items-center gap-2 order-2 md:order-1">
+                              <button
+                                onClick={() => {
+                                  markAsRead(n.id);
+                                  if (n.claim) {
+                                    setSelectedClaim(n.claim);
+                                  } else if (n.user) {
+                                    setSelectedUser(n.user);
+                                    setSelectedVehicle(n.vehicle || null);
+                                  } else if (n.agent) {
+                                    setSelectedAgent(n.agent);
+                                  }
+                                }}
+                                className={`w-[70px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none shadow-xs text-white ${
+                                  n.category === "claims"
+                                    ? (isUrgent ? "bg-red-500 hover:bg-red-600" : "bg-[#000080] hover:bg-[#000066]")
+                                    : n.category === "policy_holders"
+                                    ? "bg-emerald-600 hover:bg-emerald-700"
+                                    : "bg-purple-600 hover:bg-purple-700"
+                                }`}
+                              >
+                                {n.actionLabel}
+                              </button>
+
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleReadStatus(n.id);
+                                }}
+                                className="w-[120px] h-[34px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98] text-center"
+                              >
+                                {isRead ? "Mark as Unread" : "Mark as Read"}
+                              </button>
+                            </div>
+
+                            <span className="w-[84px] text-xs text-slate-400 font-normal whitespace-nowrap text-left md:text-right order-1 md:order-2">
+                              {formatDate(n.date)}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     );
@@ -585,7 +592,7 @@ export default function AdminNotifications() {
                     <HugeiconsIcon icon={Notification01Icon} className="w-10 h-10" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h4 className="font-extrabold text-slate-800 text-lg">No Notifications Found</h4>
+                    <h4 className="font-bold text-slate-800 text-lg">No Notifications Found</h4>
                     <p className="text-slate-500 font-semibold text-sm max-w-sm mt-2 leading-relaxed">
                       We couldn't find any notifications matching the selected tab criteria or search keywords.
                     </p>
@@ -629,7 +636,7 @@ export default function AdminNotifications() {
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300">
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[22px] font-extrabold text-[#000080] tracking-tight">
+                <h2 className="text-[22px] font-bold text-[#000080] tracking-tight">
                   Claim Details – {selectedClaim.claimNumber}
                 </h2>
                 <button
@@ -662,10 +669,10 @@ export default function AdminNotifications() {
 
                     return (
                       <div key={step.num} className="flex flex-col items-center z-10 flex-1">
-                        <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-extrabold ${circleClass}`}>
+                        <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold ${circleClass}`}>
                           {step.num}
                         </div>
-                        <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-extrabold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
+                        <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-bold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
                           {step.label}
                         </span>
                       </div>
@@ -677,33 +684,33 @@ export default function AdminNotifications() {
                 <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-6 px-2">
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Vehicle Plate:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.vehiclePlate}</span>
+                    <span className="font-bold text-slate-800">{selectedClaim.vehiclePlate}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Damage Type:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.damageType}</span>
+                    <span className="font-bold text-slate-800">{selectedClaim.damageType}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Est. Amount:</span>
-                    <span className="font-extrabold text-slate-800">
+                    <span className="font-bold text-slate-800">
                       {selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Pending"}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Incident Date:</span>
-                    <span className="font-extrabold text-slate-800">{formatDate(selectedClaim.incidentDate)}</span>
+                    <span className="font-bold text-slate-800">{formatDate(selectedClaim.incidentDate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Branch:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.branch}</span>
+                    <span className="font-bold text-slate-800">{selectedClaim.branch}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Assigned Agent:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.assignedAgent || "Unassigned"}</span>
+                    <span className="font-bold text-slate-800">{selectedClaim.assignedAgent || "Unassigned"}</span>
                   </div>
                   <div className="flex items-center gap-2 col-span-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Location:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.location}</span>
+                    <span className="font-bold text-slate-800">{selectedClaim.location}</span>
                   </div>
                 </div>
 
@@ -725,7 +732,7 @@ export default function AdminNotifications() {
                       {selectedClaim.messages.map((msg, index) => (
                         <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1">
                           <div className="flex justify-between items-center text-[11px]">
-                            <span className="font-extrabold text-[#000080]">{msg.sender}</span>
+                            <span className="font-bold text-[#000080]">{msg.sender}</span>
                             <span className="text-slate-400 font-semibold">{formatDate(msg.sentAt)}</span>
                           </div>
                           <p className="text-slate-700 text-xs font-semibold leading-relaxed m-0">{msg.message}</p>
@@ -741,13 +748,13 @@ export default function AdminNotifications() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0 gap-3">
                 <Link
                   href={`/Admin/Claims?claimId=${selectedClaim.claimNumber}`}
-                  className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-extrabold text-[14px] px-6 py-3 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
+                  className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-bold text-[14px] px-6 py-3 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
                 >
                   Manage Claim
                 </Link>
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>
@@ -764,7 +771,7 @@ export default function AdminNotifications() {
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300">
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[22px] font-extrabold text-[#000080] tracking-tight">
+                <h2 className="text-[22px] font-bold text-[#000080] tracking-tight">
                   {isVehicleView
                     ? `Vehicle Verification – ${selectedVehicle?.numberPlate}`
                     : `Portal Registration – ${selectedUser.firstName} ${selectedUser.lastName}`}
@@ -781,62 +788,62 @@ export default function AdminNotifications() {
                 <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-8 px-2">
                   <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Name:</span>
-                    <span className="font-extrabold text-slate-800">
+                    <span className="font-bold text-slate-800">
                       {selectedUser.firstName} {selectedUser.lastName}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
                     <span className="text-slate-400 font-bold w-28 shrink-0">NIC:</span>
-                    <span className="font-extrabold text-slate-800">{selectedUser.nic}</span>
+                    <span className="font-bold text-slate-800">{selectedUser.nic}</span>
                   </div>
                   <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Email:</span>
-                    <span className="font-extrabold text-slate-800">{selectedUser.email}</span>
+                    <span className="font-bold text-slate-800">{selectedUser.email}</span>
                   </div>
                   <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Mobile:</span>
-                    <span className="font-extrabold text-slate-800">{selectedUser.mobile}</span>
+                    <span className="font-bold text-slate-800">{selectedUser.mobile}</span>
                   </div>
                   <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Branch:</span>
-                    <span className="font-extrabold text-slate-800">{selectedUser.branch}</span>
+                    <span className="font-bold text-slate-800">{selectedUser.branch}</span>
                   </div>
                   <div className="flex items-center gap-2 col-span-2 sm:col-span-1">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Ref Number:</span>
-                    <span className="font-extrabold text-slate-800">{selectedUser.referenceNumber}</span>
+                    <span className="font-bold text-slate-800">{selectedUser.referenceNumber}</span>
                   </div>
                 </div>
 
                 {isVehicleView && selectedVehicle && (
                   <div className="bg-slate-50 border border-slate-200 rounded-[20px] p-6 mb-8">
-                    <h3 className="text-sm font-extrabold text-[#000080] uppercase tracking-wider mb-4">Vehicle Details</h3>
+                    <h3 className="text-sm font-bold text-[#000080] uppercase tracking-wider mb-4">Vehicle Details</h3>
                     <div className="grid grid-cols-2 gap-x-12 gap-y-4 text-sm font-semibold">
                       <div className="flex items-center gap-2">
                         <span className="text-slate-400 font-bold w-24 shrink-0">Plate:</span>
-                        <span className="font-extrabold text-slate-800">{selectedVehicle.numberPlate}</span>
+                        <span className="font-bold text-slate-800">{selectedVehicle.numberPlate}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-slate-400 font-bold w-24 shrink-0">Model:</span>
-                        <span className="font-extrabold text-slate-800">{selectedVehicle.company} {selectedVehicle.model}</span>
+                        <span className="font-bold text-slate-800">{selectedVehicle.company} {selectedVehicle.model}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-slate-400 font-bold w-24 shrink-0">Year:</span>
-                        <span className="font-extrabold text-slate-800">{selectedVehicle.year}</span>
+                        <span className="font-bold text-slate-800">{selectedVehicle.year}</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-slate-400 font-bold w-24 shrink-0">Policy:</span>
-                        <span className="font-extrabold text-slate-800">{selectedVehicle.policyNumber}</span>
+                        <span className="font-bold text-slate-800">{selectedVehicle.policyNumber}</span>
                       </div>
                       {selectedVehicle.engineNumber && (
                         <div className="flex items-center gap-2">
                           <span className="text-slate-400 font-bold w-24 shrink-0">Engine No:</span>
-                          <span className="font-extrabold text-slate-800">{selectedVehicle.engineNumber}</span>
+                          <span className="font-bold text-slate-800">{selectedVehicle.engineNumber}</span>
                         </div>
                       )}
                       {selectedVehicle.chassisNumber && (
                         <div className="flex items-center gap-2">
                           <span className="text-slate-400 font-bold w-24 shrink-0">Chassis No:</span>
-                          <span className="font-extrabold text-slate-800">{selectedVehicle.chassisNumber}</span>
+                          <span className="font-bold text-slate-800">{selectedVehicle.chassisNumber}</span>
                         </div>
                       )}
                     </div>
@@ -908,13 +915,13 @@ export default function AdminNotifications() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0 gap-3">
                 <Link
                   href={`/Admin/PolicyHolders?nic=${selectedUser.nic}`}
-                  className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-extrabold text-[14px] px-6 py-3 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
+                  className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-bold text-[14px] px-6 py-3 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
                 >
                   Manage Profile
                 </Link>
                 <button
                   onClick={() => setSelectedUser(null)}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
                 >
                   Close
                 </button>
@@ -929,7 +936,7 @@ export default function AdminNotifications() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300">
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-              <h2 className="text-[22px] font-extrabold text-[#000080] tracking-tight">
+              <h2 className="text-[22px] font-bold text-[#000080] tracking-tight">
                 Agent Details – {selectedAgent.name} ({selectedAgent.agentId})
               </h2>
               <button
@@ -944,58 +951,58 @@ export default function AdminNotifications() {
               <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-8 px-2">
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-bold w-24 shrink-0">Agent ID:</span>
-                  <span className="font-extrabold text-slate-800">{selectedAgent.agentId}</span>
+                  <span className="font-bold text-slate-800">{selectedAgent.agentId}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-bold w-24 shrink-0">NIC:</span>
-                  <span className="font-extrabold text-slate-800">{selectedAgent.nic}</span>
+                  <span className="font-bold text-slate-800">{selectedAgent.nic}</span>
                 </div>
                 <div className="flex items-center gap-2 col-span-2">
                   <span className="text-slate-400 font-bold w-24 shrink-0">Email:</span>
-                  <span className="font-extrabold text-slate-800">{selectedAgent.email}</span>
+                  <span className="font-bold text-slate-800">{selectedAgent.email}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-bold w-24 shrink-0">Phone:</span>
-                  <span className="font-extrabold text-slate-800">{selectedAgent.phone || "N/A"}</span>
+                  <span className="font-bold text-slate-800">{selectedAgent.phone || "N/A"}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-bold w-24 shrink-0">DOB:</span>
-                  <span className="font-extrabold text-slate-800">{selectedAgent.dob}</span>
+                  <span className="font-bold text-slate-800">{selectedAgent.dob}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-bold w-24 shrink-0">Branch:</span>
-                  <span className="font-extrabold text-slate-800">{selectedAgent.branch}</span>
+                  <span className="font-bold text-slate-800">{selectedAgent.branch}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-bold w-24 shrink-0">Status:</span>
-                  <span className="font-extrabold text-red-500 uppercase">{selectedAgent.status}</span>
+                  <span className="font-bold text-red-500 uppercase">{selectedAgent.status}</span>
                 </div>
                 <div className="flex items-center gap-2 col-span-2">
                   <span className="text-slate-400 font-bold w-24 shrink-0">Address:</span>
-                  <span className="font-extrabold text-slate-800">{selectedAgent.address}</span>
+                  <span className="font-bold text-slate-800">{selectedAgent.address}</span>
                 </div>
               </div>
 
               {/* Bank accounts information */}
               {(selectedAgent.bankName || selectedAgent.accountNumber) && (
                 <div className="bg-slate-50 border border-slate-200 rounded-[20px] p-6 mb-8">
-                  <h3 className="text-sm font-extrabold text-[#000080] uppercase tracking-wider mb-4">Bank Details</h3>
+                  <h3 className="text-sm font-bold text-[#000080] uppercase tracking-wider mb-4">Bank Details</h3>
                   <div className="grid grid-cols-2 gap-y-4 text-sm font-semibold">
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 font-bold w-24 shrink-0">Bank:</span>
-                      <span className="font-extrabold text-slate-800">{selectedAgent.bankName || "N/A"}</span>
+                      <span className="font-bold text-slate-800">{selectedAgent.bankName || "N/A"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 font-bold w-24 shrink-0">Branch:</span>
-                      <span className="font-extrabold text-slate-800">{selectedAgent.bankBranch || "N/A"}</span>
+                      <span className="font-bold text-slate-800">{selectedAgent.bankBranch || "N/A"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 font-bold w-24 shrink-0">Acc No:</span>
-                      <span className="font-extrabold text-slate-800">{selectedAgent.accountNumber || "N/A"}</span>
+                      <span className="font-bold text-slate-800">{selectedAgent.accountNumber || "N/A"}</span>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400 font-bold w-24 shrink-0">Holder:</span>
-                      <span className="font-extrabold text-slate-800">{selectedAgent.accountHolderName || "N/A"}</span>
+                      <span className="font-bold text-slate-800">{selectedAgent.accountHolderName || "N/A"}</span>
                     </div>
                   </div>
                 </div>
@@ -1052,13 +1059,13 @@ export default function AdminNotifications() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0 gap-3">
               <Link
                 href={`/Admin/Agents?email=${selectedAgent.email}`}
-                className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-extrabold text-[14px] px-6 py-3 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
+                className="bg-[#f59e0b] hover:bg-[#d97706] text-white font-bold text-[14px] px-6 py-3 rounded-full transition-all border-none cursor-pointer no-underline flex items-center justify-center"
               >
                 Manage Agent
               </Link>
               <button
                 onClick={() => setSelectedAgent(null)}
-                className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
               >
                 Close
               </button>

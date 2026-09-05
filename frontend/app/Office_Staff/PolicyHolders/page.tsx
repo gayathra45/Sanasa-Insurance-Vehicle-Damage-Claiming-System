@@ -47,7 +47,7 @@ export default function OfficeStaffPolicyHolders() {
                 <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
                   {branch} Branch
                 </span>
                 <span className="hidden md:inline text-slate-400 font-medium">— Policy Holders Directory</span>
@@ -71,7 +71,7 @@ export default function OfficeStaffPolicyHolders() {
               </div>
 
               <div>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">Policy Holders</h2>
+                <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">Policy Holders</h2>
                 <p className="text-slate-500 font-semibold text-sm mt-2 leading-relaxed">
                   This page is in the development stage.
                 </p>

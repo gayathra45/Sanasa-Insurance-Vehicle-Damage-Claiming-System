@@ -237,7 +237,7 @@ export default function RegistrationsPage() {
                 <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
                   {branch || "Galle"} Branch
                 </span>
                 <span className="hidden md:inline text-slate-400 font-medium">— Registrations</span>
@@ -270,7 +270,7 @@ export default function RegistrationsPage() {
                 {/* Title */}
                 <div className="flex items-center gap-2 mb-2 select-none">
                   <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                  <h2 className="text-lg font-black text-slate-800 tracking-wide">
+                  <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
                     Registrations
                   </h2>
                 </div>
@@ -299,7 +299,7 @@ export default function RegistrationsPage() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {/* Table Header Row */}
-                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,2.2fr)] gap-4 px-5 py-3 text-slate-400 font-extrabold text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,2.2fr)] gap-4 px-5 py-3 text-slate-400 font-bold text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
                       <div className="flex flex-col select-none min-w-0">Applicant Name</div>
                       <div className="flex flex-col select-none min-w-0">NIC Number</div>
                       <div className="flex flex-col select-none min-w-0">Vehicle Plate</div>
@@ -319,11 +319,11 @@ export default function RegistrationsPage() {
                         <div className="flex flex-col min-w-0 select-none">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span className="w-2 h-2 rounded-full shrink-0 bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.7)]" />
-                            <h3 className="font-black text-sm text-slate-800 whitespace-nowrap truncate">
+                            <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
                               {reg.firstName} {reg.lastName}
                             </h3>
                           </div>
-                          <span className="text-[9px] text-slate-400 font-black tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1.5 w-fit">
+                          <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1.5 w-fit">
                             Ref: {reg.referenceNumber}
                           </span>
                         </div>
@@ -366,25 +366,25 @@ export default function RegistrationsPage() {
 
                         {/* Col 7: Actions */}
                         <div className="flex items-center justify-between md:justify-end gap-2.5 mt-4 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-slate-100" onClick={(e) => e.stopPropagation()}>
-                          <span className="text-blue-500 font-extrabold text-[11px] group-hover:underline md:hidden select-none">
+                          <span className="text-blue-500 font-bold text-[11px] group-hover:underline md:hidden select-none">
                             View Profile
                           </span>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => triggerApprove(reg)}
-                              className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                              className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-bold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => triggerReject(reg)}
-                              className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                              className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                             >
                               Reject
                             </button>
                             <button
                               onClick={() => setSelectedReg(reg)}
-                              className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-extrabold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white"
+                              className="border border-slate-300 hover:bg-slate-50 text-slate-600 font-bold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white"
                             >
                               View
                             </button>
@@ -397,9 +397,9 @@ export default function RegistrationsPage() {
 
                 {/* Pagination (decorative style from image) */}
                 <div className="flex items-center justify-end gap-3 mt-4 text-slate-400 font-bold select-none text-sm">
-                  <button className="hover:text-slate-600 font-extrabold cursor-pointer">Prev</button>
-                  <span className="text-slate-800 font-black">1</span>
-                  <button className="hover:text-slate-600 font-extrabold cursor-pointer">Next</button>
+                  <button className="hover:text-slate-600 font-bold cursor-pointer">Prev</button>
+                  <span className="text-slate-800 font-semibold">1</span>
+                  <button className="hover:text-slate-600 font-bold cursor-pointer">Next</button>
                 </div>
               </div>
             )}
@@ -419,7 +419,7 @@ export default function RegistrationsPage() {
             {/* Header */}
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 select-none">
               <div>
-                <h2 className="text-[22px] font-black text-[#0f2d3a] tracking-tight leading-none">
+                <h2 className="text-[22px] font-semibold text-[#0f2d3a] tracking-tight leading-none">
                   {selectedReg.firstName} {selectedReg.lastName}
                 </h2>
                 <p className="text-xs text-slate-400 font-bold mt-1.5">Ref: {selectedReg.referenceNumber}</p>
@@ -437,17 +437,17 @@ export default function RegistrationsPage() {
               
               {/* Quick Actions banner inside profile view */}
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex items-center justify-between select-none">
-                <span className="text-sm font-extrabold text-slate-700">Quick Actions for this registration:</span>
+                <span className="text-sm font-bold text-slate-700">Quick Actions for this registration:</span>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => triggerApprove(selectedReg)}
-                    className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-extrabold text-xs px-4 py-3 rounded-lg transition-all cursor-pointer shadow-sm"
+                    className="bg-[#10b981] hover:bg-[#0ea5e9] text-white font-bold text-xs px-4 py-3 rounded-lg transition-all cursor-pointer shadow-sm"
                   >
                     Approve Registration
                   </button>
                   <button
                     onClick={() => triggerReject(selectedReg)}
-                    className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-extrabold text-xs px-4 py-3 rounded-lg transition-all cursor-pointer shadow-sm"
+                    className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold text-xs px-4 py-3 rounded-lg transition-all cursor-pointer shadow-sm"
                   >
                     Reject Registration
                   </button>
@@ -456,26 +456,26 @@ export default function RegistrationsPage() {
 
               {/* Personal Details */}
               <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 grid grid-cols-2 gap-4 select-none">
-                <h3 className="col-span-2 font-black text-slate-800 text-xs tracking-wide uppercase text-amber-500 mb-2">Personal Information</h3>
+                <h3 className="col-span-2 font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500 mb-2">Personal Information</h3>
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">NIC Number</span>
-                  <span className="text-sm font-extrabold text-slate-700">{selectedReg.nic}</span>
+                  <span className="text-sm font-bold text-slate-700">{selectedReg.nic}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Date of Birth</span>
-                  <span className="text-sm font-extrabold text-slate-700">{selectedReg.dob}</span>
+                  <span className="text-sm font-bold text-slate-700">{selectedReg.dob}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Mobile Number</span>
-                  <span className="text-sm font-extrabold text-slate-700">{selectedReg.mobile}</span>
+                  <span className="text-sm font-bold text-slate-700">{selectedReg.mobile}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Email Address</span>
-                  <span className="text-sm font-extrabold text-slate-700 truncate block">{selectedReg.email}</span>
+                  <span className="text-sm font-bold text-slate-700 truncate block">{selectedReg.email}</span>
                 </div>
                 <div className="col-span-2">
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Permanent Address</span>
-                  <span className="text-sm font-extrabold text-slate-700 leading-relaxed block">
+                  <span className="text-sm font-bold text-slate-700 leading-relaxed block">
                     {selectedReg.address}, {selectedReg.city}, {selectedReg.province}
                   </span>
                 </div>
@@ -483,14 +483,14 @@ export default function RegistrationsPage() {
 
               {/* Registered Vehicles */}
               <div className="space-y-4 select-none">
-                <h3 className="font-black text-slate-800 text-xs tracking-wide uppercase text-amber-500">Registered Vehicles ({selectedReg.vehicles?.length || 0})</h3>
+                <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">Registered Vehicles ({selectedReg.vehicles?.length || 0})</h3>
                 {selectedReg.vehicles && selectedReg.vehicles.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
                     {selectedReg.vehicles.map((v, idx) => (
                       <div key={idx} className="border border-slate-150 rounded-xl p-5 bg-white shadow-sm flex flex-col gap-3">
                         <div className="flex justify-between items-center border-b border-slate-50 pb-2">
-                          <span className="text-sm font-black text-slate-800">{formatPlate(v.numberPlate)}</span>
-                          <span className="bg-slate-100 text-slate-500 text-[10px] font-black px-2 py-1 rounded uppercase">
+                          <span className="text-sm font-semibold text-slate-800">{formatPlate(v.numberPlate)}</span>
+                          <span className="bg-slate-100 text-slate-500 text-[10px] font-semibold px-2 py-1 rounded uppercase">
                             {v.vehicleType}
                           </span>
                         </div>
@@ -520,7 +520,7 @@ export default function RegistrationsPage() {
 
               {/* Uploaded Documents */}
               <div className="space-y-4 pb-4 select-none mt-6">
-                <h3 className="font-black text-slate-800 text-xs tracking-wide uppercase text-amber-500">Uploaded Documents</h3>
+                <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">Uploaded Documents</h3>
                 <div className="grid grid-cols-2 gap-4">
                   {[
                     { key: "nicFront", label: "NIC Front View" },
@@ -561,7 +561,7 @@ export default function RegistrationsPage() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedReg(null)}
-                className="bg-[#000080] hover:bg-[#000066] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95 flex items-center justify-center"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95 flex items-center justify-center"
               >
                 Close
               </button>
@@ -603,7 +603,7 @@ export default function RegistrationsPage() {
                 <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500" strokeWidth={2.5} />
               </div>
               <div>
-                <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
+                <h3 className="font-semibold text-base text-slate-800 tracking-tight leading-none">
                   Reject Registration
                 </h3>
                 <p className="text-xs text-slate-400 font-bold mt-1">
@@ -667,7 +667,7 @@ export default function RegistrationsPage() {
                   <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500" strokeWidth={2.5} />
                 </div>
               )}
-              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
+              <h3 className="font-semibold text-base text-slate-800 tracking-tight leading-none">
                 {customPopup.title}
               </h3>
             </div>

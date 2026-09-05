@@ -126,7 +126,7 @@ export default function AdminNavbar() {
         <div className="p-6 mt-auto">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
+            className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-bold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
           >
             <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5" strokeWidth={2.5} />
             Logout
@@ -202,7 +202,7 @@ export default function AdminNavbar() {
             <div className="pt-6 border-t border-white/5 mt-auto">
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-extrabold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
+                className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-bold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
               >
                 <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5" strokeWidth={2.5} />
                 Logout

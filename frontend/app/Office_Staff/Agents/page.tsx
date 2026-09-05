@@ -331,7 +331,7 @@ export default function AgentsPage() {
                 <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
                   {branch || "Galle"} Branch
                 </span>
                 <span className="hidden md:inline text-slate-400 font-medium">— Insurance Agents</span>
@@ -353,7 +353,7 @@ export default function AgentsPage() {
             {/* Page Header Title */}
             <div className="flex items-center gap-2.5 mb-2 select-none">
               <HugeiconsIcon icon={UserMultiple02Icon} className="w-6 h-6 text-slate-700 shrink-0" strokeWidth={2.5} />
-              <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
+              <h2 className="text-xl md:text-2xl font-semibold text-slate-800 tracking-tight">
                 Insurance Agents
               </h2>
             </div>
@@ -414,7 +414,7 @@ export default function AgentsPage() {
               ) : filteredAgents.length === 0 ? (
                 <div className="bg-white border border-slate-100 rounded-[30px] p-16 text-center shadow-sm select-none">
                   <HugeiconsIcon icon={UserIcon} className="w-12 h-12 text-slate-300 mx-auto mb-4" strokeWidth={1.8} />
-                  <p className="text-slate-500 font-extrabold text-sm uppercase tracking-wider">No Insurance Agents Registered.</p>
+                  <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">No Insurance Agents Registered.</p>
                   <p className="text-slate-400 text-xs mt-1.5 font-semibold">Click "Register Agent" to onboard your first field officer.</p>
                 </div>
               ) : (
@@ -430,11 +430,11 @@ export default function AgentsPage() {
                       >
                         {/* Left Section: Profile Info */}
                         <div className="flex items-center gap-4.5 min-w-[240px]">
-                          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 text-[#0f2d3a] flex items-center justify-center font-black text-base select-none shadow-xs shrink-0">
+                          <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 text-[#0f2d3a] flex items-center justify-center font-semibold text-base select-none shadow-xs shrink-0">
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-extrabold text-slate-900 text-[15px] leading-tight truncate pr-4" title={agent.name}>
+                            <h3 className="font-bold text-slate-900 text-[15px] leading-tight truncate pr-4" title={agent.name}>
                               {agent.name}
                             </h3>
                             <span className="text-[10px] font-bold text-slate-400 block mt-1 uppercase tracking-wider">
@@ -446,15 +446,15 @@ export default function AgentsPage() {
                         {/* Middle Details Grid: Horizontal rows */}
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-6 text-xs">
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">Email Address</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold select-none">Email Address</span>
                             <span className="text-slate-900 font-bold truncate" title={agent.email}>{agent.email}</span>
                           </div>
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">NIC Number</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold select-none">NIC Number</span>
                             <span className="text-slate-900 font-bold">{agent.nic}</span>
                           </div>
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-extrabold select-none">Onboarded Date</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold select-none">Onboarded Date</span>
                             <span className="text-slate-900 font-bold">{formatDate(agent.createdAt)}</span>
                           </div>
                         </div>
@@ -462,7 +462,7 @@ export default function AgentsPage() {
                         {/* Right Section: Status Badge & View Button */}
                         <div className="flex items-center justify-between md:justify-end gap-5 shrink-0 border-t border-slate-100 pt-3 md:pt-0 md:border-none">
                           <div className="select-none">
-                            <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border tracking-wide ${
+                            <span className={`text-[10px] font-semibold uppercase px-3 py-1 rounded-full border tracking-wide ${
                               isOnline
                                 ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                 : "bg-slate-100 text-slate-500 border-slate-250"
@@ -495,7 +495,7 @@ export default function AgentsPage() {
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Register New Insurance Agent
                 </h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
@@ -530,11 +530,11 @@ export default function AgentsPage() {
 
                 {/* --- Section 1: General Details --- */}
                 <div>
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">General Details</h3>
+                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">General Details</h3>
                   <div className="flex flex-col gap-4">
                     {/* Name */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Full Name <span className="text-red-500">*</span></label>
+                      <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Full Name <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         required
@@ -548,7 +548,7 @@ export default function AgentsPage() {
                     {/* Email & Phone */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Email Address <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Email Address <span className="text-red-500">*</span></label>
                         <input
                           type="email"
                           required
@@ -559,7 +559,7 @@ export default function AgentsPage() {
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Phone Number <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Phone Number <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           required
@@ -574,7 +574,7 @@ export default function AgentsPage() {
                     {/* NIC & DOB */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Number <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">NIC Number <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           required
@@ -585,7 +585,7 @@ export default function AgentsPage() {
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Date of Birth <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Date of Birth <span className="text-red-500">*</span></label>
                         <input
                           type="date"
                           required
@@ -598,7 +598,7 @@ export default function AgentsPage() {
 
                     {/* Address */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Home Address <span className="text-red-500">*</span></label>
+                      <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Home Address <span className="text-red-500">*</span></label>
                       <textarea
                         required
                         rows={2}
@@ -616,13 +616,13 @@ export default function AgentsPage() {
 
                 {/* --- Section 2: Bank Account Details --- */}
                 <div className="mt-2">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Bank Account Details</h3>
+                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Bank Account Details</h3>
                   <div className="flex flex-col gap-4">
                     {/* Bank Name & Branch Dropdowns */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Bank Name Dropdown */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Name <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Bank Name <span className="text-red-500">*</span></label>
                         <div className="relative">
                           <select
                             required
@@ -640,7 +640,7 @@ export default function AgentsPage() {
 
                       {/* Bank Branch Dropdown */}
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Bank Branch <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Bank Branch <span className="text-red-500">*</span></label>
                         <div className="relative">
                           <select
                             required
@@ -661,7 +661,7 @@ export default function AgentsPage() {
                     {/* Account Number & Account Holder Name */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Number <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Account Number <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           required
@@ -672,7 +672,7 @@ export default function AgentsPage() {
                         />
                       </div>
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Account Holder Name <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Account Holder Name <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           required
@@ -688,11 +688,11 @@ export default function AgentsPage() {
 
                 {/* --- Section 3: Required Documents --- */}
                 <div className="mt-2 mb-2">
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Required Documents</h3>
+                  <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1 select-none">Required Documents</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* NIC Front */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Front Photo</label>
+                      <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">NIC Front Photo</label>
                       <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
                         <span className="text-slate-600 truncate max-w-[80%] select-none">
                           {nicFront ? nicFront.name : "Select file..."}
@@ -709,7 +709,7 @@ export default function AgentsPage() {
 
                     {/* NIC Back */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">NIC Back Photo</label>
+                      <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">NIC Back Photo</label>
                       <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
                         <span className="text-slate-600 truncate max-w-[80%] select-none">
                           {nicBack ? nicBack.name : "Select file..."}
@@ -726,7 +726,7 @@ export default function AgentsPage() {
 
                     {/* Birth Certificate */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Birth Certificate</label>
+                      <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Birth Certificate</label>
                       <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
                         <span className="text-slate-600 truncate max-w-[80%] select-none">
                           {birthCertificate ? birthCertificate.name : "Select file..."}
@@ -743,7 +743,7 @@ export default function AgentsPage() {
 
                     {/* Police Report */}
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[10px] font-black text-slate-500 ml-1 uppercase tracking-wider">Police Report</label>
+                      <label className="text-[10px] font-semibold text-slate-500 ml-1 uppercase tracking-wider">Police Report</label>
                       <div className="relative flex items-center justify-between px-4 py-3 rounded-2xl border border-slate-200 bg-slate-50/40 text-sm font-semibold cursor-pointer hover:bg-slate-50 transition-colors">
                         <span className="text-slate-600 truncate max-w-[80%] select-none">
                           {policeReport ? policeReport.name : "Select file..."}
@@ -766,8 +766,8 @@ export default function AgentsPage() {
                     <HugeiconsIcon icon={Location01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2} />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Assigned Branch</span>
-                    <span className="text-sm font-extrabold text-[#0f2d3a]">{branch} Branch</span>
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Assigned Branch</span>
+                    <span className="text-sm font-bold text-[#0f2d3a]">{branch} Branch</span>
                   </div>
                 </div>
               {/* Action Buttons */}
@@ -805,10 +805,10 @@ export default function AgentsPage() {
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none">
               <div>
                 <div className="flex items-center gap-2.5">
-                  <h2 className="text-[22px] font-black text-[#0f2d3a] tracking-tight leading-none">
+                  <h2 className="text-[22px] font-semibold text-[#0f2d3a] tracking-tight leading-none">
                     {selectedAgentDetails.name}
                   </h2>
-                  <span className={`text-[10px] font-black uppercase px-3 py-1 rounded-full border tracking-wide ${
+                  <span className={`text-[10px] font-semibold uppercase px-3 py-1 rounded-full border tracking-wide ${
                     (selectedAgentDetails.availability || "Active") === "Active"
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                       : "bg-slate-100 text-slate-500 border-slate-200"
@@ -836,7 +836,7 @@ export default function AgentsPage() {
                 
                 {/* Profile Details List */}
                 <div className="flex flex-col gap-3">
-                  <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
+                  <h3 className="text-[11px] font-semibold text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
                     Agent Profile Info
                   </h3>
                   <div className="flex flex-col text-xs">
@@ -852,7 +852,7 @@ export default function AgentsPage() {
                       { label: "Home Address", value: selectedAgentDetails.address }
                     ].map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center py-3 border-b border-slate-100/60 last:border-none gap-4">
-                        <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
                         <span className="text-slate-900 font-bold text-right truncate max-w-xs">{item.value}</span>
                       </div>
                     ))}
@@ -861,7 +861,7 @@ export default function AgentsPage() {
 
                 {/* Bank Account Details List */}
                 <div className="flex flex-col gap-3">
-                  <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
+                  <h3 className="text-[11px] font-semibold text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
                     Bank Account Details
                   </h3>
                   <div className="flex flex-col text-xs">
@@ -873,7 +873,7 @@ export default function AgentsPage() {
                       { label: "Account Holder", value: selectedAgentDetails.accountHolderName || "-" }
                     ].map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center py-3 border-b border-slate-100/60 last:border-none gap-4">
-                        <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
                         <span className={`text-slate-900 font-bold text-right truncate max-w-xs ${item.isMono ? 'font-mono' : ''}`}>{item.value}</span>
                       </div>
                     ))}
@@ -884,7 +884,7 @@ export default function AgentsPage() {
 
               {/* Registered Documents Section: Row layout */}
               <div className="mt-2 flex flex-col gap-3">
-                <h3 className="text-[11px] font-black text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
+                <h3 className="text-[11px] font-semibold text-slate-800 uppercase tracking-widest border-b border-slate-200 pb-2.5 mb-1 select-none">
                   Uploaded Verification Documents
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
@@ -896,7 +896,7 @@ export default function AgentsPage() {
                   ].map((doc, idx) => (
                     <div key={idx} className="bg-slate-50/50 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between gap-3 text-xs">
                       <div>
-                        <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider block mb-1 select-none">{doc.label}</span>
+                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 select-none">{doc.label}</span>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${doc.url ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                           <span className="text-[11px] text-slate-800 font-bold">
@@ -964,7 +964,7 @@ export default function AgentsPage() {
                   <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500" strokeWidth={2.5} />
                 </div>
               )}
-              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
+              <h3 className="font-semibold text-base text-slate-800 tracking-tight leading-none">
                 {customPopup.title}
               </h3>
             </div>
@@ -1013,7 +1013,7 @@ export default function AgentsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-8 flex flex-col gap-5">
             <div>
-              <h3 className="font-black text-lg text-slate-900 tracking-tight select-none">
+              <h3 className="font-semibold text-lg text-slate-900 tracking-tight select-none">
                 Delete Agent Account
               </h3>
               <p className="text-xs font-semibold text-slate-400 mt-1 select-none">
@@ -1025,7 +1025,7 @@ export default function AgentsPage() {
               
               {/* Deletion Reason Dropdown */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
                   Reason for Deletion <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -1044,7 +1044,7 @@ export default function AgentsPage() {
 
               {/* Add Note textarea */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
                   Additional Notes / Remarks <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -1059,7 +1059,7 @@ export default function AgentsPage() {
 
               {/* Document Attach (Optional) file input */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider select-none">
+                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
                   Attach Proof Document (Optional)
                 </label>
                 <div className="flex items-center gap-3">

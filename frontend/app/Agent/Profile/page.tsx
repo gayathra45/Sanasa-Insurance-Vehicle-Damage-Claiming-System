@@ -57,7 +57,7 @@ export default function AgentProfile() {
           </div>
 
           <div>
-            <h2 className="text-2xl font-black text-slate-800 tracking-tight">{t.myProfile}</h2>
+            <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">{t.myProfile}</h2>
             <p className="text-slate-500 font-semibold text-sm mt-2 leading-relaxed">
               {t.devStage}
             </p>

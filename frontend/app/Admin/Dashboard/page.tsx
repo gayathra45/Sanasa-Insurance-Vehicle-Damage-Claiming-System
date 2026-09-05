@@ -268,7 +268,7 @@ export default function AdminDashboard() {
               {/* Desktop welcome title */}
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
                 <span className="hidden lg:inline">Welcome back, </span>
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin Panel</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">Admin Panel</span>
               </h1>
             </div>
             <div className="flex items-center gap-5">
@@ -300,67 +300,67 @@ export default function AdminDashboard() {
                   {/* Policy Holders Card */}
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
                     <div className="flex justify-between items-start">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Policy Holders</span>
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Policy Holders</span>
                       <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
                         <HugeiconsIcon icon={UserMultiple02Icon} className="w-4 h-4" strokeWidth={2.5} />
                       </div>
                     </div>
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.policyHolders}</span>
+                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">{stats.policyHolders}</span>
                   </div>
 
                   {/* Total Claims Card */}
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
                     <div className="flex justify-between items-start">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Total Claims</span>
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Claims</span>
                       <div className="p-1.5 bg-slate-100 text-slate-700 rounded-lg group-hover:scale-110 transition-transform">
                         <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
                       </div>
                     </div>
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.totalClaims}</span>
+                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">{stats.totalClaims}</span>
                   </div>
 
                   {/* Active Claims Card */}
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
                     <div className="flex justify-between items-start">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Active Claims</span>
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Active Claims</span>
                       <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:scale-110 transition-transform">
                         <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
                       </div>
                     </div>
-                    <span className="text-3xl font-black text-emerald-800 tracking-tight">{stats.activeClaims}</span>
+                    <span className="text-3xl font-semibold text-emerald-800 tracking-tight">{stats.activeClaims}</span>
                   </div>
 
                   {/* Pending Claims Card */}
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
                     <div className="flex justify-between items-start">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Pending Claims</span>
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Pending Claims</span>
                       <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg group-hover:scale-110 transition-transform">
                         <HugeiconsIcon icon={Time02Icon} className="w-4 h-4" strokeWidth={2.5} />
                       </div>
                     </div>
-                    <span className="text-3xl font-black text-amber-600 tracking-tight">{stats.pendingClaims}</span>
+                    <span className="text-3xl font-semibold text-amber-600 tracking-tight">{stats.pendingClaims}</span>
                   </div>
 
                   {/* Registered Agents Card */}
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
                     <div className="flex justify-between items-start">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Total Agents</span>
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Total Agents</span>
                       <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg group-hover:scale-110 transition-transform">
                         <HugeiconsIcon icon={SecurityCheckIcon} className="w-4 h-4" strokeWidth={2.5} />
                       </div>
                     </div>
-                    <span className="text-3xl font-black text-purple-800 tracking-tight">{stats.totalAgents}</span>
+                    <span className="text-3xl font-semibold text-purple-800 tracking-tight">{stats.totalAgents}</span>
                   </div>
 
                   {/* Registered Branches Card */}
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
                     <div className="flex justify-between items-start">
-                      <span className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">Branches</span>
+                      <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Branches</span>
                       <div className="p-1.5 bg-cyan-50 text-cyan-600 rounded-lg group-hover:scale-110 transition-transform">
                         <HugeiconsIcon icon={Building01Icon} className="w-4 h-4" strokeWidth={2.5} />
                       </div>
                     </div>
-                    <span className="text-3xl font-black text-cyan-800 tracking-tight">{stats.totalBranches}</span>
+                    <span className="text-3xl font-semibold text-cyan-800 tracking-tight">{stats.totalBranches}</span>
                   </div>
                 </div>
 
@@ -369,7 +369,7 @@ export default function AdminDashboard() {
                   
                   {/* Branch Performances List (Left: 5 cols) */}
                   <div className="lg:col-span-5 flex flex-col select-none">
-                    <h2 className="text-lg font-black text-slate-800 mb-8 tracking-wide">
+                    <h2 className="text-lg font-semibold text-slate-800 mb-8 tracking-wide">
                       Branch Performances
                     </h2>
                     
@@ -399,7 +399,7 @@ export default function AdminDashboard() {
                   <div className="lg:col-span-7 flex flex-col select-none bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
                     <div className="flex justify-between items-center mb-8">
                       <div>
-                        <h2 className="text-base font-extrabold text-slate-800">
+                        <h2 className="text-base font-bold text-slate-800">
                           Insurance Claims Overview
                         </h2>
                         <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
@@ -408,7 +408,7 @@ export default function AdminDashboard() {
                       </div>
                       
                       {/* Metric info */}
-                      <span className="text-[10px] bg-slate-50 border border-slate-200/60 text-slate-500 font-extrabold px-3 py-1 rounded-full">
+                      <span className="text-[10px] bg-slate-50 border border-slate-200/60 text-slate-500 font-bold px-3 py-1 rounded-full">
                         Last 30 Days
                       </span>
                     </div>
@@ -452,7 +452,7 @@ export default function AdminDashboard() {
                                   title={`Approved: ${data.approved}`}
                                 ></div>
                               </div>
-                              <span className="text-[10px] font-extrabold text-slate-400 mt-2 select-none">
+                              <span className="text-[10px] font-bold text-slate-400 mt-2 select-none">
                                 {data.month}
                               </span>
                             </div>
@@ -467,7 +467,7 @@ export default function AdminDashboard() {
                 {/* System Request Center Section */}
                 <div className="mt-12 flex flex-col select-none">
                   <div className="mb-6">
-                    <h2 className="text-base font-extrabold text-slate-800">
+                    <h2 className="text-base font-bold text-slate-800">
                       System Administration Request Center
                     </h2>
                     <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider mt-0.5">
@@ -480,8 +480,8 @@ export default function AdminDashboard() {
                     {/* Panel 1: Branch Password Resets */}
                     <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col gap-4 shadow-sm min-h-[300px]">
                       <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                        <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Branch Password Resets</span>
-                        <span className="text-[10px] bg-red-50 text-red-600 font-extrabold px-2 py-0.5 rounded-full border border-red-100/50">
+                        <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Branch Password Resets</span>
+                        <span className="text-[10px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-full border border-red-100/50">
                           {pendingBranchResets.length} Pending
                         </span>
                       </div>
@@ -496,7 +496,7 @@ export default function AdminDashboard() {
                           pendingBranchResets.map((staff) => (
                             <div key={staff._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
                               <div className="flex flex-col">
-                                <span className="text-xs font-extrabold text-slate-850">{staff.branch} Branch</span>
+                                <span className="text-xs font-bold text-slate-850">{staff.branch} Branch</span>
                                 <span className="text-[10px] text-slate-500 font-semibold mt-0.5">{staff.email}</span>
                                 <span className="text-[10px] text-slate-500 font-semibold">{staff.mobile}</span>
                               </div>
@@ -504,7 +504,7 @@ export default function AdminDashboard() {
                                 <button
                                   onClick={() => handleBranchReset(staff._id, "approve")}
                                   disabled={actioningId !== null}
-                                  className="flex-1 py-1.5 bg-[#102A43] hover:bg-[#0c2033] active:scale-95 text-white text-[10px] font-black rounded-lg transition-all cursor-pointer border-none outline-none disabled:opacity-50"
+                                  className="flex-1 py-1.5 bg-[#102A43] hover:bg-[#0c2033] active:scale-95 text-white text-[10px] font-semibold rounded-lg transition-all cursor-pointer border-none outline-none disabled:opacity-50"
                                 >
                                   {actioningId === staff._id ? "Processing..." : "Approve"}
                                 </button>
@@ -525,8 +525,8 @@ export default function AdminDashboard() {
                     {/* Panel 2: Admin Password Resets */}
                     <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col gap-4 shadow-sm min-h-[300px]">
                       <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-                        <span className="text-xs font-black text-slate-700 uppercase tracking-wider">Admin Password Resets</span>
-                        <span className="text-[10px] bg-purple-50 text-purple-600 font-extrabold px-2 py-0.5 rounded-full border border-purple-100/50">
+                        <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Admin Password Resets</span>
+                        <span className="text-[10px] bg-purple-50 text-purple-600 font-bold px-2 py-0.5 rounded-full border border-purple-100/50">
                           {pendingAdminResets.length} Pending
                         </span>
                       </div>
@@ -541,7 +541,7 @@ export default function AdminDashboard() {
                           pendingAdminResets.map((admin) => (
                             <div key={admin._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
                               <div className="flex flex-col">
-                                <span className="text-xs font-extrabold text-slate-850">{admin.name}</span>
+                                <span className="text-xs font-bold text-slate-850">{admin.name}</span>
                                 <span className="text-[10px] text-slate-500 font-semibold mt-0.5">Email: {admin.email}</span>
                                 <span className="text-[10px] text-slate-500 font-semibold">NIC: {admin.nic}</span>
                               </div>
@@ -549,7 +549,7 @@ export default function AdminDashboard() {
                                 <button
                                   onClick={() => handleAdminReset(admin._id, "approve")}
                                   disabled={actioningId !== null}
-                                  className="flex-1 py-1.5 bg-[#102A43] hover:bg-[#0c2033] active:scale-95 text-white text-[10px] font-black rounded-lg transition-all cursor-pointer border-none outline-none disabled:opacity-50"
+                                  className="flex-1 py-1.5 bg-[#102A43] hover:bg-[#0c2033] active:scale-95 text-white text-[10px] font-semibold rounded-lg transition-all cursor-pointer border-none outline-none disabled:opacity-50"
                                 >
                                   {actioningId === admin._id ? "Processing..." : "Approve"}
                                 </button>
@@ -582,7 +582,7 @@ export default function AdminDashboard() {
             <div className="overflow-y-auto flex-1 flex flex-col">
               {/* Header */}
               <div className="px-8 pt-8 pb-5 select-none relative flex-shrink-0 border-b border-slate-100/60 bg-slate-50/55">
-                <h2 className="font-extrabold text-xl text-slate-800 tracking-tight flex items-center gap-3">
+                <h2 className="font-bold text-xl text-slate-800 tracking-tight flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                     <HugeiconsIcon icon={SquareLock02Icon} className="w-5 h-5" strokeWidth={2.5} />
                   </div>
@@ -610,7 +610,7 @@ export default function AdminDashboard() {
 
                 {/* Current Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     Current Temporary Password <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -625,7 +625,7 @@ export default function AdminDashboard() {
 
                 {/* New Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     New Password <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -641,8 +641,8 @@ export default function AdminDashboard() {
                   {passwordForm.newPassword && (
                     <div className="mt-1.5 flex flex-col gap-2.5 p-4 rounded-2xl bg-slate-50/90 border border-slate-200 select-none">
                       <div className="flex justify-between items-center text-xs text-slate-800">
-                        <span className="font-extrabold">Password Strength:</span>
-                        <span className="font-extrabold uppercase tracking-wider text-slate-900">{strength.label}</span>
+                        <span className="font-bold">Password Strength:</span>
+                        <span className="font-bold uppercase tracking-wider text-slate-900">{strength.label}</span>
                       </div>
                       <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                         <div className={`h-full ${strength.color} ${strength.width} transition-all duration-350 rounded-full`} />
@@ -676,7 +676,7 @@ export default function AdminDashboard() {
 
                 {/* Confirm Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     Confirm New Password <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -693,7 +693,7 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
-                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-extrabold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
+                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-bold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
                 >
                   {isUpdatingPassword ? (
                     <span className="flex items-center gap-2">

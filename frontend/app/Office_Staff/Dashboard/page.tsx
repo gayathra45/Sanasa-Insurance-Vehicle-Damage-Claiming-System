@@ -284,7 +284,7 @@ export default function OfficeStaffDashboard() {
               </button>
               <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
                 <span className="hidden lg:inline">Welcome back, </span>
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
                   {branch} Branch
                 </span>
               </h1>
@@ -318,7 +318,7 @@ export default function OfficeStaffDashboard() {
                 <div className="hidden lg:grid grid-cols-4 gap-6 mb-12">
                   {/* Unassigned Claims Card (Red themed) */}
                   <div className="bg-white rounded-[20px] border border-red-500 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-red-500 tracking-tight">
+                    <span className="text-3xl font-semibold text-red-500 tracking-tight">
                       {stats.unassignedClaims}
                     </span>
                     <span className="text-red-500 font-bold text-sm mt-1">Unassigned Claims</span>
@@ -326,7 +326,7 @@ export default function OfficeStaffDashboard() {
 
                   {/* New Registrations Card */}
                   <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">
+                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">
                       {stats.newRegistrations}
                     </span>
                     <span className="text-slate-500 font-bold text-sm mt-1">New Registrations</span>
@@ -334,7 +334,7 @@ export default function OfficeStaffDashboard() {
 
                   {/* Active Claims Card */}
                   <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">
+                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">
                       {stats.activeClaims}
                     </span>
                     <span className="text-slate-500 font-bold text-sm mt-1">Active Claims</span>
@@ -342,7 +342,7 @@ export default function OfficeStaffDashboard() {
 
                   {/* Pending Claims Card */}
                   <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">
+                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">
                       {stats.pendingClaims}
                     </span>
                     <span className="text-slate-500 font-bold text-sm mt-1">Pending Claims</span>
@@ -359,7 +359,7 @@ export default function OfficeStaffDashboard() {
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Unassigned Claims</span>
                     </div>
-                    <span className="text-xl font-black text-red-600 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-semibold text-red-600 tracking-tight pr-1 flex-shrink-0">
                       {stats.unassignedClaims}
                     </span>
                   </div>
@@ -372,7 +372,7 @@ export default function OfficeStaffDashboard() {
                       </div>
                       <span className="text-slate-600 font-bold text-xs">New Registrations</span>
                     </div>
-                    <span className="text-xl font-black text-blue-900 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-semibold text-blue-900 tracking-tight pr-1 flex-shrink-0">
                       {stats.newRegistrations}
                     </span>
                   </div>
@@ -385,7 +385,7 @@ export default function OfficeStaffDashboard() {
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Active Claims</span>
                     </div>
-                    <span className="text-xl font-black text-emerald-800 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-semibold text-emerald-800 tracking-tight pr-1 flex-shrink-0">
                       {stats.activeClaims}
                     </span>
                   </div>
@@ -398,7 +398,7 @@ export default function OfficeStaffDashboard() {
                       </div>
                       <span className="text-slate-600 font-bold text-xs">Pending Claims</span>
                     </div>
-                    <span className="text-xl font-black text-amber-800 tracking-tight pr-1 flex-shrink-0">
+                    <span className="text-xl font-semibold text-amber-800 tracking-tight pr-1 flex-shrink-0">
                       {stats.pendingClaims}
                     </span>
                   </div>
@@ -411,7 +411,7 @@ export default function OfficeStaffDashboard() {
                   <div className="lg:col-span-8 flex flex-col select-none">
                     <div className="flex items-center gap-2 mb-6">
                       <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                      <h2 className="text-lg font-black text-slate-800 tracking-wide">
+                      <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
                         New Claims
                       </h2>
                     </div>
@@ -436,10 +436,10 @@ export default function OfficeStaffDashboard() {
                               <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 flex-1 min-w-0">
                                 {/* Title / Urgency */}
                                 <div className="flex-shrink-0">
-                                  <span className={`font-black text-base ${headerTextClass} block`}>
+                                  <span className={`font-semibold text-base ${headerTextClass} block`}>
                                     {claim.urgency}
                                   </span>
-                                  <span className="text-[11px] font-extrabold text-slate-400 block tracking-wider uppercase">
+                                  <span className="text-[11px] font-bold text-slate-400 block tracking-wider uppercase">
                                     {claim.id}
                                   </span>
                                 </div>
@@ -447,15 +447,15 @@ export default function OfficeStaffDashboard() {
                                 {/* Specifications Row */}
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-slate-600 text-xs font-bold flex-1">
                                   <div className="flex flex-col gap-0.5">
-                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Vehicle No</span>
+                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold select-none">Vehicle No</span>
                                     <span className="text-slate-800">{claim.vehicleNo}</span>
                                   </div>
                                   <div className="flex flex-col gap-0.5">
-                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Type</span>
+                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold select-none">Type</span>
                                     <span className="text-slate-800">{claim.type}</span>
                                   </div>
                                   <div className="flex flex-col gap-0.5 col-span-2 sm:col-span-1">
-                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Location</span>
+                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold select-none">Location</span>
                                     <span className="text-slate-800 truncate" title={claim.location}>{claim.location}</span>
                                   </div>
                                 </div>
@@ -468,7 +468,7 @@ export default function OfficeStaffDashboard() {
                                 </span>
                                 <button
                                   onClick={() => setSelectedClaim(claim.rawClaim)}
-                                  className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-[13px] px-6 py-3 rounded-full transition-all tracking-wide cursor-pointer focus:outline-none shadow-sm shadow-slate-500/20 whitespace-nowrap text-center border-none"
+                                  className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-bold text-[13px] px-6 py-3 rounded-full transition-all tracking-wide cursor-pointer focus:outline-none shadow-sm shadow-slate-500/20 whitespace-nowrap text-center border-none"
                                 >
                                   Details
                                 </button>
@@ -484,7 +484,7 @@ export default function OfficeStaffDashboard() {
                   <div className="lg:col-span-4 flex flex-col select-none">
                     <div className="flex items-center gap-2 mb-6">
                       <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                      <h2 className="text-lg font-black text-slate-800 tracking-wide">
+                      <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
                         New Registration
                       </h2>
                     </div>
@@ -500,7 +500,7 @@ export default function OfficeStaffDashboard() {
                             key={index}
                             className="bg-slate-50 rounded-2xl p-5 flex flex-col shadow-sm"
                           >
-                            <span className="font-black text-slate-800 text-[15px] mb-1">
+                            <span className="font-semibold text-slate-800 text-[15px] mb-1">
                               {reg.name}
                             </span>
                             <span className="text-[12px] text-slate-400 font-bold">
@@ -529,7 +529,7 @@ export default function OfficeStaffDashboard() {
           <div className="bg-white rounded-[24px] border border-slate-150 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden text-slate-800 text-left">
             {/* Header */}
             <div className="px-6 pt-6 pb-4 flex justify-between items-center border-b border-slate-100">
-              <h3 className="text-lg font-black text-slate-800 tracking-tight">
+              <h3 className="text-lg font-semibold text-slate-800 tracking-tight">
                 Claim Details: {selectedClaim.claimNumber}
               </h3>
               <button
@@ -544,12 +544,12 @@ export default function OfficeStaffDashboard() {
             <div className="p-6 overflow-y-auto space-y-4 text-sm font-semibold text-slate-700">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Status</span>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold select-none">Status</span>
                   <span className="text-slate-800">{selectedClaim.status}</span>
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Urgency</span>
-                  <span className={checkUrgent(selectedClaim) ? "text-red-600 font-extrabold" : "text-slate-800"}>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold select-none">Urgency</span>
+                  <span className={checkUrgent(selectedClaim) ? "text-red-600 font-bold" : "text-slate-800"}>
                     {checkUrgent(selectedClaim) ? "Urgent" : "Normal"}
                   </span>
                 </div>
@@ -589,7 +589,7 @@ export default function OfficeStaffDashboard() {
               </div>
 
               <div className="flex flex-col gap-1 mt-2">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-extrabold select-none">Description</span>
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold select-none">Description</span>
                 <p className="text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs leading-relaxed whitespace-pre-wrap">
                   {selectedClaim.description || "No description provided."}
                 </p>
@@ -600,7 +600,7 @@ export default function OfficeStaffDashboard() {
             <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
               <button
                 onClick={() => setSelectedClaim(null)}
-                className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all cursor-pointer shadow-sm"
+                className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-bold text-xs px-6 py-3 rounded-full transition-all cursor-pointer shadow-sm"
               >
                 Close
               </button>
@@ -615,7 +615,7 @@ export default function OfficeStaffDashboard() {
             <div className="overflow-y-auto flex-1 flex flex-col">
               {/* Header */}
               <div className="px-8 pt-8 pb-5 select-none relative flex-shrink-0 border-b border-slate-100/60 bg-slate-50/55">
-                <h2 className="font-extrabold text-xl text-slate-800 tracking-tight flex items-center gap-3">
+                <h2 className="font-bold text-xl text-slate-800 tracking-tight flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
                     <HugeiconsIcon icon={LockIcon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
                   </div>
@@ -643,7 +643,7 @@ export default function OfficeStaffDashboard() {
 
                 {/* Current Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     Current Temporary Password <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -658,7 +658,7 @@ export default function OfficeStaffDashboard() {
 
                 {/* New Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     New Password <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -674,8 +674,8 @@ export default function OfficeStaffDashboard() {
                   {passwordForm.newPassword && (
                     <div className="mt-1.5 flex flex-col gap-2.5 p-4 rounded-2xl bg-slate-50/90 border border-slate-200 select-none">
                       <div className="flex justify-between items-center text-xs text-slate-800">
-                        <span className="font-extrabold">Password Strength:</span>
-                        <span className="font-extrabold uppercase tracking-wider text-slate-900">{strength.label}</span>
+                        <span className="font-bold">Password Strength:</span>
+                        <span className="font-bold uppercase tracking-wider text-slate-900">{strength.label}</span>
                       </div>
                       <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                         <div className={`h-full ${strength.color} ${strength.width} transition-all duration-350 rounded-full`} />
@@ -709,7 +709,7 @@ export default function OfficeStaffDashboard() {
 
                 {/* Confirm Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     Confirm New Password <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -726,7 +726,7 @@ export default function OfficeStaffDashboard() {
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
-                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-extrabold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
+                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-bold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
                 >
                   {isUpdatingPassword ? (
                     <span className="flex items-center gap-2">

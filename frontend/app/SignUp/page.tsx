@@ -399,7 +399,7 @@ export default function SignUp() {
           
           {/* Header Title */}
           <div className="text-center select-none flex flex-col gap-2">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] leading-tight">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] leading-tight">
               {t.createAccount}
             </h1>
             <p className="text-white/75 text-sm sm:text-base font-medium max-w-md mx-auto">
@@ -430,7 +430,7 @@ export default function SignUp() {
               <span className="text-xs md:text-sm font-bold text-[#ff9800] tracking-widest uppercase">
                 {t.stepIndicator}
               </span>
-              <h2 className="text-xl md:text-2xl font-extrabold text-white">
+              <h2 className="text-xl md:text-2xl font-bold text-white">
                 {t.personalDetails}
               </h2>
             </div>

@@ -479,7 +479,7 @@ export default function AgentDocuments() {
         <section className="mb-14">
           <div className="flex items-center gap-2.5 mb-6 select-none">
             <HugeiconsIcon icon={File01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-            <h2 className="text-xl md:text-[24px] font-black text-slate-800 tracking-tight">
+            <h2 className="text-xl md:text-[24px] font-semibold text-slate-800 tracking-tight">
               {lang === "en" ? "Action Required – Requested Documents" : lang === "si" ? "ක්‍රියාමාර්ගයක් අවශ්‍යයි – ඉල්ලා ඇති ලේඛන" : "நடவடிக்கை தேவை - கோரப்பட்ட ஆவணங்கள்"}
             </h2>
           </div>
@@ -494,7 +494,7 @@ export default function AgentDocuments() {
               <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 text-emerald-500">
                 <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-7 h-7" strokeWidth={2.5} />
               </div>
-              <p className="text-slate-500 font-extrabold text-[15px]">{lang === "en" ? "No Pending Agent Requests" : lang === "si" ? "ප්‍රතිචාර නොදැක්වූ ඉල්ලීම් කිසිවක් නැත" : "நிலுவையில் ஆவணக் கோரிக்கைகள் இல்லை"}</p>
+              <p className="text-slate-500 font-bold text-[15px]">{lang === "en" ? "No Pending Agent Requests" : lang === "si" ? "ප්‍රතිචාර නොදැක්වූ ඉල්ලීම් කිසිවක් නැත" : "நிலுவையில் ஆவணக் கோரிக்கைகள் இல்லை"}</p>
               <p className="text-slate-400 text-xs font-semibold mt-1">{lang === "en" ? "All requested documents from your end are verified and up to date." : lang === "si" ? "ඔබගේ පාර්ශවයෙන් ඉල්ලා ඇති සියලුම ලේඛන සත්‍යාපනය කර යාවත්කාලීන කර ඇත." : "உங்கள் தரப்பிலிருந்து கோரப்பட்ட அனைத்து ஆவணங்களும் சரிபார்க்கப்பட்டு புதுப்பிக்கப்பட்டுள்ளன."}</p>
             </div>
           ) : (
@@ -511,11 +511,11 @@ export default function AgentDocuments() {
                     </div>
 
                     <div className="flex-1">
-                      <h3 className="text-red-600 font-extrabold text-base leading-none">
+                      <h3 className="text-red-600 font-bold text-base leading-none">
                         {lang === "en" ? "Document Upload Required" : lang === "si" ? "ලේඛන උඩුගත කිරීමක් අවශ්‍යයි" : "ஆவணம் பதிவேற்றம் தேவை"}
                       </h3>
                       <p className="text-slate-600 text-sm font-semibold mt-2.5 leading-relaxed">
-                        {lang === "en" ? "Office staff has requested the following document(s) for claim" : lang === "si" ? "කාර්ය මණ්ඩලය විසින් පහත සඳහන් ලේඛන හිමිකම් ගොනුව සඳහා ඉල්ලා ඇත" : "அலுவலக ஊழியர்கள் பின்வரும் ஆவணத்தை கோரியுள்ளனர்"} <span className="text-slate-800 font-extrabold">{claim.claimNumber}</span> (Plate: {claim.vehiclePlate}):
+                        {lang === "en" ? "Office staff has requested the following document(s) for claim" : lang === "si" ? "කාර්ය මණ්ඩලය විසින් පහත සඳහන් ලේඛන හිමිකම් ගොනුව සඳහා ඉල්ලා ඇත" : "அலுவலக ஊழியர்கள் பின்வரும் ஆவணத்தை கோரியுள்ளனர்"} <span className="text-slate-800 font-bold">{claim.claimNumber}</span> (Plate: {claim.vehiclePlate}):
                       </p>
                       <div className="mt-2.5 space-y-3 pl-2.5 border-l-2 border-slate-200">
                         {getAgentPendingRequests(claim).map((docName, idx) => {
@@ -523,7 +523,7 @@ export default function AgentDocuments() {
                           const reqTime = getDocRequestTime(claim, docName);
                           return (
                             <div key={idx} className="text-slate-600 text-xs font-semibold leading-relaxed grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                              <span className="text-slate-800 font-extrabold">• {docName}</span>
+                              <span className="text-slate-800 font-bold">• {docName}</span>
                               {reqTime && (
                                 <span className="text-red-500 font-bold">
                                   (Requested: {reqTime} by {getDocRequestSender(claim, docName)})
@@ -547,7 +547,7 @@ export default function AgentDocuments() {
                   <div className="flex flex-col items-end justify-between self-stretch md:self-auto gap-4">
                     <button
                       onClick={() => handleOpenUpload(claim)}
-                      className="bg-red-500 hover:bg-red-600 text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all duration-150 shadow-[0_4px_15px_rgba(220,38,38,0.25)] hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto text-center cursor-pointer border-none"
+                      className="bg-red-500 hover:bg-red-600 text-white font-bold text-[14px] px-8 py-3 rounded-full transition-all duration-150 shadow-[0_4px_15px_rgba(220,38,38,0.25)] hover:scale-[1.03] active:scale-[0.98] w-full md:w-auto text-center cursor-pointer border-none"
                     >
                       {t.uploadButton}
                     </button>
@@ -565,7 +565,7 @@ export default function AgentDocuments() {
         <section>
           <div className="flex items-center gap-2.5 mb-6 select-none">
             <HugeiconsIcon icon={File01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-            <h2 className="text-xl md:text-[24px] font-black text-slate-800 tracking-tight">
+            <h2 className="text-xl md:text-[24px] font-semibold text-slate-800 tracking-tight">
               {lang === "en" ? "Claim Documents List" : lang === "si" ? "හිමිකම් ලේඛන ලැයිස්තුව" : "காப்பீட்டு ஆவணங்களின் பட்டியல்"}
             </h2>
           </div>
@@ -594,13 +594,13 @@ export default function AgentDocuments() {
                     </div>
 
                     <div className="min-w-0">
-                      <h4 className="text-cyan-800 font-extrabold text-base leading-none select-none truncate">
+                      <h4 className="text-cyan-800 font-bold text-base leading-none select-none truncate">
                         {claim.claimNumber}
                       </h4>
                       <div className="text-slate-400 text-xs font-semibold mt-2.5 flex flex-col gap-2.5 leading-tight select-none w-full">
                         {claim.docs.map((doc, dIdx) => (
                           <div key={dIdx} className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                            <span className="text-slate-700 font-extrabold">{doc.name}</span>
+                            <span className="text-slate-700 font-bold">{doc.name}</span>
                             {doc.uploadedAt && (
                               <span className="text-[10px] text-slate-400 font-semibold">
                                 (Uploaded: {formatDateTimeString(doc.uploadedAt)})
@@ -621,7 +621,7 @@ export default function AgentDocuments() {
                         setUploadedListTargetClaim(claim);
                         setUploadedListModalOpen(true);
                       }}
-                      className="border border-[#0891b2] text-[#0891b2] hover:bg-[#0891b2] hover:text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 cursor-pointer bg-white"
+                      className="border border-[#0891b2] text-[#0891b2] hover:bg-[#0891b2] hover:text-white font-bold text-xs px-6 py-3 rounded-full transition-all duration-150 cursor-pointer bg-white"
                     >
                       {t.viewFiles}
                     </button>
@@ -666,7 +666,7 @@ export default function AgentDocuments() {
                         {val.file === null ? (
                           <span
                             onClick={() => fileInputRefs.current[docName]?.click()}
-                            className="text-[#0891b2] hover:text-[#06738f] font-extrabold text-[15px] cursor-pointer hover:underline select-none"
+                            className="text-[#0891b2] hover:text-[#06738f] font-bold text-[15px] cursor-pointer hover:underline select-none"
                           >
                             Upload
                           </span>
@@ -734,7 +734,7 @@ export default function AgentDocuments() {
                   <HugeiconsIcon icon={Tick01Icon} className="w-8 h-8 text-white" strokeWidth={4.5} />
                 </div>
 
-                <h3 className="text-[22px] font-black text-[#0f2d3a] mt-5 leading-none">
+                <h3 className="text-[22px] font-semibold text-[#0f2d3a] mt-5 leading-none">
                   Documents Submitted!
                 </h3>
                 <p className="text-slate-600 text-[14px] font-semibold mt-2.5 max-w-[325px] leading-relaxed mx-auto">
@@ -750,7 +750,7 @@ export default function AgentDocuments() {
                       fetchClaims(agent.email);
                     }
                   }}
-                  className="mt-8 bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-extrabold text-[14px] px-10 py-4 rounded-full transition-all duration-150 shadow-md border-none cursor-pointer"
+                  className="mt-8 bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-bold text-[14px] px-10 py-4 rounded-full transition-all duration-150 shadow-md border-none cursor-pointer"
                 >
                   Done
                 </button>
@@ -796,7 +796,7 @@ export default function AgentDocuments() {
 
                   <span
                     onClick={() => handleOpenView(`${doc.name} – ${uploadedListTargetClaim.claimNumber}`, doc.files, doc.uploadedAt, doc.uploadedBy)}
-                    className="text-[#0891b2] hover:text-[#06738f] font-extrabold text-[15px] cursor-pointer hover:underline select-none"
+                    className="text-[#0891b2] hover:text-[#06738f] font-bold text-[15px] cursor-pointer hover:underline select-none"
                   >
                     View File
                   </span>
@@ -841,7 +841,7 @@ export default function AgentDocuments() {
                   {(viewUploadedBy || viewUploadedAt) && (
                     <div className="text-left sm:text-right select-none">
                       {viewUploadedBy && (
-                        <p className="text-[#0891b2] font-black text-xs m-0">
+                        <p className="text-[#0891b2] font-semibold text-xs m-0">
                           Uploaded By: {viewUploadedBy}
                         </p>
                       )}
