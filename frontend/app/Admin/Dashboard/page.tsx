@@ -292,9 +292,104 @@ export default function AdminDashboard() {
           {/* Page Content Dashboard */}
           <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-auto">
             {loading ? (
-              <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#f59e0b]"></div>
-                <span className="mt-4 text-slate-500 font-medium">Loading dashboard metrics...</span>
+              <div className="w-full flex flex-col gap-8 select-none animate-pulse">
+                {/* Top 6 Metric Cards Skeleton */}
+                <div className="grid grid-cols-2 lg:grid-cols-6 gap-6">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-2xl border border-slate-200/80 p-5 flex flex-col justify-between h-[125px] shadow-xs">
+                      <div className="flex justify-between items-start">
+                        <div className="h-3 w-20 bg-slate-200 rounded-md" />
+                        <div className="w-7 h-7 bg-slate-100 rounded-lg" />
+                      </div>
+                      <div className="h-8 w-16 bg-slate-200 rounded-lg" />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Charts & Breakdown Row Skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                  {/* Branch Performances Card Skeleton (5 cols) */}
+                  <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 lg:p-7 flex flex-col gap-6">
+                    <div className="flex justify-between items-center">
+                      <div className="flex flex-col gap-2">
+                        <div className="h-5 w-36 bg-slate-200 rounded-md" />
+                        <div className="h-3 w-48 bg-slate-100 rounded-md" />
+                      </div>
+                      <div className="h-6 w-20 bg-slate-100 rounded-full" />
+                    </div>
+
+                    <div className="flex flex-col gap-5 pt-2">
+                      {[...Array(4)].map((_, i) => (
+                        <div key={i} className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2.5 h-2.5 rounded-full bg-slate-200" />
+                              <div className="h-4 w-24 bg-slate-200 rounded-md" />
+                            </div>
+                            <div className="h-3 w-16 bg-slate-100 rounded-md" />
+                          </div>
+                          <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-slate-200 rounded-full" style={{ width: `${(4 - i) * 22}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Insurance Claims Overview Chart Skeleton (7 cols) */}
+                  <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 lg:p-7 flex flex-col justify-between">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                      <div className="flex flex-col gap-2">
+                        <div className="h-5 w-44 bg-slate-200 rounded-md" />
+                        <div className="h-3 w-56 bg-slate-100 rounded-md" />
+                      </div>
+                      <div className="h-7 w-40 bg-slate-100 rounded-full" />
+                    </div>
+
+                    <div className="flex gap-3 h-64 pt-2">
+                      <div className="flex flex-col justify-between w-6 py-1">
+                        {[...Array(4)].map((_, i) => (
+                          <div key={i} className="h-3 w-5 bg-slate-200 rounded-md ml-auto" />
+                        ))}
+                      </div>
+                      <div className="flex-1 flex justify-between items-end gap-2 pb-1 border-b border-slate-200">
+                        {[...Array(12)].map((_, i) => (
+                          <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
+                            <div className="flex items-end gap-1 h-full w-full justify-center">
+                              <div className="w-2.5 sm:w-3.5 bg-slate-200 rounded-t-sm" style={{ height: `${((i * 17) % 65) + 15}%` }} />
+                              <div className="w-2.5 sm:w-3.5 bg-slate-100 rounded-t-sm" style={{ height: `${((i * 13) % 45) + 10}%` }} />
+                            </div>
+                            <div className="h-2.5 w-6 bg-slate-200 rounded-xs" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Request Center Skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col gap-4 shadow-sm min-h-[260px]">
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <div className="h-4 w-36 bg-slate-200 rounded-md" />
+                        <div className="h-5 w-16 bg-slate-100 rounded-full" />
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        {[...Array(2)].map((_, j) => (
+                          <div key={j} className="border border-slate-100 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-2">
+                            <div className="h-4 w-28 bg-slate-200 rounded-md" />
+                            <div className="h-3 w-40 bg-slate-100 rounded-md" />
+                            <div className="flex gap-2 mt-1">
+                              <div className="flex-1 h-7 bg-slate-200 rounded-lg" />
+                              <div className="flex-1 h-7 bg-slate-100 rounded-lg" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : error ? (
               <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-red-500 font-semibold bg-red-50 rounded-2xl p-8 border border-red-200">

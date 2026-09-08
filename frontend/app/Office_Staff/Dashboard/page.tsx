@@ -304,9 +304,70 @@ export default function OfficeStaffDashboard() {
           {/* Page Content Dashboard */}
           <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-auto">
             {loading ? (
-              <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#f59e0b]"></div>
-                <span className="mt-4 text-slate-500 font-medium">Loading branch metrics...</span>
+              <div className="w-full flex flex-col gap-8 select-none animate-pulse">
+                {/* Top 4 Stat Cards Skeleton */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-[20px] border border-slate-200/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-xs">
+                      <div className="h-8 w-16 bg-slate-200 rounded-lg mb-2" />
+                      <div className="h-3.5 w-28 bg-slate-100 rounded-md" />
+                    </div>
+                  ))}
+                </div>
+
+                {/* Main 2-Column Section Skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+                  {/* Left 8 cols: New Claims Skeleton */}
+                  <div className="lg:col-span-8 flex flex-col gap-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-slate-200 rounded-md" />
+                      <div className="h-5 w-32 bg-slate-200 rounded-md" />
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                      {[...Array(3)].map((_, i) => (
+                        <div key={i} className="bg-white border border-slate-200 rounded-[20px] p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-xs">
+                          <div className="flex flex-col gap-2">
+                            <div className="h-5 w-24 bg-slate-200 rounded-md" />
+                            <div className="h-3 w-28 bg-slate-100 rounded-md" />
+                          </div>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 flex-1">
+                            {[...Array(3)].map((_, j) => (
+                              <div key={j} className="flex flex-col gap-1.5">
+                                <div className="h-3 w-16 bg-slate-100 rounded-md" />
+                                <div className="h-4 w-20 bg-slate-200 rounded-md" />
+                              </div>
+                            ))}
+                          </div>
+                          <div className="w-28 h-9 bg-slate-200 rounded-xl" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Right 4 cols: New Registrations Skeleton */}
+                  <div className="lg:col-span-4 flex flex-col gap-6">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 bg-slate-200 rounded-md" />
+                      <div className="h-5 w-36 bg-slate-200 rounded-md" />
+                    </div>
+
+                    <div className="bg-white rounded-[24px] border border-slate-200 p-6 flex flex-col gap-4 shadow-sm">
+                      {[...Array(4)].map((_, i) => (
+                        <div key={i} className="flex items-center justify-between py-2.5 border-b border-slate-100 last:border-0">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-full bg-slate-200" />
+                            <div className="flex flex-col gap-1">
+                              <div className="h-4 w-24 bg-slate-200 rounded-md" />
+                              <div className="h-3 w-16 bg-slate-100 rounded-md" />
+                            </div>
+                          </div>
+                          <div className="h-3 w-12 bg-slate-100 rounded-md" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : error ? (
               <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-red-500 font-semibold bg-red-50 rounded-2xl p-8 border border-red-200">
