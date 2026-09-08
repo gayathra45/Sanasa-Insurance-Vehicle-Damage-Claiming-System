@@ -2482,17 +2482,8 @@ function OfficeStaffClaimsPageContent() {
                   {/* Right Side Column */}
                   <div className="flex flex-col space-y-4">
                     <div className="space-y-2 text-sm font-semibold text-slate-800">
-                      <div className="flex items-center gap-2 flex-wrap">
+                      <div>
                         Agent : <span className="font-medium text-slate-600">{selectedClaim.assignedAgent ? getAgentName(selectedClaim.assignedAgent) : "Unassigned"}</span>
-                        {(!selectedClaim.assignedAgent || selectedClaim.assignedAgent === "" || selectedClaim.assignedAgent.toLowerCase() === "unassigned") && selectedClaim.status !== "Cancelled" && (
-                          <button
-                            type="button"
-                            onClick={() => setShowAssignModal(selectedClaim)}
-                            className="bg-[#f97316] hover:bg-orange-600 active:scale-95 text-white py-1 px-3.5 rounded-full text-[10px] font-semibold uppercase tracking-wider transition-all border-none cursor-pointer flex items-center justify-center shadow-xs"
-                          >
-                            Assign Agent
-                          </button>
-                        )}
                       </div>
                       <div>
                         Type : <span className="font-medium text-slate-600">{selectedClaim.damageType}</span>
