@@ -922,24 +922,25 @@ function OfficeStaffClaimsPageContent() {
               <div className="max-w-6xl mx-auto flex flex-col gap-6">
                 
                 {/* Title */}
-                <div className="flex items-center gap-2 select-none">
-                  <h2 className="text-lg font-semibold text-slate-800">
+                <div className="flex items-center gap-2.5 mb-1 select-none">
+                  <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+                  <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
                     Claims Management
                   </h2>
                 </div>
 
                 {/* Filters and Search Bar Container */}
-                <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col md:flex-row gap-4 items-center justify-between shadow-xs select-none">
                   {/* Tabs */}
-                  <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100 rounded-lg w-full md:w-auto select-none">
+                  <div className="flex flex-wrap items-center gap-1.5 p-1.5 bg-slate-100 rounded-xl w-full md:w-auto select-none">
                     {(["All", "Pending", "In Progress", "Approved", "Rejected"] as const).map(tab => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`px-3.5 py-1.5 rounded-md text-xs font-semibold transition-all border-none outline-none cursor-pointer ${
+                        className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all border-none outline-none cursor-pointer ${
                           activeTab === tab
-                            ? "bg-slate-800 text-white shadow-xs"
-                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
+                            ? "bg-[#000080] text-white shadow-xs"
+                            : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/60"
                         }`}
                       >
                         {tab} ({tab === "All" ? claims.length : claims.filter(c => c.status === tab).length})
@@ -949,7 +950,7 @@ function OfficeStaffClaimsPageContent() {
 
                   {/* Search input */}
                   <div className="relative w-full md:w-80">
-                    <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                       <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
                     </span>
                     <input
@@ -957,20 +958,20 @@ function OfficeStaffClaimsPageContent() {
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search Claim No, Plate or NIC..."
-                      className="w-full pl-9 pr-4 py-1.5 rounded-lg border border-slate-200 text-slate-700 placeholder:text-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-slate-800 focus:border-transparent transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-full border border-slate-300 text-slate-700 placeholder:text-slate-400 text-xs focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-xs"
                     />
                   </div>
                 </div>
 
                 {/* Claims list */}
                 {filteredClaims.length === 0 ? (
-                  <div className="bg-white border border-slate-200 rounded-xl p-12 text-center text-slate-400 font-medium select-none shadow-xs">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-400 font-medium select-none shadow-xs">
                     No claims found in {branch} Branch under active filters.
                   </div>
                 ) : (
                   <div className="flex flex-col gap-3">
                     {/* Header Row for Desktop */}
-                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
+                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-3 text-[10px] font-medium text-slate-400 uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1">
                       <div className="flex flex-col select-none min-w-0">Claim Info</div>
                       <div className="flex flex-col select-none min-w-0">Vehicle No</div>
                       <div className="flex flex-col select-none min-w-0">Damage Type</div>
