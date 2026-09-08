@@ -373,99 +373,159 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Branch Performance & Monthly Claims split section */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mb-12">
                   
-                  {/* Branch Performances List (Left: 5 cols) */}
-                  <div className="lg:col-span-5 flex flex-col select-none">
-                    <h2 className="text-lg font-semibold text-slate-800 mb-8 tracking-wide">
-                      Branch Performances
-                    </h2>
-                    
-                    <div className="flex flex-col gap-6">
-                      {branches.map((branch, index) => (
-                        <div key={`${branch.name}-${index}`} className="flex flex-col">
-                          <div className="flex justify-between items-center mb-2">
-                            <span className="font-semibold text-slate-700 text-sm">
-                              {branch.name}
-                            </span>
-                            <span className="text-xs text-slate-400 font-medium">
-                              {branch.count} {branch.count === 1 ? "claim" : "claims"}
-                            </span>
-                          </div>
-                          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full ${branch.color || BRANCH_PALETTE[index % BRANCH_PALETTE.length]} rounded-full transition-all duration-500`}
-                              style={{ width: `${branch.percentage}%` }}
-                            ></div>
-                          </div>
+                  {/* Branch Performances Card (Left: 5 cols) */}
+                  <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 lg:p-7 flex flex-col justify-between select-none">
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <h2 className="text-base font-semibold text-slate-800">
+                          Branch Performances
+                        </h2>
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">
+                          Claim distribution by branch location
+                        </p>
+                      </div>
+                      <span className="text-xs bg-slate-100/80 border border-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">
+                        {branches.length} Branches
+                      </span>
+                    </div>
+
+                    {/* Branch List */}
+                    <div className="flex-1 flex flex-col gap-4 overflow-y-auto max-h-[280px] pr-1">
+                      {branches.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center flex-1 py-12 text-slate-400">
+                          <span className="text-xs font-semibold">No branch activity recorded yet</span>
                         </div>
-                      ))}
+                      ) : (
+                        branches.map((branch, index) => {
+                          const colorClass = branch.color || BRANCH_PALETTE[index % BRANCH_PALETTE.length];
+                          return (
+                            <div key={`${branch.name}-${index}`} className="flex flex-col group">
+                              <div className="flex justify-between items-center mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-2.5 h-2.5 rounded-full ${colorClass} shrink-0`} />
+                                  <span className="font-semibold text-slate-700 text-sm capitalize">
+                                    {branch.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-slate-600 font-semibold">
+                                    {branch.count} {branch.count === 1 ? "claim" : "claims"}
+                                  </span>
+                                  <span className="text-xs text-slate-400 font-medium">
+                                    ({branch.percentage}%)
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full ${colorClass} rounded-full transition-all duration-500`}
+                                  style={{ width: `${Math.max(branch.percentage, 3)}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
                   </div>
 
-                  {/* Monthly Claims Chart (Right: 7 cols) */}
-                  <div className="lg:col-span-7 flex flex-col select-none bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-                    <div className="flex justify-between items-center mb-8">
+                  {/* Monthly Claims Chart Card (Right: 7 cols) */}
+                  <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 lg:p-7 flex flex-col justify-between select-none">
+                    {/* Header & Legend */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                       <div>
                         <h2 className="text-base font-semibold text-slate-800">
                           Insurance Claims Overview
                         </h2>
-                        <p className="text-[9px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">
-                          Visualizing submissions & approvals
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">
+                          Annual monthly claim submissions & approvals
                         </p>
                       </div>
-                      
-                      {/* Metric info */}
-                      <span className="text-[10px] bg-slate-50 border border-slate-200/60 text-slate-500 font-semibold px-3 py-1 rounded-full">
-                        Last 30 Days
-                      </span>
+
+                      {/* Legend Indicators */}
+                      <div className="flex items-center gap-4 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-full self-start sm:self-auto">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-[#1b75e0]" />
+                          <span>Submitted</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+                          <span>Approved</span>
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="h-64 flex flex-col justify-between relative mt-4">
-                      {/* Grid Lines */}
-                      <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
-                        <div className="w-full border-t border-slate-100"></div>
-                        <div className="w-full border-t border-slate-100"></div>
-                        <div className="w-full border-t border-slate-100"></div>
-                        <div className="w-full border-b border-slate-200"></div>
-                      </div>
-
-                      {/* Y-Axis Labels */}
-                      <div className="absolute left-[-40px] inset-y-0 flex flex-col justify-between text-[10px] text-slate-400 font-medium pointer-events-none select-none text-right w-8">
+                    {/* Chart Area with proper Y-Axis and Grid Lines */}
+                    <div className="flex-1 flex gap-3 h-64 pt-2">
+                      {/* Y-Axis scale labels */}
+                      <div className="flex flex-col justify-between text-right text-[11px] font-semibold text-slate-400 select-none w-6 shrink-0 py-1">
                         <span>{maxLimit}</span>
                         <span>{Math.round(step * 2)}</span>
                         <span>{Math.round(step)}</span>
                         <span>0</span>
                       </div>
 
-                      {/* Chart Bars */}
-                      <div className="flex-1 flex justify-around items-end z-10 px-2">
-                        {monthlyClaims.map((data) => {
-                          const subHeight = maxLimit > 0 ? (data.submitted / maxLimit) * 100 : 0;
-                          const appHeight = maxLimit > 0 ? (data.approved / maxLimit) * 100 : 0;
-                          
-                          return (
-                            <div key={data.month} className="flex flex-col items-center h-full justify-end w-12 group">
-                              <div className="flex items-end gap-1.5 h-full w-full justify-center">
-                                {/* Submitted bar */}
-                                <div
-                                  className="w-4 bg-blue-500 rounded-t-[3px] transition-all duration-500 hover:opacity-85 cursor-pointer relative"
-                                  style={{ height: `${subHeight}%` }}
-                                  title={`Submitted: ${data.submitted}`}
-                                ></div>
-                                {/* Approved bar */}
-                                <div
-                                  className="w-4 bg-emerald-500 rounded-t-[3px] transition-all duration-500 hover:opacity-85 cursor-pointer"
-                                  style={{ height: `${appHeight}%` }}
-                                  title={`Approved: ${data.approved}`}
-                                ></div>
+                      {/* Chart Grid & Bars Container */}
+                      <div className="flex-1 relative flex flex-col justify-between">
+                        {/* Horizontal Background Grid Lines */}
+                        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                          <div className="w-full border-t border-slate-100" />
+                          <div className="w-full border-t border-slate-100" />
+                          <div className="w-full border-t border-slate-100" />
+                          <div className="w-full border-b border-slate-200" />
+                        </div>
+
+                        {/* Chart Columns */}
+                        <div className="flex-1 flex justify-between items-end z-10 px-1 gap-1 sm:gap-2">
+                          {monthlyClaims.map((data, idx) => {
+                            const subHeight = maxLimit > 0 ? (data.submitted / maxLimit) * 100 : 0;
+                            const appHeight = maxLimit > 0 ? (data.approved / maxLimit) * 100 : 0;
+                            const hasData = data.submitted > 0 || data.approved > 0;
+
+                            return (
+                              <div
+                                key={data.month || idx}
+                                className="flex flex-col items-center h-full justify-end flex-1 group relative cursor-pointer"
+                              >
+                                {/* Modern Hover Tooltip */}
+                                <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-30 transform group-hover:-translate-y-1 scale-95 group-hover:scale-100 whitespace-nowrap bg-[#102A43] text-white text-[11px] font-medium py-1.5 px-2.5 rounded-xl shadow-xl flex flex-col gap-0.5">
+                                  <span className="font-semibold text-slate-200 border-b border-white/10 pb-0.5 mb-0.5">{data.month}</span>
+                                  <div className="flex items-center gap-1.5 text-blue-300">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                    <span>Submitted: <strong>{data.submitted}</strong></span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-emerald-300">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    <span>Approved: <strong>{data.approved}</strong></span>
+                                  </div>
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-[#102A43]" />
+                                </div>
+
+                                {/* Bars column */}
+                                <div className={`flex items-end gap-1 h-full w-full justify-center rounded-t-lg transition-colors duration-150 ${hasData ? 'group-hover:bg-slate-50/80' : ''} px-0.5 pb-0.5`}>
+                                  {/* Submitted Bar */}
+                                  <div
+                                    className="w-2.5 sm:w-3.5 bg-[#1b75e0] rounded-t-sm transition-all duration-500 group-hover:brightness-110 shadow-xs"
+                                    style={{ height: `${Math.max(subHeight, subHeight > 0 ? 4 : 0)}%` }}
+                                  />
+                                  {/* Approved Bar */}
+                                  <div
+                                    className="w-2.5 sm:w-3.5 bg-emerald-500 rounded-t-sm transition-all duration-500 group-hover:brightness-110 shadow-xs"
+                                    style={{ height: `${Math.max(appHeight, appHeight > 0 ? 4 : 0)}%` }}
+                                  />
+                                </div>
+
+                                {/* Month label */}
+                                <span className={`text-[10px] font-semibold mt-2 transition-colors duration-150 ${hasData ? 'text-slate-700' : 'text-slate-400'} group-hover:text-[#1b75e0]`}>
+                                  {data.month}
+                                </span>
                               </div>
-                              <span className="text-[10px] font-medium text-slate-400 mt-2 select-none">
-                                {data.month}
-                              </span>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
