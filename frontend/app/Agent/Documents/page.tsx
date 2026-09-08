@@ -18,7 +18,7 @@ import {
   Tick01Icon,
   ArrowLeft01Icon,
   ArrowRight01Icon,
-
+  Cancel01Icon,
 } from "@hugeicons/core-free-icons";
 
 interface AdditionalDoc {
@@ -640,6 +640,15 @@ export default function AgentDocuments() {
       {uploadModalOpen && uploadTargetClaim && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative transition-all duration-300 max-h-[90vh] overflow-y-auto">
+            {/* Top Right Close 'X' Button */}
+            <button
+              type="button"
+              onClick={() => setUploadModalOpen(false)}
+              className="absolute top-6 right-6 md:top-8 md:right-8 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none z-10"
+              aria-label="Close"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+            </button>
 
             {!uploadSuccess ? (
               <form onSubmit={handleUploadSubmit} className="flex flex-col">
@@ -704,18 +713,18 @@ export default function AgentDocuments() {
                   ))}
                 </div>
 
-                <div className="flex flex-row justify-between items-center mt-10">
+                <div className="flex flex-row justify-end items-center gap-3 mt-10">
                   <button
                     type="button"
                     onClick={() => setUploadModalOpen(false)}
-                    className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold text-sm px-8 py-3.5 rounded-full transition-all duration-150 cursor-pointer shadow-xs active:scale-[0.97]"
                   >
-                    Close
+                    Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={isUploading}
-                    className="bg-[#000080] hover:bg-[#000066] disabled:bg-slate-400 active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none flex items-center justify-center gap-2 min-w-[140px] text-center"
+                    className="bg-[#000080] hover:bg-[#000066] disabled:bg-slate-400 active:scale-[0.97] text-white font-bold text-sm px-10 py-3.5 rounded-full transition-all duration-150 cursor-pointer border-none flex items-center justify-center gap-2 shadow-sm"
                   >
                     {isUploading ? (
                       <>
@@ -767,8 +776,17 @@ export default function AgentDocuments() {
       {uploadedListModalOpen && uploadedListTargetClaim && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative transition-all duration-300 max-h-[90vh] overflow-y-auto">
+            {/* Top Right Close 'X' Button */}
+            <button
+              type="button"
+              onClick={() => setUploadedListModalOpen(false)}
+              className="absolute top-6 right-6 md:top-8 md:right-8 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none z-10"
+              aria-label="Close"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+            </button>
 
-            <div className="select-none text-left">
+            <div className="select-none text-left pr-10">
               <h2 className="text-[26px] font-semibold text-slate-950 tracking-tight leading-tight">
                 Claim {uploadedListTargetClaim.claimNumber}
               </h2>
@@ -806,16 +824,6 @@ export default function AgentDocuments() {
               ))}
             </div>
 
-            <div className="flex flex-row justify-start items-center mt-10">
-              <button
-                type="button"
-                onClick={() => setUploadedListModalOpen(false)}
-                className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
-              >
-                Close
-              </button>
-            </div>
-
           </div>
         </div>
       )}
@@ -824,6 +832,15 @@ export default function AgentDocuments() {
       {viewModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-10 md:p-14 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative transition-all duration-300 max-h-[90vh] overflow-y-auto">
+            {/* Top Right Close 'X' Button */}
+            <button
+              type="button"
+              onClick={() => setViewModalOpen(false)}
+              className="absolute top-6 right-6 md:top-8 md:right-8 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none z-10"
+              aria-label="Close"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+            </button>
 
             {/* Header */}
             {(() => {
@@ -831,7 +848,7 @@ export default function AgentDocuments() {
                 ? viewModalTitle.split(" – ") 
                 : [viewModalTitle, ""];
               return (
-                <div className="select-none text-left flex flex-col sm:flex-row sm:items-baseline justify-between gap-2">
+                <div className="select-none text-left flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 pr-10">
                   <div>
                     <h2 className="text-[26px] font-semibold text-slate-950 tracking-tight leading-tight">
                       {docName}
@@ -904,17 +921,6 @@ export default function AgentDocuments() {
                   {viewCurrentIndex + 1} / {viewModalFiles.length}
                 </span>
               )}
-            </div>
-
-            {/* Bottom Button Panel */}
-            <div className="flex flex-row justify-between items-center mt-10">
-              <button
-                type="button"
-                onClick={() => setViewModalOpen(false)}
-                className="bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-bold text-sm px-14 py-4 rounded-full transition-all duration-150 cursor-pointer border-none min-w-[140px] text-center"
-              >
-                Close
-              </button>
             </div>
 
           </div>
