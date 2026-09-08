@@ -338,7 +338,7 @@ export default function AdminStaffPage() {
                 <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               {/* Mobile page title */}
-              <h1 className="lg:hidden text-lg font-bold text-slate-800 tracking-tight">
+              <h1 className="lg:hidden text-lg font-semibold text-slate-800 tracking-tight">
                 Staff
               </h1>
               {/* Desktop welcome title */}
@@ -445,7 +445,7 @@ export default function AdminStaffPage() {
               return (
                 <div className="flex flex-col gap-3">
                   {/* Table Header */}
-                  <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,2.1fr)] gap-4 px-5 py-3 text-slate-500 font-bold text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                  <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,2.1fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
                     <div>Branch & Profile</div>
                     <div>District / Province</div>
                     <div>Office Location</div>
@@ -476,7 +476,7 @@ export default function AdminStaffPage() {
                       {/* Col 2: District / Province */}
                       <div className="flex flex-col min-w-0 select-none">
                         <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">District / Province</span>
-                        <span className="text-slate-700 font-bold text-xs">{staff.district}</span>
+                        <span className="text-slate-700 font-semibold text-xs">{staff.district}</span>
                         <span className="text-[10px] text-slate-500 font-semibold">{staff.province}</span>
                       </div>
 
@@ -509,19 +509,19 @@ export default function AdminStaffPage() {
                         <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => triggerView(staff)}
-                            className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-bold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm border border-slate-200"
+                            className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm border border-slate-200"
                           >
                             View
                           </button>
                           <button
                             onClick={() => triggerEdit(staff)}
-                            className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-bold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                            className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                           >
                             Edit
                           </button>
                           <button
                             onClick={() => handleDeleteStaff(staff._id)}
-                            className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-bold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                            className="bg-[#ef4444] hover:bg-[#dc2626] text-white font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
                           >
                             Delete
                           </button>
@@ -586,7 +586,7 @@ export default function AdminStaffPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Province Selection */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Province</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Province</label>
                     <div className="relative">
                       <select
                         required
@@ -607,7 +607,7 @@ export default function AdminStaffPage() {
 
                   {/* District Selection */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">District</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">District</label>
                     <div className="relative">
                       <select
                         required
@@ -629,7 +629,7 @@ export default function AdminStaffPage() {
 
                   {/* Area Selection */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Area</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Area</label>
                     <div className="relative">
                       <select
                         required
@@ -648,7 +648,7 @@ export default function AdminStaffPage() {
 
                   {/* Branch Name */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Branch Name</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Branch Name</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={Building01Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -666,7 +666,7 @@ export default function AdminStaffPage() {
 
                   {/* Staff Count */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Staff Count</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Staff Count</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={UserMultiple02Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -684,7 +684,7 @@ export default function AdminStaffPage() {
 
                   {/* Office Location */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Office Location Address</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Office Location Address</label>
                     <div className="relative">
                       <div className="absolute top-3 left-3.5 pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={Location01Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -710,7 +710,7 @@ export default function AdminStaffPage() {
 
                 {/* Staff Full Name */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Staff / Branch Profile Name</label>
+                  <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Staff / Branch Profile Name</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4" strokeWidth={2.5} />
@@ -729,7 +729,7 @@ export default function AdminStaffPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Email */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Email Address</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Email Address</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -747,7 +747,7 @@ export default function AdminStaffPage() {
 
                   {/* Mobile */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Mobile Number</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Mobile Number</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -845,8 +845,8 @@ export default function AdminStaffPage() {
                             <HugeiconsIcon icon={Key01Icon} className="w-5 h-5" strokeWidth={2.5} />
                           </div>
                           <div>
-                            <h3 className="font-bold text-slate-800 text-sm leading-tight truncate max-w-[190px]">{request.name}</h3>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mt-1">{request.branch} Branch Office</span>
+                            <h3 className="font-semibold text-slate-800 text-sm leading-tight truncate max-w-[190px]">{request.name}</h3>
+                            <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mt-1">{request.branch} Branch Office</span>
                           </div>
                         </div>
                         <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-semibold tracking-wider uppercase select-none flex items-center gap-1 animate-pulse">
@@ -978,7 +978,7 @@ export default function AdminStaffPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Province Selection */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Province</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Province</label>
                     <div className="relative">
                       <select
                         required
@@ -999,7 +999,7 @@ export default function AdminStaffPage() {
 
                   {/* District Selection */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">District</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">District</label>
                     <div className="relative">
                       <select
                         required
@@ -1021,7 +1021,7 @@ export default function AdminStaffPage() {
 
                   {/* Area Selection */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Area</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Area</label>
                     <div className="relative">
                       <select
                         required
@@ -1040,7 +1040,7 @@ export default function AdminStaffPage() {
 
                   {/* Branch Name */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Branch Name</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Branch Name</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={Building01Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -1058,7 +1058,7 @@ export default function AdminStaffPage() {
 
                   {/* Staff Count */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Staff Count</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Staff Count</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={UserMultiple02Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -1076,7 +1076,7 @@ export default function AdminStaffPage() {
 
                   {/* Office Location */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Office Location Address</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Office Location Address</label>
                     <div className="relative">
                       <div className="absolute top-3 left-3.5 pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={Location01Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -1102,7 +1102,7 @@ export default function AdminStaffPage() {
 
                 {/* Staff Full Name */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Staff / Branch Profile Name</label>
+                  <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Staff / Branch Profile Name</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                       <HugeiconsIcon icon={UserIcon} className="w-4 h-4" strokeWidth={2.5} />
@@ -1121,7 +1121,7 @@ export default function AdminStaffPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Email */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Email Address</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Email Address</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -1139,7 +1139,7 @@ export default function AdminStaffPage() {
 
                   {/* Mobile */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-bold text-slate-500 uppercase ml-1">Mobile Number</label>
+                    <label className="text-[11px] font-medium text-slate-500 uppercase ml-1">Mobile Number</label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                         <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2.5} />
@@ -1222,7 +1222,7 @@ export default function AdminStaffPage() {
             <div className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-5 text-left">
               {/* Branch Profile Name Card */}
               <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-1">
-                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">Profile Name</span>
+                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest block">Profile Name</span>
                 <span className="text-base font-semibold text-slate-800">{viewingStaff.name}</span>
               </div>
 
@@ -1231,24 +1231,24 @@ export default function AdminStaffPage() {
                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Location & Geography</span>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Province</span>
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Province</span>
                     <span className="text-slate-850 text-xs font-bold">{viewingStaff.province}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">District</span>
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">District</span>
                     <span className="text-slate-850 text-xs font-bold">{viewingStaff.district}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Area</span>
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Area</span>
                     <span className="text-slate-850 text-xs font-bold">{viewingStaff.area}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Staff Count</span>
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Staff Count</span>
                     <span className="text-[#0f2d4a] text-xs font-bold">{viewingStaff.staffCount} members</span>
                   </div>
                 </div>
                 <div className="mt-1">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase block mb-1">Office Location Address</span>
+                  <span className="text-[9px] font-medium text-slate-400 uppercase block mb-1">Office Location Address</span>
                   <p className="text-slate-750 text-xs font-semibold leading-relaxed bg-white border border-slate-200/60 rounded-xl p-3">
                     {viewingStaff.location}
                   </p>
@@ -1260,11 +1260,11 @@ export default function AdminStaffPage() {
                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Contact Details</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Email Address</span>
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Email Address</span>
                     <span className="text-slate-800 text-xs font-bold block break-all">{viewingStaff.email}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase block mb-0.5">Mobile Number</span>
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Mobile Number</span>
                     <span className="text-slate-800 text-xs font-bold block">{viewingStaff.mobile}</span>
                   </div>
                 </div>

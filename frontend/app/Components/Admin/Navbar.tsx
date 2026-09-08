@@ -17,7 +17,8 @@ import {
   ArrowRight01Icon,
   Cancel01Icon,
   Logout01Icon,
-  SecurityCheckIcon
+  SecurityCheckIcon,
+  Notification01Icon
 } from "@hugeicons/core-free-icons";
 
 export default function AdminNavbar() {
@@ -62,6 +63,8 @@ export default function AdminNavbar() {
       case "reports":
       case "analytics & reports":
         return <HugeiconsIcon icon={Analytics01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "notifications":
+        return <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "contact":
         return <HugeiconsIcon icon={Call02Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       default:

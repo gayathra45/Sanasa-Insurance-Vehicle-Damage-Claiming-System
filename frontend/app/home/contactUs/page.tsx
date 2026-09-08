@@ -85,7 +85,7 @@ export default function ContactUs() {
             {/* Dark teal/blue overlay */}
             <div className="absolute inset-0 bg-[#004f6e]/70 mix-blend-multiply"></div>
             <div className="absolute inset-0 flex items-center px-10 md:px-20 lg:px-32">
-               <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white tracking-wide">
+               <h1 className="text-3xl md:text-5xl lg:text-6xl font-semibold text-white tracking-wide">
                  {t.contactUs}
                </h1>
             </div>
@@ -100,7 +100,7 @@ export default function ContactUs() {
           <div className="w-16 h-16 rounded-full border-2 border-[#0284c7] bg-sky-50/50 text-[#0284c7] flex items-center justify-center mb-6 group-hover:bg-[#0284c7] group-hover:text-white transition-all duration-300 shadow-sm">
             <HugeiconsIcon icon={Location01Icon} className="w-7 h-7" strokeWidth={1.8} />
           </div>
-          <h3 className="font-bold text-gray-900 text-lg md:text-xl mb-3 group-hover:text-[#0284c7] transition-colors">{t.headOffice}</h3>
+          <h3 className="font-semibold text-gray-900 text-lg md:text-xl mb-3 group-hover:text-[#0284c7] transition-colors">{t.headOffice}</h3>
           <p className="text-gray-700 text-base md:text-[17px] leading-relaxed whitespace-pre-line">{t.address}</p>
         </div>
 
@@ -109,7 +109,7 @@ export default function ContactUs() {
           <div className="w-16 h-16 rounded-full border-2 border-[#0284c7] bg-sky-50/50 text-[#0284c7] flex items-center justify-center mb-6 group-hover:bg-[#0284c7] group-hover:text-white transition-all duration-300 shadow-sm">
             <HugeiconsIcon icon={Clock01Icon} className="w-7 h-7" strokeWidth={1.8} />
           </div>
-          <h3 className="font-bold text-gray-900 text-lg md:text-xl mb-3 group-hover:text-[#0284c7] transition-colors">{t.openHours}</h3>
+          <h3 className="font-semibold text-gray-900 text-lg md:text-xl mb-3 group-hover:text-[#0284c7] transition-colors">{t.openHours}</h3>
           <p className="text-gray-700 text-base md:text-[17px] leading-relaxed whitespace-pre-line">{t.hoursVal}</p>
         </div>
 
@@ -118,7 +118,7 @@ export default function ContactUs() {
           <div className="w-16 h-16 rounded-full border-2 border-[#0284c7] bg-sky-50/50 text-[#0284c7] flex items-center justify-center mb-6 group-hover:bg-[#0284c7] group-hover:text-white transition-all duration-300 shadow-sm">
             <HugeiconsIcon icon={Call02Icon} className="w-7 h-7" strokeWidth={1.8} />
           </div>
-          <h3 className="font-bold text-gray-900 text-lg md:text-xl mb-3 group-hover:text-[#0284c7] transition-colors">{t.hotline}</h3>
+          <h3 className="font-semibold text-gray-900 text-lg md:text-xl mb-3 group-hover:text-[#0284c7] transition-colors">{t.hotline}</h3>
 
           <p className="text-gray-700 text-base md:text-[17px] leading-relaxed mb-1.5 font-medium">{t.phone1}</p>
           <p className="text-gray-700 text-base md:text-[17px] leading-relaxed">{t.phone2}</p>
@@ -146,7 +146,7 @@ export default function ContactUs() {
             
             {/* Location Title */}
             <div className="flex justify-between items-start mb-6 md:mb-10">
-               <h2 className="text-3xl md:text-4xl font-bold text-white drop-shadow-md md:pl-4">
+               <h2 className="text-3xl md:text-4xl font-semibold text-white drop-shadow-md md:pl-4">
                  {t.location}
                </h2>
             </div>

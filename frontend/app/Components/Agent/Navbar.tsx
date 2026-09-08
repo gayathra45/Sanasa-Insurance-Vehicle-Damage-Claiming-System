@@ -444,12 +444,12 @@ export default function AgentNavbar() {
                 <h3 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] flex items-center gap-2">
                   <HugeiconsIcon icon={Building04Icon} className="w-6 h-6 text-cyan-600" strokeWidth={2} /> {t.branchTitle}
                 </h3>
-                <p className="text-[10px] md:text-xs text-slate-500 font-semibold mt-1">Find your nearest branch and contact details</p>
+                <p className="text-[10px] md:text-xs text-slate-500 font-normal mt-1">Find your nearest branch and contact details</p>
               </div>
               <button
                 type="button"
                 onClick={() => setBranchesModalOpen(false)}
-                className="text-slate-400 hover:text-slate-700 text-xl md:text-2xl font-semibold cursor-pointer border-none bg-transparent transition-colors p-2 flex items-center justify-center"
+                className="text-slate-400 hover:text-slate-700 text-xl md:text-2xl font-medium cursor-pointer border-none bg-transparent transition-colors p-2 flex items-center justify-center"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2} />
               </button>
@@ -465,7 +465,7 @@ export default function AgentNavbar() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t.searchPlaceholder}
-                className="w-full pl-10 md:pl-12 pr-4 py-2.5 md:py-3 rounded-2xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent transition-all shadow-inner bg-white text-slate-800 font-semibold placeholder:text-slate-400"
+                className="w-full pl-10 md:pl-12 pr-4 py-2.5 md:py-3 rounded-2xl border border-slate-200 text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent transition-all shadow-inner bg-white text-slate-800 font-normal placeholder:text-slate-400"
               />
             </div>
 
@@ -476,17 +476,17 @@ export default function AgentNavbar() {
                   {filteredBranches.map((b, idx) => (
                     <div key={idx} className="bg-white/90 backdrop-blur-sm border border-slate-200/80 rounded-[24px] p-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-md hover:-translate-y-0.5 hover:border-[#00ddff]/60 transition-all duration-200 flex flex-col justify-between gap-4 group">
                       <div className="flex flex-col gap-2">
-                        <h4 className="text-[#0d2a3a] font-bold text-base md:text-[17px] tracking-tight group-hover:text-cyan-600 transition-colors">
+                        <h4 className="text-[#0d2a3a] font-medium text-base md:text-[17px] tracking-tight group-hover:text-cyan-600 transition-colors">
                           {b.name[lang]}
                         </h4>
-                        <p className="text-slate-500 text-xs font-semibold leading-relaxed flex items-start gap-1.5">
+                        <p className="text-slate-500 text-xs font-normal leading-relaxed flex items-start gap-1.5">
                           <HugeiconsIcon icon={Location01Icon} className="w-4 h-4 text-cyan-600 shrink-0 mt-0.5" strokeWidth={2} />
                           <span>{b.address}</span>
                         </p>
                       </div>
                       <a
                         href={`tel:${b.phone.replace(/\s+/g, "")}`}
-                        className="inline-flex items-center justify-center gap-2 bg-[#e0f2fe] hover:bg-[#bae6fd] text-[#0369a1] font-semibold text-xs no-underline mt-2 px-4 py-2.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 shadow-sm"
+                        className="inline-flex items-center justify-center gap-2 bg-[#e0f2fe] hover:bg-[#bae6fd] text-[#0369a1] font-medium text-xs no-underline mt-2 px-4 py-2.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 shadow-sm"
                       >
                         <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5" strokeWidth={2} /> {t.callNow}: {b.phone}
                       </a>
@@ -494,7 +494,7 @@ export default function AgentNavbar() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-16 text-slate-400 font-semibold select-none text-sm">
+                <div className="text-center py-16 text-slate-400 font-normal select-none text-sm">
                   No branches found matching your search.
                 </div>
               )}
@@ -504,7 +504,7 @@ export default function AgentNavbar() {
             <div className="px-6 md:px-10 py-4 md:py-5 border-t border-slate-100 flex justify-end bg-white relative z-10">
               <button
                 onClick={() => setBranchesModalOpen(false)}
-                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs md:text-sm px-6 md:px-8 py-2.5 md:py-3 rounded-full shadow-md hover:shadow-lg transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95 duration-150 outline-none"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-xs md:text-sm px-6 md:px-8 py-2.5 md:py-3 rounded-full shadow-md hover:shadow-lg transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0 active:scale-95 duration-150 outline-none"
               >
                 {t.close}
               </button>

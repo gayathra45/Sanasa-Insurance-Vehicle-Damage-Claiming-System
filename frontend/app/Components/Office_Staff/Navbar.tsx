@@ -16,7 +16,8 @@ import {
   Call02Icon,
   ArrowRight01Icon,
   Cancel01Icon,
-  Logout01Icon
+  Logout01Icon,
+  Notification01Icon
 } from "@hugeicons/core-free-icons";
 
 export default function OfficeStaffNavbar() {
@@ -37,6 +38,7 @@ export default function OfficeStaffNavbar() {
     { name: "Policy Holders", href: "/Office_Staff/PolicyHolders" },
     { name: "Agents", href: "/Office_Staff/Agents" },
     { name: "Reports", href: "/Office_Staff/Reports" },
+    { name: "Notifications", href: "/Office_Staff/Notifications" },
     { name: "Contact", href: "/Office_Staff/Contact" },
   ];
 
@@ -58,6 +60,8 @@ export default function OfficeStaffNavbar() {
       case "reports":
       case "analytics & reports":
         return <HugeiconsIcon icon={Analytics01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "notifications":
+        return <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "contact":
         return <HugeiconsIcon icon={Call02Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       default:
@@ -100,7 +104,7 @@ export default function OfficeStaffNavbar() {
                 href={item.href}
                 className={`mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group ${
                   isActive
-                    ? "bg-[#1b75e0] text-white shadow-sm font-bold"
+                    ? "bg-[#1b75e0] text-white shadow-sm font-semibold"
                     : "text-slate-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
@@ -122,7 +126,7 @@ export default function OfficeStaffNavbar() {
         <div className="p-6 mt-auto">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-bold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
+            className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-semibold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
           >
             <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5" strokeWidth={2.5} />
             Logout
@@ -175,7 +179,7 @@ export default function OfficeStaffNavbar() {
                     onClick={() => setIsMobileOpen(false)}
                     className={`px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl relative ${
                       isActive
-                        ? "bg-[#1b75e0] text-white shadow-sm font-bold"
+                        ? "bg-[#1b75e0] text-white shadow-sm font-semibold"
                         : "text-slate-100 hover:bg-white/10 hover:text-white"
                     }`}
                   >
@@ -198,7 +202,7 @@ export default function OfficeStaffNavbar() {
             <div className="pt-6 border-t border-white/5 mt-auto">
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-bold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
+                className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-semibold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
               >
                 <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5" strokeWidth={2.5} />
                 Logout

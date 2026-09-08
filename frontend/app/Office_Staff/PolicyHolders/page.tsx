@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
+import Link from "next/link";
+import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -9,7 +10,6 @@ import {
   Menu01Icon,
   Notification01Icon,
   Alert02Icon,
-
 } from "@hugeicons/core-free-icons";
 
 export default function OfficeStaffPolicyHolders() {
@@ -58,9 +58,12 @@ export default function OfficeStaffPolicyHolders() {
 
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
-              <button className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
+              <Link
+                href="/Office_Staff/Notifications"
+                className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
+              >
                 <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
-              </button>
+              </Link>
               {/* User Avatar Icon */}
               <UserAvatarDropdown userType="office_staff" />
             </div>

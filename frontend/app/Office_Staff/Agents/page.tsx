@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import OfficeStaffNavbar from "@/app/Components/Office Staff/Navbar";
+import Link from "next/link";
+import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import { sriLankaBanks } from "../../utils/banks";
@@ -342,9 +343,9 @@ export default function AgentsPage() {
             
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
-              <button className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
+              <Link href="/Office_Staff/Notifications" className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center">
                 <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
-              </button>
+              </Link>
               {/* User Avatar Icon */}
               <UserAvatarDropdown userType="office_staff" />
             </div>
@@ -399,7 +400,7 @@ export default function AgentsPage() {
                   setFormSuccess("");
                   setShowModal(true);
                 }}
-                className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-bold text-sm px-6 py-3 rounded-full transition-all duration-150 shadow-md cursor-pointer border-none flex items-center justify-center gap-2 select-none"
+                className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-semibold text-sm px-6 py-3 rounded-full transition-all duration-150 shadow-md cursor-pointer border-none flex items-center justify-center gap-2 select-none"
               >
                 <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
                 Register Agent
@@ -411,12 +412,12 @@ export default function AgentsPage() {
               {loading ? (
                 <div className="bg-white border border-slate-100 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
                   <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-500"></div>
-                  <span className="mt-3 text-slate-400 text-sm font-bold">Syncing Agent list...</span>
+                  <span className="mt-3 text-slate-400 text-sm font-semibold">Syncing Agent list...</span>
                 </div>
               ) : filteredAgents.length === 0 ? (
                 <div className="bg-white border border-slate-100 rounded-[30px] p-16 text-center shadow-sm select-none">
                   <HugeiconsIcon icon={UserIcon} className="w-12 h-12 text-slate-300 mx-auto mb-4" strokeWidth={1.8} />
-                  <p className="text-slate-500 font-bold text-sm uppercase tracking-wider">No Insurance Agents Registered.</p>
+                  <p className="text-slate-500 font-medium text-sm uppercase tracking-wider">No Insurance Agents Registered.</p>
                   <p className="text-slate-400 text-xs mt-1.5 font-semibold">Click "Register Agent" to onboard your first field officer.</p>
                 </div>
               ) : (
@@ -436,10 +437,10 @@ export default function AgentsPage() {
                             {initials}
                           </div>
                           <div className="min-w-0">
-                            <h3 className="font-bold text-slate-900 text-[15px] leading-tight truncate pr-4" title={agent.name}>
+                            <h3 className="font-semibold text-slate-900 text-[15px] leading-tight truncate pr-4" title={agent.name}>
                               {agent.name}
                             </h3>
-                            <span className="text-[10px] font-bold text-slate-400 block mt-1 uppercase tracking-wider">
+                            <span className="text-[10px] font-semibold text-slate-400 block mt-1 uppercase tracking-wider">
                               ID: {agent.agentId}
                             </span>
                           </div>
@@ -448,16 +449,16 @@ export default function AgentsPage() {
                         {/* Middle Details Grid: Horizontal rows */}
                         <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-y-3 gap-x-6 text-xs">
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold select-none">Email Address</span>
-                            <span className="text-slate-900 font-bold truncate" title={agent.email}>{agent.email}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold select-none">Email Address</span>
+                            <span className="text-slate-900 font-semibold truncate" title={agent.email}>{agent.email}</span>
                           </div>
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold select-none">NIC Number</span>
-                            <span className="text-slate-900 font-bold">{agent.nic}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold select-none">NIC Number</span>
+                            <span className="text-slate-900 font-semibold">{agent.nic}</span>
                           </div>
                           <div className="flex flex-col gap-0.5">
-                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-bold select-none">Onboarded Date</span>
-                            <span className="text-slate-900 font-bold">{formatDate(agent.createdAt)}</span>
+                            <span className="text-[10px] text-slate-500 uppercase tracking-wider font-semibold select-none">Onboarded Date</span>
+                            <span className="text-slate-900 font-semibold">{formatDate(agent.createdAt)}</span>
                           </div>
                         </div>
 
@@ -474,7 +475,7 @@ export default function AgentsPage() {
                           </div>
                           <button
                             onClick={() => setSelectedAgentDetails(agent)}
-                            className="px-5 py-2 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#0f2d3a] font-bold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
+                            className="px-5 py-2 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#0f2d3a] font-semibold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-sm"
                           >
                             View Details
                           </button>
@@ -500,7 +501,7 @@ export default function AgentsPage() {
                 <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Register New Insurance Agent
                 </h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
+                <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mt-1.5">
                   Define agent profile and bank credentials
                 </p>
               </div>
@@ -518,13 +519,13 @@ export default function AgentsPage() {
             {/* Modal Content / Form */}
             <form onSubmit={handleFormSubmit} className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-6 text-left">
               {formError && (
-                <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 shrink-0">
+                <div className="bg-red-50 text-red-600 text-xs font-semibold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 shrink-0">
                   <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 shrink-0" strokeWidth={2.5} />
                   <span>{formError}</span>
                 </div>
               )}
               {formSuccess && (
-                <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 shrink-0">
+                <div className="bg-emerald-50 text-emerald-600 text-xs font-semibold px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-2 shrink-0">
                   <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 shrink-0" strokeWidth={2.5} />
                   <span>{formSuccess}</span>
                 </div>
@@ -769,7 +770,7 @@ export default function AgentsPage() {
                   </div>
                   <div className="flex flex-col">
                     <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Assigned Branch</span>
-                    <span className="text-sm font-bold text-[#0f2d3a]">{branch} Branch</span>
+                    <span className="text-sm font-semibold text-[#0f2d3a]">{branch} Branch</span>
                   </div>
                 </div>
               {/* Action Buttons */}
@@ -777,14 +778,14 @@ export default function AgentsPage() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-6 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                  className="px-6 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-full text-xs font-semibold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingAgent}
-                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(0,0,128,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-semibold shadow-[0_4px_12px_rgba(0,0,128,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
                 >
                   {submittingAgent ? (
                     <>
@@ -818,13 +819,13 @@ export default function AgentsPage() {
                     {selectedAgentDetails.availability || "Active"}
                   </span>
                 </div>
-                <p className="text-xs text-slate-400 font-bold mt-2">
+                <p className="text-xs text-slate-400 font-medium mt-2">
                   ID: {selectedAgentDetails.agentId} • {selectedAgentDetails.branch} Branch
                 </p>
               </div>
               <button
                 onClick={() => setSelectedAgentDetails(null)}
-                className="text-slate-400 hover:text-slate-700 text-2xl font-bold border-none bg-transparent cursor-pointer transition-colors p-1"
+                className="text-slate-400 hover:text-slate-700 text-2xl font-semibold border-none bg-transparent cursor-pointer transition-colors p-1"
               >
                 &times;
               </button>
@@ -854,8 +855,8 @@ export default function AgentsPage() {
                       { label: "Home Address", value: selectedAgentDetails.address }
                     ].map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center py-3 border-b border-slate-100/60 last:border-none gap-4">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
-                        <span className="text-slate-900 font-bold text-right truncate max-w-xs">{item.value}</span>
+                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
+                        <span className="text-slate-900 font-semibold text-right truncate max-w-xs">{item.value}</span>
                       </div>
                     ))}
                   </div>
@@ -875,8 +876,8 @@ export default function AgentsPage() {
                       { label: "Account Holder", value: selectedAgentDetails.accountHolderName || "-" }
                     ].map((item, idx) => (
                       <div key={idx} className="flex justify-between items-center py-3 border-b border-slate-100/60 last:border-none gap-4">
-                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
-                        <span className={`text-slate-900 font-bold text-right truncate max-w-xs ${item.isMono ? 'font-mono' : ''}`}>{item.value}</span>
+                        <span className="text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none min-w-[120px] text-left">{item.label}</span>
+                        <span className={`text-slate-900 font-semibold text-right truncate max-w-xs ${item.isMono ? 'font-mono' : ''}`}>{item.value}</span>
                       </div>
                     ))}
                   </div>
@@ -898,10 +899,10 @@ export default function AgentsPage() {
                   ].map((doc, idx) => (
                     <div key={idx} className="bg-slate-50/50 border border-slate-200/80 rounded-xl p-4 flex flex-col justify-between gap-3 text-xs">
                       <div>
-                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider block mb-1 select-none">{doc.label}</span>
+                        <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 select-none">{doc.label}</span>
                         <div className="flex items-center gap-2">
                           <span className={`w-2 h-2 rounded-full ${doc.url ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                          <span className="text-[11px] text-slate-800 font-bold">
+                          <span className="text-[11px] text-slate-800 font-semibold">
                             {doc.url ? 'Uploaded' : 'Not Uploaded'}
                           </span>
                         </div>
@@ -911,7 +912,7 @@ export default function AgentsPage() {
                           href={doc.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-4 py-2 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#0f2d3a] font-bold text-[10px] rounded-lg transition-all text-center no-underline cursor-pointer active:scale-95 shadow-sm"
+                          className="px-4 py-2 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#0f2d3a] font-semibold text-[10px] rounded-lg transition-all text-center no-underline cursor-pointer active:scale-95 shadow-sm"
                         >
                           View Document
                         </a>
@@ -930,14 +931,14 @@ export default function AgentsPage() {
                   setSelectedAgentDetails(null);
                   handleDeleteAgent(selectedAgentDetails._id);
                 }}
-                className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+                className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
               >
                 <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                 Delete Agent
               </button>
               <button
                 onClick={() => setSelectedAgentDetails(null)}
-                className="px-8 py-3 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-sm font-bold shadow-md cursor-pointer border-none outline-none transition-all"
+                className="px-8 py-3 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-sm font-semibold shadow-md cursor-pointer border-none outline-none transition-all"
               >
                 Close
               </button>
@@ -984,7 +985,7 @@ export default function AgentsPage() {
                 <>
                   <button
                     onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-semibold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
                   >
                     Cancel
                   </button>
@@ -993,7 +994,7 @@ export default function AgentsPage() {
                       setCustomPopup({ ...customPopup, show: false });
                       if (customPopup.onConfirm) customPopup.onConfirm();
                     }}
-                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-semibold shadow-md transition-all cursor-pointer border-none"
                   >
                     Confirm
                   </button>
@@ -1001,7 +1002,7 @@ export default function AgentsPage() {
               ) : (
                 <button
                   onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-semibold shadow-md transition-all cursor-pointer border-none"
                 >
                   OK
                 </button>
@@ -1027,13 +1028,13 @@ export default function AgentsPage() {
               
               {/* Deletion Reason Dropdown */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
+                <label className="text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">
                   Reason for Deletion <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={deleteReason}
                   onChange={(e) => setDeleteReason(e.target.value)}
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 outline-none focus:border-slate-350 focus:bg-white transition-all select-none"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:border-slate-350 focus:bg-white transition-all select-none"
                   required
                 >
                   <option value="Resigned">Resigned</option>
@@ -1046,7 +1047,7 @@ export default function AgentsPage() {
 
               {/* Add Note textarea */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
+                <label className="text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">
                   Additional Notes / Remarks <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -1061,11 +1062,11 @@ export default function AgentsPage() {
 
               {/* Document Attach (Optional) file input */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] text-slate-500 font-bold uppercase tracking-wider select-none">
+                <label className="text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">
                   Attach Proof Document (Optional)
                 </label>
                 <div className="flex items-center gap-3">
-                  <label className="px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-350 transition-all rounded-xl text-xs font-bold text-slate-700 cursor-pointer select-none">
+                  <label className="px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-350 transition-all rounded-xl text-xs font-semibold text-slate-700 cursor-pointer select-none">
                     Choose File
                     <input
                       type="file"
@@ -1078,7 +1079,7 @@ export default function AgentsPage() {
                       accept=".pdf,image/*"
                     />
                   </label>
-                  <span className="text-xs text-slate-500 font-bold truncate max-w-[200px]">
+                  <span className="text-xs text-slate-500 font-medium truncate max-w-[200px]">
                     {deleteDoc ? deleteDoc.name : "No file attached"}
                   </span>
                 </div>
@@ -1092,14 +1093,14 @@ export default function AgentsPage() {
                     setShowDeleteModal(false);
                     setDeletingAgentId(null);
                   }}
-                  className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                  className="px-6 py-3 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-semibold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
                   disabled={submittingDelete}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-red-650 hover:bg-red-700 active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none flex items-center justify-center gap-1.5"
+                  className="px-6 py-3 bg-red-650 hover:bg-red-700 active:scale-95 text-white rounded-full text-xs font-semibold shadow-md transition-all cursor-pointer border-none flex items-center justify-center gap-1.5"
                   disabled={submittingDelete}
                 >
                   {submittingDelete ? (

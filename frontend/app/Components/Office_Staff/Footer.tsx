@@ -31,29 +31,29 @@ export default function OfficeStaffFooter() {
           <div className="flex flex-row gap-12 md:gap-24 flex-1 justify-center md:justify-start md:pl-20">
             {/* Column 1 */}
             <div className="flex flex-col gap-3.5">
-              <Link href="/Office_Staff/Dashboard" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
+              <Link href="/Office_Staff/Dashboard" className="hover:text-slate-200 transition-colors font-semibold text-base no-underline">
                 Home
               </Link>
-              <Link href="/Office_Staff/Claims" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
+              <Link href="/Office_Staff/Claims" className="hover:text-slate-200 transition-colors font-semibold text-base no-underline">
                 Claims
               </Link>
-              <Link href="/Office_Staff/Registrations" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
+              <Link href="/Office_Staff/Registrations" className="hover:text-slate-200 transition-colors font-semibold text-base no-underline">
                 Registrations
               </Link>
-              <Link href="/Office_Staff/Contact" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
+              <Link href="/Office_Staff/Contact" className="hover:text-slate-200 transition-colors font-semibold text-base no-underline">
                 Contact
               </Link>
             </div>
 
             {/* Column 2 */}
             <div className="flex flex-col gap-3.5">
-              <Link href="/Office_Staff/PolicyHolders" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
+              <Link href="/Office_Staff/PolicyHolders" className="hover:text-slate-200 transition-colors font-semibold text-base no-underline">
                 Policy Holders
               </Link>
-              <Link href="/Office_Staff/Agents" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
+              <Link href="/Office_Staff/Agents" className="hover:text-slate-200 transition-colors font-semibold text-base no-underline">
                 Agents
               </Link>
-              <Link href="/Office_Staff/Reports" className="hover:text-slate-200 transition-colors font-bold text-base no-underline">
+              <Link href="/Office_Staff/Reports" className="hover:text-slate-200 transition-colors font-semibold text-base no-underline">
                 Reports
               </Link>
             </div>
@@ -124,7 +124,7 @@ export default function OfficeStaffFooter() {
 
         {/* Bottom Section */}
         <div className="border-t border-white/20 pt-6 text-center select-none">
-          <p className="text-sm font-bold opacity-90 tracking-wide">
+          <p className="text-sm font-semibold opacity-90 tracking-wide">
             &copy; 2025 Sanasa General Insurance Co. LTD. All Rights Reserved.
           </p>
         </div>
