@@ -20,6 +20,7 @@ import {
   BubbleChatIcon,
   Notification01Icon,
 } from "@hugeicons/core-free-icons";
+import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 
 interface ClaimMessage {
   sender: string;
@@ -697,6 +698,10 @@ export default function AdminNotifications() {
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Incident Date:</span>
                     <span className="font-bold text-slate-800">{formatDate(selectedClaim.incidentDate)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-bold w-28 shrink-0">Submitted At:</span>
+                    <span className="font-bold text-slate-800">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-bold w-28 shrink-0">Branch:</span>

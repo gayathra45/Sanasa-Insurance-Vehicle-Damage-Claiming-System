@@ -20,6 +20,7 @@ import {
   File01Icon,
   Time02Icon,
 } from "@hugeicons/core-free-icons";
+import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 
 interface AdditionalDoc {
   name: string;
@@ -739,7 +740,7 @@ export default function MyClaims() {
                     <div className="flex flex-col min-w-0 select-none">
                       <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
                       {claim.createdAt && (
-                        <span className="text-[10px] text-slate-400 font-normal mt-1 block">Registered: {formatDateString(claim.createdAt)}</span>
+                        <span className="text-[10px] text-slate-400 font-normal mt-1 block">Submitted: {formatSriLankaDateTime(claim.createdAt)}</span>
                       )}
                     </div>
 
@@ -933,8 +934,12 @@ export default function MyClaims() {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-medium w-28 shrink-0">Date:</span>
-                    <span className="font-semibold text-slate-800">{selectedClaim.incidentDate}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Incident Date:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.incidentDate} {selectedClaim.incidentTime ? `@ ${selectedClaim.incidentTime}` : ""}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Submitted At:</span>
+                    <span className="font-semibold text-slate-800">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-slate-400 font-medium w-28 shrink-0">Officer:</span>

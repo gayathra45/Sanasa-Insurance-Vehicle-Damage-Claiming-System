@@ -8,6 +8,7 @@ import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import SimpleLoader from "@/app/Components/SimpleLoader";
 import { compressImage } from "../../utils/imageCompressor";
+import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
@@ -1035,7 +1036,7 @@ function OfficeStaffClaimsPageContent() {
                               )}
                             </div>
                             <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
-                              {formatDate(claim.createdAt)}
+                              Submitted: {formatSriLankaDateTime(claim.createdAt)}
                             </span>
                           </div>
 
@@ -2475,7 +2476,10 @@ function OfficeStaffClaimsPageContent() {
                         Location : <span className="font-medium text-slate-600">{selectedClaim.location}</span>
                       </p>
                       <p>
-                        Time : <span className="font-medium text-slate-600">{claimDateString(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
+                        Incident Time : <span className="font-medium text-slate-600">{claimDateString(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
+                      </p>
+                      <p>
+                        Submitted At : <span className="font-medium text-slate-600">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
                       </p>
                       <p>
                         Est. Amount : <span className="font-medium text-slate-600">{selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
@@ -3304,6 +3308,10 @@ function OfficeStaffClaimsPageContent() {
                 <div>
                   <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block">Incident Date / Time</span>
                   <span className="text-slate-800 font-semibold">{claimDateString(showAssignModal.incidentDate)} @ {showAssignModal.incidentTime}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block">Submitted At</span>
+                  <span className="text-slate-800 font-semibold">{formatSriLankaDateTime(showAssignModal.createdAt)}</span>
                 </div>
               </div>
               <div className="border-t border-slate-200 pt-2 mt-1">

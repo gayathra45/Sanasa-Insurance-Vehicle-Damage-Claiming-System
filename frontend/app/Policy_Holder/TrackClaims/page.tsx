@@ -16,6 +16,7 @@ import {
   ViewIcon,
   File01Icon,
 } from "@hugeicons/core-free-icons";
+import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 
 interface Claim {
   claimNumber: string;
@@ -43,6 +44,7 @@ interface Claim {
   documentRequestTo?: string;
   currentStep?: number;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
+  createdAt?: string;
 }
 
 const translations = {
@@ -56,7 +58,8 @@ const translations = {
     vehicle: "Vehicle:",
     damageType: "Type:",
     estAmount: "Est. Amount:",
-    date: "Date:",
+    date: "Incident Date:",
+    submittedAt: "Submitted At:",
     officer: "Officer:",
     branch: "Branch:",
     location: "Location:",
@@ -74,7 +77,8 @@ const translations = {
     vehicle: "වාහනය:",
     damageType: "වර්ගය:",
     estAmount: "ඇස්තමේන්තු මුදල:",
-    date: "දිනය:",
+    date: "අනතුර සිදු වූ දිනය:",
+    submittedAt: "ඉදිරිපත් කළ වේලාව:",
     officer: "නිලධාරියා:",
     branch: "ශාඛාව:",
     location: "පිහිටීම:",
@@ -92,7 +96,8 @@ const translations = {
     vehicle: "வாகனம்:",
     damageType: "வகை:",
     estAmount: "மதிப்பீட்டுத் தொகை:",
-    date: "தேதி:",
+    date: "விபத்து தேதி:",
+    submittedAt: "சமர்ப்பிக்கப்பட்ட நேரம்:",
     officer: "அதிகாரி:",
     branch: "கிளை:",
     location: "இருப்பிடம்:",
@@ -107,6 +112,9 @@ function TrackClaimsContent() {
   const searchParams = useSearchParams();
   const [claimId, setClaimId] = useState("");
   const [trackedClaim, setTrackedClaim] = useState<Claim | null>(null);
+  const [searchAttempted, setSearchAttempted] = useState(false);
+  const [claimsList, setClaimsList] = useState<Claim[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Load language from localStorage on mount
   useEffect(() => {
@@ -129,34 +137,6 @@ function TrackClaimsContent() {
   }, []);
 
   const t = translations[lang];
-
-  const getUserRequestedDocs = (claim: Claim): string[] => {
-    const getRecipientForDoc = (name: string) => {
-      const msg = [...(claim.messages || [])]
-        .reverse()
-        .find(m => m.message.includes(`Requested: ${name}`));
-      if (msg) {
-        if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
-      }
-      return claim.documentRequestTo || "User";
-    };
-    return (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
-  };
-
-  const getDocRequestNote = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "";
-    const msg = [...claim.messages]
-      .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
-    if (msg && msg.message) {
-      const idx = msg.message.indexOf("Message:");
-      if (idx !== -1) {
-        return msg.message.substring(idx + 8).trim();
-      }
-    }
-    return "";
-  };
 
   // Format YYYY-MM-DD to "DD MMM YYYY" (e.g. "12 Jan 2026")
   const formatDateString = (dateStr: string) => {
@@ -185,29 +165,16 @@ function TrackClaimsContent() {
     }
   };
 
-  const getDocRequestTime = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "";
-    const msg = [...claim.messages]
-      .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
-    if (msg && msg.sentAt) {
-      return formatDateTimeString(msg.sentAt);
+  const formatNumberPlate = (plate: string): string => {
+    if (!plate) return "";
+    const cleaned = plate.trim();
+    if (cleaned.includes("-")) return cleaned;
+    const lastNumbersMatch = cleaned.match(/^(.*[A-Za-z]+)(\d+)$/);
+    if (lastNumbersMatch) {
+      return `${lastNumbersMatch[1].trim().toUpperCase()}-${lastNumbersMatch[2]}`;
     }
-    return "";
+    return cleaned;
   };
-
-  const getDocRequestSender = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "Office Staff";
-    const msg = [...claim.messages]
-      .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
-    return msg ? (msg.sender || "Office Staff") : "Office Staff";
-  };
-  const [searchAttempted, setSearchAttempted] = useState(false);
-  const [claimsList, setClaimsList] = useState<Claim[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -251,7 +218,8 @@ function TrackClaimsContent() {
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
                   messages: claim.messages || [],
-                  branch: claim.branch
+                  branch: claim.branch,
+                  createdAt: claim.createdAt
                 }));
               }
             }
@@ -282,7 +250,8 @@ function TrackClaimsContent() {
                 documentsRequested: false,
                 requestedDocuments: [],
                 currentStep: 1,
-                messages: []
+                messages: [],
+                createdAt: parsed.createdAt || new Date().toISOString()
               });
             }
           }
@@ -337,7 +306,9 @@ function TrackClaimsContent() {
               documentsRequested: data.claim.documentsRequested || false,
               requestedDocuments: data.claim.requestedDocuments || [],
               currentStep: data.claim.currentStep || 1,
-              messages: data.claim.messages || []
+              messages: data.claim.messages || [],
+              branch: data.claim.branch,
+              createdAt: data.claim.createdAt
             });
           }
         }
@@ -380,7 +351,9 @@ function TrackClaimsContent() {
             documentsRequested: data.claim.documentsRequested || false,
             requestedDocuments: data.claim.requestedDocuments || [],
             currentStep: data.claim.currentStep || 1,
-            messages: data.claim.messages || []
+            messages: data.claim.messages || [],
+            branch: data.claim.branch,
+            createdAt: data.claim.createdAt
           });
           setIsLoading(false);
           return;
@@ -396,16 +369,6 @@ function TrackClaimsContent() {
     );
     setTrackedClaim(found || null);
     setIsLoading(false);
-  };
-  const formatNumberPlate = (plate: string): string => {
-    if (!plate) return "";
-    const cleaned = plate.trim();
-    if (cleaned.includes("-")) return cleaned;
-    const lastNumbersMatch = cleaned.match(/^(.*[A-Za-z]+)(\d+)$/);
-    if (lastNumbersMatch) {
-      return `${lastNumbersMatch[1].trim().toUpperCase()}-${lastNumbersMatch[2]}`;
-    }
-    return cleaned;
   };
 
   const renderClaimProgress = (status: string, dbStep?: number, paymentReceipt?: string) => {
@@ -584,7 +547,11 @@ function TrackClaimsContent() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-medium">{t.date}</span>
-                  <span className="font-semibold text-slate-800">{trackedClaim.incidentDate}</span>
+                  <span className="font-semibold text-slate-800">{trackedClaim.incidentDate} {trackedClaim.incidentTime ? `@ ${trackedClaim.incidentTime}` : ""}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-slate-400 font-medium">{t.submittedAt}</span>
+                  <span className="font-semibold text-slate-800">{formatSriLankaDateTime(trackedClaim.createdAt)}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 font-medium">{t.officer}</span>
@@ -668,7 +635,7 @@ function TrackClaimsContent() {
                             {/* Vehicle Photos */}
                             {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
                               <div className="pt-2 border-t border-slate-200/60">
-                                <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Vehicle Photos</span>
+                                <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Third-Party Vehicle Photos</span>
                                 <div className="flex flex-wrap gap-2.5">
                                   {vehicle.vehiclePhotos.map((url: string, idx: number) => {
                                     let docUrl = url;
@@ -681,7 +648,7 @@ function TrackClaimsContent() {
                                         onClick={() => window.open(docUrl, "_blank")}
                                         className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
                                       >
-                                        <img src={docUrl} alt="Vehicle" className="w-full h-full object-cover" />
+                                        <img src={docUrl} alt="Vehicle Photo" className="w-full h-full object-cover" />
                                       </div>
                                     );
                                   })}
@@ -692,161 +659,42 @@ function TrackClaimsContent() {
                         ))}
                       </div>
                     )
-                  ) : (
-                    trackedClaim.otherVehicleDetails && (
-                      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4 text-left">
-                          <div>
-                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
-                            <span className="block text-slate-800 text-xs font-semibold mt-0.5">{trackedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
-                          </div>
-                          <div>
-                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
-                            <span className="block text-slate-800 text-xs font-semibold mt-0.5">{trackedClaim.otherVehicleDetails.driverName || "—"}</span>
-                          </div>
-                          <div>
-                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
-                            <span className="block text-slate-800 text-xs font-semibold mt-0.5">{trackedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
-                          </div>
-                          <div>
-                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
-                            <span className="block text-slate-800 text-xs font-semibold mt-0.5">{trackedClaim.otherVehicleDetails.policyNumber || "—"}</span>
-                          </div>
-                        </div>
-
-                        {/* License Photos */}
-                        {trackedClaim.otherVehicleDetails.licensePhotos && trackedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
-                          <div className="pt-2 border-t border-slate-200/60">
-                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
-                            <div className="flex flex-wrap gap-2.5">
-                              {trackedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
-                                  let docUrl = url;
-                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
-                                  }
-                                  return (
-                                    <div 
-                                      key={idx}
-                                      onClick={() => window.open(docUrl, "_blank")}
-                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                                    >
-                                      <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
-                                    </div>
-                                  );
-                                })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Vehicle Photos */}
-                        {trackedClaim.otherVehicleDetails.vehiclePhotos && trackedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
-                          <div className="pt-2 border-t border-slate-200/60">
-                            <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
-                            <div className="flex flex-wrap gap-2.5">
-                              {trackedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
-                                  let docUrl = url;
-                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
-                                  }
-                                  return (
-                                    <div 
-                                      key={idx}
-                                      onClick={() => window.open(docUrl, "_blank")}
-                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
-                                    >
-                                      <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
-                                    </div>
-                                  );
-                                })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )
-                  )}
+                  ) : null}
                 </div>
               )}
-              {/* Messages & Notifications Section */}
-              <div className="px-2 mt-6">
-                <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
-                {trackedClaim.messages && trackedClaim.messages.length > 0 ? (
-                  <div className="flex flex-col gap-2.5 max-h-[160px] overflow-y-auto pr-1">
-                    {trackedClaim.messages.map((msg: any, index: number) => (
-                      <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
-                        <div className="flex justify-between items-center text-[11px] select-none">
-                          <span className="font-semibold text-[#0f2d3a]">{msg.sender}</span>
-                          <span className="text-slate-400 font-normal">{formatDateString(msg.sentAt)}</span>
+
+              {/* Messages from office staff */}
+              {trackedClaim.messages && trackedClaim.messages.length > 0 && (
+                <div className="px-2 mb-6">
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">Staff Messages & Updates</p>
+                  <div className="space-y-3">
+                    {trackedClaim.messages.map((m, idx) => (
+                      <div key={idx} className="bg-blue-50/60 border border-blue-100 p-4 rounded-2xl">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="text-xs font-bold text-[#000080]">{m.sender}</span>
+                          <span className="text-[10px] text-slate-400">{m.sentAt ? new Date(m.sentAt).toLocaleDateString() : ""}</span>
                         </div>
-                        <p className="text-slate-700 text-xs font-normal leading-relaxed m-0">
-                          {msg.message}
-                        </p>
+                        <p className="text-slate-700 text-xs font-normal leading-relaxed">{m.message}</p>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-slate-500 text-xs italic font-normal bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
-                    No notifications or messages have been sent for this claim.
-                  </p>
-                )}
-              </div>
-
-              {/* Warning Alert Box */}
-              {trackedClaim.documentsRequested && getUserRequestedDocs(trackedClaim).length > 0 && (
-                <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mt-6">
-                  <h4 className="text-[#9c3535] font-semibold text-sm mb-1.5">Documents Requested</h4>
-                  <p className="text-[#aa4f4f] text-[13px] font-normal leading-relaxed mb-3">
-                    The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
-                  </p>
-                  <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
-                    {getUserRequestedDocs(trackedClaim).map((doc) => {
-                      const note = getDocRequestNote(trackedClaim, doc);
-                      const reqTime = getDocRequestTime(trackedClaim, doc);
-                      return (
-                        <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-normal text-xs w-full">
-                          <span className="w-2 h-2 rounded-full bg-red-650 shrink-0 mt-1.5" />
-                          <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
-                            <span className="font-semibold">{doc}</span>
-                            {reqTime && (
-                              <span className="text-red-600 font-semibold">
-                                (Requested: {reqTime} by {getDocRequestSender(trackedClaim, doc)})
-                              </span>
-                            )}
-                            {note && (
-                              <span className="col-span-1 sm:col-span-2 text-[11px] font-normal text-slate-500 italic mt-0.5 pl-0.5">
-                                Note: "{note}"
-                              </span>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                  <Link
-                    href={`/Policy_Holder/Documents?uploadClaim=${trackedClaim.claimNumber}`}
-                    className="inline-block bg-red-650 hover:bg-red-750 text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
-                  >
-                    Go to Documents
-                  </Link>
                 </div>
               )}
+
             </div>
           </div>
         ) : searchAttempted ? (
-          <div className="text-center py-12 text-red-500 font-medium bg-red-50/20 border border-red-100 rounded-3xl max-w-md mx-auto animate-pulse">
-            {t.noClaimFound} "{claimId}". Please verify your reference number.
+          <div className="max-w-xl mx-auto bg-slate-50 border border-slate-200 rounded-[24px] p-8 text-center text-slate-500 font-normal">
+            <p className="text-base font-semibold text-slate-800 mb-1">{t.noClaimFound} &quot;{claimId}&quot;</p>
+            <p className="text-xs">{t.enterPrompt}</p>
           </div>
-        ) : (
-          <div className="text-center py-16 text-slate-400 font-normal max-w-md mx-auto select-none">
-            <HugeiconsIcon icon={File01Icon} className="w-16 h-16 mx-auto text-slate-300 mb-4" strokeWidth={1.5} />
-            {t.enterPrompt}
-          </div>
-        )}
+        ) : null}
 
       </main>
 
-      
-      {/* Floating Chat Bubble Button */}
+      {/* Floating Chat Support Bubble */}
       <button
+        type="button"
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
@@ -858,17 +706,9 @@ function TrackClaimsContent() {
   );
 }
 
-export default function TrackClaims() {
+export default function TrackClaimsPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white flex flex-col font-sans relative">
-        <PolicyHolderNavbar />
-        <main className="flex-1 flex items-center justify-center font-bold text-slate-500 text-lg">
-          Loading tracking...
-        </main>
-        <PolicyHolderFooter />
-      </div>
-    }>
+    <Suspense fallback={<SimpleLoader message="Loading..." theme="blue" />}>
       <TrackClaimsContent />
     </Suspense>
   );

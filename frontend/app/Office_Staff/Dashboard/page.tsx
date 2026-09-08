@@ -20,6 +20,7 @@ import {
   LockIcon,
   Loading03Icon
 } from "@hugeicons/core-free-icons";
+import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 
 interface RegistrationItem {
   name: string;
@@ -231,12 +232,7 @@ export default function OfficeStaffDashboard() {
             vehicleModel: claim.vehiclePlate?.substring(0, 3),
             type: claim.damageType,
             location: claim.location,
-            time: new Date(claim.createdAt).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
+            time: formatSriLankaDateTime(claim.createdAt),
             rawClaim: claim,
           };
         });
@@ -659,6 +655,10 @@ export default function OfficeStaffDashboard() {
                 <div className="flex justify-between border-b border-slate-50 pb-2">
                   <span className="text-slate-400 font-medium">Incident Time</span>
                   <span className="text-slate-800 font-semibold">{selectedClaim.incidentTime}</span>
+                </div>
+                <div className="flex justify-between border-b border-slate-50 pb-2">
+                  <span className="text-slate-400 font-medium">Submitted At</span>
+                  <span className="text-slate-800 font-semibold">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-50 pb-2">
                   <span className="text-slate-400 font-medium">Assigned Agent</span>

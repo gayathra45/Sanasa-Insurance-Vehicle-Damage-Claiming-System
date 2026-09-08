@@ -7,6 +7,7 @@ import Footer from "@/app/Components/Agent/Footer";
 import { API_URL } from "@/app/config";
 import SimpleLoader from "@/app/Components/SimpleLoader";
 import { compressImage } from "../../utils/imageCompressor";
+import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   File01Icon,
@@ -2373,6 +2374,10 @@ export default function AgentActivityPage() {
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Incident Date</span>
                         <span className="text-slate-700 font-semibold truncate">: {claimDateString(selectedClaim.incidentDate)} @ {selectedClaim.incidentTime}</span>
+                      </div>
+                      <div className="grid grid-cols-[110px_1fr] gap-2">
+                        <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Submitted At</span>
+                        <span className="text-slate-700 font-semibold truncate">: {formatSriLankaDateTime(selectedClaim.createdAt)}</span>
                       </div>
                       <div className="grid grid-cols-[110px_1fr] gap-2">
                         <span className="text-slate-500 font-semibold uppercase tracking-wider text-[10px]">Est. Amount</span>
