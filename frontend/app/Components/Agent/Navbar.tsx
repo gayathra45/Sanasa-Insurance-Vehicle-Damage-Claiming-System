@@ -299,8 +299,8 @@ export default function AgentNavbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative py-2 font-bold whitespace-nowrap transition-colors duration-200 no-underline ${
-                    active ? "text-[#0d2a3a]" : "text-slate-600 hover:text-[#0284c7]"
+                  className={`relative py-2 font-medium whitespace-nowrap transition-colors duration-200 no-underline ${
+                    active ? "text-[#0d2a3a] font-semibold" : "text-slate-600 hover:text-[#0284c7]"
                   }`}
                 >
                   <span>{link.label}</span>
@@ -315,7 +315,7 @@ export default function AgentNavbar() {
             {/* My Claims Pill Button */}
             <Link
               href="/Agent/MyClaims"
-              className={`inline-flex items-center justify-center font-bold bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm hover:shadow transition-all duration-200 no-underline rounded-full hover:-translate-y-0.5 active:translate-y-0 active:scale-95 ml-2 ${
+              className={`inline-flex items-center justify-center font-medium bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm hover:shadow transition-all duration-200 no-underline rounded-full hover:-translate-y-0.5 active:translate-y-0 active:scale-95 ml-2 ${
                 lang === "en" ? "px-5 py-1.5 text-sm md:text-[15px]" : "px-4 py-1.5 text-xs md:text-sm"
               }`}
             >
@@ -354,7 +354,7 @@ export default function AgentNavbar() {
                   <Link
                     href="/Agent/Profile"
                     onClick={() => setProfileMenuOpen(false)}
-                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-semibold text-sm transition-colors no-underline"
+                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-medium text-sm transition-colors no-underline"
                   >
                     <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-slate-500" strokeWidth={2} />
                     {t.myProfile}
@@ -364,7 +364,7 @@ export default function AgentNavbar() {
 
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
+                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-medium text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
                   >
                     <HugeiconsIcon icon={Logout01Icon} className="w-4 h-4 text-red-500" strokeWidth={2} />
                     {t.logout}
@@ -399,9 +399,9 @@ export default function AgentNavbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className={`font-bold text-base py-2.5 px-4 rounded-xl transition-all duration-200 ${
+                  className={`font-medium text-base py-2.5 px-4 rounded-xl transition-all duration-200 ${
                     active
-                      ? "bg-slate-100/90 text-[#0d2a3a] border-l-4 border-[#0d2a3a]"
+                      ? "bg-slate-100/90 text-[#0d2a3a] font-semibold border-l-4 border-[#0d2a3a]"
                       : "text-slate-600 hover:text-[#0284c7] hover:bg-slate-50"
                   }`}
                 >
@@ -415,13 +415,13 @@ export default function AgentNavbar() {
               <Link
                 href="/Agent/MyClaims"
                 onClick={() => setIsOpen(false)}
-                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm transition-all duration-200 no-underline"
+                className="w-full text-center font-medium text-base py-2.5 px-4 rounded-2xl bg-[#ff9800] hover:bg-[#ff8f00] text-white shadow-sm transition-all duration-200 no-underline"
               >
                 {t.myClaims}
               </Link>
               <button
                 onClick={handleLogout}
-                className="w-full text-center font-bold text-base py-2.5 px-4 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-200 bg-transparent cursor-pointer"
+                className="w-full text-center font-medium text-base py-2.5 px-4 rounded-2xl border border-red-200 text-red-600 hover:bg-red-50 transition-all duration-200 bg-transparent cursor-pointer"
               >
                 {t.logout}
               </button>
