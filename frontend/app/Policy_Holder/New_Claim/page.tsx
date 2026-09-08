@@ -17,6 +17,8 @@ import {
   Search01Icon,
   Gps01Icon,
   BubbleChatIcon,
+  Calendar03Icon,
+  Clock01Icon,
 } from "@hugeicons/core-free-icons";
 
 function formatNumberPlate(plate: string): string {
@@ -1046,7 +1048,7 @@ export default function FileNewClaim() {
                     required
                     value={selectedVehicle}
                     onChange={(e) => setSelectedVehicle(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
                   >
                     <option value="" disabled>Select Vehicle</option>
                     {vehicles.map((v) => (
@@ -1074,8 +1076,16 @@ export default function FileNewClaim() {
                     max={maxDate}
                     value={incidentDate}
                     onChange={(e) => setIncidentDate(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 pr-10 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
+                    onClick={(e) => {
+                      try {
+                        (e.currentTarget as any).showPicker?.();
+                      } catch (_) {}
+                    }}
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   />
+                  <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                    <HugeiconsIcon icon={Calendar03Icon} className="w-5 h-5" strokeWidth={2.2} />
+                  </span>
                 </div>
               </div>
 
@@ -1090,8 +1100,16 @@ export default function FileNewClaim() {
                     required
                     value={incidentTime}
                     onChange={(e) => setIncidentTime(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 pr-10 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
+                    onClick={(e) => {
+                      try {
+                        (e.currentTarget as any).showPicker?.();
+                      } catch (_) {}
+                    }}
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   />
+                  <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                    <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" strokeWidth={2.2} />
+                  </span>
                 </div>
               </div>
 
@@ -1105,7 +1123,7 @@ export default function FileNewClaim() {
                     required
                     value={damageType}
                     onChange={(e) => setDamageType(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
                   >
                     <option value="" disabled>Select Damage Type</option>
                     {damageTypes.map((type) => (
@@ -1192,7 +1210,7 @@ export default function FileNewClaim() {
                   <select
                     value={otherVehiclesCount}
                     onChange={(e) => handleCountChange(Number(e.target.value))}
-                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
                   >
                     <option value={1}>1 Vehicle</option>
                     <option value={2}>2 Vehicles</option>
