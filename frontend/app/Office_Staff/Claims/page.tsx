@@ -1491,7 +1491,7 @@ function OfficeStaffClaimsPageContent() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold text-sm px-6 py-2.5 rounded-full transition-all cursor-pointer shadow-xs active:scale-95"
                 >
                   Close
                 </button>
@@ -1661,7 +1661,7 @@ function OfficeStaffClaimsPageContent() {
                   onClick={() => {
                     setActiveSubModal(null);
                   }}
-                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold text-sm px-6 py-2.5 rounded-full transition-all cursor-pointer shadow-xs active:scale-95"
                 >
                   Close
                 </button>
@@ -1765,7 +1765,7 @@ function OfficeStaffClaimsPageContent() {
                     setActiveSubModal(null);
                     setNewMessageText("");
                   }}
-                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold text-sm px-6 py-2.5 rounded-full transition-all cursor-pointer shadow-xs active:scale-95"
                 >
                   Close
                 </button>
@@ -1950,7 +1950,7 @@ function OfficeStaffClaimsPageContent() {
                     setActiveSubModal(null);
                     setNewMessageText("");
                   }}
-                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold text-sm px-6 py-2.5 rounded-full transition-all cursor-pointer shadow-xs active:scale-95"
                 >
                   Close
                 </button>
@@ -2406,7 +2406,7 @@ function OfficeStaffClaimsPageContent() {
                     setActiveSubModal(null);
                     setDecisionAction(null);
                   }}
-                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold text-sm px-6 py-2.5 rounded-full transition-all cursor-pointer shadow-xs active:scale-95"
                 >
                   Close
                 </button>
@@ -2418,10 +2418,21 @@ function OfficeStaffClaimsPageContent() {
           {activeSubModal === null && (
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Modal Header */}
-              <div className="px-8 pt-6 pb-2 select-none bg-white">
+              <div className="px-8 pt-6 pb-2 select-none bg-white flex justify-between items-center">
                 <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   {selectedClaim.claimNumber}
                 </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedClaim(null);
+                    setActiveDetailsPanel(null);
+                  }}
+                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer border-none bg-transparent flex items-center justify-center"
+                  aria-label="Close modal"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-slate-500 hover:text-slate-700" strokeWidth={2.5} />
+                </button>
               </div>
               <div className="border-b border-black mx-8 mb-6" />
 
@@ -3251,7 +3262,7 @@ function OfficeStaffClaimsPageContent() {
                       setSelectedClaim(null);
                       setActiveDetailsPanel(null);
                     }}
-                    className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
+                    className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 font-semibold text-sm px-6 py-2.5 rounded-full transition-all cursor-pointer shadow-xs active:scale-95"
                   >
                     Close
                   </button>
