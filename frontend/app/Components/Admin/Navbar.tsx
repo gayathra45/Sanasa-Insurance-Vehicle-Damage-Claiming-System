@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -16,14 +16,12 @@ import {
   Call02Icon,
   ArrowRight01Icon,
   Cancel01Icon,
-  Logout01Icon,
   SecurityCheckIcon,
   Notification01Icon
 } from "@hugeicons/core-free-icons";
 
 export default function AdminNavbar() {
   const pathname = usePathname();
-  const router = useRouter();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -72,15 +70,10 @@ export default function AdminNavbar() {
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.clear();
-    router.push("/Login");
-  };
-
   return (
     <>
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-[280px] bg-[#102A43] h-screen sticky top-0 flex-col text-white shadow-xl flex-shrink-0 select-none z-20">
+      <aside className="hidden lg:flex w-[280px] bg-[#102A43] h-screen sticky top-0 flex-col text-white shadow-xl flex-shrink-0 select-none z-20 pb-6">
         {/* Logo Section */}
         <div className="py-8 px-6 flex flex-col items-center border-b border-white/5">
           <div className="relative w-44 h-16">
@@ -95,7 +88,7 @@ export default function AdminNavbar() {
         </div>
 
         {/* Menu Navigation Links */}
-        <nav className="flex-1 mt-6 flex flex-col">
+        <nav className="flex-1 mt-6 flex flex-col overflow-y-auto">
           {menuItems.map((item) => {
             // Check if active (matches exact path or prefix path)
             const isActive = pathname === item.href || (item.href !== "/Admin/Dashboard" && pathname?.startsWith(item.href));
@@ -124,17 +117,6 @@ export default function AdminNavbar() {
             );
           })}
         </nav>
-
-        {/* Logout Footer Section */}
-        <div className="p-6 mt-auto">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-bold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
-          >
-            <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5" strokeWidth={2.5} />
-            Logout
-          </button>
-        </div>
       </aside>
 
       {/* Mobile Drawer */}
@@ -200,17 +182,6 @@ export default function AdminNavbar() {
                 );
               })}
             </nav>
-
-            {/* Logout Footer */}
-            <div className="pt-6 border-t border-white/5 mt-auto">
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 text-slate-300 hover:text-red-500 font-bold text-base transition-colors duration-150 bg-transparent border-none cursor-pointer w-full"
-              >
-                <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5" strokeWidth={2.5} />
-                Logout
-              </button>
-            </div>
           </aside>
         </div>
       )}
