@@ -9,7 +9,7 @@ import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { getNearestBranch } from "../utils/branch.js";
-import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { sendEmail, getBaseTemplate, formatSriLankaDateTime } from "../utils/email.js";
 import { analyzeAccidentDamage } from "../utils/aiAnalyzer.js";
 
 
@@ -191,10 +191,11 @@ router.post("/new-claim", async (req, res) => {
 
     await newClaim.save();
 
-    // Send confirmation emails
+    // Send confirmation emails with Sri Lanka Time (Asia/Colombo)
     const branchName = await getNearestBranch(location, user.branch);
     const policyHolderEmail = user.email;
     const branchEmail = `${branchName.toLowerCase().trim()}@gmail.com`;
+    const submissionTimeSL = formatSriLankaDateTime(new Date());
 
     const policyHolderHtml = getBaseTemplate(
       `Claim Submitted Successfully — ${nextClaimNum}`,
@@ -210,6 +211,10 @@ router.post("/new-claim", async (req, res) => {
         <tr>
           <td class="label">Vehicle Plate:</td>
           <td class="value">${vehiclePlate}</td>
+        </tr>
+        <tr>
+          <td class="label">Submitted At:</td>
+          <td class="value">${submissionTimeSL} (Sri Lanka Time)</td>
         </tr>
         <tr>
           <td class="label">Incident Date:</td>
@@ -256,6 +261,10 @@ router.post("/new-claim", async (req, res) => {
           <td class="value">${vehiclePlate}</td>
         </tr>
         <tr>
+          <td class="label">Submitted At:</td>
+          <td class="value">${submissionTimeSL} (Sri Lanka Time)</td>
+        </tr>
+        <tr>
           <td class="label">Incident Date/Time:</td>
           <td class="value">${incidentDate} at ${incidentTime}</td>
         </tr>
@@ -274,13 +283,13 @@ router.post("/new-claim", async (req, res) => {
           policyHolderEmail,
           `Claim Submitted Successfully — ${nextClaimNum}`,
           policyHolderHtml,
-          `Dear ${user.firstName}, your claim ${nextClaimNum} has been successfully submitted.`
+          `Dear ${user.firstName}, your claim ${nextClaimNum} has been successfully submitted at ${submissionTimeSL} (Sri Lanka Time).`
         ),
         sendEmail(
           branchEmail,
           `[New Claim Alert] ${nextClaimNum} - ${branchName} Branch`,
           branchHtml,
-          `A new claim ${nextClaimNum} has been submitted for your branch.`
+          `A new claim ${nextClaimNum} has been submitted for your branch at ${submissionTimeSL} (Sri Lanka Time).`
         )
       ]);
     } catch (emailErr) {

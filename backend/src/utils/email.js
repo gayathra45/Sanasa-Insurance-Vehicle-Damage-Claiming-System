@@ -77,6 +77,58 @@ export async function sendEmail(toEmail, subject, htmlBody, textBody) {
   return { sent: false, error: "Email credentials not configured in backend/.env" };
 }
 
+/**
+ * Format a Date or timestamp string into Sri Lanka Time (Asia/Colombo / UTC+5:30)
+ * Example output: "09 Sep 2026, 12:17 AM"
+ */
+export function formatSriLankaDateTime(date = new Date()) {
+  try {
+    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+    if (!d || isNaN(d.getTime())) return String(date || "");
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Colombo",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    }).format(d);
+  } catch (err) {
+    return new Date().toLocaleString("en-US", { timeZone: "Asia/Colombo" });
+  }
+}
+
+export function formatSriLankaDate(date = new Date()) {
+  try {
+    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+    if (!d || isNaN(d.getTime())) return String(date || "");
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Colombo",
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }).format(d);
+  } catch (err) {
+    return new Date().toLocaleDateString("en-US", { timeZone: "Asia/Colombo" });
+  }
+}
+
+export function formatSriLankaTime(date = new Date()) {
+  try {
+    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+    if (!d || isNaN(d.getTime())) return String(date || "");
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Colombo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    }).format(d);
+  } catch (err) {
+    return new Date().toLocaleTimeString("en-US", { timeZone: "Asia/Colombo" });
+  }
+}
+
 export function getBaseTemplate(title, bodyHtml, footerNote = "Sanasa General Insurance • Sri Lanka") {
   return `
     <!DOCTYPE html>
@@ -237,6 +289,7 @@ export async function sendAgentActivityEmail(agentEmail, activityType, claim, cu
     const agentName = agent ? agent.name : "Agent";
 
     const subject = `[Sanasa Activity Update] - Claim: ${claim.claimNumber}`;
+    const formattedTime = formatSriLankaDateTime(new Date());
     
     const bodyHtml = `
       <h2>New Claim Activity Update</h2>
@@ -258,6 +311,10 @@ export async function sendAgentActivityEmail(agentEmail, activityType, claim, cu
         <tr style="border-bottom: 1px solid #edf2f7;">
           <td style="padding: 10px; font-weight: bold; color: #4a5568;">Current Status:</td>
           <td style="padding: 10px; font-weight: bold; color: #2d3748;">${claim.status} (Step ${claim.currentStep})</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 10px; font-weight: bold; color: #4a5568;">Updated At:</td>
+          <td style="padding: 10px; color: #2d3748;">${formattedTime} (Sri Lanka Time)</td>
         </tr>
       </table>
       ${customMessage ? `<p style="background-color: #ebf8ff; border-left: 4px solid #3182ce; padding: 12px; border-radius: 4px; font-style: italic; font-size: 14px; margin-top: 15px; margin-bottom: 15px;">${customMessage}</p>` : ""}
