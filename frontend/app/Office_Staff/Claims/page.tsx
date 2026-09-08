@@ -884,8 +884,8 @@ function OfficeStaffClaimsPageContent() {
         <OfficeStaffNavbar />
 
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
-          {/* Header */}
-          <header className="bg-white border-b border-slate-200 text-slate-800 px-8 py-4 flex justify-between items-center select-none flex-shrink-0 h-[80px] sticky top-0 z-30">
+          {/* Top Header Bar */}
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
@@ -893,11 +893,14 @@ function OfficeStaffClaimsPageContent() {
               >
                 <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
-              <h1 className="text-lg font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="bg-slate-850 text-white text-xs px-3.5 py-1.5 rounded-lg font-semibold tracking-wide">{branch} Branch</span>
-                <span className="hidden lg:inline text-slate-400 font-medium">— Claims Portal</span>
+              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
+                  {branch || "Galle"} Branch
+                </span>
+                <span className="hidden md:inline text-slate-400 font-medium">— Claims Portal</span>
               </h1>
             </div>
+            
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
               <Link href="/Office_Staff/Notifications" className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center">
