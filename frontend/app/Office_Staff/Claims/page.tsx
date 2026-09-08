@@ -1487,11 +1487,11 @@ function OfficeStaffClaimsPageContent() {
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-4 bg-white border-t border-slate-200 flex justify-between flex-shrink-0">
+              <div className="px-8 py-4 bg-white border-t border-slate-200 flex items-center justify-end gap-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
                 >
                   Close
                 </button>
@@ -1503,7 +1503,7 @@ function OfficeStaffClaimsPageContent() {
                     ]);
                     setActiveSubModal("request_docs");
                   }}
-                  className="bg-[#f97316] hover:bg-orange-600 text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#f97316] hover:bg-orange-600 text-white font-semibold text-sm px-6 py-2.5 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Request Document
                 </button>
@@ -1655,13 +1655,13 @@ function OfficeStaffClaimsPageContent() {
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-4 bg-white border-t border-slate-200 flex justify-between flex-shrink-0">
+              <div className="px-8 py-4 bg-white border-t border-slate-200 flex items-center justify-end gap-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setActiveSubModal(null);
                   }}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
                 >
                   Close
                 </button>
@@ -1716,7 +1716,7 @@ function OfficeStaffClaimsPageContent() {
                     alert("Document requests sent successfully!");
                   }}
                   disabled={updatingClaim}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2.5 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
                 >
                   Submit
                 </button>
@@ -1758,14 +1758,14 @@ function OfficeStaffClaimsPageContent() {
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-4 bg-white border-t border-slate-200 flex justify-between flex-shrink-0">
+              <div className="px-8 py-4 bg-white border-t border-slate-200 flex items-center justify-end gap-3 flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setActiveSubModal(null);
                     setNewMessageText("");
                   }}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
                 >
                   Close
                 </button>
@@ -1784,7 +1784,7 @@ function OfficeStaffClaimsPageContent() {
                     alert("Internal note added successfully!");
                   }}
                   disabled={updatingClaim || !newMessageText.trim()}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2.5 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95 disabled:opacity-50"
                 >
                   Submit
                 </button>
@@ -1943,14 +1943,14 @@ function OfficeStaffClaimsPageContent() {
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-4 bg-white border-t border-slate-200 flex justify-between flex-shrink-0">
+              <div className="px-8 py-4 bg-white border-t border-slate-200 flex items-center justify-end flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setActiveSubModal(null);
                     setNewMessageText("");
                   }}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
                 >
                   Close
                 </button>
@@ -2399,14 +2399,14 @@ function OfficeStaffClaimsPageContent() {
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-4 bg-white border-t border-slate-200 flex justify-end flex-shrink-0">
+              <div className="px-8 py-4 bg-white border-t border-slate-200 flex items-center justify-end flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => {
                     setActiveSubModal(null);
                     setDecisionAction(null);
                   }}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center justify-center shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95"
+                  className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
                 >
                   Close
                 </button>
@@ -3229,40 +3229,44 @@ function OfficeStaffClaimsPageContent() {
               </div>
 
               {/* Modal Footer */}
-              <div className="px-8 py-4 bg-white border-t border-slate-200 flex justify-between flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedClaim(null);
-                    setActiveDetailsPanel(null);
-                  }}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
-                >
-                  Close
-                </button>
+              <div className="px-8 py-4 bg-white border-t border-slate-200 flex items-center justify-between flex-shrink-0">
+                <div>
+                  {selectedClaim.currentStep && selectedClaim.currentStep < 2 && (!selectedClaim.assignedAgent || selectedClaim.assignedAgent === "") && selectedClaim.status !== "Cancelled" && (
+                    <button
+                      type="button"
+                      onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
+                      disabled={isCancellingClaim}
+                      className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 hover:border-red-300 disabled:opacity-50 font-semibold text-xs px-5 py-2.5 rounded-full transition-all cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-xs"
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4 text-red-600" strokeWidth={2.5} />
+                      {isCancellingClaim ? "Cancelling..." : "Cancel Claim"}
+                    </button>
+                  )}
+                </div>
 
-                {selectedClaim.currentStep && selectedClaim.currentStep < 2 && (!selectedClaim.assignedAgent || selectedClaim.assignedAgent === "") && selectedClaim.status !== "Cancelled" && (
+                <div className="flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
-                    disabled={isCancellingClaim}
-                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                    onClick={() => {
+                      setSelectedClaim(null);
+                      setActiveDetailsPanel(null);
+                    }}
+                    className="px-6 py-2.5 rounded-full border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-sm transition-all bg-white cursor-pointer active:scale-95 shadow-xs"
                   >
-                    <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" strokeWidth={2.5} />
-                    {isCancellingClaim ? "Cancelling..." : "Cancel Claim"}
+                    Close
                   </button>
-                )}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedClaim(null);
-                    setActiveDetailsPanel(null);
-                  }}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
-                >
-                  Submit
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedClaim(null);
+                      setActiveDetailsPanel(null);
+                    }}
+                    className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-sm px-6 py-2.5 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  >
+                    Submit
+                  </button>
+                </div>
               </div>
             </div>
           )}
