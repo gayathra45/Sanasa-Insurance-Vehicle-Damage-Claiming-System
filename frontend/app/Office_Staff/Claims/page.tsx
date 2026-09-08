@@ -911,7 +911,7 @@ function OfficeStaffClaimsPageContent() {
             </div>
           </header>
 
-          <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-auto">
+          <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-scroll [scrollbar-gutter:stable]">
             {loading ? (
               <SimpleLoader message="Loading branch claims..." theme="slate" />
             ) : error ? (
@@ -971,7 +971,7 @@ function OfficeStaffClaimsPageContent() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {/* Header Row for Desktop */}
-                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-3 text-[10px] font-medium text-slate-400 uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1">
+                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-3 text-[10px] font-medium text-slate-400 uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-4 border-l-transparent mb-1">
                       <div className="flex flex-col select-none min-w-0">Claim Info</div>
                       <div className="flex flex-col select-none min-w-0">Vehicle No</div>
                       <div className="flex flex-col select-none min-w-0">Damage Type</div>
@@ -1013,7 +1013,7 @@ function OfficeStaffClaimsPageContent() {
                             setSelectedClaim(claim);
                             setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
                           }}
-                          className={`bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-xs hover:border-slate-300 relative overflow-hidden ${cardThemeClass}`}
+                          className={`bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-colors duration-150 cursor-pointer shadow-xs hover:border-slate-300 relative overflow-hidden ${cardThemeClass}`}
                         >
                           {/* Claim ID & Date */}
                           <div className="flex flex-col select-none min-w-0">

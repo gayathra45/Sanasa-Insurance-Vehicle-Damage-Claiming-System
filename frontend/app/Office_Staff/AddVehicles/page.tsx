@@ -462,7 +462,7 @@ export default function AddVehiclesPage() {
             </div>
           </header>
 
-          <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-auto">
+          <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-scroll [scrollbar-gutter:stable]">
             {loading ? (
               <SimpleLoader message="Loading branch records..." theme="slate" />
             ) : error ? (

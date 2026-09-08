@@ -256,7 +256,7 @@ export default function RegistrationsPage() {
             </div>
           </header>
 
-          <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-auto">
+          <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-scroll [scrollbar-gutter:stable]">
             {loading ? (
               <SimpleLoader message="Loading registrations..." theme="slate" />
             ) : error ? (
