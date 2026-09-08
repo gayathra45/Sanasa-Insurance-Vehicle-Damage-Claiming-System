@@ -6,6 +6,7 @@ import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { API_URL } from "@/app/config";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   BubbleChatIcon,
@@ -14,7 +15,6 @@ import {
   CheckmarkCircle01Icon,
   ViewIcon,
   File01Icon,
-
 } from "@hugeicons/core-free-icons";
 
 interface Claim {
@@ -526,9 +526,7 @@ function TrackClaimsContent() {
 
         {/* Tracking Output Block */}
         {isLoading ? (
-          <div className="text-center py-12 text-slate-500 font-medium text-lg">
-            {t.searching}
-          </div>
+          <SimpleLoader message={t.searching} theme="blue" />
         ) : trackedClaim ? (
           <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-[24px] shadow-lg overflow-hidden transition-all duration-300">
             {/* Header */}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   BubbleChatIcon,
@@ -379,10 +380,7 @@ export default function AdminAdminsPage() {
               </div>
 
               {loadingAdmins ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-2">
-                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-6 w-6 text-[#0f2d3a]" strokeWidth={2.5} />
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Loading admins directory...</span>
-                </div>
+                <SimpleLoader message="Loading admins directory..." theme="slate" />
               ) : activeAdmins.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 select-none">
                   No active admins found in the system.
@@ -560,10 +558,7 @@ export default function AdminAdminsPage() {
 
             <div className="px-8 pb-4 flex-1 overflow-y-auto bg-white flex flex-col gap-4 text-left">
               {loadingPending ? (
-                <div className="flex flex-col items-center justify-center py-24 gap-3">
-                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#0f2d3a]" strokeWidth={2.5} />
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider animate-pulse">Loading pending registrations...</p>
-                </div>
+                <SimpleLoader message="Loading pending registrations..." theme="slate" />
               ) : pendingAdmins.length === 0 ? (
                 <div className="text-center py-20 flex flex-col items-center justify-center text-slate-400 select-none bg-slate-50 border border-slate-100 rounded-3xl">
                   <p className="font-bold text-sm text-slate-500">No Pending Admin Registrations</p>
@@ -656,10 +651,7 @@ export default function AdminAdminsPage() {
 
             <div className="px-8 pb-4 flex-1 overflow-y-auto bg-white flex flex-col gap-4 text-left">
               {loadingRequests ? (
-                <div className="flex flex-col items-center justify-center py-24 gap-3">
-                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#0f2d3a]" strokeWidth={2.5} />
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider animate-pulse">Loading password requests...</p>
-                </div>
+                <SimpleLoader message="Loading password requests..." theme="slate" />
               ) : passwordRequests.length === 0 ? (
                 <div className="text-center py-20 flex flex-col items-center justify-center text-slate-400 select-none bg-slate-50 border border-slate-100 rounded-3xl">
                   <p className="font-bold text-sm text-slate-500">No Pending Reset Requests</p>

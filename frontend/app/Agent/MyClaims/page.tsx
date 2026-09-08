@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Agent/Navbar";
 import Footer from "@/app/Components/Agent/Footer";
 import { API_URL } from "@/app/config";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { compressImage } from "../../utils/imageCompressor";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -969,10 +970,10 @@ export default function AgentMyClaims() {
         {/* Claims List container */}
         <div className="flex flex-col gap-5">
           {loading ? (
-            <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-cyan-500"></div>
-              <span className="mt-3 text-slate-400 text-sm font-bold">{lang === "en" ? "Syncing cases with Sanasa Database..." : lang === "si" ? "සනස දත්ත සමුදාය සමඟ සමමුහුර්ත වෙමින්..." : "சனச தரவுத்தளத்துடன் ஒத்திசைக்கிறது..."}</span>
-            </div>
+            <SimpleLoader
+              message={lang === "en" ? "Syncing cases with Sanasa Database..." : lang === "si" ? "සනස දත්ත සමුදාය සමඟ සමමුහුර්ත වෙමින්..." : "சனச தரவுத்தளத்துடன் ஒத்திசைக்கிறது..."}
+              theme="cyan"
+            />
           ) : filteredClaims.length === 0 ? (
             <div className="bg-white border border-slate-100 rounded-[30px] p-16 text-center shadow-sm select-none">
               <HugeiconsIcon icon={File01Icon} className="w-12 h-12 text-slate-300 mx-auto mb-4" strokeWidth={1.8} />

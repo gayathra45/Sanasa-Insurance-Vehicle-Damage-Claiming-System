@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import Link from "next/link";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { API_URL } from "@/app/config";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -496,10 +497,7 @@ export default function OfficeStaffNotifications() {
             {/* Notifications Alert List */}
             <div className="flex flex-col gap-3.5 mb-10">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-2xl gap-4 shadow-sm">
-                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#f59e0b]" strokeWidth={2} />
-                  <p className="text-slate-500 font-medium text-sm">Loading alerts...</p>
-                </div>
+                <SimpleLoader message="Loading alerts..." theme="slate" />
               ) : filteredNotifs.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {filteredNotifs.map((n) => {

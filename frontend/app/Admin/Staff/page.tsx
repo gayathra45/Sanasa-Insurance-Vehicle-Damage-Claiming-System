@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { sriLankaLocations } from "../../utils/locations";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -416,10 +417,7 @@ export default function AdminStaffPage() {
 
             {/* Staff Table Grid Section */}
             {loadingStaff ? (
-              <div className="bg-white border border-slate-200 rounded-[20px] p-24 text-center text-slate-400 font-bold text-sm uppercase tracking-wider select-none shadow-sm flex flex-col items-center justify-center gap-3">
-                <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-7 w-7 text-blue-500" strokeWidth={2.5} />
-                <span>Loading Office Staff Directory...</span>
-              </div>
+              <SimpleLoader message="Loading office staff directory..." theme="slate" />
             ) : (() => {
               const filtered = staffList.filter((s) => {
                 const query = searchQuery.toLowerCase().trim();
@@ -823,10 +821,7 @@ export default function AdminStaffPage() {
             {/* Modal Content */}
             <div className="px-8 pb-4 flex-1 overflow-y-auto bg-white flex flex-col gap-4 text-left">
               {loadingRequests ? (
-                <div className="flex flex-col items-center justify-center py-24 gap-3 select-none">
-                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#0f2d3a]" strokeWidth={2.5} />
-                  <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">Fetching password requests...</p>
-                </div>
+                <SimpleLoader message="Fetching password requests..." theme="slate" />
               ) : passwordRequests.length === 0 ? (
                 <div className="text-center py-20 flex flex-col items-center justify-center text-slate-400 select-none bg-slate-50 border border-slate-100 rounded-3xl">
                   <div className="w-16 h-16 rounded-full bg-white border border-slate-200 flex items-center justify-center mb-3 text-slate-300 shadow-inner">

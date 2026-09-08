@@ -5,6 +5,7 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 
 interface Vehicle {
   numberPlate: string;
@@ -513,10 +514,7 @@ export default function MyVehicles() {
 
         {/* Vehicles Display Grid */}
         {isLoading ? (
-          <div className="text-center py-20 bg-white border border-slate-200 rounded-[30px] p-8 shadow-sm flex flex-col items-center justify-center">
-            <HugeiconsIcon icon={Loading03Icon} className="w-12 h-12 text-[#00ddff] animate-spin mb-4" strokeWidth={2} />
-            <p className="text-slate-500 font-medium text-base">{t.retrieving}</p>
-          </div>
+          <SimpleLoader message="Loading registered vehicles..." theme="blue" />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* If no vehicles match the criteria, show a helpful inner-grid card */}

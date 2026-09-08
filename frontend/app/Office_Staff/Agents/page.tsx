@@ -6,6 +6,7 @@ import Link from "next/link";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { sriLankaBanks } from "../../utils/banks";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -410,10 +411,7 @@ export default function AgentsPage() {
             {/* List / Loading Grid */}
             <div className="flex-1">
               {loading ? (
-                <div className="bg-white border border-slate-100 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-amber-500"></div>
-                  <span className="mt-3 text-slate-400 text-sm font-semibold">Syncing Agent list...</span>
-                </div>
+                <SimpleLoader message="Loading agent directory..." theme="slate" />
               ) : filteredAgents.length === 0 ? (
                 <div className="bg-white border border-slate-100 rounded-[30px] p-16 text-center shadow-sm select-none">
                   <HugeiconsIcon icon={UserIcon} className="w-12 h-12 text-slate-300 mx-auto mb-4" strokeWidth={1.8} />

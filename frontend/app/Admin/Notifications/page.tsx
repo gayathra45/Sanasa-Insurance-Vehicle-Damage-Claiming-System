@@ -5,6 +5,7 @@ import { API_URL } from "@/app/config";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import Link from "next/link";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
@@ -443,10 +444,7 @@ export default function AdminNotifications() {
             {/* List Content */}
             <div className="flex flex-col gap-3.5 mb-10">
               {loading ? (
-                <div className="flex flex-col items-center justify-center py-20 bg-slate-50 border border-slate-200 rounded-2xl gap-4">
-                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-8 w-8 text-[#f59e0b]" strokeWidth={2} />
-                  <p className="text-slate-500 font-medium text-sm">Fetching notifications...</p>
-                </div>
+                <SimpleLoader message="Fetching notifications..." theme="slate" />
               ) : filteredNotifs.length > 0 ? (
                 <div className="flex flex-col gap-3">
                   {filteredNotifs.map((n) => {

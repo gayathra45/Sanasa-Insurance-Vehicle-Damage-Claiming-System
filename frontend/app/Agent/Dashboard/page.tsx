@@ -6,6 +6,7 @@ import Navbar from "@/app/Components/Agent/Navbar";
 import Footer from "@/app/Components/Agent/Footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { compressImage } from "../../utils/imageCompressor";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -1458,9 +1459,7 @@ export default function AgentDashboard() {
 
             <div className="flex flex-col gap-3">
               {loading ? (
-                <div className="text-slate-400 font-semibold py-10 text-center text-sm animate-pulse">
-                  {t.fetchingClaims}
-                </div>
+                <SimpleLoader message={t.fetchingClaims} theme="cyan" size="sm" className="py-8" />
               ) : activeClaims.length === 0 ? (
                 <div className="bg-white border border-slate-100 rounded-2xl p-8 text-center text-slate-500 font-semibold text-sm">
                   {t.noNewClaims}
@@ -1550,7 +1549,7 @@ export default function AgentDashboard() {
 
             <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-[0_10px_35px_rgba(0,0,0,0.015)] flex flex-col gap-4 relative">
               {loading ? (
-                <div className="text-slate-400 text-center text-xs py-4 animate-pulse">{t.loadingActivity}</div>
+                <SimpleLoader message={t.loadingActivity} theme="cyan" size="sm" className="py-4" />
               ) : latestActivities.length === 0 ? (
                 <div className="text-slate-400 text-center text-xs py-4 font-semibold">{t.noRecentActivity}</div>
               ) : (

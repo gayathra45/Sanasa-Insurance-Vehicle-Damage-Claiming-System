@@ -6,6 +6,7 @@ import Link from "next/link";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { compressImage } from "../../utils/imageCompressor";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -909,10 +910,7 @@ function OfficeStaffClaimsPageContent() {
 
           <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-auto">
             {loading ? (
-              <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-slate-700"></div>
-                <span className="mt-4 text-slate-500 font-medium">Loading branch claims...</span>
-              </div>
+              <SimpleLoader message="Loading branch claims..." theme="slate" />
             ) : error ? (
               <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-red-500 font-semibold bg-red-50 rounded-2xl p-8 border border-red-200">
                 <span>{error}</span>

@@ -5,6 +5,7 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { compressImage } from "../../utils/imageCompressor";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -545,10 +546,7 @@ export default function PolicyHolderDocuments() {
           </div>
 
           {isLoading ? (
-            <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-slate-200 shadow-sm min-h-[140px]">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-500"></div>
-              <span className="mt-3 text-slate-400 text-sm font-medium">{t.checkingDocs}</span>
-            </div>
+            <SimpleLoader message="Checking requested documents..." theme="blue" />
           ) : requestedDocsList.length === 0 ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-10 text-center shadow-sm select-none">
               <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3 text-emerald-500">
@@ -631,11 +629,7 @@ export default function PolicyHolderDocuments() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 gap-4">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="h-[90px] bg-slate-100/70 border border-slate-200 animate-pulse rounded-3xl" />
-              ))}
-            </div>
+            <SimpleLoader message="Loading documents..." theme="blue" />
           ) : groupedClaimsList.length === 0 ? (
             <div className="bg-white border border-slate-200/80 rounded-3xl p-12 text-center shadow-sm select-none">
               <p className="text-slate-400 font-medium text-sm">{t.noUploadsTitle}</p>

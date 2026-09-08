@@ -5,6 +5,7 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UserIcon,
@@ -708,10 +709,7 @@ export default function MyClaims() {
           {/* List Cards */}
           <div className="flex flex-col gap-3.5">
             {isLoading ? (
-              <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[#0284c7]"></div>
-                <span className="mt-3 text-slate-400 text-sm font-medium">Loading your claims dossier...</span>
-              </div>
+              <SimpleLoader message="Loading claims dossier..." theme="blue" />
             ) : filteredClaims.length === 0 ? (
               <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
                 <h3 className="font-semibold text-slate-700 text-lg">No Claims Found</h3>

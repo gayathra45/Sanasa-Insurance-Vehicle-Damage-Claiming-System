@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Agent/Navbar";
 import Footer from "@/app/Components/Agent/Footer";
 import { API_URL } from "@/app/config";
+import SimpleLoader from "@/app/Components/SimpleLoader";
 import { compressImage } from "../../utils/imageCompressor";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -1305,10 +1306,7 @@ export default function AgentActivityPage() {
 
             {/* Claims Data grid list */}
             {loading ? (
-              <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500"></div>
-                <span className="mt-3 text-slate-400 text-sm font-medium">Fetching claims dossier...</span>
-              </div>
+              <SimpleLoader message="Fetching claims dossier..." theme="cyan" />
             ) : filteredClaims.length === 0 ? (
               <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
                 <h3 className="font-semibold text-slate-700 text-lg">{t.noClaimsFound}</h3>
@@ -2724,10 +2722,7 @@ export default function AgentActivityPage() {
             {/* Body */}
             <div className="px-8 pb-6 flex-1 overflow-y-auto space-y-4">
               {loadingActivities ? (
-                <div className="flex flex-col items-center justify-center h-64 text-slate-400 font-semibold italic">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0f2d4a] mb-3"></div>
-                  Loading last activities...
-                </div>
+                <SimpleLoader message="Loading last activities..." theme="cyan" />
               ) : loggedActivities.length === 0 ? (
                 <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-8 text-center text-slate-400 font-semibold italic">
                   No activity logs found.
