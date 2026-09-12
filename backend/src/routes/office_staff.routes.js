@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Office Staff Router
  * Handles endpoints for Office Staff login, dashboard statistics calculation,
  * registration verification, and agent management operations.
@@ -12,7 +12,11 @@ import Admin from "../models/admin.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
-import { analyzeAccidentDamage } from "../utils/aiAnalyzer.js";
+import { 
+  analyzeAccidentDamage, 
+  analyzeAccidentDamageWithCostSheet, 
+  compareGarageEstimateWithPhotosAndAI 
+} from "../utils/aiAnalyzer.js";
 
 const router = express.Router();
 
@@ -39,85 +43,97 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid Email or Password." });
     }
 
-    // Return staff object without password
+    // Return staff details without password
     const staffObj = staff.toObject();
     delete staffObj.password;
 
-    res.json({ message: "Office staff login successful", staff: staffObj });
+    res.json({ message: "Login successful", staff: staffObj });
   } catch (err) {
     console.error("Office staff login API error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
 
-// GET dashboard stats: /api/office-staff/dashboard-stats
-router.get("/dashboard-stats", async (req, res) => {
+// GET dashboard statistics: /api/office-staff/stats
+router.get("/stats", async (req, res) => {
   try {
     const { branch } = req.query;
     if (!branch) {
       return res.status(400).json({ error: "Branch query parameter is required." });
     }
 
-    // Filter by the last 30 days (one month data)
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
-    const dateFilter = { createdAt: { $gte: oneMonthAgo } };
+    const cleanBranch = branch.trim();
 
-    // Common query filter by branch
-    const branchFilter = { branch: branch.trim() };
+    // 1. Fetch claims statistics for the branch
+    const totalClaims = await Claim.countDocuments({ branch: cleanBranch });
+    const pendingClaims = await Claim.countDocuments({ branch: cleanBranch, status: "Pending" });
+    const approvedClaims = await Claim.countDocuments({ branch: cleanBranch, status: "Approved" });
+    const rejectedClaims = await Claim.countDocuments({ branch: cleanBranch, status: "Rejected" });
 
-    // 1. KPI Counts
-    const unassignedClaimsCount = await Claim.countDocuments({
-      ...branchFilter,
-      ...dateFilter,
-      assignedAgent: ""
-    });
+    // 2. Fetch policyholders statistics for the branch
+    const totalPolicyHolders = await User.countDocuments({ branch: cleanBranch, status: "Approved" });
 
-    const newRegistrationsCount = await User.countDocuments({
-      ...branchFilter,
-      status: "Pending"
-    });
+    // 3. Fetch active agents statistics for the branch
+    const activeAgents = await Agent.countDocuments({ branch: cleanBranch, status: "active" });
 
-    const activeClaimsCount = await Claim.countDocuments({
-      ...branchFilter,
-      ...dateFilter,
-      status: "In Progress"
-    });
+    // 4. Pending user registrations for the branch
+    const pendingRegistrations = await User.countDocuments({ branch: cleanBranch, status: { $ne: "Approved" } });
 
-    const pendingClaimsCount = await Claim.countDocuments({
-      ...branchFilter,
-      ...dateFilter,
-      status: "Pending"
-    });
+    // 5. Calculate total approved settlement payout
+    const approvedClaimsList = await Claim.find(
+      { branch: cleanBranch, status: "Approved", amount: { $ne: null } },
+      { amount: 1 }
+    );
+    const totalPayoutAmount = approvedClaimsList.reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
-    // 2. Fetch Lists for Dashboard (excluding heavy image/document fields)
-    // New Claims for this branch (latest first)
-    const newClaimsList = await Claim.find(
+    // 6. Monthly trend of claims for the current year
+    const currentYear = new Date().getFullYear();
+    const monthlyClaimsRaw = await Claim.aggregate([
       {
-        ...branchFilter,
-        ...dateFilter
+        $match: {
+          branch: cleanBranch,
+          createdAt: {
+            $gte: new Date(`${currentYear}-01-01`),
+            $lte: new Date(`${currentYear}-12-31T23:59:59.999Z`)
+          }
+        }
       },
-      { accidentPhotos: 0, drivingLicense: 0 }
-    ).sort({ createdAt: -1 });
-
-    // New Registrations for this branch (latest first)
-    const newRegistrationsList = await User.find(
       {
-        ...branchFilter,
-        status: "Pending"
+        $group: {
+          _id: { $month: "$createdAt" },
+          count: { $sum: 1 }
+        }
       },
-      { documents: 0 }
-    ).sort({ createdAt: -1 });
+      { $sort: { "_id": 1 } }
+    ]);
+
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthlyData = months.map((monthName, index) => {
+      const found = monthlyClaimsRaw.find(m => m._id === index + 1);
+      return {
+        month: monthName,
+        claims: found ? found.count : 0
+      };
+    });
+
+    // 7. Recent 5 claims for the dashboard table
+    const recentClaims = await Claim.find({ branch: cleanBranch })
+      .sort({ createdAt: -1 })
+      .limit(5);
 
     res.json({
-      stats: {
-        unassignedClaims: unassignedClaimsCount,
-        newRegistrations: newRegistrationsCount,
-        activeClaims: activeClaimsCount,
-        pendingClaims: pendingClaimsCount
+      summary: {
+        totalClaims,
+        pendingClaims,
+        approvedClaims,
+        rejectedClaims,
+        totalPolicyHolders,
+        activeAgents,
+        pendingRegistrations,
+        totalPayoutAmount
       },
-      newClaims: newClaimsList,
-      newRegistrations: newRegistrationsList
+      monthlyTrend: monthlyData,
+      recentClaims
     });
   } catch (err) {
     console.error("Office staff dashboard stats API error:", err);
@@ -230,7 +246,11 @@ router.patch("/claims/:claimNumber", async (req, res) => {
       paymentReceipt,
       bankName,
       bankBranch,
-      bankAccount
+      bankAccount,
+      documentsRequested,
+      requestedDocuments,
+      documentRequestTo,
+      rejectionReason
     } = req.body;
 
     const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
@@ -242,6 +262,10 @@ router.patch("/claims/:claimNumber", async (req, res) => {
     if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
     if (currentStep !== undefined) claim.currentStep = Number(currentStep);
     if (assignedAgent !== undefined) claim.assignedAgent = assignedAgent;
+    if (documentsRequested !== undefined) claim.documentsRequested = documentsRequested;
+    if (requestedDocuments !== undefined) claim.requestedDocuments = requestedDocuments;
+    if (documentRequestTo !== undefined) claim.documentRequestTo = documentRequestTo;
+    if (rejectionReason !== undefined) claim.rejectionReason = rejectionReason;
     if (paymentReceipt !== undefined) {
       claim.paymentReceipt = paymentReceipt;
       if (paymentReceipt && (!currentStep || Number(currentStep) < 6)) {
@@ -283,35 +307,223 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
       ...(claim.accidentPhotos?.side || [])
     ];
 
-    if (allUrls.length === 0) {
-      return res.status(400).json({ error: "No accident photos found to analyze." });
+    // Convert Cloudinary URLs to Base64 format for Gemini (if any exist)
+    let base64Photos = [];
+    if (allUrls.length > 0) {
+      try {
+        base64Photos = await Promise.all(
+          allUrls.map(async (url) => {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            return Buffer.from(arrayBuffer).toString("base64");
+          })
+        );
+      } catch (fetchErr) {
+        console.warn("Failed to fetch some photos from Cloudinary, continuing with available images:", fetchErr.message);
+      }
     }
 
-    // Convert Cloudinary URLs to Base64 format for Gemini
-    const base64Photos = await Promise.all(
-      allUrls.map(async (url) => {
-        const response = await fetch(url);
-        const arrayBuffer = await response.arrayBuffer();
-        return Buffer.from(arrayBuffer).toString("base64");
-      })
+    const vehicleInfo = {
+      vehiclePlate: claim.vehiclePlate,
+      damageType: claim.damageType
+    };
+
+    const aiResult = await analyzeAccidentDamageWithCostSheet(
+      base64Photos,
+      vehicleInfo,
+      claim.inspectionReport || ""
     );
 
-    const aiResult = await analyzeAccidentDamage(base64Photos);
     if (!aiResult) {
-      return res.status(500).json({ error: "AI analysis failed." });
+      return res.status(500).json({ error: "AI Damage Assessment failed." });
     }
 
     claim.aiAnalysis = {
       isAnalyzed: true,
-      damagedItems: aiResult.damagedItems,
-      overallDamagePercentage: aiResult.overallDamagePercentage,
-      summary: aiResult.summary
+      damagedItems: aiResult.damagedItems || [],
+      overallDamagePercentage: aiResult.overallDamagePercentage || 0,
+      totalEstimatedPartsCost: aiResult.totalEstimatedPartsCost || 0,
+      totalEstimatedLaborCost: aiResult.totalEstimatedLaborCost || 0,
+      totalEstimatedCost: aiResult.totalEstimatedCost || 0,
+      currency: aiResult.currency || "LKR",
+      summary: aiResult.summary || "",
+      analyzedAt: new Date()
     };
 
+    // Auto-request Garage Estimate Report from Policy Holder for review and comparison
+    claim.documentsRequested = true;
+    const requested = new Set(claim.requestedDocuments || []);
+    requested.add("Garage Estimate Report");
+    claim.requestedDocuments = Array.from(requested);
+    claim.documentRequestTo = "Policy Holder";
+    claim.status = "Review";
+    claim.currentStep = 4;
+
+    claim.messages.push({
+      sender: "Sanasa AI",
+      message: `AI Damage Assessment completed. Total estimated repair cost: LKR ${(aiResult.totalEstimatedCost || 0).toLocaleString()}. Garage Estimate Report has been automatically requested from Policy Holder for photo cross-check and cost comparison.`,
+      sentAt: new Date(),
+      recipient: "All"
+    });
+
     await claim.save();
-    res.json({ message: "AI analysis completed successfully", aiAnalysis: claim.aiAnalysis });
+
+    res.json({
+      message: "AI Damage Assessment completed and Garage Estimate Report automatically requested from Policy Holder.",
+      claim,
+      aiAnalysis: claim.aiAnalysis
+    });
   } catch (err) {
     console.error("AI manual analysis error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST compare garage estimate with accident photos & AI: /api/office-staff/claims/:claimNumber/compare-garage-estimate
+router.post("/claims/:claimNumber/compare-garage-estimate", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    // Find the uploaded garage estimate document
+    const garageDoc = (claim.additionalDocuments || []).find(
+      (doc) => doc.name && doc.name.toLowerCase().includes("garage")
+    ) || (claim.additionalDocuments && claim.additionalDocuments[claim.additionalDocuments.length - 1]);
+
+    if (!garageDoc || !garageDoc.url) {
+      return res.status(400).json({ error: "No uploaded Garage Estimate document found on this claim." });
+    }
+
+    let garageBase64 = "";
+    try {
+      const response = await fetch(garageDoc.url);
+      const arrayBuffer = await response.arrayBuffer();
+      garageBase64 = Buffer.from(arrayBuffer).toString("base64");
+    } catch (e) {
+      console.warn("Could not download garage doc from URL, using fallback comparison:", e.message);
+    }
+
+    // Fetch accident photos
+    const allUrls = [
+      ...(claim.accidentPhotos?.front || []),
+      ...(claim.accidentPhotos?.rear || []),
+      ...(claim.accidentPhotos?.side || [])
+    ];
+
+    let base64Photos = [];
+    if (allUrls.length > 0) {
+      try {
+        base64Photos = await Promise.all(
+          allUrls.map(async (url) => {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            return Buffer.from(arrayBuffer).toString("base64");
+          })
+        );
+      } catch (err) {
+        console.warn("Failed to fetch accident photos:", err.message);
+      }
+    }
+
+    const comparisonResult = await compareGarageEstimateWithPhotosAndAI(
+      garageBase64,
+      base64Photos,
+      claim.aiAnalysis,
+      claim.inspectionReport || ""
+    );
+
+    comparisonResult.garageDocumentUrl = garageDoc.url;
+    claim.garageEstimateComparison = comparisonResult;
+
+    claim.messages.push({
+      sender: "Sanasa AI",
+      message: `AI Forensic Comparison completed for Garage Estimate. Match Confidence: ${comparisonResult.matchConfidenceScore}%. Verdict: ${comparisonResult.verdict}. Cost Variance: ${comparisonResult.costDifferencePercentage}%.`,
+      sentAt: new Date(),
+      recipient: "All"
+    });
+
+    await claim.save();
+
+    res.json({
+      message: "Garage estimate comparison and photo cross-check completed successfully.",
+      claim,
+      garageEstimateComparison: claim.garageEstimateComparison
+    });
+  } catch (err) {
+    console.error("Compare garage estimate error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST approve or reject claim: /api/office-staff/claims/:claimNumber/decision
+router.post("/claims/:claimNumber/decision", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    const { action, amount, rejectionReason, note } = req.body;
+
+    if (!["Approve", "Reject"].includes(action)) {
+      return res.status(400).json({ error: "Action must be either Approve or Reject." });
+    }
+
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    if (action === "Approve") {
+      claim.status = "Approved";
+      claim.currentStep = 5;
+      const approvedAmount = Number(amount) || claim.garageEstimateComparison?.garageEstimatedTotal || claim.aiAnalysis?.totalEstimatedCost || claim.amount || 0;
+      claim.amount = approvedAmount;
+      claim.rejectionReason = "";
+
+      claim.messages.push({
+        sender: "Office Staff",
+        message: `Claim approved for final settlement amount LKR ${approvedAmount.toLocaleString()}.${note ? ` Note: ${note}` : ""}`,
+        sentAt: new Date(),
+        recipient: "Policy Holder"
+      });
+    } else {
+      claim.status = "Rejected";
+      claim.currentStep = 4;
+      claim.rejectionReason = rejectionReason || "Claim rejected following damage assessment and garage estimate review.";
+
+      claim.messages.push({
+        sender: "Office Staff",
+        message: `Claim has been rejected. Reason: ${claim.rejectionReason}`,
+        sentAt: new Date(),
+        recipient: "Policy Holder"
+      });
+    }
+
+    await claim.save();
+
+    // Send email notification to user
+    const user = await User.findOne({ nic: claim.userNic });
+    if (user && user.email) {
+      const isApproved = action === "Approve";
+      const subject = isApproved ? `Claim ${claim.claimNumber} Approved - Sanasa Insurance` : `Claim ${claim.claimNumber} Update - Sanasa Insurance`;
+      const htmlBody = getBaseTemplate(
+        isApproved ? "Claim Approved" : "Claim Status Update",
+        `Dear ${user.firstName || "Policy Holder"},<br><br>Your insurance claim <strong>${claim.claimNumber}</strong> has been <strong>${action === "Approve" ? "APPROVED" : "REJECTED"}</strong> by the branch office.<br><br>` +
+        (isApproved 
+          ? `<strong>Approved Settlement Amount:</strong> LKR ${Number(claim.amount).toLocaleString()}<br>Payment is currently being queued for disbursement to your registered bank account.` 
+          : `<strong>Reason:</strong> ${claim.rejectionReason}<br>Please contact your branch office if you have any questions.`)
+      );
+      const textBody = `Claim ${claim.claimNumber} has been ${action.toLowerCase()}d.`;
+      try {
+        await sendEmail(user.email, subject, htmlBody, textBody);
+      } catch (mailErr) {
+        console.warn("Could not send decision email:", mailErr.message);
+      }
+    }
+
+    res.json({ message: `Claim successfully ${action.toLowerCase()}d.`, claim });
+  } catch (err) {
+    console.error("Claim decision error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
@@ -339,97 +551,60 @@ router.post("/agents", async (req, res) => {
       nicFront,
       nicBack,
       birthCertificate,
-      policeReport,
-      password
+      policeReport
     } = req.body;
 
-    if (!name || !email || !nic || !address || !dob || !branch || !province || !district || !area) {
-      return res.status(400).json({ error: "All agent profile fields including Province, District, and Area are required." });
+    if (!name || !email || !nic || !branch || !phone || !dob || !address) {
+      return res.status(400).json({ error: "Name, Email, NIC, Branch, Phone, DOB, and Address are required." });
     }
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanNic = nic.trim().toUpperCase();
 
-    // Check if email or nic already exists in Agent collection
-    const existingAgent = await Agent.findOne({ $or: [{ email: cleanEmail }, { nic: cleanNic }] });
+    // Check if agent already exists in Agent or Admin or Staff or User
+    const existingAgent = await Agent.findOne({
+      $or: [{ email: cleanEmail }, { nic: cleanNic }]
+    });
     if (existingAgent) {
-      return res.status(400).json({ error: "An agent with this Email or NIC is already registered." });
+      return res.status(400).json({ error: "An agent with this Email or NIC already exists." });
     }
 
-    // Check if email or nic already exists in User collection
-    const existingUser = await User.findOne({ $or: [{ email: cleanEmail }, { nic: cleanNic }] });
-    if (existingUser) {
-      return res.status(400).json({ error: "A user with this Email or NIC is already registered." });
-    }
+    // Auto-generate next unique Agent ID (e.g. AGT-0001)
+    const totalAgents = await Agent.countDocuments();
+    const nextAgentId = `AGT-${String(totalAgents + 1).padStart(4, "0")}`;
 
-    // Check if email or nic already exists in Admin collection
-    const existingAdmin = await Admin.findOne({ $or: [{ email: cleanEmail }, { nic: cleanNic }] });
-    if (existingAdmin) {
-      return res.status(400).json({ error: "An admin with this Email or NIC is already registered." });
-    }
-
-    // Check if email already exists in OfficeStaff collection
-    const existingOfficeStaff = await OfficeStaff.findOne({ email: cleanEmail });
-    if (existingOfficeStaff) {
-      return res.status(400).json({ error: "An office staff account with this Email is already registered." });
-    }
-
-    // Auto-generate agentId (e.g. AGT-0001)
-    const lastAgent = await Agent.findOne({}, { agentId: 1 }).sort({ createdAt: -1 });
-    let nextAgentId = "AGT-0001";
-    if (lastAgent && lastAgent.agentId) {
-      const match = lastAgent.agentId.match(/AGT-(\d+)/i);
-      if (match) {
-        const currentNum = parseInt(match[1], 10);
-        nextAgentId = `AGT-${String(currentNum + 1).padStart(4, "0")}`;
-      }
-    }
-
-    // Generate secure temporary password containing letters, digits, and a special character
-    const tempPassword = password || ("SAN" + Math.floor(100 + Math.random() * 900) + "@" + Math.floor(10 + Math.random() * 90));
-    const hashedPassword = hashPassword(tempPassword);
-
-    // Upload documents to Cloudinary if they exist
+    // Upload identity proof documents to Cloudinary if provided
     let nicFrontUrl = "";
     let nicBackUrl = "";
-    let birthCertificateUrl = "";
+    let birthCertUrl = "";
     let policeReportUrl = "";
 
-    if (nicFront) {
-      nicFrontUrl = await uploadToCloudinary(nicFront, "agents/documents");
-    }
-    if (nicBack) {
-      nicBackUrl = await uploadToCloudinary(nicBack, "agents/documents");
-    }
-    if (birthCertificate) {
-      birthCertificateUrl = await uploadToCloudinary(birthCertificate, "agents/documents");
-    }
-    if (policeReport) {
-      policeReportUrl = await uploadToCloudinary(policeReport, "agents/documents");
-    }
+    if (nicFront) nicFrontUrl = await uploadToCloudinary(nicFront, "agents/documents");
+    if (nicBack) nicBackUrl = await uploadToCloudinary(nicBack, "agents/documents");
+    if (birthCertificate) birthCertUrl = await uploadToCloudinary(birthCertificate, "agents/documents");
+    if (policeReport) policeReportUrl = await uploadToCloudinary(policeReport, "agents/documents");
 
-    // Automatically find province based on the branch
-    const staff = await OfficeStaff.findOne({ branch: branch.trim() });
-    let resolvedProvince = staff ? staff.province : "";
-    if (!resolvedProvince && province) {
-      resolvedProvince = province.trim();
+    // Generate random 8-character temporary password
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let tempPassword = "";
+    for (let i = 0; i < 8; i++) {
+      tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
     }
+    const hashedPassword = hashPassword(tempPassword);
 
     const newAgent = new Agent({
       agentId: nextAgentId,
       name: name.trim(),
       email: cleanEmail,
-      password: hashedPassword,
-      mustChangePassword: false,
       nic: cleanNic,
-      address: address.trim(),
       dob: dob.trim(),
-      branch: branch.trim(),
-      phone: phone ? phone.trim() : "",
-      city: district ? district.trim() : "",
+      address: address.trim(),
+      phone: phone.trim(),
+      city: district ? district.trim() : (city ? city.trim() : ""),
       district: district ? district.trim() : "",
       area: area ? area.trim() : "",
-      province: province ? province.trim() : resolvedProvince,
+      province: province ? province.trim() : "",
+      branch: branch.trim(),
       bankName: bankName ? bankName.trim() : "",
       bankBranch: bankBranch ? bankBranch.trim() : "",
       accountNumber: accountNumber ? accountNumber.trim() : "",
@@ -437,33 +612,32 @@ router.post("/agents", async (req, res) => {
       accountHolderName: accountHolderName ? accountHolderName.trim() : "",
       nicFront: nicFrontUrl,
       nicBack: nicBackUrl,
-      birthCertificate: birthCertificateUrl,
+      birthCertificate: birthCertUrl,
       policeReport: policeReportUrl,
-      status: "active"
+      status: "active",
+      mustChangePassword: true,
+      password: hashedPassword
     });
 
     await newAgent.save();
 
-    // Send welcome email with login details to the agent's email
-    const subject = `Welcome to Sanasa Insurance — Your Agent Credentials`;
+    // Send Welcome Email with credentials and temporary password
+    const subject = "Welcome to Sanasa Insurance - Your Agent Account Details";
     const htmlBody = getBaseTemplate(
-      subject,
+      "Agent Account Activation",
       `
-      <h2>Agent Account Created Successfully</h2>
       <p>Dear <strong>${name.trim()}</strong>,</p>
-      <p>Your agent account has been registered by the branch staff at the <strong>${branch.trim()}</strong> branch. Below are your login credentials and account details:</p>
-      <table class="data-table">
+      <p>Congratulations! Your official Agent account with Sanasa Insurance has been successfully created. You have been assigned to the <strong>${branch.trim()}</strong> branch.</p>
+      <div class="highlight-box">
+        <p style="margin: 0; font-size: 14px; color: #1e3a8a;"><strong>Your Credentials:</strong></p>
+        <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Agent ID:</strong> ${nextAgentId}</p>
+        <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Email:</strong> ${cleanEmail}</p>
+        <p style="margin: 5px 0 0 0; font-size: 14px;"><strong>Temporary Password:</strong> <code style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-weight: bold; color: #0f172a;">${tempPassword}</code></p>
+      </div>
+      <table class="info-table">
         <tr>
-          <td class="label">Agent ID:</td>
-          <td class="value highlight-value">${nextAgentId}</td>
-        </tr>
-        <tr>
-          <td class="label">Email / Login Username:</td>
-          <td class="value">${cleanEmail}</td>
-        </tr>
-        <tr>
-          <td class="label">Temporary Password:</td>
-          <td class="value highlight-value">${tempPassword}</td>
+          <td class="label">Contact Phone:</td>
+          <td class="value">${phone.trim()}</td>
         </tr>
         <tr>
           <td class="label">NIC Number:</td>
@@ -482,7 +656,7 @@ router.post("/agents", async (req, res) => {
     try {
       await sendEmail(cleanEmail, subject, htmlBody, textBody);
     } catch (emailErr) {
-      console.error("⚠️ Failed to send agent welcome email:", emailErr.message);
+      console.error("Failed to send agent welcome email:", emailErr.message);
     }
 
     // Return agent details without password

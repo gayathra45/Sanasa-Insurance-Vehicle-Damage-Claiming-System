@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+﻿import mongoose from "mongoose";
 
 const claimSchema = new mongoose.Schema({
   claimNumber: { type: String, required: true, unique: true },
@@ -83,12 +83,45 @@ const claimSchema = new mongoose.Schema({
     damagedItems: [
       {
         item: { type: String },
-        damagePercentage: { type: Number },
-        description: { type: String }
+        damagePercentage: { type: Number, default: 0 },
+        description: { type: String, default: "" },
+        action: { type: String, default: "Repair" }, // "Repair" | "Replace"
+        estimatedPartCost: { type: Number, default: 0 },
+        estimatedLaborCost: { type: Number, default: 0 },
+        totalItemCost: { type: Number, default: 0 }
       }
     ],
     overallDamagePercentage: { type: Number, default: 0 },
-    summary: { type: String, default: "" }
+    totalEstimatedPartsCost: { type: Number, default: 0 },
+    totalEstimatedLaborCost: { type: Number, default: 0 },
+    totalEstimatedCost: { type: Number, default: 0 },
+    currency: { type: String, default: "LKR" },
+    summary: { type: String, default: "" },
+    analyzedAt: { type: Date, default: null }
+  },
+  garageEstimateComparison: {
+    isCompared: { type: Boolean, default: false },
+    garageDocumentUrl: { type: String, default: "" },
+    garageName: { type: String, default: "" },
+    garageEstimatedTotal: { type: Number, default: 0 },
+    aiEstimatedTotal: { type: Number, default: 0 },
+    costDifference: { type: Number, default: 0 },
+    costDifferencePercentage: { type: Number, default: 0 },
+    verdict: { type: String, default: "Pending" }, // "Match" | "Discrepancy" | "High Variance" | "Approved" | "Rejected"
+    matchConfidenceScore: { type: Number, default: 0 },
+    photoVerificationDetails: [
+      {
+        item: { type: String },
+        garageCost: { type: Number, default: 0 },
+        aiCost: { type: Number, default: 0 },
+        matchesAccidentPhotos: { type: Boolean, default: true },
+        confidence: { type: Number, default: 0 },
+        notes: { type: String, default: "" }
+      }
+    ],
+    summary: { type: String, default: "" },
+    reviewedAt: { type: Date, default: null },
+    reviewedBy: { type: String, default: "" }
   }
 });
 

@@ -44,7 +44,49 @@ interface Claim {
   documentRequestTo?: string;
   currentStep?: number;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
+  additionalDocuments?: { name: string; url: string; uploadedAt: string; uploadedBy?: string }[];
   createdAt?: string;
+  aiAnalysis?: {
+    isAnalyzed: boolean;
+    damagedItems?: {
+      item: string;
+      damagePercentage: number;
+      description: string;
+      action?: "Repair" | "Replace";
+      estimatedPartCost?: number;
+      estimatedLaborCost?: number;
+      totalItemCost?: number;
+    }[];
+    overallDamagePercentage?: number;
+    totalEstimatedPartsCost?: number;
+    totalEstimatedLaborCost?: number;
+    totalEstimatedCost?: number;
+    currency?: string;
+    summary?: string;
+    analyzedAt?: string;
+  };
+  garageEstimateComparison?: {
+    isCompared: boolean;
+    garageDocumentUrl?: string;
+    garageName?: string;
+    garageEstimatedTotal?: number;
+    aiEstimatedTotal?: number;
+    costDifference?: number;
+    costDifferencePercentage?: number;
+    verdict?: string;
+    matchConfidenceScore?: number;
+    photoVerificationDetails?: {
+      item: string;
+      garageCost: number;
+      aiCost: number;
+      matchesAccidentPhotos: boolean;
+      confidence: number;
+      notes: string;
+    }[];
+    summary?: string;
+    reviewedAt?: string;
+    reviewedBy?: string;
+  };
 }
 
 const translations = {
@@ -113,6 +155,44 @@ function TrackClaimsContent() {
   const [claimId, setClaimId] = useState("");
   const [trackedClaim, setTrackedClaim] = useState<Claim | null>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
+  const [garageFile, setGarageFile] = useState<File | null>(null);
+  const [isUploadingGarage, setIsUploadingGarage] = useState(false);
+
+  const handleUploadGarageEstimate = async () => {
+    if (!garageFile || !trackedClaim) return;
+    try {
+      setIsUploadingGarage(true);
+      const reader = new FileReader();
+      const base64Data: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(garageFile);
+      });
+
+      const res = await fetch(`${API_URL}/my-claims/upload-garage-estimate/${encodeURIComponent(trackedClaim.claimNumber)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileData: base64Data,
+          fileName: garageFile.name || "Garage Estimate Report"
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setTrackedClaim(data.claim);
+        setGarageFile(null);
+        alert("Garage Estimate Report uploaded and cross-checked against accident photos successfully!");
+      } else {
+        alert(data.error || "Failed to upload Garage Estimate Report.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while uploading the Garage Estimate Report.");
+    } finally {
+      setIsUploadingGarage(false);
+    }
+  };
   const [claimsList, setClaimsList] = useState<Claim[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -504,6 +584,137 @@ function TrackClaimsContent() {
               
               {/* Progress wizard */}
               {renderClaimProgress(trackedClaim.status, trackedClaim.currentStep, trackedClaim.paymentReceipt)}
+
+              {/* Garage Estimate Request Action Banner */}
+              {trackedClaim.documentsRequested && trackedClaim.requestedDocuments?.some(d => d.toLowerCase().includes("garage")) && (
+                <div className="mb-6 p-6 rounded-2xl bg-amber-50 border border-amber-300 shadow-sm flex flex-col gap-4 text-left transition-all duration-300">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl mt-0.5">⚠️</span>
+                    <div>
+                      <h4 className="text-base font-bold text-amber-950 leading-tight">
+                        Action Required: Upload Garage Estimate Report
+                      </h4>
+                      <p className="text-amber-800 text-xs font-normal mt-1 leading-relaxed">
+                        The branch office has generated the AI Damage Assessment and requires your official repair quotation from the garage to perform the forensic photo cross-check and approve your payout.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white border border-amber-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex-1 w-full">
+                      <label className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block mb-1.5">
+                        Select Garage Quotation / Estimate Document (Image / PDF)
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setGarageFile(e.target.files[0]);
+                          }
+                        }}
+                        className="text-xs font-semibold text-slate-700 file:mr-3 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-[#000080] file:text-white file:cursor-pointer"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleUploadGarageEstimate}
+                      disabled={isUploadingGarage || !garageFile}
+                      className="w-full sm:w-auto px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-full shadow-sm transition-all border-none cursor-pointer disabled:opacity-50 active:scale-95 whitespace-nowrap"
+                    >
+                      {isUploadingGarage ? "Uploading & Cross-Checking..." : "Submit Garage Estimate"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* AI Damage Assessment & Estimation Cost Sheet Card */}
+              {trackedClaim.aiAnalysis?.isAnalyzed && (
+                <div className="mb-6 p-6 rounded-2xl bg-slate-50 border border-slate-200 text-left shadow-xs flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📋</span>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                          AI Damage Assessment & Loss Estimation
+                        </h4>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Evaluated by Sanasa AI Damage Assessment Engine
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full w-fit font-mono">
+                      Total Loss: LKR {(trackedClaim.aiAnalysis.totalEstimatedCost || 0).toLocaleString()}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-white border border-slate-200/80 rounded-xl p-3">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block">Damage Severity</span>
+                      <span className="text-sm font-bold text-emerald-600 mt-1 block">{trackedClaim.aiAnalysis.overallDamagePercentage}%</span>
+                    </div>
+                    <div className="bg-white border border-slate-200/80 rounded-xl p-3">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block">Parts Total</span>
+                      <span className="text-xs font-bold text-slate-800 mt-1 block font-mono">LKR {(trackedClaim.aiAnalysis.totalEstimatedPartsCost || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="bg-white border border-slate-200/80 rounded-xl p-3">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block">Labor Total</span>
+                      <span className="text-xs font-bold text-slate-800 mt-1 block font-mono">LKR {(trackedClaim.aiAnalysis.totalEstimatedLaborCost || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3">
+                      <span className="text-[10px] text-emerald-800 font-semibold uppercase block">Grand Total</span>
+                      <span className="text-xs font-extrabold text-emerald-900 mt-1 block font-mono">LKR {(trackedClaim.aiAnalysis.totalEstimatedCost || 0).toLocaleString()}</span>
+                    </div>
+                  </div>
+
+                  {trackedClaim.aiAnalysis.damagedItems && trackedClaim.aiAnalysis.damagedItems.length > 0 && (
+                    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-slate-100 text-slate-600 font-bold border-b border-slate-200 text-[10px] uppercase">
+                            <th className="py-2 px-3">Item</th>
+                            <th className="py-2 px-3 text-center">Action</th>
+                            <th className="py-2 px-3 text-right">Parts Cost</th>
+                            <th className="py-2 px-3 text-right">Labor Cost</th>
+                            <th className="py-2 px-3 text-right font-bold text-slate-900">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 text-slate-700">
+                          {trackedClaim.aiAnalysis.damagedItems.map((item, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/50">
+                              <td className="py-2 px-3 font-semibold text-slate-800">{item.item}</td>
+                              <td className="py-2 px-3 text-center">
+                                <span className="px-2 py-0.5 bg-slate-100 rounded-full text-[10px] font-bold text-slate-700">
+                                  {item.action || "Repair"}
+                                </span>
+                              </td>
+                              <td className="py-2 px-3 text-right font-mono text-slate-600">LKR {(item.estimatedPartCost || 0).toLocaleString()}</td>
+                              <td className="py-2 px-3 text-right font-mono text-slate-600">LKR {(item.estimatedLaborCost || 0).toLocaleString()}</td>
+                              <td className="py-2 px-3 text-right font-mono font-bold text-slate-900">LKR {(item.totalItemCost || ((item.estimatedPartCost || 0) + (item.estimatedLaborCost || 0))).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {trackedClaim.garageEstimateComparison?.isCompared && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-blue-900">
+                          🔍 Garage Estimate Cross-Check ({trackedClaim.garageEstimateComparison.garageName || "Garage Quotation"})
+                        </span>
+                        <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
+                          {trackedClaim.garageEstimateComparison.matchConfidenceScore}% Photo Match Confidence
+                        </span>
+                      </div>
+                      <p className="text-xs text-blue-800 m-0 leading-relaxed">
+                        {trackedClaim.garageEstimateComparison.summary || "Garage quotation verified against accident photos. Branch review is underway."}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Payment Receipt Notification Banner */}
               {trackedClaim.paymentReceipt && (

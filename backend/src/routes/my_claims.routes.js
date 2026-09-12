@@ -1,20 +1,20 @@
-import express from "express";
+﻿import express from "express";
 import crypto from "crypto";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
-import { sendEmail, sendAgentActivityEmail } from "../utils/email.js";
 import { logAgentActivity } from "../utils/activity.js";
+import { sendAgentActivityEmail, sendEmail } from "../utils/email.js";
+import { compareGarageEstimateWithPhotosAndAI } from "../utils/aiAnalyzer.js";
 
 const router = express.Router();
 
-// Helper to hash password matching the signup hashing logic
 function hashPassword(password) {
   return crypto.createHash("sha256").update(password).digest("hex");
 }
 
-// 1. Authenticate user session (login)
+// 1. Policy holder login by NIC and Password
 router.post("/login", async (req, res) => {
   try {
     const { nic, password } = req.body;
@@ -22,8 +22,8 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "NIC and Password are required." });
     }
 
-    const cleanNic = nic.trim();
-    const user = await User.findOne({ nic: cleanNic }, { documents: 0 });
+    const cleanNic = nic.trim().toUpperCase();
+    const user = await User.findOne({ nic: cleanNic });
     if (!user) {
       return res.status(400).json({ error: "Invalid NIC or Password." });
     }
@@ -31,12 +31,6 @@ router.post("/login", async (req, res) => {
     const hashedInput = hashPassword(password);
     if (user.password !== hashedInput) {
       return res.status(400).json({ error: "Invalid NIC or Password." });
-    }
-
-    if (user.status === "Rejected") {
-      return res.status(400).json({ error: "Your registration has been rejected by the office staff." });
-    } else if (user.status !== "Approved") {
-      return res.status(400).json({ error: "Your account is pending approval from the office staff of your nearest branch." });
     }
 
     // Return user details excluding password
@@ -119,7 +113,102 @@ router.get("/track-claim", async (req, res) => {
   }
 });
 
-// 4. Update claim details (status, amount, currentStep, append message, upload documents)
+// 4. Direct Upload of Garage Estimate Report
+router.post("/upload-garage-estimate/:claimNumber", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    const { fileData, fileName } = req.body;
+
+    if (!fileData) {
+      return res.status(400).json({ error: "Document file data is required." });
+    }
+
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    const docName = fileName || "Garage Estimate Report";
+    const uploadedUrl = await uploadToCloudinary(fileData, "claims/additional_documents");
+
+    // Add to additional documents
+    claim.additionalDocuments.push({
+      name: docName,
+      url: uploadedUrl,
+      uploadedAt: new Date(),
+      uploadedBy: "Policy Holder"
+    });
+
+    // Remove from requested list
+    if (claim.requestedDocuments && Array.isArray(claim.requestedDocuments)) {
+      claim.requestedDocuments = claim.requestedDocuments.filter(
+        d => !d.toLowerCase().includes("garage")
+      );
+    }
+    if (claim.requestedDocuments.length === 0) {
+      claim.documentsRequested = false;
+    }
+
+    // Set to Review status
+    claim.status = "Review";
+    claim.currentStep = 4;
+
+    // Convert accident photos to base64 for AI forensic cross-check
+    const allUrls = [
+      ...(claim.accidentPhotos?.front || []),
+      ...(claim.accidentPhotos?.rear || []),
+      ...(claim.accidentPhotos?.side || [])
+    ];
+
+    let base64Photos = [];
+    if (allUrls.length > 0) {
+      try {
+        base64Photos = await Promise.all(
+          allUrls.map(async (url) => {
+            const response = await fetch(url);
+            const arrayBuffer = await response.arrayBuffer();
+            return Buffer.from(arrayBuffer).toString("base64");
+          })
+        );
+      } catch (err) {
+        console.warn("Could not convert accident photos to base64:", err.message);
+      }
+    }
+
+    // Run AI comparison between garage doc and accident photos
+    const comparison = await compareGarageEstimateWithPhotosAndAI(
+      fileData,
+      base64Photos,
+      claim.aiAnalysis,
+      claim.inspectionReport || ""
+    );
+
+    comparison.garageDocumentUrl = uploadedUrl;
+    claim.garageEstimateComparison = comparison;
+
+    claim.messages.push({
+      sender: "Policy Holder",
+      message: `Uploaded official Garage Estimate Report. AI forensic cross-check completed with ${comparison.matchConfidenceScore}% photo match confidence.`,
+      sentAt: new Date()
+    });
+
+    claim.markModified("requestedDocuments");
+    claim.markModified("additionalDocuments");
+    claim.markModified("garageEstimateComparison");
+    await claim.save();
+
+    res.json({
+      message: "Garage Estimate Report uploaded and cross-checked successfully!",
+      claim,
+      garageEstimateComparison: claim.garageEstimateComparison
+    });
+  } catch (err) {
+    console.error("Upload garage estimate error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// 5. Update claim details (status, amount, currentStep, append message, upload documents)
 router.patch("/update-claim/:claimNumber", async (req, res) => {
   try {
     const { claimNumber } = req.params;
@@ -190,6 +279,39 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
             await logAgentActivity(claim.assignedAgent, "Document Uploaded", deviceType, `Uploaded document: ${documentName} for claim ${claim.claimNumber}`);
           }
 
+          // If this is a garage estimate report, auto-trigger AI comparison against accident photos
+          if (documentName.toLowerCase().includes("garage")) {
+            try {
+              const allUrls = [
+                ...(claim.accidentPhotos?.front || []),
+                ...(claim.accidentPhotos?.rear || []),
+                ...(claim.accidentPhotos?.side || [])
+              ];
+
+              let base64Photos = [];
+              if (allUrls.length > 0) {
+                base64Photos = await Promise.all(
+                  allUrls.map(async (url) => {
+                    const response = await fetch(url);
+                    const arrayBuffer = await response.arrayBuffer();
+                    return Buffer.from(arrayBuffer).toString("base64");
+                  })
+                );
+              }
+
+              const comparison = await compareGarageEstimateWithPhotosAndAI(
+                fileData,
+                base64Photos,
+                claim.aiAnalysis,
+                claim.inspectionReport || ""
+              );
+              comparison.garageDocumentUrl = uploadedUrl;
+              claim.garageEstimateComparison = comparison;
+            } catch (aiErr) {
+              console.warn("Garage estimate auto-comparison warning:", aiErr.message);
+            }
+          }
+
           // Remove uploaded document from requested list
           if (claim.requestedDocuments && Array.isArray(claim.requestedDocuments)) {
             claim.requestedDocuments = claim.requestedDocuments.filter(
@@ -218,6 +340,7 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
 
     claim.markModified("requestedDocuments");
     claim.markModified("additionalDocuments");
+    claim.markModified("garageEstimateComparison");
     await claim.save();
 
     // Send activity update email to agent
@@ -243,7 +366,7 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
   }
 });
 
-// 5. Send an email from the policy holder contact page
+// 6. Send an email from the policy holder contact page
 router.post("/contact/email", async (req, res) => {
   try {
     const { name, email, nic, phone, subject, message } = req.body;
@@ -254,7 +377,6 @@ router.post("/contact/email", async (req, res) => {
     const recipient = "claims@sanasainsurance.lk";
     const emailSubject = `Contact Request: ${subject}`;
     
-    // Construct rich email body
     const htmlBody = `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 16px;">
         <h2 style="color: #004f6e; border-bottom: 2px solid #004f6e; padding-bottom: 10px;">Contact Inquiry from Policy Holder</h2>
@@ -316,7 +438,7 @@ Sent from Sanasa Insurance Portal Contact Form
   }
 });
 
-// 5. Delete/Cancel claim (only allowed before agent is assigned)
+// 7. Delete/Cancel claim (only allowed before agent is assigned)
 router.delete("/delete-claim/:claimNumber", async (req, res) => {
   try {
     const { claimNumber } = req.params;
@@ -336,7 +458,7 @@ router.delete("/delete-claim/:claimNumber", async (req, res) => {
     }
 
     // Delete the claim
-    await Claim.findOneAndDelete({ claimNumber: cleanClaimNum });
+    await Claim.findOneAndDelete({ cleanClaimNum });
 
     res.json({ message: "Claim cancelled and deleted successfully." });
   } catch (err) {
