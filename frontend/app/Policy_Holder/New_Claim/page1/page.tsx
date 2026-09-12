@@ -237,7 +237,7 @@ export default function UploadDocumentsPage() {
           type="file"
           ref={inputRef}
           multiple
-          accept="image/*,video/*"
+          accept="image/*,video/*,application/pdf"
           onChange={(e) => handleFileChange(e, stateSetter)}
           className="hidden"
         />
@@ -256,7 +256,7 @@ export default function UploadDocumentsPage() {
               {cardText}
             </span>
             <span className="text-slate-400 text-[8px] mt-0.5 font-normal leading-tight select-none">
-              JPG,PNG - max 5MB each. Multiple Files Allowed
+              JPG, PNG, PDF, Video - max 10MB each. Multiple Files Allowed
             </span>
           </div>
         ) : (

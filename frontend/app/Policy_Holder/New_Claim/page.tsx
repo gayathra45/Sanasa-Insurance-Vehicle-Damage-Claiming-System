@@ -1294,7 +1294,7 @@ export default function FileNewClaim() {
                       type="file"
                       id={`license-upload-${index}`}
                       multiple
-                      accept="image/*"
+                      accept="image/*,application/pdf"
                       onChange={(e) => handleOtherLicenseUpload(index, e.target.files)}
                       className="hidden"
                     />
@@ -1309,7 +1309,7 @@ export default function FileNewClaim() {
                           Upload Driver's License Photos
                         </span>
                         <span className="text-slate-400 text-[9px] mt-1">
-                          JPG, PNG - max 5MB. Click to upload.
+                          JPG, PNG, PDF - max 10MB. Click to upload.
                         </span>
                       </div>
                     ) : (
@@ -1354,7 +1354,7 @@ export default function FileNewClaim() {
                       type="file"
                       id={`vehicle-upload-${index}`}
                       multiple
-                      accept="image/*"
+                      accept="image/*,application/pdf"
                       onChange={(e) => handleOtherVehiclePhotoUpload(index, e.target.files)}
                       className="hidden"
                     />
@@ -1369,7 +1369,7 @@ export default function FileNewClaim() {
                           Upload Damage / Accident Photos
                         </span>
                         <span className="text-slate-400 text-[9px] mt-1">
-                          JPG, PNG - max 5MB. Click to upload.
+                          JPG, PNG, PDF - max 10MB. Click to upload.
                         </span>
                       </div>
                     ) : (

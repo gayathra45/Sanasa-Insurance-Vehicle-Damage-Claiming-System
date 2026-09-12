@@ -10,11 +10,18 @@ const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
  * Converts a base64 string or buffer into Gemini's expected image format
  */
 function fileToGenerativePart(base64Str, mimeType) {
+  let detectedMime = mimeType || "image/jpeg";
+  if (base64Str.startsWith("data:")) {
+    const header = base64Str.substring(0, base64Str.indexOf(";"));
+    detectedMime = header.replace("data:", "") || detectedMime;
+  } else if (base64Str.startsWith("JVBERi0")) {
+    detectedMime = "application/pdf";
+  }
   const base64Data = base64Str.includes(",") ? base64Str.split(",")[1] : base64Str;
   return {
     inlineData: {
       data: base64Data,
-      mimeType: mimeType || "image/jpeg"
+      mimeType: detectedMime
     },
   };
 }

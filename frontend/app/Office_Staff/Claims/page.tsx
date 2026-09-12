@@ -1277,6 +1277,19 @@ function OfficeStaffClaimsPageContent() {
                                 Assign Agent
                               </button>
                             )}
+                            {(claim.inspectionSubmitted || claim.inspectionReport || claim.currentStep >= 3 || claim.aiAnalysis) && (
+                              <button
+                                onClick={() => {
+                                  setSelectedClaim(claim);
+                                  setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
+                                  setActiveSubModal("inspection");
+                                }}
+                                className="bg-[#10b981] hover:bg-[#059669] text-white font-semibold text-[10px] px-3 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs border-none active:scale-95 whitespace-nowrap flex items-center gap-1"
+                              >
+                                <HugeiconsIcon icon={File01Icon} className="w-3 h-3 text-white" strokeWidth={2.5} />
+                                Inspection
+                              </button>
+                            )}
                             <button
                               onClick={() => {
                                 setSelectedClaim(claim);
@@ -1962,664 +1975,7 @@ function OfficeStaffClaimsPageContent() {
           )}
 
 
-          {/* SUB-MODAL: DETAILED INSPECTION REPORT & LOSS ASSESSMENT WORKFLOW */}
-          {activeSubModal === "inspection" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[950px] max-h-[92vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden text-left">
-              {/* Header */}
-              <div className="px-8 pt-6 pb-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/80 select-none">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold shadow-xs">
-                    <HugeiconsIcon icon={File01Icon} className="w-5 h-5" strokeWidth={2.5} />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none flex items-center gap-2">
-                      Vehicle Physical Inspection Report & Loss Assessment
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-1 font-medium">
-                      Claim {selectedClaim.claimNumber} � {formatPlate(selectedClaim.vehiclePlate)} � Agent: {selectedClaim.assignedAgent || "Assigned Agent"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                    selectedClaim.status === "Approved" ? "bg-emerald-100 text-emerald-800" :
-                    selectedClaim.status === "Settled" ? "bg-blue-100 text-blue-800" :
-                    selectedClaim.status === "Rejected" ? "bg-red-100 text-red-800" :
-                    selectedClaim.status === "Review" ? "bg-purple-100 text-purple-800" :
-                    "bg-amber-100 text-amber-800"
-                  }`}>
-                    {selectedClaim.status}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setActiveSubModal(null)}
-                    className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition-all border-none bg-transparent cursor-pointer"
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Scrollable Inspection & Assessment Body */}
-              <div className="px-8 py-6 flex-1 overflow-y-auto space-y-6">
-                
-                {/* 1. PHYSICAL INSPECTION REPORT FINDINGS (SUBMITTED BY AGENT) */}
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-5">
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">??</span>
-                      <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-                        1. Physical Vehicle Findings (Agent Submission)
-                      </h3>
-                    </div>
-                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      Physical Inspection Completed
-                    </span>
-                  </div>
-
-                  {(() => {
-                    const parsedReport = parseInspectionReport(selectedClaim.inspectionReport || "");
-                    const parsed = (parsedReport && !parsedReport.isRaw) ? parsedReport : {
-                      isRaw: false,
-                      odometer: "N/A",
-                      fuelLevel: "N/A",
-                      recommendedAction: "Repairable (Minor)",
-                      estimatedCost: "N/A",
-                      checklist: {},
-                      preExistingDamage: "None reported.",
-                      physicalInspectionNotes: selectedClaim.inspectionReport || "No physical remarks recorded."
-                    };
-
-                    const agentPhotos = (selectedClaim.additionalDocuments || [])
-                      .filter((doc) => doc.uploadedBy === "Agent" || doc.name.toLowerCase().includes("inspection photo"))
-                      .map((doc) => {
-                        let docUrl = doc.url;
-                        if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
-                          docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
-                        }
-                        return { name: doc.name, url: docUrl };
-                      });
-
-                    return (
-                      <div className="space-y-4">
-                        {/* 4 Metric Badges */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Odometer Mileage</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.odometer || "N/A"}</span>
-                          </div>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Fuel Level</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.fuelLevel || "N/A"}</span>
-                          </div>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Recommended Action</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.recommendedAction || "Repairable (Minor)"}</span>
-                          </div>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Pre-Existing Damage</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block truncate" title={parsed.preExistingDamage}>
-                              {parsed.preExistingDamage !== "None reported." ? parsed.preExistingDamage : "None reported"}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Damage Checklist Grid */}
-                        <div>
-                          <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Component Damage Checklist</span>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                            {Object.entries(parsed.checklist || {}).map(([key, val]) => (
-                              <div key={key} className="flex justify-between items-center py-1 border-b border-slate-100 last:border-0 text-xs px-1">
-                                <span className="text-slate-600 font-medium">{key}:</span>
-                                <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${
-                                  val === "None" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                                  val === "Minor" ? "bg-amber-50 text-amber-700 border border-amber-200" :
-                                  "bg-rose-50 text-rose-700 border border-rose-200"
-                                }`}>
-                                  {val}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Physical Remarks */}
-                        <div>
-                          <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-1.5">Agent Physical Inspection Remarks</span>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
-                            {parsed.physicalInspectionNotes || "No physical remarks recorded."}
-                          </div>
-                        </div>
-
-                        {/* Inspection Photos */}
-                        {agentPhotos.length > 0 && (
-                          <div>
-                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Agent On-Site Photos ({agentPhotos.length})</span>
-                            <div className="flex flex-wrap gap-2.5">
-                              {agentPhotos.map((p, idx) => (
-                                <div
-                                  key={idx}
-                                  onClick={() => setPreviewImage(p.url)}
-                                  className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
-                                >
-                                  <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                {/* 2. AI DAMAGE ASSESSMENT & ESTIMATION COST SHEET */}
-                <div className="bg-indigo-50/50 border border-indigo-200 rounded-2xl p-5 space-y-4">
-                  <div className="flex justify-between items-center border-b border-indigo-100 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">??</span>
-                      <h3 className="text-sm font-bold text-indigo-950 uppercase tracking-wider">
-                        2. AI Loss Assessment & Estimation Cost Sheet
-                      </h3>
-                    </div>
-                    {selectedClaim.aiAnalysis?.isAnalyzed && (
-                      <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full">
-                        Assessed via Gemini Vision
-                      </span>
-                    )}
-                  </div>
-
-                  {!selectedClaim.aiAnalysis?.isAnalyzed ? (
-                    <div className="bg-white border border-indigo-200 rounded-xl p-5 text-center space-y-3">
-                      <p className="text-xs text-slate-600 font-medium max-w-md mx-auto">
-                        Run the AI Damage Assessment engine to analyze accident photos and agent physical inspection notes, generate the itemized loss cost sheet in LKR, and automatically request the official Garage Estimate Report from the policy holder.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => handleRunAIAnalysis(selectedClaim.claimNumber)}
-                        disabled={analyzingClaim === selectedClaim.claimNumber}
-                        className="px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2"
-                      >
-                        {analyzingClaim === selectedClaim.claimNumber ? "Analyzing Damage..." : "? Run AI Damage Assessment / Cost Sheet"}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* 4 Loss KPI Cards */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Estimated Loss</span>
-                          <span className="text-sm font-extrabold text-indigo-900 font-mono mt-0.5 block">
-                            LKR {(selectedClaim.aiAnalysis.totalEstimatedCost || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Parts Cost</span>
-                          <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
-                            LKR {(selectedClaim.aiAnalysis.totalEstimatedPartsCost || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Labor & Repair</span>
-                          <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
-                            LKR {(selectedClaim.aiAnalysis.totalEstimatedLaborCost || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Assessed Damage</span>
-                          <span className="text-sm font-extrabold text-amber-600 font-mono mt-0.5 block">
-                            {selectedClaim.aiAnalysis.overallDamagePercentage || 0}%
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Itemized Cost Sheet Table */}
-                      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wider">
-                          Itemized Automotive Parts & Labor Cost Sheet (LKR)
-                        </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-xs text-left">
-                            <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100">
-                              <tr>
-                                <th className="py-2.5 px-4">Damaged Component / Assembly</th>
-                                <th className="py-2.5 px-3 text-center">Damage %</th>
-                                <th className="py-2.5 px-3 text-center">Action</th>
-                                <th className="py-2.5 px-3 text-right">Parts Cost</th>
-                                <th className="py-2.5 px-3 text-right">Labor Cost</th>
-                                <th className="py-2.5 px-4 text-right">Line Total</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {(selectedClaim.aiAnalysis.damagedItems || []).map((item, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                                  <td className="py-2.5 px-4 font-semibold text-slate-800">
-                                    <div>{item.item}</div>
-                                    {item.description && (
-                                      <div className="text-[10px] text-slate-400 font-normal mt-0.5">{item.description}</div>
-                                    )}
-                                  </td>
-                                  <td className="py-2.5 px-3 text-center font-bold text-amber-600">{item.damagePercentage}%</td>
-                                  <td className="py-2.5 px-3 text-center">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                      item.action === "Replace" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
-                                    }`}>
-                                      {item.action || "Repair"}
-                                    </span>
-                                  </td>
-                                  <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                                    LKR {(item.estimatedPartCost || 0).toLocaleString()}
-                                  </td>
-                                  <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                                    LKR {(item.estimatedLaborCost || 0).toLocaleString()}
-                                  </td>
-                                  <td className="py-2.5 px-4 text-right font-bold font-mono text-slate-900">
-                                    LKR {(item.totalItemCost || (item.estimatedPartCost || 0) + (item.estimatedLaborCost || 0)).toLocaleString()}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-
-                      {/* AI Auditor Narrative Summary */}
-                      {selectedClaim.aiAnalysis.summary && (
-                        <div className="bg-white border border-indigo-100 rounded-xl p-3.5 text-xs text-slate-700 leading-relaxed font-medium">
-                          <strong className="text-indigo-950 font-bold block mb-1">AI Assessment Summary:</strong>
-                          {selectedClaim.aiAnalysis.summary}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* 3. GARAGE ESTIMATE DOCUMENT REQUEST & POLICY HOLDER SUBMISSION */}
-                {(() => {
-                  const garageDoc = (selectedClaim.additionalDocuments || []).find(
-                    (d) => d.name && d.name.toLowerCase().includes("garage")
-                  ) || (selectedClaim.additionalDocuments && selectedClaim.additionalDocuments.find(d => d.uploadedBy === "Policy Holder"));
-
-                  return (
-                    <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-5 space-y-4">
-                      <div className="flex justify-between items-center border-b border-amber-200 pb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">??</span>
-                          <h3 className="text-sm font-bold text-amber-950 uppercase tracking-wider">
-                            3. Garage Estimate Report from Policy Holder
-                          </h3>
-                        </div>
-                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                          garageDoc ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-                        }`}>
-                          {garageDoc ? "Document Uploaded" : "Awaiting Policy Holder Upload"}
-                        </span>
-                      </div>
-
-                      {!garageDoc ? (
-                        <div className="bg-white border border-amber-200 rounded-xl p-4 text-xs text-slate-700 leading-relaxed">
-                          <span className="font-bold text-amber-900 block mb-1">Status: Document Request Dispatched</span>
-                          The policy holder has been notified to upload the official Garage Estimate quotation document. Once uploaded from their portal, the quotation will automatically appear here for forensic cost cross-checking.
-                        </div>
-                      ) : (
-                        <div className="bg-white border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                          <div>
-                            <span className="text-xs font-bold text-slate-900 block">{garageDoc.name}</span>
-                            <span className="text-[10px] text-slate-400 font-medium">
-                              Uploaded by {garageDoc.uploadedBy || "Policy Holder"} on {formatSriLankaDateTime(garageDoc.uploadedAt)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <a
-                              href={garageDoc.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs inline-flex items-center gap-1.5 text-decoration-none"
-                            >
-                              <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
-                              View Garage Quotation
-                            </a>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* 4. GARAGE ESTIMATE VS. AI BENCHMARK FORENSIC COMPARISON */}
-                {(() => {
-                  const garageDoc = (selectedClaim.additionalDocuments || []).find(
-                    (d) => d.name && d.name.toLowerCase().includes("garage")
-                  );
-
-                  return (
-                    <div className="bg-emerald-50/50 border border-emerald-200 rounded-2xl p-5 space-y-4">
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-200 pb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">??</span>
-                          <h3 className="text-sm font-bold text-emerald-950 uppercase tracking-wider">
-                            4. Garage vs. AI Benchmark & Photo Cross-Check
-                          </h3>
-                        </div>
-                        {garageDoc && (
-                          <button
-                            type="button"
-                            onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber)}
-                            disabled={comparingGarageClaim === selectedClaim.claimNumber}
-                            className="px-4 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
-                          >
-                            {comparingGarageClaim === selectedClaim.claimNumber ? "Comparing..." : "? Run Cost Comparison"}
-                          </button>
-                        )}
-                      </div>
-
-                      {!selectedClaim.garageEstimateComparison?.isCompared ? (
-                        <div className="bg-white border border-emerald-200 rounded-xl p-4 text-xs text-slate-600 text-center font-medium">
-                          {garageDoc ? "Click 'Run Cost Comparison' above to compare the uploaded garage quotation against AI loss benchmarks and accident photos." : "Awaiting Garage Estimate document upload before performing cost comparison."}
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {/* Comparison Metric Grid */}
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
-                              <span className="text-[10px] text-slate-500 font-bold uppercase block">AI Loss Benchmark</span>
-                              <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
-                                LKR {(selectedClaim.garageEstimateComparison.aiEstimatedTotal || 0).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
-                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Garage Quoted Total</span>
-                              <span className="text-sm font-extrabold text-slate-900 font-mono mt-0.5 block">
-                                LKR {(selectedClaim.garageEstimateComparison.garageEstimatedTotal || 0).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
-                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Cost Variance</span>
-                              <span className={`text-sm font-extrabold font-mono mt-0.5 block ${
-                                (selectedClaim.garageEstimateComparison.costDifferencePercentage || 0) <= 15 ? "text-emerald-600" : "text-rose-600"
-                              }`}>
-                                {(selectedClaim.garageEstimateComparison.costDifferencePercentage || 0) >= 0 ? "+" : ""}
-                                {selectedClaim.garageEstimateComparison.costDifferencePercentage || 0}%
-                              </span>
-                            </div>
-                            <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
-                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Forensic Verdict</span>
-                              <span className={`text-xs font-extrabold mt-1 block uppercase ${
-                                selectedClaim.garageEstimateComparison.verdict === "Match" ? "text-emerald-700" : "text-rose-700"
-                              }`}>
-                                {selectedClaim.garageEstimateComparison.verdict || "Match"}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Confidence Progress Meter */}
-                          <div className="bg-white border border-emerald-200 rounded-xl p-3.5">
-                            <div className="flex justify-between items-center text-xs font-bold mb-1.5">
-                              <span className="text-slate-700">Photo & Item Match Confidence Score:</span>
-                              <span className="text-emerald-700">{selectedClaim.garageEstimateComparison.matchConfidenceScore || 90}% Alignment</span>
-                            </div>
-                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${selectedClaim.garageEstimateComparison.matchConfidenceScore || 90}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Itemized Photo Cross-Check Table */}
-                          {(selectedClaim.garageEstimateComparison.photoVerificationDetails || []).length > 0 && (
-                            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wider">
-                                Forensic Photo Evidence Cross-Check
-                              </div>
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-xs text-left">
-                                  <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100">
-                                    <tr>
-                                      <th className="py-2.5 px-4">Claimed Component</th>
-                                      <th className="py-2.5 px-3 text-right">Garage Cost</th>
-                                      <th className="py-2.5 px-3 text-right">AI Cost</th>
-                                      <th className="py-2.5 px-3 text-center">Photo Evidence</th>
-                                      <th className="py-2.5 px-4">Auditor / Forensic Notes</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-100">
-                                    {(selectedClaim.garageEstimateComparison.photoVerificationDetails || []).map((p, idx) => (
-                                      <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                                        <td className="py-2.5 px-4 font-semibold text-slate-800">{p.item}</td>
-                                        <td className="py-2.5 px-3 text-right font-mono text-slate-800">LKR {p.garageCost.toLocaleString()}</td>
-                                        <td className="py-2.5 px-3 text-right font-mono text-slate-600">LKR {p.aiCost.toLocaleString()}</td>
-                                        <td className="py-2.5 px-3 text-center">
-                                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                            p.matchesAccidentPhotos ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
-                                          }`}>
-                                            {p.matchesAccidentPhotos ? "? Photo Verified" : "? Discrepancy"}
-                                          </span>
-                                        </td>
-                                        <td className="py-2.5 px-4 text-[11px] text-slate-600 font-medium">{p.notes}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* 5. POST-APPROVAL PAYMENT SETTLEMENT & RECEIPT WORKFLOW */}
-                {(selectedClaim.status === "Approved" || selectedClaim.status === "Settled") && (
-                  <div className="bg-blue-50/50 border border-blue-200 rounded-2xl p-5 space-y-4">
-                    <div className="flex justify-between items-center border-b border-blue-200 pb-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-base">??</span>
-                        <h3 className="text-sm font-bold text-blue-950 uppercase tracking-wider">
-                          5. Policy Holder Bank Account & Payment Settlement
-                        </h3>
-                      </div>
-                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                        selectedClaim.status === "Settled" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-                      }`}>
-                        {selectedClaim.status === "Settled" ? "Payment Completed" : "Payment Pending Disbursement"}
-                      </span>
-                    </div>
-
-                    {/* Policy Holder Bank Details Profile */}
-                    <div className="bg-white border border-blue-200 rounded-xl p-4">
-                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">
-                        Registered Bank Account Profile
-                      </span>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                        <div>
-                          <span className="text-slate-400 block text-[10px]">Account Holder</span>
-                          <strong className="text-slate-900 block mt-0.5">
-                            {selectedClaim.policyHolderBankDetails?.accountHolderName || selectedClaim.policyHolderName || "Policy Holder"}
-                          </strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px]">Bank Name</span>
-                          <strong className="text-slate-900 block mt-0.5">
-                            {selectedClaim.policyHolderBankDetails?.bankName || selectedClaim.bankName || "Registered Bank"}
-                          </strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px]">Branch Name</span>
-                          <strong className="text-slate-900 block mt-0.5">
-                            {selectedClaim.policyHolderBankDetails?.branchName || selectedClaim.bankBranch || "Galle"}
-                          </strong>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 block text-[10px]">Account Number</span>
-                          <strong className="text-slate-900 font-mono block mt-0.5">
-                            {selectedClaim.policyHolderBankDetails?.accountNumber || selectedClaim.bankAccount || "�"}
-                          </strong>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Payment Receipt Upload & Completion Box */}
-                    {selectedClaim.status === "Approved" && (
-                      <div className="bg-white border border-blue-200 rounded-xl p-5 space-y-4">
-                        <div className="flex flex-col gap-1">
-                          <span className="text-xs font-bold text-slate-800">
-                            Upload Bank Transfer Slip / Payment Receipt <span className="text-red-500">*</span>
-                          </span>
-                          <span className="text-[11px] text-slate-400 font-normal">
-                            Upload the official bank transaction slip to disburse the final settlement of LKR {(selectedClaim.amount || 0).toLocaleString()} to the policy holder.
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-bold text-slate-700">Settlement Amount (LKR)</label>
-                            <input
-                              type="number"
-                              value={settlingAmount || (selectedClaim.amount ? String(selectedClaim.amount) : "")}
-                              onChange={(e) => setSettlingAmount(e.target.value)}
-                              placeholder="Amount in LKR"
-                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs font-bold text-slate-900 font-mono bg-white"
-                            />
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <label className="text-[11px] font-bold text-slate-700">Branch Payment Note (Optional)</label>
-                            <input
-                              type="text"
-                              value={settlingPaymentNote}
-                              onChange={(e) => setSettlingPaymentNote(e.target.value)}
-                              placeholder="e.g. Disbursed via Sampath Bank Corporate Transfer Ref #8849"
-                              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-xs text-slate-800 bg-white"
-                            />
-                          </div>
-                        </div>
-
-                        {/* File Dropzone */}
-                        <div className="border-2 border-dashed border-blue-200 hover:border-blue-400 rounded-xl p-4 text-center bg-blue-50/20 transition-colors">
-                          <input
-                            type="file"
-                            id="receiptUpload"
-                            accept="image/*,application/pdf"
-                            className="hidden"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                setSettlingReceiptFile(e.target.files[0]);
-                              }
-                            }}
-                          />
-                          <label htmlFor="receiptUpload" className="cursor-pointer block">
-                            <HugeiconsIcon icon={File01Icon} className="w-8 h-8 text-blue-500 mx-auto mb-1.5" strokeWidth={2} />
-                            <span className="text-xs font-bold text-blue-700 block">
-                              {settlingReceiptFile ? `Selected: ${settlingReceiptFile.name}` : "Click to Browse Bank Transfer Receipt (Slip / PDF)"}
-                            </span>
-                            <span className="text-[10px] text-slate-400 block mt-0.5">Supports PNG, JPG, PDF up to 10MB</span>
-                          </label>
-                        </div>
-
-                        <div className="flex justify-end pt-2">
-                          <button
-                            type="button"
-                            onClick={handleSettlePayment}
-                            disabled={isSettlingPayment || !settlingReceiptFile}
-                            className="px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2"
-                          >
-                            {isSettlingPayment ? "Uploading & Settling..." : "? Confirm Payment & Settle Claim"}
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* If Already Settled */}
-                    {selectedClaim.status === "Settled" && (
-                      <div className="bg-white border border-emerald-200 rounded-xl p-4 flex justify-between items-center">
-                        <div>
-                          <span className="text-xs font-bold text-emerald-800 block">Payment Disbursed Successfully</span>
-                          <span className="text-[11px] text-slate-500">
-                            Amount: <strong>LKR {(selectedClaim.amount || 0).toLocaleString()}</strong>
-                            {selectedClaim.paymentSettledAt && ` � Settled on ${formatSriLankaDateTime(selectedClaim.paymentSettledAt)}`}
-                          </span>
-                        </div>
-                        {selectedClaim.paymentReceipt && (
-                          <a
-                            href={selectedClaim.paymentReceipt}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs text-decoration-none inline-flex items-center gap-1.5"
-                          >
-                            <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
-                            View Payment Slip
-                          </a>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Footer Decision Action Bar inside Inspection Modal */}
-              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 select-none">
-                <div className="text-xs text-slate-500 font-medium">
-                  {selectedClaim.status === "Approved" || selectedClaim.status === "Settled" ? (
-                    <span className="text-emerald-700 font-bold">? Claim Decision: Approved</span>
-                  ) : selectedClaim.status === "Rejected" ? (
-                    <span className="text-red-700 font-bold">? Claim Decision: Rejected</span>
-                  ) : (
-                    <span>Ready for branch review and settlement decision</span>
-                  )}
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setActiveSubModal(null)}
-                    className="px-5 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer bg-white"
-                  >
-                    Close Inspection
-                  </button>
-
-                  {/* Approve & Reject Decision Buttons inside Inspection Modal */}
-                  {(selectedClaim.status === "Pending" || selectedClaim.status === "In Progress" || selectedClaim.status === "Review") && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRejectionReasonText("");
-                          setActiveSubModal("decision_reject");
-                        }}
-                        className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
-                        Reject Claim
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setApprovingAmount(
-                            selectedClaim.garageEstimateComparison?.garageEstimatedTotal
-                              ? String(selectedClaim.garageEstimateComparison.garageEstimatedTotal)
-                              : selectedClaim.aiAnalysis?.totalEstimatedCost
-                              ? String(selectedClaim.aiAnalysis.totalEstimatedCost)
-                              : selectedClaim.amount
-                              ? String(selectedClaim.amount)
-                              : ""
-                          );
-                          setActiveSubModal("decision_approve");
-                        }}
-                        className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={Tick01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
-                        Approve Claim
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-
-{/* SUB-MODAL 1: DOCUMENTS */}
+          {/* SUB-MODAL 1: DOCUMENTS */}
           {activeSubModal === "documents" && (
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
@@ -2740,7 +2096,11 @@ function OfficeStaffClaimsPageContent() {
                                 key={idx}
                                 type="button"
                                 onClick={() => {
-                                  setPreviewReportText(doc.textContent || null);
+                                  if (doc.name.toLowerCase().includes("inspection report")) {
+                                    setActiveSubModal("inspection");
+                                  } else {
+                                    setPreviewReportText(doc.textContent || null);
+                                  }
                                 }}
                                 className="bg-white border border-slate-200 hover:bg-slate-50 transition-all p-4 rounded-[15px] flex items-center justify-start gap-3 cursor-pointer outline-none shadow-sm active:scale-98 text-left"
                               >
@@ -4176,14 +3536,17 @@ function OfficeStaffClaimsPageContent() {
 
                     {/* Cyan Buttons Stack */}
                     <div className="pt-2 flex flex-col gap-3">
-                      {selectedClaim.inspectionSubmitted && selectedClaim.inspectionReport && (
+                      {(selectedClaim.inspectionSubmitted || selectedClaim.inspectionReport || selectedClaim.currentStep >= 3 || selectedClaim.aiAnalysis) && (
                         <button
                           type="button"
-                          onClick={() => setPreviewReportText(selectedClaim.inspectionReport || null)}
+                          onClick={() => {
+                            setPreviewReportText(null);
+                            setActiveSubModal("inspection");
+                          }}
                           className="bg-[#10b981] hover:bg-[#059669] text-white font-semibold text-xs py-3 rounded-full transition-all border-none cursor-pointer text-center select-none shadow-sm active:scale-95 flex items-center justify-center gap-1.5"
                         >
                           <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                          Inspection Report
+                          Inspection Report & Loss Assessment
                         </button>
                       )}
                       <button
@@ -5083,19 +4446,27 @@ function OfficeStaffClaimsPageContent() {
       {/* Document Preview Lightbox Modal */}
       {previewImage && (
         <div 
-          className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300 select-none cursor-zoom-out transition-all duration-300"
+          className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 transition-all duration-300 select-none cursor-zoom-out"
           onClick={() => setPreviewImage(null)}
         >
-          <div className="relative max-w-4xl max-h-[85vh] overflow-hidden rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center bg-[#0a0a0a]/30" onClick={(e) => e.stopPropagation()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={previewImage}
-              alt="Damage Document Preview"
-              className="max-w-full max-h-[85vh] object-contain rounded-2xl"
-            />
+          <div className="relative w-full max-w-4xl max-h-[88vh] h-[80vh] overflow-hidden rounded-2xl border border-white/10 shadow-2xl flex items-center justify-center bg-[#0a0a0a]/90" onClick={(e) => e.stopPropagation()}>
+            {previewImage.startsWith("data:application/pdf") || previewImage.toLowerCase().endsWith(".pdf") || previewImage.includes("/raw/upload/") || previewImage.toLowerCase().includes(".pdf") ? (
+              <iframe
+                src={previewImage}
+                title="Document PDF Preview"
+                className="w-full h-full rounded-2xl border-none"
+              />
+            ) : (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={previewImage}
+                alt="Damage Document Preview"
+                className="max-w-full max-h-[85vh] object-contain rounded-2xl"
+              />
+            )}
             <button
               onClick={() => setPreviewImage(null)}
-              className="absolute top-4 right-4 bg-black/60 hover:bg-black/80 text-white p-3 rounded-full transition-colors cursor-pointer border border-white/20 select-none shadow-md"
+              className="absolute top-4 right-4 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full transition-colors cursor-pointer border border-white/20 select-none shadow-md z-10"
               aria-label="Close preview"
             >
               <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-white" strokeWidth={2.5} />
