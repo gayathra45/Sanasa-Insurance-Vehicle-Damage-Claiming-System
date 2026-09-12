@@ -39,6 +39,9 @@ interface Claim {
   officer?: string;
   branch?: string;
   paymentReceipt?: string;
+  rejectionReason?: string;
+  inspectionReport?: string;
+  inspectionSubmitted?: boolean;
   documentsRequested?: boolean;
   requestedDocuments?: string[];
   documentRequestTo?: string;
@@ -294,6 +297,9 @@ function TrackClaimsContent() {
                   location: claim.location,
                   officer: claim.assignedAgentName || claim.assignedAgent || "Not Assigned",
                   paymentReceipt: claim.paymentReceipt || "",
+        rejectionReason: claim.rejectionReason || "",
+        inspectionReport: claim.inspectionReport || "",
+        inspectionSubmitted: claim.inspectionSubmitted || false,
                   documentsRequested: claim.documentsRequested || false,
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
@@ -713,6 +719,32 @@ function TrackClaimsContent() {
                       </p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Claim Rejection Banner with Reason */}
+              {(trackedClaim.status.toLowerCase() === "rejected" || trackedClaim.rejectionReason) && (
+                <div className="mb-6 p-5 rounded-2xl bg-red-50 border border-red-200 flex flex-col gap-2 transition-all duration-300">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">?</span>
+                    <h4 className="text-[15px] font-bold text-red-950 leading-tight">Claim Rejected by Branch Office</h4>
+                  </div>
+                  <p className="text-red-800 text-xs font-medium leading-relaxed m-0">
+                    <strong>Formal Rejection Reason:</strong> {trackedClaim.rejectionReason || "Claim has been rejected following damage assessment and garage quote review. Please contact your branch for further details."}
+                  </p>
+                </div>
+              )}
+
+              {/* Claim Approved Banner */}
+              {trackedClaim.status.toLowerCase() === "approved" && !trackedClaim.paymentReceipt && (
+                <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col gap-2 transition-all duration-300">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">?</span>
+                    <h4 className="text-[15px] font-bold text-emerald-950 leading-tight">Claim Approved for Payout</h4>
+                  </div>
+                  <p className="text-emerald-800 text-xs font-medium leading-relaxed m-0">
+                    Your claim has been formally approved for a settlement payout of <strong>{trackedClaim.amount.startsWith("Rs.") ? "LKR " + trackedClaim.amount.substring(4) : trackedClaim.amount}</strong>. Payment disbursement to your registered bank account is currently in progress.
+                  </p>
                 </div>
               )}
 

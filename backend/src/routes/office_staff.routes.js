@@ -148,8 +148,35 @@ router.get("/claims", async (req, res) => {
     if (!branch) {
       return res.status(400).json({ error: "Branch query parameter is required." });
     }
-    const claims = await Claim.find({ branch: branch.trim() }).sort({ createdAt: -1 });
-    res.json({ claims });
+    const claims = await Claim.find({ branch: branch.trim() }).sort({ createdAt: -1 }).lean();
+
+    // Attach policy holder user profile info & bank details
+    const nics = claims.map(c => c.userNic).filter(Boolean);
+    const users = await User.find(
+      { nic: { $in: nics } },
+      { nic: 1, email: 1, mobile: 1, firstName: 1, lastName: 1, bankDetails: 1 }
+    ).lean();
+    const userMap = new Map(users.map(u => [u.nic, u]));
+
+    const enrichedClaims = claims.map(c => {
+      const u = userMap.get(c.userNic);
+      const b = u?.bankDetails || {};
+      const fullName = u ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "";
+      return {
+        ...c,
+        policyHolderName: fullName,
+        policyHolderEmail: u?.email || "",
+        policyHolderMobile: u?.mobile || "",
+        policyHolderBankDetails: {
+          bankName: b.bankName || c.bankName || "",
+          branchName: b.branchName || c.bankBranch || "",
+          accountNumber: b.accountNumber || c.bankAccount || "",
+          accountHolderName: b.accountHolderName || c.accountHolderName || fullName
+        }
+      };
+    });
+
+    res.json({ claims: enrichedClaims });
   } catch (err) {
     console.error("Fetch office staff claims error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
@@ -525,6 +552,91 @@ router.post("/claims/:claimNumber/decision", async (req, res) => {
   } catch (err) {
     console.error("Claim decision error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST settle payment with uploaded payment receipt: /api/office-staff/claims/:claimNumber/settle-payment
+router.post("/claims/:claimNumber/settle-payment", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    const { receiptFile, receiptFileName, paymentNote, amountPaid } = req.body;
+
+    if (!receiptFile) {
+      return res.status(400).json({ error: "Payment receipt file is required." });
+    }
+
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    // Upload receipt to Cloudinary
+    const uploadedUrl = await uploadToCloudinary(receiptFile, "claims/payment_receipts");
+
+    const finalAmount = Number(amountPaid) || claim.amount || claim.garageEstimateComparison?.garageEstimatedTotal || claim.aiAnalysis?.totalEstimatedCost || 0;
+    claim.paymentReceipt = uploadedUrl;
+    claim.paymentReceiptFileName = receiptFileName || "Payment_Receipt.pdf";
+    claim.paymentSettledAt = new Date();
+    claim.paymentSettledBy = "Office Staff";
+    claim.paymentNote = paymentNote || "";
+    claim.amount = finalAmount;
+    claim.status = "Settled";
+    claim.currentStep = 5;
+
+    // Add receipt to additional documents
+    claim.additionalDocuments.push({
+      name: `Payment Receipt - LKR ${finalAmount.toLocaleString()}`,
+      url: uploadedUrl,
+      uploadedAt: new Date(),
+      uploadedBy: "Office Staff"
+    });
+
+    claim.messages.push({
+      sender: "Office Staff",
+      message: `Payment of LKR ${finalAmount.toLocaleString()} settled successfully. Official payment receipt uploaded.${paymentNote ? ` Note: ${paymentNote}` : ""}`,
+      sentAt: new Date(),
+      recipient: "Policy Holder"
+    });
+
+    await claim.save();
+
+    // Send email with payment receipt confirmation to policyholder
+    const user = await User.findOne({ nic: claim.userNic });
+    if (user && user.email) {
+      const subject = `Payment Settled: Claim ${claim.claimNumber} - Sanasa Insurance`;
+      const bankInfo = user.bankDetails || {};
+      const htmlBody = getBaseTemplate(
+        "Payment Settlement Completed",
+        `Dear ${user.firstName || "Policy Holder"},<br><br>` +
+        `We are pleased to inform you that the final settlement payment for your claim <strong>${claim.claimNumber}</strong> has been processed successfully.<br><br>` +
+        `<table style="width: 100%; border-collapse: collapse; margin: 16px 0; background: #f8fafc; border-radius: 8px; padding: 12px;">` +
+        `<tr><td style="padding: 6px 10px; color: #64748b; font-size: 13px;">Claim Number:</td><td style="padding: 6px 10px; font-weight: bold; color: #0f172a; font-size: 13px;">${claim.claimNumber}</td></tr>` +
+        `<tr><td style="padding: 6px 10px; color: #64748b; font-size: 13px;">Vehicle Plate:</td><td style="padding: 6px 10px; font-weight: bold; color: #0f172a; font-size: 13px;">${claim.vehiclePlate}</td></tr>` +
+        `<tr><td style="padding: 6px 10px; color: #64748b; font-size: 13px;">Settlement Amount:</td><td style="padding: 6px 10px; font-weight: bold; color: #16a34a; font-size: 15px;">LKR ${finalAmount.toLocaleString()}</td></tr>` +
+        `<tr><td style="padding: 6px 10px; color: #64748b; font-size: 13px;">Bank Name:</td><td style="padding: 6px 10px; font-weight: bold; color: #0f172a; font-size: 13px;">${bankInfo.bankName || claim.bankName || "Registered Account"}</td></tr>` +
+        `<tr><td style="padding: 6px 10px; color: #64748b; font-size: 13px;">Account Number:</td><td style="padding: 6px 10px; font-weight: bold; color: #0f172a; font-size: 13px;">${bankInfo.accountNumber || claim.bankAccount || "�"}</td></tr>` +
+        `<tr><td style="padding: 6px 10px; color: #64748b; font-size: 13px;">Settlement Date:</td><td style="padding: 6px 10px; font-weight: bold; color: #0f172a; font-size: 13px;">${new Date().toLocaleDateString("en-GB")}</td></tr>` +
+        `</table>` +
+        `${paymentNote ? `<p style="font-size: 13px; color: #334155;"><strong>Branch Note:</strong> ${paymentNote}</p>` : ""}` +
+        `<div style="margin-top: 20px; text-align: center;">` +
+        `<a href="${uploadedUrl}" target="_blank" style="background: #16a34a; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;">View / Download Payment Slip</a>` +
+        `</div><br>Thank you for choosing Sanasa General Insurance.`
+      );
+      const textBody = `Payment of LKR ${finalAmount.toLocaleString()} for claim ${claim.claimNumber} has been processed. View receipt: ${uploadedUrl}`;
+      try {
+        await sendEmail(user.email, subject, htmlBody, textBody);
+      } catch (e) {
+        console.warn("Could not dispatch payment email:", e.message);
+      }
+    }
+
+    res.json({
+      message: "Payment settled and official receipt uploaded successfully.",
+      claim
+    });
+  } catch (err) {
+    console.error("Settle payment error:", err);
+    res.status(500).json({ error: "An internal server error occurred while processing payment." });
   }
 });
 
