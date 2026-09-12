@@ -384,6 +384,7 @@ export default function AgentDashboard() {
   const [glassDmg, setGlassDmg] = useState("None");
   const [wheelsDmg, setWheelsDmg] = useState("None");
   const activeClaimIdRef = useRef<string | null>(null);
+  const handledParamClaimIdRef = useRef<string | null>(null);
 
   const closeDetailModal = () => {
     activeClaimIdRef.current = null;

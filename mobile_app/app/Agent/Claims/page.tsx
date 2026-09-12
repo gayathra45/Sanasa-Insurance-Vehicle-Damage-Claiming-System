@@ -278,6 +278,7 @@ export default function AgentClaimsPage() {
   const [glassDmg, setGlassDmg] = useState("None");
   const [wheelsDmg, setWheelsDmg] = useState("None");
   const activeClaimIdRef = useRef<string | null>(null);
+  const handledParamClaimIdRef = useRef<string | null>(null);
 
   // Synchronize wizard activeInspectionStep on claim selection (preserves in-progress form during background polling)
   useEffect(() => {
@@ -505,11 +506,13 @@ export default function AgentClaimsPage() {
     }
   };
 
+  // Auto-open claim details once when claimId is passed via params
   useEffect(() => {
     if (claimId && claims.length > 0) {
-      if (!selectedClaim || (selectedClaim._id !== claimId && selectedClaim.claimNumber !== claimId)) {
+      if (handledParamClaimIdRef.current !== claimId) {
         const matched = claims.find(c => c._id === claimId || c.claimNumber === claimId);
         if (matched) {
+          handledParamClaimIdRef.current = claimId;
           setSelectedClaim(matched);
           if (step === "4") {
             setActiveInspectionStep(4);
@@ -517,7 +520,7 @@ export default function AgentClaimsPage() {
         }
       }
     }
-  }, [claimId, claims, step, selectedClaim]);
+  }, [claimId, claims, step]);
 
   // Poll claims in background for real-time updates
   useEffect(() => {
