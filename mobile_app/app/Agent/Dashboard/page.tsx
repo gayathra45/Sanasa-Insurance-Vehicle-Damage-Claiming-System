@@ -1646,15 +1646,17 @@ ${inspectionReportText.trim()}
   // Auto-open claim details when claimId is passed via params
   useEffect(() => {
     if (claimId && claims.length > 0) {
-      const matched = claims.find(c => c._id === claimId || c.claimNumber === claimId);
-      if (matched) {
-        setSelectedClaim(matched);
-        if (step === "4") {
-          setActiveInspectionStep(4);
+      if (!selectedClaim || (selectedClaim._id !== claimId && selectedClaim.claimNumber !== claimId)) {
+        const matched = claims.find(c => c._id === claimId || c.claimNumber === claimId);
+        if (matched) {
+          setSelectedClaim(matched);
+          if (step === "4") {
+            setActiveInspectionStep(4);
+          }
         }
       }
     }
-  }, [claimId, claims, step]);
+  }, [claimId, claims, step, selectedClaim]);
 
   // ── Animations ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1677,12 +1679,7 @@ ${inspectionReportText.trim()}
     ).start();
   }, []);
 
-  useEffect(() => {
-    if (selectedClaim) {
-      setAssessmentAmount(selectedClaim.amount ? String(selectedClaim.amount) : "");
-      setInspectionReportText(selectedClaim.inspectionReport || "");
-    }
-  }, [selectedClaim]);
+  
 
   // ── Derived data ──────────────────────────────────────────────────────
   const activeClaims = claims

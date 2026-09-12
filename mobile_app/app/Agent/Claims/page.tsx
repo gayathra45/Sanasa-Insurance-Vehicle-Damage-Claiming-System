@@ -507,15 +507,17 @@ export default function AgentClaimsPage() {
 
   useEffect(() => {
     if (claimId && claims.length > 0) {
-      const matched = claims.find(c => c._id === claimId || c.claimNumber === claimId);
-      if (matched) {
-        setSelectedClaim(matched);
-        if (step === "4") {
-          setActiveInspectionStep(4);
+      if (!selectedClaim || (selectedClaim._id !== claimId && selectedClaim.claimNumber !== claimId)) {
+        const matched = claims.find(c => c._id === claimId || c.claimNumber === claimId);
+        if (matched) {
+          setSelectedClaim(matched);
+          if (step === "4") {
+            setActiveInspectionStep(4);
+          }
         }
       }
     }
-  }, [claimId, claims, step]);
+  }, [claimId, claims, step, selectedClaim]);
 
   // Poll claims in background for real-time updates
   useEffect(() => {
@@ -547,12 +549,7 @@ export default function AgentClaimsPage() {
     if (agentEmail) fetchClaims(agentEmail);
   }, [agentEmail, fetchClaims]);
 
-  useEffect(() => {
-    if (selectedClaim) {
-      setAssessmentAmount(selectedClaim.amount ? String(selectedClaim.amount) : "");
-      setInspectionReportText(selectedClaim.inspectionReport || "");
-    }
-  }, [selectedClaim]);
+  
 
   const formatNumberPlate = (plate: string): string => {
     if (!plate) return "";
