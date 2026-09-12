@@ -383,51 +383,98 @@ export default function AgentDashboard() {
   const [engineDmg, setEngineDmg] = useState("None");
   const [glassDmg, setGlassDmg] = useState("None");
   const [wheelsDmg, setWheelsDmg] = useState("None");
+  const activeClaimIdRef = useRef<string | null>(null);
 
   const closeDetailModal = () => {
+    activeClaimIdRef.current = null;
     if (activeInspectionStep === 5) {
       setActiveTab("activity");
     }
     setSelectedClaim(null);
   };
 
-  // Synchronize wizard activeInspectionStep on claim selection
+  // Synchronize wizard activeInspectionStep on claim selection (preserves in-progress form during background polling)
   useEffect(() => {
     if (selectedClaim) {
-      if (step === "4") {
-        setActiveInspectionStep(4);
-      } else if (selectedClaim.currentStep === 2 || selectedClaim.currentStep === 1) {
-        setActiveInspectionStep(1);
-      } else if (selectedClaim.currentStep === 3) {
-        if (selectedClaim.inspectionSubmitted) {
+      const claimIdentifier = selectedClaim._id || selectedClaim.claimNumber;
+      const claimIdChanged = activeClaimIdRef.current !== claimIdentifier;
+
+      if (claimIdChanged) {
+        activeClaimIdRef.current = claimIdentifier;
+
+        if (step === "4") {
+          setActiveInspectionStep(4);
+        } else if (selectedClaim.currentStep === 2 || selectedClaim.currentStep === 1) {
+          setActiveInspectionStep(1);
+        } else if (selectedClaim.currentStep === 3) {
+          if (selectedClaim.inspectionSubmitted) {
+            setActiveInspectionStep(5);
+          } else {
+            setActiveInspectionStep(2);
+          }
+        } else if (selectedClaim.currentStep >= 4) {
           setActiveInspectionStep(5);
-        } else {
-          setActiveInspectionStep(2);
         }
-      } else if (selectedClaim.currentStep >= 4) {
-        setActiveInspectionStep(5);
+
+        // Pre-populate if report already exists, otherwise fresh initialization
+        if (selectedClaim.inspectionReport) {
+          const parsed = parseInspectionReport(selectedClaim.inspectionReport);
+          if (parsed && !parsed.isRaw) {
+            setOdometer(parsed.odometer || "");
+            setFuelLevel(parsed.fuelLevel || "1/2");
+            setPreExistingDamage(parsed.preExistingDamage !== "None reported." ? (parsed.preExistingDamage || "") : "");
+            setRecommendedAction(parsed.recommendedAction || "Repairable (Minor)");
+            setInspectionReportText(parsed.physicalInspectionNotes !== "None reported." ? (parsed.physicalInspectionNotes || "") : "");
+            
+            if (parsed.checklist) {
+              setFrontBumperDmg(parsed.checklist["Front Bumper Damage"] || "None");
+              setRearBumperDmg(parsed.checklist["Rear Bumper Damage"] || "None");
+              setLeftSideDmg(parsed.checklist["Left Panels Damage"] || "None");
+              setRightSideDmg(parsed.checklist["Right Panels Damage"] || "None");
+              setEngineDmg(parsed.checklist["Engine Compartment"] || "None");
+              setGlassDmg(parsed.checklist["Glass & Windshield"] || "None");
+              setWheelsDmg(parsed.checklist["Wheels & Tires"] || "None");
+            }
+          } else {
+            setInspectionReportText(selectedClaim.inspectionReport || "");
+            setOdometer("");
+            setFuelLevel("1/2");
+            setPreExistingDamage("");
+            setRecommendedAction("Repairable (Minor)");
+            setFrontBumperDmg("None");
+            setRearBumperDmg("None");
+            setLeftSideDmg("None");
+            setRightSideDmg("None");
+            setEngineDmg("None");
+            setGlassDmg("None");
+            setWheelsDmg("None");
+          }
+        } else {
+          setInspectionReportText("");
+          setOdometer("");
+          setFuelLevel("1/2");
+          setPreExistingDamage("");
+          setRecommendedAction("Repairable (Minor)");
+          setFrontBumperDmg("None");
+          setRearBumperDmg("None");
+          setLeftSideDmg("None");
+          setRightSideDmg("None");
+          setEngineDmg("None");
+          setGlassDmg("None");
+          setWheelsDmg("None");
+        }
+
+        setAssessmentAmount(selectedClaim.amount ? selectedClaim.amount.toString() : "");
+        setInspectionPhotos([]);
       }
-      setInspectionReportText(selectedClaim.inspectionReport || "");
-      setAssessmentAmount(selectedClaim.amount ? selectedClaim.amount.toString() : "");
-      setInspectionPhotos([]);
-      setOdometer("");
-      setFuelLevel("1/2");
-      setPreExistingDamage("");
-      setRecommendedAction("Repairable (Minor)");
-      setFrontBumperDmg("None");
-      setRearBumperDmg("None");
-      setLeftSideDmg("None");
-      setRightSideDmg("None");
-      setEngineDmg("None");
-      setGlassDmg("None");
-      setWheelsDmg("None");
     } else {
+      activeClaimIdRef.current = null;
       setActiveInspectionStep(1);
       setAgentLocation(null);
       setIncidentCoords(null);
       setInspectionPhotos([]);
     }
-  }, [selectedClaim, step]);
+  }, [selectedClaim?._id, selectedClaim?.claimNumber, step]);
 
   // Pending Requests Modal State
   const [showPendingRequestsModal, setShowPendingRequestsModal] = useState(false);
