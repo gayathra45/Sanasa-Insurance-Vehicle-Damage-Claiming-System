@@ -1023,6 +1023,7 @@ const styles = StyleSheet.create({
     right: 28,
     height: 3,
     backgroundColor: "#e2e8f0",
+    zIndex: 0,
   },
   wizardProgressLine: {
     position: "absolute",
@@ -1030,9 +1031,10 @@ const styles = StyleSheet.create({
     left: 28,
     height: 3,
     backgroundColor: "#00b050",
+    zIndex: 0,
   },
-  wizardStepsRow: { flexDirection: "row", justifyContent: "space-between" },
-  stepItem: { flex: 1, alignItems: "center" },
+  wizardStepsRow: { flexDirection: "row", justifyContent: "space-between", zIndex: 1 },
+  stepItem: { flex: 1, alignItems: "center", zIndex: 1 },
   stepCircle: {
     width: 28,
     height: 28,
@@ -1041,6 +1043,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#ffffff",
+    zIndex: 2,
   },
   stepCircleInactive: { borderColor: "#cbd5e1" },
   stepCircleCompleted: { borderColor: "#00b050" },

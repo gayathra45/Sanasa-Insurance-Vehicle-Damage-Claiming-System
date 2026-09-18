@@ -868,11 +868,11 @@ export default function MyClaims() {
           return (
             <div className="bg-[#f8fafc] border border-slate-100 rounded-[24px] pt-6 pb-5 px-8 mb-8 flex justify-between items-center relative select-none w-full max-w-[540px] mx-auto shadow-sm">
               {/* Background Grey Line */}
-              <div className="absolute top-[40px] left-[52px] right-[52px] h-[3px] bg-slate-200 z-0" />
+              <div className="absolute top-[44px] -translate-y-1/2 left-[52px] right-[52px] h-[3px] bg-slate-200 z-0 pointer-events-none" />
               
               {/* Active Blue Progress Line */}
               <div
-                className="absolute top-[40px] left-[52px] h-[3px] bg-gradient-to-r from-sky-400 to-[#0f2d4a] z-0 transition-all duration-300"
+                className="absolute top-[44px] -translate-y-1/2 left-[52px] h-[3px] bg-gradient-to-r from-sky-400 to-[#0f2d4a] z-0 pointer-events-none transition-all duration-300"
                 style={{ width: isFullyPaid ? "calc(100% - 104px)" : `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
               />
 
@@ -883,23 +883,23 @@ export default function MyClaims() {
 
                 let circleClass = "";
                 if (isCompleted) {
-                  circleClass = "border-blue-600 text-blue-600 bg-blue-50/50";
+                  circleClass = "border-blue-600 text-blue-600 bg-blue-50";
                 } else if (isActive) {
-                  circleClass = "border-sky-500 text-sky-600 bg-sky-50 ring-4 ring-sky-100";
+                  circleClass = "border-sky-500 text-sky-600 bg-white ring-4 ring-sky-100";
                 } else {
                   circleClass = "border-slate-300 text-slate-400 bg-white";
                 }
 
                 return (
-                  <div key={step.num} className="flex flex-col items-center z-10 flex-1">
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold ${circleClass}`}>
+                  <div key={step.num} className="relative z-10 flex flex-col items-center flex-1">
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold relative z-10 ${circleClass}`}>
                       {isCompleted ? (
                         <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-blue-600" strokeWidth={3} />
                       ) : (
                         step.num
                       )}
                     </div>
-                    <span className={`text-[11px] font-medium mt-2 leading-none ${isActive ? "text-sky-600 font-bold" : isCompleted ? "text-blue-900 font-semibold" : "text-slate-400"}`}>
+                    <span className={`text-[11px] font-medium mt-2 leading-none relative z-10 ${isActive ? "text-sky-600 font-bold" : isCompleted ? "text-blue-900 font-semibold" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>

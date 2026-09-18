@@ -726,11 +726,11 @@ export default function PolicyHolderNotifications() {
           return (
             <div className="bg-[#f8fafc] border border-slate-100 rounded-[24px] pt-6 pb-5 px-8 mb-8 flex justify-between items-center relative select-none w-full max-w-[540px] mx-auto shadow-sm">
               {/* Background Grey Line */}
-              <div className="absolute top-[40px] left-[52px] right-[52px] h-[3px] bg-slate-200 z-0" />
+              <div className="absolute top-[44px] -translate-y-1/2 left-[52px] right-[52px] h-[3px] bg-slate-200 z-0 pointer-events-none" />
               
               {/* Active Green Line */}
               <div
-                className="absolute top-[40px] left-[52px] h-[3px] bg-[#00b050] z-0 transition-all duration-300"
+                className="absolute top-[44px] -translate-y-1/2 left-[52px] h-[3px] bg-[#00b050] z-0 pointer-events-none transition-all duration-300"
                 style={{ width: `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
               />
 
@@ -749,11 +749,11 @@ export default function PolicyHolderNotifications() {
                 }
 
                 return (
-                  <div key={step.num} className="flex flex-col items-center z-10 flex-1">
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold ${circleClass}`}>
+                  <div key={step.num} className="relative z-10 flex flex-col items-center flex-1">
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold relative z-10 ${circleClass}`}>
                       {step.num}
                     </div>
-                    <span className={`text-[11px] font-medium mt-2 leading-none ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
+                    <span className={`text-[11px] font-medium mt-2 leading-none relative z-10 ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>
