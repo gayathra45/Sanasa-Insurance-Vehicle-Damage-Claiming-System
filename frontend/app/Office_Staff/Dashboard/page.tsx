@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { API_URL } from "@/app/config";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -98,7 +99,7 @@ export default function OfficeStaffDashboard() {
 
     setIsUpdatingPassword(true);
     try {
-      const res = await fetch("http://localhost:5000/api/office-staff/change-password", {
+      const res = await fetch(`${API_URL}/office-staff/change-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -138,7 +139,7 @@ export default function OfficeStaffDashboard() {
     if (selectedClaim) {
       const fetchFullClaim = async () => {
         try {
-          const res = await fetch(`http://localhost:5000/api/policy-holder/track-claim?claimNumber=${encodeURIComponent(selectedClaim.claimNumber)}`);
+          const res = await fetch(`${API_URL}/policy-holder/track-claim?claimNumber=${encodeURIComponent(selectedClaim.claimNumber)}`);
           if (res.ok) {
             const data = await res.json();
             if (data.claim) {
@@ -199,12 +200,14 @@ export default function OfficeStaffDashboard() {
 
     async function fetchStats() {
       try {
-        const res = await fetch(`http://localhost:5000/api/office-staff/dashboard-stats?branch=${currentBranch}`);
+        const res = await fetch(`${API_URL}/office-staff/dashboard-stats?branch=${encodeURIComponent(currentBranch)}`);
         if (!res.ok) {
           throw new Error("Failed to load dashboard metrics.");
         }
         const data = await res.json();
-        setStats(data.stats);
+        if (data.stats) {
+          setStats(data.stats);
+        }
 
         // Filter: Hide claims that already have an assigned agent
         const unassignedClaims = (data.newClaims || []).filter(
@@ -239,7 +242,7 @@ export default function OfficeStaffDashboard() {
         setNewClaims(formattedClaims);
 
         // Format registrations list from DB
-        const formattedRegs = data.newRegistrations.map((user: any) => ({
+        const formattedRegs = (data.newRegistrations || []).map((user: any) => ({
           name: `${user.firstName} ${user.lastName}`,
           vehiclesCount: user.vehicles ? user.vehicles.length : 0,
           date: new Date(user.createdAt).toLocaleDateString("en-US", {

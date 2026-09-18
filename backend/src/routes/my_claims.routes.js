@@ -1,4 +1,4 @@
-﻿import express from "express";
+import express from "express";
 import crypto from "crypto";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
@@ -58,9 +58,9 @@ router.get("/user-claims", async (req, res) => {
     }
 
     const cleanNic = nic.trim();
-    const projection = includeDocs === "true"
-      ? {}
-      : { accidentPhotos: 0, drivingLicense: 0 };
+    const projection = includeDocs === "false"
+      ? { accidentPhotos: 0, drivingLicense: 0 }
+      : {};
 
     const claims = await Claim.find({ userNic: cleanNic }, projection).sort({ createdAt: -1 });
 

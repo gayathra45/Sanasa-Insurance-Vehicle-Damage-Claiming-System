@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Office Staff Router
  * Handles endpoints for Office Staff login, dashboard statistics calculation,
  * registration verification, and agent management operations.
@@ -54,7 +54,98 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// GET dashboard statistics: /api/office-staff/stats
+// POST change office staff password: /api/office-staff/change-password
+router.post("/change-password", async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword } = req.body;
+    if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Email, current password, and new password are required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const staff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (!staff) {
+      return res.status(404).json({ error: "Office staff member not found." });
+    }
+
+    // Verify current temporary/existing password
+    const hashedCurrent = hashPassword(currentPassword);
+    if (staff.password !== hashedCurrent) {
+      return res.status(400).json({ error: "Incorrect current password." });
+    }
+
+    // Update password and clear temporary password flag
+    staff.password = hashPassword(newPassword);
+    staff.mustChangePassword = false;
+    await staff.save();
+
+    res.json({ message: "Password updated successfully." });
+  } catch (err) {
+    console.error("Change office staff password error:", err);
+    res.status(500).json({ error: "An internal server error occurred while updating password." });
+  }
+});
+
+// GET dashboard statistics: /api/office-staff/dashboard-stats
+router.get("/dashboard-stats", async (req, res) => {
+  try {
+    const branch = req.query.branch ? req.query.branch.trim() : "Galle";
+
+    // 1. Calculate stats counts for the branch
+    const unassignedClaims = await Claim.countDocuments({
+      branch,
+      $or: [
+        { assignedAgent: { $exists: false } },
+        { assignedAgent: null },
+        { assignedAgent: "" }
+      ]
+    });
+
+    const newRegistrationsCount = await User.countDocuments({
+      branch,
+      status: { $ne: "Approved" }
+    });
+
+    const activeClaims = await Claim.countDocuments({
+      branch,
+      status: { $in: ["In Progress", "Approved", "Investigating"] }
+    });
+
+    const pendingClaims = await Claim.countDocuments({
+      branch,
+      status: "Pending"
+    });
+
+    // 2. Fetch recent new claims for the branch
+    const newClaims = await Claim.find({ branch })
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    // 3. Fetch recent new registrations for the branch
+    const newRegistrations = await User.find({
+      branch,
+      status: { $ne: "Approved" }
+    })
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    res.json({
+      stats: {
+        unassignedClaims,
+        newRegistrations: newRegistrationsCount,
+        activeClaims,
+        pendingClaims
+      },
+      newClaims,
+      newRegistrations
+    });
+  } catch (err) {
+    console.error("Office staff dashboard stats API error:", err);
+    res.status(500).json({ error: "Failed to load dashboard metrics." });
+  }
+});
+
+// GET dashboard statistics (legacy/alternative): /api/office-staff/stats
 router.get("/stats", async (req, res) => {
   try {
     const { branch } = req.query;

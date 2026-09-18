@@ -47,6 +47,15 @@ interface Claim {
   documentRequestTo?: string;
   currentStep?: number;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
+  accidentPhotos?: {
+    front?: string[];
+    rear?: string[];
+    side?: string[];
+  };
+  drivingLicense?: {
+    front?: string[];
+    rear?: string[];
+  };
   additionalDocuments?: { name: string; url: string; uploadedAt: string; uploadedBy?: string }[];
   createdAt?: string;
   aiAnalysis?: {
@@ -110,7 +119,17 @@ const translations = {
     location: "Location:",
     description: "Description",
     noClaimFound: "No claims found matching",
-    enterPrompt: "Please enter a valid Claim ID to retrieve coverage progress records."
+    enterPrompt: "Please enter a valid Claim ID to retrieve coverage progress records.",
+    accidentPhotos: "Attached Accident & Damage Photos",
+    drivingLicense: "Driver's License Photos",
+    attachedDocs: "Attached Documents & Reports",
+    frontView: "Front View",
+    rearView: "Rear View",
+    sideView: "Side View",
+    licenseFront: "License (Front)",
+    licenseRear: "License (Rear)",
+    view: "View",
+    noPhotos: "No accident photos attached."
   },
   si: {
     title: "හිමිකම් ලුහුබැඳීම",
@@ -129,7 +148,17 @@ const translations = {
     location: "පිහිටීම:",
     description: "විස්තරය",
     noClaimFound: "ගැලපෙන හිමිකම් කිසිවක් හමු නොවීය",
-    enterPrompt: "ප්‍රගති වාර්තා ලබා ගැනීමට කරුණාකර වලංගු හිමිකම් අංකයක් ඇතුළත් කරන්න."
+    enterPrompt: "ප්‍රගති වාර්තා ලබා ගැනීමට කරුණාකර වලංගු හිමිකම් අංකයක් ඇතුළත් කරන්න.",
+    accidentPhotos: "අමුණා ඇති අනතුරු හා හානි ඡායාරූප",
+    drivingLicense: "රියදුරු බලපත්‍ර ඡායාරූප",
+    attachedDocs: "අමුණා ඇති ලේඛන සහ වාර්තා",
+    frontView: "ඉදිරිපස පෙනුම",
+    rearView: "පසුපස පෙනුම",
+    sideView: "පැති පෙනුම",
+    licenseFront: "බලපත්‍රය (ඉදිරිපස)",
+    licenseRear: "බලපත්‍රය (පසුපස)",
+    view: "බලන්න",
+    noPhotos: "අනතුරු ඡායාරූප අමුණා නොමැත."
   },
   ta: {
     title: "கோரிக்கை கண்காணிப்பு",
@@ -148,7 +177,17 @@ const translations = {
     location: "இருப்பிடம்:",
     description: "விவரம்",
     noClaimFound: "பொருந்தக்கூடிய கோரிக்கைகள் எதுவும் இல்லை",
-    enterPrompt: "முன்னேற்றப் பதிவுகளைப் பெற செல்லுபடியாகும் கோரிக்கை எண்ணை உள்ளிடவும்."
+    enterPrompt: "முன்னேற்றப் பதிவுகளைப் பெற செல்லுபடியாகும் கோரிக்கை எண்ணை உள்ளிடவும்.",
+    accidentPhotos: "இணைக்கப்பட்ட விபத்து மற்றும் சேத புகைப்படங்கள்",
+    drivingLicense: "ஓட்டுநர் உரிம புகைப்படங்கள்",
+    attachedDocs: "இணைக்கப்பட்ட ஆவணங்கள் மற்றும் அறிக்கைகள்",
+    frontView: "முன் பார்வை",
+    rearView: "பின் பார்வை",
+    sideView: "பக்க பார்வை",
+    licenseFront: "உரிமம் (முன்)",
+    licenseRear: "உரிமம் (பின்)",
+    view: "அழைக்க",
+    noPhotos: "விபத்து புகைப்படங்கள் எதுவும் இணைக்கப்படவில்லை."
   }
 };
 
@@ -157,9 +196,18 @@ function TrackClaimsContent() {
   const searchParams = useSearchParams();
   const [claimId, setClaimId] = useState("");
   const [trackedClaim, setTrackedClaim] = useState<Claim | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [garageFile, setGarageFile] = useState<File | null>(null);
   const [isUploadingGarage, setIsUploadingGarage] = useState(false);
+
+  const getDocUrl = (url?: string) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+      return url;
+    }
+    return `${API_URL.replace("/api", "")}/uploads/${url}`;
+  };
 
   const handleUploadGarageEstimate = async () => {
     if (!garageFile || !trackedClaim) return;
@@ -278,7 +326,7 @@ function TrackClaimsContent() {
         let databaseClaims: Claim[] = [];
         if (userNic) {
           try {
-            const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(userNic)}`, {
+            const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(userNic)}&includeDocs=true`, {
               cache: "no-store"
             });
             if (res.ok) {
@@ -297,15 +345,20 @@ function TrackClaimsContent() {
                   location: claim.location,
                   officer: claim.assignedAgentName || claim.assignedAgent || "Not Assigned",
                   paymentReceipt: claim.paymentReceipt || "",
-        rejectionReason: claim.rejectionReason || "",
-        inspectionReport: claim.inspectionReport || "",
-        inspectionSubmitted: claim.inspectionSubmitted || false,
+                  rejectionReason: claim.rejectionReason || "",
+                  inspectionReport: claim.inspectionReport || "",
+                  inspectionSubmitted: claim.inspectionSubmitted || false,
                   documentsRequested: claim.documentsRequested || false,
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
                   messages: claim.messages || [],
+                  accidentPhotos: claim.accidentPhotos || {},
+                  drivingLicense: claim.drivingLicense || {},
+                  additionalDocuments: claim.additionalDocuments || [],
                   branch: claim.branch,
-                  createdAt: claim.createdAt
+                  createdAt: claim.createdAt,
+                  aiAnalysis: claim.aiAnalysis,
+                  garageEstimateComparison: claim.garageEstimateComparison
                 }));
               }
             }
@@ -337,6 +390,9 @@ function TrackClaimsContent() {
                 requestedDocuments: [],
                 currentStep: 1,
                 messages: [],
+                accidentPhotos: parsed.accidentPhotos || {},
+                drivingLicense: parsed.drivingLicense || {},
+                additionalDocuments: parsed.additionalDocuments || [],
                 createdAt: parsed.createdAt || new Date().toISOString()
               });
             }
@@ -389,12 +445,20 @@ function TrackClaimsContent() {
               location: data.claim.location,
               officer: data.claim.assignedAgentName || data.claim.assignedAgent || "Not Assigned",
               paymentReceipt: data.claim.paymentReceipt || "",
+              rejectionReason: data.claim.rejectionReason || "",
+              inspectionReport: data.claim.inspectionReport || "",
+              inspectionSubmitted: data.claim.inspectionSubmitted || false,
               documentsRequested: data.claim.documentsRequested || false,
               requestedDocuments: data.claim.requestedDocuments || [],
               currentStep: data.claim.currentStep || 1,
               messages: data.claim.messages || [],
+              accidentPhotos: data.claim.accidentPhotos || {},
+              drivingLicense: data.claim.drivingLicense || {},
+              additionalDocuments: data.claim.additionalDocuments || [],
               branch: data.claim.branch,
-              createdAt: data.claim.createdAt
+              createdAt: data.claim.createdAt,
+              aiAnalysis: data.claim.aiAnalysis,
+              garageEstimateComparison: data.claim.garageEstimateComparison
             });
           }
         }
@@ -434,12 +498,20 @@ function TrackClaimsContent() {
             location: data.claim.location,
             officer: data.claim.assignedAgentName || data.claim.assignedAgent || "Not Assigned",
             paymentReceipt: data.claim.paymentReceipt || "",
+            rejectionReason: data.claim.rejectionReason || "",
+            inspectionReport: data.claim.inspectionReport || "",
+            inspectionSubmitted: data.claim.inspectionSubmitted || false,
             documentsRequested: data.claim.documentsRequested || false,
             requestedDocuments: data.claim.requestedDocuments || [],
             currentStep: data.claim.currentStep || 1,
             messages: data.claim.messages || [],
+            accidentPhotos: data.claim.accidentPhotos || {},
+            drivingLicense: data.claim.drivingLicense || {},
+            additionalDocuments: data.claim.additionalDocuments || [],
             branch: data.claim.branch,
-            createdAt: data.claim.createdAt
+            createdAt: data.claim.createdAt,
+            aiAnalysis: data.claim.aiAnalysis,
+            garageEstimateComparison: data.claim.garageEstimateComparison
           });
           setIsLoading(false);
           return;
@@ -906,6 +978,196 @@ function TrackClaimsContent() {
                 </div>
               )}
 
+                {/* Attached Accident & Damage Photos Section */}
+                {(() => {
+                  const frontPhotos = trackedClaim.accidentPhotos?.front || [];
+                  const rearPhotos = trackedClaim.accidentPhotos?.rear || [];
+                  const sidePhotos = trackedClaim.accidentPhotos?.side || [];
+                  const allAccidentPhotos: { url: string; label: string; viewType: string }[] = [];
+
+                  frontPhotos.forEach((url, idx) => {
+                    allAccidentPhotos.push({ url, label: `${t.frontView} ${frontPhotos.length > 1 ? `#${idx + 1}` : ""}`, viewType: "Front" });
+                  });
+                  rearPhotos.forEach((url, idx) => {
+                    allAccidentPhotos.push({ url, label: `${t.rearView} ${rearPhotos.length > 1 ? `#${idx + 1}` : ""}`, viewType: "Rear" });
+                  });
+                  sidePhotos.forEach((url, idx) => {
+                    allAccidentPhotos.push({ url, label: `${t.sideView} ${sidePhotos.length > 1 ? `#${idx + 1}` : ""}`, viewType: "Side" });
+                  });
+
+                  return (
+                    <div className="px-2 mb-6 text-left">
+                      <div className="flex items-center justify-between mb-2 select-none">
+                        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider m-0">
+                          {t.accidentPhotos}
+                        </p>
+                        {allAccidentPhotos.length > 0 && (
+                          <span className="text-[11px] font-semibold text-sky-700 bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-full">
+                            {allAccidentPhotos.length} {allAccidentPhotos.length === 1 ? "Photo" : "Photos"}
+                          </span>
+                        )}
+                      </div>
+
+                      {allAccidentPhotos.length === 0 ? (
+                        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs text-slate-400 italic select-none font-normal">
+                          {t.noPhotos}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {allAccidentPhotos.map((photo, pIdx) => {
+                            const docUrl = getDocUrl(photo.url);
+                            return (
+                              <div
+                                key={pIdx}
+                                onClick={() => setPreviewImage({ url: docUrl, title: `${trackedClaim.claimNumber} - ${photo.label}` })}
+                                className="group relative bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-200 hover:border-sky-400"
+                              >
+                                <div className="aspect-[4/3] w-full overflow-hidden bg-slate-900/5">
+                                  <img
+                                    src={docUrl}
+                                    alt={photo.label}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                </div>
+                                <div className="p-2.5 bg-white border-t border-slate-100 flex items-center justify-between">
+                                  <span className="text-xs font-semibold text-slate-800 truncate">
+                                    {photo.label}
+                                  </span>
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-sky-100 group-hover:text-sky-800 transition-colors">
+                                    {photo.viewType}
+                                  </span>
+                                </div>
+                                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                  <span className="bg-white/90 text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
+                                    <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                    {t.view}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Driver's License Photos Section */}
+                {(() => {
+                  const licFront = trackedClaim.drivingLicense?.front || [];
+                  const licRear = trackedClaim.drivingLicense?.rear || [];
+                  const allLicPhotos: { url: string; label: string; side: string }[] = [];
+
+                  licFront.forEach((url, idx) => {
+                    allLicPhotos.push({ url, label: `${t.licenseFront} ${licFront.length > 1 ? `#${idx + 1}` : ""}`, side: "Front" });
+                  });
+                  licRear.forEach((url, idx) => {
+                    allLicPhotos.push({ url, label: `${t.licenseRear} ${licRear.length > 1 ? `#${idx + 1}` : ""}`, side: "Rear" });
+                  });
+
+                  if (allLicPhotos.length === 0) return null;
+
+                  return (
+                    <div className="px-2 mb-6 text-left">
+                      <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">
+                        {t.drivingLicense}
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {allLicPhotos.map((lic, lIdx) => {
+                          const docUrl = getDocUrl(lic.url);
+                          return (
+                            <div
+                              key={lIdx}
+                              onClick={() => setPreviewImage({ url: docUrl, title: `${trackedClaim.claimNumber} - ${lic.label}` })}
+                              className="group relative bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-200 hover:border-blue-400"
+                            >
+                              <div className="aspect-[16/10] w-full overflow-hidden bg-slate-900/5">
+                                <img
+                                  src={docUrl}
+                                  alt={lic.label}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              </div>
+                              <div className="p-2.5 bg-white border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-slate-800 truncate">
+                                  {lic.label}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                                  {lic.side}
+                                </span>
+                              </div>
+                              <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                <span className="bg-white/90 text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
+                                  <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                  {t.view}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Additional Attached Documents & Files Section */}
+                {(() => {
+                  const docs: { name: string; url: string; uploadedAt?: string; uploadedBy?: string }[] = [];
+                  (trackedClaim.additionalDocuments || []).forEach((d) => {
+                    docs.push({
+                      name: d.name,
+                      url: d.url,
+                      uploadedAt: d.uploadedAt,
+                      uploadedBy: d.uploadedBy || "Policy Holder"
+                    });
+                  });
+
+                  if (docs.length === 0) return null;
+
+                  return (
+                    <div className="px-2 mb-6 text-left">
+                      <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">
+                        {t.attachedDocs}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {docs.map((doc, dIdx) => {
+                          const docUrl = getDocUrl(doc.url);
+                          return (
+                            <div
+                              key={dIdx}
+                              onClick={() => {
+                                if (docUrl.endsWith(".pdf") || docUrl.includes(".pdf")) {
+                                  window.open(docUrl, "_blank");
+                                } else {
+                                  setPreviewImage({ url: docUrl, title: doc.name });
+                                }
+                              }}
+                              className="bg-slate-50 border border-slate-200 hover:bg-slate-100/80 rounded-2xl p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all shadow-xs group"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-9 h-9 rounded-xl bg-blue-100/80 text-blue-700 flex items-center justify-center shrink-0">
+                                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                                </div>
+                                <div className="min-w-0">
+                                  <h5 className="text-xs font-semibold text-slate-800 truncate m-0 group-hover:text-blue-950">
+                                    {doc.name}
+                                  </h5>
+                                  <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
+                                    {doc.uploadedBy} {doc.uploadedAt ? `• ${formatDateString(doc.uploadedAt)}` : ""}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-xs text-blue-600 font-semibold px-2.5 py-1 bg-white rounded-lg border border-slate-200 shrink-0 group-hover:border-blue-300">
+                                {t.view}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
               {/* Messages from office staff */}
               {trackedClaim.messages && trackedClaim.messages.length > 0 && (
                 <div className="px-2 mb-6">
@@ -943,6 +1205,60 @@ function TrackClaimsContent() {
       >
         <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
+
+      {/* Full-Screen Image Lightbox Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-[60] p-4 transition-all duration-300"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700/70 rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90 text-white">
+              <span className="font-semibold text-sm tracking-wide text-slate-200 truncate">
+                {previewImage.title}
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewImage.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-sky-400 hover:text-sky-300 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-all no-underline font-medium"
+                >
+                  Open Original ↗
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewImage(null)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer text-lg leading-none"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Image Preview Container */}
+            <div className="p-4 flex items-center justify-center bg-slate-950/60 overflow-auto max-h-[calc(92vh-70px)]">
+              {previewImage.url.endsWith(".pdf") || previewImage.url.includes(".pdf") ? (
+                <iframe
+                  src={previewImage.url}
+                  title="Document Preview"
+                  className="w-full h-[65vh] rounded-xl border border-slate-800"
+                />
+              ) : (
+                <img
+                  src={previewImage.url}
+                  alt={previewImage.title}
+                  className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-lg"
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <PolicyHolderFooter />
     </div>

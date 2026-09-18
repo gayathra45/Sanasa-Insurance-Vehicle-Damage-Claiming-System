@@ -14,6 +14,7 @@ import {
   ImageBackground,
   Keyboard,
   Image,
+  Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -43,6 +44,16 @@ interface Claim {
   otherVehicleDetails?: any;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
   paymentReceipt?: string;
+  accidentPhotos?: {
+    front?: string[];
+    rear?: string[];
+    side?: string[];
+  };
+  drivingLicense?: {
+    front?: string[];
+    rear?: string[];
+  };
+  additionalDocuments?: { name: string; url: string; uploadedAt?: string; uploadedBy?: string }[];
 }
 
 import { useLanguage } from "../../utils/translations";
@@ -52,6 +63,13 @@ export default function TrackClaims() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const [claimId, setClaimId] = useState("");
   const [trackedClaim, setTrackedClaim] = useState<Claim | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
+
+  const getDocUrl = (url: string) => {
+    if (!url) return "";
+    if (url.startsWith("http") || url.startsWith("data:")) return url;
+    return `${API_BASE_URL.replace("/api", "")}/uploads/${url}`;
+  };
 
   const getUserRequestedDocs = (claim: Claim): string[] => {
     const getRecipientForDoc = (name: string) => {
@@ -96,7 +114,11 @@ export default function TrackClaims() {
                 documentsRequested: data.claim.documentsRequested || false,
                 requestedDocuments: data.claim.requestedDocuments || [],
                 currentStep: data.claim.currentStep || 1,
-                messages: data.claim.messages || []
+                messages: data.claim.messages || [],
+                paymentReceipt: data.claim.paymentReceipt || undefined,
+                accidentPhotos: data.claim.accidentPhotos || { front: [], rear: [], side: [] },
+                drivingLicense: data.claim.drivingLicense || { front: [], rear: [] },
+                additionalDocuments: data.claim.additionalDocuments || []
               });
               setIsLoading(false);
               return;
@@ -138,7 +160,11 @@ export default function TrackClaims() {
               requestedDocuments: data.claim.requestedDocuments || [],
               currentStep: data.claim.currentStep || 1,
               messages: data.claim.messages || [],
-              branch: data.claim.branch
+              branch: data.claim.branch,
+              paymentReceipt: data.claim.paymentReceipt || undefined,
+              accidentPhotos: data.claim.accidentPhotos || { front: [], rear: [], side: [] },
+              drivingLicense: data.claim.drivingLicense || { front: [], rear: [] },
+              additionalDocuments: data.claim.additionalDocuments || []
             });
           }
         }
@@ -157,7 +183,7 @@ export default function TrackClaims() {
         try {
           const user = JSON.parse(userStr);
           if (user.nic) {
-            const res = await fetch(`${API_BASE_URL}/api/policy-holder/user-claims?nic=${encodeURIComponent(user.nic)}`);
+            const res = await fetch(`${API_BASE_URL}/api/policy-holder/user-claims?nic=${encodeURIComponent(user.nic)}&includeDocs=true`);
             let databaseClaims: Claim[] = [];
             if (res.ok) {
               const data = await res.json();
@@ -178,7 +204,11 @@ export default function TrackClaims() {
                   requestedDocuments: claim.requestedDocuments || [],
                   currentStep: claim.currentStep || 1,
                   messages: claim.messages || [],
-                  branch: claim.branch
+                  branch: claim.branch,
+                  paymentReceipt: claim.paymentReceipt || undefined,
+                  accidentPhotos: claim.accidentPhotos || { front: [], rear: [], side: [] },
+                  drivingLicense: claim.drivingLicense || { front: [], rear: [] },
+                  additionalDocuments: claim.additionalDocuments || []
                 }));
               }
             }
@@ -261,7 +291,11 @@ export default function TrackClaims() {
             documentsRequested: data.claim.documentsRequested || false,
             requestedDocuments: data.claim.requestedDocuments || [],
             currentStep: data.claim.currentStep || 1,
-            messages: data.claim.messages || []
+            messages: data.claim.messages || [],
+            paymentReceipt: data.claim.paymentReceipt || undefined,
+            accidentPhotos: data.claim.accidentPhotos || { front: [], rear: [], side: [] },
+            drivingLicense: data.claim.drivingLicense || { front: [], rear: [] },
+            additionalDocuments: data.claim.additionalDocuments || []
           });
           setIsLoading(false);
           return;
@@ -618,6 +652,171 @@ export default function TrackClaims() {
               </View>
             )}
 
+            {/* Accident & Damage Photos Section */}
+            {(() => {
+              const frontPhotos = trackedClaim.accidentPhotos?.front || [];
+              const rearPhotos = trackedClaim.accidentPhotos?.rear || [];
+              const sidePhotos = trackedClaim.accidentPhotos?.side || [];
+              const allAccidentPhotos: { url: string; label: string; viewType: string }[] = [];
+
+              frontPhotos.forEach((url, idx) => {
+                allAccidentPhotos.push({
+                  url,
+                  label: `${lang === "en" ? "Front View" : lang === "si" ? "ඉදිරිපස පෙනුම" : "முன் பார்வை"} ${frontPhotos.length > 1 ? `#${idx + 1}` : ""}`,
+                  viewType: lang === "en" ? "Front" : lang === "si" ? "ඉදිරිපස" : "முன்"
+                });
+              });
+              rearPhotos.forEach((url, idx) => {
+                allAccidentPhotos.push({
+                  url,
+                  label: `${lang === "en" ? "Rear View" : lang === "si" ? "පසුපස පෙනුම" : "பின் பார்வை"} ${rearPhotos.length > 1 ? `#${idx + 1}` : ""}`,
+                  viewType: lang === "en" ? "Rear" : lang === "si" ? "පසුපස" : "பின்"
+                });
+              });
+              sidePhotos.forEach((url, idx) => {
+                allAccidentPhotos.push({
+                  url,
+                  label: `${lang === "en" ? "Side View" : lang === "si" ? "පැති පෙනුම" : "பக்க பார்வை"} ${sidePhotos.length > 1 ? `#${idx + 1}` : ""}`,
+                  viewType: lang === "en" ? "Side" : lang === "si" ? "පැති" : "பக்க"
+                });
+              });
+
+              return (
+                <View style={{ marginTop: 16 }}>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 4, marginBottom: 8 }}>
+                    <Text style={styles.sectionSubHeader}>
+                      {lang === "en" ? "Attached Accident Photos" : lang === "si" ? "අනතුරු හානි ඡායාරූප" : "விபத்து சேத புகைப்படங்கள்"}
+                    </Text>
+                    {allAccidentPhotos.length > 0 && (
+                      <Text style={{ fontSize: 11, fontWeight: "800", color: "#0284c7" }}>
+                        {allAccidentPhotos.length} {allAccidentPhotos.length === 1 ? "Photo" : "Photos"}
+                      </Text>
+                    )}
+                  </View>
+
+                  {allAccidentPhotos.length === 0 ? (
+                    <View style={styles.detailsCard}>
+                      <Text style={[styles.detailsVal, { fontStyle: "italic", color: "#64748b", paddingVertical: 8 }]}>
+                        {lang === "en" ? "No accident photos attached." : lang === "si" ? "අනතුරු ඡායාරූප අමුණා නැත." : "விபத்து புகைப்படங்கள் இணைக்கப்படவில்லை."}
+                      </Text>
+                    </View>
+                  ) : (
+                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                      {allAccidentPhotos.map((photo, pIdx) => {
+                        const docUrl = getDocUrl(photo.url);
+                        return (
+                          <TouchableOpacity
+                            key={pIdx}
+                            activeOpacity={0.85}
+                            onPress={() => setPreviewImage({ url: docUrl, title: `${trackedClaim.claimNumber} - ${photo.label}` })}
+                            style={styles.photoCard}
+                          >
+                            <Image source={{ uri: docUrl }} style={styles.photoCardImg} resizeMode="cover" />
+                            <View style={styles.photoBadge}>
+                              <Text style={styles.photoBadgeText} numberOfLines={1}>{photo.label}</Text>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+                </View>
+              );
+            })()}
+
+            {/* Driver's License Photos Section */}
+            {(() => {
+              const licFront = trackedClaim.drivingLicense?.front || [];
+              const licRear = trackedClaim.drivingLicense?.rear || [];
+              const allLicPhotos: { url: string; label: string }[] = [];
+
+              licFront.forEach((url, idx) => {
+                allLicPhotos.push({
+                  url,
+                  label: `${lang === "en" ? "License (Front)" : lang === "si" ? "බලපත්‍රය (ඉදිරිපස)" : "உரிமம் (முன்)"} ${licFront.length > 1 ? `#${idx + 1}` : ""}`
+                });
+              });
+              licRear.forEach((url, idx) => {
+                allLicPhotos.push({
+                  url,
+                  label: `${lang === "en" ? "License (Rear)" : lang === "si" ? "බලපත්‍රය (පසුපස)" : "உரிமம் (பின்)"} ${licRear.length > 1 ? `#${idx + 1}` : ""}`
+                });
+              });
+
+              if (allLicPhotos.length === 0) return null;
+
+              return (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={[styles.sectionSubHeader, { paddingHorizontal: 4, marginBottom: 8 }]}>
+                    {lang === "en" ? "Driver's License Photos" : lang === "si" ? "රියදුරු බලපත්‍ර ඡායාරූප" : "ஓட்டுநர் உரிம புகைப்படங்கள்"}
+                  </Text>
+                  <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingVertical: 4 }}>
+                    {allLicPhotos.map((lic, lIdx) => {
+                      const docUrl = getDocUrl(lic.url);
+                      return (
+                        <TouchableOpacity
+                          key={lIdx}
+                          activeOpacity={0.85}
+                          onPress={() => setPreviewImage({ url: docUrl, title: `${trackedClaim.claimNumber} - ${lic.label}` })}
+                          style={[styles.photoCard, { width: 150, height: 105 }]}
+                        >
+                          <Image source={{ uri: docUrl }} style={styles.photoCardImg} resizeMode="cover" />
+                          <View style={styles.photoBadge}>
+                            <Text style={styles.photoBadgeText} numberOfLines={1}>{lic.label}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </ScrollView>
+                </View>
+              );
+            })()}
+
+            {/* Additional Documents Section */}
+            {(() => {
+              const docs: { name: string; url: string; uploadedAt?: string; uploadedBy?: string }[] = [];
+              (trackedClaim.additionalDocuments || []).forEach((d) => {
+                docs.push({
+                  name: d.name,
+                  url: d.url,
+                  uploadedAt: d.uploadedAt,
+                  uploadedBy: d.uploadedBy || "Policy Holder"
+                });
+              });
+
+              if (docs.length === 0) return null;
+
+              return (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={[styles.sectionSubHeader, { paddingHorizontal: 4, marginBottom: 8 }]}>
+                    {lang === "en" ? "Attached Documents & Files" : lang === "si" ? "අමුණා ඇති ලේඛන සහ ලිපිගොනු" : "இணைக்கப்பட்ட ஆவணங்கள்"}
+                  </Text>
+                  <View style={{ gap: 8 }}>
+                    {docs.map((doc, dIdx) => {
+                      const docUrl = getDocUrl(doc.url);
+                      return (
+                        <TouchableOpacity
+                          key={dIdx}
+                          activeOpacity={0.8}
+                          onPress={() => setPreviewImage({ url: docUrl, title: doc.name })}
+                          style={[styles.detailsCard, { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingVertical: 12 }]}
+                        >
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1, marginRight: 8 }}>
+                            <Ionicons name="document-text" size={22} color="#0284c7" />
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 13, fontWeight: "700", color: "#0f172a" }} numberOfLines={1}>{doc.name}</Text>
+                              <Text style={{ fontSize: 10, color: "#64748b", marginTop: 2 }}>{doc.uploadedBy} {doc.uploadedAt ? `• ${formatDateString(doc.uploadedAt)}` : ""}</Text>
+                            </View>
+                          </View>
+                          <Ionicons name="eye-outline" size={18} color="#0284c7" />
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })()}
+
             {/* Messages updates list */}
             <View style={styles.messagesSection}>
               <Text style={styles.messagesHeader}>{lang === "en" ? "Messages & Updates" : lang === "si" ? "පණිවිඩ සහ යාවත්කාලීන කිරීම්" : "செய்திகள் & புதுப்பிப்புகள்"}</Text>
@@ -694,6 +893,29 @@ export default function TrackClaims() {
           </View>
         )}
       </ScrollView>
+
+      {/* Full-Screen Image Viewer Modal */}
+      <Modal
+        visible={previewImage !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPreviewImage(null)}
+      >
+        {previewImage && (
+          <View style={styles.fullscreenModalOverlay}>
+            <View style={styles.fullscreenHeader}>
+              <Text style={styles.fullscreenTitle} numberOfLines={1}>{previewImage.title}</Text>
+              <TouchableOpacity
+                onPress={() => setPreviewImage(null)}
+                style={styles.fullscreenCloseBtn}
+              >
+                <Ionicons name="close" size={22} color="#ffffff" />
+              </TouchableOpacity>
+            </View>
+            <Image source={{ uri: previewImage.url }} style={styles.fullscreenImage} />
+          </View>
+        )}
+      </Modal>
 
       <PolicyHolderNavbar />
     </View>
@@ -977,5 +1199,70 @@ const styles = StyleSheet.create({
   modalPhotoThumb: {
     width: "100%",
     height: "100%",
+  },
+  photoCard: {
+    width: 140,
+    height: 100,
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "#f1f5f9",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    position: "relative",
+  },
+  photoCardImg: {
+    width: "100%",
+    height: "100%",
+  },
+  photoBadge: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(15, 23, 42, 0.75)",
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+  },
+  photoBadgeText: {
+    fontSize: 9.5,
+    fontWeight: "700",
+    color: "#ffffff",
+    textAlign: "center",
+  },
+  fullscreenModalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.95)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fullscreenHeader: {
+    position: "absolute",
+    top: Platform.OS === "ios" ? 50 : 30,
+    left: 16,
+    right: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    zIndex: 10,
+  },
+  fullscreenTitle: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "700",
+    flex: 1,
+    marginRight: 10,
+  },
+  fullscreenCloseBtn: {
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fullscreenImage: {
+    width: "100%",
+    height: "80%",
+    resizeMode: "contain",
   },
 });
