@@ -48,6 +48,8 @@ interface Claim {
   otherVehicleDetails?: any;
   messages?: ClaimMessage[];
   paymentReceipt?: string;
+  additionalDocuments?: any[];
+  garageEstimateComparison?: any;
 }
 
 interface Notification {
@@ -102,17 +104,57 @@ export default function NotificationsPage() {
   const [refreshing, setRefreshing] = useState(false);
 
   const getUserRequestedDocs = (claim: Claim): string[] => {
+    if (!claim) return [];
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message.includes(`Requested: ${name}`));
+        .find(m => m.message && m.message.includes(`Requested: ${name}`));
       if (msg) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
         if (msg.message.includes("[Document Request to User]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
-    return (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+
+    const requested = (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+    const submittedNames = (claim.additionalDocuments || []).map((d: any) => (d.name || d.title || "").toLowerCase());
+    const hasGarageComparison = Boolean(claim.garageEstimateComparison?.garageDocumentUrl || claim.garageEstimateComparison?.garageEstimateAmount);
+
+    return requested.filter((reqName: string) => {
+      const lower = reqName.toLowerCase();
+      if ((lower.includes("garage") || lower.includes("estimate") || lower.includes("repair")) && hasGarageComparison) {
+        return false;
+      }
+      const isAlreadyUploaded = submittedNames.some((subName: string) => {
+        if (!subName) return false;
+        return subName.includes(lower) || lower.includes(subName) ||
+          (lower.includes("police") && subName.includes("police")) ||
+          (lower.includes("license") && (subName.includes("license") || subName.includes("driving"))) ||
+          (lower.includes("estimate") && (subName.includes("estimate") || subName.includes("garage") || subName.includes("repair"))) ||
+          (lower.includes("medical") && subName.includes("medical")) ||
+          (lower.includes("claim") && subName.includes("claim"));
+      });
+      return !isAlreadyUploaded;
+    });
+  };
+
+  const getSubmittedUserDocs = (claim: Claim): any[] => {
+    if (!claim) return [];
+    const docs = (claim.additionalDocuments || []).filter((d: any) => d.uploadedBy !== "Agent" && d.uploadedBy !== "agent");
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      const exists = docs.some((d: any) => (d.name || d.title || "").toLowerCase().includes("garage") || (d.name || d.title || "").toLowerCase().includes("estimate"));
+      if (!exists) {
+        docs.push({
+          name: "Garage Estimate Report",
+          title: "Garage Estimate Report",
+          url: claim.garageEstimateComparison.garageDocumentUrl,
+          fileUrl: claim.garageEstimateComparison.garageDocumentUrl,
+          uploadedAt: claim.garageEstimateComparison.uploadedAt || claim.updatedAt || new Date().toISOString(),
+          uploadedBy: "User"
+        });
+      }
+    }
+    return docs;
   };
 
   const fetchNotifications = useCallback(async (nic: string) => {
@@ -136,17 +178,17 @@ export default function NotificationsPage() {
       all.forEach((claim) => {
         const dateFormatted = formatDate(claim.createdAt || claim.updatedAt);
 
+        const userPendingDocs = getUserRequestedDocs(claim);
+
         // 1. Documents Requested
-        if (claim.documentsRequested) {
+        if (claim.documentsRequested && userPendingDocs.length > 0) {
           notifs.push({
             id: claim.claimNumber + "-doc",
             type: "urgent",
             title: lang === "en" ? "Documents Requested – Action Required" : lang === "si" ? "ලේඛන ඉල්ලා ඇත – ක්‍රියාවක් අවශ්‍යයි" : "ஆவணங்கள் கோரப்பட்டுள்ளன - நடவடிக்கை தேவை",
             description: lang === "en" ? `Staff has requested a ${
-              claim.requestedDocuments && claim.requestedDocuments.length > 0
-                ? claim.requestedDocuments.join(" & ")
-                : "Police Report / Repair Estimate"
-            } for claim ${claim.claimNumber}.` : lang === "si" ? `හිමිකම් අංකය ${claim.claimNumber} සඳහා ලේඛන ඉල්ලා ඇත.` : `விண்ணப்ப எண் ${claim.claimNumber} க்கான ஆவணங்கள் கோரப்பட்டுள்ளன.`,
+              userPendingDocs.join(" & ")
+            } for claim ${claim.claimNumber}.` : lang === "si" ? `හිමිකම් අංකය ${claim.claimNumber} සඳහා ලේඛන ඉල්ලා ඇත.` : `விண்ணப்ப எண் ${claim.claimNumber} க்கான ஆவணங்கள் கோරப்பட்டுள்ளன.`,
             subText: lang === "en" ? "Please upload within 3 working days to avoid settlement delays." : lang === "si" ? "ප්‍රමාදයන් වළක්වා ගැනීමට කරුණාකර වැඩකරන දින 3ක් ඇතුළත උඩුගත කරන්න." : "தாமதத்தைத் தவிர்க்க 3 வேலை நாட்களுக்குள் பதிவேற்றவும்.",
             date: dateFormatted,
             isUrgent: true,
@@ -899,6 +941,47 @@ export default function NotificationsPage() {
                     </TouchableOpacity>
                   </View>
                 )}
+
+                {/* Submitted Documents Status Card */}
+                {getUserRequestedDocs(selectedClaim).length === 0 && getSubmittedUserDocs(selectedClaim).length > 0 && (
+                  <View style={styles.docSubmittedAlert}>
+                    <View style={styles.docSubmittedTitleRow}>
+                      <Ionicons name="checkmark-circle" size={18} color="#16a34a" />
+                      <Text style={styles.docSubmittedTitle}>
+                        {lang === "en" ? "Documents Submitted – Under Review" : lang === "si" ? "ලේඛන ඉදිරිපත් කර ඇත – සමාලෝචනය වෙමින්" : "ஆவணங்கள் சமர்ப்பிக்கப்பட்டன - மதிப்பாய்வில்"}
+                      </Text>
+                    </View>
+                    <Text style={styles.docSubmittedDesc}>
+                      {lang === "en" ? "You have submitted all requested documents for this claim. Our claims team is currently reviewing them." : lang === "si" ? "ඔබ මෙම හිමිකම් පෑම සඳහා අවශ්‍ය සියලුම ලේඛන ඉදිරිපත් කර ඇත. අපගේ කණ්ඩායම ඒවා සමාලෝචනය කරයි." : "இந்த கோரிக்கைக்கான அனைத்து தேவையான ஆவணங்களையும் நீங்கள் சமர்ப்பித்துள்ளீர்கள்."}
+                    </Text>
+                    <View style={styles.docSubmittedItems}>
+                      {getSubmittedUserDocs(selectedClaim).map((doc: any, index: number) => (
+                        <View key={index} style={styles.docSubmittedItem}>
+                          <Ionicons name="document-text" size={14} color="#16a34a" />
+                          <Text style={styles.docSubmittedItemText} numberOfLines={1}>
+                            {doc.name || doc.title || `Document #${index + 1}`}
+                          </Text>
+                          {doc.uploadedAt && (
+                            <Text style={styles.docSubmittedItemDate}>
+                              {formatDateString(doc.uploadedAt)}
+                            </Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                    <TouchableOpacity
+                      style={styles.viewDocsBtn}
+                      onPress={() => {
+                        setSelectedClaim(null);
+                        router.push("/PolicyHolder/MyDocs" as any);
+                      }}
+                    >
+                      <Text style={styles.viewDocsBtnText}>
+                        {lang === "en" ? "View in Documents" : lang === "si" ? "ලේඛන පිටුවට යන්න" : "ஆவணங்களில் பார்க்கவும்"}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </ScrollView>
             ) : null}
 
@@ -1346,6 +1429,31 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   uploadDocBtnText: { fontSize: 12, color: "#ffffff", fontWeight: "800" },
+
+  /* Submitted Docs Alert Card */
+  docSubmittedAlert: {
+    backgroundColor: "rgba(240, 253, 244, 0.9)",
+    borderWidth: 1.5,
+    borderColor: "#bbf7d0",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 20,
+  },
+  docSubmittedTitleRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
+  docSubmittedTitle: { fontSize: 13.5, fontWeight: "800", color: "#15803d" },
+  docSubmittedDesc: { fontSize: 12.5, color: "#166534", fontWeight: "600", lineHeight: 17, marginBottom: 10 },
+  docSubmittedItems: { gap: 6, marginBottom: 12 },
+  docSubmittedItem: { flexDirection: "row", alignItems: "center", gap: 8 },
+  docSubmittedItemText: { fontSize: 12, color: "#15803d", fontWeight: "700", flex: 1 },
+  docSubmittedItemDate: { fontSize: 10.5, color: "#16a34a", fontWeight: "600" },
+  viewDocsBtn: {
+    backgroundColor: "#16a34a",
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  viewDocsBtnText: { fontSize: 12, color: "#ffffff", fontWeight: "800" },
 
   /* Messages updates list */
   messagesSection: { marginBottom: 20 },

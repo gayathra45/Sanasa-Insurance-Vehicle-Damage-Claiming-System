@@ -54,6 +54,7 @@ interface Claim {
   messages?: ClaimMessage[];
   additionalDocuments?: AdditionalDoc[];
   inspectionSubmitted?: boolean;
+  garageEstimateComparison?: any;
 }
 
 interface Vehicle {

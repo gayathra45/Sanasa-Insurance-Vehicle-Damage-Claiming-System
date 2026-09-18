@@ -44,6 +44,8 @@ interface Claim {
   branch?: string;
   documentRequestTo?: string;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
+  additionalDocuments?: any[];
+  garageEstimateComparison?: any;
 }
 
 interface NotificationItem {
@@ -284,14 +286,62 @@ export default function PolicyHolderNotifications() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message.includes(`Requested: ${name}`));
+        .find(m => m.message && m.message.includes(`Requested: ${name}`));
       if (msg) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
         if (msg.message.includes("[Document Request to User]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
-    return (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+
+    const uploadedNames: string[] = (claim.additionalDocuments || [])
+      .filter((d: any) => d.uploadedBy !== "Agent")
+      .map((d: any) => (d.name || "").trim().toLowerCase());
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      uploadedNames.push("garage estimate report", "garage estimate", "repair estimate");
+    }
+
+    return (claim.requestedDocuments || []).filter((name: string) => {
+      if (getRecipientForDoc(name) !== "User") return false;
+      const normName = name.trim().toLowerCase();
+      const alreadyUploaded = uploadedNames.some((u: string) => 
+        u === normName ||
+        (normName.includes("garage") && u.includes("garage")) ||
+        (normName.includes("police") && u.includes("police")) ||
+        (normName.includes("estimate") && u.includes("estimate")) ||
+        (normName.includes("license") && u.includes("license"))
+      );
+      return !alreadyUploaded;
+    });
+  };
+
+  const getSubmittedUserDocs = (claim: Claim): { name: string; url: string; uploadedAt?: string }[] => {
+    const submitted: { name: string; url: string; uploadedAt?: string }[] = [];
+    const additional = (claim.additionalDocuments || []).filter((d: any) => d.uploadedBy !== "Agent");
+    
+    additional.forEach((doc: any) => {
+      if (doc.url) {
+        submitted.push({
+          name: doc.name,
+          url: doc.url,
+          uploadedAt: doc.uploadedAt || claim.createdAt
+        });
+      }
+    });
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      const exists = submitted.some((s: any) => s.url === claim.garageEstimateComparison?.garageDocumentUrl);
+      if (!exists) {
+        submitted.push({
+          name: "Garage Estimate Report",
+          url: claim.garageEstimateComparison.garageDocumentUrl,
+          uploadedAt: claim.createdAt
+        });
+      }
+    }
+
+    return submitted;
   };
 
   const getDocRequestNote = (claim: Claim, docName: string): string => {
@@ -1022,7 +1072,7 @@ export default function PolicyHolderNotifications() {
                   })()}
                 </div>
 
-                {/* Warning Alert Box matching mockup */}
+                {/* Warning Alert Box: Documents Requested */}
                 {selectedClaim.documentsRequested && getUserRequestedDocs(selectedClaim).length > 0 && (
                   <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2 mt-4">
                     <h4 className="text-[#9c3535] font-semibold text-sm mb-1.5">Documents Requested</h4>
@@ -1058,6 +1108,45 @@ export default function PolicyHolderNotifications() {
                       className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
                       Go to Documents
+                    </Link>
+                  </div>
+                )}
+
+                {/* Success Alert Box: Documents Submitted – Under Review */}
+                {getUserRequestedDocs(selectedClaim).length === 0 && getSubmittedUserDocs(selectedClaim).length > 0 && (
+                  <div className="bg-emerald-50/90 border border-emerald-200 rounded-[20px] p-6 mb-2 mt-4 transition-all">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
+                      </div>
+                      <h4 className="text-emerald-900 font-semibold text-sm m-0">Documents Submitted – Under Review</h4>
+                    </div>
+                    <p className="text-emerald-800 text-[13px] font-normal leading-relaxed mb-3">
+                      The requested document(s) have been successfully submitted and are currently being reviewed by our insurance team:
+                    </p>
+                    <ul className="list-none flex flex-col gap-2 mb-4 pl-1">
+                      {getSubmittedUserDocs(selectedClaim).map((doc, idx) => (
+                        <li key={idx} className="flex items-center justify-between gap-2 text-emerald-900 font-medium text-xs bg-white/80 border border-emerald-100 rounded-xl px-3.5 py-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="font-semibold truncate">{doc.name}</span>
+                            {doc.uploadedAt && (
+                              <span className="text-[11px] text-emerald-700/80 font-normal">
+                                (Submitted: {formatDateString(doc.uploadedAt)})
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-md shrink-0">
+                            Submitted
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={`/Policy_Holder/Documents`}
+                      className="inline-block bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    >
+                      View in Documents
                     </Link>
                   </div>
                 )}

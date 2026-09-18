@@ -60,6 +60,7 @@ interface Claim {
   documentsRequested?: boolean;
   requestedDocuments?: string[];
   documentRequestTo?: string;
+  garageEstimateComparison?: any;
 }
 
 interface NotificationItem {

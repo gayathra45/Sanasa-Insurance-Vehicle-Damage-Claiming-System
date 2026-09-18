@@ -17,9 +17,9 @@ import {
   Modal,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import { useLocalSearchParams } from "expo-router";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import { API_BASE_URL } from "../_config";
 
@@ -54,6 +54,8 @@ interface Claim {
     rear?: string[];
   };
   additionalDocuments?: { name: string; url: string; uploadedAt?: string; uploadedBy?: string }[];
+  createdAt?: string;
+  garageEstimateComparison?: any;
 }
 
 import { useLanguage } from "../../utils/translations";
@@ -75,14 +77,62 @@ export default function TrackClaims() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message.includes(`Requested: ${name}`));
+        .find(m => m.message && m.message.includes(`Requested: ${name}`));
       if (msg) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
         if (msg.message.includes("[Document Request to User]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
-    return (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+
+    const uploadedNames = (claim.additionalDocuments || [])
+      .filter(d => d.uploadedBy !== "Agent")
+      .map(d => (d.name || "").trim().toLowerCase());
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      uploadedNames.push("garage estimate report", "garage estimate", "repair estimate");
+    }
+
+    return (claim.requestedDocuments || []).filter(name => {
+      if (getRecipientForDoc(name) !== "User") return false;
+      const normName = name.trim().toLowerCase();
+      const alreadyUploaded = uploadedNames.some(u => 
+        u === normName ||
+        (normName.includes("garage") && u.includes("garage")) ||
+        (normName.includes("police") && u.includes("police")) ||
+        (normName.includes("estimate") && u.includes("estimate")) ||
+        (normName.includes("license") && u.includes("license"))
+      );
+      return !alreadyUploaded;
+    });
+  };
+
+  const getSubmittedUserDocs = (claim: Claim): { name: string; url: string; uploadedAt?: string }[] => {
+    const submitted: { name: string; url: string; uploadedAt?: string }[] = [];
+    const additional = (claim.additionalDocuments || []).filter(d => d.uploadedBy !== "Agent");
+    
+    additional.forEach(doc => {
+      if (doc.url) {
+        submitted.push({
+          name: doc.name,
+          url: doc.url,
+          uploadedAt: doc.uploadedAt || claim.createdAt
+        });
+      }
+    });
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      const exists = submitted.some(s => s.url === claim.garageEstimateComparison?.garageDocumentUrl);
+      if (!exists) {
+        submitted.push({
+          name: "Garage Estimate Report",
+          url: claim.garageEstimateComparison.garageDocumentUrl,
+          uploadedAt: claim.createdAt
+        });
+      }
+    }
+
+    return submitted;
   };
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -865,17 +915,43 @@ export default function TrackClaims() {
                 <TouchableOpacity
                   style={styles.uploadDocBtn}
                   onPress={() => {
-                    Alert.alert(
-                      lang === "en" ? "Submit Documents" : lang === "si" ? "ලේඛන ඉදිරිපත් කරන්න" : "ஆவணங்களை சமர்ப்பிக்கவும்",
-                      lang === "en"
-                        ? "Please contact your assigned agent Saman at +94 112 003 000 or email files to claims-support@sanasa.lk."
-                        : lang === "si"
-                          ? "කරුණාකර ඔබගේ නියෝජිත සමන් දුරකථන අංක +94 112 003 000 හරහා සම්බන්ධ කරගන්න හෝ claims-support@sanasa.lk වෙත විද්‍යුත් තැපෑලක් එවන්න."
-                          : "உங்கள் நியமிக்கப்பட்ட முகவர் சமனை +94 112 003 000 இல் தொடர்பு கொள்ளவும் அல்லது claims-support@sanasa.lk க்கு மின்னஞ்சல் செய்யவும்."
-                    );
+                    router.push("/PolicyHolder/MyDocs" as any);
                   }}
                 >
-                  <Text style={styles.uploadDocBtnText}>{lang === "en" ? "Contact Agent to Submit" : lang === "si" ? "ඉදිරිපත් කිරීමට නියෝජිතයා අමතන්න" : "சமர்ப்பிக்க முகவரைத் தொடர்பு கொள்ளவும்"}</Text>
+                  <Text style={styles.uploadDocBtnText}>{lang === "en" ? "Go to My Documents to Upload" : lang === "si" ? "ලේඛන උඩුගත කිරීම වෙත යන්න" : "பதிவேற்ற எனது ஆவணங்களுக்குச் செல்லவும்"}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Documents Submitted Success alert */}
+            {getUserRequestedDocs(trackedClaim).length === 0 && getSubmittedUserDocs(trackedClaim).length > 0 && (
+              <View style={[styles.docSubmittedAlert, { marginTop: 12 }]}>
+                <View style={styles.docAlertTitleRow}>
+                  <Ionicons name="checkmark-circle" size={18} color="#059669" />
+                  <Text style={styles.docSubmittedTitle}>
+                    {lang === "en" ? "Documents Submitted – Under Review" : lang === "si" ? "ලේඛන ඉදිරිපත් කර ඇත – සමාලෝචනය යටතේ" : "ஆவணங்கள் சமர்ப்பிக்கப்பட்டன - மதிப்பாய்வில்"}
+                  </Text>
+                </View>
+                <Text style={styles.docSubmittedDesc}>
+                  {lang === "en" ? "The requested document(s) have been successfully submitted and are currently under review by our team:" : lang === "si" ? "ඉල්ලා සිටි ලේඛන සාර්ථකව ඉදිරිපත් කර ඇති අතර කාර්ය මණ්ඩලය විසින් සමාලෝචනය කරමින් පවතී:" : "கோரப்பட்ட ஆவணங்கள் வெற்றிகரமாக சமர்ப்பிக்கப்பட்டு மதிப்பாய்வில் உள்ளன:"}
+                </Text>
+                <View style={styles.docItems}>
+                  {getSubmittedUserDocs(trackedClaim).map((doc, i) => (
+                    <View key={i} style={styles.docDotItem}>
+                      <View style={[styles.bulletDot, { backgroundColor: "#059669" }]} />
+                      <Text style={[styles.docDotText, { color: "#065f46" }]}>{doc.name}</Text>
+                    </View>
+                  ))}
+                </View>
+                <TouchableOpacity
+                  style={[styles.uploadDocBtn, { backgroundColor: "#059669" }]}
+                  onPress={() => {
+                    router.push("/PolicyHolder/MyDocs" as any);
+                  }}
+                >
+                  <Text style={styles.uploadDocBtnText}>
+                    {lang === "en" ? "View in My Documents" : lang === "si" ? "මගේ ලේඛනවල බලන්න" : "எனது ஆவணங்களில் பார்க்கவும்"}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -1110,6 +1186,16 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
   },
+  docSubmittedAlert: {
+    backgroundColor: "rgba(236, 253, 245, 0.9)",
+    borderWidth: 1.5,
+    borderColor: "#a7f3d0",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 20,
+  },
+  docSubmittedTitle: { fontSize: 13.5, fontWeight: "800", color: "#065f46" },
+  docSubmittedDesc: { fontSize: 12.5, color: "#047857", fontWeight: "600", lineHeight: 17, marginBottom: 10 },
   docAlertTitleRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
   docAlertTitle: { fontSize: 13.5, fontWeight: "800", color: "#991b1b" },
   docAlertDesc: { fontSize: 12.5, color: "#b91c1c", fontWeight: "600", lineHeight: 17, marginBottom: 10 },

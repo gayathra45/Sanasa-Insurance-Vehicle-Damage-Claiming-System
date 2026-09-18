@@ -28,6 +28,7 @@ interface AdditionalDoc {
   name: string;
   url: string;
   uploadedAt: string;
+  uploadedBy?: string;
   _id?: string;
 }
 
@@ -59,6 +60,7 @@ interface Claim {
     rear?: string[];
   };
   additionalDocuments?: AdditionalDoc[];
+  garageEstimateComparison?: any;
 }
 
 export default function MyDocs() {
@@ -70,14 +72,62 @@ export default function MyDocs() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message.includes(`Requested: ${name}`));
+        .find(m => m.message && m.message.includes(`Requested: ${name}`));
       if (msg) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
         if (msg.message.includes("[Document Request to User]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
-    return (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+
+    const uploadedNames = (claim.additionalDocuments || [])
+      .filter(d => d.uploadedBy !== "Agent")
+      .map(d => (d.name || "").trim().toLowerCase());
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      uploadedNames.push("garage estimate report", "garage estimate", "repair estimate");
+    }
+
+    return (claim.requestedDocuments || []).filter(name => {
+      if (getRecipientForDoc(name) !== "User") return false;
+      const normName = name.trim().toLowerCase();
+      const alreadyUploaded = uploadedNames.some(u => 
+        u === normName ||
+        (normName.includes("garage") && u.includes("garage")) ||
+        (normName.includes("police") && u.includes("police")) ||
+        (normName.includes("estimate") && u.includes("estimate")) ||
+        (normName.includes("license") && u.includes("license"))
+      );
+      return !alreadyUploaded;
+    });
+  };
+
+  const getSubmittedUserDocs = (claim: Claim): { name: string; url: string; uploadedAt?: string }[] => {
+    const submitted: { name: string; url: string; uploadedAt?: string }[] = [];
+    const additional = (claim.additionalDocuments || []).filter(d => d.uploadedBy !== "Agent");
+    
+    additional.forEach(doc => {
+      if (doc.url) {
+        submitted.push({
+          name: doc.name,
+          url: doc.url,
+          uploadedAt: doc.uploadedAt || claim.createdAt
+        });
+      }
+    });
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      const exists = submitted.some(s => s.url === claim.garageEstimateComparison?.garageDocumentUrl);
+      if (!exists) {
+        submitted.push({
+          name: "Garage Estimate Report",
+          url: claim.garageEstimateComparison.garageDocumentUrl,
+          uploadedAt: claim.createdAt
+        });
+      }
+    }
+
+    return submitted;
   };
 
   // Upload Modal State
@@ -291,6 +341,18 @@ export default function MyDocs() {
           });
         }
       });
+    }
+
+    // 4. Garage Estimate from AI Forensic comparison
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      const garageUrl = claim.garageEstimateComparison.garageDocumentUrl;
+      const alreadyInDocs = docs.some(d => d.files.includes(garageUrl));
+      if (!alreadyInDocs) {
+        docs.push({
+          name: "Garage Estimate Report",
+          files: [garageUrl]
+        });
+      }
     }
 
     const allFiles = docs.flatMap(d => d.files);

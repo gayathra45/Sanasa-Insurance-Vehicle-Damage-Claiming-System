@@ -312,11 +312,18 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
             }
           }
 
-          // Remove uploaded document from requested list
+          // Remove uploaded document from requested list (flexible matching)
           if (claim.requestedDocuments && Array.isArray(claim.requestedDocuments)) {
-            claim.requestedDocuments = claim.requestedDocuments.filter(
-              d => d.trim().toLowerCase() !== documentName.trim().toLowerCase()
-            );
+            const normDocName = documentName.trim().toLowerCase();
+            claim.requestedDocuments = claim.requestedDocuments.filter(d => {
+              const normD = d.trim().toLowerCase();
+              if (normD === normDocName) return false;
+              if (normDocName.includes("garage") && normD.includes("garage")) return false;
+              if (normDocName.includes("police") && normD.includes("police")) return false;
+              if (normDocName.includes("estimate") && normD.includes("estimate")) return false;
+              if (normDocName.includes("license") && normD.includes("license")) return false;
+              return true;
+            });
           }
 
           // Append audit message to claim history
@@ -328,13 +335,22 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
         }
       }
 
-      // If all requested documents are uploaded, auto-resolve requests
-      if (claim.requestedDocuments && claim.requestedDocuments.length === 0) {
+      // Check if any remaining requested documents belong to User
+      const remainingUserDocs = (claim.requestedDocuments || []).filter(name => {
+        const msg = [...(claim.messages || [])]
+          .reverse()
+          .find(m => m.message && m.message.includes(`Requested: ${name}`));
+        if (msg && msg.message.includes("[Document Request to Agent]")) return false;
+        if (msg && msg.message.includes("[Document Request to User]")) return true;
+        return (claim.documentRequestTo || "User") !== "Agent";
+      });
+
+      if (remainingUserDocs.length === 0) {
         claim.documentsRequested = false;
-        
-        // Auto transition to Review status
-        claim.status = "Review";
-        claim.currentStep = 4;
+        if (!claim.status || claim.status === "Pending" || claim.status.toLowerCase().includes("doc")) {
+          claim.status = "Review";
+          claim.currentStep = 4;
+        }
       }
     }
 

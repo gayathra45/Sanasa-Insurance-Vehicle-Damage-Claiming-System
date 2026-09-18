@@ -52,6 +52,7 @@ interface Claim {
   messages: ClaimMessage[];
   additionalDocuments?: AdditionalDoc[];
   inspectionSubmitted?: boolean;
+  garageEstimateComparison?: any;
 }
 
 interface Vehicle {
@@ -225,6 +226,23 @@ export default function OfficeStaffNotifications() {
             link: `/Office_Staff/Claims?claimId=${claim.claimNumber}`,
             actionLabel: "View Document",
             createdAtRaw: latestDoc.uploadedAt,
+            claim
+          });
+        }
+
+        // 3b. Garage Estimate uploaded
+        if (claim.garageEstimateComparison?.garageDocumentUrl) {
+          const estDate = claim.garageEstimateComparison.uploadedAt || claim.createdAt;
+          compiled.push({
+            id: `${claim._id}-garage-estimate-${estDate}`,
+            type: "info",
+            title: `Garage Estimate Uploaded`,
+            description: `Garage Estimate Report has been uploaded for claim ${claim.claimNumber}.`,
+            date: formatDate(estDate),
+            isUrgent: false,
+            link: `/Office_Staff/Claims?claimId=${claim.claimNumber}`,
+            actionLabel: "View Document",
+            createdAtRaw: estDate,
             claim
           });
         }
