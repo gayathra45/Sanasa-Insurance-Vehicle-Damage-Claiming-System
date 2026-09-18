@@ -157,6 +157,7 @@ export default function PolicyHolderNavbar() {
     setLang(newLang);
     localStorage.setItem("language", newLang);
     setLangMenuOpen(false);
+    window.dispatchEvent(new CustomEvent("language-changed", { detail: newLang }));
     window.dispatchEvent(new Event("languageChange"));
   };
 

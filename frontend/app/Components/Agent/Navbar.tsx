@@ -128,6 +128,7 @@ export default function AgentNavbar() {
     localStorage.setItem("language", newLang);
     setLangMenuOpen(false);
     window.dispatchEvent(new CustomEvent("language-changed", { detail: newLang }));
+    window.dispatchEvent(new Event("languageChange"));
   };
 
   const handleLogout = async () => {

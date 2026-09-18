@@ -349,30 +349,36 @@ export const translations = {
   }
 };
 
-export function useLanguage() {
-  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
-  const [loading, setLoading] = useState(true);
+type LangCode = "en" | "si" | "ta";
+const listeners = new Set<(lang: LangCode) => void>();
+let currentLang: LangCode = "en";
 
-  const loadLang = async () => {
-    try {
-      const saved = await AsyncStorage.getItem("language");
-      if (saved && ["en", "si", "ta"].includes(saved)) {
-        setLang(saved as "en" | "si" | "ta");
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
-  };
+// Initialize on app load
+AsyncStorage.getItem("language").then((saved) => {
+  if (saved && ["en", "si", "ta"].includes(saved)) {
+    currentLang = saved as LangCode;
+    listeners.forEach((fn) => fn(currentLang));
+  }
+});
+
+export function useLanguage() {
+  const [lang, setLang] = useState<LangCode>(currentLang);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    loadLang();
+    const handler = (newLang: LangCode) => setLang(newLang);
+    listeners.add(handler);
+    setLang(currentLang);
+    return () => {
+      listeners.delete(handler);
+    };
   }, []);
 
-  const changeLang = async (newLang: "en" | "si" | "ta") => {
+  const changeLang = async (newLang: LangCode) => {
+    currentLang = newLang;
     setLang(newLang);
     await AsyncStorage.setItem("language", newLang);
+    listeners.forEach((fn) => fn(newLang));
   };
 
   return { lang, changeLang, t: translations[lang], loading };

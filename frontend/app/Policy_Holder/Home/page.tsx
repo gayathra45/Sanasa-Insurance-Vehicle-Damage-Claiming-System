@@ -142,10 +142,19 @@ export default function PolicyHolderHome() {
         setLang(savedLang);
       }
       const handleLangChange = (e: any) => {
-        setLang(e.detail);
+        if (e && e.detail) {
+          setLang(e.detail);
+        } else {
+          const saved = localStorage.getItem("language") as "en" | "si" | "ta";
+          if (saved) setLang(saved);
+        }
       };
       window.addEventListener("language-changed", handleLangChange);
-      return () => window.removeEventListener("language-changed", handleLangChange);
+      window.addEventListener("languageChange", handleLangChange);
+      return () => {
+        window.removeEventListener("language-changed", handleLangChange);
+        window.removeEventListener("languageChange", handleLangChange);
+      };
     }
   }, []);
 
@@ -663,14 +672,22 @@ export default function PolicyHolderHome() {
                         </div>
                         <div className="flex-1">
                           <h4 className={titleClass}>
-                            {notif.title}
+                            {notif.type === "urgent"
+                              ? (lang === "si" ? `ලේඛන ඉල්ලීමක් – පියවරක් අවශ්‍යයි (${notif.claim?.claimNumber || ""})` : lang === "ta" ? `ஆவணங்கள் தேவை (${notif.claim?.claimNumber || ""})` : notif.title)
+                              : notif.type === "approved"
+                              ? (lang === "si" ? `හිමිකම් පෑම ${notif.claim?.claimNumber || ""} අනුමත විය!` : lang === "ta" ? `கோரிக்கை ${notif.claim?.claimNumber || ""} அங்கீகரிக்கப்பட்டது!` : notif.title)
+                              : (lang === "si" ? `හිමිකම් පෑම ${notif.claim?.claimNumber || ""} තත්ත්වය: ${notif.claim?.status || "ක්‍රියාත්මක වෙමින්"}` : lang === "ta" ? `கோரிக்கை ${notif.claim?.claimNumber || ""} நிலை: ${notif.claim?.status || "செயல்பாட்டில்"}` : notif.title)}
                           </h4>
                           <p className="text-slate-600 text-sm font-normal mt-2 leading-relaxed">
-                            {notif.description}
+                            {notif.type === "urgent"
+                              ? (lang === "si" ? `කාර්ය මණ්ඩලය මෙම හිමිකම් පෑම සඳහා ලේඛන ඉල්ලා ඇත. කරුණාකර ලේඛන පිටුවට ගොස් උඩුගත කරන්න.` : lang === "ta" ? `இந்த கோரிக்கைக்கான ஆவணங்களை சமர்ப்பிக்கவும்.` : notif.description)
+                              : notif.type === "approved"
+                              ? (lang === "si" ? `රු. ${notif.claim?.amount ? Number(notif.claim.amount).toLocaleString() : '85,000'} ක මුදල අනුමත කර ඇති අතර ගෙවීම් කටයුතු සිදු කරමින් පවතී.` : lang === "ta" ? `ரூ. ${notif.claim?.amount ? Number(notif.claim.amount).toLocaleString() : '85,000'} க்கான தொகை அங்கீகரிக்கப்பட்டுள்ளது.` : notif.description)
+                              : (lang === "si" ? `ඔබගේ හිමිකම් පෑම දැනට සමාලෝචනය යටතේ පවතී.` : lang === "ta" ? `உங்கள் கோரிக்கை தற்போது பரிசீலனையில் உள்ளது.` : notif.description)}
                           </p>
                           {notif.subText && (
                             <p className="text-slate-500 text-xs font-normal mt-2">
-                              {notif.subText}
+                              {lang === "si" ? "කරුණාකර දින 3ක් ඇතුළත උඩුගත කරන්න..." : lang === "ta" ? "தயவுசெய்து 3 நாட்களுக்குள் பதிவேற்றவும்..." : notif.subText}
                             </p>
                           )}
                         </div>
@@ -693,7 +710,9 @@ export default function PolicyHolderHome() {
                                     : "bg-[#000080] hover:bg-[#000066] text-white font-medium text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline shadow-sm"
                                 }`}
                               >
-                                {act.label}
+                                {act.primary 
+                                  ? (lang === "si" ? "උඩුගත කරන්න" : lang === "ta" ? "பதிவேற்றுக" : "Upload")
+                                  : (lang === "si" ? "බලන්න" : lang === "ta" ? "பார்வை" : "View")}
                               </Link>
                             );
                           })}
