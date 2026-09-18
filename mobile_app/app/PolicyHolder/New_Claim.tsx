@@ -265,6 +265,61 @@ export default function FileNewClaim() {
     });
   };
 
+  // Duplicate photo detection state
+  const [duplicatesMap, setDuplicatesMap] = useState<
+    Record<
+      string,
+      {
+        matchedClaimNumber: string;
+        matchedVehiclePlate: string;
+        matchedIncidentDate: string;
+        similarity: string;
+        message: string;
+        photoType?: string;
+      }
+    >
+  >({});
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+
+  // Check duplicate photo against backend
+  const checkDuplicateMobilePhoto = async (photoKey: string, base64Data: string, typeLabel: string) => {
+    try {
+      setIsCheckingDuplicates(true);
+      const res = await fetch(`${API_BASE_URL}/api/policy-holder/check-duplicate-photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          photos: [{ id: photoKey, type: typeLabel, base64: base64Data }]
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasDuplicate && Array.isArray(data.duplicates) && data.duplicates.length > 0) {
+          const dup = data.duplicates[0];
+          setDuplicatesMap((prev) => ({
+            ...prev,
+            [photoKey]: dup
+          }));
+          Alert.alert(
+            "⚠️ Duplicate Photo Detected",
+            `The photo selected for "${typeLabel}" was already submitted under Claim #${dup.matchedClaimNumber} (${dup.matchedVehiclePlate || "Previous Claim"}) on ${dup.matchedIncidentDate} (${dup.similarity}).\n\nPlease remove this photo and upload a fresh, authentic photo for this accident.`,
+            [{ text: "Understood", style: "destructive" }]
+          );
+        } else {
+          setDuplicatesMap((prev) => {
+            const next = { ...prev };
+            delete next[photoKey];
+            return next;
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Duplicate image check error:", err);
+    } finally {
+      setIsCheckingDuplicates(false);
+    }
+  };
+
   const selectOtherVehiclePhoto = async (index: number, photoField: "licensePhotos" | "vehiclePhotos") => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
@@ -281,10 +336,12 @@ export default function FileNewClaim() {
       try {
         const asset = result.assets[0];
         const base64Data = await compressImageMobile(asset.uri);
+        let nextIndex = 0;
         setOtherVehicles((prev) => {
           const next = [...prev];
           if (next[index]) {
             const currentPhotos = next[index][photoField] || [];
+            nextIndex = currentPhotos.length;
             next[index] = {
               ...next[index],
               [photoField]: [
@@ -295,6 +352,10 @@ export default function FileNewClaim() {
           }
           return next;
         });
+
+        const photoKey = `other_${index}_${photoField}_${nextIndex}`;
+        const typeLabel = photoField === "licensePhotos" ? `Third-Party #${index + 1} License` : `Third-Party #${index + 1} Damage`;
+        await checkDuplicateMobilePhoto(photoKey, base64Data, typeLabel);
       } catch (err) {
         Alert.alert("Error", "Failed to compress selected image.");
       }
@@ -311,6 +372,13 @@ export default function FileNewClaim() {
           [photoField]: currentPhotos.filter((_: any, pIdx: number) => pIdx !== photoIndex)
         };
       }
+      return next;
+    });
+
+    const photoKey = `other_${index}_${photoField}_${photoIndex}`;
+    setDuplicatesMap((prev) => {
+      const next = { ...prev };
+      delete next[photoKey];
       return next;
     });
   };
@@ -711,7 +779,11 @@ export default function FileNewClaim() {
     }
   };
 
-  const selectPhoto = async (stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>) => {
+  const selectPhoto = async (
+    photoKey: string,
+    typeLabel: string,
+    stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>
+  ) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
       Alert.alert("Permission Required", "Please allow photo access to upload files.");
@@ -731,14 +803,23 @@ export default function FileNewClaim() {
           uri: asset.uri,
           base64: base64Data
         });
+        await checkDuplicateMobilePhoto(photoKey, base64Data, typeLabel);
       } catch (err) {
         Alert.alert("Error", "Failed to compress selected image.");
       }
     }
   };
 
-  const removePhoto = (stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>) => {
+  const removePhoto = (
+    photoKey: string,
+    stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>
+  ) => {
     stateSetter(null);
+    setDuplicatesMap((prev) => {
+      const next = { ...prev };
+      delete next[photoKey];
+      return next;
+    });
   };
 
   const selectMultiplePhotos = async (stateSetter: React.Dispatch<React.SetStateAction<PhotoState[]>>) => {
@@ -842,6 +923,18 @@ export default function FileNewClaim() {
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
+    // Check duplicate photos
+    const duplicateKeys = Object.keys(duplicatesMap);
+    if (duplicateKeys.length > 0) {
+      const firstDup = duplicatesMap[duplicateKeys[0]];
+      Alert.alert(
+        "⚠️ Cannot Submit Duplicate Photos",
+        `One or more uploaded photos have already been submitted under Claim #${firstDup.matchedClaimNumber} (${firstDup.similarity}).\n\nPlease remove or replace the flagged photo(s) before submitting this claim.`,
+        [{ text: "OK" }]
+      );
+      return;
+    }
+
     if (!accidentFront && !accidentRear && !accidentSide) {
       Alert.alert("Accident Photos Required", "Please upload at least one accident photo (Front, Rear, or Side).");
       return;
@@ -925,23 +1018,45 @@ export default function FileNewClaim() {
     return cleaned.toUpperCase();
   };
 
-  const renderUploadBox = (label: string, photo: PhotoState | null, stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>) => {
+  const renderUploadBox = (
+    photoKey: string,
+    label: string,
+    photo: PhotoState | null,
+    stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>
+  ) => {
+    const dup = duplicatesMap[photoKey];
+
     return (
       <View style={styles.uploadBoxContainer}>
         <Text style={styles.uploadLabel}>{label}</Text>
         {photo ? (
-          <View style={styles.previewContainer}>
+          <View style={[styles.previewContainer, dup ? styles.previewContainerDuplicate : null]}>
             <Image source={{ uri: photo.uri }} style={styles.previewImage} />
-            <TouchableOpacity style={styles.deletePhotoBtn} onPress={() => removePhoto(stateSetter)}>
+
+            {dup && (
+              <View style={styles.duplicateWarningBadge}>
+                <Ionicons name="warning" size={11} color="#ffffff" />
+                <Text style={styles.duplicateWarningBadgeText} numberOfLines={1}>
+                  #{dup.matchedClaimNumber}
+                </Text>
+              </View>
+            )}
+
+            <TouchableOpacity style={styles.deletePhotoBtn} onPress={() => removePhoto(photoKey, stateSetter)}>
               <Ionicons name="trash" size={16} color="#ffffff" />
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity style={styles.placeholderBox} onPress={() => selectPhoto(stateSetter)}>
+          <TouchableOpacity style={styles.placeholderBox} onPress={() => selectPhoto(photoKey, label, stateSetter)}>
             <Ionicons name="camera" size={32} color="#94a3b8" />
             <Text style={styles.placeholderTitle}>Select Image</Text>
             <Text style={styles.placeholderDesc}>JPG, PNG up to 5MB</Text>
           </TouchableOpacity>
+        )}
+        {dup && (
+          <Text style={styles.duplicateSubText} numberOfLines={2}>
+            ⚠️ Used in #{dup.matchedClaimNumber}
+          </Text>
         )}
       </View>
     );
@@ -1271,17 +1386,26 @@ export default function FileNewClaim() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.fieldLabel}>Driver's License Photos</Text>
                   <View style={styles.multiplePhotosRow}>
-                    {(vehicle.licensePhotos || []).map((photo: any, pIdx: number) => (
-                      <View key={pIdx} style={styles.multiplePhotoWrapper}>
-                        <Image source={{ uri: photo.uri }} style={styles.multiplePhotoThumb} />
-                        <TouchableOpacity
-                          style={styles.deletePhotoThumbBtn}
-                          onPress={() => removeOtherVehiclePhoto(index, "licensePhotos", pIdx)}
-                        >
-                          <Ionicons name="close" size={12} color="#ffffff" />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
+                    {(vehicle.licensePhotos || []).map((photo: any, pIdx: number) => {
+                      const pKey = `other_${index}_licensePhotos_${pIdx}`;
+                      const dup = duplicatesMap[pKey];
+                      return (
+                        <View key={pIdx} style={[styles.multiplePhotoWrapper, dup ? styles.multiplePhotoWrapperDuplicate : null]}>
+                          <Image source={{ uri: photo.uri }} style={styles.multiplePhotoThumb} />
+                          {dup && (
+                            <View style={styles.miniDupBadge}>
+                              <Ionicons name="warning" size={10} color="#ffffff" />
+                            </View>
+                          )}
+                          <TouchableOpacity
+                            style={styles.deletePhotoThumbBtn}
+                            onPress={() => removeOtherVehiclePhoto(index, "licensePhotos", pIdx)}
+                          >
+                            <Ionicons name="close" size={12} color="#ffffff" />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
                     <TouchableOpacity
                       style={styles.addPhotoThumbBtn}
                       onPress={() => selectOtherVehiclePhoto(index, "licensePhotos")}
@@ -1296,17 +1420,26 @@ export default function FileNewClaim() {
                 <View style={styles.inputGroup}>
                   <Text style={styles.fieldLabel}>Vehicle / Damage Photos</Text>
                   <View style={styles.multiplePhotosRow}>
-                    {(vehicle.vehiclePhotos || []).map((photo: any, pIdx: number) => (
-                      <View key={pIdx} style={styles.multiplePhotoWrapper}>
-                        <Image source={{ uri: photo.uri }} style={styles.multiplePhotoThumb} />
-                        <TouchableOpacity
-                          style={styles.deletePhotoThumbBtn}
-                          onPress={() => removeOtherVehiclePhoto(index, "vehiclePhotos", pIdx)}
-                        >
-                          <Ionicons name="close" size={12} color="#ffffff" />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
+                    {(vehicle.vehiclePhotos || []).map((photo: any, pIdx: number) => {
+                      const pKey = `other_${index}_vehiclePhotos_${pIdx}`;
+                      const dup = duplicatesMap[pKey];
+                      return (
+                        <View key={pIdx} style={[styles.multiplePhotoWrapper, dup ? styles.multiplePhotoWrapperDuplicate : null]}>
+                          <Image source={{ uri: photo.uri }} style={styles.multiplePhotoThumb} />
+                          {dup && (
+                            <View style={styles.miniDupBadge}>
+                              <Ionicons name="warning" size={10} color="#ffffff" />
+                            </View>
+                          )}
+                          <TouchableOpacity
+                            style={styles.deletePhotoThumbBtn}
+                            onPress={() => removeOtherVehiclePhoto(index, "vehiclePhotos", pIdx)}
+                          >
+                            <Ionicons name="close" size={12} color="#ffffff" />
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    })}
                     <TouchableOpacity
                       style={styles.addPhotoThumbBtn}
                       onPress={() => selectOtherVehiclePhoto(index, "vehiclePhotos")}
@@ -1369,17 +1502,31 @@ export default function FileNewClaim() {
         ) : (
           /* STEP 2: Photo uploads */
           <View style={styles.formContainer}>
+            {Object.keys(duplicatesMap).length > 0 && (
+              <View style={styles.duplicateAlertBanner}>
+                <Ionicons name="alert-circle" size={22} color="#dc2626" />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.duplicateAlertBannerTitle}>
+                    Duplicate Photos Detected
+                  </Text>
+                  <Text style={styles.duplicateAlertBannerDesc}>
+                    {Object.keys(duplicatesMap).length} photo(s) match previously submitted claims. Please replace them before submitting.
+                  </Text>
+                </View>
+              </View>
+            )}
+
             <Text style={styles.sectionHeader}>Accident Photos *</Text>
             <View style={styles.photosGrid}>
-              {renderUploadBox("Front Damage", accidentFront, setAccidentFront)}
-              {renderUploadBox("Rear Damage", accidentRear, setAccidentRear)}
-              {renderUploadBox("Side Damage", accidentSide, setAccidentSide)}
+              {renderUploadBox("accidentFront", "Front Damage", accidentFront, setAccidentFront)}
+              {renderUploadBox("accidentRear", "Rear Damage", accidentRear, setAccidentRear)}
+              {renderUploadBox("accidentSide", "Side Damage", accidentSide, setAccidentSide)}
             </View>
 
             <Text style={[styles.sectionHeader, { marginTop: 14 }]}>Driving License *</Text>
             <View style={styles.photosGrid}>
-              {renderUploadBox("License Front", licenseFront, setLicenseFront)}
-              {renderUploadBox("License Rear", licenseRear, setLicenseRear)}
+              {renderUploadBox("licenseFront", "License Front", licenseFront, setLicenseFront)}
+              {renderUploadBox("licenseRear", "License Rear", licenseRear, setLicenseRear)}
             </View>
 
             {/* Submit Action Row */}
@@ -1394,7 +1541,7 @@ export default function FileNewClaim() {
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.primaryBtn, isSubmitting && { backgroundColor: "#93c5fd" }]}
+                style={[styles.primaryBtn, (isSubmitting || Object.keys(duplicatesMap).length > 0) && { backgroundColor: "#93c5fd" }]}
                 onPress={handleSubmit}
                 disabled={isSubmitting}
               >
@@ -1920,5 +2067,70 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 14,
+  },
+  previewContainerDuplicate: {
+    borderWidth: 2.5,
+    borderColor: "#ef4444",
+  },
+  duplicateWarningBadge: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "rgba(220, 38, 38, 0.95)",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 3,
+    paddingHorizontal: 4,
+    gap: 3,
+  },
+  duplicateWarningBadgeText: {
+    color: "#ffffff",
+    fontSize: 9.5,
+    fontWeight: "800",
+  },
+  duplicateSubText: {
+    color: "#dc2626",
+    fontSize: 9.5,
+    fontWeight: "700",
+    marginTop: 4,
+  },
+  multiplePhotoWrapperDuplicate: {
+    borderWidth: 2,
+    borderColor: "#ef4444",
+  },
+  miniDupBadge: {
+    position: "absolute",
+    bottom: 3,
+    left: 3,
+    backgroundColor: "#dc2626",
+    borderRadius: 6,
+    padding: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  duplicateAlertBanner: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1.5,
+    borderColor: "#fecaca",
+    borderRadius: 18,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
+  },
+  duplicateAlertBannerTitle: {
+    fontSize: 13.5,
+    fontWeight: "800",
+    color: "#991b1b",
+  },
+  duplicateAlertBannerDesc: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#b91c1c",
+    marginTop: 2,
+    lineHeight: 16,
   },
 });

@@ -18,9 +18,20 @@ import {
   Alert02Icon,
 } from "@hugeicons/core-free-icons";
 
+import { API_URL } from "@/app/config";
+
 interface FileUploadState {
   files: File[];
   previews: string[];
+}
+
+interface DuplicateMatch {
+  matchedClaimNumber: string;
+  matchedVehiclePlate: string;
+  matchedIncidentDate: string;
+  similarity: string;
+  photoType: string;
+  message: string;
 }
 
 export default function UploadDocumentsPage() {
@@ -33,11 +44,15 @@ export default function UploadDocumentsPage() {
   const [licenseFront, setLicenseFront] = useState<FileUploadState>({ files: [], previews: [] });
   const [licenseRear, setLicenseRear] = useState<FileUploadState>({ files: [], previews: [] });
 
+  // Duplicate photos map (key: previewUrl, value: DuplicateMatch)
+  const [duplicatesMap, setDuplicatesMap] = useState<Record<string, DuplicateMatch>>({});
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+
   // Success Modal States
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [generatedClaimNumber, setGeneratedClaimNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-      const [customPopup, setCustomPopup] = useState<{
+  const [customPopup, setCustomPopup] = useState<{
     show: boolean;
     title: string;
     message: string;
@@ -65,10 +80,65 @@ export default function UploadDocumentsPage() {
     };
   }, [showSuccessModal]);
 
-  // File selection handler with 5MB validation
-  const handleFileChange = (
+  // Check duplicate photos against backend
+  const checkDuplicateFiles = async (files: File[], previews: string[], typeLabel: string) => {
+    if (files.length === 0) return;
+    setIsCheckingDuplicates(true);
+
+    try {
+      const photosPayload = await Promise.all(
+        files.map(async (file, i) => ({
+          id: previews[i],
+          type: typeLabel,
+          base64: await compressImage(file)
+        }))
+      );
+
+      const res = await fetch(`${API_URL}/policy-holder/check-duplicate-photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos: photosPayload })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasDuplicate && Array.isArray(data.duplicates) && data.duplicates.length > 0) {
+          const newDups: Record<string, DuplicateMatch> = {};
+          data.duplicates.forEach((d: any) => {
+            if (d.photoId) {
+              newDups[d.photoId] = {
+                matchedClaimNumber: d.matchedClaimNumber,
+                matchedVehiclePlate: d.matchedVehiclePlate,
+                matchedIncidentDate: d.matchedIncidentDate,
+                similarity: d.similarity,
+                photoType: d.photoType,
+                message: d.message
+              };
+            }
+          });
+
+          setDuplicatesMap((prev) => ({ ...prev, ...newDups }));
+
+          const firstDup = data.duplicates[0];
+          setCustomPopup({
+            show: true,
+            title: "⚠️ Duplicate Photo Detected",
+            message: `The photo selected for "${typeLabel}" was already submitted under Claim #${firstDup.matchedClaimNumber} (${firstDup.matchedVehiclePlate}) on ${firstDup.matchedIncidentDate} (${firstDup.similarity}).\n\nPlease remove this photo and upload a fresh, authentic photo of the current accident.`
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Duplicate image check error:", err);
+    } finally {
+      setIsCheckingDuplicates(false);
+    }
+  };
+
+  // File selection handler with 5MB validation and instant duplicate check
+  const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    stateSetter: React.Dispatch<React.SetStateAction<FileUploadState>>
+    stateSetter: React.Dispatch<React.SetStateAction<FileUploadState>>,
+    typeLabel: string
   ) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
@@ -91,17 +161,27 @@ export default function UploadDocumentsPage() {
         files: [...prev.files, ...validFiles],
         previews: [...prev.previews, ...newPreviews],
       }));
+
+      // Trigger automatic duplicate identification
+      await checkDuplicateFiles(validFiles, newPreviews, typeLabel);
     }
   };
 
-  // Remove individual file handler
+  // Remove individual file handler and clear duplicate map
   const handleRemoveFile = (
     index: number,
     stateSetter: React.Dispatch<React.SetStateAction<FileUploadState>>
   ) => {
     stateSetter((prev) => {
-      // Revoke the object URL to avoid memory leaks
-      URL.revokeObjectURL(prev.previews[index]);
+      const removedPreview = prev.previews[index];
+      URL.revokeObjectURL(removedPreview);
+
+      // Remove from duplicate tracking
+      setDuplicatesMap((dMap) => {
+        const next = { ...dMap };
+        delete next[removedPreview];
+        return next;
+      });
       
       const updatedFiles = [...prev.files];
       updatedFiles.splice(index, 1);
@@ -121,6 +201,18 @@ export default function UploadDocumentsPage() {
     e.preventDefault();
 
     if (isSubmitting || isSubmittingRef.current) return;
+
+    // Check if duplicate photos exist
+    const duplicateKeys = Object.keys(duplicatesMap);
+    if (duplicateKeys.length > 0) {
+      const firstDup = duplicatesMap[duplicateKeys[0]];
+      setCustomPopup({
+        show: true,
+        title: "⚠️ Duplicate Photos Detected",
+        message: `You have uploaded photo(s) that were already submitted in previous claims (e.g. Claim #${firstDup.matchedClaimNumber} - ${firstDup.similarity}).\n\nPlease remove the flagged photo(s) and upload authentic photos taken for this accident before submitting.`
+      });
+      return;
+    }
 
     // Check if at least some files are uploaded
     const totalAccidentPhotos =
@@ -187,7 +279,7 @@ export default function UploadDocumentsPage() {
         }
       };
 
-      const response = await fetch("http://localhost:5000/api/policy-holder/new-claim", {
+      const response = await fetch(`${API_URL}/policy-holder/new-claim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(claimData)
@@ -229,6 +321,8 @@ export default function UploadDocumentsPage() {
     isLicense: boolean = false
   ) => {
     const cardText = isLicense ? "Click to upload License Photos" : "Click to upload accident Photos";
+    const typeLabel = isLicense ? `License ${label}` : `Accident ${label}`;
+    const cardHasDuplicate = state.previews.some((p) => !!duplicatesMap[p]);
 
     return (
       <div className="flex flex-col flex-1">
@@ -238,7 +332,7 @@ export default function UploadDocumentsPage() {
           ref={inputRef}
           multiple
           accept="image/*,video/*,application/pdf"
-          onChange={(e) => handleFileChange(e, stateSetter)}
+          onChange={(e) => handleFileChange(e, stateSetter, typeLabel)}
           className="hidden"
         />
 
@@ -261,14 +355,20 @@ export default function UploadDocumentsPage() {
           </div>
         ) : (
           /* Active Card State with Thumbnail Previews */
-          <div className="w-full h-[170px] bg-[#e2e8f0]/40 border border-slate-300 rounded-3xl p-3 flex flex-col justify-between shadow-inner">
+          <div className={`w-full h-[170px] bg-[#e2e8f0]/40 border ${cardHasDuplicate ? 'border-red-400 ring-2 ring-red-300/50' : 'border-slate-300'} rounded-3xl p-3 flex flex-col justify-between shadow-inner`}>
             <div className="grid grid-cols-3 gap-2 overflow-y-auto h-[95px] pr-1">
               {state.previews.map((preview, idx) => {
                 const file = state.files[idx];
                 const isVideo = file && file.type.startsWith("video/");
+                const dup = duplicatesMap[preview];
 
                 return (
-                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300 group">
+                  <div
+                    key={idx}
+                    className={`relative aspect-square rounded-xl overflow-hidden bg-slate-200 border ${
+                      dup ? "border-2 border-red-500 ring-2 ring-red-400/50" : "border-slate-300"
+                    } group`}
+                  >
                     {isVideo ? (
                       <div className="w-full h-full flex items-center justify-center bg-slate-800 text-white">
                         <HugeiconsIcon icon={PlayIcon} className="w-6 h-6" strokeWidth={2} />
@@ -276,6 +376,17 @@ export default function UploadDocumentsPage() {
                     ) : (
                       <img src={preview} alt="upload preview" className="w-full h-full object-cover" />
                     )}
+
+                    {/* Duplicate photo warning banner overlay */}
+                    {dup && (
+                      <div
+                        title={dup.message}
+                        className="absolute inset-x-0 bottom-0 bg-red-600/95 text-white text-[8px] font-bold px-1 py-0.5 text-center leading-tight truncate select-none"
+                      >
+                        ⚠️ #{dup.matchedClaimNumber}
+                      </div>
+                    )}
+
                     {/* Delete item overlay */}
                     <button
                       type="button"
@@ -294,8 +405,8 @@ export default function UploadDocumentsPage() {
             
             {/* Action Bar */}
             <div className="flex items-center justify-between border-t border-slate-300/60 pt-2 mt-2">
-              <span className="text-slate-800 text-[11px] font-medium">
-                {label} ({state.files.length} selected)
+              <span className={`text-[11px] font-medium ${cardHasDuplicate ? 'text-red-600 font-bold' : 'text-slate-800'}`}>
+                {cardHasDuplicate ? `⚠️ Duplicate Photo Detected` : `${label} (${state.files.length} selected)`}
               </span>
               <button
                 type="button"

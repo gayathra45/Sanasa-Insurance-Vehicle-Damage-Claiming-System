@@ -20,6 +20,7 @@ import {
   Calendar03Icon,
   Clock01Icon,
 } from "@hugeicons/core-free-icons";
+import { API_URL } from "@/app/config";
 
 function formatNumberPlate(plate: string): string {
   if (!plate) return "";
@@ -406,6 +407,50 @@ export default function FileNewClaim() {
     vehiclePhotosBase64: string[];
   }[]>([]);
 
+  // Duplicate photos map for other vehicle uploads
+  const [duplicatesMap, setDuplicatesMap] = useState<
+    Record<
+      string,
+      {
+        matchedClaimNumber: string;
+        matchedVehiclePlate: string;
+        matchedIncidentDate: string;
+        similarity: string;
+        photoType?: string;
+        message?: string;
+      }
+    >
+  >({});
+
+  const checkDuplicatePhotos = async (keys: string[], base64s: string[], typeLabel: string) => {
+    try {
+      const payload = keys.map((k, i) => ({
+        id: k,
+        type: typeLabel,
+        base64: base64s[i]
+      }));
+      const res = await fetch(`${API_URL}/policy-holder/check-duplicate-photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos: payload })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasDuplicate && Array.isArray(data.duplicates) && data.duplicates.length > 0) {
+          const newDups: Record<string, any> = {};
+          data.duplicates.forEach((d: any) => {
+            if (d.photoId) newDups[d.photoId] = d;
+          });
+          setDuplicatesMap((prev) => ({ ...prev, ...newDups }));
+          const firstDup = data.duplicates[0];
+          alert(`⚠️ Duplicate Photo Detected: The photo selected for "${typeLabel}" was already submitted under Claim #${firstDup.matchedClaimNumber} (${firstDup.matchedVehiclePlate || "Previous Claim"}) on ${firstDup.matchedIncidentDate} (${firstDup.similarity}).\n\nPlease remove this photo and upload an authentic photo.`);
+        }
+      }
+    } catch (err) {
+      console.warn("Duplicate check error:", err);
+    }
+  };
+
   const handleCountChange = (count: number) => {
     setOtherVehiclesCount(count);
     setOtherVehicles((prev) => {
@@ -467,16 +512,28 @@ export default function FileNewClaim() {
       };
       return next;
     });
+
+    if (previews.length > 0) {
+      await checkDuplicatePhotos(previews, base64s, `Third-Party #${index + 1} License`);
+    }
   };
 
   const removeOtherLicensePhoto = (index: number, photoIdx: number) => {
     setOtherVehicles((prev) => {
       const next = [...prev];
       const previews = [...next[index].licensePhotosPreviews];
-      URL.revokeObjectURL(previews[photoIdx]);
+      const removedPreview = previews[photoIdx];
+      URL.revokeObjectURL(removedPreview);
       previews.splice(photoIdx, 1);
       const base64s = [...next[index].licensePhotosBase64];
       base64s.splice(photoIdx, 1);
+
+      setDuplicatesMap((dMap) => {
+        const nextMap = { ...dMap };
+        delete nextMap[removedPreview];
+        return nextMap;
+      });
+
       next[index] = {
         ...next[index],
         licensePhotosPreviews: previews,
@@ -515,16 +572,28 @@ export default function FileNewClaim() {
       };
       return next;
     });
+
+    if (previews.length > 0) {
+      await checkDuplicatePhotos(previews, base64s, `Third-Party #${index + 1} Vehicle Damage`);
+    }
   };
 
   const removeOtherVehiclePhoto = (index: number, photoIdx: number) => {
     setOtherVehicles((prev) => {
       const next = [...prev];
       const previews = [...next[index].vehiclePhotosPreviews];
-      URL.revokeObjectURL(previews[photoIdx]);
+      const removedPreview = previews[photoIdx];
+      URL.revokeObjectURL(removedPreview);
       previews.splice(photoIdx, 1);
       const base64s = [...next[index].vehiclePhotosBase64];
       base64s.splice(photoIdx, 1);
+
+      setDuplicatesMap((dMap) => {
+        const nextMap = { ...dMap };
+        delete nextMap[removedPreview];
+        return nextMap;
+      });
+
       next[index] = {
         ...next[index],
         vehiclePhotosPreviews: previews,
@@ -939,6 +1008,15 @@ export default function FileNewClaim() {
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check duplicate photos in other vehicles
+    const duplicateKeys = Object.keys(duplicatesMap);
+    if (duplicateKeys.length > 0) {
+      const firstDup = duplicatesMap[duplicateKeys[0]];
+      alert(`⚠️ Duplicate Photos Detected: One or more uploaded photos have already been submitted under Claim #${firstDup.matchedClaimNumber} (${firstDup.similarity}). Please remove or replace the flagged photos before proceeding.`);
+      return;
+    }
+
     if (!selectedVehicle || !incidentDate || !incidentTime || !damageType || !description || !address) {
       alert(t.fillAll);
       return;
@@ -1315,21 +1393,37 @@ export default function FileNewClaim() {
                     ) : (
                       <div className="w-full bg-white border border-slate-200 rounded-3xl p-3 flex flex-col gap-2 shadow-inner">
                         <div className="grid grid-cols-4 gap-2 max-h-[100px] overflow-y-auto pr-1">
-                          {vehicle.licensePhotosPreviews.map((preview, photoIdx) => (
-                            <div key={photoIdx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300 group">
-                              <img src={preview} alt="license preview" className="w-full h-full object-cover" />
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeOtherLicensePhoto(index, photoIdx);
-                                }}
-                                className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
+                          {vehicle.licensePhotosPreviews.map((preview, photoIdx) => {
+                            const dup = duplicatesMap[preview];
+                            return (
+                              <div
+                                key={photoIdx}
+                                className={`relative aspect-square rounded-xl overflow-hidden bg-slate-200 border ${
+                                  dup ? "border-2 border-red-500 ring-2 ring-red-400/50" : "border-slate-300"
+                                } group`}
                               >
-                                &times;
-                              </button>
-                            </div>
-                          ))}
+                                <img src={preview} alt="license preview" className="w-full h-full object-cover" />
+                                {dup && (
+                                  <div
+                                    title={dup.message}
+                                    className="absolute inset-x-0 bottom-0 bg-red-600/95 text-white text-[8px] font-bold px-1 py-0.5 text-center leading-tight truncate select-none"
+                                  >
+                                    ⚠️ #{dup.matchedClaimNumber}
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeOtherLicensePhoto(index, photoIdx);
+                                  }}
+                                  className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
                         <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-700 select-none">
                           <span>{vehicle.licensePhotosPreviews.length} photo(s) selected</span>
@@ -1375,21 +1469,37 @@ export default function FileNewClaim() {
                     ) : (
                       <div className="w-full bg-white border border-slate-200 rounded-3xl p-3 flex flex-col gap-2 shadow-inner">
                         <div className="grid grid-cols-4 gap-2 max-h-[100px] overflow-y-auto pr-1">
-                          {vehicle.vehiclePhotosPreviews.map((preview, photoIdx) => (
-                            <div key={photoIdx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300 group">
-                              <img src={preview} alt="vehicle preview" className="w-full h-full object-cover" />
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  removeOtherVehiclePhoto(index, photoIdx);
-                                }}
-                                className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
+                          {vehicle.vehiclePhotosPreviews.map((preview, photoIdx) => {
+                            const dup = duplicatesMap[preview];
+                            return (
+                              <div
+                                key={photoIdx}
+                                className={`relative aspect-square rounded-xl overflow-hidden bg-slate-200 border ${
+                                  dup ? "border-2 border-red-500 ring-2 ring-red-400/50" : "border-slate-300"
+                                } group`}
                               >
-                                &times;
-                              </button>
-                            </div>
-                          ))}
+                                <img src={preview} alt="vehicle preview" className="w-full h-full object-cover" />
+                                {dup && (
+                                  <div
+                                    title={dup.message}
+                                    className="absolute inset-x-0 bottom-0 bg-red-600/95 text-white text-[8px] font-bold px-1 py-0.5 text-center leading-tight truncate select-none"
+                                  >
+                                    ⚠️ #{dup.matchedClaimNumber}
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeOtherVehiclePhoto(index, photoIdx);
+                                  }}
+                                  className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            );
+                          })}
                         </div>
                         <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-700 select-none">
                           <span>{vehicle.vehiclePhotosPreviews.length} photo(s) selected</span>

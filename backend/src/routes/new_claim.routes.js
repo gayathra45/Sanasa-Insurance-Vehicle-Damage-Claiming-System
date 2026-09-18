@@ -7,13 +7,147 @@
 import express from "express";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
+import PhotoHash from "../models/photoHash.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { getNearestBranch } from "../utils/branch.js";
 import { sendEmail, getBaseTemplate, formatSriLankaDateTime } from "../utils/email.js";
 import { analyzeAccidentDamage } from "../utils/aiAnalyzer.js";
-
+import {
+  extractBase64Buffer,
+  computeSha256,
+  computePerceptualFingerprint,
+  calculateFingerprintSimilarity
+} from "../utils/imageHasher.js";
 
 const router = express.Router();
+
+// Auto-index historical claims photos on startup if empty
+async function ensurePhotoHashesIndexed() {
+  try {
+    const count = await PhotoHash.countDocuments();
+    if (count > 0) return;
+
+    console.log("🔄 Indexing historical claim photos for duplicate detection...");
+    const claims = await Claim.find({}, {
+      claimNumber: 1,
+      userNic: 1,
+      vehiclePlate: 1,
+      incidentDate: 1,
+      accidentPhotos: 1,
+      drivingLicense: 1,
+      otherVehicleDetails: 1,
+      createdAt: 1
+    });
+
+    const entriesToInsert = [];
+
+    for (const claim of claims) {
+      const addHash = (url, type) => {
+        if (!url || typeof url !== "string") return;
+        const buffer = extractBase64Buffer(url);
+        if (!buffer) return;
+        const sha = computeSha256(buffer);
+        const fp = computePerceptualFingerprint(buffer);
+        if (sha) {
+          entriesToInsert.push({
+            claimNumber: claim.claimNumber,
+            userNic: claim.userNic,
+            vehiclePlate: claim.vehiclePlate,
+            photoType: type,
+            sha256: sha,
+            fingerprint: fp,
+            photoUrl: url.startsWith("data:") ? "" : url,
+            incidentDate: claim.incidentDate || "",
+            createdAt: claim.createdAt || new Date()
+          });
+        }
+      };
+
+      (claim.accidentPhotos?.front || []).forEach(u => addHash(u, "Accident Front"));
+      (claim.accidentPhotos?.rear || []).forEach(u => addHash(u, "Accident Rear"));
+      (claim.accidentPhotos?.side || []).forEach(u => addHash(u, "Accident Side"));
+      (claim.drivingLicense?.front || []).forEach(u => addHash(u, "License Front"));
+      (claim.drivingLicense?.rear || []).forEach(u => addHash(u, "License Rear"));
+      (claim.otherVehicleDetails || []).forEach(ov => {
+        (ov.licensePhotos || []).forEach(u => addHash(u, "Other Vehicle License"));
+        (ov.vehiclePhotos || []).forEach(u => addHash(u, "Other Vehicle Damage"));
+      });
+    }
+
+    if (entriesToInsert.length > 0) {
+      await PhotoHash.insertMany(entriesToInsert, { ordered: false });
+      console.log(`✅ Indexed ${entriesToInsert.length} historical claim photos.`);
+    }
+  } catch (err) {
+    console.warn("Photo hash indexing note:", err.message);
+  }
+}
+
+// Initial sync
+ensurePhotoHashesIndexed();
+
+// ==========================================
+// --- API: Check Duplicate Photos ---
+// ==========================================
+router.post("/check-duplicate-photos", async (req, res) => {
+  try {
+    const { photos } = req.body;
+    if (!photos || !Array.isArray(photos) || photos.length === 0) {
+      return res.json({ hasDuplicate: false, duplicates: [] });
+    }
+
+    const duplicates = [];
+
+    for (const item of photos) {
+      if (!item.base64) continue;
+      const buffer = extractBase64Buffer(item.base64);
+      if (!buffer) continue;
+
+      const sha256 = computeSha256(buffer);
+      const fingerprint = computePerceptualFingerprint(buffer);
+
+      // 1. Exact SHA-256 match
+      let match = await PhotoHash.findOne({ sha256 });
+
+      // 2. High visual similarity match (>92%)
+      if (!match && fingerprint) {
+        const candidates = await PhotoHash.find({ fingerprint: { $exists: true, $ne: "" } }).limit(200);
+        for (const candidate of candidates) {
+          const similarity = calculateFingerprintSimilarity(fingerprint, candidate.fingerprint);
+          if (similarity >= 92) {
+            match = {
+              claimNumber: candidate.claimNumber,
+              vehiclePlate: candidate.vehiclePlate,
+              incidentDate: candidate.incidentDate,
+              similarity: `${Math.round(similarity)}% Visual Match`
+            };
+            break;
+          }
+        }
+      }
+
+      if (match) {
+        duplicates.push({
+          photoId: item.id || item.type,
+          photoType: item.type || "Accident Photo",
+          matchedClaimNumber: match.claimNumber,
+          matchedVehiclePlate: match.vehiclePlate,
+          matchedIncidentDate: match.incidentDate || "Previous Claim",
+          similarity: match.similarity || "100% Exact Match",
+          message: `This photo was already submitted under Claim ${match.claimNumber} (${match.vehiclePlate}).`
+        });
+      }
+    }
+
+    return res.json({
+      hasDuplicate: duplicates.length > 0,
+      duplicates
+    });
+  } catch (err) {
+    console.error("Check duplicate photos error:", err);
+    res.status(500).json({ error: "Failed to check duplicate photos." });
+  }
+});
 
 // ==========================================
 // --- API: Vehicle Lookup ---
@@ -190,6 +324,47 @@ router.post("/new-claim", async (req, res) => {
     });
 
     await newClaim.save();
+
+    // Record photo hashes into PhotoHash collection for future duplicate detection
+    try {
+      const newHashes = [];
+      const recordHash = (base64OrUrl, type) => {
+        if (!base64OrUrl) return;
+        const buffer = extractBase64Buffer(base64OrUrl);
+        if (!buffer) return;
+        const sha = computeSha256(buffer);
+        const fp = computePerceptualFingerprint(buffer);
+        if (sha) {
+          newHashes.push({
+            claimNumber: nextClaimNum,
+            userNic: cleanNic,
+            vehiclePlate,
+            photoType: type,
+            sha256: sha,
+            fingerprint: fp,
+            photoUrl: base64OrUrl.startsWith("data:") ? "" : base64OrUrl,
+            incidentDate: incidentDate || "",
+            createdAt: new Date()
+          });
+        }
+      };
+
+      (accidentPhotos?.front || []).forEach(b => recordHash(b, "Accident Front"));
+      (accidentPhotos?.rear || []).forEach(b => recordHash(b, "Accident Rear"));
+      (accidentPhotos?.side || []).forEach(b => recordHash(b, "Accident Side"));
+      (drivingLicense?.front || []).forEach(b => recordHash(b, "License Front"));
+      (drivingLicense?.rear || []).forEach(b => recordHash(b, "License Rear"));
+      (otherVehicleDetails || []).forEach(ov => {
+        (ov.licensePhotos || []).forEach(b => recordHash(b, "Other Vehicle License"));
+        (ov.vehiclePhotos || []).forEach(b => recordHash(b, "Other Vehicle Damage"));
+      });
+
+      if (newHashes.length > 0) {
+        await PhotoHash.insertMany(newHashes, { ordered: false });
+      }
+    } catch (hashErr) {
+      console.warn("Failed to record new photo hashes:", hashErr.message);
+    }
 
     // Send confirmation emails with Sri Lanka Time (Asia/Colombo)
     const branchName = await getNearestBranch(location, user.branch);
