@@ -23,7 +23,9 @@ import { router, useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
+import LanguageModal from "../Components/PolicyHolder/LanguageModal";
 import { API_BASE_URL } from "../_config";
+import { translateTextMobile } from "../../utils/translator";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 
@@ -153,6 +155,9 @@ export default function PolicyHolderDashboard() {
     type?: "success" | "warning" | "info";
     onClose?: () => void;
   } | null>(null);
+  const [langModalVisible, setLangModalVisible] = useState(false);
+  const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const navigation = useNavigation();
 
@@ -612,6 +617,15 @@ export default function PolicyHolderDashboard() {
                   <Text style={styles.welcomeLabel}>{t.dashboard.welcomeBack}</Text>
                   <Text style={styles.welcomeName}>{userName} 👋</Text>
                 </View>
+
+                {/* Language Switcher */}
+                <TouchableOpacity
+                  style={[styles.headerIconBtn, { marginRight: 10 }]}
+                  onPress={() => setLangModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="language" size={20} color="#ffffff" />
+                </TouchableOpacity>
 
                 {/* Bell → opens Notifications page */}
                 <Animated.View style={{ transform: [{ scale: bellScale }], marginRight: 10 }}>
@@ -1270,8 +1284,40 @@ export default function PolicyHolderDashboard() {
                 {/* Incident Description */}
                 {selectedClaim.description ? (
                   <View style={styles.descriptionContainer}>
-                    <Text style={styles.descriptionHeader}>Incident Description</Text>
-                    <Text style={styles.descriptionText}>"{selectedClaim.description}"</Text>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <Text style={styles.descriptionHeader}>Incident Description</Text>
+                      <TouchableOpacity
+                        style={styles.translateBtn}
+                        onPress={async () => {
+                          if (translatedDesc) {
+                            setTranslatedDesc(null);
+                            return;
+                          }
+                          setIsTranslating(true);
+                          const res = await translateTextMobile(selectedClaim.description, lang === "en" ? "si" : lang);
+                          setTranslatedDesc(res);
+                          setIsTranslating(false);
+                        }}
+                        disabled={isTranslating}
+                      >
+                        {isTranslating ? (
+                          <ActivityIndicator size="small" color="#0284c7" />
+                        ) : (
+                          <Text style={styles.translateBtnText}>
+                            🌐 {translatedDesc ? "Show Original" : `Translate (${lang === "en" ? "Sinhala" : lang.toUpperCase()})`}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.descriptionText}>
+                      "{translatedDesc || selectedClaim.description}"
+                    </Text>
+                    {translatedDesc && (
+                      <View style={styles.translatedBadge}>
+                        <Ionicons name="sparkles" size={12} color="#0284c7" />
+                        <Text style={styles.translatedBadgeText}>Translated via Gemini AI</Text>
+                      </View>
+                    )}
                   </View>
                 ) : null}
 
@@ -1396,6 +1442,12 @@ export default function PolicyHolderDashboard() {
           </View>
         </View>
       </Modal>
+
+      {/* Language Selection Modal */}
+      <LanguageModal
+        visible={langModalVisible}
+        onClose={() => setLangModalVisible(false)}
+      />
     </View>
   );
 }
@@ -2154,5 +2206,34 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: "#f1f5f9",
     marginHorizontal: 12,
+  },
+  translateBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: "#f0f9ff",
+    borderWidth: 1,
+    borderColor: "#bae6fd",
+    borderRadius: 8,
+  },
+  translateBtnText: {
+    fontSize: 11,
+    color: "#0284c7",
+    fontWeight: "700",
+  },
+  translatedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+    alignSelf: "flex-start",
+    backgroundColor: "#f0f9ff",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  translatedBadgeText: {
+    fontSize: 10,
+    color: "#0284c7",
+    fontWeight: "600",
   },
 });

@@ -21,7 +21,9 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
+import LanguageModal from "../Components/PolicyHolder/LanguageModal";
 import { API_BASE_URL } from "../_config";
+import { translateTextMobile } from "../../utils/translator";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -67,6 +69,9 @@ export default function MyClaims() {
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [langModalVisible, setLangModalVisible] = useState(false);
+  const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const getDocUrl = (url?: string) => {
     if (!url) return "";
@@ -373,8 +378,19 @@ export default function MyClaims() {
           colors={["rgba(13, 42, 58, 0.95)", "rgba(13, 42, 58, 0.82)", "rgba(15, 23, 42, 0.5)"]}
           style={styles.headerGradient}
         >
-          <Text style={styles.headerTitle}>{t.myClaims.title}</Text>
-          <Text style={styles.headerSubtitle}>{lang === "en" ? "All your insurance claims in one place" : lang === "si" ? "ඔබගේ සියලුම රක්ෂණ හිමිකම් එකම ස්ථානයක" : "உங்கள் அனைத்து காப்பீட்டு கோரிக்கைகளும் ஒரே இடத்தில்"}</Text>
+          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.headerTitle}>{t.myClaims.title}</Text>
+              <Text style={styles.headerSubtitle}>{lang === "en" ? "All your insurance claims in one place" : lang === "si" ? "ඔබගේ සියලුම රක්ෂණ හිමිකම් එකම ස්ථානයක" : "உங்கள் அனைத்து காப்பீட்டு கோரிக்கைகளும் ஒரே இடத்தில்"}</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.langHeaderBtn}
+              onPress={() => setLangModalVisible(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="language" size={20} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
         </LinearGradient>
       </ImageBackground>
 
@@ -692,8 +708,38 @@ export default function MyClaims() {
                 {/* Incident Description */}
                 {selectedClaim.description && (
                   <View style={styles.descriptionContainer}>
-                    <Text style={styles.descriptionHeader}>{lang === "en" ? "Incident Description" : lang === "si" ? "අනතුර පිළිබඳ විස්තරය" : "விபத்து விவரம்"}</Text>
-                    <Text style={styles.descriptionText}>"{selectedClaim.description}"</Text>
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <Text style={styles.descriptionHeader}>{lang === "en" ? "Incident Description" : lang === "si" ? "අනතුර පිළිබඳ විස්තරය" : "விபத்து விவரம்"}</Text>
+                      <TouchableOpacity
+                        style={styles.translateBtn}
+                        onPress={async () => {
+                          if (translatedDesc) {
+                            setTranslatedDesc(null);
+                            return;
+                          }
+                          setIsTranslating(true);
+                          const res = await translateTextMobile(selectedClaim.description!, lang === "en" ? "si" : lang);
+                          setTranslatedDesc(res);
+                          setIsTranslating(false);
+                        }}
+                        disabled={isTranslating}
+                      >
+                        {isTranslating ? (
+                          <ActivityIndicator size="small" color="#0284c7" />
+                        ) : (
+                          <Text style={styles.translateBtnText}>
+                            🌐 {translatedDesc ? "Original" : `Translate (${lang === "en" ? "Sinhala" : lang.toUpperCase()})`}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.descriptionText}>"{translatedDesc || selectedClaim.description}"</Text>
+                    {translatedDesc && (
+                      <View style={styles.translatedBadge}>
+                        <Ionicons name="sparkles" size={12} color="#0284c7" />
+                        <Text style={styles.translatedBadgeText}>Translated via Gemini AI</Text>
+                      </View>
+                    )}
                   </View>
                 )}
 
@@ -990,6 +1036,11 @@ export default function MyClaims() {
           </View>
         )}
       </Modal>
+
+      <LanguageModal
+        visible={langModalVisible}
+        onClose={() => setLangModalVisible(false)}
+      />
 
       <PolicyHolderNavbar />
     </View>
@@ -1367,5 +1418,45 @@ const styles = StyleSheet.create({
     width: SCREEN_W * 0.94,
     height: SCREEN_H * 0.75,
     resizeMode: "contain",
+  },
+  langHeaderBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.25)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+  translateBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    backgroundColor: "#f0f9ff",
+    borderWidth: 1,
+    borderColor: "#bae6fd",
+    borderRadius: 8,
+  },
+  translateBtnText: {
+    fontSize: 11,
+    color: "#0284c7",
+    fontWeight: "700",
+  },
+  translatedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+    alignSelf: "flex-start",
+    backgroundColor: "#f0f9ff",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  translatedBadgeText: {
+    fontSize: 10,
+    color: "#0284c7",
+    fontWeight: "600",
   },
 });

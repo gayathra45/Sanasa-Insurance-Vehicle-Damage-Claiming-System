@@ -17,6 +17,7 @@ import {
   File01Icon,
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
+import { translateText } from "@/app/utils/translator";
 
 interface Claim {
   claimNumber: string;
@@ -200,6 +201,8 @@ function TrackClaimsContent() {
   const [searchAttempted, setSearchAttempted] = useState(false);
   const [garageFile, setGarageFile] = useState<File | null>(null);
   const [isUploadingGarage, setIsUploadingGarage] = useState(false);
+  const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const getDocUrl = (url?: string) => {
     if (!url) return "";
@@ -1062,10 +1065,42 @@ function TrackClaimsContent() {
               {/* Incident description */}
               {trackedClaim.description && (
                 <div className="px-2 mb-6">
-                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1.5">{t.description}</p>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{t.description}</p>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (isTranslating) return;
+                        if (translatedDesc) {
+                          setTranslatedDesc(null);
+                        } else {
+                          setIsTranslating(true);
+                          const target = lang === "en" ? "si" : lang;
+                          const res = await translateText(trackedClaim.description || "", target as any);
+                          setTranslatedDesc(res);
+                          setIsTranslating(false);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                    >
+                      <span>🌐</span>
+                      <span>
+                        {isTranslating
+                          ? "Translating..."
+                          : translatedDesc
+                          ? (lang === "si" ? "මුල් පිටපත පෙන්වන්න" : lang === "ta" ? "அசலைக் காட்டு" : "Show Original")
+                          : lang === "si" ? "සිංහලට පරිවර්තනය" : lang === "ta" ? "தமிழில் மொழிபெயர்" : "Translate (Gemini AI)"}
+                      </span>
+                    </button>
+                  </div>
                   <p className="text-slate-600 text-sm font-normal leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                    "{trackedClaim.description}"
+                    "{translatedDesc || trackedClaim.description}"
                   </p>
+                  {translatedDesc && (
+                    <p className="text-[11px] text-sky-600 font-medium mt-1 flex items-center gap-1">
+                      <span>✨</span> Translated with Gemini AI
+                    </p>
+                  )}
                 </div>
               )}
 
