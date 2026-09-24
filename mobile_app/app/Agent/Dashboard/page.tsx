@@ -774,39 +774,95 @@ ${inspectionReportText.trim()}
     }
   };
 
-  // ── Stepper UI Progress Render ──────────────────────────────────────────────
+    // ── Stepper UI Progress Render ──────────────────────────────────────────────
   const renderWizardProgress = () => {
     const steps = [
       { num: 1, label: "Review" },
       { num: 2, label: "Accepted" },
-      { num: 3, label: "Route Map" },
+      { num: 3, label: "En Route" },
       { num: 4, label: "Inspect" },
       { num: 5, label: "Done" },
     ];
     return (
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20, paddingTop: 10, paddingBottom: 15, borderBottomWidth: 1, borderBottomColor: "#f1f5f9", backgroundColor: "#f8fafc" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          paddingHorizontal: 16,
+          paddingTop: 14,
+          paddingBottom: 14,
+          borderBottomWidth: 1,
+          borderBottomColor: "#e2e8f0",
+          backgroundColor: "#f8fafc",
+        }}
+      >
         {steps.map((st, idx) => {
           const isDone = activeInspectionStep > st.num;
           const isActive = activeInspectionStep === st.num;
+          const isLineActive = activeInspectionStep > st.num;
+
           return (
             <React.Fragment key={st.num}>
-              <View style={{ alignItems: "center", flex: 1 }}>
-                <View style={{
-                  width: 28, height: 28, borderRadius: 14,
-                  backgroundColor: isDone ? "#16a34a" : (isActive ? "#0284c7" : "#e2e8f0"),
-                  justifyContent: "center", alignItems: "center",
-                  borderWidth: isActive ? 2 : 0, borderColor: "#0284c7"
-                }}>
+              <View style={{ alignItems: "center", minWidth: 48 }}>
+                <View
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    backgroundColor: isDone ? "#10b981" : (isActive ? "#0284c7" : "#ffffff"),
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderWidth: isActive ? 2.5 : (isDone ? 0 : 1.5),
+                    borderColor: isActive ? "#38bdf8" : (isDone ? "transparent" : "#cbd5e1"),
+                    shadowColor: isActive ? "#0284c7" : (isDone ? "#10b981" : "#000"),
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: isActive || isDone ? 0.2 : 0.05,
+                    shadowRadius: 2,
+                    elevation: 2,
+                  }}
+                >
                   {isDone ? (
-                    <Ionicons name="checkmark" size={14} color="#fff" />
+                    <Ionicons name="checkmark-sharp" size={15} color="#ffffff" />
                   ) : (
-                    <Text style={{ color: isActive ? "#fff" : "#64748b", fontSize: 11, fontWeight: "900" }}>{st.num}</Text>
+                    <Text
+                      style={{
+                        color: isActive ? "#ffffff" : "#64748b",
+                        fontSize: 11,
+                        fontWeight: "800",
+                      }}
+                    >
+                      {st.num}
+                    </Text>
                   )}
                 </View>
-                <Text style={{ fontSize: 9, fontWeight: "800", color: isActive ? "#0284c7" : "#64748b", marginTop: 4, textTransform: "uppercase" }}>{st.label}</Text>
+                <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                  style={{
+                    fontSize: 9.5,
+                    fontWeight: isActive ? "800" : (isDone ? "700" : "600"),
+                    color: isActive ? "#0284c7" : (isDone ? "#059669" : "#64748b"),
+                    marginTop: 5,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.2,
+                  }}
+                >
+                  {st.label}
+                </Text>
               </View>
+
               {idx < steps.length - 1 && (
-                <View style={{ height: 2, flex: 1, backgroundColor: isDone ? "#16a34a" : "#e2e8f0", marginHorizontal: -10, marginTop: -10 }} />
+                <View
+                  style={{
+                    flex: 1,
+                    height: 2.5,
+                    backgroundColor: isLineActive ? "#10b981" : "#e2e8f0",
+                    marginTop: 13,
+                    marginHorizontal: 3,
+                    borderRadius: 2,
+                  }}
+                />
               )}
             </React.Fragment>
           );
@@ -814,7 +870,6 @@ ${inspectionReportText.trim()}
       </View>
     );
   };
-
   // ── Wizard Step 2 Popup ─────────────────────────────────────────────────────
   const renderStep2Popup = () => {
     if (!selectedClaim) return null;
@@ -2561,8 +2616,20 @@ ${inspectionReportText.trim()}
                   const isActive = selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected";
                   return (
                     <>
-                      {/* Visual Stepper */}
-                      {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
+                      {/* Status Summary Banner */}
+                      <View style={{ backgroundColor: "#f8fafc", borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: "#0284c7" }} />
+                          <Text style={{ fontSize: 12, fontWeight: "800", color: "#1e293b", textTransform: "uppercase", letterSpacing: 0.3 }}>
+                            Claim Status
+                          </Text>
+                        </View>
+                        <View style={{ backgroundColor: "#e0f2fe", borderColor: "#bae6fd", borderWidth: 1, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 10 }}>
+                          <Text style={{ fontSize: 11, fontWeight: "800", color: "#0284c7" }}>
+                            {selectedClaim.status || "In Progress"}
+                          </Text>
+                        </View>
+                      </View>
 
                       {/* Info grid */}
                       <View style={styles.modalInfoGrid}>
