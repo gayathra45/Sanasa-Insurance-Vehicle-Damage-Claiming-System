@@ -1277,19 +1277,6 @@ function OfficeStaffClaimsPageContent() {
                                 Assign Agent
                               </button>
                             )}
-                            {(claim.inspectionSubmitted || claim.inspectionReport || claim.currentStep >= 3 || claim.aiAnalysis) && (
-                              <button
-                                onClick={() => {
-                                  setSelectedClaim(claim);
-                                  setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
-                                  setActiveSubModal("inspection");
-                                }}
-                                className="bg-[#10b981] hover:bg-[#059669] text-white font-semibold text-[10px] px-3 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs border-none active:scale-95 whitespace-nowrap flex items-center gap-1"
-                              >
-                                <HugeiconsIcon icon={File01Icon} className="w-3 h-3 text-white" strokeWidth={2.5} />
-                                Inspection
-                              </button>
-                            )}
                             <button
                               onClick={() => {
                                 setSelectedClaim(claim);
