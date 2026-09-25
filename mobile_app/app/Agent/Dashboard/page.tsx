@@ -1894,16 +1894,12 @@ ${inspectionReportText.trim()}
     if (!selectedClaim) return;
     setIsAcceptingClaim(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/office-staff/claims/${selectedClaim.claimNumber}`, {
-        method: "PATCH",
+      const res = await fetch(`${API_BASE_URL}/api/agent/claims/${selectedClaim._id}/status`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status: "Rejected",
-          currentStep: 5,
-          rejectionReason: "Rejected by Agent",
-          messageText: "Claim rejected by Agent.",
-          messageRecipient: "Office Staff",
-          messageSender: "Agent"
+          declineClaim: true,
+          reason: "Declined by Agent"
         }),
       });
       if (!res.ok) throw new Error("Failed to reject");

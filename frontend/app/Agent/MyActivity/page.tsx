@@ -1007,13 +1007,17 @@ export default function AgentActivityPage() {
   const handleAcceptClaim = async (claimNumber: string) => {
     try {
       setIsAcceptingClaim(true);
-      await handleUpdateClaim(claimNumber, {
-        status: "In Progress",
-        currentStep: 3,
-        messageText: "Agent accepted the claim assignment.",
-        messageRecipient: "Office Staff"
+      const res = await fetch(`${API_URL}/agent/claims/${claimNumber}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ acceptClaim: true })
       });
+      if (!res.ok) {
+        alert("Failed to accept claim assignment.");
+        return;
+      }
       setShowMobileRedirect(true);
+      if (agent?.email) await fetchClaimsData(agent.email);
     } catch (e) {
       console.error(e);
       alert("Error accepting claim.");
@@ -1025,17 +1029,24 @@ export default function AgentActivityPage() {
   const handleDeclineClaim = async (claimNumber: string) => {
     try {
       setIsAcceptingClaim(true);
-      await handleUpdateClaim(claimNumber, {
-        status: "Rejected",
-        currentStep: 5,
-        rejectionReason: "Rejected by Agent",
-        messageText: "Claim rejected by Agent.",
-        messageRecipient: "Office Staff"
+      const res = await fetch(`${API_URL}/agent/claims/${claimNumber}/status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          declineClaim: true,
+          reason: "Declined by Agent"
+        })
       });
-      alert("Claim rejected successfully!");
+      if (!res.ok) {
+        alert("Failed to decline claim assignment.");
+        return;
+      }
+      alert("Claim assignment declined and returned to branch.");
+      setSelectedClaim(null);
+      if (agent?.email) await fetchClaimsData(agent.email);
     } catch (e) {
       console.error(e);
-      alert("Error rejecting claim.");
+      alert("Error declining claim.");
     } finally {
       setIsAcceptingClaim(false);
     }

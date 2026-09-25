@@ -378,8 +378,20 @@ router.patch("/claims/:claimNumber", async (req, res) => {
 
     if (status !== undefined) claim.status = status;
     if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
-    if (currentStep !== undefined) claim.currentStep = Number(currentStep);
-    if (assignedAgent !== undefined) claim.assignedAgent = assignedAgent;
+    if (currentStep !== undefined) {
+      claim.currentStep = Number(currentStep);
+    } else if (assignedAgent !== undefined) {
+      if (assignedAgent && assignedAgent.trim() !== "" && assignedAgent.toLowerCase() !== "unassigned") {
+        claim.currentStep = 2;
+        if (!status) claim.status = "In Progress";
+      } else {
+        claim.currentStep = 1;
+        if (!status) claim.status = "Pending";
+      }
+    }
+    if (assignedAgent !== undefined) {
+      claim.assignedAgent = (assignedAgent && assignedAgent.toLowerCase() !== "unassigned") ? assignedAgent.trim() : "";
+    }
     if (documentsRequested !== undefined) claim.documentsRequested = documentsRequested;
     if (requestedDocuments !== undefined) claim.requestedDocuments = requestedDocuments;
     if (documentRequestTo !== undefined) claim.documentRequestTo = documentRequestTo;

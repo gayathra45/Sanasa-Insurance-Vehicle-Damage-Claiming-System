@@ -890,6 +890,7 @@ function OfficeStaffClaimsPageContent() {
         body: JSON.stringify({
           assignedAgent: agentEmail,
           status: "In Progress", // Auto set status to In Progress on assignment
+          currentStep: 2,
           priority,
           messageText: messageText.trim() || undefined,
           messageSender: "Office Staff"
@@ -1269,7 +1270,7 @@ function OfficeStaffClaimsPageContent() {
 
                           {/* Quick Actions */}
                           <div className="flex items-center justify-end gap-2 flex-shrink-0 md:pl-4 border-t md:border-t-0 pt-3 md:pt-0 border-slate-100 min-w-0" onClick={(e) => e.stopPropagation()}>
-                            {!claim.assignedAgent && (
+                            {(!claim.assignedAgent || claim.assignedAgent.trim() === "" || claim.assignedAgent.toLowerCase() === "unassigned") && (
                               <button
                                 onClick={() => openAssignAgentModal(claim)}
                                 className="bg-slate-800 hover:bg-slate-900 text-white font-semibold text-[10px] px-3 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs border-none active:scale-95 whitespace-nowrap"

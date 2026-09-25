@@ -658,25 +658,21 @@ export default function AgentMyClaims() {
   const handleDeclineClaim = async (claimId: string, claimNumber: string) => {
     try {
       setIsAcceptingClaim(true);
-      const res = await fetch(`${API_URL}/office-staff/claims/${claimNumber}`, {
-        method: "PATCH",
+      const res = await fetch(`${API_URL}/agent/claims/${claimId}/status`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status: "Rejected",
-          currentStep: 5,
-          rejectionReason: "Rejected by Agent",
-          messageText: "Claim rejected by Agent.",
-          messageRecipient: "Office Staff",
-          messageSender: "Agent"
+          declineClaim: true,
+          reason: "Declined by Agent"
         })
       });
       if (!res.ok) {
-        alert("Failed to decline claim.");
+        alert("Failed to decline claim assignment.");
         return;
       }
-      alert("Claim assignment declined.");
-      await fetchClaims(agentEmail);
+      alert("Claim assignment declined and returned to branch.");
       setSelectedClaim(null);
+      await fetchClaims(agentEmail);
     } catch (e) {
       console.error("Decline claim error:", e);
       alert("Error declining claim.");

@@ -7,6 +7,8 @@ import { logAgentActivity } from "../utils/activity.js";
 import AgentActivity from "../models/agent_activity.model.js";
 import { sendAgentActivityEmail } from "../utils/email.js";
 
+import mongoose from "mongoose";
+
 const router = express.Router();
 
 function hashPassword(password) {
@@ -86,55 +88,87 @@ router.get("/policyholder/:nic", async (req, res) => {
   }
 });
 
-// POST update claim status/assessment: /api/agent/claims/:id/status
+// POST update claim status/assessment or accept/decline: /api/agent/claims/:id/status
 router.post("/claims/:id/status", async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, amount, inspectionReport, inspectionSubmitted, acceptClaim } = req.body;
+    const { status, amount, inspectionReport, inspectionSubmitted, acceptClaim, declineClaim, rejectClaim, reason } = req.body;
 
-    const updateData = {};
-    if (status !== undefined) updateData.status = status;
-    if (amount !== undefined) updateData.amount = amount === "" ? null : Number(amount);
-    if (inspectionReport !== undefined) updateData.inspectionReport = inspectionReport;
-    if (inspectionSubmitted !== undefined) {
-      updateData.inspectionSubmitted = inspectionSubmitted;
-      if (inspectionSubmitted) {
-        updateData.currentStep = 4;
-      }
-    }
-    if (acceptClaim) {
-      updateData.currentStep = 3;
-      updateData.status = "In Progress";
-    }
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { claimNumber: id.trim().toUpperCase() };
 
-    const updatedClaim = await Claim.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
-
-    if (!updatedClaim) {
+    const claim = await Claim.findOne(query);
+    if (!claim) {
       return res.status(404).json({ error: "Claim not found." });
     }
+
+    const previousAgent = claim.assignedAgent || "";
+
+    if (acceptClaim) {
+      claim.currentStep = 3;
+      claim.status = "In Progress";
+      claim.messages.push({
+        sender: "Agent",
+        message: "Agent accepted the claim assignment and is starting the inspection process.",
+        sentAt: new Date(),
+        recipient: "Office Staff"
+      });
+    } else if (declineClaim || rejectClaim) {
+      // Agent rejected/declined the assignment: Unassign agent and reset to Step 1 Pending so branch can re-assign
+      claim.assignedAgent = "";
+      claim.currentStep = 1;
+      claim.status = "Pending";
+      claim.messages.push({
+        sender: "Agent",
+        message: `Agent ${previousAgent} declined the claim assignment.${reason ? ` Reason: ${reason}` : ""}`,
+        sentAt: new Date(),
+        recipient: "Office Staff"
+      });
+      claim.notes.push({
+        text: `Claim assignment declined by agent (${previousAgent}). Claim reset to unassigned for branch staff re-assignment.`,
+        addedBy: "System",
+        addedAt: new Date()
+      });
+    }
+
+    if (status !== undefined && !declineClaim && !rejectClaim) claim.status = status;
+    if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
+    if (inspectionReport !== undefined) claim.inspectionReport = inspectionReport;
+    if (inspectionSubmitted !== undefined) {
+      claim.inspectionSubmitted = inspectionSubmitted;
+      if (inspectionSubmitted) {
+        claim.currentStep = 4;
+      }
+    }
+
+    await claim.save();
 
     const userAgent = req.headers["user-agent"] || "";
     const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
     const deviceType = isMobile ? "Mobile App" : "Web";
+    const agentToLog = previousAgent || claim.assignedAgent;
+
     if (acceptClaim) {
-      await logAgentActivity(updatedClaim.assignedAgent, "Claim Accepted", deviceType, `Accepted claim case: ${updatedClaim.claimNumber}`);
+      await logAgentActivity(agentToLog, "Claim Accepted", deviceType, `Accepted claim case: ${claim.claimNumber}`);
+    } else if (declineClaim || rejectClaim) {
+      await logAgentActivity(agentToLog, "Claim Assignment Declined", deviceType, `Declined claim assignment for: ${claim.claimNumber}`);
     } else if (inspectionSubmitted) {
-      await logAgentActivity(updatedClaim.assignedAgent, "Inspection Submitted", deviceType, `Submitted physical inspection report for claim: ${updatedClaim.claimNumber}`);
+      await logAgentActivity(agentToLog, "Inspection Submitted", deviceType, `Submitted physical inspection report for claim: ${claim.claimNumber}`);
     } else if (status !== undefined) {
-      await logAgentActivity(updatedClaim.assignedAgent, "Claim Updated", deviceType, `Updated status to ${status} for claim: ${updatedClaim.claimNumber}`);
+      await logAgentActivity(agentToLog, "Claim Updated", deviceType, `Updated status to ${status} for claim: ${claim.claimNumber}`);
     }
 
     // Send activity email to agent
-    if (updatedClaim.assignedAgent) {
+    if (agentToLog) {
       let activityText = "Claim Updated";
       let customMsg = "You updated the claim details.";
       if (acceptClaim) {
         activityText = "Claim Accepted";
         customMsg = "You have successfully accepted this claim assignment. The physical inspection is now marked in progress.";
+      } else if (declineClaim || rejectClaim) {
+        activityText = "Claim Assignment Declined";
+        customMsg = "You declined this claim assignment. The claim has been returned to the branch office for reassignment.";
       } else if (inspectionSubmitted) {
         activityText = "Inspection Report Submitted";
         customMsg = "You have successfully submitted the physical vehicle inspection report. The claim is now ready for office staff review.";
@@ -142,10 +176,10 @@ router.post("/claims/:id/status", async (req, res) => {
         activityText = `Status Updated: ${status}`;
         customMsg = `You updated the claim status to: ${status}.`;
       }
-      await sendAgentActivityEmail(updatedClaim.assignedAgent, activityText, updatedClaim, customMsg);
+      await sendAgentActivityEmail(agentToLog, activityText, claim, customMsg);
     }
 
-    res.json({ message: "Claim status updated successfully", claim: updatedClaim });
+    res.json({ message: "Claim status updated successfully", claim });
   } catch (err) {
     console.error("Update claim status error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
