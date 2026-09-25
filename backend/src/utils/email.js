@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import { Resend } from "resend";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 dotenv.config({ override: true });
 
 export async function sendEmail(toEmail, subject, htmlBody, textBody) {
@@ -57,7 +58,6 @@ export async function sendEmail(toEmail, subject, htmlBody, textBody) {
     return { sent: true };
   }
 
-  // 3. Fallback: Check for Resend
   const hasResend = resendKey && !resendKey.includes("re_your");
   if (hasResend) {
     const resend = new Resend(resendKey);
@@ -75,6 +75,58 @@ export async function sendEmail(toEmail, subject, htmlBody, textBody) {
 
   console.warn("⚠️ No email credentials configured — Dev Mode.");
   return { sent: false, error: "Email credentials not configured in backend/.env" };
+}
+
+/**
+ * Format a Date or timestamp string into Sri Lanka Time (Asia/Colombo / UTC+5:30)
+ * Example output: "09 Sep 2026, 12:17 AM"
+ */
+export function formatSriLankaDateTime(date = new Date()) {
+  try {
+    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+    if (!d || isNaN(d.getTime())) return String(date || "");
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Colombo",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    }).format(d);
+  } catch (err) {
+    return new Date().toLocaleString("en-US", { timeZone: "Asia/Colombo" });
+  }
+}
+
+export function formatSriLankaDate(date = new Date()) {
+  try {
+    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+    if (!d || isNaN(d.getTime())) return String(date || "");
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Colombo",
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    }).format(d);
+  } catch (err) {
+    return new Date().toLocaleDateString("en-US", { timeZone: "Asia/Colombo" });
+  }
+}
+
+export function formatSriLankaTime(date = new Date()) {
+  try {
+    const d = typeof date === "string" || typeof date === "number" ? new Date(date) : date;
+    if (!d || isNaN(d.getTime())) return String(date || "");
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Asia/Colombo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    }).format(d);
+  } catch (err) {
+    return new Date().toLocaleTimeString("en-US", { timeZone: "Asia/Colombo" });
+  }
 }
 
 export function getBaseTemplate(title, bodyHtml, footerNote = "Sanasa General Insurance • Sri Lanka") {
@@ -226,4 +278,53 @@ export function getBaseTemplate(title, bodyHtml, footerNote = "Sanasa General In
       </body>
     </html>
   `;
+}
+
+export async function sendAgentActivityEmail(agentEmail, activityType, claim, customMessage = "") {
+  try {
+    if (!agentEmail || agentEmail.trim() === "") return;
+    
+    const Agent = mongoose.model("Agent");
+    const agent = await Agent.findOne({ email: agentEmail.trim().toLowerCase() });
+    const agentName = agent ? agent.name : "Agent";
+
+    const subject = `[Sanasa Activity Update] - Claim: ${claim.claimNumber}`;
+    const formattedTime = formatSriLankaDateTime(new Date());
+    
+    const bodyHtml = `
+      <h2>New Claim Activity Update</h2>
+      <p>Dear <strong>${agentName}</strong>,</p>
+      <p>There has been a new update/activity on a claim assigned to you:</p>
+      <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 500px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7;">
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 10px; font-weight: bold; width: 150px; color: #4a5568;">Claim Number:</td>
+          <td style="padding: 10px; color: #2d3748; font-weight: 600;">${claim.claimNumber}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 10px; font-weight: bold; color: #4a5568;">Vehicle No:</td>
+          <td style="padding: 10px; color: #2d3748;">${claim.vehiclePlate}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 10px; font-weight: bold; color: #4a5568;">Activity:</td>
+          <td style="padding: 10px; color: #f97316; font-weight: bold;">${activityType}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 10px; font-weight: bold; color: #4a5568;">Current Status:</td>
+          <td style="padding: 10px; font-weight: bold; color: #2d3748;">${claim.status} (Step ${claim.currentStep})</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 10px; font-weight: bold; color: #4a5568;">Updated At:</td>
+          <td style="padding: 10px; color: #2d3748;">${formattedTime} (Sri Lanka Time)</td>
+        </tr>
+      </table>
+      ${customMessage ? `<p style="background-color: #ebf8ff; border-left: 4px solid #3182ce; padding: 12px; border-radius: 4px; font-style: italic; font-size: 14px; margin-top: 15px; margin-bottom: 15px;">${customMessage}</p>` : ""}
+      <p style="margin-top: 20px;">Please log in to your Agent portal to view the details and proceed with the necessary steps.</p>
+    `;
+
+    const htmlBody = getBaseTemplate(subject, bodyHtml);
+    await sendEmail(agentEmail.trim().toLowerCase(), subject, htmlBody);
+    console.log(`✅ Activity email sent successfully to Agent: ${agentEmail}`);
+  } catch (error) {
+    console.error("❌ Error sending agent activity email:", error);
+  }
 }

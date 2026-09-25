@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config({ override: true });
-import dns from "dns";
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
+// import dns from "dns";
+// dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 import express from "express";
 import mongoose from "mongoose";
@@ -10,11 +10,12 @@ import cors from "cors";
 import signupRouter from "./src/routes/signup.routes.js";
 import myClaimsRouter from "./src/routes/my_claims.routes.js";
 import newClaimRouter from "./src/routes/new_claim.routes.js";
+import myVehiclesRouter from "./src/routes/my_vehicles.routes.js";
 import adminRouter from "./src/routes/admin.routes.js";
 import officeStaffRouter from "./src/routes/office_staff.routes.js";
 import agentRouter from "./src/routes/agent.routes.js";
 import authRouter from "./src/routes/auth.routes.js";
-
+import translateRouter from "./src/routes/translate.routes.js";
 
 const app = express();
 const __dirname = path.resolve();
@@ -38,11 +39,12 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use("/api/signup", signupRouter);
 app.use("/api/policy-holder", myClaimsRouter);
 app.use("/api/policy-holder", newClaimRouter);
+app.use("/api/policy-holder", myVehiclesRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/office-staff", officeStaffRouter);
 app.use("/api/agent", agentRouter);
 app.use("/api/auth", authRouter);
-
+app.use("/api/translate", translateRouter);
 
 
 
@@ -53,12 +55,18 @@ const PORT = process.env.PORT;
 const startServer = async () => {
   try {
     console.log("Connecting to MongoDB...");
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 5000
+    });
     console.log("✅ MongoDB Connected");
 
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`http://localhost:${PORT}`);
+      console.log(`http://192.168.41.167:${PORT}`);
+    });
+
+    server.on("error", (err) => {
+      console.error("❌ Server listen error:", err.message);
     });
   } catch (error) {
     console.error("❌ Server error:", error.message);

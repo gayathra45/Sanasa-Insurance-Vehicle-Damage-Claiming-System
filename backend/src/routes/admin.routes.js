@@ -5,6 +5,7 @@ import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import OfficeStaff from "../models/office_staff.model.js";
 import Agent from "../models/agent.model.js";
+import AgentActivity from "../models/agent_activity.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
 
@@ -52,18 +53,45 @@ router.get("/dashboard-stats", async (req, res) => {
     oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
     const dateFilter = { createdAt: { $gte: oneMonthAgo } };
 
-    // 1. KPI Counts (last 30 days)
-    const policyHoldersCount = await User.countDocuments(dateFilter);
-    const totalClaimsCount = await Claim.countDocuments(dateFilter);
-    const activeClaimsCount = await Claim.countDocuments({ status: "In Progress", ...dateFilter });
-    const pendingClaimsCount = await Claim.countDocuments({ status: "Pending", ...dateFilter });
+    // 1. KPI Counts (last 30 days & overall)
+    const policyHoldersCount = await User.countDocuments();
+    const totalClaimsCount = await Claim.countDocuments();
+    const activeClaimsCount = await Claim.countDocuments({ status: "In Progress" });
+    const pendingClaimsCount = await Claim.countDocuments({ status: "Pending" });
 
-    // 2. Branch Performances (Temporarily set to 0, pending office staff assignment logic)
-    const branches = [
-      { name: "Galle", percentage: 0, count: 0 },
-      { name: "Matara", percentage: 0, count: 0 },
-      { name: "Anuradhapura", percentage: 0, count: 0 },
-      { name: "Embilipitiya", percentage: 0, count: 0 }
+    // Additional general stats
+    const totalAgentsCount = await Agent.countDocuments();
+    const totalBranchesCount = await OfficeStaff.countDocuments();
+
+    // 2. Branch Performances (Calculated dynamically from claims data)
+    const totalClaimsOverall = await Claim.countDocuments();
+    const claimsByBranch = await Claim.aggregate([
+      { $group: { _id: "$branch", count: { $sum: 1 } } }
+    ]);
+    const branchColorMap = {
+      Galle: "bg-red-500",
+      Matara: "bg-green-500",
+      Anuradhapura: "bg-blue-500",
+      Embilipitiya: "bg-orange-400",
+    };
+    const mappedBranches = claimsByBranch.map(cb => {
+      const name = cb._id || "Unassigned";
+      const count = cb.count;
+      const percentage = totalClaimsOverall > 0 ? Math.round((count / totalClaimsOverall) * 100) : 0;
+      return {
+        name,
+        percentage,
+        count,
+        color: branchColorMap[name] || "bg-slate-400"
+      };
+    }).sort((a, b) => b.count - a.count);
+
+    // Fallback if no branches have claims yet
+    const branches = mappedBranches.length > 0 ? mappedBranches : [
+      { name: "Galle", percentage: 0, count: 0, color: "bg-red-500" },
+      { name: "Matara", percentage: 0, count: 0, color: "bg-green-500" },
+      { name: "Anuradhapura", percentage: 0, count: 0, color: "bg-blue-500" },
+      { name: "Embilipitiya", percentage: 0, count: 0, color: "bg-orange-400" }
     ];
 
     // 3. Monthly Claims (Aggregated by month, filtered to last 30 days)
@@ -99,15 +127,27 @@ router.get("/dashboard-stats", async (req, res) => {
       };
     });
 
+    // 4. Pending Branch Staff Password Resets
+    const pendingBranchResets = await OfficeStaff.find({ resetRequestStatus: "Pending" }, { password: 0 })
+      .sort({ createdAt: -1 });
+
+    // 5. Pending Admin Password Resets
+    const pendingAdminResets = await Admin.find({ resetRequestStatus: "Pending" }, { password: 0 })
+      .sort({ createdAt: -1 });
+
     res.json({
       stats: {
         policyHolders: policyHoldersCount,
         totalClaims: totalClaimsCount,
         activeClaims: activeClaimsCount,
-        pendingClaims: pendingClaimsCount
+        pendingClaims: pendingClaimsCount,
+        totalAgents: totalAgentsCount,
+        totalBranches: totalBranchesCount
       },
       branches,
-      monthlyClaims
+      monthlyClaims,
+      pendingBranchResets,
+      pendingAdminResets
     });
   } catch (err) {
     console.error("Admin dashboard stats API error:", err);
@@ -286,10 +326,15 @@ router.get("/notifications", async (req, res) => {
 // POST create a new office staff member: /api/admin/staff
 router.post("/staff", async (req, res) => {
   try {
-    const { name, email, mobile, branch, province, location, staffCount, password } = req.body;
+    const { name, email, mobile, branch, province, district, area, location, staffCount, password } = req.body;
 
-    if (!name || !email || !mobile || !branch || !province || !location || staffCount === undefined) {
+    if (!name || !email || !mobile || !branch || !province || !district || !area || !location || staffCount === undefined) {
       return res.status(400).json({ error: "All fields are required." });
+    }
+
+    const cleanMobile = mobile.replace(/[-+()\s]/g, "");
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return res.status(400).json({ error: "Mobile number must be exactly 10 digits." });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -324,11 +369,13 @@ router.post("/staff", async (req, res) => {
       mobile: mobile.trim(),
       branch: branch.trim(),
       province: province.trim(),
+      district: district.trim(),
+      area: area.trim(),
       location: location.trim(),
       staffCount: Number(staffCount),
-      password: hashedPassword
+      password: hashedPassword,
+      mustChangePassword: true
     });
-
     await newStaff.save();
 
     // Send welcome email with login details to the branch staff's email
@@ -381,6 +428,63 @@ router.post("/staff", async (req, res) => {
     res.status(201).json({ message: "Office staff registered successfully", staff: staffObj });
   } catch (err) {
     console.error("Create staff API error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PUT edit office staff member details: /api/admin/staff/:id
+router.put("/staff/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, mobile, branch, province, district, area, location, staffCount } = req.body;
+
+    const staff = await OfficeStaff.findById(id);
+    if (!staff) {
+      return res.status(404).json({ error: "Office staff member not found." });
+    }
+
+    if (email && email.trim().toLowerCase() !== staff.email) {
+      const cleanEmail = email.trim().toLowerCase();
+      // Check if email already exists
+      const existingEmail = await OfficeStaff.findOne({ email: cleanEmail });
+      if (existingEmail) {
+        return res.status(400).json({ error: "An office staff account with this Email is already registered." });
+      }
+    }
+
+    if (name) staff.name = name.trim();
+    if (email) staff.email = email.trim().toLowerCase();
+    if (mobile) staff.mobile = mobile.trim();
+    if (branch) staff.branch = branch.trim();
+    if (province) staff.province = province.trim();
+    if (district) staff.district = district.trim();
+    if (area) staff.area = area.trim();
+    if (location) staff.location = location.trim();
+    if (staffCount !== undefined) staff.staffCount = Number(staffCount);
+
+    await staff.save();
+
+    const staffObj = staff.toObject();
+    delete staffObj.password;
+
+    res.json({ message: "Office staff updated successfully", staff: staffObj });
+  } catch (err) {
+    console.error("Update staff error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// DELETE office staff member: /api/admin/staff/:id
+router.delete("/staff/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const staff = await OfficeStaff.findByIdAndDelete(id);
+    if (!staff) {
+      return res.status(404).json({ error: "Office staff member not found." });
+    }
+    res.json({ message: "Office staff member deleted successfully." });
+  } catch (err) {
+    console.error("Delete staff error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
@@ -499,7 +603,16 @@ router.post("/register-admin", async (req, res) => {
     }
     const cleanEmail = email.trim().toLowerCase();
     const cleanNic = nic.trim();
-    const cleanMobile = mobile.trim();
+    const cleanMobile = mobile.replace(/[-+()\s]/g, "");
+
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return res.status(400).json({ error: "Mobile number must be exactly 10 digits." });
+    }
+
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
+    if (!nicRegex.test(cleanNic)) {
+      return res.status(400).json({ error: "Invalid NIC number. Must be between 10 and 12 characters/digits." });
+    }
 
     // Check if already exists in Admin
     const existingAdmin = await Admin.findOne({

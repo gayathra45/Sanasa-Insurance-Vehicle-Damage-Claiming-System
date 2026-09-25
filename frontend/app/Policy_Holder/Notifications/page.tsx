@@ -1,0 +1,1173 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
+import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
+import Link from "next/link";
+import { API_URL } from "@/app/config";
+import SimpleLoader from "@/app/Components/SimpleLoader";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Search01Icon,
+  Cancel01Icon,
+  CheckmarkCircle01Icon,
+  Loading03Icon,
+  Clock01Icon,
+  Alert02Icon,
+  Notification01Icon,
+  BubbleChatIcon,
+} from "@hugeicons/core-free-icons";
+
+interface Claim {
+  claimNumber: string;
+  vehiclePlate: string;
+  incidentDate: string;
+  damageType: string;
+  status: string;
+  amount?: string | number | null;
+  createdAt?: string;
+  updatedAt?: string;
+  documentsRequested?: boolean;
+  requestedDocuments?: string[];
+  currentStep?: number;
+  description?: string;
+  otherVehicleDetails?: {
+    vehiclePlate?: string;
+    insuranceCompany?: string;
+    policyNumber?: string;
+    driverName?: string;
+    licensePhotos?: string[];
+    vehiclePhotos?: string[];
+  };
+  location?: string;
+  officer?: string;
+  branch?: string;
+  documentRequestTo?: string;
+  messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
+  additionalDocuments?: any[];
+  garageEstimateComparison?: any;
+}
+
+interface NotificationItem {
+  id: string;
+  type: "urgent" | "approved" | "status";
+  title: string;
+  description: string;
+  subText?: string;
+  date: string;
+  isUrgent: boolean;
+  link: string;
+  actionLabel: string;
+  createdAtRaw?: string;
+  claim: Claim;
+}
+
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return "Today";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch {
+    return dateStr;
+  }
+}
+
+export default function PolicyHolderNotifications() {
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [filteredNotifs, setFilteredNotifs] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"all" | "unread" | "read" | "urgent" | "approved" | "status">("all");
+  const [user, setUser] = useState<{ firstName?: string; nic?: string } | null>(null);
+  const [readIds, setReadIds] = useState<string[]>([]);
+  const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
+
+  // 1. Initial Load of User Session and LocalStorage Read States
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      // Load user
+      const userStr = sessionStorage.getItem("logged_in_user");
+      if (userStr) {
+        try {
+          const parsedUser = JSON.parse(userStr);
+          setUser(parsedUser);
+          if (parsedUser.nic) {
+            fetchNotifications(parsedUser.nic);
+          } else {
+            setLoading(false);
+          }
+        } catch (err) {
+          console.error("Error parsing logged_in_user session", err);
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+
+      // Load read notifications
+      const savedReadIds = localStorage.getItem("read_notification_ids");
+      if (savedReadIds) {
+        try {
+          setReadIds(JSON.parse(savedReadIds));
+        } catch (e) {
+          console.error("Failed to load read notification IDs", e);
+        }
+      }
+    }
+  }, []);
+
+  // 1b. Poll notifications in background silently for real-time updates
+  useEffect(() => {
+    if (!user || !user.nic) return;
+    const interval = setInterval(() => {
+      fetchNotifications(user.nic!, true);
+    }, 8000);
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // 2. Fetch Claims and compile notifications list
+  const fetchNotifications = async (nic: string, silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(nic)}`, {
+        cache: "no-store"
+      });
+      let dbClaims: Claim[] = [];
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.claims)) {
+          dbClaims = data.claims;
+        }
+      }
+
+      // Check for last submitted claim
+      let localClaims: Claim[] = [];
+      const lastStr = sessionStorage.getItem("last_submitted_claim");
+      if (lastStr) {
+        try {
+          const parsed = JSON.parse(lastStr);
+          if (!dbClaims.some((c) => c.claimNumber === parsed.claimNumber)) {
+            localClaims.push(parsed);
+          }
+        } catch (e) {}
+      }
+
+      const allClaims = [...localClaims, ...dbClaims];
+      const compiled: NotificationItem[] = [];
+
+      allClaims.forEach((claim) => {
+        const dateFormatted = formatDate(claim.createdAt || claim.updatedAt);
+
+        // 1. Documents Requested (Urgent Notification)
+        if (claim.documentsRequested) {
+          compiled.push({
+            id: `${claim.claimNumber}-doc`,
+            type: "urgent",
+            title: "Documents Requested – Action Required",
+            description: `Staff has requested a ${
+              claim.requestedDocuments && claim.requestedDocuments.length > 0
+                ? claim.requestedDocuments.join(" & ")
+                : "Police Report / Repair Estimate"
+            } for claim ${claim.claimNumber}.`,
+            subText: "Please upload within 3 working days to avoid settlement delays.",
+            date: dateFormatted,
+            isUrgent: true,
+            link: `/Policy_Holder/Documents?uploadClaim=${claim.claimNumber}`, // Linking directly to documents page as requested
+            actionLabel: "Upload Documents",
+            createdAtRaw: claim.createdAt,
+            claim: claim
+          });
+        }
+
+        // 2. Claim Approved/Settled
+        const statusLower = (claim.status || "").toLowerCase();
+        if (statusLower.includes("approved") || statusLower.includes("done") || statusLower.includes("settled")) {
+          compiled.push({
+            id: `${claim.claimNumber}-approved`,
+            type: "approved",
+            title: `Claim ${claim.claimNumber} Approved!`,
+            description: `Your insurance claim for vehicle ${claim.vehiclePlate} has been approved. The settlement amount will be credited to your registered bank account.`,
+            date: dateFormatted,
+            isUrgent: false,
+            link: "/Policy_Holder/My_claims",
+            actionLabel: "View",
+            createdAtRaw: claim.createdAt,
+            claim: claim
+          });
+        } else if (!claim.documentsRequested) {
+          // 3. Claim In-Progress or standard status updates
+          compiled.push({
+            id: `${claim.claimNumber}-status`,
+            type: "status",
+            title: `Claim ${claim.claimNumber} Status: ${claim.status || "Pending"}`,
+            description: `Your claim is currently in "${claim.status || "Pending"}" status. Click below to view the detailed progress tracker.`,
+            date: dateFormatted,
+            isUrgent: false,
+            link: `/Policy_Holder/TrackClaims?id=${claim.claimNumber}`,
+            actionLabel: "View",
+            createdAtRaw: claim.createdAt,
+            claim: claim
+          });
+        }
+      });
+
+      // Sort notifications (Urgent first, then newest first)
+      compiled.sort((a, b) => {
+        if (a.isUrgent && !b.isUrgent) return -1;
+        if (!a.isUrgent && b.isUrgent) return 1;
+        const timeA = a.createdAtRaw ? new Date(a.createdAtRaw).getTime() : 0;
+        const timeB = b.createdAtRaw ? new Date(b.createdAtRaw).getTime() : 0;
+        return timeB - timeA;
+      });
+
+      setNotifications(compiled);
+      setFilteredNotifs(compiled);
+    } catch (err) {
+      console.error("Error fetching notifications", err);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  };
+
+  // Lock background scroll when modal is open
+  useEffect(() => {
+    if (selectedClaim) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedClaim]);
+
+  // 3. Read/Unread Handler Actions
+  const toggleReadStatus = (id: string) => {
+    let updatedReadIds = [...readIds];
+    if (readIds.includes(id)) {
+      updatedReadIds = updatedReadIds.filter((item) => item !== id);
+    } else {
+      updatedReadIds.push(id);
+    }
+    setReadIds(updatedReadIds);
+    localStorage.setItem("read_notification_ids", JSON.stringify(updatedReadIds));
+  };
+
+  const markAsRead = (id: string) => {
+    if (!readIds.includes(id)) {
+      const updated = [...readIds, id];
+      setReadIds(updated);
+      localStorage.setItem("read_notification_ids", JSON.stringify(updated));
+    }
+  };
+
+  const markAllAsRead = () => {
+    const allIds = notifications.map((n) => n.id);
+    setReadIds(allIds);
+    localStorage.setItem("read_notification_ids", JSON.stringify(allIds));
+  };
+
+  // Helper date formatter for claim details modal
+  const formatDateString = (dateStr?: string): string => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const getUserRequestedDocs = (claim: Claim): string[] => {
+    const getRecipientForDoc = (name: string) => {
+      const msg = [...(claim.messages || [])]
+        .reverse()
+        .find(m => m.message && m.message.includes(`Requested: ${name}`));
+      if (msg) {
+        if (msg.message.includes("[Document Request to Agent]")) return "Agent";
+        if (msg.message.includes("[Document Request to User]")) return "User";
+      }
+      return claim.documentRequestTo || "User";
+    };
+
+    const uploadedNames: string[] = (claim.additionalDocuments || [])
+      .filter((d: any) => d.uploadedBy !== "Agent")
+      .map((d: any) => (d.name || "").trim().toLowerCase());
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      uploadedNames.push("garage estimate report", "garage estimate", "repair estimate");
+    }
+
+    return (claim.requestedDocuments || []).filter((name: string) => {
+      if (getRecipientForDoc(name) !== "User") return false;
+      const normName = name.trim().toLowerCase();
+      const alreadyUploaded = uploadedNames.some((u: string) => 
+        u === normName ||
+        (normName.includes("garage") && u.includes("garage")) ||
+        (normName.includes("police") && u.includes("police")) ||
+        (normName.includes("estimate") && u.includes("estimate")) ||
+        (normName.includes("license") && u.includes("license"))
+      );
+      return !alreadyUploaded;
+    });
+  };
+
+  const getSubmittedUserDocs = (claim: Claim): { name: string; url: string; uploadedAt?: string }[] => {
+    const submitted: { name: string; url: string; uploadedAt?: string }[] = [];
+    const additional = (claim.additionalDocuments || []).filter((d: any) => d.uploadedBy !== "Agent");
+    
+    additional.forEach((doc: any) => {
+      if (doc.url) {
+        submitted.push({
+          name: doc.name,
+          url: doc.url,
+          uploadedAt: doc.uploadedAt || claim.createdAt
+        });
+      }
+    });
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      const exists = submitted.some((s: any) => s.url === claim.garageEstimateComparison?.garageDocumentUrl);
+      if (!exists) {
+        submitted.push({
+          name: "Garage Estimate Report",
+          url: claim.garageEstimateComparison.garageDocumentUrl,
+          uploadedAt: claim.createdAt
+        });
+      }
+    }
+
+    return submitted;
+  };
+
+  const getDocRequestNote = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.message) {
+      const idx = msg.message.indexOf("Message:");
+      if (idx !== -1) {
+        return msg.message.substring(idx + 8).trim();
+      }
+    }
+    return "";
+  };
+
+  const formatDateTimeString = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()} ${hours}:${minutes}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const getDocRequestTime = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.sentAt) {
+      return formatDateTimeString(msg.sentAt);
+    }
+    return "";
+  };
+
+  const getDocRequestSender = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "Office Staff";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    return msg ? (msg.sender || "Office Staff") : "Office Staff";
+  };
+
+  const formatNumberPlate = (plate?: string): string => {
+    if (!plate) return "";
+    const cleaned = plate.trim();
+    if (cleaned.includes("-")) {
+      return cleaned;
+    }
+    const lastNumbersMatch = cleaned.match(/^(.*[A-Za-z]+)(\d+)$/);
+    if (lastNumbersMatch) {
+      return `${lastNumbersMatch[1].trim().toUpperCase()}-${lastNumbersMatch[2]}`;
+    }
+    return cleaned;
+  };
+
+  // 4. Tab and Query Filtering Effect
+  useEffect(() => {
+    let result = notifications;
+
+    // Filter by Tab
+    if (activeTab === "unread") {
+      result = notifications.filter((n) => !readIds.includes(n.id));
+    } else if (activeTab === "read") {
+      result = notifications.filter((n) => readIds.includes(n.id));
+    } else if (activeTab === "urgent") {
+      result = notifications.filter((n) => n.type === "urgent");
+    } else if (activeTab === "approved") {
+      result = notifications.filter((n) => n.type === "approved");
+    } else if (activeTab === "status") {
+      result = notifications.filter((n) => n.type === "status");
+    }
+
+    // Filter by Search Query
+    if (searchQuery.trim() !== "") {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter(
+        (n) =>
+          n.title.toLowerCase().includes(q) ||
+          n.description.toLowerCase().includes(q) ||
+          (n.subText && n.subText.toLowerCase().includes(q))
+      );
+    }
+
+    setFilteredNotifs(result);
+  }, [activeTab, searchQuery, notifications, readIds]);
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col font-sans relative">
+      <PolicyHolderNavbar />
+
+      {/* Styled Curved Header Matching Mockup */}
+      <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
+        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/contact_border.jpeg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+          {/* Slate Gradient Overlay */}
+          <div className="absolute inset-0 bg-slate-900/35" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+        </div>
+
+        {/* Text Content */}
+        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+            Notifications
+          </h1>
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
+            {loading
+              ? "Loading updates..."
+              : notifications.length > 0
+              ? `You have ${notifications.filter(n => !readIds.includes(n.id)).length} unread updates`
+              : "All caught up with claim updates"}
+          </p>
+        </header>
+      </div>
+
+      {/* Main Spacious Content Layout */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10">
+        
+        {/* Horizontal Top Controls Row */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 select-none">
+          
+          {/* Search Input */}
+          <div className="relative w-full max-w-[420px] bg-slate-50 hover:bg-white focus-within:bg-white border border-slate-200 rounded-full pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10">
+            <span className="text-slate-400 flex items-center justify-center">
+              <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2.5} />
+            </span>
+            <input
+              type="text"
+              placeholder="Search notifications..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-normal"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
+              </button>
+            )}
+            <button
+              type="button"
+              className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-semibold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20"
+            >
+              Search
+            </button>
+          </div>
+
+          {/* Mark All As Read */}
+          {notifications.some(n => !readIds.includes(n.id)) && (
+            <button
+              onClick={markAllAsRead}
+              className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center"
+            >
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
+              Mark All as Read
+            </button>
+          )}
+
+        </div>
+
+        {/* Tab Filters row */}
+        <div className="flex flex-wrap gap-2.5 mb-8 border-b border-slate-100 pb-5 select-none">
+          <button
+            onClick={() => setActiveTab("all")}
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+              activeTab === "all"
+                ? "bg-[#000080] border-[#000080] text-white shadow-sm font-semibold"
+                : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+            }`}
+          >
+            All Alerts ({notifications.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("unread")}
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "unread"
+                ? "bg-sky-500 border-sky-500 text-white shadow-sm font-semibold"
+                : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+            }`}
+          >
+            Unread
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+              activeTab === "unread" ? "bg-white/20 text-white" : "bg-red-500 text-white"
+            }`}>
+              {notifications.filter((n) => !readIds.includes(n.id)).length}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab("read")}
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === "read"
+                ? "bg-slate-600 border-slate-600 text-white shadow-sm font-semibold"
+                : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+            }`}
+          >
+            Read
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+              activeTab === "read" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+            }`}>
+              {notifications.filter((n) => readIds.includes(n.id)).length}
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab("urgent")}
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+              activeTab === "urgent"
+                ? "bg-red-500 border-red-500 text-white shadow-sm font-semibold"
+                : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+            }`}
+          >
+            Urgent ({notifications.filter((n) => n.type === "urgent").length})
+          </button>
+          <button
+            onClick={() => setActiveTab("approved")}
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+              activeTab === "approved"
+                ? "bg-emerald-600 border-emerald-600 text-white shadow-sm font-semibold"
+                : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+            }`}
+          >
+            Approvals ({notifications.filter((n) => n.type === "approved").length})
+          </button>
+          <button
+            onClick={() => setActiveTab("status")}
+            className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+              activeTab === "status"
+                ? "bg-amber-500 border-amber-500 text-white shadow-sm font-semibold"
+                : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+            }`}
+          >
+            Status Updates ({notifications.filter((n) => n.type === "status").length})
+          </button>
+        </div>
+
+        {/* Notifications Container */}
+        <div className="flex flex-col gap-3.5 mb-10">
+          {loading ? (
+            <SimpleLoader message="Fetching notifications..." theme="blue" />
+          ) : filteredNotifs.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {filteredNotifs.map((n) => {
+                const isUrgent = n.type === "urgent";
+                const isApproved = n.type === "approved";
+                const isRead = readIds.includes(n.id);
+
+                let borderLeft = "border-l-4 border-l-sky-400";
+                let iconStyle = "bg-sky-50 text-sky-600";
+                let iconSvg = (
+                  <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" strokeWidth={2} />
+                );
+
+                if (isUrgent) {
+                  borderLeft = "border-l-4 border-l-rose-500";
+                  iconStyle = "bg-rose-50 text-rose-600";
+                  iconSvg = (
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2} />
+                  );
+                } else if (isApproved) {
+                  borderLeft = "border-l-4 border-l-emerald-500";
+                  iconStyle = "bg-emerald-50 text-emerald-600";
+                  iconSvg = (
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2} />
+                  );
+                }
+
+                if (isRead) {
+                  borderLeft = "border-l-4 border-l-slate-200";
+                }
+
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => {
+                      // Clicking the notification card opens the claim detail popup modal
+                      setSelectedClaim(n.claim);
+                      markAsRead(n.id);
+                    }}
+                    className={`rounded-2xl border border-slate-200/80 p-3.5 md:py-3.5 md:px-5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer ${borderLeft} ${
+                      isRead ? "bg-slate-50/50 hover:bg-slate-100/60" : "bg-white hover:bg-slate-50/50"
+                    }`}
+                  >
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-4">
+                      
+                      {/* Left Info Area: Centered Icon + Title & Description */}
+                      <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconStyle}`}>
+                          {iconSvg}
+                        </div>
+
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h4 className={`font-semibold text-sm md:text-[15px] leading-snug ${isRead ? "text-slate-600" : "text-slate-800"}`}>
+                              {n.title}
+                            </h4>
+                            
+                            {!isRead && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 border border-sky-200/60">
+                                New
+                              </span>
+                            )}
+                          </div>
+
+                          <p className="text-slate-600 text-xs md:text-sm font-normal leading-relaxed mt-0.5">
+                            {n.description}
+                          </p>
+
+                          {n.subText && (
+                            <p className="text-[11px] text-slate-400 font-normal italic mt-0.5">
+                              * {n.subText}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Right Action Area: Fixed-width Buttons + Aligned Date */}
+                      <div
+                        onClick={(e) => e.stopPropagation()} // Prevent triggering card click / modal popup
+                        className="flex items-center justify-between md:justify-end gap-2.5 md:gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100"
+                      >
+                        <div className="flex items-center gap-2 order-2 md:order-1">
+                          {n.actionLabel === "View" ? (
+                            <button
+                              onClick={() => {
+                                setSelectedClaim(n.claim);
+                                markAsRead(n.id);
+                              }}
+                              className={`w-[136px] md:w-[140px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none shadow-xs whitespace-nowrap shrink-0 ${
+                                isApproved
+                                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  : isUrgent
+                                  ? "bg-red-500 hover:bg-red-600 text-white"
+                                  : "bg-[#000080] hover:bg-[#000066] text-white"
+                              }`}
+                            >
+                              View
+                            </button>
+                          ) : (
+                            <Link
+                              href={n.link}
+                              className={`w-[136px] md:w-[140px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] text-center no-underline shadow-xs whitespace-nowrap shrink-0 ${
+                                isUrgent
+                                  ? "bg-red-500 hover:bg-red-600 text-white"
+                                  : isApproved
+                                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                  : "bg-[#000080] hover:bg-[#000066] text-white"
+                              }`}
+                            >
+                              {n.actionLabel}
+                            </Link>
+                          )}
+
+                          {/* Read/Unread toggler button with fixed width for straight column alignment */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleReadStatus(n.id);
+                            }}
+                            className="w-[136px] md:w-[140px] h-[34px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98] text-center whitespace-nowrap shrink-0"
+                          >
+                            {isRead ? "Mark as Unread" : "Mark as Read"}
+                          </button>
+                        </div>
+
+                        <span className="w-[84px] text-xs text-slate-400 font-normal whitespace-nowrap text-left md:text-right order-1 md:order-2">
+                          {n.date}
+                        </span>
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Empty state block matching original style */
+            <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-[30px] gap-6 text-center px-8 shadow-sm">
+              <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                <HugeiconsIcon icon={Notification01Icon} className="w-10 h-10" strokeWidth={1.5} />
+              </div>
+              <div>
+                <h4 className="font-semibold text-slate-800 text-lg">No Notifications Found</h4>
+                <p className="text-slate-500 font-normal text-sm max-w-sm mt-2 leading-relaxed">
+                  We couldn't find any notifications matching the selected tab criteria or search keywords.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+      </main>
+
+      {/* Floating Chat Bubble Button */}
+      <button
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        aria-label="Chat support"
+      >
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+      </button>
+
+      {/* Claim Detail Modal Popup */}
+      {selectedClaim && (() => {
+        const renderClaimProgress = (status: string, dbStep?: number) => {
+          let currentStep = dbStep || 1;
+          if (!dbStep) {
+            const s = status.toLowerCase();
+            if (s.includes("pending") || s.includes("progress")) {
+              currentStep = 3;
+            } else if (s.includes("review")) {
+              currentStep = 4;
+            } else if (s.includes("approved") || s.includes("active") || s.includes("done")) {
+              currentStep = 6;
+            }
+          }
+
+          const steps = [
+            { num: "01", label: "Submitted" },
+            { num: "02", label: "Assigned" },
+            { num: "03", label: "Inspection" },
+            { num: "04", label: "Review" },
+            { num: "05", label: "Decision" },
+            { num: "06", label: "Payment" }
+          ];
+
+          return (
+            <div className="bg-[#f8fafc] border border-slate-100 rounded-[24px] pt-6 pb-5 px-8 mb-8 flex justify-between items-center relative select-none w-full max-w-[540px] mx-auto shadow-sm">
+              {/* Background Grey Line */}
+              <div className="absolute top-[44px] -translate-y-1/2 left-[52px] right-[52px] h-[3px] bg-slate-200 z-0 pointer-events-none" />
+              
+              {/* Active Green Line */}
+              <div
+                className="absolute top-[44px] -translate-y-1/2 left-[52px] h-[3px] bg-[#00b050] z-0 pointer-events-none transition-all duration-300"
+                style={{ width: `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
+              />
+
+              {steps.map((step, idx) => {
+                const stepNum = idx + 1;
+                const isCompleted = stepNum < currentStep;
+                const isActive = stepNum === currentStep;
+
+                let circleClass = "";
+                if (isCompleted) {
+                  circleClass = "border-[#00b050] text-[#00b050] bg-white";
+                } else if (isActive) {
+                  circleClass = "border-blue-500 text-blue-500 bg-[#e8f0fe]";
+                } else {
+                  circleClass = "border-slate-300 text-slate-400 bg-white";
+                }
+
+                return (
+                  <div key={step.num} className="relative z-10 flex flex-col items-center flex-1">
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold relative z-10 ${circleClass}`}>
+                      {step.num}
+                    </div>
+                    <span className={`text-[11px] font-medium mt-2 leading-none relative z-10 ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        };
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
+              
+              {/* Modal Header Title */}
+              <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
+                <h2 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
+                  Claim Details – {selectedClaim.claimNumber}
+                </h2>
+                <button
+                  onClick={() => setSelectedClaim(null)}
+                  className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-8 flex-1 overflow-y-auto">
+                
+                {/* Dynamic Tracker Wizard */}
+                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
+
+                {/* 2-Column Grid matching mockup inline labels */}
+                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-sm font-normal text-slate-700 mb-6 px-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Vehicle:</span>
+                    <span className="font-semibold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Type:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.damageType}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Est. Amount:</span>
+                    <span className="font-semibold text-slate-800">
+                      {selectedClaim.amount
+                        ? (typeof selectedClaim.amount === "string"
+                          ? (selectedClaim.amount.startsWith("Rs.") ? "LKR " + selectedClaim.amount.substring(4) : selectedClaim.amount)
+                          : "LKR " + Number(selectedClaim.amount).toLocaleString())
+                        : "Pending"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Date:</span>
+                    <span className="font-semibold text-slate-800">{formatDateString(selectedClaim.incidentDate)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Officer:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Branch:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Location:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.location || "N/A"}</span>
+                  </div>
+                </div>
+
+                {/* Description Text (If available) */}
+                {selectedClaim.description && (
+                  <div className="px-2 mb-6">
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Incident Description</p>
+                    <p className="text-slate-600 text-sm font-normal leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                      "{selectedClaim.description}"
+                    </p>
+                  </div>
+                )}
+
+                {/* Other Vehicles Involved */}
+                {selectedClaim.otherVehicleDetails && (
+                  <div className="px-2 mb-6 text-left">
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
+                    {Array.isArray(selectedClaim.otherVehicleDetails) ? (
+                      selectedClaim.otherVehicleDetails.length === 0 ? (
+                        <div className="text-xs text-slate-500 italic select-none font-normal">No other vehicles involved.</div>
+                      ) : (
+                        <div className="space-y-4">
+                          {selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
+                            <div key={vIdx} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                              <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
+                              <div className="grid grid-cols-2 gap-4 text-left">
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.driverName || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.policyNumber || "—"}</span>
+                                </div>
+                              </div>
+
+                              {/* License Photos */}
+                              {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
+                                <div className="pt-2 border-t border-slate-200/60">
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
+                                  <div className="flex flex-wrap gap-2.5">
+                                    {vehicle.licensePhotos.map((url: string, idx: number) => {
+                                      let docUrl = url;
+                                      if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                        docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                      }
+                                      return (
+                                        <div 
+                                          key={idx}
+                                          onClick={() => window.open(docUrl, "_blank")}
+                                          className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                        >
+                                          <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Vehicle Photos */}
+                              {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
+                                <div className="pt-2 border-t border-slate-200/60">
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
+                                  <div className="flex flex-wrap gap-2.5">
+                                    {vehicle.vehiclePhotos.map((url: string, idx: number) => {
+                                      let docUrl = url;
+                                      if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                        docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                      }
+                                      return (
+                                        <div 
+                                          key={idx}
+                                          onClick={() => window.open(docUrl, "_blank")}
+                                          className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                        >
+                                          <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    ) : (
+                      (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                          <div className="grid grid-cols-2 gap-4 text-left">
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
+                            </div>
+                          </div>
+
+                          {/* License Photos */}
+                          {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
+                            <div className="pt-2 border-t border-slate-200/60">
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Vehicle Photos */}
+                          {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
+                            <div className="pt-2 border-t border-slate-200/60">
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+                {/* Messages & Notifications Section */}
+                <div className="px-2 mt-4 mb-2">
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
+                  {(() => {
+                    const filteredMessages = (selectedClaim.messages || []).filter((msg: any) => msg.recipient !== "Agent");
+                    if (filteredMessages.length > 0) {
+                      return (
+                        <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
+                          {filteredMessages.map((msg: any, index: number) => (
+                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
+                              <div className="flex justify-between items-center text-[11px] select-none">
+                                <span className="font-semibold text-[#0f2d3a]">{msg.sender}</span>
+                                <span className="text-slate-400 font-normal">{formatDateString(msg.sentAt)}</span>
+                              </div>
+                              <p className="text-slate-700 text-xs font-normal leading-relaxed m-0">
+                                {msg.message}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <p className="text-slate-500 text-xs italic font-normal bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
+                          No notifications or messages have been sent for this claim.
+                        </p>
+                      );
+                    }
+                  })()}
+                </div>
+
+                {/* Warning Alert Box: Documents Requested */}
+                {selectedClaim.documentsRequested && getUserRequestedDocs(selectedClaim).length > 0 && (
+                  <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2 mt-4">
+                    <h4 className="text-[#9c3535] font-semibold text-sm mb-1.5">Documents Requested</h4>
+                    <p className="text-[#aa4f4f] text-[13px] font-normal leading-relaxed mb-3">
+                      The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
+                    </p>
+                    <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
+                      {getUserRequestedDocs(selectedClaim).map((doc) => {
+                        const note = getDocRequestNote(selectedClaim, doc);
+                        const reqTime = getDocRequestTime(selectedClaim, doc);
+                        return (
+                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-normal text-xs w-full">
+                            <span className="w-2 h-2 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
+                              <span className="font-semibold">{doc}</span>
+                              {reqTime && (
+                                <span className="text-red-600 font-semibold">
+                                  (Requested: {reqTime} by {getDocRequestSender(selectedClaim, doc)})
+                                </span>
+                              )}
+                              {note && (
+                                <span className="col-span-1 sm:col-span-2 text-[11px] font-normal text-slate-500 italic mt-0.5 pl-0.5">
+                                  Note: "{note}"
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <Link
+                      href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    >
+                      Go to Documents
+                    </Link>
+                  </div>
+                )}
+
+                {/* Success Alert Box: Documents Submitted – Under Review */}
+                {getUserRequestedDocs(selectedClaim).length === 0 && getSubmittedUserDocs(selectedClaim).length > 0 && (
+                  <div className="bg-emerald-50/90 border border-emerald-200 rounded-[20px] p-6 mb-2 mt-4 transition-all">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
+                      </div>
+                      <h4 className="text-emerald-900 font-semibold text-sm m-0">Documents Submitted – Under Review</h4>
+                    </div>
+                    <p className="text-emerald-800 text-[13px] font-normal leading-relaxed mb-3">
+                      The requested document(s) have been successfully submitted and are currently being reviewed by our insurance team:
+                    </p>
+                    <ul className="list-none flex flex-col gap-2 mb-4 pl-1">
+                      {getSubmittedUserDocs(selectedClaim).map((doc, idx) => (
+                        <li key={idx} className="flex items-center justify-between gap-2 text-emerald-900 font-medium text-xs bg-white/80 border border-emerald-100 rounded-xl px-3.5 py-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="font-semibold truncate">{doc.name}</span>
+                            {doc.uploadedAt && (
+                              <span className="text-[11px] text-emerald-700/80 font-normal">
+                                (Submitted: {formatDateString(doc.uploadedAt)})
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-md shrink-0">
+                            Submitted
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={`/Policy_Holder/Documents`}
+                      className="inline-block bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    >
+                      View in Documents
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
+                <button
+                  onClick={() => setSelectedClaim(null)}
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
+
+      <PolicyHolderFooter />
+    </div>
+  );
+}

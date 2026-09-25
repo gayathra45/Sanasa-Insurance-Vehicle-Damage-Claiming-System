@@ -14,7 +14,7 @@ import {
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "../_config";
 
 type Stage = 1 | 2 | 3 | 4; // 1=request, 2=otp, 3=set-password, 4=success
 
@@ -92,7 +92,18 @@ export default function MobileResetPassword() {
 
   // ── HANDLER: Send OTP ─────────────────────────────────────────────────────
   const handleSendOtp = async () => {
-    if (!loginId.trim()) { showAlert("Required", "Please enter your NIC or Mobile number."); return; }
+    const cleanId = loginId.trim();
+    if (!cleanId) {
+      showAlert("Required", "Please enter your NIC or Mobile number.");
+      return;
+    }
+
+    const isMobile = /^\d{10}$/.test(cleanId);
+    const isNic = /^[0-9vVxX]{10,12}$/.test(cleanId);
+    if (!isMobile && !isNic) {
+      showAlert("Invalid Input", "Please enter a valid Mobile number (exactly 10 digits) or NIC (10-12 characters).");
+      return;
+    }
     if (!email.trim()) { showAlert("Required", "Please enter your registered email."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       showAlert("Invalid Email", "Please enter a valid email address.");

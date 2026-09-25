@@ -1,9 +1,19 @@
 import express from "express";
+import crypto from "crypto";
 import Agent from "../models/agent.model.js";
 import Claim from "../models/claim.model.js";
-import { hashPassword } from "../utils/crypto.js";
+import User from "../models/user.model.js";
+import { logAgentActivity } from "../utils/activity.js";
+import AgentActivity from "../models/agent_activity.model.js";
+import { sendAgentActivityEmail } from "../utils/email.js";
+
+import mongoose from "mongoose";
 
 const router = express.Router();
+
+function hashPassword(password) {
+  return crypto.createHash("sha256").update(password).digest("hex");
+}
 
 // POST agent login: /api/agent/login
 router.post("/login", async (req, res) => {
@@ -19,6 +29,10 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid Email or Password." });
     }
 
+    if (agent.status === "inactive") {
+      return res.status(400).json({ error: "Your account is not activated. Please check your email to set a password and activate your account." });
+    }
+
     const hashedInput = hashPassword(password);
     if (agent.password !== hashedInput) {
       return res.status(400).json({ error: "Invalid Email or Password." });
@@ -26,6 +40,11 @@ router.post("/login", async (req, res) => {
 
     const agentObj = agent.toObject();
     delete agentObj.password;
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    await logAgentActivity(cleanEmail, "Login", deviceType, `Logged in successfully via ${deviceType}`);
 
     res.json({ message: "Agent login successful", agent: agentObj });
   } catch (err) {
@@ -45,8 +64,7 @@ router.get("/claims", async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     // Fetch all claims assigned to this agent email from MongoDB (excluding heavy image/license fields)
     const claims = await Claim.find(
-      { assignedAgent: cleanEmail },
-      { accidentPhotos: 0, drivingLicense: 0 }
+      { assignedAgent: cleanEmail }
     ).sort({ createdAt: -1 });
     res.json(claims);
   } catch (err) {
@@ -55,29 +73,247 @@ router.get("/claims", async (req, res) => {
   }
 });
 
-// POST update claim status/assessment: /api/agent/claims/:id/status
+// GET policyholder phone by NIC: /api/agent/policyholder/:nic
+router.get("/policyholder/:nic", async (req, res) => {
+  try {
+    const { nic } = req.params;
+    const user = await User.findOne({ nic: nic.trim().toUpperCase() });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+    res.json({ mobile: user.mobile });
+  } catch (err) {
+    console.error("Fetch policyholder error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST update claim status/assessment or accept/decline: /api/agent/claims/:id/status
 router.post("/claims/:id/status", async (req, res) => {
   try {
     const { id } = req.params;
-    const { status, amount } = req.body;
+    const { status, amount, inspectionReport, inspectionSubmitted, acceptClaim, declineClaim, rejectClaim, reason } = req.body;
 
-    const updateData = {};
-    if (status) updateData.status = status;
-    if (amount !== undefined) updateData.amount = amount;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { claimNumber: id.trim().toUpperCase() };
 
-    const updatedClaim = await Claim.findByIdAndUpdate(
-      id,
-      updateData,
-      { new: true }
-    );
-
-    if (!updatedClaim) {
+    const claim = await Claim.findOne(query);
+    if (!claim) {
       return res.status(404).json({ error: "Claim not found." });
     }
 
-    res.json({ message: "Claim status updated successfully", claim: updatedClaim });
+    const previousAgent = claim.assignedAgent || "";
+
+    if (acceptClaim) {
+      claim.currentStep = 3;
+      claim.status = "In Progress";
+      claim.messages.push({
+        sender: "Agent",
+        message: "Agent accepted the claim assignment and is starting the inspection process.",
+        sentAt: new Date(),
+        recipient: "Office Staff"
+      });
+    } else if (declineClaim || rejectClaim) {
+      // Agent rejected/declined the assignment: Unassign agent and reset to Step 1 Pending so branch can re-assign
+      claim.assignedAgent = "";
+      claim.currentStep = 1;
+      claim.status = "Pending";
+      claim.messages.push({
+        sender: "Agent",
+        message: `Agent ${previousAgent} declined the claim assignment.${reason ? ` Reason: ${reason}` : ""}`,
+        sentAt: new Date(),
+        recipient: "Office Staff"
+      });
+      claim.notes.push({
+        text: `Claim assignment declined by agent (${previousAgent}). Claim reset to unassigned for branch staff re-assignment.`,
+        addedBy: "System",
+        addedAt: new Date()
+      });
+    }
+
+    if (status !== undefined && !declineClaim && !rejectClaim) claim.status = status;
+    if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
+    if (inspectionReport !== undefined) claim.inspectionReport = inspectionReport;
+    if (inspectionSubmitted !== undefined) {
+      claim.inspectionSubmitted = inspectionSubmitted;
+      if (inspectionSubmitted) {
+        claim.currentStep = 4;
+      }
+    }
+
+    await claim.save();
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    const agentToLog = previousAgent || claim.assignedAgent;
+
+    if (acceptClaim) {
+      await logAgentActivity(agentToLog, "Claim Accepted", deviceType, `Accepted claim case: ${claim.claimNumber}`);
+    } else if (declineClaim || rejectClaim) {
+      await logAgentActivity(agentToLog, "Claim Assignment Declined", deviceType, `Declined claim assignment for: ${claim.claimNumber}`);
+    } else if (inspectionSubmitted) {
+      await logAgentActivity(agentToLog, "Inspection Submitted", deviceType, `Submitted physical inspection report for claim: ${claim.claimNumber}`);
+    } else if (status !== undefined) {
+      await logAgentActivity(agentToLog, "Claim Updated", deviceType, `Updated status to ${status} for claim: ${claim.claimNumber}`);
+    }
+
+    // Send activity email to agent
+    if (agentToLog) {
+      let activityText = "Claim Updated";
+      let customMsg = "You updated the claim details.";
+      if (acceptClaim) {
+        activityText = "Claim Accepted";
+        customMsg = "You have successfully accepted this claim assignment. The physical inspection is now marked in progress.";
+      } else if (declineClaim || rejectClaim) {
+        activityText = "Claim Assignment Declined";
+        customMsg = "You declined this claim assignment. The claim has been returned to the branch office for reassignment.";
+      } else if (inspectionSubmitted) {
+        activityText = "Inspection Report Submitted";
+        customMsg = "You have successfully submitted the physical vehicle inspection report. The claim is now ready for office staff review.";
+      } else if (status !== undefined) {
+        activityText = `Status Updated: ${status}`;
+        customMsg = `You updated the claim status to: ${status}.`;
+      }
+      await sendAgentActivityEmail(agentToLog, activityText, claim, customMsg);
+    }
+
+    res.json({ message: "Claim status updated successfully", claim });
   } catch (err) {
     console.error("Update claim status error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET verify activation token: /api/agent/verify-activation?token=...
+router.get("/verify-activation", async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).json({ error: "Activation token is required." });
+    }
+
+    const agent = await Agent.findOne({
+      activationToken: token,
+      activationExpires: { $gt: new Date() },
+      status: "inactive"
+    });
+
+    if (!agent) {
+      return res.status(400).json({ error: "Invalid or expired activation link." });
+    }
+
+    res.json({ message: "Token verified successfully.", email: agent.email, name: agent.name });
+  } catch (err) {
+    console.error("Verify activation error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST activate account: /api/agent/activate
+router.post("/activate", async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ error: "Token and Password are required." });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters." });
+    }
+
+    const agent = await Agent.findOne({
+      activationToken: token,
+      activationExpires: { $gt: new Date() },
+      status: "inactive"
+    });
+
+    if (!agent) {
+      return res.status(400).json({ error: "Invalid or expired activation link." });
+    }
+
+    // Hash password and set to active
+    agent.password = hashPassword(password);
+    agent.status = "active";
+    agent.mustChangePassword = false;
+    agent.activationToken = undefined;
+    agent.activationExpires = undefined;
+
+    await agent.save();
+
+    res.json({ message: "Your agent account has been activated successfully! You can now log in." });
+  } catch (err) {
+    console.error("Activate agent error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET agent availability: /api/agent/availability?email=...
+router.get("/availability", async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ error: "Agent email is required." });
+    }
+    const agent = await Agent.findOne({ email: email.trim().toLowerCase() });
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+    res.json({ availability: agent.availability || "Active" });
+  } catch (err) {
+    console.error("Get agent availability error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST update agent availability: /api/agent/availability
+router.post("/availability", async (req, res) => {
+  try {
+    const { email, availability } = req.body;
+    if (!email || !availability) {
+      return res.status(400).json({ error: "Email and Availability are required." });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanAvail = availability.trim() === "Offline" ? "Offline" : "Active";
+    
+    const agent = await Agent.findOneAndUpdate(
+      { email: cleanEmail },
+      { availability: cleanAvail },
+      { new: true }
+    );
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    const actionLabel = cleanAvail === "Offline" ? "Go Offline" : "Go Active";
+    const detailLabel = cleanAvail === "Offline" ? "Changed status to Offline." : "Changed status to Active.";
+    await logAgentActivity(cleanEmail, actionLabel, deviceType, detailLabel);
+
+    res.json({ message: "Availability updated successfully.", availability: agent.availability });
+  } catch (err) {
+    console.error("Update agent availability error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET agent activities list: /api/agent/activities?email=...
+router.get("/activities", async (req, res) => {
+  try {
+    const { email } = req.query;
+    if (!email) {
+      return res.status(400).json({ error: "Agent email is required." });
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const activities = await AgentActivity.find({ agentEmail: cleanEmail })
+      .sort({ createdAt: -1 })
+      .limit(50);
+    res.json(activities);
+  } catch (err) {
+    console.error("Fetch agent activities error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
@@ -87,7 +323,7 @@ router.post("/change-password", async (req, res) => {
   try {
     const { email, currentPassword, newPassword } = req.body;
     if (!email || !currentPassword || !newPassword) {
-      return res.status(400).json({ error: "Email, Current Password, and New Password are required." });
+      return res.status(400).json({ error: "Email, current password, and new password are required." });
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -96,25 +332,26 @@ router.post("/change-password", async (req, res) => {
       return res.status(404).json({ error: "Agent not found." });
     }
 
-    const hashedInput = hashPassword(currentPassword);
-    if (agent.password !== hashedInput) {
+    // Verify current temporary/existing password
+    const hashedCurrent = hashPassword(currentPassword);
+    if (agent.password !== hashedCurrent) {
       return res.status(400).json({ error: "Incorrect current password." });
     }
 
-    if (newPassword.length < 6 || newPassword.length > 12) {
-      return res.status(400).json({ error: "Password must be between 6 and 12 characters." });
-    }
-    if (!/[0-9]/.test(newPassword) && !/[^A-Za-z0-9]/.test(newPassword)) {
-      return res.status(400).json({ error: "Password must contain at least one number or special character." });
-    }
-
+    // Update password and clear mustChangePassword flag
     agent.password = hashPassword(newPassword);
     agent.mustChangePassword = false;
     await agent.save();
 
+    // Log this activity
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    await logAgentActivity(cleanEmail, "Password Change", deviceType, "Temporary password reset completed successfully.");
+
     res.json({ message: "Password updated successfully." });
   } catch (err) {
-    console.error("Change password error:", err);
+    console.error("Change password route error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });

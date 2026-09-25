@@ -1,10 +1,26 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { compressImage } from "../../utils/imageCompressor";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Car01Icon,
+  ArrowDown01Icon,
+  Camera01Icon,
+  Location01Icon,
+  Cancel01Icon,
+  MapIcon,
+  Search01Icon,
+  Gps01Icon,
+  BubbleChatIcon,
+  Calendar03Icon,
+  Clock01Icon,
+} from "@hugeicons/core-free-icons";
+import { API_URL } from "@/app/config";
 
 function formatNumberPlate(plate: string): string {
   if (!plate) return "";
@@ -33,18 +49,6 @@ function getVehicleEmoji(type: string): string {
   return "🚗";
 }
 
-// Preset damage classification types
-const damageTypes = [
-  "Front Bumper / Grille Damage",
-  "Rear Bumper Damage",
-  "Side Scratch / Dent (Left/Right)",
-  "Windshield / Glass Crack",
-  "Engine / Mechanical Failure",
-  "Suspension Damage",
-  "Total Loss / Rollover",
-  "Other Accident Damage"
-];
-
 interface Vehicle {
   numberPlate: string;
   vehicleType: string;
@@ -56,17 +60,549 @@ interface Vehicle {
   policyNumber?: string;
 }
 
+function cleanCountry(country?: string): string {
+  if (!country) return "Sri Lanka";
+  const c = country.toLowerCase();
+  if (c.includes("ශ්‍රී ලංකා") || c.includes("இலங்கை") || c.includes("lanka")) {
+    return "Sri Lanka";
+  }
+  return country;
+}
+
+function formatPhotonResult(f: any): any {
+  const props = f.properties || {};
+  const coords = f.geometry?.coordinates || [0, 0];
+  
+  const parts = [];
+  if (props.name) parts.push(props.name);
+  
+  if (props.housenumber && props.street) {
+    parts.push(`${props.housenumber} ${props.street}`);
+  } else if (props.street) {
+    parts.push(props.street);
+  } else if (props.housenumber) {
+    parts.push(props.housenumber);
+  }
+  
+  if (props.locality) {
+    const loc = props.locality.split(';')[0].trim();
+    if (loc) parts.push(loc);
+  }
+  
+  if (props.district) parts.push(props.district);
+  if (props.city) parts.push(props.city);
+  if (props.county) parts.push(props.county);
+  if (props.state) parts.push(props.state);
+  if (props.postcode) parts.push(props.postcode);
+  if (props.country) {
+    parts.push(cleanCountry(props.country));
+  } else {
+    parts.push("Sri Lanka");
+  }
+
+  const displayName = parts.filter((v, i, self) => self.indexOf(v) === i).join(", ");
+  
+  return formatDisplayNameWithCategory({
+    display_name: displayName,
+    lat: coords[1].toString(),
+    lon: coords[0].toString(),
+    category_key: props.osm_key,
+    category_value: props.osm_value
+  });
+}
+
+function formatDisplayNameWithCategory(item: any): any {
+  if (!item || !item.display_name) return item;
+  
+  const key = (item.category_key || "").toLowerCase();
+  const value = (item.category_value || "").toLowerCase();
+  
+  const parts = item.display_name.split(",");
+  let firstName = parts[0]?.trim() || "";
+  const firstNameLower = firstName.toLowerCase();
+  
+  let modified = false;
+  
+  if (key === "railway" && value === "station") {
+    if (!firstNameLower.includes("station") && !firstNameLower.includes("railway")) {
+      firstName += " Railway Station";
+      modified = true;
+    }
+  } else if (key === "amenity" && value === "police") {
+    if (!firstNameLower.includes("police")) {
+      firstName += " Police Station";
+      modified = true;
+    }
+  } else if (key === "amenity" && (value === "bus_station" || value === "bus_stop")) {
+    if (!firstNameLower.includes("bus")) {
+      firstName += value === "bus_stop" ? " Bus Stop" : " Bus Station";
+      modified = true;
+    }
+  } else if (key === "amenity" && value === "hospital") {
+    if (!firstNameLower.includes("hospital")) {
+      firstName += " Hospital";
+      modified = true;
+    }
+  }
+  
+  if (modified) {
+    parts[0] = firstName;
+    item.display_name = parts.join(", ");
+  }
+  
+  return item;
+}
+
+function areCoordsClose(lat1: string, lon1: string, lat2: string, lon2: string): boolean {
+  const threshold = 0.0005; // approx 50m
+  return Math.abs(parseFloat(lat1) - parseFloat(lat2)) < threshold &&
+         Math.abs(parseFloat(lon1) - parseFloat(lon2)) < threshold;
+}
+
+function areNamesSimilar(n1: string, n2: string): boolean {
+  const name1 = n1.split(',')[0].toLowerCase().trim();
+  const name2 = n2.split(',')[0].toLowerCase().trim();
+  if (name1 === name2) return true;
+  if (name1.includes(name2) || name2.includes(name1)) {
+    return true;
+  }
+  return false;
+}
+
+function getResultScore(item: any, queryWords: string[]): number {
+  const name = item.display_name.toLowerCase();
+  const key = (item.category_key || "").toLowerCase();
+  const value = (item.category_value || "").toLowerCase();
+  
+  const firstPart = item.display_name.split(',')[0].toLowerCase();
+  const restPart = item.display_name.split(',').slice(1).join(',').toLowerCase();
+
+  let score = 0;
+
+  for (const word of queryWords) {
+    if (firstPart.includes(word)) {
+      score += 25;
+    } else if (restPart.includes(word)) {
+      score += 5;
+    }
+  }
+
+  if (queryWords.length > 0 && firstPart.includes(queryWords[0])) {
+    score += 30;
+  }
+
+  const queryStr = queryWords.join(' ');
+  if (firstPart === queryStr) {
+    score += 40;
+  }
+
+  if (queryWords.includes("railway") || queryWords.includes("train")) {
+    if (key === "railway") {
+      score += 50;
+    }
+    if (value === "station") {
+      score += 20;
+    }
+  }
+  
+  if (queryWords.includes("police")) {
+    if (value === "police" || key === "police" || name.includes("police")) {
+      score += 50;
+    }
+  }
+
+  if (queryWords.includes("bus")) {
+    if (value === "bus_station" || value === "bus_stop" || key === "bus") {
+      score += 50;
+    }
+  }
+
+  if (queryWords.includes("hospital") || queryWords.includes("clinic")) {
+    if (value === "hospital" || value === "clinic" || (key === "amenity" && value === "hospital")) {
+      score += 50;
+    }
+  }
+
+  return score;
+}
+
+const translations = {
+  en: {
+    title: "File New Claim",
+    subtitle: "Report an accident or damage incident",
+    vehicleIncident: "Vehicle & Incident",
+    selectVehicle: "Select Vehicle",
+    selectVehiclePlaceholder: "Select Vehicle",
+    incidentDate: "Incident Date",
+    incidentTime: "Incident Time",
+    incidentType: "Incident Type",
+    selectTypePlaceholder: "Select incident type",
+    typeAccident: "Accident with another vehicle",
+    typeCollision: "Single vehicle collision (e.g. tree, post)",
+    typeNatural: "Natural disaster (flood, tree fall)",
+    typeTheft: "Vandalism or theft",
+    typeOther: "Other damage",
+    descriptionLabel: "Describe what happened (minimum 10 characters) *",
+    descriptionPlaceholder: "Type incident description here...",
+    locationSearchLabel: "Search accident location or use GPS *",
+    locationPlaceholder: "Search address or location...",
+    useGps: "Use GPS Location",
+    orPin: "Or pin exact location on map",
+    otherInvolved: "Were other vehicles involved? *",
+    yes: "Yes",
+    no: "No",
+    otherCount: "Number of other vehicles involved",
+    selectCountPlaceholder: "Select number of vehicles",
+    otherVehicleHeader: "Other Vehicle",
+    plateNum: "Vehicle Plate Number *",
+    insuranceCompany: "Insurance Company *",
+    policyNum: "Policy Number *",
+    driverName: "Driver Full Name *",
+    licensePhotos: "Upload Driver's License Photos (Optional)",
+    scenePhotos: "Upload Other Vehicle/Scene Photos (Optional)",
+    nextBtn: "Next: Upload Photos & Documents",
+    fillAll: "Please fill in all required fields marked with *",
+    dateAlert: "Please select an incident date within the last 7 days."
+  },
+  si: {
+    title: "නව හිමිකම් පෑමක් ඇතුළත් කරන්න",
+    subtitle: "අනතුරක් හෝ හානියක් සිදුවීමක් වාර්තා කරන්න",
+    vehicleIncident: "වාහනය සහ අනතුර",
+    selectVehicle: "වාහනය තෝරන්න",
+    selectVehiclePlaceholder: "වාහනය තෝරන්න",
+    incidentDate: "අනතුර සිදු වූ දිනය",
+    incidentTime: "අනතුර සිදු වූ වේලාව",
+    incidentType: "අනතුරු වර්ගය",
+    selectTypePlaceholder: "අනතුරු වර්ගය තෝරන්න",
+    typeAccident: "වෙනත් වාහනයක් සමඟ සිදු වූ අනතුරක්",
+    typeCollision: "තනි වාහන ගැටීමක් (උදා: ගසක, කණුවක)",
+    typeNatural: "ස්වාභාවික විපතක් (ගංවතුර, ගසක් කඩා වැටීම)",
+    typeTheft: "මංකොල්ලකෑමක් හෝ සොරකමක්",
+    typeOther: "වෙනත් හානියක්",
+    descriptionLabel: "සිදු වූ දේ විස්තර කරන්න (අවම වශයෙන් අකුරු 10 ක්) *",
+    descriptionPlaceholder: "සිදුවීම පිළිබඳ විස්තර මෙහි ටයිප් කරන්න...",
+    locationSearchLabel: "අනතුර සිදු වූ ස්ථානය සොයන්න හෝ GPS භාවිතා කරන්න *",
+    locationPlaceholder: "ලිපිනය හෝ ස්ථානය සොයන්න...",
+    useGps: "GPS ස්ථානය භාවිතා කරන්න",
+    orPin: "නැතහොත් සිතියම මත නිවැරදි ස්ථානය ලකුණු කරන්න",
+    otherInvolved: "වෙනත් වාහන සම්බන්ධ වී තිබේද? *",
+    yes: "ඔව්",
+    no: "නැත",
+    otherCount: "සම්බන්ධ වූ වෙනත් වාහන ගණන",
+    selectCountPlaceholder: "වාහන ගණන තෝරන්න",
+    otherVehicleHeader: "වෙනත් වාහනය",
+    plateNum: "වාහන තහඩු අංකය *",
+    insuranceCompany: "රක්‍ෂණ සමාගම *",
+    policyNum: "ප්‍රතිපත්ති අංකය *",
+    driverName: "රියදුරුගේ සම්පූර්ණ නම *",
+    licensePhotos: "රියදුරු බලපත්‍රයේ ඡායාරූප උඩුගත කරන්න (අභිමත පරිදි)",
+    scenePhotos: "අනෙක් වාහනයේ/සිද්ධියේ ඡායාරූප උඩුගත කරන්න (අභිමත පරිදි)",
+    nextBtn: "ඊළඟ: ඡායාරූප සහ ලේඛන උඩුගත කරන්න",
+    fillAll: "කරුණාකර * ලකුණු කර ඇති සියලුම අනිවාර්ය ක්ෂේත්‍ර පුරවන්න",
+    dateAlert: "කරුණාකර පසුගිය දින 7 ඇතුළත සිදුවූ අනතුරු දිනයක් තෝරන්න."
+  },
+  ta: {
+    title: "புதிய கோரிக்கையைத் தாக்கல் செய்",
+    subtitle: "விபத்து அல்லது சேதச் சம்பவத்தை அறிக்கை செய்யவும்",
+    vehicleIncident: "வாகனம் & சம்பவம்",
+    selectVehicle: "வாகனத்தைத் தேர்ந்தெடுக்கவும்",
+    selectVehiclePlaceholder: "வாகனத்தைத் தேர்ந்தெடுக்கவும்",
+    incidentDate: "சம்பவத் தேதி",
+    incidentTime: "சம்பவ நேரம்",
+    incidentType: "சம்பவ வகை",
+    selectTypePlaceholder: "சம்பவ வகையைத் தேர்ந்தெடுக்கவும்",
+    typeAccident: "மற்றொரு வாகனத்துடனான விபத்து",
+    typeCollision: "ஒற்றை வாகன மோதல் (உதா: மரம், கம்பம்)",
+    typeNatural: "இயற்கை பேரழிவு (வெள்ளம், மரம் விழுதல்)",
+    typeTheft: " vandalism அல்லது திருட்டு",
+    typeOther: "இதர சேதங்கள்",
+    descriptionLabel: "நடந்ததை விவரிக்கவும் (குறைந்தது 10 எழுத்துக்கள்) *",
+    descriptionPlaceholder: "சம்பவ விவரங்களை இங்கே தட்டச்சு செய்யவும்...",
+    locationSearchLabel: "சம்பவ இடத்தைத் தேடவும் அல்லது GPS ஐப் பயன்படுத்தவும் *",
+    locationPlaceholder: "முகவரி அல்லது இடத்தைத் தேடுங்கள்...",
+    useGps: "GPS இருப்பிடத்தைப் பயன்படுத்துக",
+    orPin: "அல்லது வரைபடத்தில் சரியான இடத்தைக் குறிக்கவும்",
+    otherInvolved: "மற்ற வாகனங்கள் இதில் ஈடுபட்டதா? *",
+    yes: "ஆம்",
+    no: "இல்லை",
+    otherCount: "ஈடுபட்ட மற்ற வாகனங்களின் எண்ணிக்கை",
+    selectCountPlaceholder: "வாகனங்களின் எண்ணிக்கையைத் தேர்ந்தெடுக்கவும்",
+    otherVehicleHeader: "மற்ற வாகனம்",
+    plateNum: "வாகன எண் தகடு *",
+    insuranceCompany: "காப்பீட்டு நிறுவனம் *",
+    policyNum: "பாலிசி எண் *",
+    driverName: "ஓட்டுநரின் முழுப் பெயர் *",
+    licensePhotos: "ஓட்டுநர் உரிம புகைப்படங்களைப் பதிவேற்றவும் (விருப்பத்திற்குரியது)",
+    scenePhotos: "மற்ற வாகன/சம்பவ புகைப்படங்களைப் பதிவேற்றவும் (விருப்பத்திற்குரியது)",
+    nextBtn: "அடுத்து: புகைப்படங்கள் & ஆவணங்களைப் பதிவேற்றவும்",
+    fillAll: "தயவுசெய்து * குறியிடப்பட்ட அனைத்து கட்டாய புலங்களையும் நிரப்பவும்",
+    dateAlert: "கடந்த 7 நாட்களுக்குள் நடந்த சம்பவத் தேதியைத் தேர்ந்தெடுக்கவும்."
+  }
+};
+
 export default function FileNewClaim() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   // State for form fields
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [selectedVehicle, setSelectedVehicle] = useState("");
   const [incidentDate, setIncidentDate] = useState("");
+
+  const getMinMaxDates = () => {
+    const today = new Date();
+    const lastWeek = new Date();
+    lastWeek.setDate(today.getDate() - 7);
+
+    const formatDateStr = (date: Date) => {
+      const yyyy = date.getFullYear();
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const dd = String(date.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    return {
+      max: formatDateStr(today),
+      min: formatDateStr(lastWeek)
+    };
+  };
+
+  const { min: minDate, max: maxDate } = getMinMaxDates();
   const [incidentTime, setIncidentTime] = useState("");
   const [damageType, setDamageType] = useState("");
   const [description, setDescription] = useState("");
-  const [address, setAddress] = useState("");
+  // States for other vehicles involved
+  const [otherVehiclesInvolved, setOtherVehiclesInvolved] = useState<"yes" | "no" | "">("");
+  const [otherVehiclesCount, setOtherVehiclesCount] = useState<number>(0);
+  const [otherVehicles, setOtherVehicles] = useState<{
+    vehiclePlate: string;
+    insuranceCompany: string;
+    policyNumber: string;
+    driverName: string;
+    licensePhotosPreviews: string[];
+    licensePhotosBase64: string[];
+    vehiclePhotosPreviews: string[];
+    vehiclePhotosBase64: string[];
+  }[]>([]);
+
+  // Duplicate photos map for other vehicle uploads
+  const [duplicatesMap, setDuplicatesMap] = useState<
+    Record<
+      string,
+      {
+        matchedClaimNumber: string;
+        matchedVehiclePlate: string;
+        matchedIncidentDate: string;
+        similarity: string;
+        photoType?: string;
+        message?: string;
+      }
+    >
+  >({});
+
+  const checkDuplicatePhotos = async (keys: string[], base64s: string[], typeLabel: string) => {
+    try {
+      const payload = keys.map((k, i) => ({
+        id: k,
+        type: typeLabel,
+        base64: base64s[i]
+      }));
+      const res = await fetch(`${API_URL}/policy-holder/check-duplicate-photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos: payload })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasDuplicate && Array.isArray(data.duplicates) && data.duplicates.length > 0) {
+          const newDups: Record<string, any> = {};
+          data.duplicates.forEach((d: any) => {
+            if (d.photoId) newDups[d.photoId] = d;
+          });
+          setDuplicatesMap((prev) => ({ ...prev, ...newDups }));
+          const firstDup = data.duplicates[0];
+          alert(`⚠️ Duplicate Photo Detected: The photo selected for "${typeLabel}" was already submitted under Claim #${firstDup.matchedClaimNumber} (${firstDup.matchedVehiclePlate || "Previous Claim"}) on ${firstDup.matchedIncidentDate} (${firstDup.similarity}).\n\nPlease remove this photo and upload an authentic photo.`);
+        }
+      }
+    } catch (err) {
+      console.warn("Duplicate check error:", err);
+    }
+  };
+
+  const handleCountChange = (count: number) => {
+    setOtherVehiclesCount(count);
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      if (next.length < count) {
+        while (next.length < count) {
+          next.push({
+            vehiclePlate: "",
+            insuranceCompany: "",
+            policyNumber: "",
+            driverName: "",
+            licensePhotosPreviews: [],
+            licensePhotosBase64: [],
+            vehiclePhotosPreviews: [],
+            vehiclePhotosBase64: []
+          });
+        }
+      } else if (next.length > count) {
+        next.splice(count);
+      }
+      return next;
+    });
+  };
+
+  const updateOtherVehicleField = (index: number, field: string, value: any) => {
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  };
+
+  const handleOtherLicenseUpload = async (index: number, filesList: FileList | null) => {
+    if (!filesList) return;
+    const selectedFiles = Array.from(filesList);
+    const previews: string[] = [];
+    const base64s: string[] = [];
+
+    for (const file of selectedFiles) {
+      if (file.size <= 5 * 1024 * 1024) {
+        previews.push(URL.createObjectURL(file));
+        try {
+          const base64 = await compressImage(file);
+          base64s.push(base64);
+        } catch (err) {
+          console.error("Compression error", err);
+        }
+      } else {
+        alert(`File "${file.name}" exceeds 5MB size limit.`);
+      }
+    }
+
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        licensePhotosPreviews: [...next[index].licensePhotosPreviews, ...previews],
+        licensePhotosBase64: [...next[index].licensePhotosBase64, ...base64s]
+      };
+      return next;
+    });
+
+    if (previews.length > 0) {
+      await checkDuplicatePhotos(previews, base64s, `Third-Party #${index + 1} License`);
+    }
+  };
+
+  const removeOtherLicensePhoto = (index: number, photoIdx: number) => {
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      const previews = [...next[index].licensePhotosPreviews];
+      const removedPreview = previews[photoIdx];
+      URL.revokeObjectURL(removedPreview);
+      previews.splice(photoIdx, 1);
+      const base64s = [...next[index].licensePhotosBase64];
+      base64s.splice(photoIdx, 1);
+
+      setDuplicatesMap((dMap) => {
+        const nextMap = { ...dMap };
+        delete nextMap[removedPreview];
+        return nextMap;
+      });
+
+      next[index] = {
+        ...next[index],
+        licensePhotosPreviews: previews,
+        licensePhotosBase64: base64s
+      };
+      return next;
+    });
+  };
+
+  const handleOtherVehiclePhotoUpload = async (index: number, filesList: FileList | null) => {
+    if (!filesList) return;
+    const selectedFiles = Array.from(filesList);
+    const previews: string[] = [];
+    const base64s: string[] = [];
+
+    for (const file of selectedFiles) {
+      if (file.size <= 5 * 1024 * 1024) {
+        previews.push(URL.createObjectURL(file));
+        try {
+          const base64 = await compressImage(file);
+          base64s.push(base64);
+        } catch (err) {
+          console.error("Compression error", err);
+        }
+      } else {
+        alert(`File "${file.name}" exceeds 5MB size limit.`);
+      }
+    }
+
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        vehiclePhotosPreviews: [...next[index].vehiclePhotosPreviews, ...previews],
+        vehiclePhotosBase64: [...next[index].vehiclePhotosBase64, ...base64s]
+      };
+      return next;
+    });
+
+    if (previews.length > 0) {
+      await checkDuplicatePhotos(previews, base64s, `Third-Party #${index + 1} Vehicle Damage`);
+    }
+  };
+
+  const removeOtherVehiclePhoto = (index: number, photoIdx: number) => {
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      const previews = [...next[index].vehiclePhotosPreviews];
+      const removedPreview = previews[photoIdx];
+      URL.revokeObjectURL(removedPreview);
+      previews.splice(photoIdx, 1);
+      const base64s = [...next[index].vehiclePhotosBase64];
+      base64s.splice(photoIdx, 1);
+
+      setDuplicatesMap((dMap) => {
+        const nextMap = { ...dMap };
+        delete nextMap[removedPreview];
+        return nextMap;
+      });
+
+      next[index] = {
+        ...next[index],
+        vehiclePhotosPreviews: previews,
+        vehiclePhotosBase64: base64s
+      };
+      return next;
+    });
+  };
+  const [address, setAddress] = useState("Colombo, Sri Lanka");
   const [isLocating, setIsLocating] = useState(false);
   const [latitude, setLatitude] = useState(6.9271);
   const [longitude, setLongitude] = useState(79.8612);
@@ -76,15 +612,6 @@ export default function FileNewClaim() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showResultsDropdown, setShowResultsDropdown] = useState(false);
   const [isUserTyping, setIsUserTyping] = useState(false);
-      const [customPopup, setCustomPopup] = useState<{
-    show: boolean;
-    title: string;
-    message: string;
-    type?: "alert" | "confirm" | "success" | "error";
-    onConfirm?: () => void;
-  }>({ show: false, title: "", message: "", type: "alert" });
-
-  // --- Lifecycle Effects ---
 
   // Restore draft details from sessionStorage if it exists on mount
   useEffect(() => {
@@ -98,6 +625,32 @@ export default function FileNewClaim() {
           if (draft.incidentTime) setIncidentTime(draft.incidentTime);
           if (draft.damageType) setDamageType(draft.damageType);
           if (draft.description) setDescription(draft.description);
+          if (draft.otherVehiclesInvolved) {
+            setOtherVehiclesInvolved(draft.otherVehiclesInvolved);
+          }
+          if (draft.otherVehiclesCount) {
+            setOtherVehiclesCount(draft.otherVehiclesCount);
+          }
+          if (draft.otherVehicles && Array.isArray(draft.otherVehicles)) {
+            setOtherVehicles(draft.otherVehicles);
+          } else if (draft.otherVehicleDetails) {
+            // Support recovery for single-object legacy drafts
+            const v = draft.otherVehicleDetails;
+            if (v.vehiclePlate || v.driverName || v.insuranceCompany) {
+              setOtherVehiclesInvolved("yes");
+              setOtherVehiclesCount(1);
+              setOtherVehicles([{
+                vehiclePlate: v.vehiclePlate || "",
+                insuranceCompany: v.insuranceCompany || "",
+                policyNumber: v.policyNumber || "",
+                driverName: v.driverName || "",
+                licensePhotosPreviews: v.licensePhotos || [],
+                licensePhotosBase64: v.licensePhotos || [],
+                vehiclePhotosPreviews: v.vehiclePhotos || [],
+                vehiclePhotosBase64: v.vehiclePhotos || []
+              }]);
+            }
+          }
           if (draft.address) setAddress(draft.address);
           if (draft.latitude && draft.longitude) {
             setLatitude(draft.latitude);
@@ -172,7 +725,10 @@ export default function FileNewClaim() {
         }
 
         // 3. Final Fallback vehicles
-        const fallbackVehicles: Vehicle[] = [];
+        const fallbackVehicles: Vehicle[] = [
+          { numberPlate: "CBH-3202", vehicleType: "Car", year: "2019", company: "Toyota", model: "Corolla" },
+          { numberPlate: "NE-7856", vehicleType: "Lorry", year: "2016", company: "Ashok Leyland", model: "Lorry" }
+        ];
         setVehicles(fallbackVehicles);
       };
 
@@ -180,20 +736,17 @@ export default function FileNewClaim() {
     }
   }, []);
 
-  // Autocomplete suggestions debouncer
-  useEffect(() => {
-    if (!isUserTyping || !address || address.trim() === "" || address === "Colombo, Sri Lanka") {
-      return;
-    }
-
-    const delayDebounceFn = setTimeout(() => {
-      geocodeAddressForSuggestions(address);
-    }, 250); // 250ms debounce
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [address, isUserTyping]);
-
-  // --- Data Loading & Geocoding Methods ---
+  // Preset Damage Types
+  const damageTypes = [
+    "Front Bumper / Grille Damage",
+    "Rear Bumper Damage",
+    "Side Scratch / Dent (Left/Right)",
+    "Windshield / Glass Crack",
+    "Engine / Mechanical Failure",
+    "Suspension Damage",
+    "Total Loss / Rollover",
+    "Other Accident Damage"
+  ];
 
   const reverseGeocode = async (lat: number, lon: number) => {
     try {
@@ -376,10 +929,23 @@ export default function FileNewClaim() {
     }
   };
 
+  // Autocomplete suggestions debouncer
+  useEffect(() => {
+    if (!isUserTyping || !address || address.trim() === "" || address === "Colombo, Sri Lanka") {
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(() => {
+      geocodeAddressForSuggestions(address);
+    }, 250); // 250ms debounce
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [address, isUserTyping]);
+
   // Geolocation Handler
   const handleGPSLocation = () => {
     if (!navigator.geolocation) {
-      setCustomPopup({ show: true, title: "GPS Error", message: "Geolocation is not supported by your browser." });
+      alert("Geolocation is not supported by your browser.");
       setAddress("123 Galle Road, Colombo, Sri Lanka");
       return;
     }
@@ -430,7 +996,7 @@ export default function FileNewClaim() {
         } else if (err.code === 3) { // TIMEOUT
           errorMsg = "Location request timed out. Please check your network or device GPS.";
         }
-        setCustomPopup({ show: true, title: "GPS Error", message: errorMsg });
+        alert(errorMsg);
         setAddress("123 Galle Road, Colombo, Sri Lanka");
       } finally {
         setIsLocating(false);
@@ -442,8 +1008,29 @@ export default function FileNewClaim() {
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check duplicate photos in other vehicles
+    const duplicateKeys = Object.keys(duplicatesMap);
+    if (duplicateKeys.length > 0) {
+      const firstDup = duplicatesMap[duplicateKeys[0]];
+      alert(`⚠️ Duplicate Photos Detected: One or more uploaded photos have already been submitted under Claim #${firstDup.matchedClaimNumber} (${firstDup.similarity}). Please remove or replace the flagged photos before proceeding.`);
+      return;
+    }
+
     if (!selectedVehicle || !incidentDate || !incidentTime || !damageType || !description || !address) {
-      setCustomPopup({ show: true, title: "Validation Error", message: "Please fill in all required fields marked with *" });
+      alert(t.fillAll);
+      return;
+    }
+
+    const todayDate = new Date();
+    todayDate.setHours(23, 59, 59, 999);
+    const lastWeekDate = new Date();
+    lastWeekDate.setDate(todayDate.getDate() - 7);
+    lastWeekDate.setHours(0, 0, 0, 0);
+
+    const selectedDate = new Date(incidentDate);
+    if (selectedDate > todayDate || selectedDate < lastWeekDate) {
+      alert(t.dateAlert);
       return;
     }
 
@@ -471,6 +1058,19 @@ export default function FileNewClaim() {
       address,
       latitude,
       longitude,
+      otherVehiclesInvolved,
+      otherVehiclesCount,
+      otherVehicles: otherVehiclesInvolved === "yes" ? otherVehicles : [],
+      otherVehicleDetails: otherVehiclesInvolved === "yes" 
+        ? otherVehicles.map(v => ({
+            vehiclePlate: v.vehiclePlate.trim(),
+            insuranceCompany: v.insuranceCompany.trim(),
+            policyNumber: v.policyNumber.trim(),
+            driverName: v.driverName.trim(),
+            licensePhotos: v.licensePhotosBase64,
+            vehiclePhotos: v.vehiclePhotosBase64
+          }))
+        : [],
       status: "In Progress",
       createdAt: new Date().toISOString()
     };
@@ -497,7 +1097,7 @@ export default function FileNewClaim() {
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             File New Claim
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
             Report an accident or damage incident
           </p>
         </header>
@@ -509,10 +1109,8 @@ export default function FileNewClaim() {
           
           {/* Section 1: Vehicle & Incident */}
           <section className="flex flex-col gap-6">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <svg className="w-7 h-7 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
-              </svg>
+            <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
               Vehicle & Incident
             </h2>
 
@@ -520,7 +1118,7 @@ export default function FileNewClaim() {
               
               {/* Select Vehicle Dropdown */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-semibold mb-1">
+                <label className="text-slate-700 text-sm font-medium mb-1">
                   Select Vehicle <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -528,7 +1126,7 @@ export default function FileNewClaim() {
                     required
                     value={selectedVehicle}
                     onChange={(e) => setSelectedVehicle(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all cursor-pointer"
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
                   >
                     <option value="" disabled>Select Vehicle</option>
                     {vehicles.map((v) => (
@@ -538,32 +1136,40 @@ export default function FileNewClaim() {
                     ))}
                   </select>
                   <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
+                    <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   </span>
                 </div>
               </div>
 
               {/* Incident Date */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-semibold mb-1">
+                <label className="text-slate-700 text-sm font-medium mb-1">
                   Incident Date <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
                   <input
                     type="date"
                     required
+                    min={minDate}
+                    max={maxDate}
                     value={incidentDate}
                     onChange={(e) => setIncidentDate(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 pr-10 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                    onClick={(e) => {
+                      try {
+                        (e.currentTarget as any).showPicker?.();
+                      } catch (_) {}
+                    }}
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   />
+                  <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                    <HugeiconsIcon icon={Calendar03Icon} className="w-5 h-5" strokeWidth={2.2} />
+                  </span>
                 </div>
               </div>
 
               {/* Incident Time */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-semibold mb-1">
+                <label className="text-slate-700 text-sm font-medium mb-1">
                   Incident Time <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -572,14 +1178,22 @@ export default function FileNewClaim() {
                     required
                     value={incidentTime}
                     onChange={(e) => setIncidentTime(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl py-4 px-4 pr-10 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                    onClick={(e) => {
+                      try {
+                        (e.currentTarget as any).showPicker?.();
+                      } catch (_) {}
+                    }}
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0 [&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-0 [&::-webkit-calendar-picker-indicator]:w-full [&::-webkit-calendar-picker-indicator]:h-full [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                   />
+                  <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                    <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" strokeWidth={2.2} />
+                  </span>
                 </div>
               </div>
 
               {/* Damage Type Dropdown */}
               <div className="flex flex-col gap-2">
-                <label className="text-slate-800 text-sm font-semibold mb-1">
+                <label className="text-slate-700 text-sm font-medium mb-1">
                   Damage Type <span className="text-red-500 ml-0.5">*</span>
                 </label>
                 <div className="relative">
@@ -587,7 +1201,7 @@ export default function FileNewClaim() {
                     required
                     value={damageType}
                     onChange={(e) => setDamageType(e.target.value)}
-                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-10 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all cursor-pointer"
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
                   >
                     <option value="" disabled>Select Damage Type</option>
                     {damageTypes.map((type) => (
@@ -597,9 +1211,7 @@ export default function FileNewClaim() {
                     ))}
                   </select>
                   <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                    </svg>
+                    <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   </span>
                 </div>
               </div>
@@ -608,7 +1220,7 @@ export default function FileNewClaim() {
 
             {/* Description Textarea */}
             <div className="flex flex-col gap-2 mt-2">
-              <label className="text-slate-800 text-sm font-semibold mb-1">
+              <label className="text-slate-700 text-sm font-medium mb-1">
                 Description <span className="text-red-500 ml-0.5">*</span>
               </label>
               <textarea
@@ -616,23 +1228,306 @@ export default function FileNewClaim() {
                 rows={4}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl p-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-medium transition-all"
+                className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl p-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
               />
             </div>
           </section>
 
+          {/* Section 1B: Other Vehicles Involved (Optional) */}
+          <section className="flex flex-col gap-6 mt-4">
+            <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
+              Other Vehicles Involved (Optional)
+            </h2>
+
+            {/* Yes / No Selector Buttons */}
+            <div className="flex flex-col gap-3">
+              <label className="text-slate-700 text-sm font-medium">
+                Were other vehicles involved in the accident? <span className="text-red-500 ml-0.5">*</span>
+              </label>
+              <div className="flex flex-row gap-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtherVehiclesInvolved("yes");
+                    if (otherVehiclesCount === 0) handleCountChange(1);
+                  }}
+                  className={`flex-1 py-4 px-6 rounded-2xl font-medium transition-all border-2 text-center cursor-pointer ${
+                    otherVehiclesInvolved === "yes"
+                      ? "bg-[#000080] text-white border-[#000080] shadow-md"
+                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOtherVehiclesInvolved("no");
+                    setOtherVehiclesCount(0);
+                    setOtherVehicles([]);
+                  }}
+                  className={`flex-1 py-4 px-6 rounded-2xl font-medium transition-all border-2 text-center cursor-pointer ${
+                    otherVehiclesInvolved === "no"
+                      ? "bg-[#000080] text-white border-[#000080] shadow-md"
+                      : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+
+            {/* If YES: Show Vehicle Count select dropdown */}
+            {otherVehiclesInvolved === "yes" && (
+              <div className="flex flex-col gap-2 mt-2 transition-all">
+                <label className="text-slate-700 text-sm font-medium mb-1">
+                  How many other vehicles were involved? <span className="text-red-500 ml-0.5">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={otherVehiclesCount}
+                    onChange={(e) => handleCountChange(Number(e.target.value))}
+                    className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer"
+                  >
+                    <option value={1}>1 Vehicle</option>
+                    <option value={2}>2 Vehicles</option>
+                    <option value={3}>3 Vehicles</option>
+                    <option value={4}>4 Vehicles</option>
+                  </select>
+                  <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                    <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Dynamic fields listing cards for each vehicle */}
+            {otherVehiclesInvolved === "yes" && otherVehicles.map((vehicle, index) => (
+              <div key={index} className="bg-slate-50/50 border border-slate-200 rounded-3xl p-6 mt-2 shadow-sm flex flex-col gap-6 transition-all duration-300">
+                <h3 className="font-medium text-[#0d2a3a] text-base select-none">Other Vehicle #{index + 1} Details</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Vehicle Plate */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-slate-700 text-sm font-medium mb-1">Vehicle Number <span className="text-red-500 ml-0.5">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={vehicle.vehiclePlate}
+                      onChange={(e) => updateOtherVehicleField(index, "vehiclePlate", e.target.value)}
+                      placeholder="e.g. WP CAA-1234"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
+                    />
+                  </div>
+
+                  {/* Driver Name */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-slate-700 text-sm font-medium mb-1">Driver Name <span className="text-red-500 ml-0.5">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={vehicle.driverName}
+                      onChange={(e) => updateOtherVehicleField(index, "driverName", e.target.value)}
+                      placeholder="e.g. Sunil Perera"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
+                    />
+                  </div>
+
+                  {/* Insurance Name */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-slate-700 text-sm font-medium mb-1">Insurance Name <span className="text-red-500 ml-0.5">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={vehicle.insuranceCompany}
+                      onChange={(e) => updateOtherVehicleField(index, "insuranceCompany", e.target.value)}
+                      placeholder="e.g. Sri Lanka Insurance"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
+                    />
+                  </div>
+
+                  {/* Insurance Number */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-slate-700 text-sm font-medium mb-1">Insurance Number <span className="text-red-500 ml-0.5">*</span></label>
+                    <input
+                      type="text"
+                      required
+                      value={vehicle.policyNumber}
+                      onChange={(e) => updateOtherVehicleField(index, "policyNumber", e.target.value)}
+                      placeholder="e.g. POL-98765432"
+                      className="w-full bg-white text-slate-800 rounded-2xl py-4 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* dynamic uploads */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Driving License Photos Upload */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-slate-700 text-sm font-medium mb-1">
+                      Driver's License Photos
+                    </label>
+                    <input
+                      type="file"
+                      id={`license-upload-${index}`}
+                      multiple
+                      accept="image/*,application/pdf"
+                      onChange={(e) => handleOtherLicenseUpload(index, e.target.files)}
+                      className="hidden"
+                    />
+                    
+                    {vehicle.licensePhotosPreviews.length === 0 ? (
+                      <div
+                        onClick={() => document.getElementById(`license-upload-${index}`)?.click()}
+                        className="w-full h-[140px] bg-white hover:bg-slate-100 border border-slate-300 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all active:scale-[0.98] select-none"
+                      >
+                        <HugeiconsIcon icon={Camera01Icon} className="w-8 h-8 text-slate-500 mb-2" strokeWidth={1.8} />
+                        <span className="text-slate-700 text-xs font-medium block">
+                          Upload Driver's License Photos
+                        </span>
+                        <span className="text-slate-400 text-[9px] mt-1">
+                          JPG, PNG, PDF - max 10MB. Click to upload.
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="w-full bg-white border border-slate-200 rounded-3xl p-3 flex flex-col gap-2 shadow-inner">
+                        <div className="grid grid-cols-4 gap-2 max-h-[100px] overflow-y-auto pr-1">
+                          {vehicle.licensePhotosPreviews.map((preview, photoIdx) => {
+                            const dup = duplicatesMap[preview];
+                            return (
+                              <div
+                                key={photoIdx}
+                                className={`relative aspect-square rounded-xl overflow-hidden bg-slate-200 border ${
+                                  dup ? "border-2 border-red-500 ring-2 ring-red-400/50" : "border-slate-300"
+                                } group`}
+                              >
+                                <img src={preview} alt="license preview" className="w-full h-full object-cover" />
+                                {dup && (
+                                  <div
+                                    title={dup.message}
+                                    className="absolute inset-x-0 bottom-0 bg-red-600/95 text-white text-[8px] font-bold px-1 py-0.5 text-center leading-tight truncate select-none"
+                                  >
+                                    ⚠️ #{dup.matchedClaimNumber}
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeOtherLicensePhoto(index, photoIdx);
+                                  }}
+                                  className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-700 select-none">
+                          <span>{vehicle.licensePhotosPreviews.length} photo(s) selected</span>
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById(`license-upload-${index}`)?.click()}
+                            className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[9px] font-medium py-1 px-3 rounded-full cursor-pointer border-none"
+                          >
+                            Add More
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Other Vehicle Damage Photos Upload */}
+                  <div className="flex flex-col gap-2">
+                    <label className="text-slate-700 text-sm font-medium mb-1">
+                      Other Vehicle Damage Photos
+                    </label>
+                    <input
+                      type="file"
+                      id={`vehicle-upload-${index}`}
+                      multiple
+                      accept="image/*,application/pdf"
+                      onChange={(e) => handleOtherVehiclePhotoUpload(index, e.target.files)}
+                      className="hidden"
+                    />
+                    
+                    {vehicle.vehiclePhotosPreviews.length === 0 ? (
+                      <div
+                        onClick={() => document.getElementById(`vehicle-upload-${index}`)?.click()}
+                        className="w-full h-[140px] bg-white hover:bg-slate-100 border border-slate-300 border-dashed rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all active:scale-[0.98] select-none"
+                      >
+                        <HugeiconsIcon icon={Camera01Icon} className="w-8 h-8 text-slate-500 mb-2" strokeWidth={1.8} />
+                        <span className="text-slate-700 text-xs font-medium block">
+                          Upload Damage / Accident Photos
+                        </span>
+                        <span className="text-slate-400 text-[9px] mt-1">
+                          JPG, PNG, PDF - max 10MB. Click to upload.
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="w-full bg-white border border-slate-200 rounded-3xl p-3 flex flex-col gap-2 shadow-inner">
+                        <div className="grid grid-cols-4 gap-2 max-h-[100px] overflow-y-auto pr-1">
+                          {vehicle.vehiclePhotosPreviews.map((preview, photoIdx) => {
+                            const dup = duplicatesMap[preview];
+                            return (
+                              <div
+                                key={photoIdx}
+                                className={`relative aspect-square rounded-xl overflow-hidden bg-slate-200 border ${
+                                  dup ? "border-2 border-red-500 ring-2 ring-red-400/50" : "border-slate-300"
+                                } group`}
+                              >
+                                <img src={preview} alt="vehicle preview" className="w-full h-full object-cover" />
+                                {dup && (
+                                  <div
+                                    title={dup.message}
+                                    className="absolute inset-x-0 bottom-0 bg-red-600/95 text-white text-[8px] font-bold px-1 py-0.5 text-center leading-tight truncate select-none"
+                                  >
+                                    ⚠️ #{dup.matchedClaimNumber}
+                                  </div>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeOtherVehiclePhoto(index, photoIdx);
+                                  }}
+                                  className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between items-center border-t border-slate-200 pt-2 text-[10px] font-medium text-slate-700 select-none">
+                          <span>{vehicle.vehiclePhotosPreviews.length} photo(s) selected</span>
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById(`vehicle-upload-${index}`)?.click()}
+                            className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[9px] font-medium py-1 px-3 rounded-full cursor-pointer border-none"
+                          >
+                            Add More
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </section>
+
           {/* Section 2: Incident Location */}
           <section className="flex flex-col gap-6 mt-8">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <svg className="w-7 h-7 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-              </svg>
+            <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <HugeiconsIcon icon={Location01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
               Incident Location
             </h2>
 
             <div className="flex flex-col gap-2 relative">
-              <label className="text-slate-800 text-sm font-semibold mb-1">
+              <label className="text-slate-700 text-sm font-medium mb-1">
                 Enter Address or Land Mark <span className="text-red-500 ml-0.5">*</span>
               </label>
               <div className="relative w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 focus-within:bg-white border border-transparent focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10 rounded-2xl pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md">
@@ -654,7 +1549,7 @@ export default function FileNewClaim() {
                     setTimeout(() => setShowResultsDropdown(false), 250);
                   }}
                   placeholder="Enter address or landmark..."
-                  className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-medium border-none"
+                  className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-normal border-none"
                 />
                 {address && (
                   <button
@@ -667,22 +1562,20 @@ export default function FileNewClaim() {
                     }}
                     className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1 flex items-center justify-center"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
                   </button>
                 )}
                 <button
                   type="button"
                   onClick={() => geocodeAddress(address)}
-                  className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-bold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20 whitespace-nowrap"
+                  className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-medium transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20 whitespace-nowrap"
                 >
                   Search
                 </button>
               </div>
 
               {showResultsDropdown && !showMapModal && searchResults.length > 0 && (
-                <div className="absolute top-[80px] left-0 right-0 z-50 bg-white border border-slate-200/80 rounded-2xl shadow-xl max-h-[240px] overflow-y-auto mt-1.5 p-2 flex flex-col gap-1">
+                <div className="absolute top-[80px] left-0 right-0 z-50 bg-white border border-slate-200/80 rounded-2xl shadow-xl max-h-[320px] overflow-y-auto mt-1.5 p-2 flex flex-col gap-1">
                   {searchResults.map((result, idx) => {
                     const parts = result.display_name.split(",");
                     const mainTitle = parts[0]?.trim() || "";
@@ -710,14 +1603,11 @@ export default function FileNewClaim() {
                         className="text-left w-full hover:bg-slate-50 p-3 rounded-xl transition-all border-none bg-transparent cursor-pointer flex items-start gap-3"
                         title={result.display_name}
                       >
-                        <div className="mt-0.5 bg-slate-100 text-slate-500 rounded-full p-2 flex items-center justify-center shrink-0">
-                          <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
-                          </svg>
+                        <div className="mt-0.5 bg-slate-100 text-slate-500 rounded-full p-2 flex items-center justify-center flex-shrink-0">
+                          <HugeiconsIcon icon={Location01Icon} className="w-4 h-4 text-slate-500" strokeWidth={2.5} />
                         </div>
                         <div className="flex flex-col min-w-0 flex-1">
-                          <span className="font-semibold text-slate-800 text-sm truncate">{mainTitle}</span>
+                          <span className="font-medium text-slate-800 text-sm truncate">{mainTitle}</span>
                           {subTitle && (
                             <span className="text-[11px] text-slate-500 truncate mt-0.5">{subTitle}</span>
                           )}
@@ -751,13 +1641,10 @@ export default function FileNewClaim() {
                   type="button"
                   onClick={handleGPSLocation}
                   disabled={isLocating}
-                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] disabled:bg-[#0284c7]/50 text-white font-bold text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
+                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] disabled:bg-[#0284c7]/50 text-white font-medium text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
                 >
-                  <svg className={`w-8 h-8 text-white ${isLocating ? "animate-pulse" : ""}`} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
-                  </svg>
-                  <span className="font-semibold block">
+                  <HugeiconsIcon icon={Location01Icon} className={`w-8 h-8 text-white ${isLocating ? "animate-pulse" : ""}`} strokeWidth={2} />
+                  <span className="font-medium block">
                     {isLocating ? "Locating..." : "Use GPS"}
                   </span>
                 </button>
@@ -769,12 +1656,10 @@ export default function FileNewClaim() {
                     setModalInitialCoords({ latitude, longitude });
                     setShowMapModal(true);
                   }}
-                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] text-white font-bold text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
+                  className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] text-white font-medium text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
                 >
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-                  </svg>
-                  <span className="font-semibold block">
+                  <HugeiconsIcon icon={MapIcon} className="w-8 h-8 text-white" strokeWidth={2} />
+                  <span className="font-medium block">
                     Select on Map
                   </span>
                 </button>
@@ -788,14 +1673,14 @@ export default function FileNewClaim() {
                 <div className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-slate-100">
                   {/* Header */}
                   <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <h3 className="text-lg font-bold text-[#0d2a3a]">Select Location on Map</h3>
+                    <h3 className="text-base font-semibold text-[#0d2a3a]">Select Location on Map</h3>
                     <button
                       type="button"
                       onClick={() => {
                         setModalInitialCoords(null);
                         setShowMapModal(false);
                       }}
-                      className="text-slate-400 hover:text-slate-700 text-xl font-bold cursor-pointer border-none bg-transparent transition-colors"
+                      className="text-slate-400 hover:text-slate-700 text-xl font-medium cursor-pointer border-none bg-transparent transition-colors"
                     >
                       ✕
                     </button>
@@ -815,9 +1700,7 @@ export default function FileNewClaim() {
                     {/* Floating Geocoding Search Panel */}
                     <div className="absolute top-4 left-4 right-4 z-20 max-w-md bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-full pl-5 pr-1.5 py-2 shadow-[0_10px_25px_-5px_rgba(15,23,42,0.15)] flex items-center gap-2 transition-all">
                       <span className="text-slate-400 flex items-center justify-center pointer-events-none">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2.5} />
                       </span>
                       <input
                         type="text"
@@ -836,7 +1719,7 @@ export default function FileNewClaim() {
                           setTimeout(() => setShowResultsDropdown(false), 250);
                         }}
                         placeholder="Search address or landmark..."
-                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none font-medium"
+                        className="flex-1 bg-transparent text-sm text-slate-800 placeholder-slate-400 focus:outline-none font-normal"
                       />
                       {address && (
                         <button
@@ -858,15 +1741,13 @@ export default function FileNewClaim() {
                         className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white p-3 rounded-full transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20"
                         title="Search"
                       >
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
+                        <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-white" strokeWidth={3} />
                       </button>
                     </div>
 
                     {/* Suggestions inside map modal */}
                     {showResultsDropdown && showMapModal && searchResults.length > 0 && (
-                      <div className="absolute top-[64px] left-4 right-4 z-30 max-w-md bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xl max-h-[200px] overflow-y-auto mt-1.5 p-2 flex flex-col gap-1">
+                      <div className="absolute top-[64px] left-4 right-4 z-30 max-w-md bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-2xl shadow-xl max-h-[300px] overflow-y-auto mt-1.5 p-2 flex flex-col gap-1">
                         {searchResults.map((result, idx) => {
                           const parts = result.display_name.split(",");
                           const mainTitle = parts[0]?.trim() || "";
@@ -893,14 +1774,11 @@ export default function FileNewClaim() {
                               className="text-left w-full hover:bg-slate-50 p-2 rounded-xl transition-all border-none bg-transparent cursor-pointer flex items-start gap-3"
                               title={result.display_name}
                             >
-                              <div className="mt-0.5 bg-slate-100 text-slate-500 rounded-full p-2 flex items-center justify-center shrink-0">
-                                <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25s-7.5-4.108-7.5-11.25a7.5 7.5 0 1115 0z" />
-                                </svg>
+                              <div className="mt-0.5 bg-slate-100 text-slate-500 rounded-full p-2 flex items-center justify-center flex-shrink-0">
+                                <HugeiconsIcon icon={Location01Icon} className="w-4 h-4 text-slate-500" strokeWidth={2.5} />
                               </div>
                               <div className="flex flex-col min-w-0 flex-1">
-                                <span className="font-semibold text-slate-800 text-xs truncate">{mainTitle}</span>
+                                <span className="font-medium text-slate-800 text-xs truncate">{mainTitle}</span>
                                 {subTitle && (
                                   <span className="text-[10px] text-slate-500 truncate mt-0.5">{subTitle}</span>
                                 )}
@@ -919,14 +1797,7 @@ export default function FileNewClaim() {
                       className="absolute top-4 right-4 z-10 w-12 h-12 bg-white/90 backdrop-blur-md hover:bg-white text-slate-700 hover:text-sky-600 rounded-2xl shadow-xl flex items-center justify-center border border-slate-200/60 cursor-pointer transition-all duration-150 active:scale-95 disabled:bg-slate-100"
                       title="Locate Me"
                     >
-                      <svg className={`w-6 h-6 ${isLocating ? "animate-pulse text-sky-500" : "text-slate-600"}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                        <line x1="2" x2="5" y1="12" y2="12" />
-                        <line x1="19" x2="22" y1="12" y2="12" />
-                        <line x1="12" x2="12" y1="2" y2="5" />
-                        <line x1="12" x2="12" y1="19" y2="22" />
-                        <circle cx="12" cy="12" r="7" />
-                        <circle cx="12" cy="12" r="2" fill="currentColor" />
-                      </svg>
+                      <HugeiconsIcon icon={Gps01Icon} className={`w-6 h-6 ${isLocating ? "animate-pulse text-sky-500" : "text-slate-600"}`} strokeWidth={2.5} />
                     </button>
 
 
@@ -941,7 +1812,7 @@ export default function FileNewClaim() {
                         setModalInitialCoords(null);
                         setShowMapModal(false);
                       }}
-                      className="bg-[#0d2a3a] hover:bg-[#0284c7] text-white font-bold text-sm px-8 py-4 rounded-full shadow-[0_4px_12px_rgba(13,42,58,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm px-8 py-3.5 rounded-full shadow-[0_4px_12px_rgba(0,0,128,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
                     >
                       Confirm Location
                     </button>
@@ -955,14 +1826,13 @@ export default function FileNewClaim() {
           <div className="flex flex-row justify-between items-center mt-4 mb-10">
             <Link
               href="/Policy_Holder/Home"
-              onClick={() => sessionStorage.removeItem("current_claim_draft")}
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-10 py-4 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center"
+              className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center justify-center"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center"
+              className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(0,0,128,0.25)] border-none cursor-pointer flex items-center justify-center"
             >
               Next
             </button>
@@ -977,231 +1847,10 @@ export default function FileNewClaim() {
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
-
-                  {/* Custom Popup Modal */}
-      {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
-            
-            {/* Header/Title with clean inline icon */}
-            <div className="flex items-center gap-3.5">
-              {customPopup.type === "success" ? (
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              ) : customPopup.type === "confirm" ? (
-                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-              )}
-              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
-                {customPopup.title}
-              </h3>
-            </div>
-
-            {/* Message Body */}
-            <div>
-              <p className="text-slate-500 text-[13px] font-semibold leading-relaxed">
-                {customPopup.message}
-              </p>
-            </div>
-
-            {/* Footer Buttons */}
-            <div className="flex justify-end gap-2.5 mt-2 select-none">
-              {customPopup.type === "confirm" ? (
-                <>
-                  <button
-                    onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCustomPopup({ ...customPopup, show: false });
-                      if (customPopup.onConfirm) customPopup.onConfirm();
-                    }}
-                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
-                  >
-                    Confirm
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
-                >
-                  OK
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       <PolicyHolderFooter />
     </div>
   );
-}
-
-function cleanCountry(country?: string): string {
-  if (!country) return "Sri Lanka";
-  const c = country.toLowerCase();
-  if (c.includes("ශ්‍රී ලංකා") || c.includes("இலங்கை") || c.includes("lanka")) {
-    return "Sri Lanka";
-  }
-  return country;
-}
-
-function formatPhotonResult(f: any): any {
-  const props = f.properties || {};
-  const coords = f.geometry?.coordinates || [0, 0];
-  
-  const parts = [];
-  if (props.name) parts.push(props.name);
-  
-  if (props.housenumber && props.street) {
-    parts.push(`${props.housenumber} ${props.street}`);
-  } else if (props.street) {
-    parts.push(props.street);
-  } else if (props.housenumber) {
-    parts.push(props.housenumber);
-  }
-  
-  if (props.locality) {
-    const loc = props.locality.split(';')[0].trim();
-    if (loc) parts.push(loc);
-  }
-  
-  if (props.district) parts.push(props.district);
-  if (props.city) parts.push(props.city);
-  if (props.county) parts.push(props.county);
-  if (props.state) parts.push(props.state);
-  if (props.postcode) parts.push(props.postcode);
-  if (props.country) {
-    parts.push(cleanCountry(props.country));
-  } else {
-    parts.push("Sri Lanka");
-  }
-
-  const displayName = parts.filter((v, i, self) => self.indexOf(v) === i).join(", ");
-  
-  return formatDisplayNameWithCategory({
-    display_name: displayName,
-    lat: coords[1].toString(),
-    lon: coords[0].toString(),
-    category_key: props.osm_key,
-    category_value: props.osm_value
-  });
-}
-
-function formatDisplayNameWithCategory(item: any): any {
-  if (!item || !item.display_name) return item;
-  
-  const key = (item.category_key || "").toLowerCase();
-  const value = (item.category_value || "").toLowerCase();
-  
-  const parts = item.display_name.split(",");
-  let firstName = parts[0]?.trim() || "";
-  const firstNameLower = firstName.toLowerCase();
-  
-  let modified = false;
-  
-  if (key === "railway" && value === "station") {
-    if (!firstNameLower.includes("station") && !firstNameLower.includes("railway")) {
-      firstName += " Railway Station";
-      modified = true;
-    }
-  } else if (key === "amenity" && value === "police") {
-    if (!firstNameLower.includes("police")) {
-      firstName += " Police Station";
-      modified = true;
-    }
-  } else if (key === "amenity" && (value === "bus_station" || value === "bus_stop")) {
-    if (!firstNameLower.includes("bus")) {
-      firstName += value === "bus_stop" ? " Bus Stop" : " Bus Station";
-      modified = true;
-    }
-  } else if (key === "amenity" && value === "hospital") {
-    if (!firstNameLower.includes("hospital")) {
-      firstName += " Hospital";
-      modified = true;
-    }
-  }
-  
-  if (modified) {
-    parts[0] = firstName;
-    item.display_name = parts.join(", ");
-  }
-  
-  return item;
-}
-
-function areCoordsClose(lat1: string, lon1: string, lat2: string, lon2: string): boolean {
-  const threshold = 0.0005; // approx 50m
-  return Math.abs(parseFloat(lat1) - parseFloat(lat2)) < threshold &&
-         Math.abs(parseFloat(lon1) - parseFloat(lon2)) < threshold;
-}
-
-function areNamesSimilar(n1: string, n2: string): boolean {
-  const name1 = n1.split(',')[0].toLowerCase().trim();
-  const name2 = n2.split(',')[0].toLowerCase().trim();
-  if (name1 === name2) return true;
-  if (name1.includes(name2) || name2.includes(name1)) {
-    return true;
-  }
-  return false;
-}
-
-function getResultScore(item: any, queryWords: string[]): number {
-  const name = item.display_name.toLowerCase();
-  const key = (item.category_key || "").toLowerCase();
-  const value = (item.category_value || "").toLowerCase();
-  
-  const firstPart = item.display_name.split(',')[0].toLowerCase();
-  const restPart = item.display_name.split(',').slice(1).join(',').toLowerCase();
-
-  let score = 0;
-
-  for (const word of queryWords) {
-    if (firstPart.includes(word)) {
-      score += 25;
-    } else if (restPart.includes(word)) {
-      score += 5;
-    }
-  }
-
-  if (queryWords.length > 0 && firstPart.includes(queryWords[0])) {
-    score += 30;
-  }
-
-  const queryStr = queryWords.join(' ');
-  if (firstPart === queryStr) {
-    score += 40;
-  }
-
-  if (queryWords.includes("railway") || queryWords.includes("train")) {
-    if (key === "railway") {
-      score += 50;
-    }
-    if (value === "station") {
-      score += 20;
-    }
-  }
-  
-  return score;
 }

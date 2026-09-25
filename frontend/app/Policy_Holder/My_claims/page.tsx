@@ -5,6 +5,31 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
+import SimpleLoader from "@/app/Components/SimpleLoader";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  UserIcon,
+  Search01Icon,
+  Cancel01Icon,
+  BubbleChatIcon,
+  Tick01Icon,
+  CheckmarkCircle01Icon,
+  ViewIcon,
+  Delete02Icon,
+  Analytics01Icon,
+  File01Icon,
+  Time02Icon,
+} from "@hugeicons/core-free-icons";
+import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
+import { translateText } from "@/app/utils/translator";
+
+interface AdditionalDoc {
+  name: string;
+  url: string;
+  uploadedAt: string;
+  uploadedBy?: string;
+  _id?: string;
+}
 
 interface Claim {
   claimNumber: string;
@@ -15,229 +40,286 @@ interface Claim {
   amount: string;
   status: string;
   description?: string;
+  otherVehicleDetails?: {
+    vehiclePlate?: string;
+    insuranceCompany?: string;
+    policyNumber?: string;
+    driverName?: string;
+    licensePhotos?: string[];
+    vehiclePhotos?: string[];
+  };
   location?: string;
   createdAt?: string;
   officer?: string;
-  assignedAgent?: string;
+  branch?: string;
+  paymentReceipt?: string;
   documentsRequested?: boolean;
   requestedDocuments?: string[];
   documentRequestTo?: string;
   currentStep?: number;
   messages?: { sender: string; message: string; sentAt: string; recipient?: string }[];
   accidentPhotos?: {
-    front: string[];
-    rear: string[];
-    side: string[];
+    front?: string[];
+    rear?: string[];
+    side?: string[];
   };
   drivingLicense?: {
-    front: string[];
-    rear: string[];
+    front?: string[];
+    rear?: string[];
   };
+  additionalDocuments?: AdditionalDoc[];
+  garageEstimateComparison?: any;
 }
 
+const translations = {
+  en: {
+    title: "My Claims",
+    subtitle: "All your insurance claims",
+    profileStatus: "Profile & Status",
+    perfSummary: "Performance Summary",
+    claims: "Claims",
+    pending: "Pending",
+    completed: "Completed",
+    searchPlaceholder: "Search claims by number, plate, type, status...",
+    all: "All",
+    statusPending: "Pending",
+    statusReview: "Review",
+    statusApproved: "Approved",
+    statusRejected: "Rejected",
+    statusCompleted: "Completed",
+    tableClaimNum: "Claim #",
+    tablePlate: "Plate #",
+    tableDate: "Date",
+    tableType: "Damage Type",
+    tableAmount: "Amount",
+    tableStatus: "Status",
+    tableAction: "Action",
+    view: "View",
+    accidentPhotos: "Attached Accident & Damage Photos",
+    drivingLicense: "Driver's License Photos",
+    attachedDocs: "Attached Documents & Files",
+    frontView: "Front View",
+    rearView: "Rear View",
+    sideView: "Side View",
+    licenseFront: "License (Front Side)",
+    licenseRear: "License (Rear Side)",
+    viewFullPhoto: "Click to View Full Image",
+    noPhotos: "No accident photos attached."
+  },
+  si: {
+    title: "මගේ හිමිකම්",
+    subtitle: "ඔබේ සියලුම රක්‍ෂණ හිමිකම්",
+    profileStatus: "පැතිකඩ සහ තත්ත්වය",
+    perfSummary: "ක්‍රියාකාරී සාරාංශය",
+    claims: "හිමිකම්",
+    pending: "ප්‍රතිචාර නොලැබුණු",
+    completed: "නිම කළ",
+    searchPlaceholder: "අංකය, තහඩුව, වර්ගය, තත්ත්වය අනුව හිමිකම් සොයන්න...",
+    all: "සියල්ල",
+    statusPending: "Pending",
+    statusReview: "Review",
+    statusApproved: "Approved",
+    statusRejected: "Rejected",
+    statusCompleted: "Completed",
+    tableClaimNum: "හිමිකම් අංකය",
+    tablePlate: "තහඩු අංකය",
+    tableDate: "දිනය",
+    tableType: "හානි වර්ගය",
+    tableAmount: "මුදල",
+    tableStatus: "තත්ත්වය",
+    tableAction: "ක්‍රියාව",
+    view: "බලන්න",
+    accidentPhotos: "අමුණා ඇති අනතුරු හා හානි ඡායාරූප",
+    drivingLicense: "රියදුරු බලපත්‍ර ඡායාරූප",
+    attachedDocs: "අමුණා ඇති ලේඛන සහ ලිපිගොනු",
+    frontView: "ඉදිරිපස පෙනුම",
+    rearView: "පසුපස පෙනුම",
+    sideView: "පැති පෙනුම",
+    licenseFront: "බලපත්‍රය (ඉදිරිපස)",
+    licenseRear: "බලපත්‍රය (පසුපස)",
+    viewFullPhoto: "විශාල කර බැලීමට ඔබන්න",
+    noPhotos: "අනතුරු ඡායාරූප අමුණා නොමැත."
+  },
+  ta: {
+    title: "என் கோரிக்கைகள்",
+    subtitle: "உங்கள் காப்பீட்டு கோரிக்கைகள் அனைத்தும்",
+    profileStatus: "சுயவிவரம் & நிலை",
+    perfSummary: "செயல்திறன் சுருக்கம்",
+    claims: "கோரிக்கைகள்",
+    pending: "நிலுவையில் உள்ளவை",
+    completed: "முடிந்தவை",
+    searchPlaceholder: "எண், தட்டு, வகை, நிலை மூலம் கோரிக்கைகளைத் தேடுங்கள்...",
+    all: "அனைத்தும்",
+    statusPending: "Pending",
+    statusReview: "Review",
+    statusApproved: "Approved",
+    statusRejected: "Rejected",
+    statusCompleted: "Completed",
+    tableClaimNum: "கோரிக்கை #",
+    tablePlate: "தகடு #",
+    tableDate: "தேதி",
+    tableType: "சேத வகை",
+    tableAmount: "தொகை",
+    tableStatus: "நிலை",
+    tableAction: "செயல்",
+    view: "அழைக்க",
+    accidentPhotos: "இணைக்கப்பட்ட விபத்து மற்றும் சேத புகைப்படங்கள்",
+    drivingLicense: "ஓட்டுநர் உரிம புகைப்படங்கள்",
+    attachedDocs: "இணைக்கப்பட்ட ஆவணங்கள் & கோப்புகள்",
+    frontView: "முன் பார்வை",
+    rearView: "பின் பார்வை",
+    sideView: "பக்க பார்வை",
+    licenseFront: "உரிமம் (முன்)",
+    licenseRear: "உரிமம் (பின்)",
+    viewFullPhoto: "முழு புகைப்படத்தைக் காண கிளிக் செய்யவும்",
+    noPhotos: "விபத்து புகைப்படங்கள் எதுவும் இணைக்கப்படவில்லை."
+  }
+};
+
 export default function MyClaims() {
+  const [lang, setLang] = useState<"en" | "si" | "ta" >("en");
   const [claims, setClaims] = useState<Claim[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
-  const [detailedClaim, setDetailedClaim] = useState<Claim | null>(null);
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "Review" | "Approved" | "Rejected" | "Completed">("All");
   const [isCancellingClaim, setIsCancellingClaim] = useState(false);
+  const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
+  const [isTranslating, setIsTranslating] = useState(false);
 
-  useEffect(() => {
-    if (selectedClaim) {
-      const fetchFullClaim = async () => {
-        try {
-          const res = await fetch(`${API_URL}/policy-holder/track-claim?claimNumber=${encodeURIComponent(selectedClaim.claimNumber)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.claim) {
-              setDetailedClaim(data.claim);
-            }
-          }
-        } catch (err) {
-          console.error("Error fetching full claim details", err);
-        }
-      };
-      fetchFullClaim();
-    } else {
-      setDetailedClaim(null);
+  const getDocUrl = (url?: string) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) {
+      return url;
     }
-  }, [selectedClaim]);
-      const [customPopup, setCustomPopup] = useState<{
-    show: boolean;
-    title: string;
-    message: string;
-    type?: "alert" | "confirm" | "success" | "error";
-    onConfirm?: () => void;
-  }>({ show: false, title: "", message: "", type: "alert" });
+    return `${API_URL.replace("/api", "")}/uploads/${url}`;
+  };
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   const handleCancelClaim = async (claimNumber: string) => {
-    setCustomPopup({
-      show: true,
-      title: "Cancel Claim",
-      message: "Are you sure you want to cancel and delete this claim? This action cannot be undone.",
-      type: "confirm",
-      onConfirm: async () => {
-        setIsCancellingClaim(true);
-        try {
-          const res = await fetch(`${API_URL}/policy-holder/delete-claim/${encodeURIComponent(claimNumber)}`, {
-            method: "DELETE"
-          });
+    const confirmCancel = window.confirm("Are you sure you want to cancel and delete this claim? This action cannot be undone.");
+    if (!confirmCancel) return;
 
-          if (res.ok) {
-            setCustomPopup({
-              show: true,
-              title: "Success",
-              message: "Claim cancelled and deleted successfully!",
-              type: "alert"
-            });
-            setSelectedClaim(null);
-            setClaims(prev => prev.filter(c => c.claimNumber !== claimNumber));
-          } else {
-            const data = await res.json();
-            setCustomPopup({
-              show: true,
-              title: "Error",
-              message: data.error || "Failed to cancel claim.",
-              type: "alert"
-            });
-          }
-        } catch (err) {
-          console.error(err);
-          setCustomPopup({
-            show: true,
-            title: "Error",
-            message: "An error occurred while trying to cancel the claim.",
-            type: "alert"
-          });
-        } finally {
-          setIsCancellingClaim(false);
-        }
+    setIsCancellingClaim(true);
+    try {
+      const res = await fetch(`${API_URL}/policy-holder/delete-claim/${encodeURIComponent(claimNumber)}`, {
+        method: "DELETE"
+      });
+
+      if (res.ok) {
+        alert("Claim cancelled and deleted successfully!");
+        setSelectedClaim(null);
+        fetchClaims(true); // Refresh claims list
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to cancel claim.");
       }
-    });
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while trying to cancel the claim.");
+    } finally {
+      setIsCancellingClaim(false);
+    }
   };
 
   const getUserRequestedDocs = (claim: Claim): string[] => {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message.includes(`Requested: ${name}`));
+        .find(m => m.message && m.message.includes(`Requested: ${name}`));
       if (msg) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
         if (msg.message.includes("[Document Request to User]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
-    return (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+
+    const uploadedNames = (claim.additionalDocuments || [])
+      .filter(d => d.uploadedBy !== "Agent")
+      .map(d => (d.name || "").trim().toLowerCase());
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      uploadedNames.push("garage estimate report", "garage estimate", "repair estimate");
+    }
+
+    return (claim.requestedDocuments || []).filter(name => {
+      if (getRecipientForDoc(name) !== "User") return false;
+      const normName = name.trim().toLowerCase();
+      const alreadyUploaded = uploadedNames.some(u => 
+        u === normName ||
+        (normName.includes("garage") && u.includes("garage")) ||
+        (normName.includes("police") && u.includes("police")) ||
+        (normName.includes("estimate") && u.includes("estimate")) ||
+        (normName.includes("license") && u.includes("license"))
+      );
+      return !alreadyUploaded;
+    });
   };
 
+  const getSubmittedUserDocs = (claim: Claim): { name: string; url: string; uploadedAt?: string }[] => {
+    const submitted: { name: string; url: string; uploadedAt?: string }[] = [];
+    const additional = (claim.additionalDocuments || []).filter(d => d.uploadedBy !== "Agent");
+    
+    additional.forEach(doc => {
+      if (doc.url) {
+        submitted.push({
+          name: doc.name,
+          url: doc.url,
+          uploadedAt: doc.uploadedAt || claim.createdAt
+        });
+      }
+    });
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const fetchClaims = async () => {
-        setIsLoading(true);
-        let userNic = "";
-        
-        // 1. Get Logged In User NIC
-        const userStr = sessionStorage.getItem("logged_in_user");
-        if (userStr) {
-          try {
-            const user = JSON.parse(userStr);
-            if (user.nic) {
-              userNic = user.nic;
-            }
-          } catch (err) {
-            console.error("Error parsing logged_in_user session", err);
-          }
-        }
-
-        let databaseClaims: Claim[] = [];
-
-        // 2. Fetch Claims from MongoDB API (if NIC exists)
-        if (userNic) {
-          try {
-            const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(userNic)}`, {
-              cache: "no-store"
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (Array.isArray(data.claims)) {
-                databaseClaims = data.claims.map((claim: any) => ({
-                  claimNumber: claim.claimNumber,
-                  vehiclePlate: claim.vehiclePlate,
-                  incidentDate: formatDateString(claim.incidentDate),
-                  incidentTime: claim.incidentTime,
-                  damageType: claim.damageType,
-                  amount: claim.amount ? `Rs. ${Number(claim.amount).toLocaleString()}` : "Pending",
-                  status: claim.status || "Pending",
-                  description: claim.description,
-                  location: claim.location,
-                  officer: "Not Assigned",
-                  assignedAgent: claim.assignedAgent || "",
-                  documentsRequested: claim.documentsRequested || false,
-                  requestedDocuments: claim.requestedDocuments || [],
-                  currentStep: claim.currentStep || 1,
-                  messages: claim.messages || []
-                }));
-              }
-            }
-          } catch (err) {
-            console.error("Error fetching claims from backend API", err);
-          }
-        }
-
-        // 3. Fallback to check if a claim was recently submitted in current session
-        const localClaims: Claim[] = [];
-        try {
-          const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-          if (lastSubmitted) {
-            const parsed = JSON.parse(lastSubmitted);
-            // Verify if it is already in database claims to prevent duplication
-            const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
-            if (!exists) {
-              localClaims.push({
-                claimNumber: parsed.claimNumber,
-                vehiclePlate: parsed.vehiclePlate,
-                incidentDate: formatDateString(parsed.incidentDate),
-                incidentTime: parsed.incidentTime,
-                damageType: parsed.damageType,
-                amount: "Pending",
-                status: "Pending",
-                description: parsed.description,
-                location: parsed.location,
-                officer: "Not Assigned",
-                assignedAgent: "",
-                documentsRequested: false,
-                requestedDocuments: [],
-                currentStep: 1,
-                messages: []
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Error parsing local claim draft", err);
-        }
-
-        // 4. Combine recently submitted claims with database claims
-        setClaims([...localClaims, ...databaseClaims]);
-        setIsLoading(false);
-      };
-
-      fetchClaims();
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      const exists = submitted.some(s => s.url === claim.garageEstimateComparison?.garageDocumentUrl);
+      if (!exists) {
+        submitted.push({
+          name: "Garage Estimate Report",
+          url: claim.garageEstimateComparison.garageDocumentUrl,
+          uploadedAt: claim.createdAt
+        });
+      }
     }
-  }, []);
 
-  // Lock background scroll when modal is open
-  useEffect(() => {
-    if (selectedClaim) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+    return submitted;
+  };
+
+  const getDocRequestNote = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.message) {
+      const idx = msg.message.indexOf("Message:");
+      if (idx !== -1) {
+        return msg.message.substring(idx + 8).trim();
+      }
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [selectedClaim]);
+    return "";
+  };
 
   // Format YYYY-MM-DD to "DD MMM YYYY" (e.g. "12 Jan 2026")
   const formatDateString = (dateStr: string) => {
@@ -251,6 +333,172 @@ export default function MyClaims() {
       return dateStr;
     }
   };
+
+  const formatDateTimeString = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()} ${hours}:${minutes}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const getDocRequestTime = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.sentAt) {
+      return formatDateTimeString(msg.sentAt);
+    }
+    return "";
+  };
+
+  const getDocRequestSender = (claim: Claim, docName: string): string => {
+    if (!claim.messages) return "Office Staff";
+    const msg = [...claim.messages]
+      .reverse()
+      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    return msg ? (msg.sender || "Office Staff") : "Office Staff";
+  };
+
+
+  const fetchClaims = async (showLoading = true) => {
+    if (typeof window === "undefined") return;
+    if (showLoading) setIsLoading(true);
+    let userNic = "";
+    
+    // 1. Get Logged In User
+    const userStr = sessionStorage.getItem("logged_in_user");
+    if (userStr) {
+      try {
+        const parsedUser = JSON.parse(userStr);
+        setUser(parsedUser);
+        if (parsedUser.nic) {
+          userNic = parsedUser.nic;
+        }
+      } catch (err) {
+        console.error("Error parsing logged_in_user session", err);
+      }
+    }
+
+    let databaseClaims: Claim[] = [];
+
+    // 2. Fetch Claims from MongoDB API (if NIC exists)
+    if (userNic) {
+      try {
+        const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(userNic)}&includeDocs=true`, {
+          cache: "no-store"
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.claims)) {
+            databaseClaims = data.claims.map((claim: any) => ({
+              claimNumber: claim.claimNumber,
+              vehiclePlate: claim.vehiclePlate,
+              incidentDate: formatDateString(claim.incidentDate),
+              incidentTime: claim.incidentTime,
+              damageType: claim.damageType,
+              amount: claim.amount ? `Rs. ${Number(claim.amount).toLocaleString()}` : "Pending",
+              status: claim.status || "Pending",
+              description: claim.description,
+              otherVehicleDetails: claim.otherVehicleDetails,
+              location: claim.location,
+              officer: claim.assignedAgentName || claim.assignedAgent || "Not Assigned",
+              paymentReceipt: claim.paymentReceipt || "",
+              documentsRequested: claim.documentsRequested || false,
+              requestedDocuments: claim.requestedDocuments || [],
+              currentStep: claim.currentStep || 1,
+              messages: claim.messages || [],
+              accidentPhotos: claim.accidentPhotos || {},
+              drivingLicense: claim.drivingLicense || {},
+              additionalDocuments: claim.additionalDocuments || [],
+              createdAt: claim.createdAt || claim.incidentDate,
+              branch: claim.branch
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching claims from backend API", err);
+      }
+    }
+
+    // 3. Fallback to check if a claim was recently submitted in current session
+    let localClaims: Claim[] = [];
+    try {
+      const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
+      if (lastSubmitted) {
+        const parsed = JSON.parse(lastSubmitted);
+        // Verify if it is already in database claims to prevent duplication
+        const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
+        if (!exists) {
+          localClaims.push({
+            claimNumber: parsed.claimNumber,
+            vehiclePlate: parsed.vehiclePlate,
+            incidentDate: formatDateString(parsed.incidentDate),
+            incidentTime: parsed.incidentTime,
+            damageType: parsed.damageType,
+            amount: "Pending",
+            status: "Pending",
+            description: parsed.description,
+            otherVehicleDetails: parsed.otherVehicleDetails,
+            location: parsed.location,
+            officer: "Not Assigned",
+            documentsRequested: false,
+            requestedDocuments: [],
+            currentStep: 1,
+            messages: [],
+            accidentPhotos: {},
+            drivingLicense: {},
+            additionalDocuments: [],
+            createdAt: parsed.createdAt || parsed.incidentDate || new Date().toISOString()
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error parsing local claim draft", err);
+    }
+
+    // 4. Combine recently submitted claims with database claims
+    const updatedClaims = [...localClaims, ...databaseClaims];
+    setClaims(updatedClaims);
+    if (selectedClaim) {
+      const updated = updatedClaims.find(c => c.claimNumber === selectedClaim.claimNumber);
+      if (updated) {
+        setSelectedClaim(updated);
+      }
+    }
+    if (showLoading) setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchClaims(true);
+  }, []);
+
+  // Poll database claims periodically in the background
+  useEffect(() => {
+    const pollInterval = setInterval(() => {
+      fetchClaims(false);
+    }, 7000);
+    return () => clearInterval(pollInterval);
+  }, [selectedClaim]);
+
+  // Lock background scroll when modal is open
+  useEffect(() => {
+    if (selectedClaim) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedClaim]);
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
@@ -277,7 +525,7 @@ export default function MyClaims() {
     }
     // Fallback default badge
     return (
-      <span className="text-slate-500 bg-slate-50/45 border border-slate-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
+      <span className="text-slate-500 bg-slate-50 border border-slate-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
         {status}
       </span>
     );
@@ -297,18 +545,73 @@ export default function MyClaims() {
     return cleaned;
   };
 
-  // Filter claims based on search query
-  const filteredClaims = claims.filter(
-    (claim) =>
+  // Calculate statistics for the Policy Holder
+  const currentYear = new Date().getFullYear();
+  const claimsThisYear = claims.filter(c => {
+    const dateStr = c.createdAt || c.incidentDate;
+    if (!dateStr) return false;
+    try {
+      const d = new Date(dateStr);
+      return !isNaN(d.getTime()) && d.getFullYear() === currentYear;
+    } catch {
+      return false;
+    }
+  });
+
+  const totalClaimsThisYear = claimsThisYear.length;
+  const pendingClaimsThisYear = claimsThisYear.filter(c => {
+    const s = c.status.toLowerCase();
+    return s.includes("pending") || s.includes("progress");
+  }).length;
+  const completedClaimsThisYear = claimsThisYear.filter(c => {
+    const s = c.status.toLowerCase();
+    return s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
+  }).length;
+
+  const totalUploads = claims.reduce((acc, c) => {
+    let count = 0;
+    if (c.drivingLicense?.front && c.drivingLicense.front.length > 0) count++;
+    if (c.drivingLicense?.rear && c.drivingLicense.rear.length > 0) count++;
+    if (c.accidentPhotos?.front) count += c.accidentPhotos.front.length;
+    if (c.accidentPhotos?.rear) count += c.accidentPhotos.rear.length;
+    if (c.accidentPhotos?.side) count += c.accidentPhotos.side.length;
+    if (c.additionalDocuments) {
+      count += c.additionalDocuments.length;
+    }
+    return acc + count;
+  }, 0);
+  const totalChats = claims.reduce((acc, c) => acc + (c.messages?.length || 0), 0);
+
+  // Filter claims based on status filter and search query
+  const filteredClaims = claims.filter((claim) => {
+    let matchesStatus = false;
+    const s = claim.status.toLowerCase();
+    if (statusFilter === "All") {
+      matchesStatus = true;
+    } else if (statusFilter === "Completed") {
+      matchesStatus = s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
+    } else if (statusFilter === "Pending") {
+      matchesStatus = s.includes("pending") || s.includes("progress");
+    } else if (statusFilter === "Review") {
+      matchesStatus = s.includes("review") || s.includes("submit");
+    } else if (statusFilter === "Approved") {
+      matchesStatus = s.includes("approved") || s.includes("active") || s.includes("done");
+    } else if (statusFilter === "Rejected") {
+      matchesStatus = s.includes("rejected");
+    }
+
+    const matchesSearch =
       claim.claimNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       claim.vehiclePlate.toLowerCase().includes(searchQuery.toLowerCase()) ||
       claim.damageType.toLowerCase().includes(searchQuery.toLowerCase()) ||
       claim.status.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (claim.location && claim.location.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+      (claim.location && claim.location.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return matchesStatus && matchesSearch;
+  });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col font-sans relative">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative">
       <PolicyHolderNavbar />
 
       {/* Styled curved header matching the mockup exactly */}
@@ -323,102 +626,255 @@ export default function MyClaims() {
         {/* Text content aligned automatically with the page container */}
         <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
-            My Claims
+            {t.title}
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
-            All your insurance claims
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
+            {t.subtitle}
           </p>
         </header>
       </div>
 
       {/* Main Table Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 flex flex-col gap-8">
         
-        {/* Premium Search Bar */}
-        <div className="flex justify-start mb-8 select-none">
-          <div className="relative w-full max-w-[420px] bg-slate-50 hover:bg-white focus-within:bg-white border border-slate-200 rounded-full pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10">
-            <span className="text-slate-400 flex items-center justify-center">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+        {/* Top Overview Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
+          
+          {/* Card 1: Profile & Status */}
+          <div className="bg-white border border-slate-200/80 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[150px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block">{t.profileStatus}</span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Active Account
+              </span>
+            </div>
+            <div className="flex items-center gap-4 mt-2">
+              <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200/70 border border-slate-200 flex items-center justify-center text-slate-600 font-bold shrink-0 shadow-inner">
+                <HugeiconsIcon icon={UserIcon} className="w-6 h-6 text-slate-600" strokeWidth={1.8} />
+              </div>
+              <div className="overflow-hidden">
+                <span className="block font-semibold text-slate-800 text-base truncate">
+                  {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : (user?.name || "Policy Holder")}
+                </span>
+                <span className="inline-block bg-slate-100 text-slate-600 text-[11px] font-bold px-2.5 py-0.5 rounded-md mt-1">
+                  NIC: {user?.nic || "N/A"}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Performance Summary (Clean Common White Design) */}
+          <div className="bg-white border border-slate-200/80 rounded-[28px] p-6 shadow-sm flex flex-col justify-between min-h-[150px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider block">{t.perfSummary}</span>
+              <span className="text-[11px] font-semibold text-slate-400">
+                This Year ({new Date().getFullYear()})
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 text-center mt-2">
+              {/* Total Claims */}
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{t.claims}</span>
+                </div>
+                <span className="text-2xl font-bold text-slate-900">{totalClaimsThisYear}</span>
+              </div>
+
+              {/* Pending */}
+              <div className="bg-sky-50/70 border border-sky-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-sky-700 mb-1">
+                  <HugeiconsIcon icon={Time02Icon} className="w-4 h-4 text-sky-600" strokeWidth={2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-sky-700">{t.pending}</span>
+                </div>
+                <span className="text-2xl font-bold text-sky-600">{pendingClaimsThisYear}</span>
+              </div>
+
+              {/* Completed */}
+              <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-3 flex flex-col justify-center items-center">
+                <div className="flex items-center gap-1.5 text-blue-800 mb-1">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-blue-600" strokeWidth={2} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-blue-800">{t.completed}</span>
+                </div>
+                <span className="text-2xl font-bold text-blue-900">{completedClaimsThisYear}</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Search & Filter row */}
+        <div className="bg-white border border-slate-200 rounded-[24px] p-5 flex flex-col lg:flex-row gap-4 items-center justify-between shadow-sm select-none">
+          
+          {/* Status Tabs */}
+          <div className="flex flex-wrap gap-1 p-1 bg-slate-100 rounded-xl w-full lg:w-auto">
+            {(["All", "Pending", "Review", "Approved", "Rejected", "Completed"] as const).map(tab => {
+              const tabLabels = {
+                All: t.all,
+                Pending: t.statusPending,
+                Review: t.statusReview,
+                Approved: t.statusApproved,
+                Rejected: t.statusRejected,
+                Completed: t.statusCompleted
+              };
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setStatusFilter(tab)}
+                  className={`px-4 py-2 rounded-lg text-xs font-medium transition-all border-none outline-none cursor-pointer ${
+                    statusFilter === tab
+                      ? "bg-[#000080] text-white shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/50"
+                  }`}
+                >
+                  {tabLabels[tab]} ({
+                    tab === "All"
+                      ? claims.length
+                      : tab === "Completed"
+                      ? claims.filter(c => {
+                          const s = c.status.toLowerCase();
+                          return s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
+                        }).length
+                      : tab === "Pending"
+                      ? claims.filter(c => {
+                          const s = c.status.toLowerCase();
+                          return s.includes("pending") || s.includes("progress");
+                        }).length
+                      : tab === "Review"
+                      ? claims.filter(c => {
+                          const s = c.status.toLowerCase();
+                          return s.includes("review") || s.includes("submit");
+                        }).length
+                      : tab === "Approved"
+                      ? claims.filter(c => {
+                          const s = c.status.toLowerCase();
+                          return s.includes("approved") || s.includes("active") || s.includes("done");
+                        }).length
+                      : claims.filter(c => c.status.toLowerCase().includes(tab.toLowerCase())).length
+                  })
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search Bar */}
+          <div className="relative w-full lg:w-80">
+            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <HugeiconsIcon icon={Search01Icon} className="w-4 h-4" strokeWidth={2.5} />
             </span>
             <input
               type="text"
-              placeholder="Search claims by ID, vehicle, type, or status..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-medium"
+              placeholder={t.searchPlaceholder}
+              className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 text-slate-700 placeholder:text-slate-400 text-xs font-normal focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] focus:border-transparent transition-all bg-slate-50 focus:bg-white"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1"
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
               </button>
             )}
-            <button
-              type="button"
-              className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-bold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20"
-            >
-              Search
-            </button>
           </div>
         </div>
 
-        {/* Table Container Card */}
-        <div className="bg-white border border-slate-200 rounded-[30px] shadow-sm overflow-hidden mb-10">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead className="bg-[#e2e8f0]/60">
-                <tr className="border-b border-slate-200">
-                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Claim ID</th>
-                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Vehicle</th>
-                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Date</th>
-                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Type</th>
-                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Amount</th>
-                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Status</th>
-                  <th className="px-6 py-5 text-center text-base font-extrabold text-slate-800 whitespace-nowrap">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-slate-500 font-bold">
-                      Loading your claims...
-                    </td>
-                  </tr>
-                ) : filteredClaims.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="px-6 py-10 text-center text-slate-500 font-bold">
-                      No claims found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredClaims.map((claim) => (
-                    <tr key={claim.claimNumber} className="hover:bg-slate-50/40 transition-colors">
-                      <td className="px-6 py-5 text-sm text-slate-700 font-medium whitespace-nowrap">{claim.claimNumber}</td>
-                      <td className="px-6 py-5 text-sm text-slate-700 font-medium whitespace-nowrap">{formatNumberPlate(claim.vehiclePlate)}</td>
-                      <td className="px-6 py-5 text-sm text-slate-700 font-medium whitespace-nowrap">{claim.incidentDate}</td>
-                      <td className="px-6 py-5 text-sm text-slate-700 font-medium whitespace-nowrap">{claim.damageType}</td>
-                      <td className="px-6 py-5 text-sm text-slate-700 font-medium text-center whitespace-nowrap">{claim.amount}</td>
-                      <td className="px-6 py-5 text-sm text-slate-700 font-medium text-center whitespace-nowrap">{getStatusBadge(claim.status)}</td>
-                      <td className="px-6 py-5 text-sm text-center whitespace-nowrap">
-                        <button
-                          onClick={() => setSelectedClaim(claim)}
-                          className="border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold py-1 px-5 rounded-lg transition-all shadow-sm cursor-pointer"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        {/* Modern Card Grid list */}
+        <div className="flex flex-col gap-6">
+          
+          {/* Grid Table Header (Desktop Only) */}
+          <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] items-center gap-4 px-5 py-2 text-[10px] font-semibold text-slate-400 uppercase tracking-wider select-none border border-transparent border-l-4 border-l-transparent">
+            <div>{t.tableClaimNum}</div>
+            <div>{t.tablePlate}</div>
+            <div>{t.tableDate}</div>
+            <div>{t.tableType}</div>
+            <div className="text-center">{t.tableAmount}</div>
+            <div className="text-center">{t.tableStatus}</div>
+            <div className="text-right">{t.tableAction}</div>
+          </div>
+
+          {/* List Cards */}
+          <div className="flex flex-col gap-3.5">
+            {isLoading ? (
+              <SimpleLoader message="Loading claims dossier..." theme="blue" />
+            ) : filteredClaims.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-[28px] p-16 flex flex-col items-center justify-center text-center shadow-sm min-h-[300px]">
+                <h3 className="font-semibold text-slate-700 text-lg">No Claims Found</h3>
+                <p className="text-slate-400 text-xs font-normal mt-1.5 max-w-sm leading-relaxed">
+                  We couldn't find any claims matching the selected filters or search queries.
+                </p>
+              </div>
+            ) : (
+              filteredClaims.map((claim) => {
+                const s = claim.status.toLowerCase();
+                let borderLeftColor = "border-l-4 border-l-sky-400";
+                if (s.includes("review") || s.includes("submit")) {
+                  borderLeftColor = "border-l-4 border-l-blue-600";
+                } else if (s.includes("approved") || s.includes("active") || s.includes("done")) {
+                  borderLeftColor = "border-l-4 border-l-[#0f2d4a]";
+                } else if (s.includes("rejected")) {
+                  borderLeftColor = "border-l-4 border-l-slate-300";
+                }
+
+                return (
+                  <div
+                    key={claim.claimNumber}
+                    onClick={() => setSelectedClaim(claim)}
+                    className={`bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${borderLeftColor}`}
+                  >
+                    {/* Claim Info */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
+                      {claim.createdAt && (
+                        <span className="text-[10px] text-slate-400 font-normal mt-1 block">Submitted: {formatSriLankaDateTime(claim.createdAt)}</span>
+                      )}
+                    </div>
+
+                    {/* Vehicle Plate */}
+                    <div className="text-xs md:text-sm font-semibold text-slate-800">
+                      {formatNumberPlate(claim.vehiclePlate)}
+                    </div>
+
+                    {/* Incident Date */}
+                    <div className="text-xs md:text-sm font-normal text-slate-600">
+                      {claim.incidentDate}
+                    </div>
+
+                    {/* Damage Type */}
+                    <div className="text-xs md:text-sm font-normal text-slate-600 truncate" title={claim.damageType}>
+                      {claim.damageType}
+                    </div>
+
+                    {/* Amount */}
+                    <div className="text-xs md:text-sm font-semibold text-slate-700 text-center">
+                      {claim.amount}
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="flex flex-col items-center min-w-0">
+                      {getStatusBadge(claim.status)}
+                    </div>
+
+                    {/* Action */}
+                    <div className="text-left md:text-right" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedClaim(claim)}
+                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-semibold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                      >
+                        {t.view}
+                      </button>
+                    </div>
+
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -430,25 +886,27 @@ export default function MyClaims() {
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       {/* Claim Detail Modal Popup */}
       {selectedClaim && (() => {
-        const renderClaimProgress = (status: string, dbStep?: number) => {
+        const renderClaimProgress = (status: string, dbStep?: number, paymentReceipt?: string) => {
           let currentStep = dbStep || 1;
-          if (!dbStep) {
+          if (paymentReceipt) {
+            currentStep = 6;
+          } else if (!dbStep) {
             const s = status.toLowerCase();
             if (s.includes("pending") || s.includes("progress")) {
               currentStep = 3;
             } else if (s.includes("review")) {
               currentStep = 4;
             } else if (s.includes("approved") || s.includes("active") || s.includes("done")) {
-              currentStep = 6;
+              currentStep = 5;
             }
           }
+
+          const isFullyPaid = (status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
 
           const steps = [
             { num: "01", label: "Submitted" },
@@ -459,39 +917,41 @@ export default function MyClaims() {
             { num: "06", label: "Payment" }
           ];
 
-          const progressPercent = ((currentStep - 1) / (steps.length - 1)) * 100;
-
           return (
             <div className="bg-[#f8fafc] border border-slate-100 rounded-[24px] pt-6 pb-5 px-8 mb-8 flex justify-between items-center relative select-none w-full max-w-[540px] mx-auto shadow-sm">
               {/* Background Grey Line */}
-              <div className="absolute top-[40px] left-[52px] right-[52px] h-[3px] bg-slate-200 z-0" />
+              <div className="absolute top-[44px] -translate-y-1/2 left-[52px] right-[52px] h-[3px] bg-slate-200 z-0 pointer-events-none" />
               
-              {/* Active Green Line */}
+              {/* Active Blue Progress Line */}
               <div
-                className="absolute top-[40px] left-[52px] h-[3px] bg-[#00b050] z-0 transition-all duration-300"
-                style={{ width: `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
+                className="absolute top-[44px] -translate-y-1/2 left-[52px] h-[3px] bg-gradient-to-r from-sky-400 to-[#0f2d4a] z-0 pointer-events-none transition-all duration-300"
+                style={{ width: isFullyPaid ? "calc(100% - 104px)" : `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
               />
 
               {steps.map((step, idx) => {
                 const stepNum = idx + 1;
-                const isCompleted = stepNum < currentStep;
-                const isActive = stepNum === currentStep;
+                const isCompleted = isFullyPaid || stepNum < currentStep;
+                const isActive = !isFullyPaid && stepNum === currentStep;
 
                 let circleClass = "";
                 if (isCompleted) {
-                  circleClass = "border-[#00b050] text-[#00b050] bg-white";
+                  circleClass = "border-blue-600 text-blue-600 bg-blue-50";
                 } else if (isActive) {
-                  circleClass = "border-blue-500 text-blue-500 bg-[#e8f0fe]";
+                  circleClass = "border-sky-500 text-sky-600 bg-white ring-4 ring-sky-100";
                 } else {
                   circleClass = "border-slate-300 text-slate-400 bg-white";
                 }
 
                 return (
-                  <div key={step.num} className="flex flex-col items-center z-10 flex-1">
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-extrabold ${circleClass}`}>
-                      {step.num}
+                  <div key={step.num} className="relative z-10 flex flex-col items-center flex-1">
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold relative z-10 ${circleClass}`}>
+                      {isCompleted ? (
+                        <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-blue-600" strokeWidth={3} />
+                      ) : (
+                        step.num
+                      )}
                     </div>
-                    <span className={`text-[11px] font-bold mt-2 leading-none ${isActive ? "text-blue-600 font-extrabold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
+                    <span className={`text-[11px] font-medium mt-2 leading-none relative z-10 ${isActive ? "text-sky-600 font-bold" : isCompleted ? "text-blue-900 font-semibold" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>
@@ -506,13 +966,13 @@ export default function MyClaims() {
             <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
               
               {/* Modal Header Title */}
-              <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 shrink-0">
-                <h2 className="text-[22px] font-extrabold text-[#0f2d3a] tracking-tight leading-none">
+              <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
+                <h2 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
                   Claim Details – {selectedClaim.claimNumber}
                 </h2>
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="text-slate-400 hover:text-slate-600 text-2xl font-bold border-none bg-transparent cursor-pointer"
+                  className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer"
                 >
                   &times;
                 </button>
@@ -522,50 +982,461 @@ export default function MyClaims() {
               <div className="p-8 flex-1 overflow-y-auto">
                 
                 {/* Dynamic Tracker Wizard */}
-                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
+                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep, selectedClaim.paymentReceipt)}
+
+                {/* Payment Receipt Notification Banner */}
+                {selectedClaim.paymentReceipt && (
+                  <div className="mb-6 p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row items-center justify-between gap-4 transition-all duration-300">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <h4 className="text-[15px] font-semibold text-emerald-950 leading-tight">Payment Transfer Successful</h4>
+                        <p className="text-emerald-700 text-xs font-normal mt-0.5">The branch office has submitted the transaction bank receipt.</p>
+                      </div>
+                    </div>
+                    <a
+                      href={selectedClaim.paymentReceipt.startsWith("http") || selectedClaim.paymentReceipt.startsWith("data:") ? selectedClaim.paymentReceipt : `${API_URL.replace("/api", "")}/uploads/${selectedClaim.paymentReceipt}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-sm transition-all duration-200 no-underline whitespace-nowrap inline-flex items-center gap-1.5"
+                    >
+                      <HugeiconsIcon icon={ViewIcon} className="w-4 h-4" strokeWidth={2} />
+                      View Receipt
+                    </a>
+                  </div>
+                )}
 
                 {/* 2-Column Grid matching mockup inline labels */}
-                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-6 px-2">
+                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-sm font-normal text-slate-700 mb-6 px-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Vehicle:</span>
-                    <span className="font-extrabold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Vehicle:</span>
+                    <span className="font-semibold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Type:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.damageType}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Type:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.damageType}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Est. Amount:</span>
-                    <span className="font-extrabold text-slate-800">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Est. Amount:</span>
+                    <span className="font-semibold text-slate-800">
                       {selectedClaim.amount.startsWith("Rs.") ? "LKR " + selectedClaim.amount.substring(4) : selectedClaim.amount}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Date:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.incidentDate}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Incident Date:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.incidentDate} {selectedClaim.incidentTime ? `@ ${selectedClaim.incidentTime}` : ""}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Officer:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Submitted At:</span>
+                    <span className="font-semibold text-slate-800">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-bold w-28 shrink-0">Location:</span>
-                    <span className="font-extrabold text-slate-800">{selectedClaim.location || "N/A"}</span>
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Officer:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Branch:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 font-medium w-28 shrink-0">Location:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.location || "N/A"}</span>
                   </div>
                 </div>
 
                 {/* Description Text (If available) */}
                 {selectedClaim.description && (
                   <div className="px-2 mb-6">
-                    <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Incident Description</p>
-                    <p className="text-slate-600 text-sm font-medium leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                      "{selectedClaim.description}"
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Incident Description</p>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (isTranslating) return;
+                          if (translatedDesc) {
+                            setTranslatedDesc(null);
+                          } else {
+                            setIsTranslating(true);
+                            const target = lang === "en" ? "si" : lang;
+                            const res = await translateText(selectedClaim.description || "", target as any);
+                            setTranslatedDesc(res);
+                            setIsTranslating(false);
+                          }
+                        }}
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-600 hover:text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                      >
+                        <span>🌐</span>
+                        <span>
+                          {isTranslating
+                            ? "Translating..."
+                            : translatedDesc
+                            ? (lang === "si" ? "මුල් පිටපත පෙන්වන්න" : lang === "ta" ? "அசலைக் காட்டு" : "Show Original")
+                            : lang === "si" ? "සිංහලට පරිවර්තනය" : lang === "ta" ? "தமிழில் மொழிபெயர்" : "Translate (Gemini AI)"}
+                        </span>
+                      </button>
+                    </div>
+                    <p className="text-slate-600 text-sm font-normal leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                      "{translatedDesc || selectedClaim.description}"
                     </p>
+                    {translatedDesc && (
+                      <p className="text-[11px] text-sky-600 font-medium mt-1 flex items-center gap-1">
+                        <span>✨</span> Translated with Gemini AI
+                      </p>
+                    )}
                   </div>
                 )}
+
+                {/* Other Vehicles Involved (If available) */}
+                {selectedClaim.otherVehicleDetails && (
+                  <div className="px-2 mb-6 text-left">
+                    <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
+                    {Array.isArray(selectedClaim.otherVehicleDetails) ? (
+                      selectedClaim.otherVehicleDetails.length === 0 ? (
+                        <div className="text-xs text-slate-500 italic select-none font-normal">No other vehicles involved.</div>
+                      ) : (
+                        <div className="space-y-4">
+                          {selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
+                            <div key={vIdx} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                              <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
+                              <div className="grid grid-cols-2 gap-4 text-left">
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.vehiclePlate || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.driverName || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.insuranceCompany || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                                  <span className="block text-slate-800 text-xs font-semibold mt-0.5">{vehicle.policyNumber || "—"}</span>
+                                </div>
+                              </div>
+
+                              {/* License Photos */}
+                              {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
+                                <div className="pt-2 border-t border-slate-200/60">
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
+                                  <div className="flex flex-wrap gap-2.5">
+                                    {vehicle.licensePhotos.map((url: string, idx: number) => {
+                                      let docUrl = url;
+                                      if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                        docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                      }
+                                      return (
+                                        <div 
+                                          key={idx}
+                                          onClick={() => window.open(docUrl, "_blank")}
+                                          className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                        >
+                                          <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Vehicle Photos */}
+                              {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
+                                <div className="pt-2 border-t border-slate-200/60">
+                                  <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
+                                  <div className="flex flex-wrap gap-2.5">
+                                    {vehicle.vehiclePhotos.map((url: string, idx: number) => {
+                                      let docUrl = url;
+                                      if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                        docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                      }
+                                      return (
+                                        <div 
+                                          key={idx}
+                                          onClick={() => window.open(docUrl, "_blank")}
+                                          className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                        >
+                                          <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    ) : (
+                      (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                          <div className="grid grid-cols-2 gap-4 text-left">
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                              <span className="block text-slate-800 text-xs font-semibold mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
+                            </div>
+                          </div>
+
+                          {/* License Photos */}
+                          {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
+                            <div className="pt-2 border-t border-slate-200/60">
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Vehicle Photos */}
+                          {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
+                            <div className="pt-2 border-t border-slate-200/60">
+                              <span className="block text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+                {/* Attached Accident & Damage Photos Section */}
+                {(() => {
+                  const frontPhotos = selectedClaim.accidentPhotos?.front || [];
+                  const rearPhotos = selectedClaim.accidentPhotos?.rear || [];
+                  const sidePhotos = selectedClaim.accidentPhotos?.side || [];
+                  const allAccidentPhotos: { url: string; label: string; viewType: string }[] = [];
+
+                  frontPhotos.forEach((url, idx) => {
+                    allAccidentPhotos.push({ url, label: `${t.frontView} ${frontPhotos.length > 1 ? `#${idx + 1}` : ""}`, viewType: "Front" });
+                  });
+                  rearPhotos.forEach((url, idx) => {
+                    allAccidentPhotos.push({ url, label: `${t.rearView} ${rearPhotos.length > 1 ? `#${idx + 1}` : ""}`, viewType: "Rear" });
+                  });
+                  sidePhotos.forEach((url, idx) => {
+                    allAccidentPhotos.push({ url, label: `${t.sideView} ${sidePhotos.length > 1 ? `#${idx + 1}` : ""}`, viewType: "Side" });
+                  });
+
+                  return (
+                    <div className="px-2 mb-6 text-left">
+                      <div className="flex items-center justify-between mb-2 select-none">
+                        <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider m-0">
+                          {t.accidentPhotos}
+                        </p>
+                        {allAccidentPhotos.length > 0 && (
+                          <span className="text-[11px] font-semibold text-sky-700 bg-sky-50 border border-sky-200 px-2.5 py-0.5 rounded-full">
+                            {allAccidentPhotos.length} {allAccidentPhotos.length === 1 ? "Photo" : "Photos"}
+                          </span>
+                        )}
+                      </div>
+
+                      {allAccidentPhotos.length === 0 ? (
+                        <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs text-slate-400 italic select-none font-normal">
+                          {t.noPhotos}
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                          {allAccidentPhotos.map((photo, pIdx) => {
+                            const docUrl = getDocUrl(photo.url);
+                            return (
+                              <div
+                                key={pIdx}
+                                onClick={() => setPreviewImage({ url: docUrl, title: `${selectedClaim.claimNumber} - ${photo.label}` })}
+                                className="group relative bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-200 hover:border-sky-400"
+                              >
+                                <div className="aspect-[4/3] w-full overflow-hidden bg-slate-900/5">
+                                  <img
+                                    src={docUrl}
+                                    alt={photo.label}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                  />
+                                </div>
+                                <div className="p-2.5 bg-white border-t border-slate-100 flex items-center justify-between">
+                                  <span className="text-xs font-semibold text-slate-800 truncate">
+                                    {photo.label}
+                                  </span>
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 group-hover:bg-sky-100 group-hover:text-sky-800 transition-colors">
+                                    {photo.viewType}
+                                  </span>
+                                </div>
+                                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                  <span className="bg-white/90 text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
+                                    <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                    {t.view}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Driver's License Photos Section */}
+                {(() => {
+                  const licFront = selectedClaim.drivingLicense?.front || [];
+                  const licRear = selectedClaim.drivingLicense?.rear || [];
+                  const allLicPhotos: { url: string; label: string; side: string }[] = [];
+
+                  licFront.forEach((url, idx) => {
+                    allLicPhotos.push({ url, label: `${t.licenseFront} ${licFront.length > 1 ? `#${idx + 1}` : ""}`, side: "Front" });
+                  });
+                  licRear.forEach((url, idx) => {
+                    allLicPhotos.push({ url, label: `${t.licenseRear} ${licRear.length > 1 ? `#${idx + 1}` : ""}`, side: "Rear" });
+                  });
+
+                  if (allLicPhotos.length === 0) return null;
+
+                  return (
+                    <div className="px-2 mb-6 text-left">
+                      <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">
+                        {t.drivingLicense}
+                      </p>
+                      <div className="grid grid-cols-2 gap-3">
+                        {allLicPhotos.map((lic, lIdx) => {
+                          const docUrl = getDocUrl(lic.url);
+                          return (
+                            <div
+                              key={lIdx}
+                              onClick={() => setPreviewImage({ url: docUrl, title: `${selectedClaim.claimNumber} - ${lic.label}` })}
+                              className="group relative bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all duration-200 hover:border-blue-400"
+                            >
+                              <div className="aspect-[16/10] w-full overflow-hidden bg-slate-900/5">
+                                <img
+                                  src={docUrl}
+                                  alt={lic.label}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                />
+                              </div>
+                              <div className="p-2.5 bg-white border-t border-slate-100 flex items-center justify-between">
+                                <span className="text-xs font-semibold text-slate-800 truncate">
+                                  {lic.label}
+                                </span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                                  {lic.side}
+                                </span>
+                              </div>
+                              <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                <span className="bg-white/90 text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center gap-1.5">
+                                  <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                                  {t.view}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Additional Attached Documents & Files Section */}
+                {(() => {
+                  const docs: { name: string; url: string; uploadedAt?: string; uploadedBy?: string }[] = [];
+                  (selectedClaim.additionalDocuments || []).forEach((d) => {
+                    docs.push({
+                      name: d.name,
+                      url: d.url,
+                      uploadedAt: d.uploadedAt,
+                      uploadedBy: d.uploadedBy || "Policy Holder"
+                    });
+                  });
+
+                  if (docs.length === 0) return null;
+
+                  return (
+                    <div className="px-2 mb-6 text-left">
+                      <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">
+                        {t.attachedDocs}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        {docs.map((doc, dIdx) => {
+                          const docUrl = getDocUrl(doc.url);
+                          return (
+                            <div
+                              key={dIdx}
+                              onClick={() => {
+                                if (docUrl.endsWith(".pdf") || docUrl.includes(".pdf")) {
+                                  window.open(docUrl, "_blank");
+                                } else {
+                                  setPreviewImage({ url: docUrl, title: doc.name });
+                                }
+                              }}
+                              className="bg-slate-50 border border-slate-200 hover:bg-slate-100/80 rounded-2xl p-3.5 flex items-center justify-between gap-3 cursor-pointer transition-all shadow-xs group"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-9 h-9 rounded-xl bg-blue-100/80 text-blue-700 flex items-center justify-center shrink-0">
+                                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                                </div>
+                                <div className="min-w-0">
+                                  <h5 className="text-xs font-semibold text-slate-800 truncate m-0 group-hover:text-blue-950">
+                                    {doc.name}
+                                  </h5>
+                                  <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
+                                    {doc.uploadedBy} {doc.uploadedAt ? `• ${formatDateString(doc.uploadedAt)}` : ""}
+                                  </span>
+                                </div>
+                              </div>
+                              <span className="text-xs text-blue-600 font-semibold px-2.5 py-1 bg-white rounded-lg border border-slate-200 shrink-0 group-hover:border-blue-300">
+                                {t.view}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Messages & Notifications Section */}
                 <div className="px-2 mt-4 mb-2">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
+                  <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
                   {(() => {
                     const filteredMessages = (selectedClaim.messages || []).filter((msg: any) => msg.recipient !== "Agent");
                     if (filteredMessages.length > 0) {
@@ -574,10 +1445,10 @@ export default function MyClaims() {
                           {filteredMessages.map((msg: any, index: number) => (
                             <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
                               <div className="flex justify-between items-center text-[11px] select-none">
-                                <span className="font-extrabold text-[#0f2d3a]">{msg.sender}</span>
-                                <span className="text-slate-400 font-semibold">{formatDateString(msg.sentAt)}</span>
+                                <span className="font-semibold text-[#0f2d3a]">{msg.sender}</span>
+                                <span className="text-slate-400 font-normal">{formatDateString(msg.sentAt)}</span>
                               </div>
-                              <p className="text-slate-700 text-xs font-semibold leading-relaxed m-0">
+                              <p className="text-slate-700 text-xs font-normal leading-relaxed m-0">
                                 {msg.message}
                               </p>
                             </div>
@@ -586,7 +1457,7 @@ export default function MyClaims() {
                       );
                     } else {
                       return (
-                        <p className="text-slate-500 text-xs italic font-medium bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
+                        <p className="text-slate-500 text-xs italic font-normal bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
                           No notifications or messages have been sent for this claim.
                         </p>
                       );
@@ -594,115 +1465,95 @@ export default function MyClaims() {
                   })()}
                 </div>
 
-                {/* Policy Holder Uploaded Documents / Photos Display Section */}
-                <div className="px-2 mt-6 border-t border-slate-100 pt-5">
-                  <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-3 select-none">Uploaded Documents & Photos</p>
-                  {!detailedClaim ? (
-                    <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
-                      <svg className="animate-spin h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
-                      <span>Loading uploaded documents...</span>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Accident Photos */}
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-wide">Accident Photos</span>
-                        {(!detailedClaim.accidentPhotos || 
-                          ((detailedClaim.accidentPhotos.front || []).length === 0 && 
-                           (detailedClaim.accidentPhotos.rear || []).length === 0 && 
-                           (detailedClaim.accidentPhotos.side || []).length === 0)) ? (
-                          <span className="text-xs text-slate-500 italic font-semibold">No accident photos uploaded</span>
-                        ) : (
-                          <div className="flex flex-wrap gap-3">
-                            {(detailedClaim.accidentPhotos.front || []).map((url: string, index: number) => (
-                              <a key={`front-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
-                                <img src={url} alt="Accident Front" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">Front</div>
-                              </a>
-                            ))}
-                            {(detailedClaim.accidentPhotos.rear || []).map((url: string, index: number) => (
-                              <a key={`rear-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
-                                <img src={url} alt="Accident Rear" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">Rear</div>
-                              </a>
-                            ))}
-                            {(detailedClaim.accidentPhotos.side || []).map((url: string, index: number) => (
-                              <a key={`side-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
-                                <img src={url} alt="Accident Side" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">Side</div>
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Driving License */}
-                      <div className="flex flex-col gap-2">
-                        <span className="text-[11px] text-slate-400 font-extrabold uppercase tracking-wide">Driving License</span>
-                        {(!detailedClaim.drivingLicense || 
-                          ((detailedClaim.drivingLicense.front || []).length === 0 && 
-                           (detailedClaim.drivingLicense.rear || []).length === 0)) ? (
-                          <span className="text-xs text-slate-500 italic font-semibold">No driving license photos uploaded</span>
-                        ) : (
-                          <div className="flex flex-wrap gap-3">
-                            {(detailedClaim.drivingLicense.front || []).map((url: string, index: number) => (
-                              <a key={`lic-front-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
-                                <img src={url} alt="License Front" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">License Front</div>
-                              </a>
-                            ))}
-                            {(detailedClaim.drivingLicense.rear || []).map((url: string, index: number) => (
-                              <a key={`lic-rear-${index}`} href={url} target="_blank" rel="noopener noreferrer" className="relative group w-24 h-24 rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all bg-slate-100 flex items-center justify-center">
-                                <img src={url} alt="License Rear" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-all">License Rear</div>
-                              </a>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Warning Alert Box matching mockup */}
+                {/* Warning Alert Box: Documents Requested */}
                 {selectedClaim.documentsRequested && getUserRequestedDocs(selectedClaim).length > 0 && (
                   <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2 mt-4">
-                    <h4 className="text-[#9c3535] font-extrabold text-sm mb-1.5">Documents Requested</h4>
-                    <p className="text-[#aa4f4f] text-[13px] font-semibold leading-relaxed mb-3">
+                    <h4 className="text-[#9c3535] font-semibold text-sm mb-1.5">Documents Requested</h4>
+                    <p className="text-[#aa4f4f] text-[13px] font-normal leading-relaxed mb-3">
                       The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
                     </p>
+                    <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
+                      {getUserRequestedDocs(selectedClaim).map((doc) => {
+                        const note = getDocRequestNote(selectedClaim, doc);
+                        const reqTime = getDocRequestTime(selectedClaim, doc);
+                        return (
+                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-normal text-xs w-full">
+                            <span className="w-2 h-2 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
+                              <span className="font-semibold">{doc}</span>
+                              {reqTime && (
+                                <span className="text-red-600 font-semibold">
+                                  (Requested: {reqTime} by {getDocRequestSender(selectedClaim, doc)})
+                                </span>
+                              )}
+                              {note && (
+                                <span className="col-span-1 sm:col-span-2 text-[11px] font-normal text-slate-500 italic mt-0.5 pl-0.5">
+                                  Note: "{note}"
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <Link
+                      href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    >
+                      Go to Documents
+                    </Link>
+                  </div>
+                )}
+
+                {/* Success/Status Alert Box: Documents Submitted – Under Review */}
+                {getUserRequestedDocs(selectedClaim).length === 0 && getSubmittedUserDocs(selectedClaim).length > 0 && (
+                  <div className="bg-emerald-50/90 border border-emerald-200 rounded-[20px] p-6 mb-2 mt-4 transition-all">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                        <HugeiconsIcon icon={Tick01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
+                      </div>
+                      <h4 className="text-emerald-900 font-semibold text-sm m-0">Documents Submitted – Under Review</h4>
+                    </div>
+                    <p className="text-emerald-800 text-[13px] font-normal leading-relaxed mb-3">
+                      The requested document(s) have been successfully submitted and are currently being reviewed by our insurance team:
+                    </p>
                     <ul className="list-none flex flex-col gap-2 mb-4 pl-1">
-                      {getUserRequestedDocs(selectedClaim).map((doc) => (
-                        <li key={doc} className="flex items-center gap-2 text-[#aa4f4f] font-bold text-xs">
-                          <span className="w-2 h-2 rounded-full bg-[#df3d3d] shrink-0" />
-                          <span>{doc}</span>
+                      {getSubmittedUserDocs(selectedClaim).map((doc, idx) => (
+                        <li key={idx} className="flex items-center justify-between gap-2 text-emerald-900 font-medium text-xs bg-white/80 border border-emerald-100 rounded-xl px-3.5 py-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="font-semibold truncate">{doc.name}</span>
+                            {doc.uploadedAt && (
+                              <span className="text-[11px] text-emerald-700/80 font-normal">
+                                (Submitted: {formatDateString(doc.uploadedAt)})
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-md shrink-0">
+                            Submitted
+                          </span>
                         </li>
                       ))}
                     </ul>
                     <Link
-                      href="/Policy_Holder/Documents"
-                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-extrabold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                      href={`/Policy_Holder/Documents`}
+                      className="inline-block bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
                     >
-                      Go to Documents
+                      View in Documents
                     </Link>
                   </div>
                 )}
               </div>
 
               {/* Modal Footer */}
-              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center shrink-0">
-                {selectedClaim.currentStep && selectedClaim.currentStep < 2 && (!selectedClaim.officer || selectedClaim.officer === "Not Assigned") && (!selectedClaim.assignedAgent || selectedClaim.assignedAgent === "") && selectedClaim.status !== "Cancelled" ? (
+              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-shrink-0">
+                {selectedClaim.currentStep && selectedClaim.currentStep < 2 && (!selectedClaim.officer || selectedClaim.officer === "Not Assigned") && selectedClaim.status !== "Cancelled" ? (
                   <button
                     onClick={() => handleCancelClaim(selectedClaim.claimNumber)}
                     disabled={isCancellingClaim}
-                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-extrabold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                    className="bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white font-semibold text-xs px-5 py-3 rounded-full transition-all border-none cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
+                    <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" strokeWidth={2.5} />
                     {isCancellingClaim ? "Cancelling Claim..." : "Cancel Claim"}
                   </button>
                 ) : (
@@ -711,7 +1562,7 @@ export default function MyClaims() {
 
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-extrabold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(15,45,58,0.25)] active:scale-95 flex items-center justify-center"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95 flex items-center justify-center"
                 >
                   Close
                 </button>
@@ -722,71 +1573,54 @@ export default function MyClaims() {
         );
       })()}
 
-                  {/* Custom Popup Modal */}
-      {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
-            
-            {/* Header/Title with clean inline icon */}
-            <div className="flex items-center gap-3.5">
-              {customPopup.type === "success" ? (
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              ) : customPopup.type === "confirm" ? (
-                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-              )}
-              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
-                {customPopup.title}
-              </h3>
-            </div>
-
-            {/* Message Body */}
-            <div>
-              <p className="text-slate-500 text-[13px] font-semibold leading-relaxed">
-                {customPopup.message}
-              </p>
-            </div>
-
-            {/* Footer Buttons */}
-            <div className="flex justify-end gap-2.5 mt-2 select-none">
-              {customPopup.type === "confirm" ? (
-                <>
-                  <button
-                    onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCustomPopup({ ...customPopup, show: false });
-                      if (customPopup.onConfirm) customPopup.onConfirm();
-                    }}
-                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
-                  >
-                    Confirm
-                  </button>
-                </>
-              ) : (
-                <button
-                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+      {/* Full-Screen Image Lightbox Preview Modal */}
+      {previewImage && (
+        <div
+          className="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center z-[60] p-4 transition-all duration-300"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div
+            className="bg-slate-900 border border-slate-700/70 rounded-3xl max-w-4xl w-full overflow-hidden shadow-2xl flex flex-col max-h-[92vh] animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-slate-900/90 text-white">
+              <span className="font-semibold text-sm tracking-wide text-slate-200 truncate">
+                {previewImage.title}
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewImage.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-sky-400 hover:text-sky-300 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-all no-underline font-medium"
                 >
-                  OK
+                  Open Original ↗
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewImage(null)}
+                  className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors border-none bg-transparent cursor-pointer text-lg leading-none"
+                >
+                  ✕
                 </button>
+              </div>
+            </div>
+
+            {/* Image Preview Container */}
+            <div className="p-4 flex items-center justify-center bg-slate-950/60 overflow-auto max-h-[calc(92vh-70px)]">
+              {previewImage.url.endsWith(".pdf") || previewImage.url.includes(".pdf") ? (
+                <iframe
+                  src={previewImage.url}
+                  title="Document Preview"
+                  className="w-full h-[65vh] rounded-xl border border-slate-800"
+                />
+              ) : (
+                <img
+                  src={previewImage.url}
+                  alt={previewImage.title}
+                  className="max-w-full max-h-[75vh] object-contain rounded-xl shadow-lg"
+                />
               )}
             </div>
           </div>

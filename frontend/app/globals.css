@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@theme {
+  --color-red-650: #df3d3d;
+  --color-red-750: #c53030;
+  --color-slate-350: #b2c1d3;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -14,8 +20,19 @@
   }
 }
 
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-afacad), Arial, Helvetica, sans-serif;
+  scrollbar-gutter: stable;
 }
+
+main {
+  scrollbar-gutter: stable;
+}
+
+

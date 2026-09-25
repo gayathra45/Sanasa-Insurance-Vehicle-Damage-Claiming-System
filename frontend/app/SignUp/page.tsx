@@ -5,6 +5,18 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import LoginFooter from "@/app/Components/Login/Footer";
 import { API_URL } from "@/app/config";
+import { sriLankaBanks } from "../utils/banks";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AlertCircleIcon,
+  UserIcon,
+  Call02Icon,
+  Calendar01Icon,
+  ArrowDown01Icon,
+  ViewIcon,
+  ViewOffSlashIcon,
+  BankIcon,
+} from "@hugeicons/core-free-icons";
 
 // Province and Cities Sri Lanka Data
 const provincesData = [
@@ -19,8 +31,154 @@ const provincesData = [
   { id: "sabaragamuwa", name: "Sabaragamuwa Province", cities: ["Ratnapura", "Kegalle", "Balangoda", "Mawanella", "Embilipitiya"] }
 ];
 
+const translations = {
+  en: {
+    createAccount: "Create an Account",
+    descHint: "Follow the steps to register your account with Sanasa General Insurance.",
+    stepIndicator: "STEP 01 OF 04",
+    personalDetails: "Personal Details",
+    firstName: "First Name *",
+    lastName: "Last Name *",
+    nicNum: "NIC Number *",
+    mobileNum: "Mobile Number *",
+    emailAddr: "Email Address *",
+    dob: "Date of Birth *",
+    resAddress: "Residential Address *",
+    province: "Province *",
+    selectProvince: "Select Province",
+    city: "City *",
+    selectCity: "Select City",
+    password: "Password *",
+    confirmPassword: "Confirm Password *",
+    bankTitle: "Bank Details (For Payouts)",
+    bankName: "Bank Name *",
+    selectBank: "Select Bank",
+    branchName: "Branch Name *",
+    selectBranch: "Select Branch",
+    accountNum: "Account Number *",
+    accountHolder: "Account Holder Name *",
+    backBtn: "Back to Login",
+    nextBtn: "Next",
+    fillAll: "Please fill out all required fields marked with *",
+    fillBank: "Please fill out all required bank details fields.",
+    nicAlert: "Please enter a valid NIC (10-12 characters/digits).",
+    mobileAlert: "Mobile number must be exactly 10 digits.",
+    emailAlert: "Please enter a valid email address.",
+    passLength: "Password must be between 6 and 12 characters.",
+    passChar: "Password must contain at least one number or special character.",
+    passMatch: "Passwords do not match!",
+    verifyFail: "Failed to verify credentials with the database.",
+    emailExist: "This email address is already registered.",
+    nicExist: "This NIC number is already registered.",
+    connError: "Could not connect to verification server. Please try again."
+  },
+  si: {
+    createAccount: "ගිණුමක් සාදන්න",
+    descHint: "සනස සාමාන්‍ය රක්ෂණය සමඟ ඔබේ ගිණුම ලියාපදිංචි කිරීමට පියවර අනුගමනය කරන්න.",
+    stepIndicator: "පියවර 04 න් 01 වන පියවර",
+    personalDetails: "පුද්ගලික විස්තර",
+    firstName: "පළමු නම *",
+    lastName: "වාසගම *",
+    nicNum: "ජාතික හැඳුනුම්පත් අංකය *",
+    mobileNum: "ජංගම දුරකථන අංකය *",
+    emailAddr: "විද්‍යුත් තැපැල් ලිපිනය *",
+    dob: "උපන් දිනය *",
+    resAddress: "පදිංචි ලිපිනය *",
+    province: "පළාත *",
+    selectProvince: "පළාත තෝරන්න",
+    city: "නගරය *",
+    selectCity: "නගරය තෝරන්න",
+    password: "මුරපදය *",
+    confirmPassword: "මුරපදය තහවුරු කරන්න *",
+    bankTitle: "බැංකු විස්තර (ගෙවීම් සඳහා)",
+    bankName: "බැංකුවේ නම *",
+    selectBank: "බැංකුව තෝරන්න",
+    branchName: "ශාඛාවේ නම *",
+    selectBranch: "ශාඛාව තෝරන්න",
+    accountNum: "ගිණුම් අංකය *",
+    accountHolder: "ගිණුම් හිමියාගේ නම *",
+    backBtn: "ලොගින් පිටුවට",
+    nextBtn: "ඊළඟ",
+    fillAll: "කරුණාකර * ලකුණු කළ සියලුම ක්ෂේත්‍ර පුරවන්න",
+    fillBank: "කරුණාකර සියලුම අනිවාර්ය බැංකු විස්තර පුරවන්න.",
+    nicAlert: "කරුණාකර වලංගු ජාතික හැඳුනුම්පත් අංකයක් ඇතුළත් කරන්න (අක්ෂර/ඉලක්කම් 10-12).",
+    mobileAlert: "ජංගම දුරකථන අංකය හරියටම ඉලක්කම් 10ක් විය යුතුය.",
+    emailAlert: "කරුණාකර වලංගු විද්‍යුත් තැපැල් ලිපිනයක් ඇතුළත් කරන්න.",
+    passLength: "මුරපදය අක්ෂර 6ත් 12ත් අතර විය යුතුය.",
+    passChar: "මුරපදයේ අවම වශයෙන් එක් ඉලක්කමක් හෝ විශේෂ අක්ෂරයක් තිබිය යුතුය.",
+    passMatch: "මුරපද එකිනෙකට නොගැලපේ!",
+    verifyFail: "දත්ත ගබඩාව සමඟ අක්තපත්‍ර සත්‍යාපනය කිරීමට අපොහොසත් විය.",
+    emailExist: "මෙම විද්‍යුත් තැපැල් ලිපිනය දැනටමත් ලියාපදිංචි කර ඇත.",
+    nicExist: "මෙම හැඳුනුම්පත් අංකය දැනටමත් ලියාපදිංචි කර ඇත.",
+    connError: "සත්‍යාපන සේවාදායකයට සම්බන්ධ විය නොහැක. කරුණාකර නැවත උත්සාහ කරන්න."
+  },
+  ta: {
+    createAccount: "கணக்கை உருவாக்கு",
+    descHint: "சனச பொதுக் காப்பீட்டில் உங்கள் கணக்கைப் பதிவு செய்ய படிகளைப் பின்பற்றவும்.",
+    stepIndicator: "படி 01 இல் 04",
+    personalDetails: "தனிப்பட்ட விவரங்கள்",
+    firstName: "முதல் பெயர் *",
+    lastName: "குடும்பப் பெயர் *",
+    nicNum: "அடையாள அட்டை எண் *",
+    mobileNum: "கைபேசி எண் *",
+    emailAddr: "மின்னஞ்சல் முகவரி *",
+    dob: "பிறந்த தேதி *",
+    resAddress: "வீட்டு முகவரி *",
+    province: "மாகாணம் *",
+    selectProvince: "மாகாணத்தைத் தேர்ந்தெடு",
+    city: "நகரம் *",
+    selectCity: "நகரத்தைத் தேர்ந்தெடு",
+    password: "கடவுச்சொல் *",
+    confirmPassword: "கடவுச்சொல்லை உறுதிப்படுத்துக *",
+    bankTitle: "வங்கி விவரங்கள் (பணப் பரிமாற்றத்திற்கு)",
+    bankName: "வங்கி பெயர் *",
+    selectBank: "வங்கியைத் தேர்ந்தெடு",
+    branchName: "கிளை பெயர் *",
+    selectBranch: "கிளையைத் தேர்ந்தெடு",
+    accountNum: "கணக்கு எண் *",
+    accountHolder: "கணக்கு வைத்திருப்பவர் பெயர் *",
+    backBtn: "உள்நுழைவுக்குத் திரும்பு",
+    nextBtn: "அடுத்து",
+    fillAll: "தயவுசெய்து * குறியிடப்பட்ட அனைத்து புலங்களையும் நிரப்பவும்",
+    fillBank: "தயவுசெய்து தேவையான அனைத்து வங்கி விவரங்களையும் நிரப்பவும்.",
+    nicAlert: "செல்லுபடியாகும் அடையாள அட்டை எண்ணை உள்ளிடவும் (10-12 அட்சரங்கள்/இலக்கங்கள்).",
+    mobileAlert: "கைபேசி எண் சரியாக 10 இலக்கங்களாக இருக்க வேண்டும்.",
+    emailAlert: "செல்லுபடியாகும் மின்னஞ்சல் முகவரியை உள்ளிடவும்.",
+    passLength: "கடவுச்சொல் 6 முதல் 12 எழுத்துகளுக்குள் இருக்க வேண்டும்.",
+    passChar: "கடவுச்சொல்லில் குறைந்தபட்சம் ஒரு எண் அல்லது சிறப்பு எழுத்து இருக்க வேண்டும்.",
+    passMatch: "கடவுச்சொற்கள் பொருந்தவில்லை!",
+    verifyFail: "தரவுத்தளத்துடன் நற்சான்றிதழ்களைச் சரிபார்க்க முடியவில்லை.",
+    emailExist: "இந்த மின்னஞ்சல் முகவரி ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது.",
+    nicExist: "இந்த அடையாள அட்டை எண் ஏற்கனவே பதிவு செய்யப்பட்டுள்ளது.",
+    connError: "சரிபார்ப்பு சேவையகத்துடன் இணைக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும்."
+  }
+};
+
 export default function SignUp() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
 
   // Form Fields
   const [firstName, setFirstName] = useState("");
@@ -121,49 +279,49 @@ export default function SignUp() {
     setValidationError("");
 
     if (!firstName || !lastName || !nic || !mobile || !email || !dob || !address || !province || !city || !password || !confirmPassword) {
-      setValidationError("Please fill out all required fields marked with *");
+      setValidationError(t.fillAll);
       return;
     }
 
     if (!bankName || !branchName || !accountNumber || !accountHolderName) {
-      setValidationError("Please fill out all required bank details fields.");
+      setValidationError(t.fillBank);
       return;
     }
 
-    // NIC format check: 9-12 characters, numbers only, last character can be V/v/X/x.
+    // NIC format check: 10-12 characters/digits.
     const cleanNic = nic.trim();
-    const nicRegex = /^\d{8,11}[0-9vVxX]$/;
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
     if (!nicRegex.test(cleanNic)) {
-      setValidationError("Please enter a valid NIC (9-12 characters, numbers only, last character can be V or X).");
+      setValidationError(t.nicAlert);
       return;
     }
 
-    // Mobile number check: exactly 9 or 10 digits
+    // Mobile number check: exactly 10 digits
     const cleanMobile = mobile.replace(/[-+()\s]/g, "");
-    if (!/^\d{9,10}$/.test(cleanMobile)) {
-      setValidationError("Mobile number must be exactly 9 or 10 digits.");
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      setValidationError(t.mobileAlert);
       return;
     }
 
     // Email check
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setValidationError("Please enter a valid email address.");
+      setValidationError(t.emailAlert);
       return;
     }
 
     // Password check: 6-12 characters, with conditions (numbers or special chars)
     if (password.length < 6 || password.length > 12) {
-      setValidationError("Password must be between 6 and 12 characters.");
+      setValidationError(t.passLength);
       return;
     }
     if (!/[0-9]/.test(password) && !/[^A-Za-z0-9]/.test(password)) {
-      setValidationError("Password must contain at least one number or special character.");
+      setValidationError(t.passChar);
       return;
     }
 
     if (password !== confirmPassword) {
-      setValidationError("Passwords do not match!");
+      setValidationError(t.passMatch);
       return;
     }
 
@@ -171,19 +329,19 @@ export default function SignUp() {
     try {
       const res = await fetch(`${API_URL}/signup/check?email=${encodeURIComponent(email)}&nic=${encodeURIComponent(cleanNic)}`);
       if (!res.ok) {
-        throw new Error("Failed to verify credentials with the database.");
+        throw new Error(t.verifyFail);
       }
       const data = await res.json();
       if (data.emailExists) {
-        setValidationError("This email address is already registered.");
+        setValidationError(t.emailExist);
         return;
       }
       if (data.nicExists) {
-        setValidationError("This NIC number is already registered.");
+        setValidationError(t.nicExist);
         return;
       }
     } catch (err: any) {
-      setValidationError("Could not connect to verification server. Please try again.");
+      setValidationError(t.connError);
       return;
     }
     
@@ -230,7 +388,7 @@ export default function SignUp() {
       >
         {/* Background Visual teal/blue depth effects */}
         <div className="absolute inset-0 bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
         
         {/* Modern glowing ambient lights */}
         <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px] pointer-events-none" />
@@ -241,11 +399,11 @@ export default function SignUp() {
           
           {/* Header Title */}
           <div className="text-center select-none flex flex-col gap-2">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] leading-tight">
-              Create an Account
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white tracking-tight drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] leading-tight">
+              {t.createAccount}
             </h1>
             <p className="text-white/75 text-sm sm:text-base font-medium max-w-md mx-auto">
-              Follow the steps to register your account with Sanasa General Insurance.
+              {t.descHint}
             </p>
           </div>
 
@@ -270,10 +428,10 @@ export default function SignUp() {
             {/* Step Label Container */}
             <div className="flex flex-col items-center md:items-start text-center md:text-left gap-0.5 mt-1">
               <span className="text-xs md:text-sm font-bold text-[#ff9800] tracking-widest uppercase">
-                STEP 01 OF 04
+                {t.stepIndicator}
               </span>
-              <h2 className="text-xl md:text-2xl font-extrabold text-white">
-                Personal Details
+              <h2 className="text-xl md:text-2xl font-bold text-white">
+                {t.personalDetails}
               </h2>
             </div>
           </div>
@@ -284,9 +442,7 @@ export default function SignUp() {
             {/* Show Validation Error Banner if present */}
             {validationError && (
               <div className="bg-red-500/20 border-l-4 border-red-500 p-4 rounded-xl text-white text-sm flex items-center gap-3 animate-pulse">
-                <svg className="w-5 h-5 shrink-0 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
+                <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5 shrink-0 text-red-400" strokeWidth={2} />
                 <span>{validationError}</span>
               </div>
             )}
@@ -297,12 +453,10 @@ export default function SignUp() {
               {/* Title & Icon */}
               <div className="flex items-center gap-3 border-b border-white/15 pb-4">
                 <div className="w-10 h-10 rounded-2xl bg-orange-500/20 flex items-center justify-center border border-orange-400/40 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.25)]">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                  </svg>
+                  <HugeiconsIcon icon={UserIcon} className="w-6 h-6" strokeWidth={2} />
                 </div>
                 <h2 className="text-white text-2xl font-bold tracking-wide select-none">
-                  Personal Details
+                  {t.personalDetails}
                 </h2>
               </div>
 
@@ -312,7 +466,7 @@ export default function SignUp() {
                 {/* First Name */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    First Name <span className="text-red-500 font-bold">*</span>
+                    {t.firstName}
                   </label>
                   <input
                     type="text"
@@ -327,7 +481,7 @@ export default function SignUp() {
                 {/* Last Name */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Last Name <span className="text-red-500 font-bold">*</span>
+                    {t.lastName}
                   </label>
                   <input
                     type="text"
@@ -342,7 +496,7 @@ export default function SignUp() {
                 {/* NIC Number */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    NIC Number <span className="text-red-500 font-bold">*</span>
+                    {t.nicNum}
                   </label>
                   <input
                     type="text"
@@ -357,7 +511,7 @@ export default function SignUp() {
                 {/* Mobile Number */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Mobile Number <span className="text-red-500 font-bold">*</span>
+                    {t.mobileNum}
                   </label>
                   <div className="relative">
                     <input
@@ -369,9 +523,7 @@ export default function SignUp() {
                       placeholder="0771234567"
                     />
                     <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-2.824-1.502-5.187-3.865-6.69-6.69l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-                      </svg>
+                      <HugeiconsIcon icon={Call02Icon} className="w-5 h-5 text-slate-700" strokeWidth={2} />
                     </span>
                   </div>
                 </div>
@@ -379,7 +531,7 @@ export default function SignUp() {
                 {/* Email Address */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Email Address <span className="text-red-500 font-bold">*</span>
+                    {t.emailAddr}
                   </label>
                   <input
                     type="email"
@@ -394,7 +546,7 @@ export default function SignUp() {
                 {/* Date of Birth */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Date of Birth <span className="text-red-500 font-bold">*</span>
+                    {t.dob}
                   </label>
                   <div className="relative">
                     <input
@@ -408,9 +560,7 @@ export default function SignUp() {
                       className="w-full bg-white text-slate-800 rounded-full py-3 pl-6 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
                     />
                     <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                      <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5m-9-6h.008v.008H12v-.008ZM12 15h.008v.008H12V15Zm0 2.25h.008v.008H12v-.008ZM9.75 15h.008v.008H9.75V15Zm0 2.25h.008v.008H9.75v-.008ZM7.5 15h.008v.008H7.5V15Zm0 2.25h.008v.008H7.5v-.008Zm6.75-4.5h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V15Zm0 2.25h.008v.008h-.008v-.008Zm2.25-4.5h.008v.008H16.5v-.008Zm0 2.25h.008v.008H16.5V15Z" />
-                      </svg>
+                      <HugeiconsIcon icon={Calendar01Icon} className="w-5 h-5 text-slate-700" strokeWidth={2} />
                     </span>
                   </div>
                 </div>
@@ -418,7 +568,7 @@ export default function SignUp() {
                 {/* Residential Address */}
                 <div className="flex flex-col gap-2 md:col-span-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Residential Address <span className="text-red-500 font-bold">*</span>
+                    {t.resAddress}
                   </label>
                   <textarea
                     required
@@ -433,7 +583,7 @@ export default function SignUp() {
                 {/* Province Selection */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Province <span className="text-red-500 font-bold">*</span>
+                    {t.province}
                   </label>
                   <div className="relative">
                     <select
@@ -442,15 +592,13 @@ export default function SignUp() {
                       onChange={(e) => setProvince(e.target.value)}
                       className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none"
                     >
-                      <option value="" disabled>Select Province</option>
+                      <option value="" disabled>{t.selectProvince}</option>
                       {provincesData.map((p) => (
                         <option key={p.id} value={p.name}>{p.name}</option>
                       ))}
                     </select>
                     <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-700">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                      </svg>
+                      <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     </span>
                   </div>
                 </div>
@@ -458,7 +606,7 @@ export default function SignUp() {
                 {/* City Selection */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    City <span className="text-red-500 font-bold">*</span>
+                    {t.city}
                   </label>
                   <div className="relative">
                     <select
@@ -468,15 +616,13 @@ export default function SignUp() {
                       disabled={!province}
                       className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      <option value="" disabled>Select City</option>
+                      <option value="" disabled>{t.selectCity}</option>
                       {activeCities.map((c) => (
                         <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
                     <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-700">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                      </svg>
+                      <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     </span>
                   </div>
                 </div>
@@ -484,7 +630,7 @@ export default function SignUp() {
                 {/* Password Field */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Password <span className="text-red-500 font-bold">*</span>
+                    {t.password}
                   </label>
                   <div className="relative">
                     <input
@@ -498,17 +644,12 @@ export default function SignUp() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer"
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer border-none bg-transparent"
                     >
                       {showPassword ? (
-                        <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-                        </svg>
+                        <HugeiconsIcon icon={ViewOffSlashIcon} className="w-5 h-5 text-slate-700" strokeWidth={2} />
                       ) : (
-                        <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-                        </svg>
+                        <HugeiconsIcon icon={ViewIcon} className="w-5 h-5 text-slate-700" strokeWidth={2} />
                       )}
                     </button>
                   </div>
@@ -551,7 +692,7 @@ export default function SignUp() {
                 {/* Confirm Password */}
                 <div className="flex flex-col gap-2">
                   <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                    Confirm Password <span className="text-red-500 font-bold">*</span>
+                    {t.confirmPassword}
                   </label>
                   <div className="relative">
                     <input
@@ -565,17 +706,12 @@ export default function SignUp() {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer"
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer border-none bg-transparent"
                     >
                       {showConfirmPassword ? (
-                        <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-                        </svg>
+                        <HugeiconsIcon icon={ViewOffSlashIcon} className="w-5 h-5 text-slate-700" strokeWidth={2} />
                       ) : (
-                        <svg className="w-5 h-5 text-slate-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z" />
-                        </svg>
+                        <HugeiconsIcon icon={ViewIcon} className="w-5 h-5 text-slate-700" strokeWidth={2} />
                       )}
                     </button>
                   </div>
@@ -586,50 +722,68 @@ export default function SignUp() {
                   <div className="flex items-center gap-3 pb-2">
                     <div className="w-10 h-10 rounded-2xl bg-orange-500/20 flex items-center justify-center border border-orange-400/40 text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.25)]">
                       {/* Bank Card SVG Icon */}
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-                      </svg>
+                      <HugeiconsIcon icon={BankIcon} className="w-6 h-6" strokeWidth={2} />
                     </div>
                     <h2 className="text-white text-2xl font-bold tracking-wide select-none">
-                      Bank Details (For Payouts)
+                      {t.bankTitle}
                     </h2>
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Bank Name */}
+                    {/* Bank Name Dropdown */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                        Bank Name <span className="text-red-500 font-bold">*</span>
+                        {t.bankName}
                       </label>
-                      <input
-                        type="text"
-                        required
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                        placeholder="e.g. Bank of Ceylon"
-                      />
+                      <div className="relative">
+                        <select
+                          required
+                          value={bankName}
+                          onChange={(e) => {
+                            setBankName(e.target.value);
+                            setBranchName(""); // reset branch selection when bank changes
+                          }}
+                          className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none"
+                        >
+                          <option value="" disabled>{t.selectBank}</option>
+                          {Object.keys(sriLankaBanks).map((b) => (
+                            <option key={b} value={b}>{b}</option>
+                          ))}
+                        </select>
+                        <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-700">
+                          <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                        </span>
+                      </div>
                     </div>
 
-                    {/* Branch Name */}
+                    {/* Branch Name Dropdown */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                        Branch Name <span className="text-red-500 font-bold">*</span>
+                        {t.branchName}
                       </label>
-                      <input
-                        type="text"
-                        required
-                        value={branchName}
-                        onChange={(e) => setBranchName(e.target.value)}
-                        className="w-full bg-white text-slate-800 rounded-full py-3 px-6 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                        placeholder="e.g. Galle Fort"
-                      />
+                      <div className="relative">
+                        <select
+                          required
+                          disabled={!bankName}
+                          value={branchName}
+                          onChange={(e) => setBranchName(e.target.value)}
+                          className="w-full bg-white text-slate-800 rounded-full py-3 px-6 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-orange-400 transition-all font-medium border border-transparent appearance-none disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          <option value="" disabled>{t.selectBranch}</option>
+                          {bankName && sriLankaBanks[bankName].map((br) => (
+                            <option key={br} value={br}>{br}</option>
+                          ))}
+                        </select>
+                        <span className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-slate-700">
+                          <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                        </span>
+                      </div>
                     </div>
 
                     {/* Account Number */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                        Account Number <span className="text-red-500 font-bold">*</span>
+                        {t.accountNum}
                       </label>
                       <input
                         type="text"
@@ -644,7 +798,7 @@ export default function SignUp() {
                     {/* Account Holder Name */}
                     <div className="flex flex-col gap-2">
                       <label className="text-white text-sm font-semibold tracking-wide ml-1 select-none flex gap-0.5">
-                        Account Holder Name <span className="text-red-500 font-bold">*</span>
+                        {t.accountHolder}
                       </label>
                       <input
                         type="text"
@@ -670,7 +824,7 @@ export default function SignUp() {
                 onClick={handleBackStep}
                 className="bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-base cursor-pointer select-none outline-none border-none"
               >
-                Back to Login
+                {t.backBtn}
               </button>
 
               {/* Next button */}
@@ -679,7 +833,7 @@ export default function SignUp() {
                 onClick={handleNextStep}
                 className="bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-base cursor-pointer select-none outline-none border-none"
               >
-                Next
+                {t.nextBtn}
               </button>
 
             </div>

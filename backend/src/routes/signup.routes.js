@@ -59,14 +59,14 @@ router.post("/", async (req, res) => {
     }
 
     const cleanNic = nic.trim();
-    const nicRegex = /^\d{8,11}[0-9vVxX]$/;
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
     if (!nicRegex.test(cleanNic)) {
-      return res.status(400).json({ error: "Invalid NIC number. Must be between 9 and 12 characters, starting with numbers and ending with optional V or X." });
+      return res.status(400).json({ error: "Invalid NIC number. Must be between 10 and 12 characters/digits." });
     }
 
     const cleanMobile = mobile.replace(/[-+()\s]/g, "");
-    if (!/^\d{9,10}$/.test(cleanMobile)) {
-      return res.status(400).json({ error: "Mobile number must be exactly 9 or 10 digits." });
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return res.status(400).json({ error: "Mobile number must be exactly 10 digits." });
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -96,10 +96,11 @@ router.post("/", async (req, res) => {
       if (!/^\d{4}$/.test(v.year)) {
         return res.status(400).json({ error: `Invalid year for Vehicle #${i + 1}. Must be a 4-digit number.` });
       }
-      const cleanPolicy = v.policyNumber.replace(/[\s-]/g, "");
-      if (!/^SAN[A-Za-z0-9]{5,9}$/i.test(cleanPolicy)) {
-        return res.status(400).json({ error: `Vehicle #${i + 1} Insurance Policy Number must start with 'SAN' and be between 8 and 12 alphanumeric characters.` });
+      const cleanPolicy = v.policyNumber.replace(/[\s-]/g, "").toUpperCase();
+      if (!/^SAN\d{7}$/.test(cleanPolicy)) {
+        return res.status(400).json({ error: `Vehicle #${i + 1} Insurance Policy Number must start with 'SAN' followed by exactly 7 digits (e.g., SAN9876543).` });
       }
+      v.policyNumber = cleanPolicy;
     }
 
     const { nicFront, nicBack, vehicleReg, revenueLicense } = documents;
@@ -178,7 +179,7 @@ router.post("/", async (req, res) => {
         accountNumber: bankDetails.accountNumber,
         accountHolderName: bankDetails.accountHolderName
       },
-      branch: getNearestBranch(city),
+      branch: await getNearestBranch(city),
       referenceNumber: nextRefNum,
     });
 
@@ -238,6 +239,14 @@ router.post("/reset-password/send-otp", async (req, res) => {
 
     if (!cleanInput) {
       return res.status(400).json({ error: "NIC or Mobile number is required." });
+    }
+
+    const cleanMobileCheck = cleanInput.replace(/[-+()\s]/g, "");
+    const isMobile = /^\d{10}$/.test(cleanMobileCheck);
+    const isNic = /^[0-9vVxX]{10,12}$/.test(cleanInput);
+
+    if (!isMobile && !isNic) {
+      return res.status(400).json({ error: "Please enter a valid Mobile number (exactly 10 digits) or NIC (10-12 characters)." });
     }
 
     // Look up in parallel across all collections

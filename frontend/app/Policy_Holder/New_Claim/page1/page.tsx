@@ -6,10 +6,32 @@ import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { compressImage } from "../../../utils/imageCompressor";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Camera01Icon,
+  PlayIcon,
+  Upload01Icon,
+  Loading03Icon,
+  BubbleChatIcon,
+  Tick01Icon,
+  CheckmarkCircle01Icon,
+  Alert02Icon,
+} from "@hugeicons/core-free-icons";
+
+import { API_URL } from "@/app/config";
 
 interface FileUploadState {
   files: File[];
   previews: string[];
+}
+
+interface DuplicateMatch {
+  matchedClaimNumber: string;
+  matchedVehiclePlate: string;
+  matchedIncidentDate: string;
+  similarity: string;
+  photoType: string;
+  message: string;
 }
 
 export default function UploadDocumentsPage() {
@@ -22,11 +44,15 @@ export default function UploadDocumentsPage() {
   const [licenseFront, setLicenseFront] = useState<FileUploadState>({ files: [], previews: [] });
   const [licenseRear, setLicenseRear] = useState<FileUploadState>({ files: [], previews: [] });
 
+  // Duplicate photos map (key: previewUrl, value: DuplicateMatch)
+  const [duplicatesMap, setDuplicatesMap] = useState<Record<string, DuplicateMatch>>({});
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+
   // Success Modal States
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [generatedClaimNumber, setGeneratedClaimNumber] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-      const [customPopup, setCustomPopup] = useState<{
+  const [customPopup, setCustomPopup] = useState<{
     show: boolean;
     title: string;
     message: string;
@@ -40,6 +66,7 @@ export default function UploadDocumentsPage() {
   const accidentSideRef = useRef<HTMLInputElement>(null);
   const licenseFrontRef = useRef<HTMLInputElement>(null);
   const licenseRearRef = useRef<HTMLInputElement>(null);
+  const isSubmittingRef = useRef(false);
 
   // Lock background scroll when success modal is open
   React.useEffect(() => {
@@ -53,10 +80,65 @@ export default function UploadDocumentsPage() {
     };
   }, [showSuccessModal]);
 
-  // File selection handler with 5MB validation
-  const handleFileChange = (
+  // Check duplicate photos against backend
+  const checkDuplicateFiles = async (files: File[], previews: string[], typeLabel: string) => {
+    if (files.length === 0) return;
+    setIsCheckingDuplicates(true);
+
+    try {
+      const photosPayload = await Promise.all(
+        files.map(async (file, i) => ({
+          id: previews[i],
+          type: typeLabel,
+          base64: await compressImage(file)
+        }))
+      );
+
+      const res = await fetch(`${API_URL}/policy-holder/check-duplicate-photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos: photosPayload })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasDuplicate && Array.isArray(data.duplicates) && data.duplicates.length > 0) {
+          const newDups: Record<string, DuplicateMatch> = {};
+          data.duplicates.forEach((d: any) => {
+            if (d.photoId) {
+              newDups[d.photoId] = {
+                matchedClaimNumber: d.matchedClaimNumber,
+                matchedVehiclePlate: d.matchedVehiclePlate,
+                matchedIncidentDate: d.matchedIncidentDate,
+                similarity: d.similarity,
+                photoType: d.photoType,
+                message: d.message
+              };
+            }
+          });
+
+          setDuplicatesMap((prev) => ({ ...prev, ...newDups }));
+
+          const firstDup = data.duplicates[0];
+          setCustomPopup({
+            show: true,
+            title: "⚠️ Duplicate Photo Detected",
+            message: `The photo selected for "${typeLabel}" was already submitted under Claim #${firstDup.matchedClaimNumber} (${firstDup.matchedVehiclePlate}) on ${firstDup.matchedIncidentDate} (${firstDup.similarity}).\n\nPlease remove this photo and upload a fresh, authentic photo of the current accident.`
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("Duplicate image check error:", err);
+    } finally {
+      setIsCheckingDuplicates(false);
+    }
+  };
+
+  // File selection handler with 5MB validation and instant duplicate check
+  const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
-    stateSetter: React.Dispatch<React.SetStateAction<FileUploadState>>
+    stateSetter: React.Dispatch<React.SetStateAction<FileUploadState>>,
+    typeLabel: string
   ) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
@@ -79,17 +161,27 @@ export default function UploadDocumentsPage() {
         files: [...prev.files, ...validFiles],
         previews: [...prev.previews, ...newPreviews],
       }));
+
+      // Trigger automatic duplicate identification
+      await checkDuplicateFiles(validFiles, newPreviews, typeLabel);
     }
   };
 
-  // Remove individual file handler
+  // Remove individual file handler and clear duplicate map
   const handleRemoveFile = (
     index: number,
     stateSetter: React.Dispatch<React.SetStateAction<FileUploadState>>
   ) => {
     stateSetter((prev) => {
-      // Revoke the object URL to avoid memory leaks
-      URL.revokeObjectURL(prev.previews[index]);
+      const removedPreview = prev.previews[index];
+      URL.revokeObjectURL(removedPreview);
+
+      // Remove from duplicate tracking
+      setDuplicatesMap((dMap) => {
+        const next = { ...dMap };
+        delete next[removedPreview];
+        return next;
+      });
       
       const updatedFiles = [...prev.files];
       updatedFiles.splice(index, 1);
@@ -108,7 +200,19 @@ export default function UploadDocumentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isSubmitting) return;
+    if (isSubmitting || isSubmittingRef.current) return;
+
+    // Check if duplicate photos exist
+    const duplicateKeys = Object.keys(duplicatesMap);
+    if (duplicateKeys.length > 0) {
+      const firstDup = duplicatesMap[duplicateKeys[0]];
+      setCustomPopup({
+        show: true,
+        title: "⚠️ Duplicate Photos Detected",
+        message: `You have uploaded photo(s) that were already submitted in previous claims (e.g. Claim #${firstDup.matchedClaimNumber} - ${firstDup.similarity}).\n\nPlease remove the flagged photo(s) and upload authentic photos taken for this accident before submitting.`
+      });
+      return;
+    }
 
     // Check if at least some files are uploaded
     const totalAccidentPhotos =
@@ -125,6 +229,7 @@ export default function UploadDocumentsPage() {
       return;
     }
 
+    isSubmittingRef.current = true;
     setIsSubmitting(true);
 
     // Convert helper: File -> base64 with compression
@@ -162,6 +267,7 @@ export default function UploadDocumentsPage() {
         damageType: combinedPayload.damageType || "",
         description: combinedPayload.description || "",
         location: combinedPayload.address || "Colombo, Sri Lanka",
+        otherVehicleDetails: combinedPayload.otherVehicleDetails || {},
         accidentPhotos: {
           front: frontPhotos,
           rear: rearPhotos,
@@ -173,7 +279,7 @@ export default function UploadDocumentsPage() {
         }
       };
 
-      const response = await fetch("http://localhost:5000/api/policy-holder/new-claim", {
+      const response = await fetch(`${API_URL}/policy-holder/new-claim`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(claimData)
@@ -182,6 +288,7 @@ export default function UploadDocumentsPage() {
       if (!response.ok) {
         setCustomPopup({ show: true, title: "Submission Failed", message: data.error || "Failed to submit claim to database." });
         setIsSubmitting(false);
+        isSubmittingRef.current = false;
         return;
       }
 
@@ -201,6 +308,7 @@ export default function UploadDocumentsPage() {
       console.error("New claim submission failed", err);
       setCustomPopup({ show: true, title: "Connection Error", message: "Unable to reach the claims database server. Please try again." });
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   };
 
@@ -213,6 +321,8 @@ export default function UploadDocumentsPage() {
     isLicense: boolean = false
   ) => {
     const cardText = isLicense ? "Click to upload License Photos" : "Click to upload accident Photos";
+    const typeLabel = isLicense ? `License ${label}` : `Accident ${label}`;
+    const cardHasDuplicate = state.previews.some((p) => !!duplicatesMap[p]);
 
     return (
       <div className="flex flex-col flex-1">
@@ -221,8 +331,8 @@ export default function UploadDocumentsPage() {
           type="file"
           ref={inputRef}
           multiple
-          accept="image/*,video/*"
-          onChange={(e) => handleFileChange(e, stateSetter)}
+          accept="image/*,video/*,application/pdf"
+          onChange={(e) => handleFileChange(e, stateSetter, typeLabel)}
           className="hidden"
         />
 
@@ -232,38 +342,51 @@ export default function UploadDocumentsPage() {
             onClick={() => inputRef.current?.click()}
             className="w-full h-[170px] bg-[#e2e8f0]/60 hover:bg-slate-200/60 border border-slate-300 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-150 active:scale-[0.97] select-none shadow-sm"
           >
-            <svg className="w-10 h-10 text-slate-500 mb-2" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z" />
-            </svg>
-            <span className="text-slate-800 text-[14px] font-bold block leading-tight">
+            <HugeiconsIcon icon={Camera01Icon} className="w-10 h-10 text-slate-500 mb-2" strokeWidth={1.8} />
+            <span className="text-slate-800 text-[14px] font-medium block leading-tight">
               {label}
             </span>
-            <span className="text-slate-600 text-[10px] mt-1.5 font-medium leading-tight">
+            <span className="text-slate-600 text-[10px] mt-1.5 font-normal leading-tight">
               {cardText}
             </span>
-            <span className="text-slate-400 text-[8px] mt-0.5 font-semibold leading-tight select-none">
-              JPG,PNG - max 5MB each. Multiple Files Allowed
+            <span className="text-slate-400 text-[8px] mt-0.5 font-normal leading-tight select-none">
+              JPG, PNG, PDF, Video - max 10MB each. Multiple Files Allowed
             </span>
           </div>
         ) : (
           /* Active Card State with Thumbnail Previews */
-          <div className="w-full h-[170px] bg-[#e2e8f0]/40 border border-slate-300 rounded-3xl p-3 flex flex-col justify-between shadow-inner">
+          <div className={`w-full h-[170px] bg-[#e2e8f0]/40 border ${cardHasDuplicate ? 'border-red-400 ring-2 ring-red-300/50' : 'border-slate-300'} rounded-3xl p-3 flex flex-col justify-between shadow-inner`}>
             <div className="grid grid-cols-3 gap-2 overflow-y-auto h-[95px] pr-1">
               {state.previews.map((preview, idx) => {
                 const file = state.files[idx];
                 const isVideo = file && file.type.startsWith("video/");
+                const dup = duplicatesMap[preview];
 
                 return (
-                  <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-300 group">
+                  <div
+                    key={idx}
+                    className={`relative aspect-square rounded-xl overflow-hidden bg-slate-200 border ${
+                      dup ? "border-2 border-red-500 ring-2 ring-red-400/50" : "border-slate-300"
+                    } group`}
+                  >
                     {isVideo ? (
                       <div className="w-full h-full flex items-center justify-center bg-slate-800 text-white">
-                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                        <HugeiconsIcon icon={PlayIcon} className="w-6 h-6" strokeWidth={2} />
                       </div>
                     ) : (
                       <img src={preview} alt="upload preview" className="w-full h-full object-cover" />
                     )}
+
+                    {/* Duplicate photo warning banner overlay */}
+                    {dup && (
+                      <div
+                        title={dup.message}
+                        className="absolute inset-x-0 bottom-0 bg-red-600/95 text-white text-[8px] font-bold px-1 py-0.5 text-center leading-tight truncate select-none"
+                      >
+                        ⚠️ #{dup.matchedClaimNumber}
+                      </div>
+                    )}
+
                     {/* Delete item overlay */}
                     <button
                       type="button"
@@ -271,7 +394,7 @@ export default function UploadDocumentsPage() {
                         e.stopPropagation();
                         handleRemoveFile(idx, stateSetter);
                       }}
-                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-bold cursor-pointer border-none shadow"
+                      className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-semibold cursor-pointer border-none shadow"
                     >
                       &times;
                     </button>
@@ -282,13 +405,13 @@ export default function UploadDocumentsPage() {
             
             {/* Action Bar */}
             <div className="flex items-center justify-between border-t border-slate-300/60 pt-2 mt-2">
-              <span className="text-slate-800 text-[11px] font-bold">
-                {label} ({state.files.length} selected)
+              <span className={`text-[11px] font-medium ${cardHasDuplicate ? 'text-red-600 font-bold' : 'text-slate-800'}`}>
+                {cardHasDuplicate ? `⚠️ Duplicate Photo Detected` : `${label} (${state.files.length} selected)`}
               </span>
               <button
                 type="button"
                 onClick={() => inputRef.current?.click()}
-                className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[10px] font-bold py-1 px-3 rounded-full cursor-pointer border-none shadow-sm transition-all"
+                className="bg-[#00ddff] hover:bg-[#00c8e6] text-white text-[10px] font-medium py-1 px-3 rounded-full cursor-pointer border-none shadow-sm transition-all"
               >
                 Add More
               </button>
@@ -314,7 +437,7 @@ export default function UploadDocumentsPage() {
           <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             File New Claim
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
             Report an accident or damage incident
           </p>
         </header>
@@ -326,16 +449,14 @@ export default function UploadDocumentsPage() {
           
           {/* Section: Upload Documents */}
           <section className="flex flex-col gap-8">
-            <h2 className="text-2xl md:text-[28px] font-bold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
-              <svg className="w-7 h-7 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z" />
-              </svg>
+            <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 mt-4 select-none">
+              <HugeiconsIcon icon={Upload01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
               Upload Documents
             </h2>
 
             {/* Subsection 1: Accident Photos */}
             <div className="flex flex-col">
-              <h3 className="text-[17px] font-bold text-slate-800 mb-4 select-none">
+              <h3 className="text-base font-medium text-slate-800 mb-3 select-none">
                 Accident Photos <span className="text-red-500 ml-0.5">*</span>
               </h3>
               
@@ -348,7 +469,7 @@ export default function UploadDocumentsPage() {
 
             {/* Subsection 2: Driving License */}
             <div className="flex flex-col mt-4">
-              <h3 className="text-[17px] font-bold text-slate-800 mb-4 select-none">
+              <h3 className="text-base font-medium text-slate-800 mb-3 select-none">
                 Driving License <span className="text-red-500 ml-0.5">*</span>
               </h3>
 
@@ -364,7 +485,7 @@ export default function UploadDocumentsPage() {
           <div className="flex flex-row justify-between items-center mt-6 mb-10">
             <Link
               href="/Policy_Holder/New_Claim"
-              className={`bg-[#0f2d3a] hover:bg-[#0b222c] text-white font-bold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center justify-center ${
+              className={`bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center justify-center ${
                 isSubmitting ? "pointer-events-none opacity-50" : ""
               }`}
             >
@@ -373,14 +494,11 @@ export default function UploadDocumentsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#0f2d3a] hover:bg-[#0b222c] disabled:bg-[#0f2d3a]/50 text-white font-bold text-base px-12 py-4 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(15,45,58,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
+              className="bg-[#000080] hover:bg-[#000066] disabled:bg-[#000080]/50 text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(0,0,128,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-5 w-5 text-white" strokeWidth={2} />
                   Submitting...
                 </span>
               ) : (
@@ -398,9 +516,7 @@ export default function UploadDocumentsPage() {
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       {/* Success Modal Popup matching the mockup exactly */}
@@ -409,26 +525,24 @@ export default function UploadDocumentsPage() {
           <div className="bg-[#e2e8f0] border border-slate-300 rounded-[35px] md:rounded-[45px] w-full max-w-[480px] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col items-center select-none relative transition-all duration-300">
             {/* Green Check Circle */}
             <div className="w-20 h-20 bg-[#00b050] rounded-full flex items-center justify-center shadow-md select-none">
-              <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" strokeWidth="4.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
+              <HugeiconsIcon icon={Tick01Icon} className="w-10 h-10 text-white" strokeWidth={4.5} />
             </div>
 
             {/* Thank You & Success messages */}
-            <h2 className="text-[25px] font-black text-[#0f2d3a] tracking-tight mt-6 leading-none">
+            <h2 className="text-xl font-semibold text-[#0f2d3a] tracking-tight mt-6 leading-none">
               Thank You.
             </h2>
-            <p className="text-[22px] font-bold text-[#0f2d3a] tracking-tight mt-2 leading-none">
+            <p className="text-lg font-medium text-[#0f2d3a] tracking-tight mt-2 leading-none">
               Application Submitted!
             </p>
 
             {/* Reference Number Pill */}
-            <div className="bg-black text-white font-extrabold text-[15px] px-8 py-3 rounded-full mt-7 shadow-md tracking-wider">
+            <div className="bg-black text-white font-semibold text-[14px] px-7 py-2.5 rounded-full mt-7 shadow-md tracking-wider">
               {generatedClaimNumber}
             </div>
 
             {/* Sub-text description */}
-            <p className="text-slate-600 text-xs md:text-[13px] font-semibold text-center leading-relaxed mt-6 max-w-[320px] select-none">
+            <p className="text-slate-600 text-xs md:text-[13px] font-normal text-center leading-relaxed mt-6 max-w-[320px] select-none">
               Your insurance application has been received. Our office staff will review your documents.
             </p>
 
@@ -438,7 +552,7 @@ export default function UploadDocumentsPage() {
                 router.refresh();
                 router.push("/Policy_Holder/Home");
               }}
-              className="mt-9 self-start bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-[0.97] text-white font-extrabold text-[14px] px-8 py-4 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(15,45,58,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
+              className="mt-9 self-start bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-[14px] px-8 py-3.5 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
             >
               <span>Back to Home</span>
             </button>
@@ -446,7 +560,7 @@ export default function UploadDocumentsPage() {
         </div>
       )}
 
-                  {/* Custom Popup Modal */}
+      {/* Custom Popup Modal */}
       {customPopup.show && (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
@@ -454,32 +568,26 @@ export default function UploadDocumentsPage() {
             {/* Header/Title with clean inline icon */}
             <div className="flex items-center gap-3.5">
               {customPopup.type === "success" ? (
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center flex-shrink-0">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2.5} />
                 </div>
               ) : customPopup.type === "confirm" ? (
-                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center flex-shrink-0">
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
+                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center flex-shrink-0">
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
                 </div>
               )}
-              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
+              <h3 className="font-semibold text-base text-slate-800 tracking-tight leading-none">
                 {customPopup.title}
               </h3>
             </div>
 
             {/* Message Body */}
             <div>
-              <p className="text-slate-500 text-[13px] font-semibold leading-relaxed">
+              <p className="text-slate-500 text-[13px] font-normal leading-relaxed">
                 {customPopup.message}
               </p>
             </div>
@@ -490,7 +598,7 @@ export default function UploadDocumentsPage() {
                 <>
                   <button
                     onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-medium transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
                   >
                     Cancel
                   </button>
@@ -499,7 +607,7 @@ export default function UploadDocumentsPage() {
                       setCustomPopup({ ...customPopup, show: false });
                       if (customPopup.onConfirm) customPopup.onConfirm();
                     }}
-                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-medium shadow-md transition-all cursor-pointer border-none"
                   >
                     Confirm
                   </button>
@@ -507,7 +615,7 @@ export default function UploadDocumentsPage() {
               ) : (
                 <button
                   onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-medium shadow-md transition-all cursor-pointer border-none"
                 >
                   OK
                 </button>

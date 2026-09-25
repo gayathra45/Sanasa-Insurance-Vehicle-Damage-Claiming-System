@@ -3,11 +3,11 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "node ../update-ip.js && expo start",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
+    "android": "node ../update-ip.js && expo start --android",
+    "ios": "node ../update-ip.js && expo start --ios",
+    "web": "node ../update-ip.js && expo start --web",
     "lint": "expo lint"
   },
   "dependencies": {
@@ -22,6 +22,7 @@
     "expo-font": "~14.0.11",
     "expo-haptics": "~15.0.8",
     "expo-image": "~3.0.11",
+    "expo-image-manipulator": "~14.0.8",
     "expo-image-picker": "~17.0.11",
     "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.11",
@@ -40,7 +41,6 @@
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-web": "~0.21.0",
-    "react-native-webview": "^14.0.1",
     "react-native-worklets": "0.5.1"
   },
   "devDependencies": {

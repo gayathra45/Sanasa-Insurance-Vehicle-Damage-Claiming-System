@@ -1,7 +1,53 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { API_URL } from "@/app/config";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
+import Link from "next/link";
+import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Menu01Icon,
+  Notification01Icon,
+  Alert02Icon,
+  UserMultiple02Icon,
+  File01Icon,
+  CheckmarkCircle01Icon,
+  Time02Icon,
+  SecurityCheckIcon,
+  Building01Icon,
+  SquareLock02Icon,
+  Loading03Icon,
+  BubbleChatIcon,
+} from "@hugeicons/core-free-icons";
+
+interface Branch {
+  name: string;
+  percentage: number;
+  count: number;
+  color?: string;
+}
+
+interface MonthlyClaim {
+  month: string;
+  submitted: number;
+  approved: number;
+}
+
+const BRANCH_PALETTE = [
+  "bg-red-500",      // Red
+  "bg-blue-500",     // Blue
+  "bg-emerald-500",  // Emerald Green
+  "bg-amber-500",    // Amber / Yellow
+  "bg-purple-500",   // Purple
+  "bg-cyan-500",     // Cyan
+  "bg-pink-500",     // Pink
+  "bg-indigo-500",   // Indigo
+  "bg-orange-500",   // Orange
+  "bg-teal-500",     // Teal
+  "bg-violet-500",   // Violet
+  "bg-rose-500",     // Rose
+];
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -9,7 +55,15 @@ export default function AdminDashboard() {
     totalClaims: 0,
     activeClaims: 0,
     pendingClaims: 0,
+    totalAgents: 0,
+    totalBranches: 0,
   });
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [monthlyClaims, setMonthlyClaims] = useState<MonthlyClaim[]>([]);
+  const [pendingBranchResets, setPendingBranchResets] = useState<any[]>([]);
+  const [pendingAdminResets, setPendingAdminResets] = useState<any[]>([]);
+  const [loggedAdmin, setLoggedAdmin] = useState<any | null>(null);
+  const [actioningId, setActioningId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -33,9 +87,9 @@ export default function AdminDashboard() {
     }
     try {
       const parsed = JSON.parse(adminData);
+      setLoggedAdmin(parsed);
       if (parsed.email) {
         setAdminEmail(parsed.email);
-        fetchStats();
       }
       if (parsed.mustChangePassword) {
         setShowPasswordModal(true);
@@ -43,25 +97,88 @@ export default function AdminDashboard() {
     } catch (e) {
       console.error(e);
       window.location.href = "/Login";
+      return;
     }
-  }, []);
 
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("http://localhost:5000/api/admin/dashboard-stats");
-      if (!res.ok) throw new Error("Failed to fetch dashboard stats.");
-      const data = await res.json();
-      if (data.stats) {
+    async function fetchStats() {
+      try {
+        const res = await fetch(`${API_URL}/admin/dashboard-stats`);
+        if (!res.ok) {
+          throw new Error("Failed to fetch dashboard statistics.");
+        }
+        const data = await res.json();
+        
         setStats(data.stats);
+        
+        // Map distinct colors from BRANCH_PALETTE to all branches
+        const mappedBranches = (data.branches || []).map((b: any, idx: number) => ({
+          ...b,
+          color: BRANCH_PALETTE[idx % BRANCH_PALETTE.length],
+        }));
+        setBranches(mappedBranches);
+        setMonthlyClaims(data.monthlyClaims || []);
+        setPendingBranchResets(data.pendingBranchResets || []);
+        setPendingAdminResets(data.pendingAdminResets || []);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "Failed to load dashboard metrics");
+      } finally {
+        setLoading(false);
       }
+    }
+    fetchStats();
+    const intervalId = setInterval(fetchStats, 8000);
+    return () => clearInterval(intervalId);
+  }, [loggedAdmin?._id]);
+
+  const handleBranchReset = async (staffId: string, action: "approve" | "reject") => {
+    setActioningId(staffId);
+    try {
+      const res = await fetch(`${API_URL}/admin/staff/password-requests/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ staffId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${action} request.`);
+      
+      setPendingBranchResets(prev => prev.filter(r => r._id !== staffId));
+      alert(`Branch password request ${action}d successfully!`);
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to load dashboard metrics.");
+      alert(err.message || `Failed to ${action} request.`);
     } finally {
-      setLoading(false);
+      setActioningId(null);
     }
   };
+
+  const handleAdminReset = async (adminId: string, action: "approve" | "reject") => {
+    setActioningId(adminId);
+    try {
+      const res = await fetch(`${API_URL}/admin/admins/password-requests/${action}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ adminId })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${action} request.`);
+      
+      setPendingAdminResets(prev => prev.filter(a => a._id !== adminId));
+      alert(`Admin password reset ${action}d successfully!`);
+    } catch (err: any) {
+      alert(err.message || `Failed to ${action} request.`);
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  // Calculate dynamic max height for bar chart to accommodate any data volume
+  const maxVal = monthlyClaims.length > 0 
+    ? Math.max(...monthlyClaims.map((d) => Math.max(d.submitted, d.approved))) 
+    : 0;
+  
+  // Set chart upper limit (defaults to 30, scales dynamically in multiples of 30)
+  const maxLimit = maxVal > 30 ? Math.ceil(maxVal / 30) * 30 : 30;
+  const step = maxLimit / 3;
 
   const getStrength = () => {
     const newPassword = passwordForm.newPassword;
@@ -144,15 +261,13 @@ export default function AdminDashboard() {
         {/* Right Main Container */}
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Welcome Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-admin-mobile-menu"))}
                 className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               {/* Mobile page title */}
               <h1 className="lg:hidden text-lg font-bold text-slate-800 tracking-tight">
@@ -161,128 +276,435 @@ export default function AdminDashboard() {
               {/* Desktop welcome title */}
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
                 <span className="hidden lg:inline">Welcome back, </span>
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin Panel</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">Admin Panel</span>
               </h1>
             </div>
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
-              <button className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-slate-500 hover:text-slate-800">
-                  <path fillRule="evenodd" d="M5.25 9a6.75 6.75 0 0 1 13.5 0v.75c0 1.65.342 3.228.96 4.658A1.875 1.875 0 0 1 18 17.25H6a1.875 1.875 0 0 1-1.71-2.842 9.06 9.06 0 0 0 .96-4.658V9ZM12 18.75a2.25 2.25 0 0 1-2.247-2.118.75.75 0 0 1 .746-.757h3a.75.75 0 0 1 .746.757A2.25 2.25 0 0 1 12 18.75Z" clipRule="evenodd" />
-                </svg>
-              </button>
+              <Link href="/Admin/Notifications" className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center">
+                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
+              </Link>
               {/* User Avatar Icon */}
-              <button className="relative p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-slate-500 hover:text-slate-800">
-                  <path fillRule="evenodd" d="M18.685 19.097A9.723 9.723 0 0 0 21.75 12c0-5.385-4.365-9.75-9.75-9.75S2.25 6.615 2.25 12c0 2.754 1.14 5.244 2.98 7.03-.028-.01-.053-.024-.082-.031a.75.75 0 0 1-.502-.879C5.556 14.931 8.193 12 12 12s6.444 2.931 7.352 6.12a.75.75 0 0 1-.502.88c-.029.007-.054.02-.082.031ZM12 11.25a3.375 3.375 0 1 0 0-6.75 3.375 3.375 0 0 0 0 6.75Z" clipRule="evenodd" />
-                </svg>
-              </button>
+              <UserAvatarDropdown userType="admin" />
             </div>
           </header>
 
           {/* Page Content Dashboard */}
           <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-auto">
             {loading ? (
-              <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#f59e0b]"></div>
-                <span className="mt-4 text-slate-500 font-bold">Loading dashboard metrics...</span>
+              <div className="w-full animate-pulse select-none">
+                {/* 6 Metric Cards Skeleton */}
+                <div className="grid grid-cols-2 lg:grid-cols-6 gap-6 mb-12">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <div
+                      key={i}
+                      className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="h-3 w-16 bg-slate-200 rounded"></div>
+                        <div className="w-7 h-7 bg-slate-100 rounded-lg"></div>
+                      </div>
+                      <div className="h-8 w-12 bg-slate-200 rounded-md"></div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Lower Grid Skeleton (Branch Performance & Claims Overview) */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+                  {/* Left Column: Branch Performance Skeleton */}
+                  <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm min-h-[460px]">
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                      <div className="h-5 w-40 bg-slate-200 rounded-md"></div>
+                      <div className="h-5 w-20 bg-slate-100 rounded-full"></div>
+                    </div>
+
+                    <div className="space-y-4 py-4 flex-1">
+                      {[1, 2, 3, 4, 5, 6].map((idx) => (
+                        <div key={idx} className="space-y-1.5">
+                          <div className="flex justify-between items-center">
+                            <div className="h-3.5 w-24 bg-slate-200 rounded"></div>
+                            <div className="h-3.5 w-10 bg-slate-200 rounded"></div>
+                          </div>
+                          <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-slate-200 rounded-full" style={{ width: `${30 + idx * 10}%` }}></div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
+                      <div className="h-3 w-28 bg-slate-200 rounded"></div>
+                      <div className="h-3 w-16 bg-slate-200 rounded"></div>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Claims Bar Chart Skeleton */}
+                  <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm min-h-[460px]">
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                      <div className="h-5 w-48 bg-slate-200 rounded-md"></div>
+                      <div className="flex items-center gap-3">
+                        <div className="h-4 w-20 bg-slate-100 rounded-full"></div>
+                        <div className="h-4 w-20 bg-slate-100 rounded-full"></div>
+                      </div>
+                    </div>
+
+                    {/* Chart Bars Skeleton */}
+                    <div className="h-[280px] w-full pt-8 pb-4 flex items-end justify-between px-6 gap-4 border-b border-slate-100">
+                      {[45, 75, 55, 90, 65, 80].map((h, idx) => (
+                        <div key={idx} className="flex-1 flex items-end justify-center gap-2 h-full">
+                          <div className="w-4 bg-slate-200 rounded-t" style={{ height: `${h}%` }}></div>
+                          <div className="w-4 bg-slate-300 rounded-t" style={{ height: `${h * 0.7}%` }}></div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex justify-between px-6 pt-3">
+                      {["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map((m, idx) => (
+                        <div key={idx} className="h-3 w-8 bg-slate-200 rounded text-center"></div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : error ? (
-              <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-red-500 font-bold bg-red-50 rounded-2xl p-8 border border-red-200">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-10 h-10 mb-2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
-                </svg>
+              <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-red-500 font-semibold bg-red-50 rounded-2xl p-8 border border-red-200">
+                <HugeiconsIcon icon={Alert02Icon} className="w-10 h-10 mb-2" strokeWidth={2} />
                 <span>{error}</span>
               </div>
             ) : (
               <>
-                {/* 4 Cards Grid - Desktop view */}
-                <div className="hidden lg:grid grid-cols-4 gap-6 mb-12">
+                {/* 6 Cards Grid - Fully Responsive */}
+                <div className="grid grid-cols-2 lg:grid-cols-6 gap-6 mb-12 select-none">
                   {/* Policy Holders Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.policyHolders}</span>
-                    <span className="text-slate-500 font-bold text-sm mt-1">Policy Holders</span>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Policy Holders</span>
+                      <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <HugeiconsIcon icon={UserMultiple02Icon} className="w-4 h-4" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">{stats.policyHolders}</span>
                   </div>
 
                   {/* Total Claims Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.totalClaims}</span>
-                    <span className="text-slate-500 font-bold text-sm mt-1">Total Claims</span>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Total Claims</span>
+                      <div className="p-1.5 bg-slate-100 text-slate-700 rounded-lg group-hover:scale-110 transition-transform">
+                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">{stats.totalClaims}</span>
                   </div>
 
                   {/* Active Claims Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.activeClaims}</span>
-                    <span className="text-slate-500 font-bold text-sm mt-1">Active Claims</span>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Active Claims</span>
+                      <div className="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <span className="text-3xl font-semibold text-emerald-800 tracking-tight">{stats.activeClaims}</span>
                   </div>
 
                   {/* Pending Claims Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-black text-slate-800 tracking-tight">{stats.pendingClaims}</span>
-                    <span className="text-slate-500 font-bold text-sm mt-1">Pending Claims</span>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Pending Claims</span>
+                      <div className="p-1.5 bg-amber-50 text-amber-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <HugeiconsIcon icon={Time02Icon} className="w-4 h-4" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <span className="text-3xl font-semibold text-amber-600 tracking-tight">{stats.pendingClaims}</span>
+                  </div>
+
+                  {/* Registered Agents Card */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Total Agents</span>
+                      <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <HugeiconsIcon icon={SecurityCheckIcon} className="w-4 h-4" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <span className="text-3xl font-semibold text-purple-800 tracking-tight">{stats.totalAgents}</span>
+                  </div>
+
+                  {/* Registered Branches Card */}
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col justify-between h-[125px] shadow-sm hover:shadow-md transition-all duration-200 group">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Branches</span>
+                      <div className="p-1.5 bg-cyan-50 text-cyan-600 rounded-lg group-hover:scale-110 transition-transform">
+                        <HugeiconsIcon icon={Building01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                      </div>
+                    </div>
+                    <span className="text-3xl font-semibold text-cyan-800 tracking-tight">{stats.totalBranches}</span>
                   </div>
                 </div>
 
-                {/* 4 Cards Grid - Mobile view */}
-                <div className="grid lg:hidden grid-cols-1 gap-4 mb-8">
-                  {/* Policy Holders Card */}
-                  <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0zM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
-                        </svg>
+                {/* Branch Performance & Monthly Claims split section */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch mb-12">
+                  
+                  {/* Branch Performances Card (Left: 5 cols) */}
+                  <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 lg:p-7 flex flex-col justify-between select-none">
+                    {/* Header */}
+                    <div className="flex justify-between items-start mb-6">
+                      <div>
+                        <h2 className="text-base font-semibold text-slate-800">
+                          Branch Performances
+                        </h2>
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">
+                          Claim distribution by branch location
+                        </p>
                       </div>
-                      <span className="text-slate-600 font-bold text-xs">Policy Holders</span>
+                      <span className="text-xs bg-slate-100/80 border border-slate-200 text-slate-600 font-semibold px-3 py-1 rounded-full">
+                        {branches.length} Branches
+                      </span>
                     </div>
-                    <span className="text-xl font-black text-blue-900 tracking-tight pr-1 shrink-0">
-                      {stats.policyHolders}
-                    </span>
+
+                    {/* Branch List */}
+                    <div className="flex-1 flex flex-col gap-4 overflow-y-auto max-h-[280px] pr-1">
+                      {branches.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center flex-1 py-12 text-slate-400">
+                          <span className="text-xs font-semibold">No branch activity recorded yet</span>
+                        </div>
+                      ) : (
+                        branches.map((branch, index) => {
+                          const colorClass = branch.color || BRANCH_PALETTE[index % BRANCH_PALETTE.length];
+                          return (
+                            <div key={`${branch.name}-${index}`} className="flex flex-col group">
+                              <div className="flex justify-between items-center mb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className={`w-2.5 h-2.5 rounded-full ${colorClass} shrink-0`} />
+                                  <span className="font-semibold text-slate-700 text-sm capitalize">
+                                    {branch.name}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs text-slate-600 font-semibold">
+                                    {branch.count} {branch.count === 1 ? "claim" : "claims"}
+                                  </span>
+                                  <span className="text-xs text-slate-400 font-medium">
+                                    ({branch.percentage}%)
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full ${colorClass} rounded-full transition-all duration-500`}
+                                  style={{ width: `${Math.max(branch.percentage, 3)}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
                   </div>
 
-                  {/* Total Claims Card */}
-                  <div className="bg-gradient-to-br from-slate-50/60 to-white rounded-[20px] border border-slate-200/80 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-slate-100 rounded-xl text-slate-800 shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08" />
-                        </svg>
+                  {/* Monthly Claims Chart Card (Right: 7 cols) */}
+                  <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 lg:p-7 flex flex-col justify-between select-none">
+                    {/* Header & Legend */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                      <div>
+                        <h2 className="text-base font-semibold text-slate-800">
+                          Insurance Claims Overview
+                        </h2>
+                        <p className="text-xs text-slate-400 font-medium mt-0.5">
+                          Annual monthly claim submissions & approvals
+                        </p>
                       </div>
-                      <span className="text-slate-600 font-bold text-xs">Total Claims</span>
+
+                      {/* Legend Indicators */}
+                      <div className="flex items-center gap-4 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-full self-start sm:self-auto">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-[#1b75e0]" />
+                          <span>Submitted</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+                          <span>Approved</span>
+                        </div>
+                      </div>
                     </div>
-                    <span className="text-xl font-black text-slate-800 tracking-tight pr-1 shrink-0">
-                      {stats.totalClaims}
-                    </span>
+
+                    {/* Chart Area with proper Y-Axis and Grid Lines */}
+                    <div className="flex-1 flex gap-3 h-64 pt-2">
+                      {/* Y-Axis scale labels */}
+                      <div className="flex flex-col justify-between text-right text-[11px] font-semibold text-slate-400 select-none w-6 shrink-0 py-1">
+                        <span>{maxLimit}</span>
+                        <span>{Math.round(step * 2)}</span>
+                        <span>{Math.round(step)}</span>
+                        <span>0</span>
+                      </div>
+
+                      {/* Chart Grid & Bars Container */}
+                      <div className="flex-1 relative flex flex-col justify-between">
+                        {/* Horizontal Background Grid Lines */}
+                        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                          <div className="w-full border-t border-slate-100" />
+                          <div className="w-full border-t border-slate-100" />
+                          <div className="w-full border-t border-slate-100" />
+                          <div className="w-full border-b border-slate-200" />
+                        </div>
+
+                        {/* Chart Columns */}
+                        <div className="flex-1 flex justify-between items-end z-10 px-1 gap-1 sm:gap-2">
+                          {monthlyClaims.map((data, idx) => {
+                            const subHeight = maxLimit > 0 ? (data.submitted / maxLimit) * 100 : 0;
+                            const appHeight = maxLimit > 0 ? (data.approved / maxLimit) * 100 : 0;
+                            const hasData = data.submitted > 0 || data.approved > 0;
+
+                            return (
+                              <div
+                                key={data.month || idx}
+                                className="flex flex-col items-center h-full justify-end flex-1 group relative cursor-pointer"
+                              >
+                                {/* Modern Hover Tooltip */}
+                                <div className="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-30 transform group-hover:-translate-y-1 scale-95 group-hover:scale-100 whitespace-nowrap bg-[#102A43] text-white text-[11px] font-medium py-1.5 px-2.5 rounded-xl shadow-xl flex flex-col gap-0.5">
+                                  <span className="font-semibold text-slate-200 border-b border-white/10 pb-0.5 mb-0.5">{data.month}</span>
+                                  <div className="flex items-center gap-1.5 text-blue-300">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+                                    <span>Submitted: <strong>{data.submitted}</strong></span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 text-emerald-300">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                                    <span>Approved: <strong>{data.approved}</strong></span>
+                                  </div>
+                                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-[#102A43]" />
+                                </div>
+
+                                {/* Bars column */}
+                                <div className={`flex items-end gap-1 h-full w-full justify-center rounded-t-lg transition-colors duration-150 ${hasData ? 'group-hover:bg-slate-50/80' : ''} px-0.5 pb-0.5`}>
+                                  {/* Submitted Bar */}
+                                  <div
+                                    className="w-2.5 sm:w-3.5 bg-[#1b75e0] rounded-t-sm transition-all duration-500 group-hover:brightness-110 shadow-xs"
+                                    style={{ height: `${Math.max(subHeight, subHeight > 0 ? 4 : 0)}%` }}
+                                  />
+                                  {/* Approved Bar */}
+                                  <div
+                                    className="w-2.5 sm:w-3.5 bg-emerald-500 rounded-t-sm transition-all duration-500 group-hover:brightness-110 shadow-xs"
+                                    style={{ height: `${Math.max(appHeight, appHeight > 0 ? 4 : 0)}%` }}
+                                  />
+                                </div>
+
+                                {/* Month label */}
+                                <span className={`text-[10px] font-semibold mt-2 transition-colors duration-150 ${hasData ? 'text-slate-700' : 'text-slate-400'} group-hover:text-[#1b75e0]`}>
+                                  {data.month}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Active Claims Card */}
-                  <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
-                      </div>
-                      <span className="text-slate-600 font-bold text-xs">Active Claims</span>
-                    </div>
-                    <span className="text-xl font-black text-emerald-800 tracking-tight pr-1 shrink-0">
-                      {stats.activeClaims}
-                    </span>
+                </div>
+
+                {/* System Request Center Section */}
+                <div className="mt-12 flex flex-col select-none">
+                  <div className="mb-6">
+                    <h2 className="text-base font-semibold text-slate-800">
+                      System Administration Request Center
+                    </h2>
+                    <p className="text-[9px] text-slate-400 font-medium uppercase tracking-wider mt-0.5">
+                      Verify and authorize credentials and password resets
+                    </p>
                   </div>
 
-                  {/* Pending Claims Card */}
-                  <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    
+                    {/* Panel 1: Branch Password Resets */}
+                    <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col gap-4 shadow-sm min-h-[300px]">
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Branch Password Resets</span>
+                        <span className="text-[10px] bg-red-50 text-red-600 font-semibold px-2 py-0.5 rounded-full border border-red-100/50">
+                          {pendingBranchResets.length} Pending
+                        </span>
                       </div>
-                      <span className="text-slate-600 font-bold text-xs">Pending Claims</span>
+
+                      <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[400px] pr-1">
+                        {pendingBranchResets.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center flex-1 py-12 text-slate-400">
+                            <span className="text-xs font-semibold">All clear!</span>
+                            <span className="text-[10px] mt-0.5">No pending branch resets</span>
+                          </div>
+                        ) : (
+                          pendingBranchResets.map((staff) => (
+                            <div key={staff._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
+                              <div className="flex flex-col">
+                                <span className="text-xs font-semibold text-slate-850">{staff.branch} Branch</span>
+                                <span className="text-[10px] text-slate-500 font-medium mt-0.5">{staff.email}</span>
+                                <span className="text-[10px] text-slate-500 font-medium">{staff.mobile}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleBranchReset(staff._id, "approve")}
+                                  disabled={actioningId !== null}
+                                  className="flex-1 py-1.5 bg-[#102A43] hover:bg-[#0c2033] active:scale-95 text-white text-[10px] font-semibold rounded-lg transition-all cursor-pointer border-none outline-none disabled:opacity-50"
+                                >
+                                  {actioningId === staff._id ? "Processing..." : "Approve"}
+                                </button>
+                                <button
+                                  onClick={() => handleBranchReset(staff._id, "reject")}
+                                  disabled={actioningId !== null}
+                                  className="flex-1 py-1.5 bg-white hover:bg-slate-50 text-slate-550 border border-slate-200 text-[10px] font-semibold rounded-lg transition-all cursor-pointer outline-none disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
-                    <span className="text-xl font-black text-amber-800 tracking-tight pr-1 shrink-0">
-                      {stats.pendingClaims}
-                    </span>
+
+                    {/* Panel 2: Admin Password Resets */}
+                    <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col gap-4 shadow-sm min-h-[300px]">
+                      <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                        <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">Admin Password Resets</span>
+                        <span className="text-[10px] bg-purple-50 text-purple-600 font-semibold px-2 py-0.5 rounded-full border border-purple-100/50">
+                          {pendingAdminResets.length} Pending
+                        </span>
+                      </div>
+
+                      <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[400px] pr-1">
+                        {pendingAdminResets.length === 0 ? (
+                          <div className="flex flex-col items-center justify-center flex-1 py-12 text-slate-400">
+                            <span className="text-xs font-semibold">All clear!</span>
+                            <span className="text-[10px] mt-0.5">No pending admin resets</span>
+                          </div>
+                        ) : (
+                          pendingAdminResets.map((admin) => (
+                            <div key={admin._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
+                              <div className="flex flex-col">
+                                <span className="text-xs font-semibold text-slate-850">{admin.name}</span>
+                                <span className="text-[10px] text-slate-500 font-medium mt-0.5">Email: {admin.email}</span>
+                                <span className="text-[10px] text-slate-500 font-medium">NIC: {admin.nic}</span>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => handleAdminReset(admin._id, "approve")}
+                                  disabled={actioningId !== null}
+                                  className="flex-1 py-1.5 bg-[#102A43] hover:bg-[#0c2033] active:scale-95 text-white text-[10px] font-semibold rounded-lg transition-all cursor-pointer border-none outline-none disabled:opacity-50"
+                                >
+                                  {actioningId === admin._id ? "Processing..." : "Approve"}
+                                </button>
+                                <button
+                                  onClick={() => handleAdminReset(admin._id, "reject")}
+                                  disabled={actioningId !== null}
+                                  className="flex-1 py-1.5 bg-white hover:bg-slate-50 text-slate-550 border border-slate-200 text-[10px] font-semibold rounded-lg transition-all cursor-pointer outline-none disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
                   </div>
                 </div>
               </>
@@ -297,16 +719,14 @@ export default function AdminDashboard() {
           <div className="w-full max-w-md bg-white border border-slate-100 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] flex flex-col my-auto overflow-hidden max-h-[95vh] transition-all duration-300">
             <div className="overflow-y-auto flex-1 flex flex-col">
               {/* Header */}
-              <div className="px-8 pt-8 pb-5 select-none relative shrink-0 border-b border-slate-100/60 bg-slate-50/55">
-                <h2 className="font-extrabold text-xl text-slate-800 tracking-tight flex items-center gap-3">
+              <div className="px-8 pt-8 pb-5 select-none relative flex-shrink-0 border-b border-slate-100/60 bg-slate-50/55">
+                <h2 className="font-semibold text-xl text-slate-800 tracking-tight flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
+                    <HugeiconsIcon icon={SquareLock02Icon} className="w-5 h-5" strokeWidth={2.5} />
                   </div>
                   Update Password
                 </h2>
-                <p className="text-slate-600 text-xs font-semibold mt-2 leading-relaxed">
+                <p className="text-slate-600 text-xs font-medium mt-2 leading-relaxed">
                   You are logged in with a temporary password. Please set a new secure password.
                 </p>
               </div>
@@ -314,25 +734,21 @@ export default function AdminDashboard() {
               {/* Form Content */}
               <form onSubmit={handlePasswordChange} className="p-8 flex flex-col gap-5">
                 {passwordError && (
-                  <div className="bg-red-50 text-red-600 text-xs font-bold p-4 rounded-2xl border border-red-100 flex items-center gap-3">
-                    <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                  <div className="bg-red-50 text-red-600 text-xs font-semibold p-4 rounded-2xl border border-red-100 flex items-center gap-3">
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500 flex-shrink-0" strokeWidth={2.5} />
                     <span>{passwordError}</span>
                   </div>
                 )}
                 {passwordSuccess && (
-                  <div className="bg-emerald-50 text-emerald-600 text-xs font-bold p-4 rounded-2xl border border-emerald-100 flex items-center gap-3">
-                    <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                  <div className="bg-emerald-50 text-emerald-600 text-xs font-semibold p-4 rounded-2xl border border-emerald-100 flex items-center gap-3">
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-500 flex-shrink-0" strokeWidth={2.5} />
                     <span>{passwordSuccess}</span>
                   </div>
                 )}
 
                 {/* Current Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     Current Temporary Password <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -347,7 +763,7 @@ export default function AdminDashboard() {
 
                 {/* New Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     New Password <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -363,13 +779,13 @@ export default function AdminDashboard() {
                   {passwordForm.newPassword && (
                     <div className="mt-1.5 flex flex-col gap-2.5 p-4 rounded-2xl bg-slate-50/90 border border-slate-200 select-none">
                       <div className="flex justify-between items-center text-xs text-slate-800">
-                        <span className="font-extrabold">Password Strength:</span>
-                        <span className="font-extrabold uppercase tracking-wider text-slate-900">{strength.label}</span>
+                        <span className="font-semibold">Password Strength:</span>
+                        <span className="font-semibold uppercase tracking-wider text-slate-900">{strength.label}</span>
                       </div>
                       <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
                         <div className={`h-full ${strength.color} ${strength.width} transition-all duration-350 rounded-full`} />
                       </div>
-                      <div className="flex flex-col gap-1.5 text-[11px] font-bold mt-1.5">
+                      <div className="flex flex-col gap-1.5 text-[11px] font-medium mt-1.5">
                         <div className="flex items-center gap-1.5">
                           {passwordForm.newPassword.length >= 6 && passwordForm.newPassword.length <= 12 ? (
                             <span className="text-emerald-600 flex items-center gap-1.5">✓ 6 to 12 characters</span>
@@ -398,7 +814,7 @@ export default function AdminDashboard() {
 
                 {/* Confirm Password Field */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-black text-slate-700 ml-1 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
                     Confirm New Password <span className="text-red-500 font-bold">*</span>
                   </label>
                   <input
@@ -415,14 +831,11 @@ export default function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={isUpdatingPassword}
-                  className="w-full mt-2 bg-[#0f2d3a] hover:bg-[#0c242e] active:scale-[0.98] text-white font-extrabold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
+                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-semibold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
                 >
                   {isUpdatingPassword ? (
                     <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-5 w-5 text-white" strokeWidth={2.5} />
                       Updating...
                     </span>
                   ) : (
@@ -436,11 +849,10 @@ export default function AdminDashboard() {
       )}
 
       {/* Floating Action Chat Button */}
-      <button className="fixed bottom-24 right-8 w-14 h-14 bg-[#00ddff] hover:bg-[#00cceb] text-white rounded-full flex items-center justify-center shadow-lg transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-50 group">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75 0 1.776.476 3.44 1.307 4.887L2.14 21.64a.75.75 0 0 0 .935.935l4.753-1.428A9.702 9.702 0 0 0 12 21.75c5.385 0 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm-3 9.75a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm3.75 0a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm3.75 0a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Z" clipRule="evenodd" />
-        </svg>
+      <button className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center" aria-label="Chat support">
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
+
     </div>
   );
 }

@@ -4,6 +4,22 @@ import React, { useState, useEffect } from "react";
 import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
+import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  Analytics01Icon,
+  Clock01Icon,
+  CheckmarkCircle01Icon,
+  Notification01Icon,
+  AlertCircleIcon,
+  Alert02Icon,
+  Car01Icon,
+  CustomerService01Icon,
+  Call02Icon,
+  RefreshIcon,
+  Download01Icon,
+  BubbleChatIcon,
+} from "@hugeicons/core-free-icons";
 
 function formatNumberPlate(plate: string): string {
   if (!plate) return "";
@@ -18,121 +34,184 @@ function formatNumberPlate(plate: string): string {
   return cleaned;
 }
 
-function getVehicleIconSvg(type: string, className = "w-9 h-9 text-black") {
-  if (!type) type = "car";
-  const t = type.toLowerCase().trim();
-  
-  if (t.includes("suv")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 12h20M17 17h3a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3L14 4H6L3 7v8a2 2 0 0 0 2 2h3" />
-        <circle cx="7" cy="17" r="2" />
-        <path d="M9 17h6" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M7 7h6M19 10h-3" />
-      </svg>
-    );
-  }
-  if (t.includes("cab") || t.includes("pickup")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 13h13V8H7L4 11H2v2zm13 0h7V10h-7v3z" />
-        <path d="M2 13v3a1 1 0 0 0 1 1h3" />
-        <path d="M9 17h6" />
-        <path d="M19 17h2a1 1 0 0 0 1-1v-3" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("van") || t.includes("minibus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V7a2 2 0 0 1 2-2h12l5 3v7a2 2 0 0 1-2 2h-1" />
-        <path d="M2 15h3" />
-        <path d="M9 17h6" />
-        <circle cx="7" cy="17" r="2" />
-        <circle cx="17" cy="17" r="2" />
-        <path d="M6 8h4v3H6V8zm6 0h3v3h-3V8z" />
-      </svg>
-    );
-  }
-  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="5" cy="16" r="3" />
-        <circle cx="19" cy="16" r="3" />
-        <path d="M5 16h8l3-7H9l-2 3M16 9h3M12 9l-3-4H6" />
-      </svg>
-    );
-  }
-  if (t.includes("three") || t.includes("rickshaw") || t.includes("tuk")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="18" cy="18" r="2" />
-        <path d="M3 18h1c.5 0 .9-.4 1-1l1-6h11c.6 0 1-.4 1-1V5h-3l-2 3H8L6 11H3v7z" />
-        <path d="M12 11v7M15 11v7" />
-      </svg>
-    );
-  }
-  if (t.includes("lorry") || t.includes("truck")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 18H3a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h11v13zm0-8h7l2 3v5a1 1 0 0 1-1 1h-8v-9z" />
-        <circle cx="6" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-      </svg>
-    );
-  }
-  if (t.includes("bus")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M2 15V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v9M2 15h20v1a2 2 0 0 1-2 2h-1M5 18H3" />
-        <circle cx="7" cy="18" r="2" />
-        <circle cx="17" cy="18" r="2" />
-        <path d="M4 7h3v3H4V7zm5 0h3v3H9V7zm5 0h3v3h-3V7zm5 0h2v3h-2V7z" />
-      </svg>
-    );
-  }
-  if (t.includes("tractor")) {
-    return (
-      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="6" cy="17" r="2.5" />
-        <circle cx="17" cy="15" r="4.5" />
-        <path d="M6 17h6v-2h-3v-4h4v5" />
-        <path d="M12.5 15.5h.5M9 11l-3-4H4" />
-      </svg>
-    );
-  }
-  
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.8C2.1 11 2 11.3 2 11.5V16c0 .6.4 1 1 1h2" />
-      <circle cx="7" cy="17" r="2" />
-      <path d="M9 17h6" />
-      <circle cx="17" cy="17" r="2" />
-    </svg>
-  );
-}
+import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
 
-function getVehicleIconContainer(type: string) {
-  const svg = getVehicleIconSvg(type);
-  return (
-    <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white border-2 border-black text-black shadow-sm shrink-0 select-none">
-      {svg}
-    </div>
-  );
-}
 
+const homeTranslations = {
+  en: {
+    welcome: "Welcome back,",
+    totalClaims: "Total Claims",
+    inProgress: "In Progress",
+    approved: "Approved",
+    myVehicles: "My Registered Vehicles",
+    notifications: "Recent Notifications & Requests",
+    activePolicy: "Active Policy",
+    coverageStatus: "Coverage Status",
+    action: "Action",
+    view: "View",
+    details: "Details",
+    downloadCertificate: "Download Cover Note",
+    noNotifications: "No notifications or reminders at this time.",
+    noVehicles: "No vehicles registered under this policy.",
+    policyActiveNote: "Your policy is active and up to date. You have",
+    policyClaimSingular: "pending claim",
+    policyClaimPlural: "pending claims",
+    policyAnd: " and ",
+    policyDocRequest: "a document request awaiting action",
+    policyCleanNote: "Your policy is active and up to date. You have no pending claims.",
+    newClaim: "New Claim",
+    trackClaim: "Track Claim",
+    accidentNote: "An accident claim with Sanasa General Insurance Company Limited is a request for compensation after an accident.",
+    supportHelpdesk: "Support Helpdesk",
+    liveSupport: "Live Support",
+    supportNeed: "Need assistance with an active claim filing, towing service, or coverage terms? Call our staff directly.",
+    line1: "Line 1",
+    line2: "Line 2"
+  },
+  si: {
+    welcome: "නැවත සාදරයෙන් පිළිගනිමු,",
+    totalClaims: "මුළු හිමිකම් ගණන",
+    inProgress: "ක්‍රියාත්මක වෙමින් පවතින",
+    approved: "අනුමත කරන ලද",
+    myVehicles: "මගේ ලියාපදිංචි වාහන",
+    notifications: "මෑත කාලීන දැනුම්දීම් සහ ඉල්ලීම්",
+    activePolicy: "සක්‍රීය රක්ෂණ ඔප්පුව",
+    coverageStatus: "රක්ෂණ ආවරණ තත්ත්වය",
+    action: "ක්‍රියාව",
+    view: "බලන්න",
+    details: "විස්තර",
+    downloadCertificate: "ආවරණ සටහන බාගත කරන්න",
+    noNotifications: "දැනට දැනුම්දීම් හෝ ඉල්ලීම් කිසිවක් නැත.",
+    noVehicles: "මෙම රක්ෂණ ඔප්පු යටතේ කිසිදු වාහනයක් ලියාපදිංචි කර නොමැත.",
+    policyActiveNote: "ඔබගේ රක්ෂණ ඔප්පුව සක්‍රීය වන අතර යාවත්කාලීන වේ. ඔබට",
+    policyClaimSingular: "හිමිකම් පෑමක් බලාපොරොත්තුවෙන් පවතී",
+    policyClaimPlural: "හිමිකම් පෑම් බලාපොරොත්තුවෙන් පවතී",
+    policyAnd: " සහ ",
+    policyDocRequest: "ක්‍රියාත්මක කිරීමට බලාපොරොත්තු වන ලේඛන ඉල්ලීමක් ඇත",
+    policyCleanNote: "ඔබගේ රක්ෂණ ඔප්පුව සක්‍රීය වන අතර යාවත්කාලීන වේ. ඔබට බලාපොරොත්තු වන හිමිකම් පෑම් නොමැත.",
+    newClaim: "නව හිමිකම්",
+    trackClaim: "හිමිකම් ලුහුබැඳීම",
+    accidentNote: "සනස සාමාන්‍ය රක්ෂණ සමාගම සමඟ අනතුරු හිමිකම් පෑමක් යනු අනතුරකින් පසු වන්දි ලබා ගැනීම සඳහා කරන ඉල්ලීමකි.",
+    supportHelpdesk: "සහාය සේවා කවුළුව",
+    liveSupport: "සජීවී සහාය",
+    supportNeed: "හිමිකම් පෑමක්, ඇදගෙන යාමේ සේවාවක් හෝ රක්ෂණ කොන්දේසි පිළිබඳ සහාය අවශ්‍යද? අපගේ කාර්ය මණ්ඩලය අමතන්න.",
+    line1: "මාර්ගය 1",
+    line2: "මාර්ගය 2"
+  },
+  ta: {
+    welcome: "மீண்டும் வருக,",
+    totalClaims: "மொத்த கோரிக்கைகள்",
+    inProgress: "செயல்முறையில்",
+    approved: "அங்கீகரிக்கப்பட்ட",
+    myVehicles: "என் பதிவு செய்யப்பட்ட வாகனங்கள்",
+    notifications: "சமீபத்திய அறிவிப்புகள் & கோரிக்கைகள்",
+    activePolicy: "செயலில் உள்ள காப்பீடு",
+    coverageStatus: "காப்பீட்டு நிலை",
+    action: "நடவடிக்கை",
+    view: "பார்வை",
+    details: "விவரங்கள்",
+    downloadCertificate: "காப்பீட்டுச் சான்றிதழைப் பதிவிறக்குக",
+    noNotifications: "நிலுவையில் உள்ள அறிவிப்புகள் எதுவும் இல்லை.",
+    noVehicles: "இந்தக் காப்பீட்டின் கீழ் வாகனங்கள் எதுவும் பதிவு செய்யப்படவில்லை.",
+    policyActiveNote: "உங்கள் காப்பீடு செயல்பாட்டில் உள்ளது. உங்களிடம்",
+    policyClaimSingular: "விண்ணப்பம் பரிசீலனையில் உள்ளது",
+    policyClaimPlural: "விண்ணப்பங்கள் பரிசீலனையில் உள்ளன",
+    policyAnd: " மற்றும் ",
+    policyDocRequest: "ஆவணங்கள் சமர்ப்பிக்க வேண்டியுள்ளது",
+    policyCleanNote: "உங்கள் காப்பீடு செயல்பாட்டில் உள்ளது. நிலுவையில் விண்ணப்பங்கள் ஏதுமில்லை.",
+    newClaim: "புதிய கோரிக்கை",
+    trackClaim: "கோரிக்கையைத் தொடர்க",
+    accidentNote: "சனச பொது காப்பீட்டு நிறுவனத்தில் விபத்துக் கோரிக்கை என்பது விபத்துக்குப் பின்னர் இழப்பீடு கோரும் ஒரு கோரிக்கையாகும்.",
+    supportHelpdesk: "உதவி மையம்",
+    liveSupport: "நேரடி உதவி",
+    supportNeed: "உதவி தேவைப்படின் எங்களை நேரடியாகத் தொடர்பு கொள்ளவும்.",
+    line1: "வரிசை 1",
+    line2: "வரிசை 2"
+  }
+};
 
 export default function PolicyHolderHome() {
   const [userName, setUserName] = useState("");
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+      if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+        setLang(savedLang);
+      }
+      const handleLangChange = (e: any) => {
+        if (e && e.detail) {
+          setLang(e.detail);
+        } else {
+          const saved = localStorage.getItem("language") as "en" | "si" | "ta";
+          if (saved) setLang(saved);
+        }
+      };
+      window.addEventListener("language-changed", handleLangChange);
+      window.addEventListener("languageChange", handleLangChange);
+      return () => {
+        window.removeEventListener("language-changed", handleLangChange);
+        window.removeEventListener("languageChange", handleLangChange);
+      };
+    }
+  }, []);
+
+  const t = homeTranslations[lang];
   const [pendingClaimsCount, setPendingClaimsCount] = useState(0);
   const [hasDocumentRequest, setHasDocumentRequest] = useState(false);
   const [totalClaimsCount, setTotalClaimsCount] = useState(0);
   const [approvedClaimsCount, setApprovedClaimsCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [selectedVehicleForModal, setSelectedVehicleForModal] = useState<any | null>(null);
+  const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
+
+  const handleDownloadCoverNote = (vehicle: any) => {
+    triggerToast(`Generating insurance certificate for ${formatNumberPlate(vehicle.numberPlate)}...`);
+    setTimeout(() => {
+      const element = document.createElement("a");
+      const file = new Blob([
+        `SANASA GENERAL INSURANCE COMPANY LIMITED\n`,
+        `POLICY CERTIFICATE / COVER NOTE\n`,
+        `========================================\n`,
+        `Policy Number: ${vehicle.policyNumber}\n`,
+        `Vehicle Number Plate: ${formatNumberPlate(vehicle.numberPlate)}\n`,
+        `Vehicle Type: ${vehicle.vehicleType}\n`,
+        `Make & Model: ${vehicle.company} ${vehicle.model} (${vehicle.year})\n`,
+        `Engine Number: ${vehicle.engineNumber}\n`,
+        `Chassis Number: ${vehicle.chassisNumber}\n`,
+        `Coverage Status: ACTIVE\n`,
+        `Validity Period: 2026-01-01 to 2026-12-31\n`,
+        `Authorized Signature: Sanasa General Insurance Co. LTD.`
+      ], { type: 'text/plain' });
+      element.href = URL.createObjectURL(file);
+      element.download = `Sanasa_Policy_${vehicle.numberPlate}.txt`;
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+      triggerToast(`Successfully downloaded Cover Note for ${formatNumberPlate(vehicle.numberPlate)}!`);
+    }, 1200);
+  };
+
+  useEffect(() => {
+    if (selectedVehicleForModal || selectedClaim) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [selectedVehicleForModal, selectedClaim]);
 
   const formatDateString = (dateStr: string) => {
     if (!dateStr) return "";
@@ -146,9 +225,118 @@ export default function PolicyHolderHome() {
     }
   };
 
+  const getUserRequestedDocs = (claim: any): string[] => {
+    const getRecipientForDoc = (name: string) => {
+      const msg = [...(claim.messages || [])]
+        .reverse()
+        .find((m: any) => m.message && m.message.includes(`Requested: ${name}`));
+      if (msg) {
+        if (msg.message.includes("[Document Request to Agent]")) return "Agent";
+        if (msg.message.includes("[Document Request to User]")) return "User";
+      }
+      return claim.documentRequestTo || "User";
+    };
+
+    const uploadedNames = (claim.additionalDocuments || [])
+      .filter((d: any) => d.uploadedBy !== "Agent")
+      .map((d: any) => (d.name || "").trim().toLowerCase());
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      uploadedNames.push("garage estimate report", "garage estimate", "repair estimate");
+    }
+
+    return (claim.requestedDocuments || []).filter((name: string) => {
+      if (getRecipientForDoc(name) !== "User") return false;
+      const normName = name.trim().toLowerCase();
+      const alreadyUploaded = uploadedNames.some((u: string) => 
+        u === normName ||
+        (normName.includes("garage") && u.includes("garage")) ||
+        (normName.includes("police") && u.includes("police")) ||
+        (normName.includes("estimate") && u.includes("estimate")) ||
+        (normName.includes("license") && u.includes("license"))
+      );
+      return !alreadyUploaded;
+    });
+  };
+
+  const getSubmittedUserDocs = (claim: any): { name: string; url: string; uploadedAt?: string }[] => {
+    const submitted: { name: string; url: string; uploadedAt?: string }[] = [];
+    const additional = (claim.additionalDocuments || []).filter((d: any) => d.uploadedBy !== "Agent");
+    
+    additional.forEach((doc: any) => {
+      if (doc.url) {
+        submitted.push({
+          name: doc.name,
+          url: doc.url,
+          uploadedAt: doc.uploadedAt || claim.createdAt
+        });
+      }
+    });
+
+    if (claim.garageEstimateComparison?.garageDocumentUrl) {
+      const exists = submitted.some((s: any) => s.url === claim.garageEstimateComparison?.garageDocumentUrl);
+      if (!exists) {
+        submitted.push({
+          name: "Garage Estimate Report",
+          url: claim.garageEstimateComparison.garageDocumentUrl,
+          uploadedAt: claim.createdAt
+        });
+      }
+    }
+
+    return submitted;
+  };
+
+  const getDocRequestNote = (claim: any, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find((m: any) => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.message) {
+      const idx = msg.message.indexOf("Message:");
+      if (idx !== -1) {
+        return msg.message.substring(idx + 8).trim();
+      }
+    }
+    return "";
+  };
+
+  const formatDateTimeString = (dateStr: string) => {
+    if (!dateStr) return "";
+    try {
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) return dateStr;
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const hours = date.getHours().toString().padStart(2, '0');
+      const minutes = date.getMinutes().toString().padStart(2, '0');
+      return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()} ${hours}:${minutes}`;
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
+  const getDocRequestTime = (claim: any, docName: string): string => {
+    if (!claim.messages) return "";
+    const msg = [...claim.messages]
+      .reverse()
+      .find((m: any) => m.message && m.message.includes(`Requested: ${docName}`));
+    if (msg && msg.sentAt) {
+      return formatDateTimeString(msg.sentAt);
+    }
+    return "";
+  };
+
+  const getDocRequestSender = (claim: any, docName: string): string => {
+    if (!claim.messages) return "Office Staff";
+    const msg = [...claim.messages]
+      .reverse()
+      .find((m: any) => m.message && m.message.includes(`Requested: ${docName}`));
+    return msg ? (msg.sender || "Office Staff") : "Office Staff";
+  };
+
   useEffect(() => {
+    let intervalId: any;
     if (typeof window !== "undefined") {
-      sessionStorage.removeItem("current_claim_draft");
       const userStr = sessionStorage.getItem("logged_in_user");
       if (userStr) {
         try {
@@ -160,55 +348,133 @@ export default function PolicyHolderHome() {
             setVehicles(user.vehicles);
           }
 
-          if (user.nic) {
-            const fetchClaims = async () => {
-              try {
-                const res = await fetch(`http://localhost:5000/api/policy-holder/user-claims?nic=${encodeURIComponent(user.nic)}`, {
-                  cache: "no-store"
-                });
-                let dbClaims: any[] = [];
-                if (res.ok) {
-                  const data = await res.json();
-                  if (Array.isArray(data.claims)) {
-                    dbClaims = data.claims;
-                  }
+          const syncVehicles = async () => {
+            if (!user.nic) return;
+            try {
+              const res = await fetch(`${API_URL}/policy-holder/vehicles?nic=${encodeURIComponent(user.nic)}`);
+              if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data.vehicles)) {
+                  setVehicles(data.vehicles);
+                  const updatedUser = { ...user, vehicles: data.vehicles };
+                  sessionStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
                 }
-
-                // Check for local session submitted claims
-                const localClaims: any[] = [];
-                const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-                if (lastSubmitted) {
-                  const parsed = JSON.parse(lastSubmitted);
-                  const exists = dbClaims.some(c => c.claimNumber === parsed.claimNumber);
-                  if (!exists) {
-                    localClaims.push(parsed);
-                  }
-                }
-
-                const allClaims = [...localClaims, ...dbClaims];
-
-                // A claim is pending if status is not approved, done, or rejected
-                const pendingClaims = allClaims.filter(c => {
-                  const s = (c.status || "Pending").toLowerCase();
-                  return !["approved", "done", "rejected"].some(val => s.includes(val));
-                });
-
-                const approvedClaims = allClaims.filter(c => {
-                  const s = (c.status || "").toLowerCase();
-                  return ["approved", "done", "active"].some(val => s.includes(val));
-                });
-
-                const docRequest = allClaims.some(c => c.documentsRequested === true);
-
-                setTotalClaimsCount(allClaims.length);
-                setPendingClaimsCount(pendingClaims.length);
-                setApprovedClaimsCount(approvedClaims.length);
-                setHasDocumentRequest(docRequest);
-              } catch (err) {
-                console.error("Error fetching claims for home page banner:", err);
               }
-            };
+            } catch (e) {
+              console.error("Error syncing vehicles:", e);
+            }
+          };
+
+          const fetchClaims = async () => {
+            if (!user.nic) return;
+            try {
+              const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(user.nic)}`, {
+                cache: "no-store"
+              });
+              let dbClaims: any[] = [];
+              if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data.claims)) {
+                  dbClaims = data.claims;
+                }
+              }
+
+              // Check for local session submitted claims
+              let localClaims: any[] = [];
+              const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
+              if (lastSubmitted) {
+                const parsed = JSON.parse(lastSubmitted);
+                const exists = dbClaims.some(c => c.claimNumber === parsed.claimNumber);
+                if (!exists) {
+                  localClaims.push(parsed);
+                }
+              }
+
+              const allClaims = [...localClaims, ...dbClaims];
+
+              // A claim is pending if status is not approved, done, or rejected
+              const pendingClaims = allClaims.filter(c => {
+                const s = (c.status || "Pending").toLowerCase();
+                return !["approved", "done", "rejected"].some(val => s.includes(val));
+              });
+
+              const approvedClaims = allClaims.filter(c => {
+                const s = (c.status || "").toLowerCase();
+                return ["approved", "done", "active"].some(val => s.includes(val));
+              });
+
+              const docRequest = allClaims.some(c => c.documentsRequested === true);
+
+              // Compile dynamic notifications list
+              const compiledNotifications: any[] = [];
+              allClaims.forEach((claim: any) => {
+                if (claim.documentsRequested) {
+                  compiledNotifications.push({
+                    id: claim.claimNumber + "-doc",
+                    type: "urgent",
+                    title: "Documents Requested – Action Required",
+                    description: `Staff has requested a ${claim.requestedDocuments && claim.requestedDocuments.length > 0 ? claim.requestedDocuments.join(' & ') : 'Police Report & Repair Estimate'} for ${claim.claimNumber}.`,
+                    subText: "Please upload within 3 days...",
+                    date: claim.createdAt ? formatDateString(claim.createdAt) : "Today",
+                    actions: [
+                      { label: "Upload", href: `/Policy_Holder/Documents?uploadClaim=${claim.claimNumber}`, primary: true },
+                      { label: "View", href: `/Policy_Holder/TrackClaims?id=${claim.claimNumber}` }
+                    ],
+                    isUrgent: true,
+                    claim: claim
+                  });
+                }
+
+                const s = (claim.status || "").toLowerCase();
+                if (["approved", "done", "active"].some(val => s.includes(val))) {
+                  compiledNotifications.push({
+                    id: claim.claimNumber + "-approved",
+                    type: "approved",
+                    title: `Claim ${claim.claimNumber} Approved!`,
+                    description: `Your claim for LKR ${claim.amount ? Number(claim.amount).toLocaleString() : '85,000'} has been approved. Payment processed within 5 days.`,
+                    date: claim.createdAt ? formatDateString(claim.createdAt) : "Today",
+                    actions: [
+                      { label: "View", href: `/Policy_Holder/TrackClaims?id=${claim.claimNumber}` }
+                    ],
+                    isUrgent: false,
+                    claim: claim
+                  });
+                } else if (!claim.documentsRequested) {
+                  compiledNotifications.push({
+                    id: claim.claimNumber + "-status",
+                    type: "status",
+                    title: `Claim ${claim.claimNumber} Status: ${claim.status || "Pending"}`,
+                    description: `Your claim is currently in ${claim.status || "Pending"} stage. Agent is reviewing details.`,
+                    date: claim.createdAt ? formatDateString(claim.createdAt) : "Today",
+                    actions: [
+                      { label: "View", href: `/Policy_Holder/TrackClaims?id=${claim.claimNumber}` }
+                    ],
+                    isUrgent: false,
+                    claim: claim
+                  });
+                }
+              });
+
+              // Sort: Urgent first
+              compiledNotifications.sort((a, b) => (a.isUrgent === b.isUrgent ? 0 : a.isUrgent ? -1 : 1));
+
+              setTotalClaimsCount(allClaims.length);
+              setPendingClaimsCount(pendingClaims.length);
+              setApprovedClaimsCount(approvedClaims.length);
+              setHasDocumentRequest(docRequest);
+              setNotifications(compiledNotifications);
+            } catch (err) {
+              console.error("Error fetching claims for home page banner:", err);
+            }
+          };
+
+          if (user.nic) {
+            syncVehicles();
             fetchClaims();
+            intervalId = setInterval(() => {
+              syncVehicles();
+              fetchClaims();
+            }, 5000);
           }
         } catch (err) {
           console.error("Error parsing user session", err);
@@ -218,6 +484,9 @@ export default function PolicyHolderHome() {
         window.location.href = "/Login";
       }
     }
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, []);
 
   return (
@@ -225,7 +494,7 @@ export default function PolicyHolderHome() {
       <PolicyHolderNavbar />
 
       {/* Immersive curved header with background image and horizontal gradient overlay */}
-      <header className="relative w-full min-h-[460px] md:h-[420px] rounded-b-[40px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
+      <header className="relative w-full h-[450px] md:h-[420px] rounded-b-[60px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
         {/* Horizontal gradient overlay to darken left text area but keep the right image fold bright and clear */}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
 
@@ -235,60 +504,59 @@ export default function PolicyHolderHome() {
           {/* Welcome Greeting Row */}
           <div>
             <div className="inline-block border-b-3 border-[#00ddff] pb-1.5 mb-2">
-              <h2 className="text-white text-xl md:text-2.5xl font-black tracking-tight">
-                Welcome back, {userName} !
+              <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight">
+                {t.welcome} {userName} !
               </h2>
             </div>
-            <p className="text-slate-200 text-[13px] md:text-sm font-semibold tracking-wide mt-1 transition-all duration-300">
+            <p className="text-slate-200 text-[13px] md:text-sm font-normal tracking-wide mt-1 transition-all duration-300">
               {pendingClaimsCount > 0 || hasDocumentRequest ? (
                 <>
-                  Your policy is active and up to date. You have{" "}
+                  {t.policyActiveNote}{" "}
                   {pendingClaimsCount > 0 && (
                     <>
-                      <span className="text-[#ff9800] font-extrabold">
-                        {pendingClaimsCount} pending claim{pendingClaimsCount > 1 ? "s" : ""}
+                      <span className="text-[#ff9800] font-semibold">
+                        {pendingClaimsCount} {pendingClaimsCount > 1 ? t.policyClaimPlural : t.policyClaimSingular}
                       </span>
                     </>
                   )}
-                  {pendingClaimsCount > 0 && hasDocumentRequest && " and "}
+                  {pendingClaimsCount > 0 && hasDocumentRequest && t.policyAnd}
                   {hasDocumentRequest && (
                     <>
-                      <span className="text-[#ff9800] font-extrabold">
-                        a document request awaiting action
+                      <span className="text-[#ff9800] font-semibold">
+                        {t.policyDocRequest}
                       </span>
                     </>
                   )}
                   .
                 </>
               ) : (
-                "Your policy is active and up to date. You have no pending claims."
+                t.policyCleanNote
               )}
             </p>
           </div>
 
           {/* Central Statement */}
           <div className="my-auto max-w-4xl mx-auto text-center px-4">
-              <h1 className="text-lg md:text-[24px] font-extrabold text-white leading-relaxed tracking-normal">
-                An accident claim with Sanasa General Insurance Company Limited is <br className="hidden md:inline" />
-                a request for compensation after an accident.
+              <h1 className="text-base md:text-xl font-medium text-slate-100/90 leading-relaxed tracking-normal">
+                {t.accidentNote}
               </h1>
           </div>
 
           {/* Action Buttons - Highly highlighted with glowing drop shadows */}
-          <div className="flex flex-col sm:flex-row justify-center items-center gap-4 md:gap-6 mt-4 md:mt-2 w-full sm:w-auto">
+          <div className="flex flex-row justify-center gap-6 mt-2">
             <Link
               href="/Policy_Holder/New_Claim"
-              className="w-full sm:w-auto text-center bg-red-600 hover:bg-red-700 text-white font-extrabold text-sm md:text-lg px-8 sm:px-10 py-4 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
-              style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.45)" }}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
             >
-              New Claim
+              {t.newClaim}
             </Link>
             <Link
               href="/Policy_Holder/TrackClaims"
-              className="w-full sm:w-auto text-center bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-extrabold text-sm md:text-lg px-8 sm:px-10 py-4 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
-              style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.45)" }}
+              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-bold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
             >
-              Track Claim
+              {t.trackClaim}
             </Link>
           </div>
 
@@ -304,108 +572,796 @@ export default function PolicyHolderHome() {
           {/* Total Claims */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
-            <div className="text-slate-400 shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 19V6m4 13V10m4 9V14" />
-            </svg>
+            <div className="text-slate-400 flex-shrink-0">
+              <HugeiconsIcon icon={Analytics01Icon} className="w-11 h-11 text-orange-500" strokeWidth={2} />
             </div>
-            <div>
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{totalClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">Total Claims</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{totalClaimsCount}</h3>
+              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.totalClaims}</p>
             </div>
           </Link>
 
           {/* In Progress */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
-            <div className="text-slate-400 shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-cyan-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <div className="text-slate-400 flex-shrink-0">
+              <HugeiconsIcon icon={Clock01Icon} className="w-11 h-11 text-cyan-500" strokeWidth={2} />
             </div>
-            <div>
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">In Progress</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
+              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.inProgress}</p>
             </div>
           </Link>
 
           {/* Approved */}
           <Link
             href="/Policy_Holder/My_claims"
-            className="bg-white px-6 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-center gap-6 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
+            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 no-underline text-inherit cursor-pointer"
           >
-            <div className="text-slate-400 shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
-            </svg>
+            <div className="text-slate-400 flex-shrink-0">
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-11 h-11 text-emerald-500" strokeWidth={2} />
             </div>
-            <div>
-              <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-wider">Approved</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
+              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">{t.approved}</p>
             </div>
           </Link>
 
         </section>
 
-        {/* Dashboard Grid - Vehicles only (full 12 columns) */}
+        {/* Dashboard Grid - Notifications & Vehicles */}
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
-          {/* Vehicles Column */}
-          <div className="lg:col-span-12">
+          {/* Notifications Column */}
+          <div className="lg:col-span-7">
             <div className="flex items-center gap-2.5 mb-6 select-none">
-              <svg className="w-6 h-6 text-slate-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.129-1.125V14.25M3 14.25h18M4.5 14.25l1.62-5.4a2.25 2.25 0 012.16-1.6h7.44a2.25 2.25 0 012.16 1.6l1.62 5.4M9 10.5h.008v.008H9V10.5Zm6 0h.008v.008H15V10.5Z" />
-              </svg>
-              <h2 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight">
-                My Vehicles
+              <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+              <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
+                {t.notifications}
               </h2>
             </div>
 
-            {/* Vehicle List Grid */}
-            {vehicles.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                {vehicles.map((vehicle, idx) => (
-                  <div key={idx} className="bg-white border border-slate-200 rounded-[22px] p-4 sm:p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] flex flex-row items-center justify-between gap-3">
-                    <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
-                      {getVehicleIconContainer(vehicle.vehicleType)}
-                      <div className="min-w-0 flex-1">
-                        <h4 className="text-slate-800 font-extrabold text-sm sm:text-base leading-tight truncate">{formatNumberPlate(vehicle.numberPlate)}</h4>
-                        <p className="text-slate-400 font-bold text-[11px] sm:text-xs mt-0.5 truncate">{vehicle.company} {vehicle.model} {vehicle.year}</p>
+            {/* Alert List */}
+            <div className="flex flex-col gap-6">
+              {notifications.length > 0 ? (
+                notifications.slice(0, 3).map((notif: any) => {
+                  const isUrgent = notif.type === "urgent";
+                  const isApproved = notif.type === "approved";
+                  
+                  let cardClass = "";
+                  let iconClass = "";
+                  let iconSvg = null;
+                  let titleClass = "";
+                  
+                  if (isUrgent) {
+                    cardClass = "bg-red-50/15 border-2 border-red-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[160px]";
+                    iconClass = "p-2 bg-red-100 rounded-xl text-red-500 flex-shrink-0 mt-0.5";
+                    iconSvg = (
+                      <HugeiconsIcon icon={AlertCircleIcon} className="w-6 h-6" strokeWidth={2} />
+                    );
+                    titleClass = "text-red-600 font-semibold text-base leading-none";
+                  } else if (isApproved) {
+                    cardClass = "bg-emerald-50/15 border-2 border-emerald-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]";
+                    iconClass = "p-2 bg-emerald-100 rounded-xl text-emerald-500 flex-shrink-0 mt-0.5";
+                    iconSvg = (
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-6 h-6" strokeWidth={2} />
+                    );
+                    titleClass = "text-emerald-600 font-semibold text-base leading-none";
+                  } else {
+                    cardClass = "bg-blue-50/15 border-2 border-blue-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]";
+                    iconClass = "p-2 bg-blue-100 rounded-xl text-blue-500 flex-shrink-0 mt-0.5";
+                    iconSvg = (
+                      <HugeiconsIcon icon={Clock01Icon} className="w-6 h-6" strokeWidth={2} />
+                    );
+                    titleClass = "text-blue-600 font-semibold text-base leading-none";
+                  }
+
+                  return (
+                    <div
+                      key={notif.id}
+                      onClick={() => notif.claim && setSelectedClaim(notif.claim)}
+                      className={`${cardClass} transition-all duration-300 cursor-pointer hover:shadow-md transition-shadow`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className={iconClass}>
+                          {iconSvg}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className={titleClass}>
+                            {notif.type === "urgent"
+                              ? (lang === "si" ? `ලේඛන ඉල්ලීමක් – පියවරක් අවශ්‍යයි (${notif.claim?.claimNumber || ""})` : lang === "ta" ? `ஆவணங்கள் தேவை (${notif.claim?.claimNumber || ""})` : notif.title)
+                              : notif.type === "approved"
+                              ? (lang === "si" ? `හිමිකම් පෑම ${notif.claim?.claimNumber || ""} අනුමත විය!` : lang === "ta" ? `கோரிக்கை ${notif.claim?.claimNumber || ""} அங்கீகரிக்கப்பட்டது!` : notif.title)
+                              : (lang === "si" ? `හිමිකම් පෑම ${notif.claim?.claimNumber || ""} තත්ත්වය: ${notif.claim?.status || "ක්‍රියාත්මක වෙමින්"}` : lang === "ta" ? `கோரிக்கை ${notif.claim?.claimNumber || ""} நிலை: ${notif.claim?.status || "செயல்பாட்டில்"}` : notif.title)}
+                          </h4>
+                          <p className="text-slate-600 text-sm font-normal mt-2 leading-relaxed">
+                            {notif.type === "urgent"
+                              ? (lang === "si" ? `කාර්ය මණ්ඩලය මෙම හිමිකම් පෑම සඳහා ලේඛන ඉල්ලා ඇත. කරුණාකර ලේඛන පිටුවට ගොස් උඩුගත කරන්න.` : lang === "ta" ? `இந்த கோரிக்கைக்கான ஆவணங்களை சமர்ப்பிக்கவும்.` : notif.description)
+                              : notif.type === "approved"
+                              ? (lang === "si" ? `රු. ${notif.claim?.amount ? Number(notif.claim.amount).toLocaleString() : '85,000'} ක මුදල අනුමත කර ඇති අතර ගෙවීම් කටයුතු සිදු කරමින් පවතී.` : lang === "ta" ? `ரூ. ${notif.claim?.amount ? Number(notif.claim.amount).toLocaleString() : '85,000'} க்கான தொகை அங்கீகரிக்கப்பட்டுள்ளது.` : notif.description)
+                              : (lang === "si" ? `ඔබගේ හිමිකම් පෑම දැනට සමාලෝචනය යටතේ පවතී.` : lang === "ta" ? `உங்கள் கோரிக்கை தற்போது பரிசீலனையில் உள்ளது.` : notif.description)}
+                          </p>
+                          {notif.subText && (
+                            <p className="text-slate-500 text-xs font-normal mt-2">
+                              {lang === "si" ? "කරුණාකර දින 3ක් ඇතුළත උඩුගත කරන්න..." : lang === "ta" ? "தயவுசெய்து 3 நாட்களுக்குள் பதிவேற்றவும்..." : notif.subText}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100/50"
+                      >
+                        <div className="flex gap-2">
+                          {notif.actions.map((act: any, idx: number) => {
+                            const isPrimary = act.primary;
+                            return (
+                              <Link
+                                key={idx}
+                                href={act.href}
+                                className={`${
+                                  isPrimary 
+                                    ? "bg-red-600 hover:bg-red-700 text-white font-medium text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline shadow-sm"
+                                    : "bg-[#000080] hover:bg-[#000066] text-white font-medium text-[13px] px-5 py-2 rounded-full transition-all duration-150 no-underline shadow-sm"
+                                }`}
+                              >
+                                {act.primary 
+                                  ? (lang === "si" ? "උඩුගත කරන්න" : lang === "ta" ? "பதிவேற்றுக" : "Upload")
+                                  : (lang === "si" ? "බලන්න" : lang === "ta" ? "பார்வை" : "View")}
+                              </Link>
+                            );
+                          })}
+                        </div>
+                        <span className="text-slate-400 text-xs font-normal">{notif.date}</span>
                       </div>
                     </div>
-                    <Link
-                      href="/Policy_Holder/MyVehicles"
-                      className="border border-slate-300 hover:border-slate-400 text-slate-600 font-extrabold text-xs px-4 sm:px-5 py-2 rounded-full transition-all no-underline shrink-0"
-                    >
-                      View
-                    </Link>
+                  );
+                })
+              ) : (
+                <div className="bg-white border border-slate-200 rounded-[24px] p-8 text-center shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
+                  <p className="text-slate-400 font-normal text-sm">{t.noNotifications}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Vehicles Column */}
+          <div className="lg:col-span-5 flex flex-col gap-8">
+            <div>
+              <Link href="/Policy_Holder/MyVehicles" className="flex items-center gap-2.5 mb-6 cursor-pointer group no-underline text-inherit select-none">
+                <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+                <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
+                  {t.myVehicles}
+                </h2>
+              </Link>
+
+              {/* Vehicle List */}
+              <div className="flex flex-col gap-5">
+                {vehicles.length > 0 ? (
+                  vehicles.map((vehicle, idx) => (
+                    <div key={idx} className="bg-white border border-slate-200/80 rounded-[22px] p-5 shadow-[0_4px_20px_rgba(0,0,0,0.02)] hover:shadow-md transition-all duration-300 flex items-center justify-between group">
+                      <div className="flex items-center gap-4">
+                        {getVehicleIconContainer(vehicle.vehicleType, "w-14 h-14 rounded-2xl")}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-slate-800 font-bold text-base leading-tight">{formatNumberPlate(vehicle.numberPlate)}</h4>
+                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getVehicleTheme(vehicle.vehicleType).badge} select-none`}>
+                              {vehicle.vehicleType}
+                            </span>
+                          </div>
+                          <p className="text-slate-500 font-normal text-xs mt-1">{vehicle.company} {vehicle.model} ({vehicle.year})</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setSelectedVehicleForModal(vehicle)}
+                        className="border border-slate-200 hover:border-slate-400 hover:bg-slate-50 text-slate-700 font-medium text-xs px-4 py-1.5 rounded-full transition-all bg-transparent cursor-pointer outline-none whitespace-nowrap"
+                      >
+                        {t.view}
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="bg-white border border-slate-200 rounded-[22px] p-8 text-center shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+                    <p className="text-slate-400 font-normal text-sm">{t.noVehicles}</p>
                   </div>
-                ))}
+                )}
               </div>
-            ) : (
-              <div className="bg-white border border-slate-200 rounded-[22px] p-8 text-center shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
-                <p className="text-slate-400 font-bold text-sm">No vehicles registered under this policy.</p>
+            </div>
+
+            {/* Contact Support Card Box */}
+            <div className="bg-gradient-to-br from-cyan-50/90 via-sky-50/40 to-blue-50/20 border border-cyan-150/60 rounded-3xl p-6 shadow-md hover:shadow-lg hover:scale-[1.01] transition-all duration-300 relative overflow-hidden flex flex-col gap-4">
+              
+              {/* Pulsing online status indicator */}
+              <div className="absolute top-4 right-4 flex items-center gap-1.5 bg-emerald-50 border border-emerald-200/50 rounded-full px-3 py-1 select-none">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-[9px] font-medium text-emerald-700 tracking-wide uppercase">{t.liveSupport}</span>
               </div>
-            )}
+
+              <h3 className="text-cyan-800 font-bold text-lg tracking-tight flex items-center gap-2 select-none">
+                <HugeiconsIcon icon={CustomerService01Icon} className="w-5 h-5 text-cyan-600" strokeWidth={2.5} />
+                {t.supportHelpdesk}
+              </h3>
+              
+              <p className="text-xs text-slate-500 font-normal text-left leading-relaxed -mt-1 select-none">
+                {t.supportNeed}
+              </p>
+
+              <div className="flex flex-col gap-2.5 mt-1">
+                <a href="tel:+94112003000" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-medium text-sm text-slate-800 group no-underline">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white flex-shrink-0">
+                      <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2} />
+                    </span>
+                    <span className="text-slate-700 tracking-tight font-medium text-xs md:text-sm truncate">+94 112 003 000</span>
+                  </div>
+                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200 whitespace-nowrap flex-shrink-0">
+                    {t.line1}
+                  </span>
+                </a>
+
+                <a href="tel:+94112003001" className="flex items-center justify-between bg-white border border-slate-100/60 p-3 rounded-2xl hover:border-cyan-200 hover:shadow-sm hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 font-medium text-sm text-slate-800 group no-underline">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="bg-cyan-50 p-2 rounded-xl text-cyan-600 transition-colors group-hover:bg-cyan-500 group-hover:text-white flex-shrink-0">
+                      <HugeiconsIcon icon={Call02Icon} className="w-4 h-4" strokeWidth={2} />
+                    </span>
+                    <span className="text-slate-700 tracking-tight font-medium text-xs md:text-sm truncate">+94 112 003 001</span>
+                  </div>
+                  <span className="text-[10px] bg-slate-50 border border-slate-150 px-3 py-1 rounded-full text-slate-400 group-hover:bg-cyan-50 group-hover:text-cyan-600 group-hover:border-cyan-200 whitespace-nowrap flex-shrink-0">
+                    {t.line2}
+                  </span>
+                </a>
+              </div>
+            </div>
           </div>
 
         </section>
 
       </main>
 
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-slate-900 font-semibold px-6 py-4 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border border-slate-900/20">
+          <HugeiconsIcon icon={RefreshIcon} className="w-6 h-6 animate-spin" strokeWidth={2.5} />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Vehicle Detail Popup Modal */}
+      {selectedVehicleForModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[620px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
+              <h2 className="text-[20px] md:text-[22px] font-bold text-[#0f2d3a] tracking-tight leading-none text-slate-800">
+                Vehicle Specifications
+              </h2>
+              <button
+                onClick={() => setSelectedVehicleForModal(null)}
+                className="text-slate-400 hover:text-slate-600 text-2xl font-bold border-none bg-transparent cursor-pointer outline-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-8 flex-1 overflow-y-auto">
+              
+              {/* Profile Card Header inside modal */}
+              <div className="bg-slate-50 border border-slate-200/60 rounded-[22px] p-5 mb-6 flex items-center gap-4.5 shadow-sm select-none text-slate-800">
+                {getVehicleIconContainer(selectedVehicleForModal.vehicleType)}
+                <div>
+                  <h3 className="text-[#0f2d3a] font-bold text-xl leading-none tracking-tight">
+                    {selectedVehicleForModal.company} {selectedVehicleForModal.model}
+                  </h3>
+                  <p className="text-slate-500 font-normal text-xs mt-1.5">
+                    Year: {selectedVehicleForModal.year} | Type: {selectedVehicleForModal.vehicleType}
+                  </p>
+                </div>
+              </div>
+
+              {/* 2-Column Specs Layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-normal text-slate-700 mb-8 px-2">
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Number Plate</span>
+                  <span className="font-semibold text-slate-800 text-base">{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Policy Number</span>
+                  <span className="font-semibold text-slate-800 text-base tracking-wide">{selectedVehicleForModal.policyNumber || "N/A"}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Engine Number</span>
+                  <span className="font-medium text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.engineNumber || "N/A"}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Chassis Number</span>
+                  <span className="font-medium text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.chassisNumber || "N/A"}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Insurance Coverage</span>
+                  <span className="font-semibold text-emerald-600 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                    Active Coverage
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Renewal Cycle</span>
+                  <span className="font-semibold text-slate-800">Annual (Jan 01 - Dec 31)</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2 sm:col-span-2">
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Insurance Plan Type</span>
+                  <span className="font-semibold text-slate-800">Comprehensive Vehicle Insurance Plan</span>
+                </div>
+              </div>
+
+              {/* Action Buttons in Modal */}
+              <div className="flex gap-4 border-t border-slate-100 pt-6">
+                <Link
+                  href={`/Policy_Holder/New_Claim?plate=${encodeURIComponent(selectedVehicleForModal.numberPlate)}`}
+                  onClick={() => setSelectedVehicleForModal(null)}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                >
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2.5} />
+                  File a Claim
+                </Link>
+                <button
+                  onClick={() => handleDownloadCoverNote(selectedVehicleForModal)}
+                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-semibold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                >
+                  <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                  Cover Note
+                </button>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
+              <button
+                onClick={() => setSelectedVehicleForModal(null)}
+                className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+              >
+                Close
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Claim Detail Modal Popup */}
+      {selectedClaim && (() => {
+        const renderClaimProgress = (status: string, dbStep?: number) => {
+          let currentStep = dbStep || 1;
+          if (!dbStep) {
+            const s = status.toLowerCase();
+            if (s.includes("pending") || s.includes("progress")) {
+              currentStep = 3;
+            } else if (s.includes("review")) {
+              currentStep = 4;
+            } else if (s.includes("approved") || s.includes("active") || s.includes("done")) {
+              currentStep = 6;
+            }
+          }
+
+          const steps = [
+            { num: "01", label: "Submitted" },
+            { num: "02", label: "Assigned" },
+            { num: "03", label: "Inspection" },
+            { num: "04", label: "Review" },
+            { num: "05", label: "Decision" },
+            { num: "06", label: "Payment" }
+          ];
+
+          return (
+            <div className="bg-[#f8fafc] border border-slate-100 rounded-[24px] pt-6 pb-5 px-8 mb-8 flex justify-between items-center relative select-none w-full max-w-[540px] mx-auto shadow-sm">
+              {/* Background Grey Line */}
+              <div className="absolute top-[44px] -translate-y-1/2 left-[52px] right-[52px] h-[3px] bg-slate-200 z-0 pointer-events-none" />
+              
+              {/* Active Green Line */}
+              <div
+                className="absolute top-[44px] -translate-y-1/2 left-[52px] h-[3px] bg-[#00b050] z-0 pointer-events-none transition-all duration-300"
+                style={{ width: `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
+              />
+
+              {steps.map((step, idx) => {
+                const stepNum = idx + 1;
+                const isCompleted = stepNum < currentStep;
+                const isActive = stepNum === currentStep;
+
+                let circleClass = "";
+                if (isCompleted) {
+                  circleClass = "border-[#00b050] text-[#00b050] bg-white";
+                } else if (isActive) {
+                  circleClass = "border-blue-500 text-blue-500 bg-[#e8f0fe]";
+                } else {
+                  circleClass = "border-slate-300 text-slate-400 bg-white";
+                }
+
+                return (
+                  <div key={step.num} className="relative z-10 flex flex-col items-center flex-1">
+                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold relative z-10 ${circleClass}`}>
+                      {step.num}
+                    </div>
+                    <span className={`text-[11px] font-medium mt-2 leading-none relative z-10 ${isActive ? "text-blue-600 font-semibold" : isCompleted ? "text-slate-800" : "text-slate-400"}`}>
+                      {step.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        };
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
+              
+              {/* Modal Header Title */}
+              <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
+                <h2 className="text-[22px] font-bold text-[#0f2d3a] tracking-tight leading-none text-slate-800">
+                  Claim Details – {selectedClaim.claimNumber}
+                </h2>
+                <button
+                  onClick={() => setSelectedClaim(null)}
+                  className="text-slate-400 hover:text-slate-600 text-2xl font-bold border-none bg-transparent cursor-pointer"
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-8 flex-1 overflow-y-auto">
+                
+                {/* Dynamic Tracker Wizard */}
+                {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep)}
+
+                {/* 2-Column Grid matching mockup inline labels */}
+                <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[14px] font-normal text-slate-700 mb-6 px-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Vehicle:</span>
+                    <span className="font-semibold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate || "")}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Type:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.damageType}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Est. Amount:</span>
+                    <span className="font-semibold text-slate-800">
+                      {selectedClaim.amount
+                        ? (typeof selectedClaim.amount === "string"
+                          ? (selectedClaim.amount.startsWith("Rs.") ? "LKR " + selectedClaim.amount.substring(4) : selectedClaim.amount)
+                          : "LKR " + Number(selectedClaim.amount).toLocaleString())
+                        : "Pending"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Date:</span>
+                    <span className="font-semibold text-slate-800">{formatDateString(selectedClaim.incidentDate)}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Officer:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.officer || "Agent Saman"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Branch:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.branch ? (selectedClaim.branch.toLowerCase().includes("branch") ? selectedClaim.branch : selectedClaim.branch + " Branch") : "Galle Branch"}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-500 font-medium w-28 shrink-0">Location:</span>
+                    <span className="font-semibold text-slate-800">{selectedClaim.location || "N/A"}</span>
+                  </div>
+                </div>
+
+                {/* Description Text (If available) */}
+                {selectedClaim.description && (
+                  <div className="px-2 mb-6">
+                    <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Incident Description</p>
+                    <p className="text-slate-600 text-sm font-normal leading-relaxed italic bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                      "{selectedClaim.description}"
+                    </p>
+                  </div>
+                )}
+
+                {/* Other Vehicles Involved */}
+                {selectedClaim.otherVehicleDetails && (
+                  <div className="px-2 mb-6 text-left">
+                    <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-2 select-none">Other Vehicles Involved</p>
+                    {Array.isArray(selectedClaim.otherVehicleDetails) ? (
+                      selectedClaim.otherVehicleDetails.length === 0 ? (
+                        <div className="text-xs text-slate-500 italic select-none">No other vehicles involved.</div>
+                      ) : (
+                        <div className="space-y-4">
+                          {selectedClaim.otherVehicleDetails.map((vehicle: any, vIdx: number) => (
+                            <div key={vIdx} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                              <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wider select-none">Vehicle #{vIdx + 1}</h4>
+                              <div className="grid grid-cols-2 gap-4 text-left">
+                                <div>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                                  <span className="block text-slate-800 text-xs font-medium mt-0.5">{vehicle.vehiclePlate || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                                  <span className="block text-slate-800 text-xs font-medium mt-0.5">{vehicle.driverName || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                                  <span className="block text-slate-800 text-xs font-medium mt-0.5">{vehicle.insuranceCompany || "—"}</span>
+                                </div>
+                                <div>
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                                  <span className="block text-slate-800 text-xs font-medium mt-0.5">{vehicle.policyNumber || "—"}</span>
+                                </div>
+                              </div>
+
+                              {/* License Photos */}
+                              {vehicle.licensePhotos && vehicle.licensePhotos.length > 0 && (
+                                <div className="pt-2 border-t border-slate-200/60">
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2 select-none">Driver's License Photos</span>
+                                  <div className="flex flex-wrap gap-2.5">
+                                    {vehicle.licensePhotos.map((url: string, idx: number) => {
+                                      let docUrl = url;
+                                      if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                        docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                      }
+                                      return (
+                                        <div 
+                                          key={idx}
+                                          onClick={() => window.open(docUrl, "_blank")}
+                                          className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                        >
+                                          <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Vehicle Photos */}
+                              {vehicle.vehiclePhotos && vehicle.vehiclePhotos.length > 0 && (
+                                <div className="pt-2 border-t border-slate-200/60">
+                                  <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2 select-none">Vehicle / Damage Photos</span>
+                                  <div className="flex flex-wrap gap-2.5">
+                                    {vehicle.vehiclePhotos.map((url: string, idx: number) => {
+                                      let docUrl = url;
+                                      if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                        docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                      }
+                                      return (
+                                        <div 
+                                          key={idx}
+                                          onClick={() => window.open(docUrl, "_blank")}
+                                          className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                        >
+                                          <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    ) : (
+                      (selectedClaim.otherVehicleDetails.vehiclePlate || selectedClaim.otherVehicleDetails.driverName) && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-4">
+                          <div className="grid grid-cols-2 gap-4 text-left">
+                            <div>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Vehicle Number</span>
+                              <span className="block text-slate-800 text-xs font-medium mt-0.5">{selectedClaim.otherVehicleDetails.vehiclePlate || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Driver Name</span>
+                              <span className="block text-slate-800 text-xs font-medium mt-0.5">{selectedClaim.otherVehicleDetails.driverName || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Insurance Name</span>
+                              <span className="block text-slate-800 text-xs font-medium mt-0.5">{selectedClaim.otherVehicleDetails.insuranceCompany || "—"}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider select-none">Insurance Number</span>
+                              <span className="block text-slate-800 text-xs font-medium mt-0.5">{selectedClaim.otherVehicleDetails.policyNumber || "—"}</span>
+                            </div>
+                          </div>
+
+                          {/* License Photos */}
+                          {selectedClaim.otherVehicleDetails.licensePhotos && selectedClaim.otherVehicleDetails.licensePhotos.length > 0 && (
+                            <div className="pt-2 border-t border-slate-200/60">
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2 select-none">Other Driver's License Photos</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {selectedClaim.otherVehicleDetails.licensePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Driver License" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Vehicle Photos */}
+                          {selectedClaim.otherVehicleDetails.vehiclePhotos && selectedClaim.otherVehicleDetails.vehiclePhotos.length > 0 && (
+                            <div className="pt-2 border-t border-slate-200/60">
+                              <span className="block text-[10px] text-slate-500 font-medium uppercase tracking-wider mb-2 select-none">Other Vehicle / Scene Photos</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {selectedClaim.otherVehicleDetails.vehiclePhotos.map((url: string, idx: number) => {
+                                  let docUrl = url;
+                                  if (docUrl && !docUrl.startsWith("http") && !docUrl.startsWith("data:")) {
+                                    docUrl = `${API_URL.replace("/api", "")}/uploads/${docUrl}`;
+                                  }
+                                  return (
+                                    <div 
+                                      key={idx}
+                                      onClick={() => window.open(docUrl, "_blank")}
+                                      className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-sm"
+                                    >
+                                      <img src={docUrl} alt="Other Vehicle" className="w-full h-full object-cover" />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
+                {/* Messages & Notifications Section */}
+                <div className="px-2 mt-4 mb-2">
+                  <p className="text-slate-500 text-xs font-medium uppercase tracking-wider mb-2 select-none">Messages & Notifications</p>
+                  {(() => {
+                    const filteredMessages = (selectedClaim.messages || []).filter((msg: any) => msg.recipient !== "Agent");
+                    if (filteredMessages.length > 0) {
+                      return (
+                        <div className="flex flex-col gap-2.5 max-h-[140px] overflow-y-auto pr-1">
+                          {filteredMessages.map((msg: any, index: number) => (
+                            <div key={index} className="bg-slate-50 border border-slate-200/60 rounded-2xl p-4 flex flex-col gap-1 shadow-sm">
+                              <div className="flex justify-between items-center text-[11px] select-none">
+                                <span className="font-semibold text-[#0f2d3a]">{msg.sender}</span>
+                                <span className="text-slate-400 font-normal">{formatDateString(msg.sentAt)}</span>
+                              </div>
+                              <p className="text-slate-700 text-xs font-normal leading-relaxed m-0">
+                                {msg.message}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <p className="text-slate-500 text-xs italic font-normal bg-slate-50 border border-slate-100 rounded-xl p-3 m-0 select-none">
+                          No notifications or messages have been sent for this claim.
+                        </p>
+                      );
+                    }
+                  })()}
+                </div>
+
+                {/* Warning Alert Box: Documents Requested */}
+                {selectedClaim.documentsRequested && getUserRequestedDocs(selectedClaim).length > 0 && (
+                  <div className="bg-[#ffeaea]/80 border border-[#ffd1d1] rounded-[20px] p-6 mb-2 mt-4">
+                    <h4 className="text-[#9c3535] font-semibold text-sm mb-1.5">Documents Requested</h4>
+                    <p className="text-[#aa4f4f] text-[13px] font-normal leading-relaxed mb-3">
+                      The following documents have been requested by staff to process your claim. Please upload them via the Documents section:
+                    </p>
+                    <ul className="list-none flex flex-col gap-4.5 mb-4 pl-1">
+                      {getUserRequestedDocs(selectedClaim).map((doc) => {
+                        const note = getDocRequestNote(selectedClaim, doc);
+                        const reqTime = getDocRequestTime(selectedClaim, doc);
+                        return (
+                          <li key={doc} className="flex items-start gap-2 text-[#aa4f4f] font-normal text-xs w-full">
+                            <span className="w-2 h-2 rounded-full bg-[#df3d3d] flex-shrink-0 mt-1.5" />
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-x-2 gap-y-0.5 items-baseline">
+                              <span className="font-semibold">{doc}</span>
+                              {reqTime && (
+                                <span className="text-red-600 font-medium">
+                                  (Requested: {reqTime} by {getDocRequestSender(selectedClaim, doc)})
+                                </span>
+                              )}
+                              {note && (
+                                <span className="col-span-1 sm:col-span-2 text-[11px] font-normal text-slate-500 italic mt-0.5 pl-0.5">
+                                  Note: "{note}"
+                                </span>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <Link
+                      href={`/Policy_Holder/Documents?uploadClaim=${selectedClaim.claimNumber}`}
+                      className="inline-block bg-[#df3d3d] hover:bg-[#c53030] text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    >
+                      Go to Documents
+                    </Link>
+                  </div>
+                )}
+
+                {/* Success Alert Box: Documents Submitted – Under Review */}
+                {getUserRequestedDocs(selectedClaim).length === 0 && getSubmittedUserDocs(selectedClaim).length > 0 && (
+                  <div className="bg-emerald-50/90 border border-emerald-200 rounded-[20px] p-6 mb-2 mt-4 transition-all">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
+                      </div>
+                      <h4 className="text-emerald-900 font-semibold text-sm m-0">Documents Submitted – Under Review</h4>
+                    </div>
+                    <p className="text-emerald-800 text-[13px] font-normal leading-relaxed mb-3">
+                      The requested document(s) have been successfully submitted and are currently being reviewed by our insurance team:
+                    </p>
+                    <ul className="list-none flex flex-col gap-2 mb-4 pl-1">
+                      {getSubmittedUserDocs(selectedClaim).map((doc, idx) => (
+                        <li key={idx} className="flex items-center justify-between gap-2 text-emerald-900 font-medium text-xs bg-white/80 border border-emerald-100 rounded-xl px-3.5 py-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            <span className="font-semibold truncate">{doc.name}</span>
+                            {doc.uploadedAt && (
+                              <span className="text-[11px] text-emerald-700/80 font-normal">
+                                (Submitted: {formatDateString(doc.uploadedAt)})
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/60 px-2 py-0.5 rounded-md shrink-0">
+                            Submitted
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={`/Policy_Holder/Documents`}
+                      className="inline-block bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs px-6 py-2.5 rounded-full transition-all duration-150 no-underline shadow-sm cursor-pointer border-none text-center"
+                    >
+                      View in Documents
+                    </Link>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
+                <button
+                  onClick={() => setSelectedClaim(null)}
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer"
+                >
+                  Close
+                </button>
+              </div>
+
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Floating Chat Bubble Button */}
       <button
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-7 h-7">
-          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.477 2 12c0 1.821.487 3.53 1.338 5L2.1 21.5l4.63-.827A9.957 9.957 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm-3.5 11a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3zm3.5 0a1.5 1.5 0 110-3 1.5 1.5 0 010 3z" clipRule="evenodd" />
-        </svg>
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
       </button>
 
       <PolicyHolderFooter />

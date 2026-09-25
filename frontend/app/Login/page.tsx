@@ -1,37 +1,101 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/app/Components/Homepage/Navbar";
 import Footer from "@/app/Components/Login/Footer";
 import { API_URL } from "@/app/config";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  UserIcon,
+  LockIcon,
+  ViewIcon,
+  ViewOffSlashIcon,
+  AlertCircleIcon,
+  InformationCircleIcon,
+  Cancel01Icon
+} from "@hugeicons/core-free-icons";
 
-/**
- * Login Component
- * Handles user authentication for all roles (Policy Holders, Insurance Agents, Office Staff, and Admins).
- * Uses session storage to persist user context upon successful authentication.
- */
+const translations = {
+  en: {
+    loginTitle: "Login",
+    loginSubtitle: "Welcome back! Please enter your credentials to continue.",
+    nicOrEmail: "NIC or Email Address",
+    nicEmailHint: "Policy Holders: Use NIC or Email · Agents/Staff/Admins: Use Email",
+    nicEmailPlaceholder: "Enter your NIC or Email address",
+    password: "Password",
+    passwordPlaceholder: "Enter your password",
+    confirmBtn: "Confirm",
+    createAccount: "Create an Account",
+    resetPassword: "Reset Password",
+    loginFailed: "Login failed.",
+    connError: "Unable to connect to the server. Please verify the backend is running.",
+    unknownRole: "Unknown user role returned from server."
+  },
+  si: {
+    loginTitle: "ලොගින් වන්න",
+    loginSubtitle: "නැවත සාදරයෙන් පිළිගනිමු! කරුණාකර ඔබගේ තොරතුරු ඇතුළත් කරන්න.",
+    nicOrEmail: "ජාතික හැඳුනුම්පත් අංකය හෝ විද්‍යුත් තැපෑල",
+    nicEmailHint: "ප්‍රතිපත්ති හිමියන්: හැඳුනුම්පත හෝ විද්‍යුත් තැපෑල · නියෝජිතයින්/කාර්ය මණ්ඩලය: විද්‍යුත් තැපෑල",
+    nicEmailPlaceholder: "ජාතික හැඳුනුම්පත හෝ විද්‍යුත් තැපැල් ලිපිනය ඇතුළත් කරන්න",
+    password: "මුරපදය",
+    passwordPlaceholder: "ඔබගේ මුරපදය ඇතුළත් කරන්න",
+    confirmBtn: "තහවුරු කරන්න",
+    createAccount: "ගිණුමක් සාදන්න",
+    resetPassword: "මුරපදය අලුත් කරන්න",
+    loginFailed: "ඇතුල් වීම අසාර්ථක විය.",
+    connError: "සේවාදායකයට සම්බන්ධ විය නොහැක. කරුණාකර පසුබිම් සේවාව ක්‍රියාත්මක දැයි පරීක්ෂා කරන්න.",
+    unknownRole: "සේවාදායකයෙන් නොදන්නා පරිශීලක භූමිකාවක් ලැබුණි."
+  },
+  ta: {
+    loginTitle: "உள்நுழைக",
+    loginSubtitle: "மீண்டும் வருக! தொடர உங்கள் விவரங்களை உள்ளிடவும்.",
+    nicOrEmail: "அடையாள அட்டை அல்லது மின்னஞ்சல் முகவரி",
+    nicEmailHint: "பாலிசிதாரர்கள்: அட்டை எண் அல்லது மின்னஞ்சல் · முகவர்கள்/ஊழியர்கள்: மின்னஞ்சல்",
+    nicEmailPlaceholder: "அடையாள அட்டை அல்லது மின்னஞ்சல் முகவரியை உள்ளிடவும்",
+    password: "கடவுச்சொல்",
+    passwordPlaceholder: "உங்கள் கடவுச்சொல்லை உள்ளிடவும்",
+    confirmBtn: "உறுதிப்படுத்துக",
+    createAccount: "கணக்கை உருவாக்கு",
+    resetPassword: "கடவுச்சொல்லை மீட்டமை",
+    loginFailed: "உள்நுழைவு தோல்வியடைந்தது.",
+    connError: "சேவையகத்துடன் இணைக்க முடியவில்லை. பின்னணி சேவை இயங்குகிறதா என சரிபார்க்கவும்.",
+    unknownRole: "சேவையகத்திலிருந்து அறியப்படாத பயனர் பங்கு பெறப்பட்டது."
+  }
+};
+
 export default function Login() {
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
   const router = useRouter();
-
-  // --- Input State & UI Controls ---
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [infoMessage, setInfoMessage] = useState("");
 
-  // --- Custom Dialog Popup State ---
-  const [customPopup, setCustomPopup] = useState<{
-    show: boolean;
-    title: string;
-    message: string;
-    type?: "alert" | "confirm" | "success" | "error";
-    onConfirm?: () => void;
-  }>({ show: false, title: "", message: "", type: "alert" });
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
+      setLang(savedLang);
+    }
+  }, []);
 
-  // --- Lifecycle Effects ---
-  // Reset any existing session context on mount to guarantee fresh credentials state.
+  // Listen to language change events from navbar
+  useEffect(() => {
+    const handleLangChange = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail) {
+        setLang(customEvent.detail);
+      }
+    };
+    window.addEventListener("language-changed", handleLangChange);
+    return () => window.removeEventListener("language-changed", handleLangChange);
+  }, []);
+
+  const t = translations[lang];
+
   React.useEffect(() => {
     if (typeof window !== "undefined") {
       sessionStorage.clear();
@@ -43,10 +107,9 @@ export default function Login() {
     }
   }, []);
 
-  // --- Authentication Submission ---
-  // Sends the user credentials to the authentication service and checks their authorized system role.
   const handleConfirm = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
@@ -55,7 +118,7 @@ export default function Login() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setCustomPopup({ show: true, title: "Login Failed", message: data.error || "Login failed." });
+        setError(data.error || t.loginFailed);
         return;
       }
 
@@ -72,267 +135,164 @@ export default function Login() {
         sessionStorage.setItem("logged_in_admin", JSON.stringify(data.admin));
         router.push("/Admin/Dashboard");
       } else {
-        setCustomPopup({ show: true, title: "System Error", message: "Unknown user role returned from server." });
+        setError(t.unknownRole);
       }
     } catch (err) {
       console.error("Login request failed", err);
-      setCustomPopup({ show: true, title: "Connection Error", message: "Unable to connect to the server. Please check your network connection." });
+      setError(t.connError);
     }
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col">
+    <div className="min-h-screen w-full flex flex-col justify-between">
       <Navbar />
       <div
-        className="relative flex-1 w-full flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="relative flex-1 w-full flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat min-h-[calc(100vh-140px)] py-8 md:py-12"
         style={{
           backgroundImage: "url('/login_bg.jpg')",
         }}
       >
-      {/* Visual Teal/Blue Overlay Layers for Modern Depth */}
-      <div className="absolute inset-0 bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
+        {/* Visual Teal/Blue Overlay Layers for Modern Depth */}
+        <div className="absolute inset-0 bg-[#0e3b44]/75 mix-blend-multiply pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0c3945]/90 via-[#125867]/75 to-[#0b333b]/90 pointer-events-none" />
 
-      {/* Floating ambient light effects to wow the user */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-300/15 blur-[120px] pointer-events-none" />
+        {/* Floating ambient light effects */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-cyan-400/20 blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-teal-300/15 blur-[120px] pointer-events-none" />
 
-      {/* Main Container */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pt-12 pb-32 md:pb-40 flex flex-col lg:flex-row items-center justify-around gap-12 lg:gap-6">
-        
-        {/* Left Side: Large Title */}
-        <div className="flex flex-col items-center lg:items-start text-center lg:text-left text-white max-w-md">
-          <h1 className="text-6xl md:text-8xl font-bold tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)] transition-all duration-300">
-            Login
-          </h1>
-        </div>
-
-        {/* Right Side: Glass effect Login Card */}
-        <div className="w-full max-w-[500px] bg-white/10 backdrop-blur-md border border-white/20 rounded-[2.5rem] p-8 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-8 transition-all duration-500 hover:border-white/30">
+        {/* Main Centered Container */}
+        <div className="relative z-10 w-full max-w-xl mx-auto px-4 sm:px-6 flex flex-col items-center justify-center my-auto">
           
-          {infoMessage && (
-            <div className="bg-blue-500/20 border-l-4 border-blue-400 p-4 rounded-xl text-white text-sm flex items-start gap-3">
-              <svg className="w-5 h-5 shrink-0 text-blue-300 mt-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 111.085 1.085l-.04.02m-.086-1.085a.75.75 0 00-1.085-.022m0 0l-.017-.016a.75.75 0 00-1.078 1.025l.016.018a.75.75 0 001.078-1.027zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>{infoMessage}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleConfirm} className="flex flex-col gap-6">
+          {/* Glass effect Login Card */}
+          <div className="w-full max-w-[500px] bg-white/10 backdrop-blur-md border border-white/20 rounded-[2.5rem] p-8 sm:p-10 md:p-12 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] flex flex-col gap-6 transition-all duration-300 hover:border-white/30">
             
-            {/* Unified NIC / Email Input Field */}
-            <div className="flex flex-col gap-2">
-              <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
-                NIC or Email Address
-              </label>
-              <span className="text-[11px] text-white/60 block select-none ml-1 -mt-1.5 leading-normal">
-                Policy Holders: Use NIC or Email · Agents/Staff/Admins: Use Email
-              </span>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                    />
-                  </svg>
-                </span>
-                <input
-                  type="text"
-                  required
-                  value={loginId}
-                  onChange={(e) => setLoginId(e.target.value)}
-                  className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                  placeholder="Enter your NIC or Email address"
-                />
-              </div>
-            </div>
-
-            {/* Password Field */}
-            <div className="flex flex-col gap-2">
-              <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
-                Password
-              </label>
-
-              <div className="relative">
-                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
-                  {/* Custom Lock SVG Icon */}
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.2"
-                    viewBox="0 0 24 24"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                </span>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
-                  placeholder="Enter your password"
-                />
-                {password.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer"
-                  >
-                    {showPassword ? (
-                      /* Eye Slash Icon (Hide) */
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"
-                        />
-                      </svg>
-                    ) : (
-                      /* Eye Icon (Show) */
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"
-                        />
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"
-                        />
-                      </svg>
-                    )}
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Confirm Button */}
-            <button
-              type="submit"
-              className="mt-4 w-full max-w-[220px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-lg cursor-pointer select-none outline-none border-none"
-            >
-              Confirm
-            </button>
-          </form>
-
-          {/* Footer Links */}
-          <div className="flex justify-between items-center w-full border-t border-white/10 pt-6 text-sm text-white/85 font-medium select-none">
-            <Link
-              href="/SignUp"
-              className="hover:text-white hover:underline transition-all cursor-pointer"
-            >
-              Create an Account
-            </Link>
-            <Link
-              href="/Reset_password"
-              className="hover:text-white hover:underline transition-all cursor-pointer"
-            >
-              Reset Password
-            </Link>
-          </div>
-
-        </div>
-
-      </div>
-      </div>
-            {/* Custom Popup Modal */}
-      {customPopup.show && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-sm shadow-[0_20px_50px_rgba(15,45,58,0.15)] border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 flex flex-col gap-4">
-            
-            {/* Header/Title with clean inline icon */}
-            <div className="flex items-center gap-3.5">
-              {customPopup.type === "success" ? (
-                <div className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-              ) : customPopup.type === "confirm" ? (
-                <div className="w-10 h-10 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center shrink-0">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                </div>
-              )}
-              <h3 className="font-black text-base text-slate-800 tracking-tight leading-none">
-                {customPopup.title}
-              </h3>
-            </div>
-
-            {/* Message Body */}
-            <div>
-              <p className="text-slate-500 text-[13px] font-semibold leading-relaxed">
-                {customPopup.message}
+            {/* Top Center Title */}
+            <div className="flex flex-col items-center text-center -mt-2 mb-1">
+              <h1 className="text-4xl md:text-5xl font-bold text-white tracking-tight select-none drop-shadow-[0_4px_10px_rgba(0,0,0,0.3)]">
+                {t.loginTitle}
+              </h1>
+              <p className="text-white/70 text-sm mt-2 font-medium">
+                {t.loginSubtitle}
               </p>
             </div>
-
-            {/* Footer Buttons */}
-            <div className="flex justify-end gap-2.5 mt-2 select-none">
-              {customPopup.type === "confirm" ? (
-                <>
-                  <button
-                    onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                    className="px-5 py-2 border border-slate-200 hover:bg-slate-50 text-slate-500 rounded-full text-xs font-bold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      setCustomPopup({ ...customPopup, show: false });
-                      if (customPopup.onConfirm) customPopup.onConfirm();
-                    }}
-                    className="px-6 py-2 bg-[#df3d3d] hover:bg-[#c53030] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
-                  >
-                    Confirm
-                  </button>
-                </>
-              ) : (
+            
+            {error && (
+              <div className="flex items-start gap-3 bg-red-500/15 backdrop-blur-md border border-red-500/30 text-red-100 p-4 rounded-2xl transition-all duration-300 shadow-[0_4px_20px_rgba(239,68,68,0.2)] relative overflow-hidden text-sm">
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-red-500 rounded-l-2xl" />
+                <span className="text-red-400 mt-0.5 shrink-0 pl-1">
+                  <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5" strokeWidth={2} />
+                </span>
+                <div className="flex-1 font-semibold pr-4 leading-relaxed">
+                  {error}
+                </div>
                 <button
-                  onClick={() => setCustomPopup({ ...customPopup, show: false })}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-md transition-all cursor-pointer border-none"
+                  type="button"
+                  onClick={() => setError(null)}
+                  className="absolute right-3 top-3 text-red-400/80 hover:text-red-100 transition-colors focus:outline-none cursor-pointer border-none bg-transparent"
                 >
-                  OK
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
                 </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+              </div>
+            )}
 
+            {infoMessage && (
+              <div className="bg-blue-500/20 border-l-4 border-blue-400 p-4 rounded-xl text-white text-sm flex items-start gap-3">
+                <HugeiconsIcon icon={InformationCircleIcon} className="w-5 h-5 flex-shrink-0 text-blue-300 mt-0.5" strokeWidth={2} />
+                <span>{infoMessage}</span>
+              </div>
+            )}
+
+            <form onSubmit={handleConfirm} className="flex flex-col gap-6">
+              
+              {/* Unified NIC / Email Input Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
+                  {t.nicOrEmail}
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
+                    <HugeiconsIcon icon={UserIcon} className="w-5 h-5 text-slate-400" strokeWidth={2} />
+                  </span>
+                  <input
+                    type="text"
+                    required
+                    value={loginId}
+                    onChange={(e) => {
+                      setLoginId(e.target.value);
+                      if (error) setError(null);
+                    }}
+                    className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-4 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                    placeholder={t.nicEmailPlaceholder}
+                  />
+                </div>
+              </div>
+
+              {/* Password Field */}
+              <div className="flex flex-col gap-2">
+                <label className="text-white text-base font-semibold tracking-wide ml-1 select-none">
+                  {t.password}
+                </label>
+
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-700">
+                    <HugeiconsIcon icon={LockIcon} className="w-5 h-5 text-slate-400" strokeWidth={2} />
+                  </span>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (error) setError(null);
+                    }}
+                    className="w-full bg-white text-slate-800 rounded-2xl py-4 pl-12 pr-12 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 focus:shadow-[0_0_15px_rgba(245,158,11,0.25)] transition-all placeholder:text-gray-400 font-medium border border-transparent"
+                    placeholder={t.passwordPlaceholder}
+                  />
+                  {password.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer border-none bg-transparent"
+                    >
+                      {showPassword ? (
+                        <HugeiconsIcon icon={ViewOffSlashIcon} className="w-5 h-5" strokeWidth={2} />
+                      ) : (
+                        <HugeiconsIcon icon={ViewIcon} className="w-5 h-5" strokeWidth={2} />
+                      )}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Confirm Button */}
+              <button
+                type="submit"
+                className="mt-2 w-full max-w-[220px] mx-auto bg-[#ff9800] hover:bg-[#ff8f00] active:bg-[#f57c00] text-white font-bold py-4 px-8 rounded-full transition-all duration-300 transform hover:scale-[1.04] active:scale-95 shadow-lg shadow-orange-500/35 text-center text-lg cursor-pointer select-none outline-none border-none"
+              >
+                {t.confirmBtn}
+              </button>
+            </form>
+
+            {/* Footer Links */}
+            <div className="flex justify-between items-center w-full border-t border-white/10 pt-5 text-sm text-white/85 font-medium select-none">
+              <Link
+                href="/SignUp"
+                className="hover:text-white hover:underline transition-all cursor-pointer"
+              >
+                {t.createAccount}
+              </Link>
+              <Link
+                href="/Reset_password"
+                className="hover:text-white hover:underline transition-all cursor-pointer"
+              >
+                {t.resetPassword}
+              </Link>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
       <Footer />
     </div>
   );

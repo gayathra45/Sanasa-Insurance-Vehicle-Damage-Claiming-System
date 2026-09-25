@@ -1,0 +1,1094 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
+import { API_URL } from "@/app/config";
+import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import SimpleLoader from "@/app/Components/SimpleLoader";
+
+import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  BubbleChatIcon,
+  Menu01Icon,
+  Notification01Icon,
+  File01Icon,
+  Add01Icon,
+  CheckmarkCircle01Icon,
+  Alert02Icon,
+  Tick01Icon,
+  Search01Icon
+
+} from "@hugeicons/core-free-icons";
+
+interface Vehicle {
+  numberPlate: string;
+  vehicleType: string;
+  year: string;
+  company: string;
+  model: string;
+  engineNumber: string;
+  chassisNumber: string;
+  policyNumber: string;
+  status?: string;
+}
+
+interface PolicyHolder {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  nic: string;
+  mobile: string;
+  email: string;
+  vehicles: Vehicle[];
+  branch: string;
+  referenceNumber: string;
+  status: string;
+  dob?: string;
+  address?: string;
+  province?: string;
+  city?: string;
+  createdAt?: string;
+}
+
+interface PendingVehicleItem {
+  user: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    nic: string;
+    email: string;
+    mobile: string;
+    referenceNumber: string;
+    dob?: string;
+    address?: string;
+    province?: string;
+    city?: string;
+    branch?: string;
+    status?: string;
+    createdAt?: string;
+    vehicles?: Vehicle[];
+  };
+  vehicle: Vehicle;
+}
+
+interface ConfirmedVehicleItem {
+  user: {
+    _id?: string;
+    firstName: string;
+    lastName: string;
+    nic: string;
+    email: string;
+    mobile: string;
+    referenceNumber: string;
+    dob?: string;
+    address?: string;
+    province?: string;
+    city?: string;
+    branch?: string;
+    status?: string;
+    createdAt?: string;
+    vehicles?: Vehicle[];
+  };
+  vehicle: Vehicle;
+}
+
+export default function AddVehiclesPage() {
+  const router = useRouter();
+  const [branch, setBranch] = useState("");
+  const [policyHolders, setPolicyHolders] = useState<PolicyHolder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // Sub-Navigation Tab: Default to "pending"
+  const [activeMenuTab, setActiveMenuTab] = useState<"pending" | "confirmed">("pending");
+  const [pendingVehicles, setPendingVehicles] = useState<PendingVehicleItem[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
+
+  // Confirmed vehicles search and filter
+  const [confirmedSearch, setConfirmedSearch] = useState("");
+  const [filteredConfirmed, setFilteredConfirmed] = useState<ConfirmedVehicleItem[]>([]);
+
+  // Verify Action States
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [selectedUserForModal, setSelectedUserForModal] = useState<any | null>(null);
+
+  // Add Vehicle Modal States
+  const [isAddVehicleOpen, setIsAddVehicleOpen] = useState(false);
+  const [selectedUserForAdd, setSelectedUserForAdd] = useState<string>(""); 
+  const [addCompany, setAddCompany] = useState("");
+  const [addModel, setAddModel] = useState("");
+  const [addYear, setAddYear] = useState("");
+  const [addNumberPlate, setAddNumberPlate] = useState("");
+  const [addVehicleType, setAddVehicleType] = useState("Car");
+  const [addPolicyNumber, setAddPolicyNumber] = useState("");
+  const [addEngineNumber, setAddEngineNumber] = useState("");
+  const [addChassisNumber, setAddChassisNumber] = useState("");
+  const [addSubmitting, setAddSubmitting] = useState(false);
+  const [addError, setAddError] = useState("");
+
+  const handleAddVehicleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddError("");
+    setAddSubmitting(true);
+
+    if (!selectedUserForAdd) {
+      setAddError("Please select a policy holder.");
+      setAddSubmitting(false);
+      return;
+    }
+
+    if (!addCompany.trim() || !addModel.trim() || !addYear.trim() || !addNumberPlate.trim() || !addVehicleType.trim() || !addPolicyNumber.trim() || !addEngineNumber.trim() || !addChassisNumber.trim()) {
+      setAddError("All fields are required.");
+      setAddSubmitting(false);
+      return;
+    }
+
+    const cleanPlate = addNumberPlate.replace(/[\s-]/g, "");
+    if (cleanPlate.length < 5 || cleanPlate.length > 10 || !/^[A-Za-z0-9]+$/.test(cleanPlate)) {
+      setAddError("Number Plate must be an alphanumeric mix between 5 and 10 characters.");
+      setAddSubmitting(false);
+      return;
+    }
+
+    if (!/^\d{4}$/.test(addYear.trim())) {
+      setAddError("Year must be a 4-digit number.");
+      setAddSubmitting(false);
+      return;
+    }
+
+    const cleanPolicy = addPolicyNumber.replace(/[\s-]/g, "");
+    if (!/^SAN[A-Za-z0-9]{5,9}$/i.test(cleanPolicy)) {
+      setAddError("Policy Number must start with 'SAN' and be between 8 and 12 alphanumeric characters.");
+      setAddSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/policy-holder/add-vehicle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nic: selectedUserForAdd,
+          company: addCompany.trim(),
+          model: addModel.trim(),
+          year: addYear.trim(),
+          numberPlate: addNumberPlate.trim(),
+          vehicleType: addVehicleType.trim(),
+          policyNumber: addPolicyNumber.trim(),
+          engineNumber: addEngineNumber.trim(),
+          chassisNumber: addChassisNumber.trim(),
+          status: "Approved" 
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setAddError(data.error || "Failed to register vehicle.");
+        setAddSubmitting(false);
+        return;
+      }
+
+      setActionSuccess(`Vehicle ${formatNumberPlate(addNumberPlate)} has been registered and verified successfully.`);
+      setIsAddVehicleOpen(false);
+      
+      setSelectedUserForAdd("");
+      setAddCompany("");
+      setAddModel("");
+      setAddYear("");
+      setAddNumberPlate("");
+      setAddVehicleType("Car");
+      setAddPolicyNumber("");
+      setAddEngineNumber("");
+      setAddChassisNumber("");
+
+      const holdersRes = await fetch(`${API_URL}/office-staff/policy-holders?branch=${branch}`);
+      if (holdersRes.ok) {
+        const holdersData = await holdersRes.json();
+        setPolicyHolders(holdersData.policyHolders || []);
+      }
+    } catch (err) {
+      console.error(err);
+      setAddError("Unable to connect to the server.");
+    } finally {
+      setAddSubmitting(false);
+    }
+  };
+
+  const handleCancelAddVehicle = () => {
+    setIsAddVehicleOpen(false);
+    setAddError("");
+    setSelectedUserForAdd("");
+    setAddCompany("");
+    setAddModel("");
+    setAddYear("");
+    setAddNumberPlate("");
+    setAddVehicleType("Car");
+    setAddPolicyNumber("");
+    setAddEngineNumber("");
+    setAddChassisNumber("");
+  };
+
+  // 1. Session check & fetch policy holders & pending vehicles
+  useEffect(() => {
+    let currentBranch = "";
+    if (typeof window !== "undefined") {
+      const savedStaff = sessionStorage.getItem("logged_in_staff");
+      if (!savedStaff) {
+        router.push("/Login");
+        return;
+      }
+      try {
+        const staffObj = JSON.parse(savedStaff);
+        if (staffObj && staffObj.branch) {
+          currentBranch = staffObj.branch;
+          setBranch(currentBranch);
+        } else {
+          router.push("/Login");
+          return;
+        }
+      } catch (e) {
+        console.error("Error parsing logged_in_staff", e);
+        router.push("/Login");
+        return;
+      }
+    }
+
+    async function loadInitialData() {
+      try {
+        // Fetch all approved policy holders
+        const holdersRes = await fetch(`${API_URL}/office-staff/policy-holders?branch=${currentBranch}`);
+        if (!holdersRes.ok) {
+          throw new Error("Failed to fetch policy holders.");
+        }
+        const holdersData = await holdersRes.json();
+        setPolicyHolders(holdersData.policyHolders || []);
+
+        // Fetch pending vehicles
+        const pendingRes = await fetch(`${API_URL}/office-staff/pending-vehicles?branch=${currentBranch}`);
+        if (pendingRes.ok) {
+          const pendingData = await pendingRes.json();
+          setPendingVehicles(pendingData.pendingVehicles || []);
+        }
+      } catch (err: any) {
+        console.error("Load initial data error:", err);
+        setError(err.message || "Failed to load branch records.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (currentBranch) {
+      loadInitialData();
+    }
+  }, [router]);
+
+  // Load pending vehicles on tab switch or reload
+  const loadPendingVehicles = async () => {
+    if (!branch) return;
+    setPendingLoading(true);
+    setActionSuccess("");
+    setActionError("");
+    try {
+      const res = await fetch(`${API_URL}/office-staff/pending-vehicles?branch=${branch}`);
+      if (!res.ok) {
+        throw new Error("Failed to fetch pending vehicles list.");
+      }
+      const data = await res.json();
+      setPendingVehicles(data.pendingVehicles || []);
+    } catch (err: any) {
+      console.error(err);
+      setActionError(err.message || "Could not reload pending vehicles.");
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeMenuTab === "pending") {
+      loadPendingVehicles();
+    }
+  }, [activeMenuTab]);
+
+  // 2. Compute and filter Confirmed Vehicles
+  useEffect(() => {
+    const list: ConfirmedVehicleItem[] = [];
+    policyHolders.forEach((holder) => {
+      (holder.vehicles || []).forEach((v) => {
+        if (!v.status || v.status === "Approved") {
+          list.push({
+            user: {
+              _id: holder._id,
+              firstName: holder.firstName,
+              lastName: holder.lastName,
+              nic: holder.nic,
+              email: holder.email,
+              mobile: holder.mobile,
+              dob: holder.dob,
+              address: holder.address,
+              province: holder.province,
+              city: holder.city,
+              branch: holder.branch,
+              status: holder.status,
+              createdAt: holder.createdAt ? String(holder.createdAt) : undefined,
+              referenceNumber: holder.referenceNumber,
+              vehicles: holder.vehicles
+            },
+            vehicle: v
+          });
+        }
+      });
+    });
+
+    // Sort Confirmed list alphabetically by owner's first name, then plate number
+    list.sort((a, b) => {
+      const nameA = `${a.user.firstName} ${a.user.lastName}`.toLowerCase();
+      const nameB = `${b.user.firstName} ${b.user.lastName}`.toLowerCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return a.vehicle.numberPlate.localeCompare(b.vehicle.numberPlate);
+    });
+
+    if (confirmedSearch.trim() === "") {
+      setFilteredConfirmed(list);
+    } else {
+      const q = confirmedSearch.toLowerCase().trim();
+      const filtered = list.filter(
+        (item) =>
+          item.vehicle.numberPlate.toLowerCase().includes(q) ||
+          item.vehicle.policyNumber.toLowerCase().includes(q) ||
+          item.vehicle.company.toLowerCase().includes(q) ||
+          item.vehicle.model.toLowerCase().includes(q) ||
+          item.user.firstName.toLowerCase().includes(q) ||
+          item.user.lastName.toLowerCase().includes(q) ||
+          item.user.nic.toLowerCase().includes(q) ||
+          item.user.referenceNumber.toLowerCase().includes(q)
+      );
+      setFilteredConfirmed(filtered);
+    }
+  }, [confirmedSearch, policyHolders]);
+
+  // 3. Handle Verification Actions (Approve / Reject)
+  const handleVerifyVehicle = async (nic: string, plate: string, action: "Approve" | "Reject") => {
+    const actionKey = `${nic}-${plate}`;
+    setVerifyingId(actionKey);
+    setActionSuccess("");
+    setActionError("");
+
+    try {
+      const res = await fetch(`${API_URL}/office-staff/vehicles/verify`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nic, numberPlate: plate, action })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || `Failed to ${action.toLowerCase()} vehicle.`);
+      }
+
+      setActionSuccess(`Vehicle ${formatNumberPlate(plate)} has been successfully ${action === "Approve" ? "approved" : "rejected"}.`);
+      
+      // Remove from pending list
+      setPendingVehicles((prev) =>
+        prev.filter((item) => !(item.user.nic === nic && item.vehicle.numberPlate === plate))
+      );
+
+      // Fetch latest policy holders to update the Confirmed Vehicles list
+      const holdersRes = await fetch(`${API_URL}/office-staff/policy-holders?branch=${branch}`);
+      if (holdersRes.ok) {
+        const holdersData = await holdersRes.json();
+        setPolicyHolders(holdersData.policyHolders || []);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setActionError(err.message || "Failed to process vehicle verification request.");
+    } finally {
+      setVerifyingId(null);
+    }
+  };
+
+  const formatNumberPlate = (plate?: string): string => {
+    if (!plate) return "";
+    const cleaned = plate.trim();
+    if (cleaned.includes("-")) return cleaned;
+    const m = cleaned.match(/^(.*[A-Za-z]+)(\d+)$/);
+    if (m) return `${m[1].trim().toUpperCase()}-${m[2]}`;
+    return cleaned;
+  };
+
+  const getPlateParts = (plateStr?: string) => {
+    const formatted = formatNumberPlate(plateStr).toUpperCase();
+    const m = formatted.match(/^(WP|CP|SP|EP|NP|NW|NC|SG|UP|UVA|Uva)[-\s](.*)$/i);
+    if (m) {
+      return { province: m[1].toUpperCase(), number: m[2] };
+    }
+    return { province: "LK", number: formatted };
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+      <div className="flex flex-1 flex-row min-h-0">
+        <OfficeStaffNavbar />
+
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+          {/* Header */}
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
+                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
+              >
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
+              </button>
+              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+                <span className="hidden lg:inline">Welcome back, </span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">{branch} Branch</span>
+              </h1>
+            </div>
+            <div className="flex items-center gap-5">
+              <Link
+                href="/Office_Staff/Notifications"
+                className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
+              >
+                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
+              </Link>
+              {/* User Avatar Icon */}
+              <UserAvatarDropdown userType="office_staff" />
+            </div>
+          </header>
+
+          <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-scroll [scrollbar-gutter:stable]">
+            {loading ? (
+              <SimpleLoader message="Loading branch records..." theme="slate" />
+            ) : error ? (
+              <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-red-500 font-semibold bg-red-50 rounded-2xl p-8 border border-red-200">
+                <span>{error}</span>
+              </div>
+            ) : (
+              <div className="max-w-7xl mx-auto flex flex-col gap-6">
+                
+                {/* Page Path / Title */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                  <div className="flex items-center gap-2 select-none">
+                    <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+                    <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
+                      Add Vehicles
+                    </h2>
+                    <span className="text-slate-300 font-light mx-1">/</span>
+                    <span className="text-sm font-semibold text-slate-400">
+                      Manage and Verify Registered Vehicles
+                    </span>
+                  </div>
+
+                  {/* Navigation Tabs & Add Vehicle Action */}
+                  <div className="flex flex-wrap items-center gap-3.5 select-none self-start md:self-auto">
+                    <button
+                      onClick={() => setIsAddVehicleOpen(true)}
+                      className="bg-amber-500 hover:bg-amber-600 border-none text-white font-semibold text-xs px-5 py-3 rounded-full cursor-pointer transition-all shadow-sm active:scale-[0.98] flex items-center gap-1.5 h-[36px]"
+                    >
+                      <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                      Add Vehicle
+                    </button>
+
+                    <div className="flex bg-slate-200/60 p-2 rounded-full">
+                      <button
+                        onClick={() => setActiveMenuTab("pending")}
+                        className={`font-semibold text-xs px-5 py-2 rounded-full border-none transition-all cursor-pointer flex items-center gap-2 relative ${
+                          activeMenuTab === "pending"
+                            ? "bg-slate-800 text-white shadow-sm"
+                            : "bg-transparent hover:text-slate-800 text-slate-500"
+                        }`}
+                      >
+                        Pending Approvals
+                        {pendingVehicles.length > 0 && (
+                          <span className="text-[10px] font-semibold bg-red-500 text-white px-2 py-1 rounded-full">
+                            {pendingVehicles.length}
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        onClick={() => setActiveMenuTab("confirmed")}
+                        className={`font-semibold text-xs px-5 py-2 rounded-full border-none transition-all cursor-pointer ${
+                          activeMenuTab === "confirmed"
+                            ? "bg-slate-800 text-white shadow-sm"
+                            : "bg-transparent hover:text-slate-800 text-slate-500"
+                        }`}
+                      >
+                        Confirmed Vehicles
+                        {filteredConfirmed.length > 0 && (
+                          <span className="ml-1 text-[10px] font-semibold bg-slate-300 text-slate-700 px-2 py-1 rounded-full">
+                            {filteredConfirmed.length}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sub-tab Feedback Alerts */}
+                {actionSuccess && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-600 rounded-2xl text-xs font-semibold flex items-center gap-2 select-none transition-all duration-300">
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 shrink-0" strokeWidth={2.5} />
+                    {actionSuccess}
+                  </div>
+                )}
+
+                {actionError && (
+                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-semibold flex items-center gap-2 select-none transition-all duration-300">
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 shrink-0" strokeWidth={2.5} />
+                    {actionError}
+                  </div>
+                )}
+
+                {/* Tab Content switch */}
+                {activeMenuTab === "pending" ? (
+                  /* TAB 1: Pending Approvals View (Default) */
+                  <div className="flex flex-col gap-6">
+                    {pendingLoading ? (
+                      <div className="w-full flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-[28px] shadow-sm transition-all duration-300">
+                        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#f59e0b]"></div>
+                        <span className="mt-4 text-slate-500 font-medium text-sm">Fetching pending vehicles...</span>
+                      </div>
+                    ) : pendingVehicles.length === 0 ? (
+                      <div className="bg-white border border-slate-200 rounded-[28px] p-16 text-center select-none shadow-sm flex flex-col items-center justify-center gap-4 min-h-[350px] transition-all duration-300">
+                        <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-8 h-8 text-emerald-600" strokeWidth={2} />
+                        </div>
+                        <h4 className="font-semibold text-slate-700 text-base">All Caught Up!</h4>
+                        <p className="text-slate-400 font-semibold text-sm max-w-sm">
+                          There are currently no pending vehicle registration verification requests for the {branch} Branch.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 transition-all duration-300">
+                        {pendingVehicles.map((item, idx) => {
+                          const actionKey = `${item.user.nic}-${item.vehicle.numberPlate}`;
+                          const isProcessing = verifyingId === actionKey;
+
+                          return (
+                            <div
+                              key={idx}
+                              className="bg-white border border-slate-200 rounded-[30px] p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1 text-slate-800"
+                            >
+                              {/* Decorative faint background accent similar to policy holder dashboard */}
+                              <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[100px] pointer-events-none group-hover:bg-amber-50/50 transition-colors" />
+
+                              <div>
+                                {/* Header Row: Icon + Plate Number & Year */}
+                                <div className="flex items-center justify-between mb-5 select-none">
+                                  <div className="flex items-center gap-4">
+                                    {getVehicleIconContainer(item.vehicle.vehicleType)}
+                                    <div>
+                                      {/* Sri Lankan Province License Plate */}
+                                      {(() => {
+                                        const parts = getPlateParts(item.vehicle.numberPlate);
+                                        return (
+                                          <div className="inline-flex items-center bg-[#f8fafc] border border-slate-350 rounded-md shadow-sm overflow-hidden font-mono leading-none">
+                                            <div className="bg-blue-600 text-white font-sans font-semibold text-[8px] px-2 py-2 border-r border-slate-250 flex items-center justify-center shrink-0">
+                                              {parts.province}
+                                            </div>
+                                            <div className="text-slate-900 font-semibold text-[12px] px-3 py-1 tracking-wider uppercase bg-white">
+                                              {parts.number}
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
+                                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-1 rounded-full uppercase tracking-wider mt-1.5 block w-fit">
+                                        <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
+                                        Pending
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Small visual card details pill */}
+                                  <span className="text-slate-400 font-medium text-xs bg-slate-100 border border-slate-200/50 rounded-full px-3 py-1 self-start select-none">
+                                    {item.vehicle.year}
+                                  </span>
+                                </div>
+
+                                {/* Vehicle Technical details rows */}
+                                <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 font-semibold text-xs text-slate-700">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Make & Model</span>
+                                    <span className="text-slate-800 font-semibold">{item.vehicle.company} {item.vehicle.model}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Vehicle Type</span>
+                                    <span className="text-slate-800 font-semibold">{item.vehicle.vehicleType}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Policy Number</span>
+                                    <span className="text-[#f59e0b] font-semibold font-mono bg-amber-50 border border-amber-100 rounded px-2 py-1 shadow-sm">{item.vehicle.policyNumber}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Engine Number</span>
+                                    <span className="text-slate-800 font-semibold font-mono bg-slate-50 border border-slate-100 rounded px-2 py-1">{item.vehicle.engineNumber || "N/A"}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Chassis Number</span>
+                                    <span className="text-slate-800 font-semibold font-mono bg-slate-50 border border-slate-100 rounded px-2 py-1">{item.vehicle.chassisNumber || "N/A"}</span>
+                                  </div>
+                                </div>
+
+                                {/* Owner Details Section */}
+                                <div className="flex flex-col gap-3 border-t border-slate-100 pt-4 mt-4 font-semibold text-xs text-slate-700">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Owner Name</span>
+                                    <span className="text-slate-800 font-semibold">{item.user.firstName} {item.user.lastName}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Owner NIC</span>
+                                    <span className="text-slate-800 font-semibold font-mono">{item.user.nic}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Mobile Number</span>
+                                    <span className="text-slate-800 font-semibold font-mono">{item.user.mobile}</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-slate-400">Branch Reference</span>
+                                    <span className="text-slate-500 font-medium">{item.user.referenceNumber}</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons Row */}
+                              <div className="flex items-center gap-2 border-t border-slate-100 pt-4 mt-5 select-none shrink-0 w-full justify-between">
+                                <button
+                                  onClick={() => setSelectedUserForModal(item.user)}
+                                  className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 font-semibold text-[11px] px-4 py-3 rounded-full transition-all active:scale-95 shadow-sm hover:scale-[1.01]"
+                                >
+                                  Profile
+                                </button>
+                                <button
+                                  onClick={() => handleVerifyVehicle(item.user.nic, item.vehicle.numberPlate, "Approve")}
+                                  disabled={isProcessing}
+                                  className="flex-grow bg-[#000080] hover:bg-emerald-600 disabled:bg-slate-200 text-white font-semibold text-[11px] py-3 rounded-full cursor-pointer transition-all duration-300 flex items-center justify-center gap-1 border-none active:scale-95 shadow-sm hover:shadow-[0_4px_12px_rgba(16,185,129,0.2)] hover:scale-[1.01]"
+                                >
+                                  {isProcessing ? "..." : (
+                                    <>
+                                      <HugeiconsIcon icon={Tick01Icon} className="w-3 h-3 text-white shrink-0" strokeWidth={3} />
+                                      Approve
+                                    </>
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => handleVerifyVehicle(item.user.nic, item.vehicle.numberPlate, "Reject")}
+                                  disabled={isProcessing}
+                                  className="bg-white hover:bg-red-50 border border-slate-200 hover:border-red-200 text-slate-500 hover:text-red-650 font-semibold text-[11px] px-3 py-3 rounded-full cursor-pointer transition-all duration-250 active:scale-95 outline-none shadow-sm hover:scale-[1.01]"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  /* TAB 2: Confirmed Vehicles (Searchable list of all approved vehicles in branch) */
+                  <div className="bg-white p-6 border border-slate-200 rounded-[28px] shadow-sm flex flex-col gap-6 transition-all duration-300">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4 select-none">
+                      <div>
+                        <h3 className="font-semibold text-slate-800 text-base">
+                          All Verified Branch Vehicles
+                        </h3>
+                        <p className="text-slate-400 font-semibold text-xs mt-1">
+                          A listing of all approved vehicles registered by policy holders inside your branch coverage.
+                        </p>
+                      </div>
+
+                      {/* Search Bar */}
+                      <div className="relative w-full max-w-[360px] bg-slate-50 border border-slate-200 rounded-full pl-4 pr-2 py-2 flex items-center gap-2 transition-all duration-200 focus-within:bg-white focus-within:border-[#f59e0b] focus-within:ring-4 focus-within:ring-[#f59e0b]/10">
+                        <span className="text-slate-400 flex items-center justify-center shrink-0">
+                          <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
+                        </span>
+                        <input
+                          type="text"
+                          placeholder="Search plate, policy, owner..."
+                          value={confirmedSearch}
+                          onChange={(e) => setConfirmedSearch(e.target.value)}
+                          className="flex-1 bg-transparent text-slate-800 text-[13px] placeholder-slate-400 focus:outline-none font-semibold"
+                        />
+                      </div>
+                    </div>
+
+                    {filteredConfirmed.length === 0 ? (
+                      <div className="py-20 text-center text-slate-400 font-medium text-xs select-none">
+                        No confirmed vehicles found.
+                      </div>
+                    ) : (
+                      <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+                        <table className="min-w-full divide-y divide-slate-200 select-none text-left">
+                          <thead className="bg-slate-50">
+                            <tr>
+                              <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Plate Number</th>
+                              <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Type</th>
+                              <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Make & Model</th>
+                              <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Policy No</th>
+                              <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Policy Holder (Owner)</th>
+                              <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Engine / Chassis</th>
+                              <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-slate-100 font-semibold text-xs text-slate-700">
+                            {filteredConfirmed.map((item, idx) => (
+                              <tr key={idx} className="hover:bg-slate-50/50">
+                                <td className="px-5 py-5 font-semibold text-slate-800">
+                                  {formatNumberPlate(item.vehicle.numberPlate)}
+                                </td>
+                                <td className="px-5 py-5 text-slate-600">
+                                  <span className="bg-slate-100 text-slate-700 px-2 py-1 rounded text-[10px] font-semibold">
+                                    {item.vehicle.vehicleType}
+                                  </span>
+                                </td>
+                                <td className="px-5 py-5 text-slate-600">
+                                  {item.vehicle.company} {item.vehicle.model} ({item.vehicle.year})
+                                </td>
+                                <td className="px-5 py-5 text-[#f59e0b] font-semibold">
+                                  {item.vehicle.policyNumber}
+                                </td>
+                                <td className="px-5 py-5">
+                                  <div className="font-semibold text-slate-800">{item.user.firstName} {item.user.lastName}</div>
+                                  <div className="text-[10px] text-slate-400 font-medium">NIC: {item.user.nic} | Mob: {item.user.mobile}</div>
+                                </td>
+                                <td className="px-5 py-5 text-slate-400 text-[10px] leading-tight font-medium">
+                                  <div>E: {item.vehicle.engineNumber || "N/A"}</div>
+                                  <div className="mt-0.5">C: {item.vehicle.chassisNumber || "N/A"}</div>
+                                </td>
+                                <td className="px-5 py-5">
+                                  <button
+                                    onClick={() => setSelectedUserForModal(item.user)}
+                                    className="text-[10px] font-semibold text-[#f59e0b] hover:text-[#d97706] bg-[#f59e0b]/10 hover:bg-[#f59e0b]/20 border border-[#f59e0b]/20 px-3 py-2 rounded-full cursor-pointer transition-all outline-none"
+                                  >
+                                    View Owner
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+
+      {/* Owner Profile Details Modal */}
+      {selectedUserForModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300 text-slate-800">
+          <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[640px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 flex-shrink-0 select-none">
+              <h2 className="text-lg font-semibold text-slate-800 tracking-tight leading-none">
+                Policy Holder Details
+              </h2>
+              <button
+                onClick={() => setSelectedUserForModal(null)}
+                className="text-slate-400 hover:text-slate-600 text-2xl font-semibold border-none bg-transparent cursor-pointer outline-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-8 flex-1 overflow-y-auto">
+              
+              {/* Profile Card Header */}
+              <div className="bg-slate-50 border border-slate-200/50 rounded-[22px] p-5 mb-6 flex items-center gap-4.5 shadow-sm select-none">
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-amber-500 text-white text-xl font-semibold shadow-sm select-none">
+                  {selectedUserForModal.firstName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-slate-800 font-semibold text-lg leading-none tracking-tight">
+                    {selectedUserForModal.firstName} {selectedUserForModal.lastName}
+                  </h3>
+                  <p className="text-slate-400 font-medium text-xs mt-1.5">
+                    Ref: {selectedUserForModal.referenceNumber} | Status: <span className="font-semibold text-amber-500">{selectedUserForModal.status}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* 2-Column Info Layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm font-semibold text-slate-700 mb-6 px-2 select-none">
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">NIC Number</span>
+                  <span className="font-semibold text-slate-800 text-sm">{selectedUserForModal.nic}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Date of Birth</span>
+                  <span className="font-semibold text-slate-800 text-sm">{selectedUserForModal.dob || "N/A"}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Mobile Number</span>
+                  <span className="font-semibold text-slate-800 text-sm">{selectedUserForModal.mobile}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Email Address</span>
+                  <span className="font-semibold text-slate-800 text-sm">{selectedUserForModal.email}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Province</span>
+                  <span className="font-semibold text-slate-800 text-sm">{selectedUserForModal.province || "N/A"}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">City</span>
+                  <span className="font-semibold text-slate-800 text-sm">{selectedUserForModal.city || "N/A"}</span>
+                </div>
+                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2 sm:col-span-2">
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Residential Address</span>
+                  <span className="font-semibold text-slate-800 text-sm">{selectedUserForModal.address || "N/A"}</span>
+                </div>
+              </div>
+
+              {/* Registered Vehicles List */}
+              <div className="select-none">
+                <h4 className="font-semibold text-slate-800 text-sm mb-3">Registered Vehicles ({selectedUserForModal.vehicles?.length || 0})</h4>
+                {selectedUserForModal.vehicles && selectedUserForModal.vehicles.length > 0 ? (
+                  <div className="flex flex-col gap-3 max-h-[180px] overflow-y-auto pr-1">
+                    {selectedUserForModal.vehicles.map((v: any, i: number) => (
+                      <div key={i} className="flex justify-between items-center bg-slate-50 border border-slate-100 p-4 rounded-xl text-xs">
+                        <div>
+                          <div className="font-semibold text-slate-800">{formatNumberPlate(v.numberPlate)}</div>
+                          <div className="text-slate-400 font-semibold mt-0.5">{v.company} {v.model} ({v.year})</div>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full font-semibold text-[10px] ${
+                          v.status === "Approved" ? "bg-emerald-50 text-emerald-600 border border-emerald-100" :
+                          v.status === "Rejected" ? "bg-red-50 text-red-600 border border-red-100" :
+                          "bg-amber-50 text-amber-600 border border-amber-100"
+                        }`}>
+                          {v.status || "Pending"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-slate-400 font-medium text-xs bg-slate-50 p-4 rounded-xl text-center border border-dashed border-slate-200">No vehicles registered.</p>
+                )}
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-8 py-5 bg-slate-50 border-t border-slate-150 flex justify-end flex-shrink-0">
+              <button
+                onClick={() => setSelectedUserForModal(null)}
+                className="bg-slate-800 hover:bg-slate-900 border-none text-white font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer outline-none"
+              >
+                Close Profile
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* Add Vehicle Modal */}
+      {isAddVehicleOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300 transition-all duration-300 text-slate-800">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[720px] max-h-[95vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden">
+            
+            {/* Modal Header */}
+            <div className="px-10 pt-8 pb-5 border-b border-slate-100 flex-shrink-0 select-none">
+              <h2 className="text-xl font-semibold text-slate-800 tracking-tight leading-none">
+                Register New Vehicle
+              </h2>
+              <p className="text-slate-400 font-semibold text-xs mt-2">
+                Create and approve a new vehicle record directly for a branch policy holder.
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleAddVehicleSubmit} className="flex-1 flex flex-col overflow-hidden">
+              
+              {/* Form Scrollable Body */}
+              <div className="px-10 py-6 overflow-y-auto flex-1 flex flex-col gap-4">
+                
+                {addError && (
+                  <div className="p-4 bg-red-50 border border-red-200 text-red-600 rounded-2xl text-xs font-semibold flex items-center gap-2 select-none transition-all duration-300">
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 shrink-0" strokeWidth={2.5} />
+                    {addError}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+                  
+                  {/* Select Policy Holder */}
+                  <div className="col-span-2 flex flex-col gap-1.5">
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Select Policy Holder *</label>
+                    <select
+                      value={selectedUserForAdd}
+                      onChange={(e) => setSelectedUserForAdd(e.target.value)}
+                      className="w-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border border-slate-200 font-medium"
+                      required
+                    >
+                      <option value="">-- Choose Approved Owner --</option>
+                      {policyHolders.map((holder) => (
+                        <option key={holder.nic} value={holder.nic}>
+                          {holder.firstName} {holder.lastName} (NIC: {holder.nic})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Number Plate */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Number Plate *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. WP-CAB-1234"
+                      value={addNumberPlate}
+                      onChange={(e) => setAddNumberPlate(e.target.value.toUpperCase())}
+                      className="w-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border border-slate-200 font-semibold"
+                      required
+                    />
+                  </div>
+
+                  {/* Vehicle Type */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Vehicle Type *</label>
+                    <select
+                      value={addVehicleType}
+                      onChange={(e) => setAddVehicleType(e.target.value)}
+                      className="w-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border border-slate-200 font-medium"
+                      required
+                    >
+                      <option value="Car">Car</option>
+                      <option value="SUV">SUV</option>
+                      <option value="Van">Van</option>
+                      <option value="Motorbike">Motorbike</option>
+                      <option value="Lorry / Truck">Lorry / Truck</option>
+                      <option value="Three-Wheeler">Three-Wheeler</option>
+                      <option value="Bus">Bus</option>
+                      <option value="Tractor">Tractor</option>
+                    </select>
+                  </div>
+
+                  {/* Company */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Make / Brand *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Toyota"
+                      value={addCompany}
+                      onChange={(e) => setAddCompany(e.target.value)}
+                      className="w-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border border-slate-200 font-medium"
+                      required
+                    />
+                  </div>
+
+                  {/* Model */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Model *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Corolla"
+                      value={addModel}
+                      onChange={(e) => setAddModel(e.target.value)}
+                      className="w-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border border-slate-200 font-medium"
+                      required
+                    />
+                  </div>
+
+                  {/* Year */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Year of Manufacture *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 2021"
+                      value={addYear}
+                      onChange={(e) => setAddYear(e.target.value)}
+                      className="w-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border border-slate-200 font-medium"
+                      required
+                    />
+                  </div>
+
+                  {/* Policy Number */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Policy Number *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. SAN123456"
+                      value={addPolicyNumber}
+                      onChange={(e) => setAddPolicyNumber(e.target.value.toUpperCase())}
+                      className="w-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border border-slate-200 font-semibold"
+                      required
+                    />
+                  </div>
+
+                  {/* Engine Number */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Engine Number *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 1NZ-FE-77812"
+                      value={addEngineNumber}
+                      onChange={(e) => setAddEngineNumber(e.target.value)}
+                      className="w-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border border-slate-200 font-mono font-semibold"
+                      required
+                    />
+                  </div>
+
+                  {/* Chassis Number */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Chassis Number *</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. NZE141-88902"
+                      value={addChassisNumber}
+                      onChange={(e) => setAddChassisNumber(e.target.value)}
+                      className="w-full bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-slate-800 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all border border-slate-200 font-mono font-semibold"
+                      required
+                    />
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-10 py-5 bg-slate-50 border-t border-slate-150 flex justify-end gap-3 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={handleCancelAddVehicle}
+                  className="bg-transparent hover:bg-slate-200/50 border border-solid border-slate-300 text-slate-600 font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer outline-none"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addSubmitting}
+                  className="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-200 border-none text-white font-semibold text-xs px-8 py-3 rounded-full cursor-pointer transition-all shadow-sm active:scale-[0.98]"
+                >
+                  {addSubmitting ? "Registering..." : "Register Vehicle"}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+    
+      {/* Floating Chat Bubble Button */}
+      <button
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        aria-label="Chat support"
+      >
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+      </button>
+
+    </div>
+  );
+}

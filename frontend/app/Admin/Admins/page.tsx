@@ -2,6 +2,26 @@
 
 import React, { useState, useEffect } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
+import { API_URL } from "@/app/config";
+import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import SimpleLoader from "@/app/Components/SimpleLoader";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  BubbleChatIcon,
+  Menu01Icon,
+  SecurityCheckIcon,
+  Add01Icon,
+  UserMultiple02Icon,
+  SquareLock02Icon,
+  RefreshIcon,
+  Loading03Icon,
+  Cancel01Icon,
+  AlertCircleIcon,
+  CheckmarkCircle01Icon,
+  UserIcon,
+  Key01Icon,
+
+} from "@hugeicons/core-free-icons";
 
 export default function AdminAdminsPage() {
   // Current logged in admin state
@@ -59,7 +79,8 @@ export default function AdminAdminsPage() {
   const fetchActiveAdmins = async () => {
     setLoadingAdmins(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/all");
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/all`);
       const data = await res.json();
       if (res.ok) {
         setActiveAdmins(data.admins || []);
@@ -73,8 +94,9 @@ export default function AdminAdminsPage() {
 
   const fetchPendingCounts = async (admin: any) => {
     try {
+      const baseUrl = API_URL;
       // 1. Fetch pending registrations (excluding self)
-      const resPending = await fetch(`http://localhost:5000/api/admin/admins/pending?adminId=${admin._id}`);
+      const resPending = await fetch(`${baseUrl}/admin/admins/pending?adminId=${admin._id}`);
       const dataPending = await resPending.json();
       if (resPending.ok && dataPending.requests) {
         setPendingCount(dataPending.requests.length);
@@ -82,7 +104,7 @@ export default function AdminAdminsPage() {
       }
 
       // 2. Fetch pending password requests (excluding self)
-      const resRequests = await fetch(`http://localhost:5000/api/admin/admins/password-requests?email=${encodeURIComponent(admin.email)}`);
+      const resRequests = await fetch(`${baseUrl}/admin/admins/password-requests?email=${encodeURIComponent(admin.email)}`);
       const dataRequests = await resRequests.json();
       if (resRequests.ok && dataRequests.requests) {
         setRequestsCount(dataRequests.requests.length);
@@ -108,11 +130,23 @@ export default function AdminAdminsPage() {
       return setFormError("Please enter a valid email address.");
     }
 
+    const cleanMobile = formData.mobile.replace(/[-+()\s]/g, "");
+    if (!/^\d{10}$/.test(cleanMobile)) {
+      return setFormError("Mobile number must be exactly 10 digits.");
+    }
+
+    const cleanNic = formData.nic.trim();
+    const nicRegex = /^[0-9vVxX]{10,12}$/;
+    if (!nicRegex.test(cleanNic)) {
+      return setFormError("Invalid NIC format. Must be 10-12 characters/digits.");
+    }
+
     if (!currentAdmin) return setFormError("Current administrator session is not found.");
 
     setSubmittingAdmin(true);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/register-admin", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/register-admin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -144,7 +178,8 @@ export default function AdminAdminsPage() {
     if (!currentAdmin) return;
     setActioningAdminId(targetAdminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/approve", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -170,7 +205,8 @@ export default function AdminAdminsPage() {
     if (!currentAdmin) return;
     setActioningAdminId(targetAdminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/reject", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -194,7 +230,8 @@ export default function AdminAdminsPage() {
   const handleApprovePasswordRequest = async (adminId: string) => {
     setActioningRequestId(adminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/password-requests/approve", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/password-requests/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminId })
@@ -214,7 +251,8 @@ export default function AdminAdminsPage() {
   const handleRejectPasswordRequest = async (adminId: string) => {
     setActioningRequestId(adminId);
     try {
-      const res = await fetch("http://localhost:5000/api/admin/admins/password-requests/reject", {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/admins/password-requests/reject`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ adminId })
@@ -244,17 +282,18 @@ export default function AdminAdminsPage() {
                 onClick={() => window.dispatchEvent(new CustomEvent("open-admin-mobile-menu"))}
                 className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-black shadow-sm tracking-wide">Admin Portal</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">Admin Portal</span>
                 <span className="hidden lg:inline"> — Administrators Management</span>
               </h1>
             </div>
-            <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full text-slate-600 border border-slate-200">
-              System Admin
+            <div className="flex items-center gap-5">
+              <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full text-slate-600 border border-slate-200">
+                System Admin
+              </div>
+              <UserAvatarDropdown userType="admin" />
             </div>
           </header>
 
@@ -265,13 +304,11 @@ export default function AdminAdminsPage() {
               <div className="absolute bottom-[-10%] left-[-10%] w-32 h-32 rounded-full bg-[#102A43]/5 blur-[50px] pointer-events-none" />
 
               <div className="w-20 h-20 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#102A43] shadow-inner select-none animate-pulse">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-10 h-10">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
-                </svg>
+                <HugeiconsIcon icon={SecurityCheckIcon} className="w-10 h-10" strokeWidth={1.5} />
               </div>
 
               <div>
-                <h2 className="text-2xl font-black text-slate-800 tracking-tight">System Administrators</h2>
+                <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">System Administrators</h2>
                 <p className="text-slate-500 font-semibold text-sm mt-2 leading-relaxed">
                   Register new system administrators, approve registration requests, and dispatch secure password resets.
                 </p>
@@ -286,11 +323,9 @@ export default function AdminAdminsPage() {
                     setFormSuccess("");
                     setShowRegisterModal(true);
                   }}
-                  className="w-full py-4 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-2xl text-base font-bold shadow-lg shadow-slate-900/20 transition-all border-none outline-none cursor-pointer flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-2xl text-base font-bold shadow-lg shadow-slate-900/20 transition-all border-none outline-none cursor-pointer flex items-center justify-center gap-2"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                  </svg>
+                  <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" strokeWidth={2.5} />
                   <span>Add New Administrator</span>
                 </button>
 
@@ -301,9 +336,7 @@ export default function AdminAdminsPage() {
                   }}
                   className="w-full py-4 bg-white hover:bg-slate-50 border border-slate-200 active:scale-95 text-slate-700 rounded-2xl text-base font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-2 relative"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 014.5 0z" />
-                  </svg>
+                  <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5" strokeWidth={2} />
                   <span>Pending Registrations</span>
                   {pendingCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-6 h-6 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
@@ -319,9 +352,7 @@ export default function AdminAdminsPage() {
                   }}
                   className="w-full py-4 bg-white hover:bg-slate-50 border border-slate-200 active:scale-95 text-slate-700 rounded-2xl text-base font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-2 relative"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-5 h-5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
-                  </svg>
+                  <HugeiconsIcon icon={SquareLock02Icon} className="w-5 h-5" strokeWidth={2.5} />
                   <span>Password Reset Requests</span>
                   {requestsCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-6 h-6 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
@@ -336,7 +367,7 @@ export default function AdminAdminsPage() {
             <div className="bg-white rounded-3xl border border-slate-100 shadow-lg max-w-4xl w-full overflow-hidden">
               <div className="p-6 border-b border-slate-100 select-none bg-slate-50/75 flex justify-between items-center">
                 <div>
-                  <h3 className="font-extrabold text-slate-800 text-base">Active Administrators</h3>
+                  <h3 className="font-bold text-slate-800 text-base">Active Administrators</h3>
                   <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Authorized system admins directory</p>
                 </div>
                 <button
@@ -344,20 +375,12 @@ export default function AdminAdminsPage() {
                   className="p-2 hover:bg-slate-200 rounded-full text-slate-500 hover:text-slate-700 transition-all cursor-pointer focus:outline-none"
                   title="Reload Active Admins"
                 >
-                  <svg className={`w-4 h-4 ${loadingAdmins ? "animate-spin" : ""}`} fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-                  </svg>
+                  <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${loadingAdmins ? "animate-spin" : ""}`} strokeWidth={2.5} />
                 </button>
               </div>
 
               {loadingAdmins ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-2">
-                  <svg className="animate-spin h-6 w-6 text-[#0f2d3a]" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider">Loading admins directory...</span>
-                </div>
+                <SimpleLoader message="Loading admins directory..." theme="slate" />
               ) : activeAdmins.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 select-none">
                   No active admins found in the system.
@@ -377,7 +400,7 @@ export default function AdminAdminsPage() {
                     <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
                       {activeAdmins.map((admin) => (
                         <tr key={admin._id} className="hover:bg-slate-50/75 transition-colors">
-                          <td className="py-4 px-6 font-extrabold text-slate-800">{admin.name}</td>
+                          <td className="py-4 px-6 font-bold text-slate-800">{admin.name}</td>
                           <td className="py-4 px-6 text-slate-600 select-all">{admin.email}</td>
                           <td className="py-4 px-6 text-slate-600">{admin.mobile}</td>
                           <td className="py-4 px-6 text-slate-600 uppercase">{admin.nic}</td>
@@ -401,16 +424,14 @@ export default function AdminAdminsPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Register Admin Request</h2>
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Register Admin Request</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Define new admin profile for approval</p>
               </div>
               <button
                 onClick={() => setShowRegisterModal(false)}
                 className="text-slate-400 hover:text-slate-600 bg-transparent border-none outline-none cursor-pointer transition-colors p-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -419,23 +440,19 @@ export default function AdminAdminsPage() {
             <form onSubmit={handleRegisterSubmit} className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-5 text-left">
               {formError && (
                 <div className="bg-red-50 text-red-600 text-xs font-bold px-4 py-3 rounded-xl border border-red-100 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-red-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
+                  <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5 text-red-500 shrink-0" strokeWidth={2} />
                   <span>{formError}</span>
                 </div>
               )}
               {formSuccess && (
                 <div className="bg-emerald-50 text-emerald-600 text-xs font-bold px-4 py-3 rounded-xl border border-emerald-100 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-500 shrink-0" strokeWidth={2} />
                   <span>{formSuccess}</span>
                 </div>
               )}
 
               <div className="flex flex-col gap-4 bg-slate-50 border border-slate-200 rounded-2xl p-5">
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">Admin Profile Details</span>
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest border-b pb-2 mb-1 select-none block">Admin Profile Details</span>
 
                 {/* Name */}
                 <div className="flex flex-col gap-1.5">
@@ -503,14 +520,11 @@ export default function AdminAdminsPage() {
                 <button
                   type="submit"
                   disabled={submittingAdmin}
-                  className="px-6 py-2 bg-[#0f2d3a] hover:bg-[#0b222c] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(15,45,58,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
+                  className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-bold shadow-[0_4px_12px_rgba(0,0,128,0.25)] transition-all cursor-pointer border-none outline-none disabled:opacity-60 flex items-center gap-2"
                 >
                   {submittingAdmin ? (
                     <>
-                      <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                      </svg>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-4 w-4 text-white" strokeWidth={2.5} />
                       <span>Submitting...</span>
                     </>
                   ) : (
@@ -529,16 +543,14 @@ export default function AdminAdminsPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Pending Admin Requests</h2>
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Pending Admin Requests</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Approve new admins to join the system</p>
               </div>
               <button
                 onClick={() => setShowPendingModal(false)}
                 className="text-slate-400 hover:text-slate-600 bg-transparent border-none outline-none cursor-pointer transition-colors p-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -546,13 +558,7 @@ export default function AdminAdminsPage() {
 
             <div className="px-8 pb-4 flex-1 overflow-y-auto bg-white flex flex-col gap-4 text-left">
               {loadingPending ? (
-                <div className="flex flex-col items-center justify-center py-24 gap-3">
-                  <svg className="animate-spin h-8 w-8 text-[#0f2d3a]" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <p className="text-xs text-slate-400 font-extrabold uppercase tracking-wider animate-pulse">Loading pending registrations...</p>
-                </div>
+                <SimpleLoader message="Loading pending registrations..." theme="slate" />
               ) : pendingAdmins.length === 0 ? (
                 <div className="text-center py-20 flex flex-col items-center justify-center text-slate-400 select-none bg-slate-50 border border-slate-100 rounded-3xl">
                   <p className="font-bold text-sm text-slate-500">No Pending Admin Registrations</p>
@@ -565,16 +571,14 @@ export default function AdminAdminsPage() {
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-[#102A43] flex items-center justify-center shrink-0 shadow-inner">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                            </svg>
+                            <HugeiconsIcon icon={UserIcon} className="w-5 h-5" strokeWidth={2.5} />
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-slate-800 text-sm leading-tight truncate max-w-[195px]">{req.name}</h3>
-                            <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mt-1">Registered by another admin</span>
+                            <h3 className="font-bold text-slate-800 text-sm leading-tight truncate max-w-[195px]">{req.name}</h3>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mt-1">Registered by another admin</span>
                           </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-[9px] font-black tracking-wider uppercase">Pending Approval</span>
+                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 border border-blue-200 text-[9px] font-semibold tracking-wider uppercase">Pending Approval</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-xs border-t border-b border-slate-200/60 py-4 font-semibold text-slate-700">
@@ -603,7 +607,7 @@ export default function AdminAdminsPage() {
                         <button
                           onClick={() => handleApproveRegistration(req._id)}
                           disabled={actioningAdminId !== null}
-                          className="px-5 py-2 bg-[#0f2d3a] hover:bg-[#0c242e] text-white text-xs font-extrabold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
+                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] text-white text-xs font-bold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
                         >
                           {actioningAdminId === req._id ? "Approving..." : "Approve & Send Credentials"}
                         </button>
@@ -617,7 +621,7 @@ export default function AdminAdminsPage() {
             <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end shrink-0 select-none">
               <button
                 onClick={() => setShowPendingModal(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0c242e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
               >
                 Close Requests
               </button>
@@ -632,16 +636,14 @@ export default function AdminAdminsPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-black text-slate-900 tracking-tight leading-none">Admin Password Requests</h2>
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Admin Password Requests</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Review, approve and dispatch reset codes to admins</p>
               </div>
               <button
                 onClick={() => setShowRequestsModal(false)}
                 className="text-slate-400 hover:text-slate-600 bg-transparent border-none outline-none cursor-pointer transition-colors p-1"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
             </div>
 
@@ -649,13 +651,7 @@ export default function AdminAdminsPage() {
 
             <div className="px-8 pb-4 flex-1 overflow-y-auto bg-white flex flex-col gap-4 text-left">
               {loadingRequests ? (
-                <div className="flex flex-col items-center justify-center py-24 gap-3">
-                  <svg className="animate-spin h-8 w-8 text-[#0f2d3a]" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  <p className="text-xs text-slate-400 font-extrabold uppercase tracking-wider animate-pulse">Loading password requests...</p>
-                </div>
+                <SimpleLoader message="Loading password requests..." theme="slate" />
               ) : passwordRequests.length === 0 ? (
                 <div className="text-center py-20 flex flex-col items-center justify-center text-slate-400 select-none bg-slate-50 border border-slate-100 rounded-3xl">
                   <p className="font-bold text-sm text-slate-500">No Pending Reset Requests</p>
@@ -668,16 +664,14 @@ export default function AdminAdminsPage() {
                       <div className="flex justify-between items-start gap-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 text-slate-600 flex items-center justify-center shrink-0 shadow-inner">
-                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
-                            </svg>
+                            <HugeiconsIcon icon={Key01Icon} className="w-5 h-5" strokeWidth={2.5} />
                           </div>
                           <div>
-                            <h3 className="font-extrabold text-slate-800 text-sm leading-tight truncate max-w-[195px]">{req.name}</h3>
-                            <span className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider block mt-1">System Administrator</span>
+                            <h3 className="font-bold text-slate-800 text-sm leading-tight truncate max-w-[195px]">{req.name}</h3>
+                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block mt-1">System Administrator</span>
                           </div>
                         </div>
-                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-black tracking-wider uppercase select-none animate-pulse">Pending Reset</span>
+                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-200 text-[9px] font-semibold tracking-wider uppercase select-none animate-pulse">Pending Reset</span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-y-3.5 gap-x-6 text-xs border-t border-b border-slate-200/60 py-4 font-semibold text-slate-700">
@@ -702,7 +696,7 @@ export default function AdminAdminsPage() {
                         <button
                           onClick={() => handleApprovePasswordRequest(req._id)}
                           disabled={actioningRequestId !== null}
-                          className="px-5 py-2 bg-[#0f2d3a] hover:bg-[#0c242e] text-white text-xs font-extrabold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
+                          className="px-5 py-2 bg-[#000080] hover:bg-[#000066] text-white text-xs font-bold rounded-full transition-all cursor-pointer border-none outline-none flex items-center gap-1.5"
                         >
                           {actioningRequestId === req._id ? "Approving..." : "Approve & Send Reset OTP"}
                         </button>
@@ -716,7 +710,7 @@ export default function AdminAdminsPage() {
             <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end shrink-0 select-none">
               <button
                 onClick={() => setShowRequestsModal(false)}
-                className="bg-[#0f2d3a] hover:bg-[#0c242e] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer"
               >
                 Close Requests
               </button>
@@ -724,6 +718,15 @@ export default function AdminAdminsPage() {
           </div>
         </div>
       )}
+    
+      {/* Floating Chat Bubble Button */}
+      <button
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        aria-label="Chat support"
+      >
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+      </button>
+
     </div>
   );
 }
