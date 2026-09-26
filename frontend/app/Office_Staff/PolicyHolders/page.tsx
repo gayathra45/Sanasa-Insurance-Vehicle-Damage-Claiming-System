@@ -708,14 +708,6 @@ export default function OfficeStaffPolicyHolders() {
                     {selectedHolder.vehicles?.length || 0} Vehicles Insured
                   </span>
                 </div>
-
-                <button
-                  onClick={() => setSelectedHolder(null)}
-                  className="text-slate-400 hover:text-slate-600 text-2xl font-semibold border-none bg-transparent cursor-pointer p-1"
-                  aria-label="Close modal"
-                >
-                  &times;
-                </button>
               </div>
             </div>
 
