@@ -577,12 +577,9 @@ export default function OfficeStaffPolicyHolders() {
                         >
                           {/* Col 1: Applicant Name & Ref */}
                           <div className="flex flex-col min-w-0 select-none">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="w-2 h-2 rounded-full shrink-0 bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.7)]" />
-                              <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
-                                {holder.firstName} {holder.lastName}
-                              </h3>
-                            </div>
+                            <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
+                              {holder.firstName} {holder.lastName}
+                            </h3>
                             <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1.5 w-fit">
                               Ref: {holder.referenceNumber || "SAN-PH"}
                             </span>
