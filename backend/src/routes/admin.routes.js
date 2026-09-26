@@ -6,6 +6,7 @@ import Claim from "../models/claim.model.js";
 import OfficeStaff from "../models/office_staff.model.js";
 import Agent from "../models/agent.model.js";
 import AgentActivity from "../models/agent_activity.model.js";
+import Inquiry from "../models/inquiry.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
 
@@ -898,4 +899,377 @@ router.post("/admins/change-password", async (req, res) => {
   }
 });
 
+// ==========================================
+// ADMIN CONTACT & INQUIRY MANAGEMENT ROUTES
+// ==========================================
+
+// Seed initial realistic inquiries if none exist
+const seedInitialInquiries = async () => {
+  const count = await Inquiry.countDocuments();
+  if (count === 0) {
+    const sampleInquiries = [
+      {
+        ticketId: "INQ-2026-1082",
+        senderName: "Kamal Perera",
+        senderEmail: "kamal.perera@gmail.com",
+        senderPhone: "0771234567",
+        senderRole: "Policy Holder",
+        category: "Claims Escalation",
+        priority: "Urgent",
+        subject: "Claim CLM-2026-0042 delay inquiry",
+        message: "My vehicle accident assessment was submitted last Monday at Galle branch, but the status is still pending approval. Could you please check the status with the branch assessor?",
+        branch: "Galle",
+        status: "Pending",
+        adminNotes: ""
+      },
+      {
+        ticketId: "INQ-2026-1045",
+        senderName: "Nimali Rathnayake",
+        senderEmail: "nimali.rath@yahoo.com",
+        senderPhone: "0719876543",
+        senderRole: "Policy Holder",
+        category: "Policy Inquiry",
+        priority: "Normal",
+        subject: "Adding comprehensive motor rider for electric car",
+        message: "I would like to inquire about the terms and premium calculation for EV battery replacement coverage under my existing policy POL-88219.",
+        branch: "Colombo (Head Office)",
+        status: "In Review",
+        adminNotes: "Assigned to underwriting department for EV rate confirmation."
+      },
+      {
+        ticketId: "INQ-2026-0988",
+        senderName: "Sunil Shantha (Agent)",
+        senderEmail: "sunil.agt04@sanasainsurance.lk",
+        senderPhone: "0773344556",
+        senderRole: "Agent",
+        category: "Agent Support",
+        priority: "Normal",
+        subject: "Commission statement discrepancy for August 2026",
+        message: "The commission payout statement for motor policy renewals registered in Matara branch area shows 3 missing policies. Attached are the registration slips.",
+        branch: "Matara",
+        status: "Resolved",
+        adminNotes: "Finance reconciled missing 3 policies on 18 Sep 2026. Paid out in supplemental cycle.",
+        resolvedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        resolvedBy: "System Admin"
+      },
+      {
+        ticketId: "INQ-2026-0920",
+        senderName: "Dilshan Fernando",
+        senderEmail: "dilshan.f@hotmail.com",
+        senderPhone: "0765544332",
+        senderRole: "Public Visitor",
+        category: "General Inquiry",
+        priority: "Normal",
+        subject: "Corporate Fleet Insurance quotation request",
+        message: "Our logistics company in Kandy operates 15 commercial vans. We require a comprehensive group fleet insurance proposal with roadside assistance.",
+        branch: "Kandy",
+        status: "In Review",
+        adminNotes: "Forwarded to Corporate Sales team & Kandy Branch Manager."
+      },
+      {
+        ticketId: "INQ-2026-0870",
+        senderName: "Kandy Branch Office",
+        senderEmail: "kandy@sanasainsurance.lk",
+        senderPhone: "0812234500",
+        senderRole: "Office Staff",
+        category: "Branch Operations",
+        priority: "High",
+        subject: "Assessment portal slow response during morning peak",
+        message: "Branch claims assessors experienced latency when uploading high resolution photo evidence between 9:30 AM and 11:00 AM.",
+        branch: "Kandy",
+        status: "Resolved",
+        adminNotes: "IT infrastructure team scaled image compression cache on server.",
+        resolvedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        resolvedBy: "System Admin"
+      }
+    ];
+    await Inquiry.insertMany(sampleInquiries);
+    console.log("Seeded initial support inquiries.");
+  }
+};
+
+// GET all inquiries: /api/admin/contact/inquiries
+router.get("/contact/inquiries", async (req, res) => {
+  try {
+    await seedInitialInquiries();
+    const { category, status, search } = req.query;
+    const filter = {};
+
+    if (category && category !== "All") {
+      filter.category = category;
+    }
+    if (status && status !== "All") {
+      filter.status = status;
+    }
+    if (search) {
+      const q = search.trim();
+      filter.$or = [
+        { ticketId: { $regex: q, $options: "i" } },
+        { senderName: { $regex: q, $options: "i" } },
+        { senderEmail: { $regex: q, $options: "i" } },
+        { subject: { $regex: q, $options: "i" } },
+        { message: { $regex: q, $options: "i" } },
+        { branch: { $regex: q, $options: "i" } }
+      ];
+    }
+
+    const inquiries = await Inquiry.find(filter).sort({ createdAt: -1 });
+    
+    // Quick statistics
+    const totalCount = await Inquiry.countDocuments();
+    const pendingCount = await Inquiry.countDocuments({ status: "Pending" });
+    const inReviewCount = await Inquiry.countDocuments({ status: "In Review" });
+    const resolvedCount = await Inquiry.countDocuments({ status: "Resolved" });
+
+    res.json({
+      inquiries,
+      stats: {
+        total: totalCount,
+        pending: pendingCount,
+        inReview: inReviewCount,
+        resolved: resolvedCount
+      }
+    });
+  } catch (err) {
+    console.error("Fetch inquiries error:", err);
+    res.status(500).json({ error: "Failed to load support inquiries." });
+  }
+});
+
+// POST create inquiry: /api/admin/contact/inquiries
+router.post("/contact/inquiries", async (req, res) => {
+  try {
+    const { senderName, senderEmail, senderPhone, senderRole, category, priority, subject, message, branch } = req.body;
+    if (!senderName || !senderEmail || !subject || !message) {
+      return res.status(400).json({ error: "Name, email, subject, and message are required." });
+    }
+
+    const newInquiry = new Inquiry({
+      senderName: senderName.trim(),
+      senderEmail: senderEmail.trim().toLowerCase(),
+      senderPhone: senderPhone ? senderPhone.trim() : "",
+      senderRole: senderRole || "General",
+      category: category || "General Inquiry",
+      priority: priority || "Normal",
+      subject: subject.trim(),
+      message: message.trim(),
+      branch: branch || "Head Office",
+      status: "Pending"
+    });
+
+    await newInquiry.save();
+    res.status(201).json({ message: "Inquiry registered successfully.", inquiry: newInquiry });
+  } catch (err) {
+    console.error("Create inquiry error:", err);
+    res.status(500).json({ error: "Failed to submit inquiry." });
+  }
+});
+
+// PATCH update inquiry: /api/admin/contact/inquiries/:id
+router.patch("/contact/inquiries/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, priority, adminNotes, resolvedBy } = req.body;
+
+    const inquiry = await Inquiry.findById(id);
+    if (!inquiry) {
+      return res.status(404).json({ error: "Inquiry not found." });
+    }
+
+    if (status) inquiry.status = status;
+    if (priority) inquiry.priority = priority;
+    if (adminNotes !== undefined) inquiry.adminNotes = adminNotes;
+    
+    if (status === "Resolved" && !inquiry.resolvedAt) {
+      inquiry.resolvedAt = new Date();
+      inquiry.resolvedBy = resolvedBy || "Admin";
+    }
+
+    await inquiry.save();
+    res.json({ message: "Inquiry updated successfully.", inquiry });
+  } catch (err) {
+    console.error("Update inquiry error:", err);
+    res.status(500).json({ error: "Failed to update inquiry." });
+  }
+});
+
+// POST reply to inquiry: /api/admin/contact/inquiries/:id/reply
+router.post("/contact/inquiries/:id/reply", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { replyMessage, adminName } = req.body;
+
+    if (!replyMessage || !replyMessage.trim()) {
+      return res.status(400).json({ error: "Reply message cannot be empty." });
+    }
+
+    const inquiry = await Inquiry.findById(id);
+    if (!inquiry) {
+      return res.status(404).json({ error: "Inquiry not found." });
+    }
+
+    const responder = adminName || "Sanasa Insurance Executive Support Team";
+
+    // Compose official email
+    const emailSubject = `Response to Inquiry [${inquiry.ticketId}]: ${inquiry.subject}`;
+    const emailHtml = getBaseTemplate(
+      `Support Response — ${inquiry.ticketId}`,
+      `
+      <h2>Official Inquiry Response</h2>
+      <p>Dear <strong>${inquiry.senderName}</strong>,</p>
+      <p>Thank you for contacting Sanasa General Insurance. Below is the official response regarding your inquiry:</p>
+      
+      <table class="data-table">
+        <tr>
+          <td class="label">Ticket Reference:</td>
+          <td class="value highlight-value">${inquiry.ticketId}</td>
+        </tr>
+        <tr>
+          <td class="label">Category / Subject:</td>
+          <td class="value">${inquiry.category} — ${inquiry.subject}</td>
+        </tr>
+        <tr>
+          <td class="label">Original Message:</td>
+          <td class="value" style="font-style: italic; color: #666;">"${inquiry.message}"</td>
+        </tr>
+      </table>
+
+      <div style="background-color: #f0f7fa; border-left: 4px solid #004f6e; padding: 16px; margin: 20px 0; border-radius: 4px;">
+        <h4 style="margin: 0 0 8px 0; color: #004f6e; font-size: 14px; text-transform: uppercase;">Official Response:</h4>
+        <p style="margin: 0; color: #1e293b; font-size: 14px; line-height: 1.6; white-space: pre-line;">${replyMessage.trim()}</p>
+      </div>
+
+      <p style="font-size: 12px; color: #64748b; margin-top: 24px;">
+        If you have further questions, you can reply directly to this email or contact our 24/7 hotline at <strong>+94 112 003 000</strong>.
+      </p>
+      `
+    );
+
+    const emailText = `Dear ${inquiry.senderName},\n\nTicket Reference: ${inquiry.ticketId}\nSubject: ${inquiry.subject}\n\nOfficial Response:\n${replyMessage.trim()}\n\nBest Regards,\n${responder}\nSanasa General Insurance PLC`;
+
+    let emailSent = false;
+    let emailError = null;
+    try {
+      const result = await sendEmail(inquiry.senderEmail, emailSubject, emailHtml, emailText);
+      emailSent = result.sent;
+      emailError = result.error || null;
+    } catch (e) {
+      emailError = e.message;
+    }
+
+    inquiry.replyMessage = replyMessage.trim();
+    inquiry.repliedAt = new Date();
+    inquiry.repliedBy = responder;
+    inquiry.status = "Resolved";
+    inquiry.resolvedAt = new Date();
+    inquiry.resolvedBy = responder;
+    await inquiry.save();
+
+    res.json({
+      message: emailSent ? "Reply sent successfully to recipient!" : "Reply saved (Dev Mode: Email delivery simulated).",
+      emailSent,
+      emailError,
+      inquiry
+    });
+  } catch (err) {
+    console.error("Reply inquiry error:", err);
+    res.status(500).json({ error: "Failed to send reply to inquiry." });
+  }
+});
+
+// POST send official broadcast/direct email: /api/admin/contact/send-email
+router.post("/contact/send-email", async (req, res) => {
+  try {
+    const { targetGroup, specificEmail, subject, message, priority, senderName } = req.body;
+
+    if (!subject || !message) {
+      return res.status(400).json({ error: "Subject and message are required." });
+    }
+
+    let recipientEmails = [];
+
+    if (targetGroup === "custom") {
+      if (!specificEmail || !specificEmail.trim()) {
+        return res.status(400).json({ error: "Recipient email address is required for custom dispatch." });
+      }
+      recipientEmails = [specificEmail.trim().toLowerCase()];
+    } else if (targetGroup === "all_branches") {
+      const branches = await OfficeStaff.find({}, "email");
+      recipientEmails = branches.map(b => b.email).filter(Boolean);
+      if (recipientEmails.length === 0) {
+        recipientEmails = ["galle@sanasainsurance.lk", "colombo@sanasainsurance.lk", "kandy@sanasainsurance.lk"];
+      }
+    } else if (targetGroup === "all_agents") {
+      const agents = await Agent.find({ status: "active" }, "email");
+      recipientEmails = agents.map(a => a.email).filter(Boolean);
+      if (recipientEmails.length === 0) {
+        recipientEmails = ["agents@sanasainsurance.lk"];
+      }
+    } else if (targetGroup?.startsWith("branch_")) {
+      const branchName = targetGroup.replace("branch_", "");
+      const branchStaff = await OfficeStaff.findOne({ branch: branchName });
+      if (branchStaff && branchStaff.email) {
+        recipientEmails = [branchStaff.email];
+      } else {
+        recipientEmails = [`${branchName.toLowerCase().replace(/\s+/g, "")}@sanasainsurance.lk`];
+      }
+    } else {
+      if (specificEmail) recipientEmails = [specificEmail.trim().toLowerCase()];
+    }
+
+    if (recipientEmails.length === 0) {
+      return res.status(400).json({ error: "No valid recipient email addresses found for the selected target." });
+    }
+
+    const priorityBadgeColor = priority === "Urgent" ? "#ef4444" : priority === "High" ? "#f59e0b" : "#0284c7";
+    const priorityLabel = priority || "Normal Priority";
+
+    const emailHtml = getBaseTemplate(
+      `Executive Communication — Sanasa Insurance`,
+      `
+      <div style="display: inline-block; background-color: ${priorityBadgeColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 12px;">
+        ${priorityLabel}
+      </div>
+      <h2>${subject}</h2>
+      <p>Official communication from Sanasa General Insurance Executive Administration.</p>
+      
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0; color: #1e293b; font-size: 14px; line-height: 1.7; white-space: pre-line;">${message.trim()}</p>
+      </div>
+
+      <p style="font-size: 12px; color: #64748b; margin-top: 24px;">
+        Sent by <strong>${senderName || "System Administrator"}</strong> — Executive Head Office, Sanasa General Insurance PLC.
+      </p>
+      `
+    );
+
+    const emailText = `${subject}\nPriority: ${priorityLabel}\n\n${message.trim()}\n\nSent by ${senderName || "System Administrator"} — Sanasa General Insurance PLC`;
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (const email of recipientEmails) {
+      try {
+        const result = await sendEmail(email, subject, emailHtml, emailText);
+        if (result.sent) successCount++;
+        else failedCount++;
+      } catch (err) {
+        console.error(`Failed to send email to ${email}:`, err);
+        failedCount++;
+      }
+    }
+
+    res.json({
+      message: `Dispatched message to ${recipientEmails.length} recipient(s). (${successCount} delivered)`,
+      recipients: recipientEmails,
+      successCount,
+      failedCount
+    });
+  } catch (err) {
+    console.error("Admin send email error:", err);
+    res.status(500).json({ error: "Failed to dispatch email communication." });
+  }
+});
+
 export default router;
+
