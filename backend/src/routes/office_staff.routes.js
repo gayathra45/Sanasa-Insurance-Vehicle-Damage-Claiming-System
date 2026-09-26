@@ -423,6 +423,157 @@ router.post("/policy-holders/:nic/vehicles", async (req, res) => {
   }
 });
 
+// PUT update policy holder details: /api/office-staff/policy-holders/:nic
+router.put("/policy-holders/:nic", async (req, res) => {
+  try {
+    const { nic } = req.params;
+    const {
+      firstName,
+      lastName,
+      mobile,
+      email,
+      dob,
+      address,
+      city,
+      province,
+      branch,
+      status,
+      bankDetails
+    } = req.body;
+
+    if (!nic || !nic.trim()) {
+      return res.status(400).json({ error: "Policy holder NIC is required." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    if (firstName) user.firstName = firstName.trim();
+    if (lastName) user.lastName = lastName.trim();
+    if (mobile) user.mobile = mobile.trim();
+    if (email) user.email = email.trim();
+    if (dob) user.dob = dob.trim();
+    if (address) user.address = address.trim();
+    if (city) user.city = city.trim();
+    if (province) user.province = province.trim();
+    if (branch) user.branch = branch.trim();
+    if (status) user.status = status.trim();
+
+    if (bankDetails) {
+      user.bankDetails = {
+        bankName: (bankDetails.bankName || user.bankDetails?.bankName || "").trim(),
+        branchName: (bankDetails.branchName || user.bankDetails?.branchName || "").trim(),
+        accountNumber: (bankDetails.accountNumber || user.bankDetails?.accountNumber || "").trim(),
+        accountHolderName: (bankDetails.accountHolderName || user.bankDetails?.accountHolderName || "").trim()
+      };
+    }
+
+    await user.save();
+
+    res.json({
+      message: "Policy holder details updated successfully.",
+      policyHolder: user
+    });
+  } catch (err) {
+    console.error("Update policy holder error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// PUT update a specific vehicle of a policy holder: /api/office-staff/policy-holders/:nic/vehicles/:plate
+router.put("/policy-holders/:nic/vehicles/:plate", async (req, res) => {
+  try {
+    const { nic, plate } = req.params;
+    const {
+      numberPlate,
+      vehicleType,
+      year,
+      company,
+      model,
+      engineNumber,
+      chassisNumber,
+      policyNumber,
+      status
+    } = req.body;
+
+    if (!nic || !plate) {
+      return res.status(400).json({ error: "NIC and vehicle plate are required." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    const normTargetPlate = plate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    const vehicleIndex = (user.vehicles || []).findIndex(
+      v => v.numberPlate && v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === normTargetPlate
+    );
+
+    if (vehicleIndex === -1) {
+      return res.status(404).json({ error: "Vehicle not found for this policy holder." });
+    }
+
+    if (numberPlate) user.vehicles[vehicleIndex].numberPlate = numberPlate.trim().toUpperCase();
+    if (vehicleType) user.vehicles[vehicleIndex].vehicleType = vehicleType.trim();
+    if (year) user.vehicles[vehicleIndex].year = year.toString().trim();
+    if (company) user.vehicles[vehicleIndex].company = company.trim();
+    if (model) user.vehicles[vehicleIndex].model = model.trim();
+    if (engineNumber) user.vehicles[vehicleIndex].engineNumber = engineNumber.trim();
+    if (chassisNumber) user.vehicles[vehicleIndex].chassisNumber = chassisNumber.trim();
+    if (policyNumber) user.vehicles[vehicleIndex].policyNumber = policyNumber.trim();
+    if (status) user.vehicles[vehicleIndex].status = status.trim();
+
+    await user.save();
+
+    res.json({
+      message: "Vehicle updated successfully.",
+      vehicle: user.vehicles[vehicleIndex],
+      vehicles: user.vehicles,
+      policyHolder: user
+    });
+  } catch (err) {
+    console.error("Update vehicle error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// DELETE a specific vehicle of a policy holder: /api/office-staff/policy-holders/:nic/vehicles/:plate
+router.delete("/policy-holders/:nic/vehicles/:plate", async (req, res) => {
+  try {
+    const { nic, plate } = req.params;
+    if (!nic || !plate) {
+      return res.status(400).json({ error: "NIC and vehicle plate are required." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    const normTargetPlate = plate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    user.vehicles = (user.vehicles || []).filter(
+      v => v.numberPlate && v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() !== normTargetPlate
+    );
+
+    await user.save();
+
+    res.json({
+      message: "Vehicle removed successfully.",
+      vehicles: user.vehicles,
+      policyHolder: user
+    });
+  } catch (err) {
+    console.error("Delete vehicle error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
 // GET all agents for a specific branch: /api/office-staff/agents
 router.get("/agents", async (req, res) => {
   try {

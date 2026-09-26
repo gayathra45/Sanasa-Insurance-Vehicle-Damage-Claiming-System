@@ -24,7 +24,8 @@ import {
   File01Icon,
   ViewIcon,
   Loading03Icon,
-  Add01Icon
+  Add01Icon,
+  Edit02Icon
 } from "@hugeicons/core-free-icons";
 
 interface Vehicle {
@@ -72,6 +73,53 @@ interface PolicyHolder {
   status: string;
   createdAt: string;
 }
+
+const SRI_LANKA_PROVINCES = [
+  "Western Province",
+  "Central Province",
+  "Southern Province",
+  "Northern Province",
+  "Eastern Province",
+  "North Western Province",
+  "North Central Province",
+  "Uva Province",
+  "Sabaragamuwa Province"
+];
+
+const SRI_LANKA_BRANCHES = [
+  "Galle",
+  "Colombo",
+  "Kandy",
+  "Matara",
+  "Kurunegala",
+  "Gampaha",
+  "Kalutara",
+  "Negombo",
+  "Anuradhapura",
+  "Ratnapura",
+  "Jaffna",
+  "Badulla",
+  "Hambantota",
+  "Kegalle"
+];
+
+const SRI_LANKA_BANKS = [
+  "Bank of Ceylon (BOC)",
+  "People's Bank",
+  "Commercial Bank of Ceylon",
+  "Hatton National Bank (HNB)",
+  "Sampath Bank",
+  "Seylan Bank",
+  "Nations Trust Bank (NTB)",
+  "National Development Bank (NDB)",
+  "DFCC Bank",
+  "Pan Asia Bank",
+  "Union Bank",
+  "Standard Chartered Bank",
+  "HSBC",
+  "Amana Bank",
+  "Sanasa Development Bank (SDB)"
+];
 
 interface ClaimRecord {
   _id: string;
@@ -159,6 +207,42 @@ export default function OfficeStaffPolicyHolders() {
     chassisNumber: "",
     policyNumber: "",
     status: "Approved"
+  });
+
+  // Edit Existing Vehicle Modal state
+  const [showEditVehicleModal, setShowEditVehicleModal] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(false);
+  const [originalPlateToEdit, setOriginalPlateToEdit] = useState("");
+  const [editVehicleForm, setEditVehicleForm] = useState({
+    numberPlate: "",
+    vehicleType: "Car",
+    company: "",
+    model: "",
+    year: new Date().getFullYear().toString(),
+    engineNumber: "",
+    chassisNumber: "",
+    policyNumber: "",
+    status: "Approved"
+  });
+
+  // Edit Policy Holder Modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [savingHolder, setSavingHolder] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    firstName: "",
+    lastName: "",
+    mobile: "",
+    email: "",
+    dob: "",
+    address: "",
+    city: "",
+    province: "",
+    branch: "",
+    status: "Approved",
+    bankName: "",
+    branchName: "",
+    accountNumber: "",
+    accountHolderName: ""
   });
 
   // Custom notification popup state
@@ -371,6 +455,193 @@ export default function OfficeStaffPolicyHolders() {
       });
     } finally {
       setAddingVehicle(false);
+    }
+  };
+
+  // Start Edit Policy Holder
+  const handleStartEdit = (holder?: PolicyHolder) => {
+    const target = holder || selectedHolder;
+    if (!target) return;
+    if (!selectedHolder || selectedHolder.nic !== target.nic) {
+      setSelectedHolder(target);
+    }
+    setEditFormData({
+      firstName: target.firstName || "",
+      lastName: target.lastName || "",
+      mobile: target.mobile || "",
+      email: target.email || "",
+      dob: target.dob || "",
+      address: target.address || "",
+      city: target.city || "",
+      province: target.province || "",
+      branch: target.branch || branch || "Galle",
+      status: target.status || "Approved",
+      bankName: target.bankDetails?.bankName || "",
+      branchName: target.bankDetails?.branchName || "",
+      accountNumber: target.bankDetails?.accountNumber || "",
+      accountHolderName: target.bankDetails?.accountHolderName || `${target.firstName} ${target.lastName}`
+    });
+    setShowEditModal(true);
+  };
+
+  // Start Edit Vehicle
+  const handleStartEditVehicle = (veh: Vehicle) => {
+    setOriginalPlateToEdit(veh.numberPlate);
+    setEditVehicleForm({
+      numberPlate: veh.numberPlate || "",
+      vehicleType: veh.vehicleType || "Car",
+      company: veh.company || "",
+      model: veh.model || "",
+      year: veh.year || new Date().getFullYear().toString(),
+      engineNumber: veh.engineNumber || "",
+      chassisNumber: veh.chassisNumber || "",
+      policyNumber: veh.policyNumber || "",
+      status: veh.status || "Approved"
+    });
+    setShowEditVehicleModal(true);
+  };
+
+  // Handle Edit Vehicle Submit
+  const handleEditVehicleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedHolder || !originalPlateToEdit) return;
+
+    if (!editVehicleForm.numberPlate.trim() || !editVehicleForm.company.trim() || !editVehicleForm.model.trim()) {
+      setCustomPopup({
+        show: true,
+        title: "Validation Error",
+        message: "Number plate, make, and model are required.",
+        type: "error"
+      });
+      return;
+    }
+
+    try {
+      setEditingVehicle(true);
+      const res = await fetch(
+        `${API_URL}/office-staff/policy-holders/${encodeURIComponent(selectedHolder.nic)}/vehicles/${encodeURIComponent(originalPlateToEdit)}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editVehicleForm)
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update vehicle.");
+      }
+
+      const updatedVehicles = data.vehicles || (selectedHolder.vehicles || []).map(v =>
+        v.numberPlate.toLowerCase() === originalPlateToEdit.toLowerCase() ? { ...v, ...editVehicleForm } : v
+      );
+
+      const updatedHolder = { ...selectedHolder, vehicles: updatedVehicles };
+      setSelectedHolder(updatedHolder);
+      setPolicyHolders(prev => prev.map(h => h.nic === selectedHolder.nic ? updatedHolder : h));
+      if (searchScope === "islandwide") {
+        setIslandResults(prev => prev.map(h => h.nic === selectedHolder.nic ? updatedHolder : h));
+      }
+
+      setShowEditVehicleModal(false);
+      setCustomPopup({
+        show: true,
+        title: "Vehicle Updated Successfully",
+        message: `Vehicle details for ${editVehicleForm.numberPlate} have been successfully updated.`,
+        type: "success"
+      });
+    } catch (err: any) {
+      console.error("Update vehicle error:", err);
+      setCustomPopup({
+        show: true,
+        title: "Failed to Update Vehicle",
+        message: err.message || "An error occurred while updating the vehicle.",
+        type: "error"
+      });
+    } finally {
+      setEditingVehicle(false);
+    }
+  };
+
+  // Handle Edit Policy Holder Submit
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedHolder) return;
+
+    if (!editFormData.firstName.trim() || !editFormData.lastName.trim()) {
+      setCustomPopup({
+        show: true,
+        title: "Validation Error",
+        message: "First name and last name are required.",
+        type: "error"
+      });
+      return;
+    }
+
+    try {
+      setSavingHolder(true);
+      const res = await fetch(`${API_URL}/office-staff/policy-holders/${encodeURIComponent(selectedHolder.nic)}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: editFormData.firstName,
+          lastName: editFormData.lastName,
+          mobile: editFormData.mobile,
+          email: editFormData.email,
+          dob: editFormData.dob,
+          address: editFormData.address,
+          city: editFormData.city,
+          province: editFormData.province,
+          branch: editFormData.branch,
+          status: editFormData.status,
+          bankDetails: {
+            bankName: editFormData.bankName,
+            branchName: editFormData.branchName,
+            accountNumber: editFormData.accountNumber,
+            accountHolderName: editFormData.accountHolderName
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update policy holder details.");
+      }
+
+      const updatedHolder: PolicyHolder = {
+        ...selectedHolder,
+        ...data.policyHolder,
+        bankDetails: data.policyHolder?.bankDetails || {
+          bankName: editFormData.bankName,
+          branchName: editFormData.branchName,
+          accountNumber: editFormData.accountNumber,
+          accountHolderName: editFormData.accountHolderName
+        }
+      };
+
+      setSelectedHolder(updatedHolder);
+      setPolicyHolders(prev => prev.map(h => h.nic === selectedHolder.nic ? updatedHolder : h));
+      if (searchScope === "islandwide") {
+        setIslandResults(prev => prev.map(h => h.nic === selectedHolder.nic ? updatedHolder : h));
+      }
+
+      setShowEditModal(false);
+      setCustomPopup({
+        show: true,
+        title: "Details Updated Successfully",
+        message: `Policy holder details for ${updatedHolder.firstName} ${updatedHolder.lastName} have been successfully updated.`,
+        type: "success"
+      });
+    } catch (err: any) {
+      console.error("Update policy holder error:", err);
+      setCustomPopup({
+        show: true,
+        title: "Failed to Update Details",
+        message: err.message || "An error occurred while saving policy holder details.",
+        type: "error"
+      });
+    } finally {
+      setSavingHolder(false);
     }
   };
 
@@ -740,6 +1011,16 @@ export default function OfficeStaffPolicyHolders() {
                                 <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
                                 <span>View</span>
                               </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleStartEdit(holder);
+                                }}
+                                className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
+                              >
+                                <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
+                                <span>Edit</span>
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -796,7 +1077,7 @@ export default function OfficeStaffPolicyHolders() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-2.5 shrink-0">
                 <div className="hidden sm:flex items-center gap-2">
                   <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs">
                     Age: {calculateAge(selectedHolder.dob)}
@@ -805,6 +1086,14 @@ export default function OfficeStaffPolicyHolders() {
                     {selectedHolder.vehicles?.length || 0} Vehicles Insured
                   </span>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => handleStartEdit(selectedHolder)}
+                  className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+                >
+                  <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+                  <span>Edit Details</span>
+                </button>
               </div>
             </div>
 
@@ -850,57 +1139,77 @@ export default function OfficeStaffPolicyHolders() {
             <div className="p-8 flex-1 overflow-y-auto space-y-6">
               {/* TAB 1: Personal Info (Maximum Information Display) */}
               {activeTab === "overview" && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Identity & Contact Details Card */}
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4 select-none">
-                    <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500 pb-2 border-b border-slate-200/60 flex items-center gap-1.5">
-                      <span>Identity & Contact Information</span>
-                    </h3>
-                    <div className="flex flex-col divide-y divide-slate-200/60 text-xs">
-                      {[
-                        { label: "Full Name", value: `${selectedHolder.firstName} ${selectedHolder.lastName}` },
-                        { label: "National ID (NIC)", value: selectedHolder.nic, isMono: true },
-                        { label: "Date of Birth", value: formatDate(selectedHolder.dob) },
-                        { label: "Age", value: calculateAge(selectedHolder.dob) },
-                        { label: "Mobile Phone", value: selectedHolder.mobile || "-" },
-                        { label: "Email Address", value: selectedHolder.email || "-" }
-                      ].map((item, idx) => (
-                        <div key={idx} className="py-2.5 flex items-center justify-between gap-4">
-                          <span className="text-slate-400 font-medium uppercase text-[10px] tracking-wider min-w-[110px]">
-                            {item.label}
-                          </span>
-                          <span className={`font-semibold text-slate-800 text-right truncate ${item.isMono ? "font-mono" : ""}`}>
-                            {item.value}
-                          </span>
-                        </div>
-                      ))}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between flex-wrap gap-2 select-none">
+                    <div>
+                      <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
+                        Personal & Contact Information
+                      </h3>
+                      <span className="text-xs text-slate-400 font-medium">Verified policyholder identity & address</span>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(selectedHolder)}
+                      className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+                    >
+                      <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                      <span>Edit Details</span>
+                    </button>
                   </div>
 
-                  {/* Address & Registration Info Card */}
-                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4 select-none">
-                    <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500 pb-2 border-b border-slate-200/60 flex items-center gap-1.5">
-                      <span>Address & Registration Metadata</span>
-                    </h3>
-                    <div className="flex flex-col divide-y divide-slate-200/60 text-xs">
-                      {[
-                        { label: "Registered Branch", value: `${selectedHolder.branch} Branch` },
-                        { label: "Reference Number", value: selectedHolder.referenceNumber || "-", isMono: true },
-                        { label: "City", value: selectedHolder.city || "-" },
-                        { label: "Province", value: selectedHolder.province || "-" },
-                        { label: "Permanent Address", value: selectedHolder.address || "-" },
-                        { label: "Member Since", value: formatDate(selectedHolder.createdAt) },
-                        { label: "Account Status", value: selectedHolder.status || "Pending" }
-                      ].map((item, idx) => (
-                        <div key={idx} className="py-2.5 flex items-center justify-between gap-4">
-                          <span className="text-slate-400 font-medium uppercase text-[10px] tracking-wider min-w-[110px]">
-                            {item.label}
-                          </span>
-                          <span className={`font-semibold text-slate-800 text-right truncate ${item.isMono ? "font-mono" : ""}`}>
-                            {item.value}
-                          </span>
-                        </div>
-                      ))}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Identity & Contact Details Card */}
+                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4 select-none">
+                      <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500 pb-2 border-b border-slate-200/60 flex items-center gap-1.5">
+                        <span>Identity & Contact Information</span>
+                      </h3>
+                      <div className="flex flex-col divide-y divide-slate-200/60 text-xs">
+                        {[
+                          { label: "Full Name", value: `${selectedHolder.firstName} ${selectedHolder.lastName}` },
+                          { label: "National ID (NIC)", value: selectedHolder.nic, isMono: true },
+                          { label: "Date of Birth", value: formatDate(selectedHolder.dob) },
+                          { label: "Age", value: calculateAge(selectedHolder.dob) },
+                          { label: "Mobile Phone", value: selectedHolder.mobile || "-" },
+                          { label: "Email Address", value: selectedHolder.email || "-" }
+                        ].map((item, idx) => (
+                          <div key={idx} className="py-2.5 flex items-center justify-between gap-4">
+                            <span className="text-slate-400 font-medium uppercase text-[10px] tracking-wider min-w-[110px]">
+                              {item.label}
+                            </span>
+                            <span className={`font-semibold text-slate-800 text-right truncate ${item.isMono ? "font-mono" : ""}`}>
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Address & Registration Info Card */}
+                    <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4 select-none">
+                      <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500 pb-2 border-b border-slate-200/60 flex items-center gap-1.5">
+                        <span>Address & Registration Metadata</span>
+                      </h3>
+                      <div className="flex flex-col divide-y divide-slate-200/60 text-xs">
+                        {[
+                          { label: "Registered Branch", value: `${selectedHolder.branch} Branch` },
+                          { label: "Reference Number", value: selectedHolder.referenceNumber || "-", isMono: true },
+                          { label: "City", value: selectedHolder.city || "-" },
+                          { label: "Province", value: selectedHolder.province || "-" },
+                          { label: "Permanent Address", value: selectedHolder.address || "-" },
+                          { label: "Member Since", value: formatDate(selectedHolder.createdAt) },
+                          { label: "Account Status", value: selectedHolder.status || "Pending" }
+                        ].map((item, idx) => (
+                          <div key={idx} className="py-2.5 flex items-center justify-between gap-4">
+                            <span className="text-slate-400 font-medium uppercase text-[10px] tracking-wider min-w-[110px]">
+                              {item.label}
+                            </span>
+                            <span className={`font-semibold text-slate-800 text-right truncate ${item.isMono ? "font-mono" : ""}`}>
+                              {item.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1004,6 +1313,17 @@ export default function OfficeStaffPolicyHolders() {
                               </span>
                             </div>
                           </div>
+
+                          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => handleStartEditVehicle(veh)}
+                              className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
+                            >
+                              <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
+                              <span>Edit Vehicle</span>
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -1014,18 +1334,29 @@ export default function OfficeStaffPolicyHolders() {
               {/* TAB 3: Direct Settlement Bank Account */}
               {activeTab === "bank" && (
                 <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-5 select-none">
-                  <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                      <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" strokeWidth={2} />
+                  <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-200/70 flex-wrap">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                        <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" strokeWidth={2} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
+                          Direct Settlement Bank Account
+                        </h3>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">
+                          Used for direct electronic insurance claim reimbursements and settlement deposits.
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
-                        Direct Settlement Bank Account
-                      </h3>
-                      <p className="text-xs text-slate-500 font-medium mt-0.5">
-                        Used for direct electronic insurance claim reimbursements and settlement deposits.
-                      </p>
-                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleStartEdit(selectedHolder)}
+                      className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+                    >
+                      <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                      <span>Edit Bank Details</span>
+                    </button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -1230,7 +1561,16 @@ export default function OfficeStaffPolicyHolders() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0 select-none">
+            <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-shrink-0 select-none">
+              <button
+                type="button"
+                onClick={() => handleStartEdit(selectedHolder)}
+                className="bg-[#102A43] hover:bg-[#000080] text-white font-semibold text-xs px-5 py-2.5 rounded-full transition-all border-none cursor-pointer shadow-xs active:scale-95 flex items-center gap-2"
+              >
+                <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                <span>Edit Policy Holder Details</span>
+              </button>
+
               <button
                 onClick={() => setSelectedHolder(null)}
                 className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95 flex items-center justify-center"
@@ -1762,6 +2102,479 @@ export default function OfficeStaffPolicyHolders() {
                     </>
                   ) : (
                     <span>Register Vehicle</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* Edit Vehicle Modal                                       */}
+      {/* ======================================================== */}
+      {showEditVehicleModal && selectedHolder && (
+        <div className="fixed inset-0 z-90 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-left">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white select-none">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                  <HugeiconsIcon icon={Edit02Icon} className="w-5 h-5" strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Edit Vehicle Details</h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Plate: <span className="font-mono font-bold text-slate-700">{originalPlateToEdit}</span> • Policy Holder: {selectedHolder.firstName} {selectedHolder.lastName}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditVehicleModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Modal Form Body */}
+            <form onSubmit={handleEditVehicleSubmit} className="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Vehicle Plate */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Number Plate <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editVehicleForm.numberPlate}
+                    onChange={(e) => setEditVehicleForm({ ...editVehicleForm, numberPlate: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold font-mono focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Vehicle Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Vehicle Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={editVehicleForm.vehicleType}
+                    onChange={(e) => setEditVehicleForm({ ...editVehicleForm, vehicleType: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400 bg-white"
+                  >
+                    <option value="Car">Car</option>
+                    <option value="Motorcycle">Motorcycle</option>
+                    <option value="Van">Van</option>
+                    <option value="Three Wheeler">Three Wheeler</option>
+                    <option value="Lorry">Lorry</option>
+                    <option value="Bus">Bus</option>
+                    <option value="SUV">SUV</option>
+                  </select>
+                </div>
+
+                {/* Make / Company */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Make / Company <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editVehicleForm.company}
+                    onChange={(e) => setEditVehicleForm({ ...editVehicleForm, company: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Model */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Model <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editVehicleForm.model}
+                    onChange={(e) => setEditVehicleForm({ ...editVehicleForm, model: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Year */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Year of Manufacture
+                  </label>
+                  <input
+                    type="text"
+                    value={editVehicleForm.year}
+                    onChange={(e) => setEditVehicleForm({ ...editVehicleForm, year: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Policy Number */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Policy Number
+                  </label>
+                  <input
+                    type="text"
+                    value={editVehicleForm.policyNumber}
+                    onChange={(e) => setEditVehicleForm({ ...editVehicleForm, policyNumber: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold font-mono focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Engine Number */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Engine Number
+                  </label>
+                  <input
+                    type="text"
+                    value={editVehicleForm.engineNumber}
+                    onChange={(e) => setEditVehicleForm({ ...editVehicleForm, engineNumber: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold font-mono focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Chassis Number */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Chassis Number
+                  </label>
+                  <input
+                    type="text"
+                    value={editVehicleForm.chassisNumber}
+                    onChange={(e) => setEditVehicleForm({ ...editVehicleForm, chassisNumber: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold font-mono focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+              </div>
+
+              {/* Status Selector */}
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-800 block">Vehicle Insurance Status</span>
+                  <span className="text-[10px] text-slate-400">Current active status for this registered vehicle</span>
+                </div>
+                <select
+                  value={editVehicleForm.status}
+                  onChange={(e) => setEditVehicleForm({ ...editVehicleForm, status: e.target.value })}
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 bg-white focus:outline-none"
+                >
+                  <option value="Approved">Approved</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex justify-end items-center gap-3 pt-4 border-t border-slate-200 mt-2 select-none">
+                <button
+                  type="button"
+                  onClick={() => setShowEditVehicleModal(false)}
+                  className="px-4 py-2 border border-slate-300 text-slate-600 rounded-full text-xs font-semibold hover:bg-slate-50 transition-all cursor-pointer bg-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editingVehicle}
+                  className="px-6 py-2 bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white rounded-full text-xs font-semibold shadow-md transition-all cursor-pointer border-none flex items-center gap-2"
+                >
+                  {editingVehicle ? (
+                    <>
+                      <HugeiconsIcon icon={Loading03Icon} className="w-3.5 h-3.5 animate-spin text-white" strokeWidth={2.5} />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Save Vehicle</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* Edit Policy Holder Modal                                 */}
+      {/* ======================================================== */}
+      {showEditModal && selectedHolder && (
+        <div className="fixed inset-0 z-90 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-left">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white select-none">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                  <HugeiconsIcon icon={Edit02Icon} className="w-5 h-5" strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Edit Policy Holder Details</h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    NIC: <span className="font-mono font-bold text-slate-700">{selectedHolder.nic}</span> • Ref: {selectedHolder.referenceNumber || "SAN-PH"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Modal Form Body */}
+            <form onSubmit={handleEditSubmit} className="p-6 overflow-y-auto flex-1 flex flex-col gap-6">
+              {/* Section 1: Personal & Contact */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-amber-500 pb-1 border-b border-slate-100 flex items-center justify-between">
+                  <span>Personal & Contact Information</span>
+                  <span className="text-[10px] text-slate-400 font-normal normal-case">Core Identity Details</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      First Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.firstName}
+                      onChange={(e) => setEditFormData({ ...editFormData, firstName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Last Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editFormData.lastName}
+                      onChange={(e) => setEditFormData({ ...editFormData, lastName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      National ID (NIC)
+                    </label>
+                    <input
+                      type="text"
+                      disabled
+                      value={selectedHolder.nic}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 text-xs font-semibold font-mono cursor-not-allowed"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Mobile Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editFormData.mobile}
+                      onChange={(e) => setEditFormData({ ...editFormData, mobile: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Email Address
+                    </label>
+                    <input
+                      type="email"
+                      value={editFormData.email}
+                      onChange={(e) => setEditFormData({ ...editFormData, email: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Date of Birth
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 2004-06-07 or 07 Jun 2004"
+                      value={editFormData.dob}
+                      onChange={(e) => setEditFormData({ ...editFormData, dob: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Account Status
+                    </label>
+                    <select
+                      value={editFormData.status}
+                      onChange={(e) => setEditFormData({ ...editFormData, status: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400 bg-white"
+                    >
+                      <option value="Approved">Approved</option>
+                      <option value="Pending">Pending</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Address & Branch */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-amber-500 pb-1 border-b border-slate-100 flex items-center justify-between">
+                  <span>Address & Branch Registration</span>
+                  <span className="text-[10px] text-slate-400 font-normal normal-case">Location & Branch Info</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="sm:col-span-2">
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Permanent Address
+                    </label>
+                    <input
+                      type="text"
+                      value={editFormData.address}
+                      onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      City / District
+                    </label>
+                    <input
+                      type="text"
+                      value={editFormData.city}
+                      onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Province
+                    </label>
+                    <select
+                      value={editFormData.province}
+                      onChange={(e) => setEditFormData({ ...editFormData, province: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400 bg-white"
+                    >
+                      <option value="">Select Province</option>
+                      {SRI_LANKA_PROVINCES.map((prov) => (
+                        <option key={prov} value={prov}>
+                          {prov}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Assigned Branch
+                    </label>
+                    <select
+                      value={editFormData.branch}
+                      onChange={(e) => setEditFormData({ ...editFormData, branch: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400 bg-white"
+                    >
+                      <option value="">Select Branch</option>
+                      {SRI_LANKA_BRANCHES.map((b) => (
+                        <option key={b} value={b}>
+                          {b} Branch
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Bank Details */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-amber-500 pb-1 border-b border-slate-100 flex items-center justify-between">
+                  <span>Direct Settlement Bank Details</span>
+                  <span className="text-[10px] text-slate-400 font-normal normal-case">Direct Electronic Payouts</span>
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Bank Name
+                    </label>
+                    <input
+                      type="text"
+                      list="sl-banks-list"
+                      placeholder="e.g. Bank of Ceylon, Commercial Bank"
+                      value={editFormData.bankName}
+                      onChange={(e) => setEditFormData({ ...editFormData, bankName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                    <datalist id="sl-banks-list">
+                      {SRI_LANKA_BANKS.map((b) => (
+                        <option key={b} value={b} />
+                      ))}
+                    </datalist>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Bank Branch
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Galle Main Branch"
+                      value={editFormData.branchName}
+                      onChange={(e) => setEditFormData({ ...editFormData, branchName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Account Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 10023456789"
+                      value={editFormData.accountNumber}
+                      onChange={(e) => setEditFormData({ ...editFormData, accountNumber: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold font-mono focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Account Holder Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. G. Kapuge"
+                      value={editFormData.accountHolderName}
+                      onChange={(e) => setEditFormData({ ...editFormData, accountHolderName: e.target.value })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex justify-end items-center gap-3 pt-4 border-t border-slate-200 mt-2 select-none">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 border border-slate-300 text-slate-600 rounded-full text-xs font-semibold hover:bg-slate-50 transition-all cursor-pointer bg-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingHolder}
+                  className="px-6 py-2 bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white rounded-full text-xs font-semibold shadow-md transition-all cursor-pointer border-none flex items-center gap-2"
+                >
+                  {savingHolder ? (
+                    <>
+                      <HugeiconsIcon icon={Loading03Icon} className="w-3.5 h-3.5 animate-spin text-white" strokeWidth={2.5} />
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
                   )}
                 </button>
               </div>
