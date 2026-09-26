@@ -25,6 +25,7 @@ import {
   Call02Icon,
   Mail01Icon,
   File01Icon,
+  Clock01Icon,
   Loading03Icon
 } from "@hugeicons/core-free-icons";
 
@@ -77,12 +78,52 @@ interface PolicyHolder {
 interface ClaimRecord {
   _id: string;
   claimNumber: string;
+  userNic?: string;
   vehiclePlate: string;
-  damageType: string;
   incidentDate: string;
+  incidentTime?: string;
+  damageType: string;
+  description?: string;
+  location?: string;
   status: string;
-  amount?: number;
   branch: string;
+  assignedAgent?: string;
+  priority?: string;
+  amount?: number | null;
+  currentStep?: number;
+  documentsRequested?: boolean;
+  requestedDocuments?: string[];
+  inspectionReport?: string;
+  inspectionSubmitted?: boolean;
+  paymentReceipt?: string;
+  bankName?: string;
+  bankBranch?: string;
+  bankAccount?: string;
+  accountHolderName?: string;
+  accidentPhotos?: {
+    front?: string[];
+    rear?: string[];
+    side?: string[];
+  };
+  drivingLicense?: {
+    front?: string[];
+    rear?: string[];
+  };
+  otherVehicleDetails?: Array<{
+    vehiclePlate?: string;
+    insuranceCompany?: string;
+    policyNumber?: string;
+    driverName?: string;
+    licensePhotos?: string[];
+    vehiclePhotos?: string[];
+  }>;
+  additionalDocuments?: Array<{
+    name: string;
+    url: string;
+    uploadedAt?: string;
+    uploadedBy?: string;
+  }>;
+  createdAt?: string;
 }
 
 export default function OfficeStaffPolicyHolders() {
@@ -106,6 +147,9 @@ export default function OfficeStaffPolicyHolders() {
   const [holderClaims, setHolderClaims] = useState<ClaimRecord[]>([]);
   const [loadingClaims, setLoadingClaims] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "vehicles" | "bank" | "documents" | "claims">("overview");
+
+  // Single Claim Full Details Modal state
+  const [selectedClaimModal, setSelectedClaimModal] = useState<ClaimRecord | null>(null);
 
   // Document Lightbox Preview state
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
@@ -1212,9 +1256,13 @@ export default function OfficeStaffPolicyHolders() {
                           </div>
 
                           <div className="flex items-center gap-3 self-end sm:self-auto">
-                            {claim.amount && (
-                              <span className="text-xs font-bold text-slate-900">
+                            {claim.amount ? (
+                              <span className="text-xs font-bold text-slate-900 font-mono">
                                 LKR {claim.amount.toLocaleString()}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] text-slate-400 font-semibold italic">
+                                Pending Amount
                               </span>
                             )}
                             <span
@@ -1228,6 +1276,14 @@ export default function OfficeStaffPolicyHolders() {
                             >
                               {claim.status}
                             </span>
+                            <button
+                              onClick={() => setSelectedClaimModal(claim)}
+                              className="px-3.5 py-1.5 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#000080] font-semibold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-xs flex items-center gap-1.5 select-none shrink-0"
+                              aria-label={`View claim ${claim.claimNumber}`}
+                            >
+                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                              <span>View</span>
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -1257,10 +1313,284 @@ export default function OfficeStaffPolicyHolders() {
       )}
 
       {/* ======================================================== */}
+      {/* Full Claim Details Modal (Opened from Claims History)    */}
+      {/* ======================================================== */}
+      {selectedClaimModal && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-slate-200 overflow-hidden transform scale-100 transition-all h-[680px] max-h-[92vh] flex flex-col text-left">
+            {/* Modal Header */}
+            <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none flex justify-between items-center gap-4">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-lg shadow-xs shrink-0">
+                  <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" strokeWidth={2} />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2.5 flex-wrap">
+                    <h2 className="text-lg sm:text-xl font-bold font-mono text-slate-900 tracking-tight leading-none truncate">
+                      {selectedClaimModal.claimNumber}
+                    </h2>
+                    <span
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                        selectedClaimModal.status === "Approved"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : selectedClaimModal.status === "Rejected"
+                          ? "bg-red-50 text-red-700 border-red-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
+                      }`}
+                    >
+                      {selectedClaimModal.status}
+                    </span>
+                    {selectedClaimModal.priority && (
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                        {selectedClaimModal.priority} Priority
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium mt-1 truncate">
+                    Vehicle: <span className="font-mono font-bold text-slate-800">{formatPlate(selectedClaimModal.vehiclePlate)}</span> •{" "}
+                    <span className="font-semibold text-[#102A43]">{selectedClaimModal.branch} Branch</span> • Incident on{" "}
+                    {formatDate(selectedClaimModal.incidentDate)} {selectedClaimModal.incidentTime ? `at ${selectedClaimModal.incidentTime}` : ""}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedClaimModal(null)}
+                className="text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+                aria-label="Close claim details modal"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 sm:p-8 overflow-y-auto flex-1 bg-white flex flex-col gap-6">
+              {/* Section 1: Incident & Workflow Highlights */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-1">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">Damage Type</span>
+                  <span className="font-bold text-slate-900 text-sm">{selectedClaimModal.damageType || "Accident Damage"}</span>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-1">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">Claim Amount</span>
+                  <span className="font-bold text-blue-700 text-sm font-mono">
+                    {selectedClaimModal.amount ? `LKR ${selectedClaimModal.amount.toLocaleString()}` : "Pending Assessment"}
+                  </span>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-1">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">Assigned Field Agent</span>
+                  <span className="font-bold text-slate-900 text-sm">{selectedClaimModal.assignedAgent || "None (Branch Direct)"}</span>
+                </div>
+              </div>
+
+              {/* Section 2: Location & Description */}
+              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 flex flex-col gap-3">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none flex items-center gap-2">
+                  <HugeiconsIcon icon={Location01Icon} className="w-4 h-4 text-slate-500" strokeWidth={2} />
+                  <span>Incident Location & Details</span>
+                </h4>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">Location</span>
+                    <span className="font-semibold text-slate-900">{selectedClaimModal.location || "Not Specified"}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">Date & Time</span>
+                    <span className="font-semibold text-slate-900">
+                      {formatDate(selectedClaimModal.incidentDate)} {selectedClaimModal.incidentTime ? `• ${selectedClaimModal.incidentTime}` : ""}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-2">
+                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1 select-none">Description / Driver Statement</span>
+                  <p className="text-xs font-medium text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-200 leading-relaxed whitespace-pre-wrap">
+                    {selectedClaimModal.description || "No description provided."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Section 3: Accident Damage Photos */}
+              <div className="flex flex-col gap-3">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none flex items-center gap-2">
+                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500" strokeWidth={2} />
+                  <span>Accident Damage Photos</span>
+                </h4>
+
+                {(() => {
+                  const frontPhotos = selectedClaimModal.accidentPhotos?.front || [];
+                  const rearPhotos = selectedClaimModal.accidentPhotos?.rear || [];
+                  const sidePhotos = selectedClaimModal.accidentPhotos?.side || [];
+                  const allAccidentPhotos = [
+                    ...frontPhotos.map((url, i) => ({ url, label: `Front View #${i + 1}` })),
+                    ...rearPhotos.map((url, i) => ({ url, label: `Rear View #${i + 1}` })),
+                    ...sidePhotos.map((url, i) => ({ url, label: `Side View #${i + 1}` }))
+                  ];
+
+                  if (allAccidentPhotos.length === 0) {
+                    return (
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-6 text-center text-slate-400 text-xs font-medium select-none">
+                        No accident damage photos uploaded with this claim.
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {allAccidentPhotos.map((photo, pIdx) => (
+                        <div
+                          key={pIdx}
+                          onClick={() => setPreviewImage({ url: photo.url, title: `${selectedClaimModal.claimNumber} - ${photo.label}` })}
+                          className="group relative bg-slate-100 border border-slate-200 rounded-xl overflow-hidden aspect-video cursor-pointer hover:shadow-md transition-all flex flex-col justify-end"
+                        >
+                          <img
+                            src={photo.url}
+                            alt={photo.label}
+                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                          <div className="relative z-10 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent p-2 text-white flex items-center justify-between">
+                            <span className="text-[10px] font-semibold truncate">{photo.label}</span>
+                            <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-white/80 shrink-0" strokeWidth={2.5} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Section 4: Driving License & Inspection Documents */}
+              <div className="flex flex-col gap-3">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none">
+                  License & Supplementary Documents
+                </h4>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {/* Driving License Front */}
+                  {(selectedClaimModal.drivingLicense?.front || []).map((url, i) => (
+                    <div
+                      key={`dl-front-${i}`}
+                      onClick={() => setPreviewImage({ url, title: `Driving License Front - ${selectedClaimModal.claimNumber}` })}
+                      className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-100 transition-all select-none"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
+                        <span className="text-xs font-semibold text-slate-800 truncate">License Front #{i + 1}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-600 shrink-0">View</span>
+                    </div>
+                  ))}
+
+                  {/* Driving License Rear */}
+                  {(selectedClaimModal.drivingLicense?.rear || []).map((url, i) => (
+                    <div
+                      key={`dl-rear-${i}`}
+                      onClick={() => setPreviewImage({ url, title: `Driving License Rear - ${selectedClaimModal.claimNumber}` })}
+                      className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-100 transition-all select-none"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
+                        <span className="text-xs font-semibold text-slate-800 truncate">License Rear #{i + 1}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-600 shrink-0">View</span>
+                    </div>
+                  ))}
+
+                  {/* Inspection Report */}
+                  {selectedClaimModal.inspectionReport && (
+                    <div
+                      onClick={() => setPreviewImage({ url: selectedClaimModal.inspectionReport!, title: `Inspection Report - ${selectedClaimModal.claimNumber}` })}
+                      className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-blue-100/70 transition-all select-none"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-blue-600 shrink-0" strokeWidth={2} />
+                        <span className="text-xs font-semibold text-blue-900 truncate">Inspection Report</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-700 shrink-0">View Report</span>
+                    </div>
+                  )}
+
+                  {/* Payment Receipt */}
+                  {selectedClaimModal.paymentReceipt && (
+                    <div
+                      onClick={() => setPreviewImage({ url: selectedClaimModal.paymentReceipt!, title: `Settlement Receipt - ${selectedClaimModal.claimNumber}` })}
+                      className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-emerald-100/70 transition-all select-none"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2} />
+                        <span className="text-xs font-semibold text-emerald-900 truncate">Payment Receipt</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-emerald-700 shrink-0">View Receipt</span>
+                    </div>
+                  )}
+
+                  {/* Additional Documents */}
+                  {(selectedClaimModal.additionalDocuments || []).map((doc, docIdx) => (
+                    <div
+                      key={`add-doc-${docIdx}`}
+                      onClick={() => setPreviewImage({ url: doc.url, title: `${doc.name} - ${selectedClaimModal.claimNumber}` })}
+                      className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-100 transition-all select-none"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
+                        <span className="text-xs font-semibold text-slate-800 truncate">{doc.name}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-blue-600 shrink-0">View</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Section 5: Third Party Vehicles (if any) */}
+              {selectedClaimModal.otherVehicleDetails && selectedClaimModal.otherVehicleDetails.length > 0 && selectedClaimModal.otherVehicleDetails.some(ov => ov.vehiclePlate) && (
+                <div className="flex flex-col gap-3">
+                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none">
+                    Third-Party Vehicle Details
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    {selectedClaimModal.otherVehicleDetails.filter(ov => ov.vehiclePlate).map((ov, ovIdx) => (
+                      <div key={ovIdx} className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex flex-col gap-1.5">
+                        <div className="flex justify-between items-center">
+                          <span className="font-mono font-bold text-slate-900">{formatPlate(ov.vehiclePlate || "")}</span>
+                          <span className="text-[10px] font-semibold text-slate-500">{ov.insuranceCompany || "Third Party"}</span>
+                        </div>
+                        <span className="text-slate-600 font-medium">Driver: {ov.driverName || "-"}</span>
+                        <span className="text-slate-600 font-medium">Policy No: {ov.policyNumber || "-"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 sm:px-8 py-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center select-none shrink-0">
+              <Link
+                href={`/Office_Staff/Claims?claimId=${encodeURIComponent(selectedClaimModal.claimNumber)}`}
+                className="text-xs font-semibold text-blue-700 hover:text-blue-900 hover:underline flex items-center gap-1.5 no-underline"
+              >
+                <span>Open in Claims Management Workbench ↗</span>
+              </Link>
+
+              <button
+                onClick={() => setSelectedClaimModal(null)}
+                className="px-6 py-2.5 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-semibold shadow-md cursor-pointer border-none transition-all"
+              >
+                Close Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
       {/* Document Image Fullscreen Lightbox Modal */}
       {/* ======================================================== */}
       {previewImage && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all duration-300">
+        <div className="fixed inset-0 z-80 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all duration-300">
           <div className="bg-white rounded-3xl max-w-3xl w-full overflow-hidden shadow-2xl border border-slate-200 flex flex-col max-h-[90vh]">
             <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center select-none bg-white">
               <h3 className="text-sm font-bold text-slate-900">{previewImage.title}</h3>
