@@ -23,7 +23,8 @@ import {
   Car01Icon,
   File01Icon,
   ViewIcon,
-  Loading03Icon
+  Loading03Icon,
+  Add01Icon
 } from "@hugeicons/core-free-icons";
 
 interface Vehicle {
@@ -145,11 +146,20 @@ export default function OfficeStaffPolicyHolders() {
   const [loadingClaims, setLoadingClaims] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "vehicles" | "bank" | "documents" | "claims">("overview");
 
-  // Single Claim Full Details Modal state
-  const [selectedClaimModal, setSelectedClaimModal] = useState<ClaimRecord | null>(null);
-
-  // Document Lightbox Preview state (string URL or title + url object)
-  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
+  // Add New Vehicle Modal state
+  const [showAddVehicleModal, setShowAddVehicleModal] = useState(false);
+  const [addingVehicle, setAddingVehicle] = useState(false);
+  const [newVehicleForm, setNewVehicleForm] = useState({
+    numberPlate: "",
+    vehicleType: "Car",
+    company: "",
+    model: "",
+    year: new Date().getFullYear().toString(),
+    engineNumber: "",
+    chassisNumber: "",
+    policyNumber: "",
+    status: "Approved"
+  });
 
   // Custom notification popup state
   const [customPopup, setCustomPopup] = useState<{
@@ -269,12 +279,99 @@ export default function OfficeStaffPolicyHolders() {
     }
   };
 
+  // Single Claim Full Details Modal state
+  const [selectedClaimModal, setSelectedClaimModal] = useState<ClaimRecord | null>(null);
+
+  // Document Lightbox Preview state (string URL or title + url object)
+  const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
+
   // Open details popup
   const handleOpenDetails = (holder: PolicyHolder) => {
     setSelectedHolder(holder);
     setActiveTab("overview");
     setHolderClaims([]);
     loadHolderClaims(holder.nic);
+  };
+
+  // Handle Add Vehicle Submit
+  const handleAddVehicleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedHolder) return;
+
+    if (!newVehicleForm.numberPlate.trim()) {
+      setCustomPopup({
+        show: true,
+        title: "Validation Error",
+        message: "Please enter the vehicle number plate.",
+        type: "error"
+      });
+      return;
+    }
+
+    if (!newVehicleForm.company.trim() || !newVehicleForm.model.trim()) {
+      setCustomPopup({
+        show: true,
+        title: "Validation Error",
+        message: "Please enter the vehicle make (company) and model.",
+        type: "error"
+      });
+      return;
+    }
+
+    try {
+      setAddingVehicle(true);
+      const res = await fetch(`${API_URL}/office-staff/policy-holders/${encodeURIComponent(selectedHolder.nic)}/vehicles`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newVehicleForm)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to add vehicle.");
+      }
+
+      // Update selectedHolder in state
+      const updatedVehicles = data.vehicles || [...(selectedHolder.vehicles || []), data.vehicle];
+      const updatedHolder = { ...selectedHolder, vehicles: updatedVehicles };
+      setSelectedHolder(updatedHolder);
+
+      // Update in policyHolders list
+      setPolicyHolders(prev => prev.map(h => h.nic === selectedHolder.nic ? updatedHolder : h));
+      if (searchScope === "islandwide") {
+        setIslandResults(prev => prev.map(h => h.nic === selectedHolder.nic ? updatedHolder : h));
+      }
+
+      setShowAddVehicleModal(false);
+      setNewVehicleForm({
+        numberPlate: "",
+        vehicleType: "Car",
+        company: "",
+        model: "",
+        year: new Date().getFullYear().toString(),
+        engineNumber: "",
+        chassisNumber: "",
+        policyNumber: "",
+        status: "Approved"
+      });
+
+      setCustomPopup({
+        show: true,
+        title: "Vehicle Added Successfully",
+        message: `Vehicle ${data.vehicle.numberPlate} (${data.vehicle.company} ${data.vehicle.model}) has been registered under ${selectedHolder.firstName} ${selectedHolder.lastName}'s policy.`,
+        type: "success"
+      });
+    } catch (err: any) {
+      console.error("Add vehicle error:", err);
+      setCustomPopup({
+        show: true,
+        title: "Failed to Add Vehicle",
+        message: err.message || "An error occurred while adding the vehicle.",
+        type: "error"
+      });
+    } finally {
+      setAddingVehicle(false);
+    }
   };
 
   // Lifecycle initialization
@@ -812,17 +909,36 @@ export default function OfficeStaffPolicyHolders() {
               {/* TAB 2: Insured Vehicles (Full Details Cards) */}
               {activeTab === "vehicles" && (
                 <div className="space-y-4 select-none">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
-                      Registered Vehicles Under Policy ({selectedHolder.vehicles?.length || 0})
-                    </h3>
-                    <span className="text-xs text-slate-400 font-medium">Active Motor Insurance Policies</span>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
+                        Registered Vehicles Under Policy ({selectedHolder.vehicles?.length || 0})
+                      </h3>
+                      <span className="text-xs text-slate-400 font-medium">Active Motor Insurance Policies</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowAddVehicleModal(true)}
+                      className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+                    >
+                      <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                      <span>Add New Vehicle</span>
+                    </button>
                   </div>
 
                   {!selectedHolder.vehicles || selectedHolder.vehicles.length === 0 ? (
-                    <div className="border border-slate-200 border-dashed rounded-2xl p-10 text-center text-slate-400 italic text-sm">
-                      <HugeiconsIcon icon={Car01Icon} className="w-10 h-10 mx-auto text-slate-300 mb-2" strokeWidth={1.5} />
+                    <div className="border border-slate-200 border-dashed rounded-2xl p-10 text-center text-slate-400 italic text-sm flex flex-col items-center gap-3">
+                      <HugeiconsIcon icon={Car01Icon} className="w-10 h-10 mx-auto text-slate-300 mb-1" strokeWidth={1.5} />
                       <p className="font-semibold">No vehicles registered for this policy holder.</p>
+                      <button
+                        type="button"
+                        onClick={() => setShowAddVehicleModal(true)}
+                        className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5 not-italic"
+                      >
+                        <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                        <span>Add First Vehicle</span>
+                      </button>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1452,6 +1568,204 @@ export default function OfficeStaffPolicyHolders() {
                 Close Preview
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* Add New Vehicle Modal                                    */}
+      {/* ======================================================== */}
+      {showAddVehicleModal && selectedHolder && (
+        <div className="fixed inset-0 z-90 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] text-left">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-white select-none">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                  <HugeiconsIcon icon={Car01Icon} className="w-5 h-5" strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Add New Vehicle</h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    For {selectedHolder.firstName} {selectedHolder.lastName} • NIC: {selectedHolder.nic}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddVehicleModal(false)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            {/* Modal Form Body */}
+            <form onSubmit={handleAddVehicleSubmit} className="p-6 overflow-y-auto flex-1 flex flex-col gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Vehicle Plate */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Number Plate <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. WP CAC-8921 or CAA 5674"
+                    value={newVehicleForm.numberPlate}
+                    onChange={(e) => setNewVehicleForm({ ...newVehicleForm, numberPlate: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Vehicle Type */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Vehicle Type <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={newVehicleForm.vehicleType}
+                    onChange={(e) => setNewVehicleForm({ ...newVehicleForm, vehicleType: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400 bg-white"
+                  >
+                    <option value="Car">Car</option>
+                    <option value="Motorcycle">Motorcycle</option>
+                    <option value="Van">Van</option>
+                    <option value="Three Wheeler">Three Wheeler</option>
+                    <option value="Lorry">Lorry</option>
+                    <option value="Bus">Bus</option>
+                    <option value="SUV">SUV</option>
+                  </select>
+                </div>
+
+                {/* Make / Company */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Make / Company <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Toyota, Suzuki, Honda"
+                    value={newVehicleForm.company}
+                    onChange={(e) => setNewVehicleForm({ ...newVehicleForm, company: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Model */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Model <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Wagon R, Prius, Civic"
+                    value={newVehicleForm.model}
+                    onChange={(e) => setNewVehicleForm({ ...newVehicleForm, model: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Year */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Year of Manufacture
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. 2018"
+                    value={newVehicleForm.year}
+                    onChange={(e) => setNewVehicleForm({ ...newVehicleForm, year: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Policy Number */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Policy Number (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. SAN-989824 (Auto-generated if blank)"
+                    value={newVehicleForm.policyNumber}
+                    onChange={(e) => setNewVehicleForm({ ...newVehicleForm, policyNumber: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Engine Number */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Engine Number
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. C234234N2344"
+                    value={newVehicleForm.engineNumber}
+                    onChange={(e) => setNewVehicleForm({ ...newVehicleForm, engineNumber: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+
+                {/* Chassis Number */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Chassis Number
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. N235G543"
+                    value={newVehicleForm.chassisNumber}
+                    onChange={(e) => setNewVehicleForm({ ...newVehicleForm, chassisNumber: e.target.value })}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  />
+                </div>
+              </div>
+
+              {/* Status Selector */}
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-semibold text-slate-800 block">Initial Vehicle Status</span>
+                  <span className="text-[10px] text-slate-400">Branch verified additions are approved by default</span>
+                </div>
+                <select
+                  value={newVehicleForm.status}
+                  onChange={(e) => setNewVehicleForm({ ...newVehicleForm, status: e.target.value })}
+                  className="px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 bg-white focus:outline-none"
+                >
+                  <option value="Approved">Approved</option>
+                  <option value="Pending">Pending</option>
+                </select>
+              </div>
+
+              {/* Modal Actions */}
+              <div className="flex justify-end items-center gap-3 pt-4 border-t border-slate-200 mt-2 select-none">
+                <button
+                  type="button"
+                  onClick={() => setShowAddVehicleModal(false)}
+                  className="px-4 py-2 border border-slate-300 text-slate-600 rounded-full text-xs font-semibold hover:bg-slate-50 transition-all cursor-pointer bg-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addingVehicle}
+                  className="px-6 py-2 bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white rounded-full text-xs font-semibold shadow-md transition-all cursor-pointer border-none flex items-center gap-2"
+                >
+                  {addingVehicle ? (
+                    <>
+                      <HugeiconsIcon icon={Loading03Icon} className="w-3.5 h-3.5 animate-spin text-white" strokeWidth={2.5} />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <span>Register Vehicle</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

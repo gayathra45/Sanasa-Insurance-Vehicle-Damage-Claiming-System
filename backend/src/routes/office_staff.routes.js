@@ -344,6 +344,85 @@ router.get("/policy-holders/by-nic/:nic", async (req, res) => {
   }
 });
 
+// POST add a new vehicle for a policy holder by branch staff: /api/office-staff/policy-holders/:nic/vehicles
+router.post("/policy-holders/:nic/vehicles", async (req, res) => {
+  try {
+    const { nic } = req.params;
+    const {
+      numberPlate,
+      vehicleType,
+      year,
+      company,
+      model,
+      engineNumber,
+      chassisNumber,
+      policyNumber,
+      status
+    } = req.body;
+
+    if (!nic || !nic.trim()) {
+      return res.status(400).json({ error: "Policy holder NIC is required." });
+    }
+
+    if (!numberPlate || !vehicleType || !company || !model) {
+      return res.status(400).json({ error: "Vehicle plate number, type, make (company), and model are required." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found with the provided NIC." });
+    }
+
+    // Check if plate already registered under this user
+    const normalizedPlate = numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    const plateExists = user.vehicles && user.vehicles.some(
+      v => v.numberPlate && v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === normalizedPlate
+    );
+
+    if (plateExists) {
+      return res.status(400).json({ error: `Vehicle plate ${numberPlate} is already registered under this policy holder.` });
+    }
+
+    // Generate policy number if not provided
+    let finalPolicyNumber = (policyNumber && policyNumber.trim()) ? policyNumber.trim().toUpperCase() : "";
+    if (!finalPolicyNumber) {
+      finalPolicyNumber = `SAN-${Math.floor(100000 + Math.random() * 900000)}`;
+    } else if (!finalPolicyNumber.startsWith("SAN-") && !finalPolicyNumber.startsWith("SAN")) {
+      finalPolicyNumber = `SAN-${finalPolicyNumber}`;
+    }
+
+    const newVehicle = {
+      numberPlate: numberPlate.trim().toUpperCase(),
+      vehicleType: vehicleType.trim(),
+      year: (year && year.toString().trim()) || new Date().getFullYear().toString(),
+      company: company.trim(),
+      model: model.trim(),
+      engineNumber: (engineNumber && engineNumber.trim()) || `ENG-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      chassisNumber: (chassisNumber && chassisNumber.trim()) || `CHS-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      policyNumber: finalPolicyNumber,
+      status: status || "Approved"
+    };
+
+    if (!user.vehicles) {
+      user.vehicles = [];
+    }
+
+    user.vehicles.push(newVehicle);
+    await user.save();
+
+    res.status(201).json({
+      message: "New vehicle added successfully to policy holder.",
+      vehicle: newVehicle,
+      vehicles: user.vehicles,
+      policyHolder: user
+    });
+  } catch (err) {
+    console.error("Add vehicle to policy holder error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
 // GET all agents for a specific branch: /api/office-staff/agents
 router.get("/agents", async (req, res) => {
   try {
