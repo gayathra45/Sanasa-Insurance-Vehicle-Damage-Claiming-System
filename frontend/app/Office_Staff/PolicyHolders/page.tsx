@@ -793,7 +793,7 @@ export default function OfficeStaffPolicyHolders() {
       {/* ======================================================== */}
       {selectedHolder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-slate-200 overflow-hidden transform scale-100 transition-all max-h-[92vh] flex flex-col text-left">
+          <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-slate-200 overflow-hidden transform scale-100 transition-all h-[680px] max-h-[92vh] flex flex-col text-left">
             {/* Modal Header */}
             <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none flex justify-between items-center">
               <div className="flex items-center gap-3.5 min-w-0">
