@@ -25,7 +25,8 @@ import {
   ArrowRight01Icon,
   Analytics01Icon,
   Cancel01Icon,
-  Briefcase01Icon
+  Briefcase01Icon,
+  Download01Icon
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 
@@ -428,6 +429,379 @@ export default function OfficeStaffReports() {
       show: true,
       title: "Detailed Report Exported",
       message: `The complete ${activeReportType} dataset for ${branchName} Branch has been downloaded as a structured CSV spreadsheet.`,
+      type: "success"
+    });
+  };
+
+  // Handler for downloading single record case file report
+  const handleDownloadRecordReport = (record: { type: "claim" | "holder" | "agent"; data: any }) => {
+    const branchName = branch || "Galle";
+    const reportDate = new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    });
+    const reportTime = new Date().toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    let docTitle = "";
+    let contentHtml = "";
+
+    if (record.type === "claim") {
+      const c = record.data;
+      const bankInfo = c.policyHolderBankDetails || {
+        bankName: c.bankName,
+        branchName: c.bankBranch,
+        accountNumber: c.bankAccount,
+        accountHolderName: c.accountHolderName
+      };
+      docTitle = `Sanasa_Claim_Report_${c.claimNumber}`;
+
+      contentHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${c.claimNumber} - Official Claim Audit Report</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 40px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #102A43; padding-bottom: 20px; margin-bottom: 24px; }
+            .company { font-size: 22px; font-weight: 800; color: #102A43; text-transform: uppercase; letter-spacing: 0.5px; }
+            .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
+            .meta { text-align: right; font-size: 12px; color: #64748b; line-height: 1.5; }
+            .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+            .badge-approved { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+            .badge-pending { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+            .badge-progress { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+            .badge-rejected { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+            .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #102A43; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-top: 24px; margin-bottom: 12px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+            th { text-align: left; padding: 8px 12px; background: #f8fafc; color: #64748b; font-weight: 600; font-size: 11px; text-transform: uppercase; border: 1px solid #e2e8f0; }
+            td { padding: 10px 12px; border: 1px solid #e2e8f0; color: #334155; }
+            .label { font-weight: 600; color: #475569; width: 35%; background: #f8fafc; }
+            .val { font-weight: 500; color: #0f172a; }
+            .highlight { font-weight: 700; color: #0f172a; font-family: monospace; }
+            .amount { font-size: 16px; font-weight: 800; color: #15803d; font-family: monospace; }
+            .desc-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 13px; color: #334155; line-height: 1.6; margin-top: 6px; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+            .signature-box { margin-top: 40px; display: flex; justify-content: space-between; }
+            .signature-line { width: 180px; border-top: 1px dashed #94a3b8; text-align: center; padding-top: 6px; font-size: 11px; color: #64748b; }
+            @media print {
+              body { padding: 20px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="company">Sanasa General Insurance Co. LTD</div>
+              <div class="subtitle">Branch Operations & Claims Audit Division • ${branchName} Branch</div>
+            </div>
+            <div class="meta">
+              <div><strong>Document Ref:</strong> ${c.claimNumber}</div>
+              <div><strong>Date Generated:</strong> ${reportDate} ${reportTime}</div>
+              <div style="margin-top: 6px;">
+                <span class="badge ${
+                  c.status === "Approved" ? "badge-approved" : c.status === "In Progress" ? "badge-progress" : c.status === "Pending" ? "badge-pending" : "badge-rejected"
+                }">${c.status || "Pending"}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">1. Claim & Policyholder Information</div>
+          <table>
+            <tr>
+              <td class="label">Claim Reference Number</td>
+              <td class="val highlight">${c.claimNumber}</td>
+            </tr>
+            <tr>
+              <td class="label">Policyholder Full Name</td>
+              <td class="val"><strong>${c.policyHolderName || "Client"}</strong></td>
+            </tr>
+            <tr>
+              <td class="label">National Identity Card (NIC)</td>
+              <td class="val highlight">${c.userNic || "-"}</td>
+            </tr>
+            <tr>
+              <td class="label">Contact Mobile / Email</td>
+              <td class="val">${c.policyHolderMobile || "-"} / ${c.policyHolderEmail || "-"}</td>
+            </tr>
+            <tr>
+              <td class="label">Lodged Date & Time</td>
+              <td class="val">${formatSriLankaDateTime(c.createdAt)}</td>
+            </tr>
+          </table>
+
+          <div class="section-title">2. Vehicle & Incident Assessment</div>
+          <table>
+            <tr>
+              <td class="label">Vehicle Registration Number</td>
+              <td class="val highlight">${c.vehicleNumber || "-"}</td>
+            </tr>
+            <tr>
+              <td class="label">Vehicle Model / Category</td>
+              <td class="val">${c.vehicleModel || c.vehicleType || "Standard Motor Vehicle"}</td>
+            </tr>
+            <tr>
+              <td class="label">Damage Classification</td>
+              <td class="val"><strong>${c.damageType || "Accident Collision"}</strong></td>
+            </tr>
+            <tr>
+              <td class="label">Incident Location</td>
+              <td class="val">${c.incidentLocation || `${branchName} District`}</td>
+            </tr>
+            <tr>
+              <td class="label">Assigned Field Assessor</td>
+              <td class="val">${c.assignedAgent || "Unassigned"}</td>
+            </tr>
+            <tr>
+              <td class="label">Processing Turnaround (TAT)</td>
+              <td class="val">${calculateTAT(c.createdAt, c.updatedAt)}</td>
+            </tr>
+          </table>
+
+          ${c.description ? `
+            <div style="margin-bottom: 16px;">
+              <strong style="font-size: 12px; color: #475569; text-transform: uppercase;">Surveyor & Incident Details:</strong>
+              <div class="desc-box">${c.description}</div>
+            </div>
+          ` : ""}
+
+          <div class="section-title">3. Financial Settlement & Direct Banking</div>
+          <table>
+            <tr>
+              <td class="label">Approved Settlement Amount</td>
+              <td class="val amount">${formatLKR(c.amount)}</td>
+            </tr>
+            <tr>
+              <td class="label">Settlement Status</td>
+              <td class="val"><strong>${c.status === "Approved" ? "Approved for CEFT Electronic Settlement" : c.status}</strong></td>
+            </tr>
+            <tr>
+              <td class="label">Bank Name</td>
+              <td class="val">${bankInfo.bankName || "Commercial Bank of Ceylon"}</td>
+            </tr>
+            <tr>
+              <td class="label">Branch Name</td>
+              <td class="val">${bankInfo.branchName || `${branchName} Branch`}</td>
+            </tr>
+            <tr>
+              <td class="label">Bank Account Number</td>
+              <td class="val highlight">${bankInfo.accountNumber || "10023456789"}</td>
+            </tr>
+            <tr>
+              <td class="label">Account Beneficiary Name</td>
+              <td class="val">${bankInfo.accountHolderName || c.policyHolderName || "Client"}</td>
+            </tr>
+            <tr>
+              <td class="label">Electronic Transfer Mode</td>
+              <td class="val">Direct Electronic CEFT / SLIPS Transfer</td>
+            </tr>
+          </table>
+
+          <div class="signature-box">
+            <div class="signature-line">
+              Prepared by: Office Staff
+            </div>
+            <div class="signature-line">
+              Authorized Claims Assessor
+            </div>
+            <div class="signature-line">
+              Branch Seal / Stamp
+            </div>
+          </div>
+
+          <div class="footer">
+            <div>Confidential • Sanasa General Insurance Company Limited • ${branchName} Regional Hub</div>
+            <div>Official Audit Copy</div>
+          </div>
+        </body>
+        </html>
+      `;
+    } else if (record.type === "holder") {
+      const h = record.data;
+      docTitle = `Sanasa_Policyholder_Report_${h.nic || h.referenceNumber}`;
+      contentHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${h.firstName} ${h.lastName} - Policyholder Profile Report</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 40px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #102A43; padding-bottom: 20px; margin-bottom: 24px; }
+            .company { font-size: 22px; font-weight: 800; color: #102A43; text-transform: uppercase; }
+            .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
+            .meta { text-align: right; font-size: 12px; color: #64748b; line-height: 1.5; }
+            .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #102A43; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-top: 24px; margin-bottom: 12px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+            th { text-align: left; padding: 8px 12px; background: #f8fafc; color: #64748b; font-weight: 600; font-size: 11px; text-transform: uppercase; border: 1px solid #e2e8f0; }
+            td { padding: 10px 12px; border: 1px solid #e2e8f0; color: #334155; }
+            .label { font-weight: 600; color: #475569; width: 35%; background: #f8fafc; }
+            .val { font-weight: 500; color: #0f172a; }
+            .highlight { font-weight: 700; color: #0f172a; font-family: monospace; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+            .signature-box { margin-top: 40px; display: flex; justify-content: space-between; }
+            .signature-line { width: 180px; border-top: 1px dashed #94a3b8; text-align: center; padding-top: 6px; font-size: 11px; color: #64748b; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="company">Sanasa General Insurance Co. LTD</div>
+              <div class="subtitle">Policyholder Portfolio Profile • ${branchName} Branch</div>
+            </div>
+            <div class="meta">
+              <div><strong>Ref No:</strong> ${h.referenceNumber || "SAN-PH"}</div>
+              <div><strong>Date Generated:</strong> ${reportDate} ${reportTime}</div>
+            </div>
+          </div>
+
+          <div class="section-title">1. Policyholder Profile</div>
+          <table>
+            <tr><td class="label">Reference Number</td><td class="val highlight">${h.referenceNumber || "SAN-PH"}</td></tr>
+            <tr><td class="label">Full Name</td><td class="val"><strong>${h.firstName} ${h.lastName}</strong></td></tr>
+            <tr><td class="label">National Identity Card (NIC)</td><td class="val highlight">${h.nic}</td></tr>
+            <tr><td class="label">Mobile Number</td><td class="val">${h.mobile || "-"}</td></tr>
+            <tr><td class="label">Email Address</td><td class="val">${h.email || "-"}</td></tr>
+            <tr><td class="label">Residential City / District</td><td class="val">${h.city || branchName}</td></tr>
+            <tr><td class="label">Operating Branch</td><td class="val">${h.branch || branchName} Branch</td></tr>
+            <tr><td class="label">Account Registration Date</td><td class="val">${formatDate(h.createdAt)}</td></tr>
+            <tr><td class="label">Status</td><td class="val"><strong>${h.status || "Approved"}</strong></td></tr>
+          </table>
+
+          <div class="section-title">2. Insured Vehicles (${h.vehicles?.length || 0} Registered)</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Plate Number</th>
+                <th>Policy Number</th>
+                <th>Vehicle Type</th>
+                <th>Make / Model</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(h.vehicles && h.vehicles.length > 0) ? h.vehicles.map((v: any) => `
+                <tr>
+                  <td class="highlight">${v.numberPlate || "-"}</td>
+                  <td class="highlight">${v.policyNumber || "-"}</td>
+                  <td>${v.vehicleType || "Motor Vehicle"}</td>
+                  <td>${v.company || ""} ${v.model || ""} ${v.year ? `(${v.year})` : ""}</td>
+                </tr>
+              `).join("") : `
+                <tr><td colspan="4" style="text-align:center;color:#94a3b8;">No registered vehicles on record.</td></tr>
+              `}
+            </tbody>
+          </table>
+
+          <div class="signature-box">
+            <div class="signature-line">
+              Branch Officer
+            </div>
+            <div class="signature-line">
+              Underwriting Manager
+            </div>
+          </div>
+
+          <div class="footer">
+            <div>Confidential • Sanasa General Insurance Company Limited • ${branchName} Regional Hub</div>
+            <div>Official Audit Copy</div>
+          </div>
+        </body>
+        </html>
+      `;
+    } else {
+      const a = record.data;
+      docTitle = `Sanasa_Agent_Report_${a.name ? a.name.replace(/\s+/g, "_") : "Agent"}`;
+      contentHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${a.name} - Agent Profile Report</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 40px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #102A43; padding-bottom: 20px; margin-bottom: 24px; }
+            .company { font-size: 22px; font-weight: 800; color: #102A43; text-transform: uppercase; }
+            .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
+            .meta { text-align: right; font-size: 12px; color: #64748b; line-height: 1.5; }
+            .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #102A43; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-top: 24px; margin-bottom: 12px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+            td { padding: 10px 12px; border: 1px solid #e2e8f0; color: #334155; }
+            .label { font-weight: 600; color: #475569; width: 35%; background: #f8fafc; }
+            .val { font-weight: 500; color: #0f172a; }
+            .highlight { font-weight: 700; color: #0f172a; font-family: monospace; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+            .signature-box { margin-top: 40px; display: flex; justify-content: space-between; }
+            .signature-line { width: 180px; border-top: 1px dashed #94a3b8; text-align: center; padding-top: 6px; font-size: 11px; color: #64748b; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="company">Sanasa General Insurance Co. LTD</div>
+              <div class="subtitle">Field Agent Profile & Performance Report • ${branchName} Branch</div>
+            </div>
+            <div class="meta">
+              <div><strong>Agent Name:</strong> ${a.name}</div>
+              <div><strong>Date Generated:</strong> ${reportDate} ${reportTime}</div>
+            </div>
+          </div>
+
+          <div class="section-title">1. Field Agent Details</div>
+          <table>
+            <tr><td class="label">Agent Name</td><td class="val"><strong>${a.name}</strong></td></tr>
+            <tr><td class="label">Email Address</td><td class="val">${a.email}</td></tr>
+            <tr><td class="label">Contact Phone</td><td class="val highlight">${a.phone || "-"}</td></tr>
+            <tr><td class="label">Assigned Branch</td><td class="val">${a.branch} Branch</td></tr>
+            <tr><td class="label">Operating Status</td><td class="val"><strong>${a.status || "Active"}</strong></td></tr>
+          </table>
+
+          <div class="signature-box">
+            <div class="signature-line">
+              Branch Operations Head
+            </div>
+          </div>
+
+          <div class="footer">
+            <div>Confidential • Sanasa General Insurance Company Limited • ${branchName} Regional Hub</div>
+            <div>Official Audit Copy</div>
+          </div>
+        </body>
+        </html>
+      `;
+    }
+
+    // Direct download as an HTML/Doc report file
+    const blob = new Blob([contentHtml], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${docTitle}_${new Date().toISOString().split("T")[0]}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // Also trigger printable preview window
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.open();
+      printWindow.document.write(contentHtml);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    }
+
+    setPopup({
+      show: true,
+      title: "Case Report Downloaded",
+      message: `The official audit report for ${record.data.claimNumber || record.data.name || record.data.nic} has been downloaded and prepared for printing/PDF export.`,
       type: "success"
     });
   };
@@ -1213,12 +1587,22 @@ export default function OfficeStaffReports() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedRecord(null)}
-                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
-              >
-                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadRecordReport(selectedRecord)}
+                  title="Download / Print Case Report"
+                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border-none"
+                >
+                  <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2} />
+                  <span className="hidden sm:inline">Download</span>
+                </button>
+                <button
+                  onClick={() => setSelectedRecord(null)}
+                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                </button>
+              </div>
             </div>
 
             {/* Modal Navigation Tabs */}
@@ -1421,13 +1805,25 @@ export default function OfficeStaffReports() {
               )}
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end">
-              <button
-                onClick={() => setSelectedRecord(null)}
-                className="px-5 py-2 bg-[#102A43] hover:bg-[#000080] text-white font-semibold text-xs rounded-xl transition-all cursor-pointer border-none shadow-xs"
-              >
-                Close File
-              </button>
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+              <div className="text-[11px] text-slate-400 font-medium hidden sm:block">
+                Sanasa General Insurance • {branch} District Hub
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadRecordReport(selectedRecord)}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border-none shadow-xs active:scale-95"
+                >
+                  <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                  <span>Download Report</span>
+                </button>
+                <button
+                  onClick={() => setSelectedRecord(null)}
+                  className="px-5 py-2 bg-[#102A43] hover:bg-[#000080] text-white font-semibold text-xs rounded-xl transition-all cursor-pointer border-none shadow-xs active:scale-95"
+                >
+                  Close File
+                </button>
+              </div>
             </div>
           </div>
         </div>
