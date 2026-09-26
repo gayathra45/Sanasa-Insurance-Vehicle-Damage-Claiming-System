@@ -23,8 +23,8 @@ import {
   Upload01Icon,
   Location01Icon,
   Loading03Icon,
-  Delete02Icon
-
+  Delete02Icon,
+  Edit02Icon
 } from "@hugeicons/core-free-icons";
 
 const formatDate = (dateStr: string) => {
@@ -81,6 +81,32 @@ export default function AgentsPage() {
   const [formSuccess, setFormSuccess] = useState("");
   const [submittingAgent, setSubmittingAgent] = useState(false);
   const [selectedAgentDetails, setSelectedAgentDetails] = useState<any | null>(null);
+  
+  // Edit Agent Modal states
+  const [showEditAgentModal, setShowEditAgentModal] = useState(false);
+  const [savingAgent, setSavingAgent] = useState(false);
+  const [editAgentError, setEditAgentError] = useState("");
+  const [editAgentForm, setEditAgentForm] = useState({
+    _id: "",
+    agentId: "",
+    name: "",
+    email: "",
+    phone: "",
+    nic: "",
+    dob: "",
+    address: "",
+    province: "",
+    district: "",
+    area: "",
+    branch: "",
+    status: "active",
+    availability: "Active",
+    bankName: "",
+    bankBranch: "",
+    accountNumber: "",
+    accountType: "",
+    accountHolderName: ""
+  });
   
   // Deletion Modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -241,6 +267,107 @@ export default function AgentsPage() {
       setFormError(err.message || "Something went wrong.");
     } finally {
       setSubmittingAgent(false);
+    }
+  };
+
+  const handleOpenEditAgent = (agent: any) => {
+    setEditAgentError("");
+    setEditAgentForm({
+      _id: agent._id || "",
+      agentId: agent.agentId || "",
+      name: agent.name || "",
+      email: agent.email || "",
+      phone: agent.phone || "",
+      nic: agent.nic || "",
+      dob: agent.dob || "",
+      address: agent.address || "",
+      province: agent.province || "",
+      district: agent.district || agent.city || "",
+      area: agent.area || "",
+      branch: agent.branch || branch,
+      status: agent.status || "active",
+      availability: agent.availability || "Active",
+      bankName: agent.bankName || "",
+      bankBranch: agent.bankBranch || "",
+      accountNumber: agent.accountNumber || "",
+      accountType: agent.accountType || "Savings",
+      accountHolderName: agent.accountHolderName || agent.name || ""
+    });
+    setShowEditAgentModal(true);
+  };
+
+  const handleSaveEditAgent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setEditAgentError("");
+
+    if (!editAgentForm._id) return;
+
+    if (!editAgentForm.name.trim()) {
+      setEditAgentError("Full Name is required.");
+      return;
+    }
+
+    if (!editAgentForm.phone.trim()) {
+      setEditAgentError("Phone Number is required.");
+      return;
+    }
+
+    const cleanPhone = editAgentForm.phone.replace(/[-+()\s]/g, "");
+    if (!/^\d{10}$/.test(cleanPhone)) {
+      setEditAgentError("Phone number must be exactly 10 digits.");
+      return;
+    }
+
+    setSavingAgent(true);
+    try {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/office-staff/agents/${editAgentForm._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editAgentForm.name.trim(),
+          phone: editAgentForm.phone.trim(),
+          dob: editAgentForm.dob.trim(),
+          address: editAgentForm.address.trim(),
+          province: editAgentForm.province.trim(),
+          district: editAgentForm.district.trim(),
+          city: editAgentForm.district.trim(),
+          area: editAgentForm.area.trim(),
+          bankName: editAgentForm.bankName.trim(),
+          bankBranch: editAgentForm.bankBranch.trim(),
+          accountNumber: editAgentForm.accountNumber.trim(),
+          accountType: editAgentForm.accountType.trim(),
+          accountHolderName: editAgentForm.accountHolderName.trim(),
+          status: editAgentForm.status,
+          availability: editAgentForm.availability
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to update agent details.");
+      }
+
+      const updatedAgent = data.agent || { ...selectedAgentDetails, ...editAgentForm };
+
+      setAgents(prev => prev.map(a => (a._id === editAgentForm._id ? { ...a, ...updatedAgent } : a)));
+
+      if (selectedAgentDetails && selectedAgentDetails._id === editAgentForm._id) {
+        setSelectedAgentDetails((prev: any) => ({ ...prev, ...updatedAgent }));
+      }
+
+      setShowEditAgentModal(false);
+      setCustomPopup({
+        show: true,
+        title: "Agent Profile Updated",
+        message: `Successfully updated personal and banking details for Agent ${editAgentForm.name} (${editAgentForm.agentId || "ID"}).`,
+        type: "success"
+      });
+    } catch (err: any) {
+      console.error("Save agent error:", err);
+      setEditAgentError(err.message || "An error occurred while updating the agent.");
+    } finally {
+      setSavingAgent(false);
     }
   };
 
@@ -810,23 +937,32 @@ export default function AgentsPage() {
                     {selectedAgentDetails.name}
                   </h2>
                   <span className={`text-[10px] font-semibold uppercase px-3 py-1 rounded-full border tracking-wide ${
-                    (selectedAgentDetails.availability || "Active") === "Active"
+                    (selectedAgentDetails.availability || selectedAgentDetails.status || "Active").toLowerCase() === "active"
                       ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                       : "bg-slate-100 text-slate-500 border-slate-200"
                   }`}>
-                    {selectedAgentDetails.availability || "Active"}
+                    {selectedAgentDetails.availability || selectedAgentDetails.status || "Active"}
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 font-medium mt-2">
                   ID: {selectedAgentDetails.agentId} • {selectedAgentDetails.branch} Branch
                 </p>
               </div>
-              <button
-                onClick={() => setSelectedAgentDetails(null)}
-                className="text-slate-400 hover:text-slate-700 text-2xl font-semibold border-none bg-transparent cursor-pointer transition-colors p-1"
-              >
-                &times;
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleOpenEditAgent(selectedAgentDetails)}
+                  className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                >
+                  <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-blue-600" strokeWidth={2.5} />
+                  <span>Edit Details</span>
+                </button>
+                <button
+                  onClick={() => setSelectedAgentDetails(null)}
+                  className="text-slate-400 hover:text-slate-700 text-2xl font-semibold border-none bg-transparent cursor-pointer transition-colors p-1"
+                >
+                  &times;
+                </button>
+              </div>
             </div>
 
             {/* Modal Content */}
@@ -934,13 +1070,321 @@ export default function AgentsPage() {
                 <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
                 Delete Agent
               </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handleOpenEditAgent(selectedAgentDetails)}
+                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-full text-xs font-semibold shadow-md cursor-pointer border-none outline-none transition-all flex items-center gap-1.5"
+                >
+                  <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                  <span>Edit Agent</span>
+                </button>
+                <button
+                  onClick={() => setSelectedAgentDetails(null)}
+                  className="px-8 py-3 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-sm font-semibold shadow-md cursor-pointer border-none outline-none transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Agent Modal */}
+      {showEditAgentModal && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up max-h-[90vh] flex flex-col text-left">
+            
+            {/* Modal Header */}
+            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-100 shrink-0 bg-white select-none">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight leading-none flex items-center gap-2">
+                  <HugeiconsIcon icon={Edit02Icon} className="w-5 h-5 text-blue-600" strokeWidth={2.5} />
+                  Edit Agent Details
+                </h2>
+                <p className="text-xs text-slate-400 font-medium mt-1">
+                  Update personal profile & banking information for {editAgentForm.agentId || "Agent"} ({editAgentForm.branch} Branch)
+                </p>
+              </div>
               <button
-                onClick={() => setSelectedAgentDetails(null)}
-                className="px-8 py-3 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-sm font-semibold shadow-md cursor-pointer border-none outline-none transition-all"
+                type="button"
+                onClick={() => setShowEditAgentModal(false)}
+                className="text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer transition-colors p-1"
               >
-                Close
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
               </button>
             </div>
+
+            {/* Edit Form */}
+            <form onSubmit={handleSaveEditAgent} className="p-8 overflow-y-auto flex-1 flex flex-col gap-6">
+              {editAgentError && (
+                <div className="bg-red-50 text-red-600 text-xs font-semibold px-4 py-3 rounded-2xl border border-red-100 flex items-center gap-2 shrink-0">
+                  <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 shrink-0" strokeWidth={2.5} />
+                  <span>{editAgentError}</span>
+                </div>
+              )}
+
+              {/* Section 1: Personal Details */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">
+                  Personal & Contact Information
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Full Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editAgentForm.name}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, name: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Phone Number <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={editAgentForm.phone}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, phone: e.target.value })}
+                      placeholder="0712345678"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Email Address (Read-Only)
+                    </label>
+                    <input
+                      type="email"
+                      disabled
+                      value={editAgentForm.email}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500 cursor-not-allowed"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      National ID (NIC - Read-Only)
+                    </label>
+                    <input
+                      type="text"
+                      disabled
+                      value={editAgentForm.nic}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500 cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Date of Birth
+                    </label>
+                    <input
+                      type="date"
+                      value={editAgentForm.dob ? editAgentForm.dob.split("T")[0] : ""}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, dob: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Operating Status
+                    </label>
+                    <select
+                      value={editAgentForm.availability || editAgentForm.status || "Active"}
+                      onChange={(e) => setEditAgentForm({
+                        ...editAgentForm,
+                        availability: e.target.value,
+                        status: e.target.value.toLowerCase()
+                      })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                      <option value="On Leave">On Leave</option>
+                      <option value="Suspended">Suspended</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                    Home Address
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editAgentForm.address}
+                    onChange={(e) => setEditAgentForm({ ...editAgentForm, address: e.target.value })}
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Province
+                    </label>
+                    <input
+                      type="text"
+                      value={editAgentForm.province}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, province: e.target.value })}
+                      placeholder="E.g., Southern Province"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      District / City
+                    </label>
+                    <input
+                      type="text"
+                      value={editAgentForm.district}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, district: e.target.value })}
+                      placeholder="E.g., Galle"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Area / Town
+                    </label>
+                    <input
+                      type="text"
+                      value={editAgentForm.area}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, area: e.target.value })}
+                      placeholder="E.g., Karapitiya"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Bank Account Details */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2">
+                  Direct Bank Account Credentials
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Bank Name
+                    </label>
+                    <select
+                      value={editAgentForm.bankName}
+                      onChange={(e) => setEditAgentForm({
+                        ...editAgentForm,
+                        bankName: e.target.value,
+                        bankBranch: ""
+                      })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Bank</option>
+                      {Object.keys(sriLankaBanks).map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Bank Branch
+                    </label>
+                    <select
+                      disabled={!editAgentForm.bankName}
+                      value={editAgentForm.bankBranch}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, bankBranch: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-50 disabled:text-slate-400"
+                    >
+                      <option value="">Select Branch</option>
+                      {editAgentForm.bankName && sriLankaBanks[editAgentForm.bankName]?.map((br) => (
+                        <option key={br} value={br}>{br}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Account Number
+                    </label>
+                    <input
+                      type="text"
+                      value={editAgentForm.accountNumber}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, accountNumber: e.target.value })}
+                      placeholder="8123456789"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-mono font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Account Type
+                    </label>
+                    <select
+                      value={editAgentForm.accountType || "Savings Account"}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, accountType: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="Savings Account">Savings Account</option>
+                      <option value="Current Account">Current Account</option>
+                      <option value="Salary Account">Salary Account</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Account Holder Name
+                    </label>
+                    <input
+                      type="text"
+                      value={editAgentForm.accountHolderName}
+                      onChange={(e) => setEditAgentForm({ ...editAgentForm, accountHolderName: e.target.value })}
+                      placeholder="Account Holder"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 select-none">
+                <button
+                  type="button"
+                  onClick={() => setShowEditAgentModal(false)}
+                  className="px-6 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-full text-xs font-semibold transition-all cursor-pointer bg-white active:scale-95 shadow-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingAgent}
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-full text-xs font-semibold shadow-md transition-all cursor-pointer border-none flex items-center gap-1.5 disabled:opacity-60"
+                >
+                  {savingAgent ? (
+                    <>
+                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-4 w-4 text-white" strokeWidth={2} />
+                      <span>Saving Changes...</span>
+                    </>
+                  ) : (
+                    <span>Save Changes</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
