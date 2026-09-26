@@ -1587,22 +1587,12 @@ export default function OfficeStaffReports() {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleDownloadRecordReport(selectedRecord)}
-                  title="Download / Print Case Report"
-                  className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border-none"
-                >
-                  <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2} />
-                  <span className="hidden sm:inline">Download</span>
-                </button>
-                <button
-                  onClick={() => setSelectedRecord(null)}
-                  className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
-                >
-                  <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
-                </button>
-              </div>
+              <button
+                onClick={() => setSelectedRecord(null)}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
+              </button>
             </div>
 
             {/* Modal Navigation Tabs */}
