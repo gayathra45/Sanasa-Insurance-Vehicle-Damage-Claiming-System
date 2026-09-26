@@ -452,73 +452,46 @@ export default function OfficeStaffPolicyHolders() {
             </div>
 
             {/* Quick Metrics Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 select-none">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 select-none">
               {/* Card 1: Branch Registered Policyholders */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-3xl p-6 shadow-xs flex items-center justify-between transition-all">
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     {branch} Policy Holders
                   </span>
-                  <span className="text-2xl font-bold text-slate-900 mt-1">{totalBranchHolders}</span>
-                  <span className="text-[11px] text-emerald-600 font-semibold mt-1">
-                    {totalApprovedHolders} Approved & Active
+                  <div className="flex items-baseline gap-3 mt-1.5">
+                    <span className="text-3xl font-bold text-slate-900">{totalBranchHolders}</span>
+                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
+                      {totalApprovedHolders} Approved & Active
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-500 font-medium mt-2">
+                    Total registered policy accounts managed under {branch} Branch
                   </span>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center">
-                  <HugeiconsIcon icon={UserMultiple02Icon} className="w-6 h-6" strokeWidth={2} />
+                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+                  <HugeiconsIcon icon={UserMultiple02Icon} className="w-7 h-7" strokeWidth={2} />
                 </div>
               </div>
 
               {/* Card 2: Insured Vehicles */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex items-center justify-between">
+              <div className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-3xl p-6 shadow-xs flex items-center justify-between transition-all">
                 <div className="flex flex-col">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Insured Vehicles
                   </span>
-                  <span className="text-2xl font-bold text-slate-900 mt-1">{totalBranchVehicles}</span>
-                  <span className="text-[11px] text-slate-500 font-medium mt-1">
-                    Under {branch} Branch
+                  <div className="flex items-baseline gap-3 mt-1.5">
+                    <span className="text-3xl font-bold text-slate-900">{totalBranchVehicles}</span>
+                    <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
+                      Active Vehicle Policies
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-500 font-medium mt-2">
+                    Motor vehicles covered under {branch} Branch policyholders
                   </span>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center">
-                  <HugeiconsIcon icon={Car01Icon} className="w-6 h-6" strokeWidth={2} />
-                </div>
-              </div>
-
-              {/* Card 3: Islandwide Registry Status */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    Sri Lanka Database
-                  </span>
-                  <span className="text-sm font-bold text-slate-900 mt-1.5 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    All Branches Connected
-                  </span>
-                  <span className="text-[11px] text-slate-500 font-medium mt-1">
-                    Instant NIC Verification
-                  </span>
-                </div>
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
-                  <HugeiconsIcon icon={Globe02Icon} className="w-6 h-6" strokeWidth={2} />
-                </div>
-              </div>
-
-              {/* Card 4: Active Search Scope */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex items-center justify-between">
-                <div className="flex flex-col">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
-                    Active Search Mode
-                  </span>
-                  <span className="text-base font-bold text-[#102A43] mt-1 truncate">
-                    {searchScope === "branch" ? `${branch} Branch` : "All Sri Lanka"}
-                  </span>
-                  <span className="text-[11px] text-slate-500 font-medium mt-1">
-                    {searchScope === "branch" ? "Local Branch Directory" : "National Registry (By NIC)"}
-                  </span>
-                </div>
-                <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center">
-                  <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" strokeWidth={2} />
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0 shadow-2xs">
+                  <HugeiconsIcon icon={Car01Icon} className="w-7 h-7" strokeWidth={2} />
                 </div>
               </div>
             </div>
