@@ -795,7 +795,7 @@ export default function OfficeStaffPolicyHolders() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
           <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-slate-200 overflow-hidden transform scale-100 transition-all h-[680px] max-h-[92vh] flex flex-col text-left">
             {/* Modal Header */}
-            <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none flex justify-between items-center">
+            <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none flex justify-between items-center gap-4">
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-12 h-12 rounded-2xl bg-[#102A43] text-white flex items-center justify-center font-bold text-lg shadow-md shrink-0">
                   {(selectedHolder.firstName || "P").substring(0, 1).toUpperCase()}
@@ -818,18 +818,29 @@ export default function OfficeStaffPolicyHolders() {
                   <p className="text-xs text-slate-500 font-medium mt-1 truncate">
                     NIC: <span className="font-mono font-bold text-slate-800">{selectedHolder.nic}</span> •{" "}
                     <span className="font-semibold text-[#102A43]">{selectedHolder.branch} Branch</span> • Ref:{" "}
-                    {selectedHolder.referenceNumber}
+                    {selectedHolder.referenceNumber} • Registered on {formatDate(selectedHolder.createdAt)}
                   </p>
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelectedHolder(null)}
-                className="text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
-                aria-label="Close modal"
-              >
-                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
-              </button>
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="hidden sm:flex items-center gap-2">
+                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs">
+                    Age: {calculateAge(selectedHolder.dob)}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200/80 px-3 py-1.5 rounded-xl shadow-2xs">
+                    {selectedHolder.vehicles?.length || 0} Vehicles Insured
+                  </span>
+                </div>
+
+                <button
+                  onClick={() => setSelectedHolder(null)}
+                  className="text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+                  aria-label="Close modal"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+                </button>
+              </div>
             </div>
 
             {/* Modal Navigation Tabs */}
@@ -875,32 +886,6 @@ export default function OfficeStaffPolicyHolders() {
               {/* TAB 1: Personal Profile Overview */}
               {activeTab === "overview" && (
                 <div className="flex flex-col gap-6">
-                  {/* Summary Banner Card */}
-                  <div className="bg-gradient-to-br from-slate-50 to-slate-100/80 border border-slate-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-[#102A43] font-bold text-xl shadow-xs">
-                        {(selectedHolder.firstName || "P").substring(0, 1).toUpperCase()}
-                      </div>
-                      <div>
-                        <h3 className="text-base font-bold text-slate-900">
-                          {selectedHolder.firstName} {selectedHolder.lastName}
-                        </h3>
-                        <p className="text-xs text-slate-500 font-medium">
-                          Registered via {selectedHolder.branch} Branch on {formatDate(selectedHolder.createdAt)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs">
-                        Age: {calculateAge(selectedHolder.dob)}
-                      </span>
-                      <span className="text-xs font-semibold text-slate-600 bg-white border border-slate-200 px-3 py-1.5 rounded-xl shadow-2xs">
-                        {selectedHolder.vehicles?.length || 0} Vehicles Insured
-                      </span>
-                    </div>
-                  </div>
-
                   {/* Two Column Grid */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Identity & Contact Details */}
