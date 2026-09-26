@@ -22,7 +22,7 @@ import {
 const router = express.Router();
 
 // Auto-index historical claims photos on startup if empty
-async function ensurePhotoHashesIndexed() {
+export async function ensurePhotoHashesIndexed() {
   try {
     const count = await PhotoHash.countDocuments();
     if (count > 0) return;
@@ -82,9 +82,6 @@ async function ensurePhotoHashesIndexed() {
     console.warn("Photo hash indexing note:", err.message);
   }
 }
-
-// Initial sync
-ensurePhotoHashesIndexed();
 
 // ==========================================
 // --- API: Check Duplicate Photos ---

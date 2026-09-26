@@ -9,7 +9,7 @@ import path from "path";
 import cors from "cors";
 import signupRouter from "./src/routes/signup.routes.js";
 import myClaimsRouter from "./src/routes/my_claims.routes.js";
-import newClaimRouter from "./src/routes/new_claim.routes.js";
+import newClaimRouter, { ensurePhotoHashesIndexed } from "./src/routes/new_claim.routes.js";
 import myVehiclesRouter from "./src/routes/my_vehicles.routes.js";
 import adminRouter from "./src/routes/admin.routes.js";
 import officeStaffRouter from "./src/routes/office_staff.routes.js";
@@ -53,19 +53,23 @@ app.use("/api/translate", translateRouter);
 
 /*  SERVER START */
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
   try {
     console.log("Connecting to MongoDB...");
     await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000
+      serverSelectionTimeoutMS: 30000
     });
     console.log("✅ MongoDB Connected");
 
+    // Index historical photos in background once DB is connected
+    ensurePhotoHashesIndexed().catch((err) => {
+      console.warn("Photo hash indexing error:", err.message);
+    });
+
     const server = app.listen(PORT, "0.0.0.0", () => {
       console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`http://192.168.41.167:${PORT}`);
     });
 
     server.on("error", (err) => {
