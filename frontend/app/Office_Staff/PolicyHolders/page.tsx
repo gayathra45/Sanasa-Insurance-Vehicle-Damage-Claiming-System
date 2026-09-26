@@ -11,21 +11,18 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
   Notification01Icon,
+  UserMultiple02Icon,
   Search01Icon,
   BubbleChatIcon,
   Cancel01Icon,
   Alert02Icon,
   CheckmarkCircle01Icon,
-  UserMultiple02Icon,
-  ViewIcon,
   Location01Icon,
   Globe02Icon,
   Shield01Icon,
   Car01Icon,
-  Call02Icon,
-  Mail01Icon,
   File01Icon,
-  Clock01Icon,
+  ViewIcon,
   Loading03Icon
 } from "@hugeicons/core-free-icons";
 
@@ -151,7 +148,7 @@ export default function OfficeStaffPolicyHolders() {
   // Single Claim Full Details Modal state
   const [selectedClaimModal, setSelectedClaimModal] = useState<ClaimRecord | null>(null);
 
-  // Document Lightbox Preview state
+  // Document Lightbox Preview state (string URL or title + url object)
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
   // Custom notification popup state
@@ -197,6 +194,15 @@ export default function OfficeStaffPolicyHolders() {
     } catch {
       return "-";
     }
+  };
+
+  // Helper to normalize document URLs for image display
+  const getFullImageUrl = (rawUrl?: string) => {
+    if (!rawUrl) return "";
+    if (rawUrl.startsWith("http") || rawUrl.startsWith("data:")) {
+      return rawUrl;
+    }
+    return `${API_URL.replace("/api", "")}/uploads/${rawUrl}`;
   };
 
   // Fetch branch policy holders
@@ -353,19 +359,14 @@ export default function OfficeStaffPolicyHolders() {
     return true;
   });
 
-  // Calculate stats
-  const totalBranchHolders = policyHolders.length;
-  const totalBranchVehicles = policyHolders.reduce((acc, h) => acc + (h.vehicles?.length || 0), 0);
-  const totalApprovedHolders = policyHolders.filter((h) => h.status === "Approved").length;
-
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+    <div className="flex flex-col min-h-screen bg-white font-sans">
       <div className="flex flex-1 flex-row min-h-0">
         <OfficeStaffNavbar />
 
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Header Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
@@ -378,7 +379,7 @@ export default function OfficeStaffPolicyHolders() {
                 <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
                   {branch || "Galle"} Branch
                 </span>
-                <span className="hidden md:inline text-slate-400 font-medium">— Policy Holders Directory</span>
+                <span className="hidden md:inline text-slate-400 font-medium">— Policy Holders</span>
               </h1>
             </div>
 
@@ -396,430 +397,290 @@ export default function OfficeStaffPolicyHolders() {
             </div>
           </header>
 
-          <main className="flex-1 p-6 lg:p-8 bg-slate-50 flex flex-col gap-6 transition-all duration-300">
-            {/* Top Page Header Title & Subtitle */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-10 h-10 rounded-2xl bg-[#102A43] text-white flex items-center justify-center shadow-md">
-                    <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5 text-white" strokeWidth={2.5} />
-                  </div>
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-semibold text-slate-900 tracking-tight">
-                      Policy Holders Directory
-                    </h2>
-                    <p className="text-xs text-slate-500 font-medium mt-0.5">
-                      Manage registered policyholders under {branch} Branch and search island-wide Sri Lanka records by NIC.
-                    </p>
-                  </div>
+          <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-scroll [scrollbar-gutter:stable]">
+            {loading || (searchScope === "islandwide" && islandLoading) ? (
+              <SimpleLoader
+                message={
+                  searchScope === "islandwide"
+                    ? "Searching Sri Lanka policy holders database..."
+                    : "Loading policy holders..."
+                }
+                theme="slate"
+              />
+            ) : error ? (
+              <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-red-500 font-semibold bg-red-50 rounded-2xl p-8 border border-red-200">
+                <span>{error}</span>
+              </div>
+            ) : (
+              <div className="max-w-6xl mx-auto flex flex-col gap-6">
+                {/* Title */}
+                <div className="flex items-center gap-2 mb-2 select-none">
+                  <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+                  <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
+                    Policy Holders Directory
+                  </h2>
                 </div>
-              </div>
 
-              {/* Scope Switcher: Branch vs Island-wide Sri Lanka Search */}
-              <div className="bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => {
-                    setSearchScope("branch");
-                    setSearchQuery("");
-                  }}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border-none flex items-center gap-2 ${
-                    searchScope === "branch"
-                      ? "bg-[#102A43] text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-transparent"
-                  }`}
-                >
-                  <HugeiconsIcon icon={Location01Icon} className="w-4 h-4" strokeWidth={2} />
-                  <span>{branch} Branch ({totalBranchHolders})</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setSearchScope("islandwide");
-                    if (searchQuery.trim()) {
-                      searchSriLankaIslandwide(searchQuery);
-                    }
-                  }}
-                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border-none flex items-center gap-2 ${
-                    searchScope === "islandwide"
-                      ? "bg-[#000080] text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-transparent"
-                  }`}
-                >
-                  <HugeiconsIcon icon={Globe02Icon} className="w-4 h-4" strokeWidth={2} />
-                  <span>Sri Lanka Island-wide NIC Search</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Metrics Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 select-none">
-              {/* Card 1: Branch Registered Policyholders */}
-              <div className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-3xl p-6 shadow-xs flex items-center justify-between transition-all">
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    {branch} Policy Holders
-                  </span>
-                  <div className="flex items-baseline gap-3 mt-1.5">
-                    <span className="text-3xl font-bold text-slate-900">{totalBranchHolders}</span>
-                    <span className="text-xs font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-2.5 py-0.5 rounded-full">
-                      {totalApprovedHolders} Approved & Active
+                {/* Search & Filter Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 select-none mb-2">
+                  {/* Search Bar Input */}
+                  <div className="relative w-full sm:w-[360px]">
+                    <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                      <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
                     </span>
-                  </div>
-                  <span className="text-xs text-slate-500 font-medium mt-2">
-                    Total registered policy accounts managed under {branch} Branch
-                  </span>
-                </div>
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
-                  <HugeiconsIcon icon={UserMultiple02Icon} className="w-7 h-7" strokeWidth={2} />
-                </div>
-              </div>
-
-              {/* Card 2: Insured Vehicles */}
-              <div className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-3xl p-6 shadow-xs flex items-center justify-between transition-all">
-                <div className="flex flex-col">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Insured Vehicles
-                  </span>
-                  <div className="flex items-baseline gap-3 mt-1.5">
-                    <span className="text-3xl font-bold text-slate-900">{totalBranchVehicles}</span>
-                    <span className="text-xs font-semibold text-slate-600 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
-                      Active Vehicle Policies
-                    </span>
-                  </div>
-                  <span className="text-xs text-slate-500 font-medium mt-2">
-                    Motor vehicles covered under {branch} Branch policyholders
-                  </span>
-                </div>
-                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0 shadow-2xs">
-                  <HugeiconsIcon icon={Car01Icon} className="w-7 h-7" strokeWidth={2} />
-                </div>
-              </div>
-            </div>
-
-            {/* Actions Bar (Search + Filter Tabs) */}
-            <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-white border border-slate-200/80 p-4 rounded-3xl shadow-xs select-none">
-              {/* Search Bar Input */}
-              <div className="relative flex-1 max-w-2xl bg-slate-50 hover:bg-slate-100/80 focus-within:bg-white border border-slate-200 rounded-full pl-5 pr-3 py-2 flex items-center gap-3 transition-all duration-200 focus-within:shadow-md focus-within:border-[#000080] focus-within:ring-4 focus-within:ring-[#000080]/10">
-                <span className="text-slate-400 flex items-center justify-center">
-                  <HugeiconsIcon icon={Search01Icon} className="w-5 h-5 text-slate-400" strokeWidth={2.5} />
-                </span>
-                <input
-                  type="text"
-                  placeholder={
-                    searchScope === "islandwide"
-                      ? "Search any Sri Lankan policy holder by NIC number (e.g. 199912345678 or 991234567V)..."
-                      : `Search ${branch} policy holders by Name, NIC, Vehicle Plate, Policy No...`
-                  }
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && searchScope === "islandwide") {
-                      searchSriLankaIslandwide(searchQuery);
-                    }
-                  }}
-                  className="flex-1 bg-transparent text-slate-800 text-sm placeholder-slate-400 focus:outline-none font-semibold"
-                />
-
-                {searchQuery && (
-                  <button
-                    onClick={() => {
-                      setSearchQuery("");
-                      if (searchScope === "islandwide") {
-                        setIslandResults([]);
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && searchScope === "islandwide") {
+                          searchSriLankaIslandwide(searchQuery);
+                        }
+                      }}
+                      placeholder={
+                        searchScope === "islandwide"
+                          ? "Search Sri Lanka by NIC number..."
+                          : "Search by name, NIC, plate, or ref..."
                       }
-                    }}
-                    className="p-1 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-200 transition-colors border-none bg-transparent cursor-pointer"
-                    title="Clear search"
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2} />
-                  </button>
-                )}
-
-                {searchScope === "islandwide" && (
-                  <button
-                    onClick={() => searchSriLankaIslandwide(searchQuery)}
-                    disabled={!searchQuery.trim() || islandLoading}
-                    className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-semibold text-xs px-4 py-2 rounded-full transition-all cursor-pointer border-none shadow-xs disabled:opacity-50 flex items-center gap-1.5 shrink-0"
-                  >
-                    {islandLoading ? (
-                      <HugeiconsIcon icon={Loading03Icon} className="w-3.5 h-3.5 animate-spin" strokeWidth={2.5} />
-                    ) : (
-                      <HugeiconsIcon icon={Search01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      className="w-full pl-10 pr-4 py-3 rounded-full border border-slate-300 text-slate-700 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => {
+                          setSearchQuery("");
+                          if (searchScope === "islandwide") {
+                            setIslandResults([]);
+                          }
+                        }}
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
+                      >
+                        <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2} />
+                      </button>
                     )}
-                    <span>Search NIC</span>
-                  </button>
-                )}
-              </div>
-
-              {/* Status Filter Badges */}
-              <div className="flex items-center gap-2 self-end md:self-auto overflow-x-auto pb-1 md:pb-0">
-                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider hidden sm:inline mr-1">
-                  Status:
-                </span>
-                {(["all", "Approved", "Pending"] as const).map((st) => (
-                  <button
-                    key={st}
-                    onClick={() => setStatusFilter(st)}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer border ${
-                      statusFilter === st
-                        ? "bg-[#102A43] text-white border-[#102A43] shadow-xs"
-                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
-                    }`}
-                  >
-                    {st === "all" ? "All Status" : st}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Smart Prompt: If search in branch returns 0 results but query is typed, offer Islandwide search */}
-            {searchScope === "branch" && searchQuery.trim() && displayedPolicyHolders.length === 0 && !loading && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
-                    <HugeiconsIcon icon={Globe02Icon} className="w-5 h-5 text-white" strokeWidth={2} />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-800">
-                      No policyholder found in {branch} Branch matching "{searchQuery}"
-                    </h4>
-                    <p className="text-xs text-slate-500 font-medium">
-                      Would you like to search across all registered policy holders in Sri Lanka with this NIC or name?
-                    </p>
+
+                  {/* Scope Switcher & Status Filter */}
+                  <div className="flex items-center gap-3 flex-wrap justify-between sm:justify-end">
+                    {/* Scope Switcher */}
+                    <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
+                      <button
+                        onClick={() => {
+                          setSearchScope("branch");
+                          setSearchQuery("");
+                        }}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+                          searchScope === "branch"
+                            ? "bg-[#102A43] text-white shadow-xs"
+                            : "text-slate-600 hover:bg-slate-200/70 bg-transparent"
+                        }`}
+                      >
+                        <HugeiconsIcon icon={Location01Icon} className="w-3.5 h-3.5" strokeWidth={2} />
+                        <span>{branch} Branch ({policyHolders.length})</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setSearchScope("islandwide");
+                          if (searchQuery.trim()) {
+                            searchSriLankaIslandwide(searchQuery);
+                          }
+                        }}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border-none flex items-center gap-1.5 ${
+                          searchScope === "islandwide"
+                            ? "bg-[#000080] text-white shadow-xs"
+                            : "text-slate-600 hover:bg-slate-200/70 bg-transparent"
+                        }`}
+                      >
+                        <HugeiconsIcon icon={Globe02Icon} className="w-3.5 h-3.5" strokeWidth={2} />
+                        <span>Island-wide NIC Search</span>
+                      </button>
+                    </div>
+
+                    {/* Status Filter */}
+                    <div className="flex items-center gap-1.5">
+                      {(["all", "Approved", "Pending"] as const).map((st) => (
+                        <button
+                          key={st}
+                          onClick={() => setStatusFilter(st)}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                            statusFilter === st
+                              ? "bg-[#102A43] text-white border-[#102A43] shadow-xs"
+                              : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          {st === "all" ? "All" : st}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <button
-                  onClick={() => {
-                    setSearchScope("islandwide");
-                    searchSriLankaIslandwide(searchQuery);
-                  }}
-                  className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-full transition-all cursor-pointer border-none shadow-sm flex items-center gap-2 shrink-0"
-                >
-                  <HugeiconsIcon icon={Globe02Icon} className="w-4 h-4 text-white" strokeWidth={2} />
-                  <span>Search All Sri Lanka Registry</span>
-                </button>
-              </div>
-            )}
+                {/* Smart Islandwide Search Prompt Banner */}
+                {searchScope === "branch" && searchQuery.trim() && displayedPolicyHolders.length === 0 && !loading && (
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                        <HugeiconsIcon icon={Globe02Icon} className="w-5 h-5 text-white" strokeWidth={2} />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-800">
+                          No policyholder found in {branch} Branch matching "{searchQuery}"
+                        </h4>
+                        <p className="text-xs text-slate-500 font-medium">
+                          Would you like to search across all registered policy holders in Sri Lanka with this NIC?
+                        </p>
+                      </div>
+                    </div>
 
-            {/* Main Policy Holders List / Table */}
-            <div className="flex-1">
-              {loading || (searchScope === "islandwide" && islandLoading) ? (
-                <SimpleLoader
-                  message={
-                    searchScope === "islandwide"
-                      ? "Searching Sri Lanka policy holders database..."
-                      : `Loading ${branch} Branch policy holders directory...`
-                  }
-                  theme="slate"
-                />
-              ) : error ? (
-                <div className="bg-red-50 border border-red-200 rounded-3xl p-12 text-center text-red-600 font-semibold shadow-xs select-none flex flex-col items-center gap-3">
-                  <HugeiconsIcon icon={Alert02Icon} className="w-10 h-10 text-red-500" strokeWidth={2} />
-                  <p className="text-base">{error}</p>
-                  <button
-                    onClick={() => loadBranchPolicyHolders(branch)}
-                    className="px-5 py-2 bg-red-600 text-white rounded-full text-xs font-semibold hover:bg-red-700 transition-all border-none cursor-pointer"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              ) : displayedPolicyHolders.length === 0 ? (
-                <div className="bg-white border border-slate-200 rounded-3xl p-16 text-center shadow-xs select-none flex flex-col items-center justify-center">
-                  <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 mb-4">
-                    <HugeiconsIcon icon={UserMultiple02Icon} className="w-8 h-8 text-slate-400" strokeWidth={1.8} />
-                  </div>
-                  <h3 className="text-base font-semibold text-slate-800 tracking-tight">
-                    {searchScope === "islandwide"
-                      ? "No Policy Holders Found in Sri Lanka Database"
-                      : `No Policy Holders Found for ${branch} Branch`}
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-1.5 max-w-md font-medium">
-                    {searchQuery
-                      ? `No registered records matched the search term "${searchQuery}". Please check the NIC number or spelling.`
-                      : `There are currently no policy holders registered under this branch.`}
-                  </p>
-                  {searchScope === "islandwide" && (
                     <button
                       onClick={() => {
-                        setSearchScope("branch");
-                        setSearchQuery("");
+                        setSearchScope("islandwide");
+                        searchSriLankaIslandwide(searchQuery);
                       }}
-                      className="mt-5 px-5 py-2 bg-[#102A43] text-white text-xs font-semibold rounded-full hover:bg-[#09111b] transition-all cursor-pointer border-none shadow-xs"
+                      className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-full transition-all cursor-pointer border-none shadow-sm flex items-center gap-2 shrink-0"
                     >
-                      Back to {branch} Branch
+                      <HugeiconsIcon icon={Globe02Icon} className="w-4 h-4 text-white" strokeWidth={2} />
+                      <span>Search All Sri Lanka Registry</span>
                     </button>
-                  )}
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3.5">
-                  {/* Table Column Titles (Desktop) */}
-                  <div className="hidden lg:grid lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1.3fr)_minmax(0,1.5fr)_minmax(0,1.6fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.0fr)] gap-4 px-6 py-3 bg-slate-100/80 rounded-2xl border border-slate-200/70 text-[11px] font-semibold text-slate-500 uppercase tracking-wider select-none items-center">
-                    <div>Policy Holder</div>
-                    <div>NIC Number</div>
-                    <div>Contact Info</div>
-                    <div>Insured Vehicles</div>
-                    <div>Registered Branch</div>
-                    <div>Status</div>
-                    <div className="text-right">Action</div>
                   </div>
+                )}
 
-                  {/* List Rows */}
-                  {displayedPolicyHolders.map((holder) => {
-                    const fullName = `${holder.firstName || ""} ${holder.lastName || ""}`.trim() || "Sanasa Member";
-                    const initial = (holder.firstName || "P").substring(0, 1).toUpperCase();
-                    const isBranchMatch = holder.branch?.toLowerCase() === branch.toLowerCase();
-                    const vehicleCount = holder.vehicles?.length || 0;
-                    const primaryVehicle = holder.vehicles && holder.vehicles.length > 0 ? holder.vehicles[0] : null;
-                    const isApproved = holder.status === "Approved";
+                {/* Table Layout matching Registrations */}
+                {displayedPolicyHolders.length === 0 ? (
+                  <div className="bg-white border border-slate-200 rounded-[20px] p-12 text-center text-slate-400 font-medium select-none shadow-sm">
+                    {searchScope === "islandwide"
+                      ? "No policy holders found in Sri Lanka database matching your search."
+                      : "No policy holders found matching your query."}
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-3">
+                    {/* Table Header Row */}
+                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] gap-4 px-5 py-3 text-slate-400 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                      <div className="flex flex-col select-none min-w-0">Applicant Name</div>
+                      <div className="flex flex-col select-none min-w-0">NIC Number</div>
+                      <div className="flex flex-col select-none min-w-0">Vehicle Plate</div>
+                      <div className="flex flex-col select-none min-w-0">Vehicle Type</div>
+                      <div className="flex flex-col select-none min-w-0">Policy Number</div>
+                      <div className="flex flex-col select-none min-w-0">Date</div>
+                      <div className="flex flex-col select-none min-w-0 text-right">Actions</div>
+                    </div>
 
-                    return (
-                      <div
-                        key={holder._id || holder.nic}
-                        className="bg-white border border-slate-200/90 border-l-4 border-l-[#102A43] hover:border-l-[#000080] hover:border-slate-300 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col lg:grid lg:grid-cols-[minmax(0,2.2fr)_minmax(0,1.3fr)_minmax(0,1.5fr)_minmax(0,1.6fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.0fr)] lg:items-center gap-4 group"
-                      >
-                        {/* Col 1: Avatar & Policy Holder Info */}
-                        <div className="flex items-center gap-3.5 min-w-0">
-                          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#102A43] to-[#000080] text-white flex items-center justify-center font-bold text-base shadow-sm shrink-0 select-none">
-                            {initial}
-                          </div>
-                          <div className="min-w-0">
-                            <h3 className="font-semibold text-slate-900 text-sm leading-snug truncate" title={fullName}>
-                              {fullName}
-                            </h3>
-                            <span className="text-[10px] font-semibold text-slate-400 block mt-0.5 tracking-wider uppercase">
+                    {/* Table Row Items */}
+                    {displayedPolicyHolders.map((holder) => {
+                      const primaryVehicle = holder.vehicles && holder.vehicles.length > 0 ? holder.vehicles[0] : null;
+
+                      return (
+                        <div
+                          key={holder._id || holder.nic}
+                          onClick={() => handleOpenDetails(holder)}
+                          className="bg-white border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent hover:border-blue-400 border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden group"
+                        >
+                          {/* Col 1: Applicant Name & Ref */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="w-2 h-2 rounded-full shrink-0 bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.7)]" />
+                              <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
+                                {holder.firstName} {holder.lastName}
+                              </h3>
+                            </div>
+                            <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1.5 w-fit">
                               Ref: {holder.referenceNumber || "SAN-PH"}
                             </span>
                           </div>
-                        </div>
 
-                        {/* Col 2: NIC Number */}
-                        <div className="flex flex-col min-w-0 select-none">
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block lg:hidden mb-0.5">
-                            NIC Number
-                          </span>
-                          <span className="font-mono text-xs font-bold text-slate-800 bg-slate-100/80 px-2.5 py-1 rounded-lg w-fit border border-slate-200/60">
-                            {holder.nic}
-                          </span>
-                        </div>
-
-                        {/* Col 3: Contact Info */}
-                        <div className="flex flex-col gap-0.5 text-xs">
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block lg:hidden mb-0.5 select-none">
-                            Contact
-                          </span>
-                          <div className="flex items-center gap-1.5 text-slate-800 font-semibold truncate" title={holder.mobile}>
-                            <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={2} />
-                            <span>{holder.mobile || "-"}</span>
+                          {/* Col 2: NIC */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">NIC</span>
+                            <span className="text-slate-700 font-semibold text-xs font-mono">{holder.nic}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-slate-500 font-medium text-[11px] truncate" title={holder.email}>
-                            <HugeiconsIcon icon={Mail01Icon} className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={2} />
-                            <span className="truncate">{holder.email || "-"}</span>
-                          </div>
-                        </div>
 
-                        {/* Col 4: Insured Vehicles */}
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block lg:hidden mb-0.5 select-none">
-                            Vehicles
-                          </span>
-                          {vehicleCount > 0 ? (
-                            <div className="flex flex-col gap-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-slate-900 font-mono bg-blue-50 text-blue-800 border border-blue-200/70 px-2 py-0.5 rounded-md">
-                                  {formatPlate(primaryVehicle?.numberPlate || "")}
-                                </span>
-                                {vehicleCount > 1 && (
-                                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full border border-slate-200">
-                                    +{vehicleCount - 1} more
-                                  </span>
-                                )}
-                              </div>
-                              <span className="text-[11px] text-slate-500 font-medium truncate">
-                                {primaryVehicle?.company} {primaryVehicle?.model} ({primaryVehicle?.vehicleType})
+                          {/* Col 3: Vehicle Plate */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Vehicle Plate</span>
+                            <span className="text-slate-800 font-semibold text-xs font-mono">
+                              {primaryVehicle ? formatPlate(primaryVehicle.numberPlate) : "-"}
+                            </span>
+                            {primaryVehicle?.model && (
+                              <span className="text-[10px] text-slate-400 font-medium truncate block">
+                                {primaryVehicle.company} {primaryVehicle.model}
                               </span>
+                            )}
+                          </div>
+
+                          {/* Col 4: Vehicle Type */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Vehicle Type</span>
+                            <span className="text-slate-700 text-xs font-semibold">
+                              {primaryVehicle ? primaryVehicle.vehicleType : "No Vehicle"}
+                            </span>
+                          </div>
+
+                          {/* Col 5: Policy Number */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 md:hidden">Policy No.</span>
+                            <span className="font-semibold text-[#0f2d4a] text-xs font-mono">
+                              {primaryVehicle ? primaryVehicle.policyNumber : "-"}
+                            </span>
+                          </div>
+
+                          {/* Col 6: Date / Branch */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Date</span>
+                            <span className="text-slate-600 text-xs font-semibold">{formatDate(holder.createdAt)}</span>
+                            <span className="text-[10px] text-slate-400 font-medium">{holder.branch} Branch</span>
+                          </div>
+
+                          {/* Col 7: Actions */}
+                          <div
+                            className="flex items-center justify-between md:justify-end gap-2.5 mt-4 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-slate-100"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <span className="text-blue-500 font-semibold text-[11px] group-hover:underline md:hidden select-none">
+                              View Profile
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleOpenDetails(holder)}
+                                className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
+                              >
+                                <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
+                                <span>View</span>
+                              </button>
                             </div>
-                          ) : (
-                            <span className="text-xs text-slate-400 font-medium italic">No vehicles added</span>
-                          )}
+                          </div>
                         </div>
+                      );
+                    })}
+                  </div>
+                )}
 
-                        {/* Col 5: Branch Badge */}
-                        <div className="flex flex-col min-w-0 select-none">
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block lg:hidden mb-0.5">
-                            Branch
-                          </span>
-                          <span
-                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-xl w-fit border ${
-                              isBranchMatch
-                                ? "bg-slate-100 text-[#102A43] border-slate-200"
-                                : "bg-purple-50 text-purple-700 border-purple-200"
-                            }`}
-                          >
-                            {holder.branch || "Galle"} Branch
-                          </span>
-                          <span className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">
-                            {holder.city ? `${holder.city}, ${holder.province}` : formatDate(holder.createdAt)}
-                          </span>
-                        </div>
-
-                        {/* Col 6: Status Badge */}
-                        <div className="flex items-center select-none">
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block lg:hidden mr-2">
-                            Status:
-                          </span>
-                          <span
-                            className={`text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${
-                              isApproved
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : "bg-amber-50 text-amber-700 border-amber-200"
-                            }`}
-                          >
-                            {holder.status || "Pending"}
-                          </span>
-                        </div>
-
-                        {/* Col 7: Action (View Details Button) */}
-                        <div className="flex items-center justify-between lg:justify-end gap-2 pt-3 lg:pt-0 border-t lg:border-none border-slate-100">
-                          <span className="text-xs font-semibold text-slate-400 block lg:hidden select-none">
-                            Full Dossier:
-                          </span>
-                          <button
-                            onClick={() => handleOpenDetails(holder)}
-                            className="px-4 py-2 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#000080] font-semibold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-xs flex items-center gap-1.5 select-none"
-                            aria-label={`View details for ${fullName}`}
-                          >
-                            <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" strokeWidth={2.5} />
-                            <span>View</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                {/* Pagination Controls */}
+                <div className="flex items-center justify-end gap-3 mt-4 text-slate-400 font-medium select-none text-sm">
+                  <button className="hover:text-slate-600 font-medium cursor-pointer">Prev</button>
+                  <span className="text-slate-800 font-semibold">1</span>
+                  <button className="hover:text-slate-600 font-medium cursor-pointer">Next</button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </main>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* Policy Holder Full Details Popup Dossier Modal */}
+      {/* Policy Holder Full Details Popup Modal (Fixed 640px)     */}
       {/* ======================================================== */}
       {selectedHolder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl border border-slate-200 overflow-hidden transform scale-100 transition-all h-[630px] max-h-[90vh] flex flex-col text-left">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-4xl h-[640px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden text-left">
             {/* Modal Header */}
-            <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none flex justify-between items-center gap-4">
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-12 h-12 rounded-2xl bg-[#102A43] text-white flex items-center justify-center font-bold text-lg shadow-md shrink-0">
+            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 select-none bg-white">
+              <div className="flex items-center gap-3.5 min-w-0 pr-4">
+                <div className="w-12 h-12 rounded-2xl bg-[#102A43] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
                   {(selectedHolder.firstName || "P").substring(0, 1).toUpperCase()}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <h2 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-none truncate">
+                    <h2 className="text-[22px] font-semibold text-[#0f2d3a] tracking-tight leading-none truncate">
                       {selectedHolder.firstName} {selectedHolder.lastName}
                     </h2>
                     <span
@@ -832,10 +693,11 @@ export default function OfficeStaffPolicyHolders() {
                       {selectedHolder.status || "Pending"}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 font-medium mt-1 truncate">
-                    NIC: <span className="font-mono font-bold text-slate-800">{selectedHolder.nic}</span> •{" "}
+                  <p className="text-xs text-slate-400 font-medium mt-1.5 truncate">
+                    NIC: <span className="font-semibold text-slate-700 font-mono">{selectedHolder.nic}</span> •{" "}
                     <span className="font-semibold text-[#102A43]">{selectedHolder.branch} Branch</span> • Ref:{" "}
-                    {selectedHolder.referenceNumber} • Registered on {formatDate(selectedHolder.createdAt)}
+                    <span className="font-semibold text-slate-600">{selectedHolder.referenceNumber || "SAN-PH"}</span> • Reg:{" "}
+                    {formatDate(selectedHolder.createdAt)}
                   </p>
                 </div>
               </div>
@@ -852,16 +714,16 @@ export default function OfficeStaffPolicyHolders() {
 
                 <button
                   onClick={() => setSelectedHolder(null)}
-                  className="text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+                  className="text-slate-400 hover:text-slate-600 text-2xl font-semibold border-none bg-transparent cursor-pointer p-1"
                   aria-label="Close modal"
                 >
-                  <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+                  &times;
                 </button>
               </div>
             </div>
 
-            {/* Modal Navigation Tabs */}
-            <div className="px-6 sm:px-8 border-b border-slate-200 bg-slate-50/60 select-none flex items-center gap-2 overflow-x-auto shrink-0 py-2">
+            {/* Navigation Tabs Bar */}
+            <div className="px-8 border-b border-slate-200 bg-slate-50/70 select-none flex items-center gap-2 overflow-x-auto shrink-0 py-2.5">
               {[
                 { id: "overview", label: "Personal Info", count: null },
                 { id: "vehicles", label: "Insured Vehicles", count: selectedHolder.vehicles?.length || 0 },
@@ -898,207 +760,57 @@ export default function OfficeStaffPolicyHolders() {
               ))}
             </div>
 
-            {/* Modal Scrollable Content */}
-            <div className="p-6 sm:p-8 overflow-y-auto flex-1 bg-white">
-              {/* TAB 1: Personal Profile Overview */}
+            {/* Scrollable Body Content */}
+            <div className="p-8 flex-1 overflow-y-auto space-y-6">
+              {/* TAB 1: Personal Info (Maximum Information Display) */}
               {activeTab === "overview" && (
-                <div className="flex flex-col gap-6">
-                  {/* Two Column Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Identity & Contact Details */}
-                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col gap-3.5">
-                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none">
-                        Identity & Contact Information
-                      </h4>
-                      <div className="flex flex-col divide-y divide-slate-100 text-xs">
-                        {[
-                          { label: "Full Name", value: `${selectedHolder.firstName} ${selectedHolder.lastName}` },
-                          { label: "National ID (NIC)", value: selectedHolder.nic, isMono: true },
-                          { label: "Date of Birth", value: formatDate(selectedHolder.dob) },
-                          { label: "Age", value: calculateAge(selectedHolder.dob) },
-                          { label: "Mobile Phone", value: selectedHolder.mobile || "-" },
-                          { label: "Email Address", value: selectedHolder.email || "-" }
-                        ].map((item, idx) => (
-                          <div key={idx} className="py-2.5 flex items-center justify-between gap-4">
-                            <span className="text-slate-400 font-medium uppercase text-[10px] tracking-wider select-none min-w-[110px]">
-                              {item.label}
-                            </span>
-                            <span className={`font-semibold text-slate-900 text-right truncate ${item.isMono ? "font-mono" : ""}`}>
-                              {item.value}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Location & Account Metadata */}
-                    <div className="bg-white border border-slate-200/80 rounded-2xl p-5 flex flex-col gap-3.5">
-                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none">
-                        Address & Registration Info
-                      </h4>
-                      <div className="flex flex-col divide-y divide-slate-100 text-xs">
-                        {[
-                          { label: "Registered Branch", value: `${selectedHolder.branch} Branch` },
-                          { label: "Reference Number", value: selectedHolder.referenceNumber || "-", isMono: true },
-                          { label: "Province", value: selectedHolder.province || "-" },
-                          { label: "City", value: selectedHolder.city || "-" },
-                          { label: "Home Address", value: selectedHolder.address || "-" },
-                          { label: "Member Since", value: formatDate(selectedHolder.createdAt) },
-                          { label: "Account Status", value: selectedHolder.status || "Pending" }
-                        ].map((item, idx) => (
-                          <div key={idx} className="py-2.5 flex items-center justify-between gap-4">
-                            <span className="text-slate-400 font-medium uppercase text-[10px] tracking-wider select-none min-w-[110px]">
-                              {item.label}
-                            </span>
-                            <span className={`font-semibold text-slate-900 text-right truncate ${item.isMono ? "font-mono" : ""}`}>
-                              {item.value}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB 2: Insured Vehicles */}
-              {activeTab === "vehicles" && (
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between select-none">
-                    <h4 className="text-sm font-bold text-slate-800">
-                      Registered Vehicles Under Policy ({selectedHolder.vehicles?.length || 0})
-                    </h4>
-                    <span className="text-xs text-slate-400 font-medium">All insurance active policies</span>
-                  </div>
-
-                  {!selectedHolder.vehicles || selectedHolder.vehicles.length === 0 ? (
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-10 text-center text-slate-400 select-none">
-                      <HugeiconsIcon icon={Car01Icon} className="w-10 h-10 mx-auto text-slate-300 mb-2" strokeWidth={1.5} />
-                      <p className="text-sm font-semibold">No vehicles registered for this policy holder.</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {selectedHolder.vehicles.map((veh, index) => (
-                        <div
-                          key={index}
-                          className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between gap-4 hover:border-slate-300 transition-all"
-                        >
-                          <div>
-                            {/* Card Header: Plate & Type */}
-                            <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 mb-3 select-none">
-                              <div className="flex items-center gap-2">
-                                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm">
-                                  <HugeiconsIcon icon={Car01Icon} className="w-5 h-5" strokeWidth={2} />
-                                </div>
-                                <div>
-                                  <span className="font-mono font-bold text-sm text-slate-900">
-                                    {formatPlate(veh.numberPlate)}
-                                  </span>
-                                  <span className="text-[10px] text-slate-400 block font-semibold uppercase">
-                                    {veh.vehicleType}
-                                  </span>
-                                </div>
-                              </div>
-
-                              <span
-                                className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                                  veh.status === "Approved"
-                                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                    : "bg-amber-50 text-amber-700 border-amber-200"
-                                }`}
-                              >
-                                {veh.status || "Approved"}
-                              </span>
-                            </div>
-
-                            {/* Details Grid */}
-                            <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-xs">
-                              <div>
-                                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">
-                                  Make & Model
-                                </span>
-                                <span className="font-semibold text-slate-800 truncate block">
-                                  {veh.company} {veh.model}
-                                </span>
-                              </div>
-
-                              <div>
-                                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">
-                                  Year of Make
-                                </span>
-                                <span className="font-semibold text-slate-800 block">{veh.year || "-"}</span>
-                              </div>
-
-                              <div>
-                                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">
-                                  Policy Number
-                                </span>
-                                <span className="font-mono font-bold text-blue-700 block truncate">
-                                  {veh.policyNumber || "-"}
-                                </span>
-                              </div>
-
-                              <div>
-                                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">
-                                  Engine Number
-                                </span>
-                                <span className="font-mono text-slate-700 font-semibold block truncate">
-                                  {veh.engineNumber || "-"}
-                                </span>
-                              </div>
-
-                              <div className="col-span-2">
-                                <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">
-                                  Chassis Number
-                                </span>
-                                <span className="font-mono text-slate-700 font-semibold block truncate">
-                                  {veh.chassisNumber || "-"}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Identity & Contact Details Card */}
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4 select-none">
+                    <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500 pb-2 border-b border-slate-200/60 flex items-center gap-1.5">
+                      <span>Identity & Contact Information</span>
+                    </h3>
+                    <div className="flex flex-col divide-y divide-slate-200/60 text-xs">
+                      {[
+                        { label: "Full Name", value: `${selectedHolder.firstName} ${selectedHolder.lastName}` },
+                        { label: "National ID (NIC)", value: selectedHolder.nic, isMono: true },
+                        { label: "Date of Birth", value: formatDate(selectedHolder.dob) },
+                        { label: "Age", value: calculateAge(selectedHolder.dob) },
+                        { label: "Mobile Phone", value: selectedHolder.mobile || "-" },
+                        { label: "Email Address", value: selectedHolder.email || "-" }
+                      ].map((item, idx) => (
+                        <div key={idx} className="py-2.5 flex items-center justify-between gap-4">
+                          <span className="text-slate-400 font-medium uppercase text-[10px] tracking-wider min-w-[110px]">
+                            {item.label}
+                          </span>
+                          <span className={`font-semibold text-slate-800 text-right truncate ${item.isMono ? "font-mono" : ""}`}>
+                            {item.value}
+                          </span>
                         </div>
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
 
-              {/* TAB 3: Bank Details */}
-              {activeTab === "bank" && (
-                <div className="flex flex-col gap-6">
-                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col gap-4">
-                    <div className="flex items-center gap-3 select-none pb-3 border-b border-slate-200">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                        <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" strokeWidth={2} />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-bold text-slate-900">Direct Settlement Bank Account</h4>
-                        <p className="text-xs text-slate-500 font-medium">
-                          Used for claim payouts and electronic reimbursement deposits.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  {/* Address & Registration Info Card */}
+                  <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4 select-none">
+                    <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500 pb-2 border-b border-slate-200/60 flex items-center gap-1.5">
+                      <span>Address & Registration Metadata</span>
+                    </h3>
+                    <div className="flex flex-col divide-y divide-slate-200/60 text-xs">
                       {[
-                        { label: "Bank Name", value: selectedHolder.bankDetails?.bankName || "Not Provided" },
-                        { label: "Bank Branch", value: selectedHolder.bankDetails?.branchName || "Not Provided" },
-                        {
-                          label: "Account Number",
-                          value: selectedHolder.bankDetails?.accountNumber || "Not Provided",
-                          isMono: true
-                        },
-                        {
-                          label: "Account Holder Name",
-                          value: selectedHolder.bankDetails?.accountHolderName || `${selectedHolder.firstName} ${selectedHolder.lastName}`
-                        }
+                        { label: "Registered Branch", value: `${selectedHolder.branch} Branch` },
+                        { label: "Reference Number", value: selectedHolder.referenceNumber || "-", isMono: true },
+                        { label: "City", value: selectedHolder.city || "-" },
+                        { label: "Province", value: selectedHolder.province || "-" },
+                        { label: "Permanent Address", value: selectedHolder.address || "-" },
+                        { label: "Member Since", value: formatDate(selectedHolder.createdAt) },
+                        { label: "Account Status", value: selectedHolder.status || "Pending" }
                       ].map((item, idx) => (
-                        <div key={idx} className="bg-white border border-slate-200/80 rounded-xl p-4 flex flex-col gap-1">
-                          <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider select-none">
+                        <div key={idx} className="py-2.5 flex items-center justify-between gap-4">
+                          <span className="text-slate-400 font-medium uppercase text-[10px] tracking-wider min-w-[110px]">
                             {item.label}
                           </span>
-                          <span className={`text-sm font-bold text-slate-900 ${item.isMono ? "font-mono" : ""}`}>
+                          <span className={`font-semibold text-slate-800 text-right truncate ${item.isMono ? "font-mono" : ""}`}>
                             {item.value}
                           </span>
                         </div>
@@ -1108,21 +820,153 @@ export default function OfficeStaffPolicyHolders() {
                 </div>
               )}
 
-              {/* TAB 4: Uploaded Documents */}
+              {/* TAB 2: Insured Vehicles (Full Details Cards) */}
+              {activeTab === "vehicles" && (
+                <div className="space-y-4 select-none">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
+                      Registered Vehicles Under Policy ({selectedHolder.vehicles?.length || 0})
+                    </h3>
+                    <span className="text-xs text-slate-400 font-medium">Active Motor Insurance Policies</span>
+                  </div>
+
+                  {!selectedHolder.vehicles || selectedHolder.vehicles.length === 0 ? (
+                    <div className="border border-slate-200 border-dashed rounded-2xl p-10 text-center text-slate-400 italic text-sm">
+                      <HugeiconsIcon icon={Car01Icon} className="w-10 h-10 mx-auto text-slate-300 mb-2" strokeWidth={1.5} />
+                      <p className="font-semibold">No vehicles registered for this policy holder.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedHolder.vehicles.map((veh, idx) => (
+                        <div key={idx} className="border border-slate-200 rounded-2xl p-5 bg-white shadow-xs flex flex-col gap-3.5 hover:border-slate-300 transition-all">
+                          <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-sm">
+                                <HugeiconsIcon icon={Car01Icon} className="w-5 h-5" strokeWidth={2} />
+                              </div>
+                              <div>
+                                <span className="font-mono font-bold text-sm text-slate-900 block">
+                                  {formatPlate(veh.numberPlate)}
+                                </span>
+                                <span className="bg-slate-100 text-slate-500 text-[9px] font-semibold px-2 py-0.5 rounded uppercase">
+                                  {veh.vehicleType}
+                                </span>
+                              </div>
+                            </div>
+
+                            <span
+                              className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
+                                veh.status === "Approved"
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  : "bg-amber-50 text-amber-700 border-amber-200"
+                              }`}
+                            >
+                              {veh.status || "Approved"}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 text-xs">
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Make / Model</span>
+                              <span className="font-semibold text-slate-800 truncate block">
+                                {veh.company} {veh.model}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Year of Make</span>
+                              <span className="font-semibold text-slate-800 block">{veh.year || "-"}</span>
+                            </div>
+
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Policy Number</span>
+                              <span className="font-mono font-bold text-blue-700 block truncate">
+                                {veh.policyNumber || "-"}
+                              </span>
+                            </div>
+
+                            <div>
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Engine Number</span>
+                              <span className="font-mono text-slate-700 font-semibold block truncate">
+                                {veh.engineNumber || "-"}
+                              </span>
+                            </div>
+
+                            <div className="col-span-2">
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Chassis Number</span>
+                              <span className="font-mono text-slate-700 font-semibold block truncate">
+                                {veh.chassisNumber || "-"}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 3: Direct Settlement Bank Account */}
+              {activeTab === "bank" && (
+                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-5 select-none">
+                  <div className="flex items-center gap-3 pb-3 border-b border-slate-200/70">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                      <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" strokeWidth={2} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
+                        Direct Settlement Bank Account
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        Used for direct electronic insurance claim reimbursements and settlement deposits.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    {[
+                      { label: "Bank Name", value: selectedHolder.bankDetails?.bankName || "Not Provided" },
+                      { label: "Bank Branch", value: selectedHolder.bankDetails?.branchName || "Not Provided" },
+                      {
+                        label: "Account Number",
+                        value: selectedHolder.bankDetails?.accountNumber || "Not Provided",
+                        isMono: true
+                      },
+                      {
+                        label: "Account Holder Name",
+                        value: selectedHolder.bankDetails?.accountHolderName || `${selectedHolder.firstName} ${selectedHolder.lastName}`
+                      }
+                    ].map((item, idx) => (
+                      <div key={idx} className="bg-white border border-slate-200/80 rounded-xl p-4 flex flex-col gap-1 shadow-2xs">
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">
+                          {item.label}
+                        </span>
+                        <span className={`text-sm font-bold text-slate-900 ${item.isMono ? "font-mono" : ""}`}>
+                          {item.value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 4: Uploaded Verification Documents (Rich cards with preview + status + view) */}
               {activeTab === "documents" && (
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between select-none">
-                    <h4 className="text-sm font-bold text-slate-800">Verification & Registration Documents</h4>
-                    <span className="text-xs text-slate-400 font-medium">Official verified KYC files</span>
+                <div className="space-y-4 select-none">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
+                      Uploaded Verification & KYC Documents
+                    </h3>
+                    <span className="text-xs text-slate-400 font-medium">Official verified registration files</span>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
-                      { key: "nicFront", label: "NIC Front Photo", url: selectedHolder.documents?.nicFront },
-                      { key: "nicBack", label: "NIC Back Photo", url: selectedHolder.documents?.nicBack },
+                      { key: "nicFront", label: "National ID (NIC) Front View", url: selectedHolder.documents?.nicFront },
+                      { key: "nicBack", label: "National ID (NIC) Back View", url: selectedHolder.documents?.nicBack },
                       {
                         key: "vehicleReg",
-                        label: "Vehicle Registration Document (CR)",
+                        label: "Vehicle Registration Book (CR)",
                         url: selectedHolder.documents?.vehicleReg
                       },
                       {
@@ -1132,10 +976,11 @@ export default function OfficeStaffPolicyHolders() {
                       }
                     ].map((doc, idx) => {
                       const isUploaded = Boolean(doc.url);
+                      const fullUrl = getFullImageUrl(doc.url);
                       return (
                         <div
                           key={idx}
-                          className="bg-white border border-slate-200 rounded-2xl p-5 shadow-xs flex flex-col justify-between gap-4"
+                          className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs flex flex-col justify-between gap-4"
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-center gap-3">
@@ -1143,7 +988,7 @@ export default function OfficeStaffPolicyHolders() {
                                 <HugeiconsIcon icon={File01Icon} className="w-5 h-5" strokeWidth={2} />
                               </div>
                               <div>
-                                <h5 className="text-xs font-bold text-slate-900">{doc.label}</h5>
+                                <h4 className="text-xs font-bold text-slate-900">{doc.label}</h4>
                                 <span className="text-[10px] text-slate-400 block font-medium">
                                   {isUploaded ? "Uploaded on file" : "Pending document"}
                                 </span>
@@ -1151,7 +996,7 @@ export default function OfficeStaffPolicyHolders() {
                             </div>
 
                             <span
-                              className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                              className={`text-[9px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
                                 isUploaded
                                   ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                                   : "bg-slate-100 text-slate-500 border-slate-200"
@@ -1161,16 +1006,30 @@ export default function OfficeStaffPolicyHolders() {
                             </span>
                           </div>
 
-                          {isUploaded && doc.url ? (
+                          {/* Image Preview Thumbnail */}
+                          <div className="w-full aspect-[4/3] bg-slate-50 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative">
+                            {isUploaded && fullUrl ? (
+                              <img
+                                src={fullUrl}
+                                alt={doc.label}
+                                onClick={() => setPreviewImage({ url: fullUrl, title: doc.label })}
+                                className="object-cover w-full h-full hover:scale-105 transition-transform duration-300 cursor-zoom-in"
+                              />
+                            ) : (
+                              <span className="text-xs text-slate-400 italic font-semibold">No Document Uploaded</span>
+                            )}
+                          </div>
+
+                          {isUploaded && fullUrl ? (
                             <button
-                              onClick={() => setPreviewImage({ url: doc.url!, title: doc.label })}
-                              className="w-full py-2.5 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#000080] font-semibold text-xs rounded-xl transition-all cursor-pointer border-none flex items-center justify-center gap-2 select-none active:scale-95 shadow-xs"
+                              onClick={() => setPreviewImage({ url: fullUrl, title: doc.label })}
+                              className="w-full py-2.5 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#000080] font-semibold text-xs rounded-xl transition-all cursor-pointer border-none flex items-center justify-center gap-2 select-none active:scale-95 shadow-2xs"
                             >
                               <HugeiconsIcon icon={ViewIcon} className="w-4 h-4" strokeWidth={2} />
-                              <span>View Document</span>
+                              <span>View Full Document</span>
                             </button>
                           ) : (
-                            <div className="py-2.5 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-center text-slate-400 text-xs font-medium select-none">
+                            <div className="py-2.5 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-center text-slate-400 text-xs font-medium">
                               No file attached
                             </div>
                           )}
@@ -1181,13 +1040,13 @@ export default function OfficeStaffPolicyHolders() {
                 </div>
               )}
 
-              {/* TAB 5: Claims History */}
+              {/* TAB 5: Claims History & Claim View Trigger */}
               {activeTab === "claims" && (
-                <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between select-none">
-                    <h4 className="text-sm font-bold text-slate-800">
+                <div className="space-y-4 select-none">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
                       Claims History ({holderClaims.length})
-                    </h4>
+                    </h3>
                     <span className="text-xs text-slate-400 font-medium">Recorded incident claims</span>
                   </div>
 
@@ -1197,9 +1056,9 @@ export default function OfficeStaffPolicyHolders() {
                       <p className="text-xs text-slate-500 font-semibold">Loading claims history...</p>
                     </div>
                   ) : holderClaims.length === 0 ? (
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-10 text-center text-slate-400 select-none">
+                    <div className="border border-slate-200 border-dashed rounded-2xl p-10 text-center text-slate-400 italic text-sm">
                       <HugeiconsIcon icon={Shield01Icon} className="w-10 h-10 mx-auto text-slate-300 mb-2" strokeWidth={1.5} />
-                      <p className="text-sm font-semibold">No insurance claims filed by this policy holder.</p>
+                      <p className="font-semibold">No insurance claims filed by this policy holder.</p>
                       <p className="text-xs text-slate-400 mt-1">Clean claim record with zero reported incidents.</p>
                     </div>
                   ) : (
@@ -1207,7 +1066,7 @@ export default function OfficeStaffPolicyHolders() {
                       {holderClaims.map((claim) => (
                         <div
                           key={claim._id}
-                          className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+                          className="border border-slate-200 rounded-2xl p-4 bg-white shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
                         >
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
@@ -1251,11 +1110,10 @@ export default function OfficeStaffPolicyHolders() {
                             </span>
                             <button
                               onClick={() => setSelectedClaimModal(claim)}
-                              className="px-3.5 py-1.5 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#000080] font-semibold text-xs rounded-full transition-all cursor-pointer border-none active:scale-95 shadow-xs flex items-center gap-1.5 select-none shrink-0"
-                              aria-label={`View claim ${claim.claimNumber}`}
+                              className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
                             >
-                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" strokeWidth={2.5} />
-                              <span>View</span>
+                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
+                              <span>View Details</span>
                             </button>
                           </div>
                         </div>
@@ -1264,6 +1122,16 @@ export default function OfficeStaffPolicyHolders() {
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0 select-none">
+              <button
+                onClick={() => setSelectedHolder(null)}
+                className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95 flex items-center justify-center"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
@@ -1274,16 +1142,16 @@ export default function OfficeStaffPolicyHolders() {
       {/* ======================================================== */}
       {selectedClaimModal && (
         <div className="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-md transition-all duration-300">
-          <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-slate-200 overflow-hidden transform scale-100 transition-all h-[680px] max-h-[92vh] flex flex-col text-left">
+          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-3xl shadow-2xl overflow-hidden transform scale-100 transition-all h-[680px] max-h-[92vh] flex flex-col text-left">
             {/* Modal Header */}
-            <div className="px-6 sm:px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none flex justify-between items-center gap-4">
+            <div className="px-8 pt-6 pb-4 border-b border-slate-200 shrink-0 bg-white select-none flex justify-between items-center gap-4">
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold text-lg shadow-xs shrink-0">
                   <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" strokeWidth={2} />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <h2 className="text-lg sm:text-xl font-bold font-mono text-slate-900 tracking-tight leading-none truncate">
+                    <h2 className="text-[20px] font-semibold font-mono text-[#0f2d3a] tracking-tight leading-none truncate">
                       {selectedClaimModal.claimNumber}
                     </h2>
                     <span
@@ -1313,15 +1181,15 @@ export default function OfficeStaffPolicyHolders() {
 
               <button
                 onClick={() => setSelectedClaimModal(null)}
-                className="text-slate-400 hover:text-slate-700 p-2 rounded-full hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+                className="text-slate-400 hover:text-slate-600 text-2xl font-semibold border-none bg-transparent cursor-pointer p-1"
                 aria-label="Close claim details modal"
               >
-                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+                &times;
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 sm:p-8 overflow-y-auto flex-1 bg-white flex flex-col gap-6">
+            <div className="p-8 overflow-y-auto flex-1 bg-white space-y-6">
               {/* Section 1: Incident & Workflow Highlights */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
                 <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-1">
@@ -1343,38 +1211,36 @@ export default function OfficeStaffPolicyHolders() {
               </div>
 
               {/* Section 2: Location & Description */}
-              <div className="bg-white border border-slate-200/90 rounded-2xl p-5 flex flex-col gap-3">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none flex items-center gap-2">
-                  <HugeiconsIcon icon={Location01Icon} className="w-4 h-4 text-slate-500" strokeWidth={2} />
-                  <span>Incident Location & Details</span>
+              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col gap-3 select-none">
+                <h4 className="text-xs font-semibold text-slate-800 uppercase tracking-wide text-amber-500 pb-1">
+                  Incident Location & Statement
                 </h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">Location</span>
-                    <span className="font-semibold text-slate-900">{selectedClaimModal.location || "Not Specified"}</span>
+                    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block">Location</span>
+                    <span className="font-semibold text-slate-800">{selectedClaimModal.location || "Not Specified"}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block select-none">Date & Time</span>
-                    <span className="font-semibold text-slate-900">
+                    <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block">Date & Time</span>
+                    <span className="font-semibold text-slate-800">
                       {formatDate(selectedClaimModal.incidentDate)} {selectedClaimModal.incidentTime ? `• ${selectedClaimModal.incidentTime}` : ""}
                     </span>
                   </div>
                 </div>
 
                 <div className="mt-2">
-                  <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block mb-1 select-none">Description / Driver Statement</span>
-                  <p className="text-xs font-medium text-slate-700 bg-slate-50 p-3.5 rounded-xl border border-slate-200 leading-relaxed whitespace-pre-wrap">
+                  <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block mb-1">Driver Statement</span>
+                  <p className="text-xs font-medium text-slate-700 bg-white p-3.5 rounded-xl border border-slate-200 leading-relaxed whitespace-pre-wrap">
                     {selectedClaimModal.description || "No description provided."}
                   </p>
                 </div>
               </div>
 
               {/* Section 3: Accident Damage Photos */}
-              <div className="flex flex-col gap-3">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none flex items-center gap-2">
-                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500" strokeWidth={2} />
-                  <span>Accident Damage Photos</span>
+              <div className="space-y-3 select-none">
+                <h4 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
+                  Accident Damage Photos
                 </h4>
 
                 {(() => {
@@ -1382,14 +1248,14 @@ export default function OfficeStaffPolicyHolders() {
                   const rearPhotos = selectedClaimModal.accidentPhotos?.rear || [];
                   const sidePhotos = selectedClaimModal.accidentPhotos?.side || [];
                   const allAccidentPhotos = [
-                    ...frontPhotos.map((url, i) => ({ url, label: `Front View #${i + 1}` })),
-                    ...rearPhotos.map((url, i) => ({ url, label: `Rear View #${i + 1}` })),
-                    ...sidePhotos.map((url, i) => ({ url, label: `Side View #${i + 1}` }))
+                    ...frontPhotos.map((url, i) => ({ url: getFullImageUrl(url), label: `Front View #${i + 1}` })),
+                    ...rearPhotos.map((url, i) => ({ url: getFullImageUrl(url), label: `Rear View #${i + 1}` })),
+                    ...sidePhotos.map((url, i) => ({ url: getFullImageUrl(url), label: `Side View #${i + 1}` }))
                   ];
 
                   if (allAccidentPhotos.length === 0) {
                     return (
-                      <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-6 text-center text-slate-400 text-xs font-medium select-none">
+                      <div className="border border-slate-200 border-dashed rounded-xl p-6 text-center text-slate-400 text-xs italic">
                         No accident damage photos uploaded with this claim.
                       </div>
                     );
@@ -1401,17 +1267,18 @@ export default function OfficeStaffPolicyHolders() {
                         <div
                           key={pIdx}
                           onClick={() => setPreviewImage({ url: photo.url, title: `${selectedClaimModal.claimNumber} - ${photo.label}` })}
-                          className="group relative bg-slate-100 border border-slate-200 rounded-xl overflow-hidden aspect-video cursor-pointer hover:shadow-md transition-all flex flex-col justify-end"
+                          className="border border-slate-200 rounded-xl p-2 bg-white shadow-2xs cursor-zoom-in group"
                         >
-                          <img
-                            src={photo.url}
-                            alt={photo.label}
-                            className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                          />
-                          <div className="relative z-10 bg-gradient-to-t from-slate-950/80 via-slate-950/40 to-transparent p-2 text-white flex items-center justify-between">
-                            <span className="text-[10px] font-semibold truncate">{photo.label}</span>
-                            <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-white/80 shrink-0" strokeWidth={2.5} />
+                          <div className="aspect-[4/3] bg-slate-50 rounded-lg overflow-hidden relative">
+                            <img
+                              src={photo.url}
+                              alt={photo.label}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
                           </div>
+                          <span className="text-[10px] font-semibold text-slate-600 block mt-1.5 text-center truncate">
+                            {photo.label}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -1420,47 +1287,53 @@ export default function OfficeStaffPolicyHolders() {
               </div>
 
               {/* Section 4: Driving License & Inspection Documents */}
-              <div className="flex flex-col gap-3">
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none">
+              <div className="space-y-3 select-none">
+                <h4 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
                   License & Supplementary Documents
                 </h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                   {/* Driving License Front */}
-                  {(selectedClaimModal.drivingLicense?.front || []).map((url, i) => (
-                    <div
-                      key={`dl-front-${i}`}
-                      onClick={() => setPreviewImage({ url, title: `Driving License Front - ${selectedClaimModal.claimNumber}` })}
-                      className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-100 transition-all select-none"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
-                        <span className="text-xs font-semibold text-slate-800 truncate">License Front #{i + 1}</span>
+                  {(selectedClaimModal.drivingLicense?.front || []).map((url, i) => {
+                    const fullUrl = getFullImageUrl(url);
+                    return (
+                      <div
+                        key={`dl-front-${i}`}
+                        onClick={() => setPreviewImage({ url: fullUrl, title: `Driving License Front - ${selectedClaimModal.claimNumber}` })}
+                        className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 transition-all select-none shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
+                          <span className="text-xs font-semibold text-slate-800 truncate">License Front #{i + 1}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-blue-600 shrink-0">View</span>
                       </div>
-                      <span className="text-[10px] font-bold text-blue-600 shrink-0">View</span>
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {/* Driving License Rear */}
-                  {(selectedClaimModal.drivingLicense?.rear || []).map((url, i) => (
-                    <div
-                      key={`dl-rear-${i}`}
-                      onClick={() => setPreviewImage({ url, title: `Driving License Rear - ${selectedClaimModal.claimNumber}` })}
-                      className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-100 transition-all select-none"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
-                        <span className="text-xs font-semibold text-slate-800 truncate">License Rear #{i + 1}</span>
+                  {(selectedClaimModal.drivingLicense?.rear || []).map((url, i) => {
+                    const fullUrl = getFullImageUrl(url);
+                    return (
+                      <div
+                        key={`dl-rear-${i}`}
+                        onClick={() => setPreviewImage({ url: fullUrl, title: `Driving License Rear - ${selectedClaimModal.claimNumber}` })}
+                        className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 transition-all select-none shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
+                          <span className="text-xs font-semibold text-slate-800 truncate">License Rear #{i + 1}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-blue-600 shrink-0">View</span>
                       </div>
-                      <span className="text-[10px] font-bold text-blue-600 shrink-0">View</span>
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {/* Inspection Report */}
                   {selectedClaimModal.inspectionReport && (
                     <div
-                      onClick={() => setPreviewImage({ url: selectedClaimModal.inspectionReport!, title: `Inspection Report - ${selectedClaimModal.claimNumber}` })}
-                      className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-blue-100/70 transition-all select-none"
+                      onClick={() => setPreviewImage({ url: getFullImageUrl(selectedClaimModal.inspectionReport), title: `Inspection Report - ${selectedClaimModal.claimNumber}` })}
+                      className="p-3 bg-blue-50/70 border border-blue-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-blue-100/70 transition-all select-none shadow-2xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-blue-600 shrink-0" strokeWidth={2} />
@@ -1473,8 +1346,8 @@ export default function OfficeStaffPolicyHolders() {
                   {/* Payment Receipt */}
                   {selectedClaimModal.paymentReceipt && (
                     <div
-                      onClick={() => setPreviewImage({ url: selectedClaimModal.paymentReceipt!, title: `Settlement Receipt - ${selectedClaimModal.claimNumber}` })}
-                      className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-emerald-100/70 transition-all select-none"
+                      onClick={() => setPreviewImage({ url: getFullImageUrl(selectedClaimModal.paymentReceipt), title: `Payment Receipt - ${selectedClaimModal.claimNumber}` })}
+                      className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-emerald-100/70 transition-all select-none shadow-2xs"
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2} />
@@ -1485,26 +1358,29 @@ export default function OfficeStaffPolicyHolders() {
                   )}
 
                   {/* Additional Documents */}
-                  {(selectedClaimModal.additionalDocuments || []).map((doc, docIdx) => (
-                    <div
-                      key={`add-doc-${docIdx}`}
-                      onClick={() => setPreviewImage({ url: doc.url, title: `${doc.name} - ${selectedClaimModal.claimNumber}` })}
-                      className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-100 transition-all select-none"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
-                        <span className="text-xs font-semibold text-slate-800 truncate">{doc.name}</span>
+                  {(selectedClaimModal.additionalDocuments || []).map((doc, docIdx) => {
+                    const fullUrl = getFullImageUrl(doc.url);
+                    return (
+                      <div
+                        key={`add-doc-${docIdx}`}
+                        onClick={() => setPreviewImage({ url: fullUrl, title: `${doc.name} - ${selectedClaimModal.claimNumber}` })}
+                        className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 transition-all select-none shadow-2xs"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-500 shrink-0" strokeWidth={2} />
+                          <span className="text-xs font-semibold text-slate-800 truncate">{doc.name}</span>
+                        </div>
+                        <span className="text-[10px] font-bold text-blue-600 shrink-0">View</span>
                       </div>
-                      <span className="text-[10px] font-bold text-blue-600 shrink-0">View</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Section 5: Third Party Vehicles (if any) */}
+              {/* Section 5: Third Party Vehicles */}
               {selectedClaimModal.otherVehicleDetails && selectedClaimModal.otherVehicleDetails.length > 0 && selectedClaimModal.otherVehicleDetails.some(ov => ov.vehiclePlate) && (
-                <div className="flex flex-col gap-3">
-                  <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider pb-2 border-b border-slate-100 select-none">
+                <div className="space-y-3 select-none">
+                  <h4 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
                     Third-Party Vehicle Details
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -1524,7 +1400,7 @@ export default function OfficeStaffPolicyHolders() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-6 sm:px-8 py-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center select-none shrink-0">
+            <div className="px-8 py-4 border-t border-slate-200 bg-slate-50 flex justify-between items-center select-none shrink-0">
               <Link
                 href={`/Office_Staff/Claims?claimId=${encodeURIComponent(selectedClaimModal.claimNumber)}`}
                 className="text-xs font-semibold text-blue-700 hover:text-blue-900 hover:underline flex items-center gap-1.5 no-underline"
@@ -1544,7 +1420,7 @@ export default function OfficeStaffPolicyHolders() {
       )}
 
       {/* ======================================================== */}
-      {/* Document Image Fullscreen Lightbox Modal */}
+      {/* Document Image Fullscreen Lightbox Modal                 */}
       {/* ======================================================== */}
       {previewImage && (
         <div className="fixed inset-0 z-80 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md transition-all duration-300">
@@ -1592,7 +1468,7 @@ export default function OfficeStaffPolicyHolders() {
       )}
 
       {/* ======================================================== */}
-      {/* Alert / Notification Popup */}
+      {/* Alert / Notification Popup                               */}
       {/* ======================================================== */}
       {customPopup.show && (
         <div className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm transition-all duration-300">
@@ -1624,7 +1500,7 @@ export default function OfficeStaffPolicyHolders() {
         </div>
       )}
 
-      {/* Floating Chat Bubble Button */}
+      {/* Floating Action Chat Button */}
       <button
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
         aria-label="Chat support"
