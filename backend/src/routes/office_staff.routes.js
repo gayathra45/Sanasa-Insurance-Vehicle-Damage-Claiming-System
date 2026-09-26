@@ -374,6 +374,13 @@ router.post("/policy-holders/:nic/vehicles", async (req, res) => {
       return res.status(404).json({ error: "Policy holder not found with the provided NIC." });
     }
 
+    const staffBranch = req.headers["x-staff-branch"] || req.body.staffBranch;
+    if (staffBranch && user.branch && user.branch.toLowerCase() !== staffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only add vehicles for policyholders registered under your branch (${staffBranch} Branch).`
+      });
+    }
+
     // Check if plate already registered under this user
     const normalizedPlate = numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
     const plateExists = user.vehicles && user.vehicles.some(
@@ -438,7 +445,8 @@ router.put("/policy-holders/:nic", async (req, res) => {
       province,
       branch,
       status,
-      bankDetails
+      bankDetails,
+      staffBranch
     } = req.body;
 
     if (!nic || !nic.trim()) {
@@ -449,6 +457,13 @@ router.put("/policy-holders/:nic", async (req, res) => {
     const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
     if (!user) {
       return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    const effectiveStaffBranch = req.headers["x-staff-branch"] || staffBranch;
+    if (effectiveStaffBranch && user.branch && user.branch.toLowerCase() !== effectiveStaffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only edit policyholders registered under your branch (${effectiveStaffBranch} Branch). This policyholder is registered under ${user.branch} Branch.`
+      });
     }
 
     if (firstName) user.firstName = firstName.trim();
@@ -496,7 +511,8 @@ router.put("/policy-holders/:nic/vehicles/:plate", async (req, res) => {
       engineNumber,
       chassisNumber,
       policyNumber,
-      status
+      status,
+      staffBranch
     } = req.body;
 
     if (!nic || !plate) {
@@ -507,6 +523,13 @@ router.put("/policy-holders/:nic/vehicles/:plate", async (req, res) => {
     const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
     if (!user) {
       return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    const effectiveStaffBranch = req.headers["x-staff-branch"] || staffBranch;
+    if (effectiveStaffBranch && user.branch && user.branch.toLowerCase() !== effectiveStaffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only edit vehicles for policyholders registered under your branch (${effectiveStaffBranch} Branch).`
+      });
     }
 
     const normTargetPlate = plate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
@@ -554,6 +577,13 @@ router.delete("/policy-holders/:nic/vehicles/:plate", async (req, res) => {
     const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
     if (!user) {
       return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    const staffBranch = req.headers["x-staff-branch"] || req.query.staffBranch;
+    if (staffBranch && user.branch && user.branch.toLowerCase() !== staffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only remove vehicles for policyholders registered under your branch (${staffBranch} Branch).`
+      });
     }
 
     const normTargetPlate = plate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();

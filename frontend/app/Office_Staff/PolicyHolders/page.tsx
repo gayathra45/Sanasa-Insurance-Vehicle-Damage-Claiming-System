@@ -402,12 +402,22 @@ export default function OfficeStaffPolicyHolders() {
       return;
     }
 
+    if (selectedHolder.branch && selectedHolder.branch.toLowerCase() !== branch.toLowerCase()) {
+      setCustomPopup({
+        show: true,
+        title: "Action Restricted",
+        message: `You can only add vehicles for policy holders registered under your branch (${branch} Branch). This policy holder belongs to ${selectedHolder.branch} Branch.`,
+        type: "alert"
+      });
+      return;
+    }
+
     try {
       setAddingVehicle(true);
       const res = await fetch(`${API_URL}/office-staff/policy-holders/${encodeURIComponent(selectedHolder.nic)}/vehicles`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newVehicleForm)
+        body: JSON.stringify({ ...newVehicleForm, staffBranch: branch })
       });
 
       const data = await res.json();
@@ -462,6 +472,18 @@ export default function OfficeStaffPolicyHolders() {
   const handleStartEdit = (holder?: PolicyHolder) => {
     const target = holder || selectedHolder;
     if (!target) return;
+
+    // Verify own branch permission
+    if (target.branch && target.branch.toLowerCase() !== branch.toLowerCase()) {
+      setCustomPopup({
+        show: true,
+        title: "Action Restricted",
+        message: `You can only edit policy holders registered under your assigned branch (${branch} Branch). This policy holder belongs to ${target.branch} Branch.`,
+        type: "alert"
+      });
+      return;
+    }
+
     if (!selectedHolder || selectedHolder.nic !== target.nic) {
       setSelectedHolder(target);
     }
@@ -486,6 +508,16 @@ export default function OfficeStaffPolicyHolders() {
 
   // Start Edit Vehicle
   const handleStartEditVehicle = (veh: Vehicle) => {
+    if (selectedHolder?.branch && selectedHolder.branch.toLowerCase() !== branch.toLowerCase()) {
+      setCustomPopup({
+        show: true,
+        title: "Action Restricted",
+        message: `You can only edit vehicles for policy holders registered under your assigned branch (${branch} Branch).`,
+        type: "alert"
+      });
+      return;
+    }
+
     setOriginalPlateToEdit(veh.numberPlate);
     setEditVehicleForm({
       numberPlate: veh.numberPlate || "",
@@ -506,6 +538,16 @@ export default function OfficeStaffPolicyHolders() {
     e.preventDefault();
     if (!selectedHolder || !originalPlateToEdit) return;
 
+    if (selectedHolder.branch && selectedHolder.branch.toLowerCase() !== branch.toLowerCase()) {
+      setCustomPopup({
+        show: true,
+        title: "Action Restricted",
+        message: `You can only edit vehicles for policy holders in your assigned branch (${branch} Branch).`,
+        type: "alert"
+      });
+      return;
+    }
+
     if (!editVehicleForm.numberPlate.trim() || !editVehicleForm.company.trim() || !editVehicleForm.model.trim()) {
       setCustomPopup({
         show: true,
@@ -523,7 +565,7 @@ export default function OfficeStaffPolicyHolders() {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(editVehicleForm)
+          body: JSON.stringify({ ...editVehicleForm, staffBranch: branch })
         }
       );
 
@@ -568,6 +610,16 @@ export default function OfficeStaffPolicyHolders() {
     e.preventDefault();
     if (!selectedHolder) return;
 
+    if (selectedHolder.branch && selectedHolder.branch.toLowerCase() !== branch.toLowerCase()) {
+      setCustomPopup({
+        show: true,
+        title: "Action Restricted",
+        message: `You can only edit policy holders registered under your own branch (${branch} Branch).`,
+        type: "alert"
+      });
+      return;
+    }
+
     if (!editFormData.firstName.trim() || !editFormData.lastName.trim()) {
       setCustomPopup({
         show: true,
@@ -594,6 +646,7 @@ export default function OfficeStaffPolicyHolders() {
           province: editFormData.province,
           branch: editFormData.branch,
           status: editFormData.status,
+          staffBranch: branch,
           bankDetails: {
             bankName: editFormData.bankName,
             branchName: editFormData.branchName,
@@ -1011,16 +1064,18 @@ export default function OfficeStaffPolicyHolders() {
                                 <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
                                 <span>View</span>
                               </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleStartEdit(holder);
-                                }}
-                                className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
-                              >
-                                <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
-                                <span>Edit</span>
-                              </button>
+                              {(!holder.branch || holder.branch.toLowerCase() === branch.toLowerCase()) && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartEdit(holder);
+                                  }}
+                                  className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
+                                >
+                                  <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
+                                  <span>Edit</span>
+                                </button>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -1086,14 +1141,21 @@ export default function OfficeStaffPolicyHolders() {
                     {selectedHolder.vehicles?.length || 0} Vehicles Insured
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => handleStartEdit(selectedHolder)}
-                  className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                >
-                  <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
-                  <span>Edit Details</span>
-                </button>
+                {(!selectedHolder.branch || selectedHolder.branch.toLowerCase() === branch.toLowerCase()) ? (
+                  <button
+                    type="button"
+                    onClick={() => handleStartEdit(selectedHolder)}
+                    className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+                  >
+                    <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
+                    <span>Edit Details</span>
+                  </button>
+                ) : (
+                  <span className="bg-slate-100 text-slate-600 border border-slate-200/80 font-semibold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-2xs">
+                    <HugeiconsIcon icon={Location01Icon} className="w-3.5 h-3.5 text-slate-400" strokeWidth={2} />
+                    <span>{selectedHolder.branch} Branch (View Only)</span>
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1140,24 +1202,6 @@ export default function OfficeStaffPolicyHolders() {
               {/* TAB 1: Personal Info (Maximum Information Display) */}
               {activeTab === "overview" && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between flex-wrap gap-2 select-none">
-                    <div>
-                      <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
-                        Personal & Contact Information
-                      </h3>
-                      <span className="text-xs text-slate-400 font-medium">Verified policyholder identity & address</span>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleStartEdit(selectedHolder)}
-                      className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                    >
-                      <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                      <span>Edit Details</span>
-                    </button>
-                  </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Identity & Contact Details Card */}
                     <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col gap-4 select-none">
@@ -1226,28 +1270,32 @@ export default function OfficeStaffPolicyHolders() {
                       <span className="text-xs text-slate-400 font-medium">Active Motor Insurance Policies</span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => setShowAddVehicleModal(true)}
-                      className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                    >
-                      <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                      <span>Add New Vehicle</span>
-                    </button>
+                    {(!selectedHolder.branch || selectedHolder.branch.toLowerCase() === branch.toLowerCase()) && (
+                      <button
+                        type="button"
+                        onClick={() => setShowAddVehicleModal(true)}
+                        className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+                      >
+                        <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                        <span>Add New Vehicle</span>
+                      </button>
+                    )}
                   </div>
 
                   {!selectedHolder.vehicles || selectedHolder.vehicles.length === 0 ? (
                     <div className="border border-slate-200 border-dashed rounded-2xl p-10 text-center text-slate-400 italic text-sm flex flex-col items-center gap-3">
                       <HugeiconsIcon icon={Car01Icon} className="w-10 h-10 mx-auto text-slate-300 mb-1" strokeWidth={1.5} />
                       <p className="font-semibold">No vehicles registered for this policy holder.</p>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddVehicleModal(true)}
-                        className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5 not-italic"
-                      >
-                        <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                        <span>Add First Vehicle</span>
-                      </button>
+                      {(!selectedHolder.branch || selectedHolder.branch.toLowerCase() === branch.toLowerCase()) && (
+                        <button
+                          type="button"
+                          onClick={() => setShowAddVehicleModal(true)}
+                          className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5 not-italic"
+                        >
+                          <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                          <span>Add First Vehicle</span>
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1314,16 +1362,18 @@ export default function OfficeStaffPolicyHolders() {
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                            <button
-                              type="button"
-                              onClick={() => handleStartEditVehicle(veh)}
-                              className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
-                            >
-                              <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
-                              <span>Edit Vehicle</span>
-                            </button>
-                          </div>
+                          {(!selectedHolder.branch || selectedHolder.branch.toLowerCase() === branch.toLowerCase()) && (
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                              <button
+                                type="button"
+                                onClick={() => handleStartEditVehicle(veh)}
+                                className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
+                              >
+                                <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
+                                <span>Edit Vehicle</span>
+                              </button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1348,15 +1398,6 @@ export default function OfficeStaffPolicyHolders() {
                         </p>
                       </div>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleStartEdit(selectedHolder)}
-                      className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
-                    >
-                      <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                      <span>Edit Bank Details</span>
-                    </button>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -1561,16 +1602,7 @@ export default function OfficeStaffPolicyHolders() {
             </div>
 
             {/* Modal Footer */}
-            <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-between items-center flex-shrink-0 select-none">
-              <button
-                type="button"
-                onClick={() => handleStartEdit(selectedHolder)}
-                className="bg-[#102A43] hover:bg-[#000080] text-white font-semibold text-xs px-5 py-2.5 rounded-full transition-all border-none cursor-pointer shadow-xs active:scale-95 flex items-center gap-2"
-              >
-                <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                <span>Edit Policy Holder Details</span>
-              </button>
-
+            <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0 select-none">
               <button
                 onClick={() => setSelectedHolder(null)}
                 className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-2.5 rounded-full transition-all border-none cursor-pointer shadow-[0_4px_12px_rgba(0,0,128,0.25)] active:scale-95 flex items-center justify-center"
