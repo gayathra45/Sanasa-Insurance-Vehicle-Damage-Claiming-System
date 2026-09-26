@@ -234,6 +234,44 @@ export default function OfficeStaffReports() {
     return `${diffDays} ${diffDays === 1 ? "Day" : "Days"}`;
   };
 
+  // Comprehensive Monthly Metrics for All Claims, Approved, Completed, and Rejected
+  const monthlyMetrics = useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const currentYear = new Date().getFullYear();
+
+    return months.map((monthName, index) => {
+      const monthClaims = claims.filter((c) => {
+        if (!c.createdAt) return false;
+        const d = new Date(c.createdAt);
+        return d.getMonth() === index && d.getFullYear() === currentYear;
+      });
+
+      const all = monthClaims.length;
+      const approved = monthClaims.filter(c => c.status === "Approved").length;
+      const completed = monthClaims.filter(c => c.status === "Approved" && (c.amount !== null && c.amount !== undefined && c.amount > 0)).length;
+      const rejected = monthClaims.filter(c => c.status === "Rejected").length;
+      const inProgress = monthClaims.filter(c => c.status === "In Progress" || c.status === "Pending").length;
+
+      return {
+        month: monthName,
+        all,
+        approved,
+        completed,
+        rejected,
+        inProgress
+      };
+    });
+  }, [claims]);
+
+  const maxMonthVal = useMemo(() => {
+    let max = 1;
+    monthlyMetrics.forEach(m => {
+      const high = Math.max(m.all, m.approved, m.completed, m.rejected);
+      if (high > max) max = high;
+    });
+    return max;
+  }, [monthlyMetrics]);
+
   // Filtered Claims
   const filteredClaims = useMemo(() => {
     return claims.filter((c) => {
@@ -979,47 +1017,125 @@ export default function OfficeStaffReports() {
                   </div>
                 </div>
 
-                {/* Monthly Claims & Payout Volume Cadence Chart */}
-                {monthlyTrend && monthlyTrend.length > 0 && (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs select-none space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
-                          <HugeiconsIcon icon={Analytics01Icon} className="w-4 h-4 text-blue-600" strokeWidth={2} />
-                          Annual Monthly Claims Incurred & Volume Trend ({new Date().getFullYear()})
-                        </h3>
-                        <p className="text-xs text-slate-400 font-medium mt-0.5">
-                          Monthly submission cadence and settlement progress for {branch} Branch
-                        </p>
-                      </div>
-                      <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-3 py-1 rounded-xl">
-                        Total {claims.length} Claims Incurred
-                      </span>
+                {/* Monthly Claims & Payout Volume Cadence Chart with Grouped Multi-Bars */}
+                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs select-none space-y-5">
+                  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                        <HugeiconsIcon icon={Analytics01Icon} className="w-4 h-4 text-blue-600" strokeWidth={2} />
+                        Annual Monthly Claims Cadence & Volume Breakdown ({new Date().getFullYear()})
+                      </h3>
+                      <p className="text-xs text-slate-400 font-medium mt-0.5">
+                        Monthly status breakdown: All Incurred, Approved, Completed, and Rejected claims for {branch} Branch
+                      </p>
                     </div>
 
-                    <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 pt-3 items-end h-32 border-b border-slate-100 pb-2">
-                      {monthlyTrend.map((m, idx) => {
-                        const maxClaims = Math.max(...monthlyTrend.map((t) => t.claims), 1);
-                        const heightPct = Math.max(Math.round((m.claims / maxClaims) * 100), 8);
-
-                        return (
-                          <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end group">
-                            <span className="text-[10px] font-bold text-slate-700 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {m.claims}
-                            </span>
-                            <div
-                              style={{ height: `${heightPct}%` }}
-                              className={`w-full max-w-[28px] rounded-lg transition-all ${
-                                m.claims > 0 ? "bg-[#102A43] group-hover:bg-[#1b75e0]" : "bg-slate-100"
-                              }`}
-                            />
-                            <span className="text-[10px] font-medium text-slate-400 uppercase">{m.month}</span>
-                          </div>
-                        );
-                      })}
+                    {/* Chart Legend Badges with Live Totals */}
+                    <div className="flex items-center gap-2 flex-wrap text-[11px] font-semibold">
+                      <div className="flex items-center gap-1.5 bg-slate-100 text-slate-800 px-3 py-1 rounded-xl border border-slate-200">
+                        <span className="w-2.5 h-2.5 rounded-xs bg-[#102A43]" />
+                        <span>All Claims: <strong>{claims.length}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-3 py-1 rounded-xl border border-emerald-200">
+                        <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500" />
+                        <span>Approved: <strong>{claims.filter(c => c.status === "Approved").length}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-sky-50 text-sky-800 px-3 py-1 rounded-xl border border-sky-200">
+                        <span className="w-2.5 h-2.5 rounded-xs bg-sky-500" />
+                        <span>Completed: <strong>{claims.filter(c => c.status === "Approved" && (c.amount !== null && c.amount !== undefined && c.amount > 0)).length}</strong></span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-rose-50 text-rose-800 px-3 py-1 rounded-xl border border-rose-200">
+                        <span className="w-2.5 h-2.5 rounded-xs bg-rose-500" />
+                        <span>Rejected: <strong>{claims.filter(c => c.status === "Rejected").length}</strong></span>
+                      </div>
                     </div>
                   </div>
-                )}
+
+                  {/* Chart Grid with 4-Bar Clusters per Month */}
+                  <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 sm:gap-3 pt-6 items-end h-48 border-b border-slate-100 pb-3">
+                    {monthlyMetrics.map((m, idx) => {
+                      const allHeight = m.all > 0 ? Math.max(Math.round((m.all / maxMonthVal) * 100), 12) : 4;
+                      const appHeight = m.approved > 0 ? Math.max(Math.round((m.approved / maxMonthVal) * 100), 12) : 4;
+                      const compHeight = m.completed > 0 ? Math.max(Math.round((m.completed / maxMonthVal) * 100), 12) : 4;
+                      const rejHeight = m.rejected > 0 ? Math.max(Math.round((m.rejected / maxMonthVal) * 100), 12) : 4;
+
+                      const hasActivity = m.all > 0 || m.approved > 0 || m.completed > 0 || m.rejected > 0;
+
+                      return (
+                        <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end group relative">
+                          {/* Floating Hover Tooltip */}
+                          <div className="absolute -top-24 z-20 hidden group-hover:flex flex-col items-center pointer-events-none transition-all duration-150">
+                            <div className="bg-slate-900 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-xl shadow-xl space-y-0.5 whitespace-nowrap min-w-[95px]">
+                              <div className="font-bold text-slate-200 border-b border-slate-700 pb-0.5 mb-0.5">
+                                {m.month} {new Date().getFullYear()}
+                              </div>
+                              <div className="flex justify-between gap-2">
+                                <span className="text-slate-400">All Claims:</span>
+                                <strong className="text-white">{m.all}</strong>
+                              </div>
+                              <div className="flex justify-between gap-2">
+                                <span className="text-emerald-400">Approved:</span>
+                                <strong className="text-emerald-300">{m.approved}</strong>
+                              </div>
+                              <div className="flex justify-between gap-2">
+                                <span className="text-sky-400">Completed:</span>
+                                <strong className="text-sky-300">{m.completed}</strong>
+                              </div>
+                              <div className="flex justify-between gap-2">
+                                <span className="text-rose-400">Rejected:</span>
+                                <strong className="text-rose-300">{m.rejected}</strong>
+                              </div>
+                            </div>
+                            <div className="w-2 h-2 bg-slate-900 rotate-45 -mt-1" />
+                          </div>
+
+                          {/* Cluster of 4 Bars */}
+                          <div className="w-full flex items-end justify-center gap-0.5 sm:gap-1 h-full px-0.5">
+                            {/* Bar 1: All Claims (Navy) */}
+                            <div
+                              style={{ height: `${allHeight}%` }}
+                              title={`All Claims: ${m.all}`}
+                              className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
+                                m.all > 0 ? "bg-[#102A43] group-hover:brightness-125" : "bg-slate-100"
+                              }`}
+                            />
+                            {/* Bar 2: Approved (Green) */}
+                            <div
+                              style={{ height: `${appHeight}%` }}
+                              title={`Approved: ${m.approved}`}
+                              className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
+                                m.approved > 0 ? "bg-emerald-500 group-hover:brightness-110" : "bg-slate-100"
+                              }`}
+                            />
+                            {/* Bar 3: Completed (Sky Blue) */}
+                            <div
+                              style={{ height: `${compHeight}%` }}
+                              title={`Completed: ${m.completed}`}
+                              className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
+                                m.completed > 0 ? "bg-sky-500 group-hover:brightness-110" : "bg-slate-100"
+                              }`}
+                            />
+                            {/* Bar 4: Rejected (Rose Red) */}
+                            <div
+                              style={{ height: `${rejHeight}%` }}
+                              title={`Rejected: ${m.rejected}`}
+                              className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
+                                m.rejected > 0 ? "bg-rose-500 group-hover:brightness-110" : "bg-slate-100"
+                              }`}
+                            />
+                          </div>
+
+                          {/* Month Label */}
+                          <span className={`text-[10px] uppercase font-bold tracking-tight ${
+                            hasActivity ? "text-slate-700" : "text-slate-400"
+                          }`}>
+                            {m.month}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {/* Report Section Tabs */}
                 <div className="space-y-4">
