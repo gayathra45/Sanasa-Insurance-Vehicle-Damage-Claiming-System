@@ -274,20 +274,72 @@ router.get("/claims", async (req, res) => {
   }
 });
 
-// GET all policy holders for a specific branch: /api/office-staff/policy-holders
+// GET all policy holders for a specific branch or search across Sri Lanka: /api/office-staff/policy-holders
 router.get("/policy-holders", async (req, res) => {
   try {
-    const { branch } = req.query;
-    if (!branch) {
-      return res.status(400).json({ error: "Branch query parameter is required." });
+    const { branch, search, nic, allSriLanka, status } = req.query;
+    
+    const query = {};
+
+    // Filter by branch if not searching all Sri Lanka
+    const isAllSriLanka = allSriLanka === "true" || allSriLanka === "1";
+    if (!isAllSriLanka && branch) {
+      query.branch = branch.trim();
     }
-    const policyHolders = await User.find(
-      { branch: branch.trim(), status: "Approved" },
-      { password: 0, documents: 0 }
-    ).sort({ createdAt: -1 });
+
+    // Filter by status if specified (default to Approved if none specified and no search)
+    if (status && status !== "all") {
+      query.status = status;
+    } else if (!status && !nic && !search) {
+      query.status = "Approved";
+    }
+
+    // Filter by specific NIC if provided
+    if (nic && nic.trim()) {
+      const cleanNic = nic.trim();
+      query.nic = { $regex: cleanNic, $options: "i" };
+    }
+
+    // Filter by search term across multiple fields
+    if (search && search.trim()) {
+      const cleanSearch = search.trim();
+      const searchRegex = { $regex: cleanSearch, $options: "i" };
+      query.$or = [
+        { nic: searchRegex },
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { email: searchRegex },
+        { mobile: searchRegex },
+        { referenceNumber: searchRegex },
+        { "vehicles.numberPlate": searchRegex },
+        { "vehicles.policyNumber": searchRegex }
+      ];
+    }
+
+    const policyHolders = await User.find(query, { password: 0 }).sort({ createdAt: -1 });
     res.json({ policyHolders });
   } catch (err) {
     console.error("Fetch office staff policy holders error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET single policy holder full details + claims by NIC: /api/office-staff/policy-holders/by-nic/:nic
+router.get("/policy-holders/by-nic/:nic", async (req, res) => {
+  try {
+    const { nic } = req.params;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC is required." });
+    }
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } }, { password: 0 });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+    const claims = await Claim.find({ userNic: { $regex: new RegExp(`^${cleanNic}$`, "i") } }).sort({ createdAt: -1 });
+    res.json({ policyHolder: user, claims });
+  } catch (err) {
+    console.error("Fetch policy holder by NIC error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });
