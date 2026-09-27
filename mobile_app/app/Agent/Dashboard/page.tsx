@@ -283,6 +283,7 @@ export default function AgentDashboard() {
   const { claimId, step } = useLocalSearchParams<{ claimId?: string; step?: string }>();
   const [agentName, setAgentName]     = useState("");
   const [agentEmail, setAgentEmail]   = useState("");
+  const [agentProfilePhoto, setAgentProfilePhoto] = useState("");
   const [claims, setClaims]           = useState<Claim[]>([]);
   const [loading, setLoading]         = useState(true);
   const [refreshing, setRefreshing]   = useState(false);
@@ -1625,6 +1626,7 @@ ${inspectionReportText.trim()}
       try {
         const agent = JSON.parse(agentStr);
         setAgentName(agent.name || "Agent");
+        setAgentProfilePhoto(agent.profilePhoto || "");
         if (agent.email) {
           setAgentEmail(agent.email);
           fetchClaims(agent.email);
@@ -2094,9 +2096,24 @@ ${inspectionReportText.trim()}
                 </TouchableOpacity>
               </Animated.View>
 
-              {/* Avatar / logout */}
-              <TouchableOpacity style={styles.avatarButton} onPress={handleLogout} activeOpacity={0.85}>
-                <Text style={styles.avatarText}>{agentName.charAt(0).toUpperCase()}</Text>
+              {/* Avatar / Profile Navigation */}
+              <TouchableOpacity
+                style={styles.avatarButton}
+                onPress={() => router.push("/Agent/Profile/page" as any)}
+                activeOpacity={0.85}
+              >
+                {agentProfilePhoto ? (
+                  <Image
+                    source={{
+                      uri: agentProfilePhoto.startsWith("http") || agentProfilePhoto.startsWith("data:")
+                        ? agentProfilePhoto
+                        : `${API_BASE_URL.replace("/api", "")}/${agentProfilePhoto.startsWith("/") ? agentProfilePhoto.slice(1) : agentProfilePhoto}`
+                    }}
+                    style={styles.avatarPhoto}
+                  />
+                ) : (
+                  <Text style={styles.avatarText}>{agentName.charAt(0).toUpperCase()}</Text>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -3658,6 +3675,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(249,115,22,0.25)",
     borderWidth: 1.5, borderColor: "rgba(249,115,22,0.5)",
     alignItems: "center", justifyContent: "center",
+    overflow: "hidden"
+  },
+  avatarPhoto: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 22,
   },
   avatarText: { color: "#ffffff", fontSize: 18, fontWeight: "800" },
 

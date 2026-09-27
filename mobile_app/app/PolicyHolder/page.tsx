@@ -139,6 +139,7 @@ export default function PolicyHolderDashboard() {
   const { lang, t } = useLanguage();
   const [userName, setUserName]       = useState("");
   const [userNic, setUserNic]         = useState("");
+  const [userProfilePhoto, setUserProfilePhoto] = useState("");
   const [vehicles, setVehicles]       = useState<Vehicle[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
@@ -305,6 +306,7 @@ export default function PolicyHolderDashboard() {
         const user = JSON.parse(userStr);
         setUserName(user.firstName || "User");
         setUserNic(user.nic || "");
+        setUserProfilePhoto(user.profilePhoto || "");
         if (user.vehicles && Array.isArray(user.vehicles)) setVehicles(user.vehicles);
         if (user.nic) {
           fetchClaims(user.nic);
@@ -340,6 +342,7 @@ export default function PolicyHolderDashboard() {
         try {
           const user = JSON.parse(userStr);
           const nic = user.nic || userNic;
+          setUserProfilePhoto(user.profilePhoto || "");
           if (nic) {
             fetchClaims(nic);
             fetchVehicles(nic, user);
@@ -647,9 +650,24 @@ export default function PolicyHolderDashboard() {
                   </TouchableOpacity>
                 </Animated.View>
 
-                {/* Avatar / logout */}
-                <TouchableOpacity style={styles.avatarButton} onPress={handleLogout} activeOpacity={0.85}>
-                  <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
+                {/* Avatar / Profile Navigation */}
+                <TouchableOpacity
+                  style={styles.avatarButton}
+                  onPress={() => router.push("/PolicyHolder/Profile" as any)}
+                  activeOpacity={0.85}
+                >
+                  {userProfilePhoto ? (
+                    <Image
+                      source={{
+                        uri: userProfilePhoto.startsWith("http") || userProfilePhoto.startsWith("data:")
+                          ? userProfilePhoto
+                          : `${API_BASE_URL.replace("/api", "")}/${userProfilePhoto.startsWith("/") ? userProfilePhoto.slice(1) : userProfilePhoto}`
+                      }}
+                      style={styles.avatarPhoto}
+                    />
+                  ) : (
+                    <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
+                  )}
                 </TouchableOpacity>
               </View>
 
@@ -1499,6 +1517,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.15)",
     borderWidth: 1.5, borderColor: "rgba(255,255,255,0.3)",
     alignItems: "center", justifyContent: "center",
+    overflow: "hidden"
+  },
+  avatarPhoto: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 22,
   },
   avatarText: { color: "#ffffff", fontSize: 18, fontWeight: "800" },
 
