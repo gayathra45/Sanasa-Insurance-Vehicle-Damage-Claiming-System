@@ -25,10 +25,57 @@ import {
   Loading03Icon,
   Delete02Icon,
   Edit02Icon,
-  ViewIcon
+  ViewIcon,
+  CheckmarkBadge01Icon
 } from "@hugeicons/core-free-icons";
 
-const formatDate = (dateStr: string) => {
+interface AgentProfileEditRequest {
+  _id: string;
+  agentId: string;
+  agentNic: string;
+  agentName: string;
+  agentEmail: string;
+  agentPhone: string;
+  branch: string;
+  requestType: string;
+  originalData: {
+    name?: string;
+    phone?: string;
+    dob?: string;
+    address?: string;
+    province?: string;
+    district?: string;
+    city?: string;
+    area?: string;
+    bankName?: string;
+    bankBranch?: string;
+    accountNumber?: string;
+    accountType?: string;
+    accountHolderName?: string;
+  };
+  requestedChanges: {
+    name?: string;
+    phone?: string;
+    dob?: string;
+    address?: string;
+    province?: string;
+    district?: string;
+    city?: string;
+    area?: string;
+    bankName?: string;
+    bankBranch?: string;
+    accountNumber?: string;
+    accountType?: string;
+    accountHolderName?: string;
+  };
+  status: "Pending" | "Approved" | "Rejected";
+  reviewNote?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+}
+
+const formatDate = (dateStr?: string) => {
   if (!dateStr) return "-";
   try {
     const d = new Date(dateStr);
@@ -42,10 +89,14 @@ const formatDate = (dateStr: string) => {
 
 /**
  * AgentsPage Component
- * Provides a management workbench to search, register, view, and delete Insurance Agents assigned to the office branch.
+ * Provides a management workbench to search, register, view, review profile edit requests, and delete Insurance Agents assigned to the office branch.
  */
 export default function AgentsPage() {
   const router = useRouter();
+
+  // --- Category Switcher State ---
+  const [activeCategory, setActiveCategory] = useState<"agents" | "edit_requests">("agents");
+  const [staffInfo, setStaffInfo] = useState<any>(null);
 
   // --- UI Display & Search States ---
   const [branch, setBranch] = useState("");
@@ -53,6 +104,22 @@ export default function AgentsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "Active" | "Offline">("all");
+
+  // --- Agent Profile Edit Requests States ---
+  const [agentEditRequests, setAgentEditRequests] = useState<AgentProfileEditRequest[]>([]);
+  const [selectedAgentEditRequest, setSelectedAgentEditRequest] = useState<AgentProfileEditRequest | null>(null);
+  const [editStatusFilter, setEditStatusFilter] = useState<"all" | "Pending" | "Approved" | "Rejected">("all");
+  const [reviewNoteInput, setReviewNoteInput] = useState("");
+  const [reviewingEditRequest, setReviewingEditRequest] = useState(false);
+  const [agentEditRejectModal, setAgentEditRejectModal] = useState<{
+    show: boolean;
+    request: AgentProfileEditRequest | null;
+    reason: string;
+  }>({
+    show: false,
+    request: null,
+    reason: ""
+  });
 
   // --- Modal / Form Registration States ---
   const [showModal, setShowModal] = useState(false);
@@ -131,7 +198,9 @@ export default function AgentsPage() {
         const staffObj = JSON.parse(savedStaff);
         if (staffObj && staffObj.branch) {
           setBranch(staffObj.branch);
+          setStaffInfo(staffObj);
           loadAgents(staffObj.branch);
+          loadAgentEditRequests(staffObj.branch);
         } else {
           router.push("/Login");
           return;
@@ -144,14 +213,15 @@ export default function AgentsPage() {
     }
   }, [router]);
 
-  // Poll agents in background for real-time status/availability updates
+  // Poll agents and edit requests in background for real-time status/availability updates
   useEffect(() => {
     if (!branch) return;
     const pollInterval = setInterval(() => {
       loadAgents(branch, true);
+      loadAgentEditRequests(branch, true);
     }, 7000);
     return () => clearInterval(pollInterval);
-  }, [branch]);
+  }, [branch, selectedAgentEditRequest]);
 
   // --- Data Loading Operations ---
   // Loads all registered Insurance Agents belonging to the specific branch.
@@ -170,6 +240,76 @@ export default function AgentsPage() {
     } finally {
       if (!silent) setLoading(false);
     }
+  };
+
+  // Loads agent profile edit requests for the branch
+  const loadAgentEditRequests = async (branchName: string, silent = false) => {
+    try {
+      const res = await fetch(`${API_URL}/office-staff/agent-profile-update-requests?branch=${encodeURIComponent(branchName)}&status=all`);
+      if (res.ok) {
+        const data = await res.json();
+        const freshRequests = data.requests || [];
+        setAgentEditRequests(freshRequests);
+        if (selectedAgentEditRequest) {
+          const updated = freshRequests.find((r: AgentProfileEditRequest) => r._id === selectedAgentEditRequest._id);
+          if (updated) setSelectedAgentEditRequest(updated);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error loading agent edit requests:", err);
+    }
+  };
+
+  // Process Approval or Rejection of Agent Edit Request
+  const handleReviewAgentEditRequest = async (id: string, status: "Approved" | "Rejected", reviewNote?: string) => {
+    try {
+      setReviewingEditRequest(true);
+      const staffName = staffInfo ? `${staffInfo.firstName || ""} ${staffInfo.lastName || ""}`.trim() || staffInfo.name || "Branch Staff" : "Branch Staff";
+      const res = await fetch(`${API_URL}/office-staff/agent-profile-update-requests/${id}/review`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status,
+          reviewNote: reviewNote || (status === "Approved" ? "Approved by Branch Office Staff" : "Rejected by Branch Office Staff"),
+          reviewedBy: staffName,
+          staffBranch: branch
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || `Failed to ${status.toLowerCase()} edit request.`);
+
+      await loadAgentEditRequests(branch, true);
+      await loadAgents(branch, true);
+
+      if (selectedAgentEditRequest && selectedAgentEditRequest._id === id) {
+        setSelectedAgentEditRequest(data.request || null);
+      }
+
+      setCustomPopup({
+        show: true,
+        title: status === "Approved" ? "Agent Edit Request Approved" : "Agent Edit Request Rejected",
+        message: status === "Approved"
+          ? "The requested agent profile and banking changes have been approved and updated in the database. A confirmation email has been sent to the agent."
+          : "The agent profile update request has been rejected. A notification email has been dispatched to the agent.",
+        type: "success"
+      });
+    } catch (err: any) {
+      console.error("Agent review error:", err);
+      setCustomPopup({ show: true, title: "Error", message: err.message || "Failed to process review.", type: "error" });
+    } finally {
+      setReviewingEditRequest(false);
+    }
+  };
+
+  const triggerApproveAgentEdit = (req: AgentProfileEditRequest) => {
+    setCustomPopup({
+      show: true,
+      title: "Approve Agent Profile Edit Request",
+      message: `Are you sure you want to approve the requested changes for Agent ${req.agentName} (${req.agentId})? The agent's profile in the database will be updated automatically and an approval email will be sent to ${req.agentEmail}.`,
+      type: "confirm",
+      onConfirm: () => handleReviewAgentEditRequest(req._id, "Approved", reviewNoteInput)
+    });
   };
 
   // --- Event Handlers & Submissions ---
@@ -460,6 +600,25 @@ export default function AgentsPage() {
     return matchesSearch && matchesStatus;
   });
 
+  // Filtered agent edit requests based on search query and edit status filter
+  const filteredAgentEditRequests = agentEditRequests.filter(req => {
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch = !q || (
+      req.agentName?.toLowerCase().includes(q) ||
+      req.agentNic?.toLowerCase().includes(q) ||
+      req.agentId?.toLowerCase().includes(q) ||
+      req.agentEmail?.toLowerCase().includes(q) ||
+      req.agentPhone?.toLowerCase().includes(q) ||
+      req.requestType?.toLowerCase().includes(q) ||
+      req.branch?.toLowerCase().includes(q)
+    );
+
+    const matchesStatus = editStatusFilter === "all" || req.status === editStatusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const pendingEditCount = agentEditRequests.filter(r => r.status === "Pending").length;
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
       <div className="flex flex-1 flex-row min-h-0">
@@ -479,7 +638,7 @@ export default function AgentsPage() {
                 <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
                   {branch || "Galle"} Branch
                 </span>
-                <span className="hidden md:inline text-slate-400 font-medium">— Insurance Agents</span>
+                <span className="hidden md:inline text-slate-400 font-medium">— Insurance Agents Management</span>
               </h1>
             </div>
             
@@ -497,220 +656,426 @@ export default function AgentsPage() {
             {/* Content Container */}
             <div className="max-w-7xl mx-auto w-full flex flex-col gap-6">
               
-              {/* Page Title */}
-              <div className="flex items-center gap-2 mb-1 select-none">
-                <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
-                  Insurance Agents Directory
-                </h2>
+              {/* Category Navigation Tabs */}
+              <div className="flex items-center gap-2 border-b border-slate-200 pb-2 select-none flex-wrap">
+                <button
+                  onClick={() => {
+                    setActiveCategory("agents");
+                    setSearchQuery("");
+                  }}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none ${
+                    activeCategory === "agents"
+                      ? "bg-[#102A43] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-transparent"
+                  }`}
+                >
+                  <HugeiconsIcon icon={UserMultiple02Icon} className="w-4 h-4" strokeWidth={2.5} />
+                  <span>Branch Agents Directory</span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    activeCategory === "agents" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                  }`}>
+                    {agents.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setActiveCategory("edit_requests");
+                    setSearchQuery("");
+                  }}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none relative ${
+                    activeCategory === "edit_requests"
+                      ? "bg-[#102A43] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-transparent"
+                  }`}
+                >
+                  <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4" strokeWidth={2.5} />
+                  <span>Agent Edit Requests</span>
+                  {pendingEditCount > 0 ? (
+                    <span className="bg-amber-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold animate-pulse shadow-xs">
+                      {pendingEditCount} Pending
+                    </span>
+                  ) : (
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      activeCategory === "edit_requests" ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
+                    }`}>
+                      {agentEditRequests.length}
+                    </span>
+                  )}
+                </button>
               </div>
 
-              {/* Search & Filter Bar */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 select-none mb-2">
-                {/* Search Bar Input */}
-                <div className="relative w-full sm:w-[360px]">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
-                  </span>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by name, NIC, email, or agent ID..."
-                    className="w-full pl-10 pr-4 py-3 rounded-full border border-slate-300 text-slate-700 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
-                    >
-                      <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2} />
-                    </button>
-                  )}
-                </div>
+              {/* ======================================================== */}
+              {/* CATEGORY 1: Branch Agents Directory                      */}
+              {/* ======================================================== */}
+              {activeCategory === "agents" && (
+                <div className="flex flex-col gap-6">
+                  {/* Search & Filter Bar */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 select-none mb-2">
+                    {/* Search Bar Input */}
+                    <div className="relative w-full sm:w-[360px]">
+                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
+                      </span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search by name, NIC, email, or agent ID..."
+                        className="w-full pl-10 pr-4 py-3 rounded-full border border-slate-300 text-slate-700 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2} />
+                        </button>
+                      )}
+                    </div>
 
-                {/* Scope Switcher / Status Filter / Register Button */}
-                <div className="flex items-center gap-3 flex-wrap justify-between sm:justify-end">
-                  {/* Branch Pill */}
-                  <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
-                    <div className="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[#102A43] text-white shadow-xs select-none">
-                      <HugeiconsIcon icon={Location01Icon} className="w-3.5 h-3.5" strokeWidth={2} />
-                      <span>{branch || "Galle"} Branch ({agents.length})</span>
+                    {/* Scope Switcher / Status Filter / Register Button */}
+                    <div className="flex items-center gap-3 flex-wrap justify-between sm:justify-end">
+                      {/* Branch Pill */}
+                      <div className="bg-slate-100 p-1 rounded-xl flex items-center gap-1 border border-slate-200">
+                        <div className="px-3.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 bg-[#102A43] text-white shadow-xs select-none">
+                          <HugeiconsIcon icon={Location01Icon} className="w-3.5 h-3.5" strokeWidth={2} />
+                          <span>{branch || "Galle"} Branch ({agents.length})</span>
+                        </div>
+                      </div>
+
+                      {/* Status Filter Tabs */}
+                      <div className="flex items-center gap-1.5">
+                        {(["all", "Active", "Offline"] as const).map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => setStatusFilter(st)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                              statusFilter === st
+                                ? "bg-[#102A43] text-white border-[#102A43] shadow-xs"
+                                : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                            }`}
+                          >
+                            {st === "all" ? "All" : st}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Register Agent Button */}
+                      <button
+                        onClick={() => {
+                          setFormData({
+                            name: "",
+                            email: "",
+                            nic: "",
+                            dob: "",
+                            address: "",
+                            phone: "",
+                            bankName: "",
+                            bankBranch: "",
+                            accountNumber: "",
+                            accountHolderName: ""
+                          });
+                          setNicFront(null);
+                          setNicBack(null);
+                          setBirthCertificate(null);
+                          setPoliceReport(null);
+                          setFormError("");
+                          setFormSuccess("");
+                          setShowModal(true);
+                        }}
+                        className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-full transition-all cursor-pointer border-none shadow-sm flex items-center gap-2 shrink-0 select-none"
+                      >
+                        <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                        <span>Register Agent</span>
+                      </button>
                     </div>
                   </div>
 
-                  {/* Status Filter Tabs */}
-                  <div className="flex items-center gap-1.5">
-                    {(["all", "Active", "Offline"] as const).map((st) => (
-                      <button
-                        key={st}
-                        onClick={() => setStatusFilter(st)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
-                          statusFilter === st
-                            ? "bg-[#102A43] text-white border-[#102A43] shadow-xs"
-                            : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
-                        }`}
-                      >
-                        {st === "all" ? "All" : st}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Table Layout */}
+                  {loading ? (
+                    <SimpleLoader message="Loading agent directory..." theme="slate" />
+                  ) : filteredAgents.length === 0 ? (
+                    <div className="bg-white border border-slate-200 rounded-[20px] p-12 text-center text-slate-400 font-medium select-none shadow-sm">
+                      No insurance agents found matching your query.
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {/* Table Header Row */}
+                      <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] gap-4 px-5 py-3 text-slate-400 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                        <div className="flex flex-col select-none min-w-0">Agent Name</div>
+                        <div className="flex flex-col select-none min-w-0">NIC Number</div>
+                        <div className="flex flex-col select-none min-w-0">Contact Details</div>
+                        <div className="flex flex-col select-none min-w-0">Location / Area</div>
+                        <div className="flex flex-col select-none min-w-0">Onboarded Date</div>
+                        <div className="flex flex-col select-none min-w-0">Status</div>
+                        <div className="flex flex-col select-none min-w-0 text-right">Actions</div>
+                      </div>
 
-                  {/* Register Agent Button */}
-                  <button
-                    onClick={() => {
-                      setFormData({
-                        name: "",
-                        email: "",
-                        nic: "",
-                        dob: "",
-                        address: "",
-                        phone: "",
-                        bankName: "",
-                        bankBranch: "",
-                        accountNumber: "",
-                        accountHolderName: ""
-                      });
-                      setNicFront(null);
-                      setNicBack(null);
-                      setBirthCertificate(null);
-                      setPoliceReport(null);
-                      setFormError("");
-                      setFormSuccess("");
-                      setShowModal(true);
-                    }}
-                    className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-semibold text-xs px-5 py-2.5 rounded-full transition-all cursor-pointer border-none shadow-sm flex items-center gap-2 shrink-0 select-none"
-                  >
-                    <HugeiconsIcon icon={Add01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                    <span>Register Agent</span>
-                  </button>
+                      {/* Table Row Items */}
+                      {filteredAgents.map((agent) => {
+                        const isOnline = (agent.availability || agent.status || "Active").toLowerCase() === "active";
+
+                        return (
+                          <div
+                            key={agent._id}
+                            onClick={() => setSelectedAgentDetails(agent)}
+                            className="bg-white border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent hover:border-blue-400 border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden group"
+                          >
+                            {/* Col 1: Agent Name & ID */}
+                            <div className="flex flex-col min-w-0 select-none">
+                              <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate" title={agent.name}>
+                                {agent.name}
+                              </h3>
+                              <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1.5 w-fit">
+                                ID: {agent.agentId || "AGT-0001"}
+                              </span>
+                            </div>
+
+                            {/* Col 2: NIC */}
+                            <div className="flex flex-col min-w-0 select-none">
+                              <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">NIC</span>
+                              <span className="text-slate-700 font-semibold text-xs font-mono">{agent.nic}</span>
+                            </div>
+
+                            {/* Col 3: Email & Phone */}
+                            <div className="flex flex-col min-w-0 select-none">
+                              <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Contact</span>
+                              <span className="text-slate-800 font-semibold text-xs truncate block" title={agent.email}>
+                                {agent.email}
+                              </span>
+                              {agent.phone && (
+                                <span className="text-[10px] text-slate-400 font-medium truncate block font-mono">
+                                  {agent.phone}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Col 4: Location / Area */}
+                            <div className="flex flex-col min-w-0 select-none">
+                              <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Location</span>
+                              <span className="text-slate-700 text-xs font-semibold truncate block">
+                                {agent.district || agent.city || agent.area || "Galle"}
+                              </span>
+                              {agent.province && (
+                                <span className="text-[10px] text-slate-400 font-medium truncate block">
+                                  {agent.province}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Col 5: Onboarded Date & Branch */}
+                            <div className="flex flex-col min-w-0 select-none">
+                              <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Date</span>
+                              <span className="text-slate-600 text-xs font-semibold">{formatDate(agent.createdAt)}</span>
+                              <span className="text-[10px] text-slate-400 font-medium">{agent.branch || branch} Branch</span>
+                            </div>
+
+                            {/* Col 6: Status */}
+                            <div className="flex flex-col min-w-0 select-none">
+                              <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Status</span>
+                              <span className={`text-[10px] font-semibold uppercase px-2.5 py-0.5 rounded-full border tracking-wide w-fit ${
+                                isOnline
+                                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  : "bg-slate-100 text-slate-500 border-slate-200"
+                              }`}>
+                                {isOnline ? "Active" : "Offline"}
+                              </span>
+                            </div>
+
+                            {/* Col 7: Actions */}
+                            <div
+                              className="flex items-center justify-between md:justify-end gap-2 mt-4 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-slate-100"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <span className="text-blue-500 font-semibold text-[11px] group-hover:underline md:hidden select-none">
+                                View Details
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => setSelectedAgentDetails(agent)}
+                                  className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
+                                >
+                                  <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
+                                  <span>View</span>
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenEditAgent(agent);
+                                  }}
+                                  className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
+                                >
+                                  <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
+                                  <span>Edit</span>
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
-              {/* Table Layout */}
-              {loading ? (
-                <SimpleLoader message="Loading agent directory..." theme="slate" />
-              ) : filteredAgents.length === 0 ? (
-                <div className="bg-white border border-slate-200 rounded-[20px] p-12 text-center text-slate-400 font-medium select-none shadow-sm">
-                  No insurance agents found matching your query.
-                </div>
-              ) : (
-                <div className="flex flex-col gap-3">
-                  {/* Table Header Row */}
-                  <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] gap-4 px-5 py-3 text-slate-400 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
-                    <div className="flex flex-col select-none min-w-0">Agent Name</div>
-                    <div className="flex flex-col select-none min-w-0">NIC Number</div>
-                    <div className="flex flex-col select-none min-w-0">Contact Details</div>
-                    <div className="flex flex-col select-none min-w-0">Location / Area</div>
-                    <div className="flex flex-col select-none min-w-0">Onboarded Date</div>
-                    <div className="flex flex-col select-none min-w-0">Status</div>
-                    <div className="flex flex-col select-none min-w-0 text-right">Actions</div>
-                  </div>
-
-                  {/* Table Row Items */}
-                  {filteredAgents.map((agent) => {
-                    const isOnline = (agent.availability || agent.status || "Active").toLowerCase() === "active";
-
-                    return (
-                      <div
-                        key={agent._id}
-                        onClick={() => setSelectedAgentDetails(agent)}
-                        className="bg-white border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent hover:border-blue-400 border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,1.2fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden group"
-                      >
-                        {/* Col 1: Agent Name & ID */}
-                        <div className="flex flex-col min-w-0 select-none">
-                          <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate" title={agent.name}>
-                            {agent.name}
-                          </h3>
-                          <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1.5 w-fit">
-                            ID: {agent.agentId || "AGT-0001"}
-                          </span>
-                        </div>
-
-                        {/* Col 2: NIC */}
-                        <div className="flex flex-col min-w-0 select-none">
-                          <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">NIC</span>
-                          <span className="text-slate-700 font-semibold text-xs font-mono">{agent.nic}</span>
-                        </div>
-
-                        {/* Col 3: Email & Phone */}
-                        <div className="flex flex-col min-w-0 select-none">
-                          <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Contact</span>
-                          <span className="text-slate-800 font-semibold text-xs truncate block" title={agent.email}>
-                            {agent.email}
-                          </span>
-                          {agent.phone && (
-                            <span className="text-[10px] text-slate-400 font-medium truncate block font-mono">
-                              {agent.phone}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Col 4: Location / Area */}
-                        <div className="flex flex-col min-w-0 select-none">
-                          <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Location</span>
-                          <span className="text-slate-700 text-xs font-semibold truncate block">
-                            {agent.district || agent.city || agent.area || "Galle"}
-                          </span>
-                          {agent.province && (
-                            <span className="text-[10px] text-slate-400 font-medium truncate block">
-                              {agent.province}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Col 5: Onboarded Date & Branch */}
-                        <div className="flex flex-col min-w-0 select-none">
-                          <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Date</span>
-                          <span className="text-slate-600 text-xs font-semibold">{formatDate(agent.createdAt)}</span>
-                          <span className="text-[10px] text-slate-400 font-medium">{agent.branch || branch} Branch</span>
-                        </div>
-
-                        {/* Col 6: Status */}
-                        <div className="flex flex-col min-w-0 select-none">
-                          <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Status</span>
-                          <span className={`text-[10px] font-semibold uppercase px-2.5 py-0.5 rounded-full border tracking-wide w-fit ${
-                            isOnline
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-slate-100 text-slate-500 border-slate-200"
-                          }`}>
-                            {isOnline ? "Active" : "Offline"}
-                          </span>
-                        </div>
-
-                        {/* Col 7: Actions */}
-                        <div
-                          className="flex items-center justify-between md:justify-end gap-2 mt-4 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-slate-100"
-                          onClick={(e) => e.stopPropagation()}
+              {/* ======================================================== */}
+              {/* CATEGORY 2: Agent Profile Edit Requests                  */}
+              {/* ======================================================== */}
+              {activeCategory === "edit_requests" && (
+                <div className="flex flex-col gap-6">
+                  {/* Search & Status Filter Bar */}
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 select-none mb-2">
+                    {/* Search Bar Input */}
+                    <div className="relative w-full sm:w-[360px]">
+                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
+                      </span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Search edit requests by agent name, NIC, ID..."
+                        className="w-full pl-10 pr-4 py-3 rounded-full border border-slate-300 text-slate-700 placeholder:text-slate-400 text-sm focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
                         >
-                          <span className="text-blue-500 font-semibold text-[11px] group-hover:underline md:hidden select-none">
-                            View Details
-                          </span>
-                          <div className="flex items-center gap-2">
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Status Filter Tabs */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {(["all", "Pending", "Approved", "Rejected"] as const).map((st) => (
+                        <button
+                          key={st}
+                          onClick={() => setEditStatusFilter(st)}
+                          className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                            editStatusFilter === st
+                              ? "bg-[#102A43] text-white border-[#102A43] shadow-xs"
+                              : "bg-white text-slate-600 border-slate-300 hover:bg-slate-50"
+                          }`}
+                        >
+                          {st === "all" ? "All Requests" : st}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Requests Table */}
+                  {filteredAgentEditRequests.length === 0 ? (
+                    <div className="bg-white border border-slate-200 rounded-[20px] p-12 text-center text-slate-400 font-medium select-none shadow-sm flex flex-col items-center gap-2">
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-8 h-8 text-slate-300" strokeWidth={1.5} />
+                      <p>No agent profile edit requests found matching your query.</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3">
+                      {/* Table Header Row */}
+                      <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.1fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] gap-4 px-5 py-3 text-slate-400 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                        <div className="min-w-0">Agent Name & ID</div>
+                        <div className="min-w-0">NIC Number</div>
+                        <div className="min-w-0">Contact Phone</div>
+                        <div className="min-w-0">Request Category</div>
+                        <div className="min-w-0">Submitted Date</div>
+                        <div className="min-w-0">Status</div>
+                        <div className="min-w-0 text-right">Actions</div>
+                      </div>
+
+                      {/* Request Items */}
+                      {filteredAgentEditRequests.map((req) => (
+                        <div
+                          key={req._id}
+                          onClick={() => {
+                            setSelectedAgentEditRequest(req);
+                            setReviewNoteInput(req.reviewNote || "");
+                          }}
+                          className={`bg-white border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.1fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_minmax(0,1.2fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md border-l-[6px] ${
+                            req.status === "Pending"
+                              ? "border-l-amber-500 bg-gradient-to-r from-amber-50/20 via-transparent to-transparent"
+                              : req.status === "Approved"
+                              ? "border-l-emerald-500 bg-gradient-to-r from-emerald-50/10 via-transparent to-transparent"
+                              : "border-l-red-500 bg-gradient-to-r from-red-50/10 via-transparent to-transparent"
+                          }`}
+                        >
+                          {/* Col 1: Name & ID */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate" title={req.agentName}>
+                              {req.agentName}
+                            </h3>
+                            <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1.5 w-fit">
+                              ID: {req.agentId || "AGT-0001"}
+                            </span>
+                          </div>
+
+                          {/* Col 2: NIC */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">NIC</span>
+                            <span className="text-slate-700 font-semibold text-xs font-mono">{req.agentNic}</span>
+                          </div>
+
+                          {/* Col 3: Contact */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Contact</span>
+                            <span className="text-slate-800 font-semibold text-xs truncate font-mono">{req.agentPhone || "-"}</span>
+                            <span className="text-[10px] text-slate-400 truncate">{req.agentEmail}</span>
+                          </div>
+
+                          {/* Col 4: Request Category */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Category</span>
+                            <span className="bg-sky-50 text-sky-800 border border-sky-200/80 px-2.5 py-1 rounded-lg text-xs font-semibold w-fit">
+                              {req.requestType}
+                            </span>
+                          </div>
+
+                          {/* Col 5: Submitted Date */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Date</span>
+                            <span className="text-slate-600 text-xs font-semibold">{formatDate(req.createdAt)}</span>
+                            <span className="text-[10px] text-slate-400">{req.branch || branch} Branch</span>
+                          </div>
+
+                          {/* Col 6: Status */}
+                          <div className="flex flex-col min-w-0 select-none">
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Status</span>
+                            <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border tracking-wide w-fit ${
+                              req.status === "Pending"
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : req.status === "Approved"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-red-50 text-red-700 border-red-200"
+                            }`}>
+                              {req.status}
+                            </span>
+                          </div>
+
+                          {/* Col 7: Actions */}
+                          <div
+                            className="flex items-center justify-between md:justify-end gap-2 mt-4 md:mt-0 pt-3 md:pt-0 border-t md:border-0 border-slate-100"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <button
-                              onClick={() => setSelectedAgentDetails(agent)}
-                              className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
+                              onClick={() => {
+                                setSelectedAgentEditRequest(req);
+                                setReviewNoteInput(req.reviewNote || "");
+                              }}
+                              className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
                             >
                               <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
-                              <span>View</span>
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenEditAgent(agent);
-                              }}
-                              className="border border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-xs bg-white active:scale-95 flex items-center gap-1.5"
-                            >
-                              <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-slate-600" strokeWidth={2.5} />
-                              <span>Edit</span>
+                              <span>{req.status === "Pending" ? "Review & Diff" : "View Record"}</span>
                             </button>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
+
             </div>
           </main>
         </div>
@@ -1652,7 +2017,215 @@ export default function AgentsPage() {
         </div>
       )}
 
-    
+      {/* ======================================================== */}
+      {/* Agent Edit Request Diff & Review Modal                   */}
+      {/* ======================================================== */}
+      {selectedAgentEditRequest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-3xl shadow-2xl border border-slate-100 overflow-hidden transform scale-100 transition-all animate-scale-up text-left p-6 sm:p-8 flex flex-col gap-6 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-3">
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold text-sm ${
+                  selectedAgentEditRequest.status === "Pending"
+                    ? "bg-amber-50 text-amber-700 border border-amber-200"
+                    : selectedAgentEditRequest.status === "Approved"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "bg-red-50 text-red-700 border border-red-200"
+                }`}>
+                  <HugeiconsIcon icon={Edit02Icon} className="w-5 h-5" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-base text-slate-900">
+                      Agent Profile Edit Request: {selectedAgentEditRequest.agentName}
+                    </h3>
+                    <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${
+                      selectedAgentEditRequest.status === "Pending"
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : selectedAgentEditRequest.status === "Approved"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-red-50 text-red-700 border-red-200"
+                    }`}>
+                      {selectedAgentEditRequest.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">
+                    Agent ID: <span className="font-mono text-slate-700 font-bold">{selectedAgentEditRequest.agentId}</span> • NIC: <span className="font-mono text-slate-700 font-bold">{selectedAgentEditRequest.agentNic}</span> • Branch: {selectedAgentEditRequest.branch} • Submitted {formatDate(selectedAgentEditRequest.createdAt)}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedAgentEditRequest(null)}
+                className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1 rounded-lg hover:bg-slate-100"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2} />
+              </button>
+            </div>
+
+            {/* Diff Comparison Table */}
+            <div className="flex flex-col gap-3">
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Changes Requested for Verification ({selectedAgentEditRequest.requestType})
+              </h4>
+
+              <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold text-[11px] uppercase tracking-wider">
+                      <th className="py-3 px-4 w-1/3">Field Name</th>
+                      <th className="py-3 px-4 w-1/3">Original Record</th>
+                      <th className="py-3 px-4 w-1/3 bg-blue-50/50 text-blue-900">Requested Value</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {Object.keys(selectedAgentEditRequest.requestedChanges || {}).map((key) => {
+                      const origVal = (selectedAgentEditRequest.originalData as any)?.[key];
+                      const newVal = (selectedAgentEditRequest.requestedChanges as any)?.[key];
+                      const isChanged = origVal !== newVal;
+
+                      const formatFieldName = (fieldName: string) => {
+                        return fieldName
+                          .replace(/([A-Z])/g, ' $1')
+                          .replace(/^./, str => str.toUpperCase());
+                      };
+
+                      return (
+                        <tr key={key} className={isChanged ? "bg-amber-50/20" : ""}>
+                          <td className="py-3 px-4 font-semibold text-slate-700">
+                            {formatFieldName(key)}
+                          </td>
+                          <td className="py-3 px-4 text-slate-500 font-medium">
+                            {origVal || <span className="text-slate-300 italic">None</span>}
+                          </td>
+                          <td className="py-3 px-4 font-bold text-sky-900 bg-sky-50/40">
+                            {newVal || <span className="text-slate-300 italic">None</span>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Review Note & Status Information */}
+            {selectedAgentEditRequest.status === "Pending" ? (
+              <div className="flex flex-col gap-2">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Review Notes / Approval Remarks
+                </label>
+                <input
+                  type="text"
+                  value={reviewNoteInput}
+                  onChange={(e) => setReviewNoteInput(e.target.value)}
+                  placeholder="e.g. Verified residential address and direct deposit settlement bank account."
+                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                />
+              </div>
+            ) : (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col gap-1.5 text-xs">
+                <div className="flex items-center justify-between text-slate-500">
+                  <span>Reviewed by: <strong className="text-slate-800">{selectedAgentEditRequest.reviewedBy || "Branch Staff"}</strong></span>
+                  <span>Reviewed on: <strong className="text-slate-800">{formatDate(selectedAgentEditRequest.reviewedAt)}</strong></span>
+                </div>
+                <div className="text-slate-600 mt-1">
+                  <strong>Notes:</strong> {selectedAgentEditRequest.reviewNote || "No notes recorded"}
+                </div>
+              </div>
+            )}
+
+            {/* Actions Bar */}
+            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSelectedAgentEditRequest(null)}
+                className="px-6 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+              >
+                Close
+              </button>
+
+              {selectedAgentEditRequest.status === "Pending" && (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAgentEditRejectModal({
+                        show: true,
+                        request: selectedAgentEditRequest,
+                        reason: ""
+                      });
+                    }}
+                    disabled={reviewingEditRequest}
+                    className="px-6 py-2.5 rounded-full bg-red-50 hover:bg-red-100 text-red-700 text-xs font-semibold border border-red-200 cursor-pointer"
+                  >
+                    Reject Request
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => triggerApproveAgentEdit(selectedAgentEditRequest)}
+                    disabled={reviewingEditRequest}
+                    className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md cursor-pointer border-none flex items-center gap-2"
+                  >
+                    {reviewingEditRequest && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                    <span>Approve & Update Agent</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Reason Modal */}
+      {agentEditRejectModal.show && agentEditRejectModal.request && (
+        <div className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-100 p-6 flex flex-col gap-4">
+            <h3 className="text-base font-bold text-slate-900">
+              Reject Agent Edit Request
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Please enter the reason for rejecting Agent {agentEditRejectModal.request.agentName}'s profile changes. This reason will be emailed to {agentEditRejectModal.request.agentEmail}.
+            </p>
+            <textarea
+              rows={3}
+              required
+              placeholder="e.g. Bank account holder name does not match official agent identity."
+              value={agentEditRejectModal.reason}
+              onChange={(e) => setAgentEditRejectModal({ ...agentEditRejectModal, reason: e.target.value })}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
+            />
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setAgentEditRejectModal({ show: false, request: null, reason: "" })}
+                className="px-5 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={!agentEditRejectModal.reason.trim() || reviewingEditRequest}
+                onClick={() => {
+                  const reqId = agentEditRejectModal.request?._id;
+                  const reason = agentEditRejectModal.reason;
+                  setAgentEditRejectModal({ show: false, request: null, reason: "" });
+                  if (reqId) {
+                    handleReviewAgentEditRequest(reqId, "Rejected", reason);
+                  }
+                }}
+                className="px-6 py-2.5 rounded-full bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-semibold shadow-md cursor-pointer border-none flex items-center gap-2"
+              >
+                {reviewingEditRequest && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                <span>Confirm Rejection</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Floating Chat Bubble Button */}
       <button
         className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"

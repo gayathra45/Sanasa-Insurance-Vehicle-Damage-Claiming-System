@@ -10,8 +10,9 @@ import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
 import ProfileUpdateRequest from "../models/profile_update_request.model.js";
+import AgentProfileUpdateRequest from "../models/agent_profile_update_request.model.js";
 import { hashPassword } from "../utils/crypto.js";
-import { sendEmail, getBaseTemplate, sendProfileUpdateStatusEmail } from "../utils/email.js";
+import { sendEmail, getBaseTemplate, sendProfileUpdateStatusEmail, sendAgentProfileUpdateStatusEmail } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { 
   analyzeAccidentDamage, 
@@ -1559,6 +1560,123 @@ router.patch("/vehicles/verify", async (req, res) => {
   } catch (err) {
     console.error("Verify vehicle error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET all agent profile update requests for a branch: /api/office-staff/agent-profile-update-requests
+router.get("/agent-profile-update-requests", async (req, res) => {
+  try {
+    const { branch, status, search, allSriLanka } = req.query;
+    const query = {};
+
+    const isAllSriLanka = allSriLanka === "true" || allSriLanka === "1";
+    if (!isAllSriLanka && branch) {
+      query.branch = { $regex: new RegExp(`^${branch.trim()}$`, "i") };
+    }
+
+    if (status && status !== "all") {
+      query.status = status;
+    }
+
+    if (search && search.trim()) {
+      const cleanSearch = search.trim();
+      const sRegex = { $regex: cleanSearch, $options: "i" };
+      query.$or = [
+        { agentId: sRegex },
+        { agentName: sRegex },
+        { agentEmail: sRegex },
+        { agentNic: sRegex },
+        { agentPhone: sRegex }
+      ];
+    }
+
+    const requests = await AgentProfileUpdateRequest.find(query).sort({ createdAt: -1 });
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch agent profile update requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PATCH review agent profile update request: /api/office-staff/agent-profile-update-requests/:id/review
+router.patch("/agent-profile-update-requests/:id/review", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, reviewNote, reviewedBy, staffBranch } = req.body;
+
+    if (!["Approved", "Rejected"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status. Must be Approved or Rejected." });
+    }
+
+    const updateRequest = await AgentProfileUpdateRequest.findById(id);
+    if (!updateRequest) {
+      return res.status(404).json({ error: "Agent profile update request not found." });
+    }
+
+    const effectiveStaffBranch = req.headers["x-staff-branch"] || staffBranch;
+    if (effectiveStaffBranch && updateRequest.branch && updateRequest.branch.toLowerCase() !== effectiveStaffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only review requests for your assigned branch (${effectiveStaffBranch} Branch).`
+      });
+    }
+
+    updateRequest.status = status;
+    updateRequest.reviewNote = reviewNote || "";
+    updateRequest.reviewedBy = reviewedBy || "Office Staff";
+    updateRequest.reviewedAt = new Date();
+    updateRequest.updatedAt = new Date();
+
+    // If Approved, automatically apply the requested changes to the Agent in database
+    if (status === "Approved") {
+      const agent = await Agent.findOne({
+        $or: [
+          { email: updateRequest.agentEmail.toLowerCase() },
+          { agentId: updateRequest.agentId }
+        ]
+      });
+
+      if (agent) {
+        const changes = updateRequest.requestedChanges || {};
+
+        if (changes.phone !== undefined) agent.phone = changes.phone;
+        if (changes.address !== undefined) agent.address = changes.address;
+        if (changes.city !== undefined) agent.city = changes.city;
+        if (changes.district !== undefined) agent.district = changes.district;
+        if (changes.area !== undefined) agent.area = changes.area;
+        if (changes.province !== undefined) agent.province = changes.province;
+
+        if (changes.bankName !== undefined) agent.bankName = changes.bankName;
+        if (changes.bankBranch !== undefined) agent.bankBranch = changes.bankBranch;
+        if (changes.accountNumber !== undefined) agent.accountNumber = changes.accountNumber;
+        if (changes.accountType !== undefined) agent.accountType = changes.accountType;
+        if (changes.accountHolderName !== undefined) agent.accountHolderName = changes.accountHolderName;
+
+        if (changes.profilePhoto !== undefined) agent.profilePhoto = changes.profilePhoto;
+
+        await agent.save();
+      }
+    }
+
+    await updateRequest.save();
+
+    // Send email notification to agent
+    await sendAgentProfileUpdateStatusEmail(
+      updateRequest.agentEmail,
+      updateRequest.agentName,
+      updateRequest.agentId,
+      status,
+      updateRequest.requestType,
+      updateRequest.reviewNote,
+      updateRequest.branch
+    );
+
+    res.json({
+      message: `Agent profile update request has been ${status.toLowerCase()} successfully.`,
+      request: updateRequest
+    });
+  } catch (err) {
+    console.error("Review agent profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
   }
 });
 

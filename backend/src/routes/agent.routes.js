@@ -1,12 +1,13 @@
 import express from "express";
 import crypto from "crypto";
 import Agent from "../models/agent.model.js";
+import AgentProfileUpdateRequest from "../models/agent_profile_update_request.model.js";
 import Claim from "../models/claim.model.js";
 import User from "../models/user.model.js";
 import { logAgentActivity } from "../utils/activity.js";
 import AgentActivity from "../models/agent_activity.model.js";
 import { sendAgentActivityEmail } from "../utils/email.js";
-
+import { uploadToCloudinary } from "../utils/upload.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
@@ -352,6 +353,225 @@ router.post("/change-password", async (req, res) => {
     res.json({ message: "Password updated successfully." });
   } catch (err) {
     console.error("Change password route error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET agent profile details: /api/agent/profile?email=...
+router.get("/profile", async (req, res) => {
+  try {
+    const { email, agentId } = req.query;
+    if (!email && !agentId) {
+      return res.status(400).json({ error: "Agent email or agentId is required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    if (agentId) query.agentId = agentId.trim().toUpperCase();
+
+    const agent = await Agent.findOne(query, { password: 0 });
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    // Fetch claim stats for this agent
+    const cleanEmail = agent.email.toLowerCase();
+    const assignedClaims = await Claim.find({ assignedAgent: cleanEmail });
+    const totalClaims = assignedClaims.length;
+    const activeClaims = assignedClaims.filter(c => c.status === "In Progress" || c.currentStep === 3).length;
+    const completedInspections = assignedClaims.filter(c => c.inspectionSubmitted || c.currentStep >= 4).length;
+
+    res.json({
+      agent,
+      stats: {
+        totalClaims,
+        activeClaims,
+        completedInspections
+      }
+    });
+  } catch (err) {
+    console.error("Fetch agent profile error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PUT update agent profile: /api/agent/profile
+router.put("/profile", async (req, res) => {
+  try {
+    const {
+      email,
+      agentId,
+      profilePhoto,
+      phone,
+      address,
+      city,
+      district,
+      area,
+      province,
+      bankName,
+      bankBranch,
+      accountNumber,
+      accountType,
+      accountHolderName
+    } = req.body;
+
+    if (!email && !agentId) {
+      return res.status(400).json({ error: "Agent email or agentId is required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    if (agentId) query.agentId = agentId.trim().toUpperCase();
+
+    const agent = await Agent.findOne(query);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    // Handle profile photo upload if provided as data URL
+    if (profilePhoto !== undefined) {
+      if (profilePhoto && typeof profilePhoto === "string" && profilePhoto.startsWith("data:image")) {
+        try {
+          const photoUrl = await uploadToCloudinary(profilePhoto, "agents/avatars");
+          agent.profilePhoto = photoUrl;
+        } catch (uploadErr) {
+          console.warn("Cloudinary agent photo upload failed, storing fallback:", uploadErr.message);
+          agent.profilePhoto = profilePhoto;
+        }
+      } else {
+        agent.profilePhoto = profilePhoto || "";
+      }
+    }
+
+    // Update editable contact and bank fields
+    if (phone !== undefined) agent.phone = phone.trim();
+    if (address !== undefined) agent.address = address.trim();
+    if (city !== undefined) agent.city = city.trim();
+    if (district !== undefined) agent.district = district.trim();
+    if (area !== undefined) agent.area = area.trim();
+    if (province !== undefined) agent.province = province.trim();
+    if (bankName !== undefined) agent.bankName = bankName.trim();
+    if (bankBranch !== undefined) agent.bankBranch = bankBranch.trim();
+    if (accountNumber !== undefined) agent.accountNumber = accountNumber.trim();
+    if (accountType !== undefined) agent.accountType = accountType.trim();
+    if (accountHolderName !== undefined) agent.accountHolderName = accountHolderName.trim();
+
+    await agent.save();
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    await logAgentActivity(agent.email, "Profile Updated", deviceType, "Agent updated personal contact and profile details.");
+
+    const agentObj = agent.toObject();
+    delete agentObj.password;
+
+    res.json({ message: "Agent profile updated successfully.", agent: agentObj });
+  } catch (err) {
+    console.error("Update agent profile error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// POST submit agent profile update request for branch review: /api/agent/profile-update-request
+router.post("/profile-update-request", async (req, res) => {
+  try {
+    const { email, agentId, requestType, requestedChanges } = req.body;
+
+    if (!email && !agentId) {
+      return res.status(400).json({ error: "Agent email or agentId is required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    if (agentId) query.agentId = agentId.trim().toUpperCase();
+
+    const agent = await Agent.findOne(query);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    if (!requestedChanges || typeof requestedChanges !== "object" || Object.keys(requestedChanges).length === 0) {
+      return res.status(400).json({ error: "No changes provided in the update request." });
+    }
+
+    // Security check: strictly disallow editing immutable credentials directly
+    const sanitizedChanges = { ...requestedChanges };
+    delete sanitizedChanges.nic;
+    delete sanitizedChanges.branch;
+    delete sanitizedChanges.agentId;
+    delete sanitizedChanges._id;
+    delete sanitizedChanges.password;
+    delete sanitizedChanges.status;
+
+    // Capture snapshot of original data
+    const originalData = {
+      name: agent.name,
+      nic: agent.nic,
+      phone: agent.phone || "",
+      address: agent.address || "",
+      city: agent.city || "",
+      district: agent.district || "",
+      area: agent.area || "",
+      province: agent.province || "",
+      bankName: agent.bankName || "",
+      bankBranch: agent.bankBranch || "",
+      accountNumber: agent.accountNumber || "",
+      accountType: agent.accountType || "",
+      accountHolderName: agent.accountHolderName || ""
+    };
+
+    const newRequest = new AgentProfileUpdateRequest({
+      agentId: agent.agentId,
+      agentNic: agent.nic,
+      agentName: agent.name,
+      agentEmail: agent.email,
+      agentPhone: agent.phone || "",
+      branch: agent.branch || "Galle",
+      requestType: requestType || "Personal & Contact",
+      originalData,
+      requestedChanges: sanitizedChanges,
+      status: "Pending"
+    });
+
+    await newRequest.save();
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    await logAgentActivity(
+      agent.email,
+      "Profile Edit Request Submitted",
+      deviceType,
+      `Submitted profile edit request (${requestType || "Personal & Contact"}) to ${agent.branch} Branch.`
+    );
+
+    res.status(201).json({
+      message: "Your profile update request has been submitted to your branch staff for review.",
+      request: newRequest
+    });
+  } catch (err) {
+    console.error("Submit agent profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// GET agent's own profile update requests: /api/agent/profile-update-requests
+router.get("/profile-update-requests", async (req, res) => {
+  try {
+    const { email, agentId } = req.query;
+    if (!email && !agentId) {
+      return res.status(400).json({ error: "Agent email or agentId is required." });
+    }
+
+    const query = {};
+    if (email) query.agentEmail = email.trim().toLowerCase();
+    if (agentId) query.agentId = agentId.trim().toUpperCase();
+
+    const requests = await AgentProfileUpdateRequest.find(query).sort({ createdAt: -1 });
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch agent profile update requests error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
   }
 });

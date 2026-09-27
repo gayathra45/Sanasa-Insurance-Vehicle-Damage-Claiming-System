@@ -10,6 +10,7 @@ const agentSchema = new mongoose.Schema({
   address: { type: String, required: true },
   dob: { type: String, required: true },
   branch: { type: String, required: true },
+  profilePhoto: { type: String, default: "" },
   phone: { type: String, default: "" },
   city: { type: String, default: "" },
   district: { type: String, default: "" },
