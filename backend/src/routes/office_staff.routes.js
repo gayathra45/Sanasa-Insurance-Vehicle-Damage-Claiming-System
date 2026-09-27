@@ -9,8 +9,9 @@ import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
+import ProfileUpdateRequest from "../models/profile_update_request.model.js";
 import { hashPassword } from "../utils/crypto.js";
-import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { sendEmail, getBaseTemplate, sendProfileUpdateStatusEmail } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { 
   analyzeAccidentDamage, 
@@ -659,6 +660,127 @@ router.patch("/registrations/:id/status", async (req, res) => {
   } catch (err) {
     console.error("Update registration status error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET all profile update requests for a specific branch: /api/office-staff/profile-update-requests
+router.get("/profile-update-requests", async (req, res) => {
+  try {
+    const { branch, status } = req.query;
+    if (!branch) {
+      return res.status(400).json({ error: "Branch query parameter is required." });
+    }
+
+    const query = { branch: branch.trim() };
+    if (status && status !== "all") {
+      query.status = status;
+    }
+
+    const requests = await ProfileUpdateRequest.find(query).sort({ createdAt: -1 });
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch profile update requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PATCH approve or reject a profile update request: /api/office-staff/profile-update-requests/:id/review
+router.patch("/profile-update-requests/:id/review", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, reviewNote, reviewerName } = req.body;
+
+    if (!["Approve", "Reject"].includes(action)) {
+      return res.status(400).json({ error: "Action must be either 'Approve' or 'Reject'." });
+    }
+
+    const request = await ProfileUpdateRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({ error: "Profile update request not found." });
+    }
+
+    if (request.status !== "Pending") {
+      return res.status(400).json({ error: `This request has already been ${request.status.toLowerCase()}.` });
+    }
+
+    const user = await User.findOne({ nic: request.userNic });
+    if (!user) {
+      return res.status(404).json({ error: "Associated policy holder not found in database." });
+    }
+
+    if (action === "Approve") {
+      const changes = request.requestedChanges || {};
+
+      // Apply changes to the user record in database
+      if (changes.firstName) user.firstName = changes.firstName.trim();
+      if (changes.lastName) user.lastName = changes.lastName.trim();
+      if (changes.mobile) user.mobile = changes.mobile.trim();
+      if (changes.email) user.email = changes.email.trim().toLowerCase();
+      if (changes.dob) user.dob = changes.dob.trim();
+      if (changes.address) user.address = changes.address.trim();
+      if (changes.province) user.province = changes.province.trim();
+      if (changes.city) user.city = changes.city.trim();
+
+      if (changes.documents && typeof changes.documents === "object") {
+        if (!user.documents) user.documents = {};
+        if (changes.documents.nicFront) user.documents.nicFront = changes.documents.nicFront;
+        if (changes.documents.nicBack) user.documents.nicBack = changes.documents.nicBack;
+        if (changes.documents.vehicleReg) user.documents.vehicleReg = changes.documents.vehicleReg;
+        if (changes.documents.revenueLicense) user.documents.revenueLicense = changes.documents.revenueLicense;
+      }
+
+      await user.save();
+
+      // Update request status
+      request.status = "Approved";
+      request.reviewedBy = reviewerName || "Branch Staff";
+      request.reviewedAt = new Date();
+      request.reviewNote = reviewNote || "Approved by Branch Office Staff";
+      request.updatedAt = new Date();
+      await request.save();
+
+      // Send status email to policy holder's personal email
+      await sendProfileUpdateStatusEmail(
+        user.email || request.userEmail,
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() || request.userName,
+        "Approved",
+        request.requestType,
+        reviewNote || "Your changes have been verified and applied to your account.",
+        user.branch || request.branch || "Galle"
+      );
+
+      res.json({
+        message: "Profile update request approved successfully. User data has been updated in database.",
+        request,
+        user
+      });
+    } else {
+      // Reject action
+      request.status = "Rejected";
+      request.reviewedBy = reviewerName || "Branch Staff";
+      request.reviewedAt = new Date();
+      request.reviewNote = reviewNote || "Request rejected by branch staff.";
+      request.updatedAt = new Date();
+      await request.save();
+
+      // Send status email to policy holder's personal email
+      await sendProfileUpdateStatusEmail(
+        user.email || request.userEmail,
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() || request.userName,
+        "Rejected",
+        request.requestType,
+        reviewNote || "Your profile update request could not be approved.",
+        user.branch || request.branch || "Galle"
+      );
+
+      res.json({
+        message: "Profile update request rejected.",
+        request
+      });
+    }
+  } catch (err) {
+    console.error("Review profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
   }
 });
 

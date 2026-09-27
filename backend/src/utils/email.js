@@ -328,3 +328,86 @@ export async function sendAgentActivityEmail(agentEmail, activityType, claim, cu
     console.error("❌ Error sending agent activity email:", error);
   }
 }
+
+export async function sendProfileUpdateStatusEmail(userEmail, userName, status, requestType, reviewNote = "", branch = "Galle") {
+  try {
+    if (!userEmail || userEmail.trim() === "") return;
+
+    const cleanEmail = userEmail.trim().toLowerCase();
+    const isApproved = status === "Approved";
+    const subject = isApproved
+      ? `[Sanasa Insurance] Profile Update Approved - ${branch} Branch`
+      : `[Sanasa Insurance] Profile Update Rejected - ${branch} Branch`;
+
+    const formattedTime = formatSriLankaDateTime(new Date());
+
+    const bodyHtml = `
+      <h2 style="color: ${isApproved ? '#059669' : '#dc2626'}; margin-top: 0;">
+        ${isApproved ? "Profile & Document Changes Approved" : "Profile & Document Changes Rejected"}
+      </h2>
+      <p>Dear <strong>${userName || "Policy Holder"}</strong>,</p>
+      <p>
+        Your recent request to update your <strong>${requestType || "Personal Information & Documents"}</strong> 
+        has been reviewed by the <strong>${branch} Branch</strong> team.
+      </p>
+
+      <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 540px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; width: 35%; color: #4a5568;">Review Status:</td>
+          <td style="padding: 12px 16px; color: ${isApproved ? '#059669' : '#dc2626'}; font-weight: 700;">
+            ${status.toUpperCase()}
+          </td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Category:</td>
+          <td style="padding: 12px 16px; color: #1a202c; font-weight: 600;">${requestType || "Personal & Contact Information"}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Reviewing Branch:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${branch} Branch Office</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Processed At:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${formattedTime} (Sri Lanka Time)</td>
+        </tr>
+        ${
+          reviewNote
+            ? `
+        <tr style="background-color: ${isApproved ? '#ecfdf5' : '#fef2f2'};">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Branch Note / Reason:</td>
+          <td style="padding: 12px 16px; color: ${isApproved ? '#065f46' : '#991b1b'}; font-weight: 500;">
+            ${reviewNote}
+          </td>
+        </tr>
+        `
+            : ""
+        }
+      </table>
+
+      ${
+        isApproved
+          ? `
+        <p style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 14px; border-radius: 6px; font-size: 14px; color: #065f46;">
+          ✅ Your official policy records and verified documents have been updated successfully in our database.
+        </p>
+      `
+          : `
+        <p style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 14px; border-radius: 6px; font-size: 14px; color: #991b1b;">
+          ⚠️ Your requested changes were not approved. Please review the branch note above, verify your documents or details, and re-submit if required.
+        </p>
+      `
+      }
+
+      <p style="margin-top: 25px; font-size: 14px; color: #4a5568;">
+        You can log in to your Sanasa Insurance Policy Holder portal anytime to view your profile and notifications.
+      </p>
+    `;
+
+    const htmlBody = getBaseTemplate(subject, bodyHtml, `Sanasa General Insurance • ${branch} Branch`);
+    await sendEmail(cleanEmail, subject, htmlBody);
+    console.log(`✅ Profile update status email sent successfully to ${cleanEmail}`);
+  } catch (error) {
+    console.error("❌ Error sending profile update status email:", error);
+  }
+}
+

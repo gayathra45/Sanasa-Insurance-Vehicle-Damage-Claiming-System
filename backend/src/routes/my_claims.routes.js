@@ -3,6 +3,7 @@ import crypto from "crypto";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
+import ProfileUpdateRequest from "../models/profile_update_request.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { logAgentActivity } from "../utils/activity.js";
 import { sendAgentActivityEmail, sendEmail } from "../utils/email.js";
@@ -575,4 +576,116 @@ router.put("/profile", async (req, res) => {
   }
 });
 
+// 10. POST submit a profile / KYC update request for branch approval
+router.post("/profile-update-request", async (req, res) => {
+  try {
+    const { nic, requestType, requestedChanges } = req.body;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC is required to submit an update request." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: cleanNic });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    if (!requestedChanges || typeof requestedChanges !== "object" || Object.keys(requestedChanges).length === 0) {
+      return res.status(400).json({ error: "No changes provided in the update request." });
+    }
+
+    // Security check: strictly disallow editing nic, branch, referenceNumber
+    const sanitizedChanges = { ...requestedChanges };
+    delete sanitizedChanges.nic;
+    delete sanitizedChanges.branch;
+    delete sanitizedChanges.referenceNumber;
+    delete sanitizedChanges._id;
+    delete sanitizedChanges.password;
+
+    // Handle document image uploads if any base64 images are sent in documents
+    if (sanitizedChanges.documents && typeof sanitizedChanges.documents === "object") {
+      const docKeys = ["nicFront", "nicBack", "vehicleReg", "revenueLicense"];
+      for (const key of docKeys) {
+        const val = sanitizedChanges.documents[key];
+        if (val && typeof val === "string" && val.startsWith("data:image")) {
+          try {
+            const uploadedUrl = await uploadToCloudinary(val, "policy_holders/kyc_documents");
+            sanitizedChanges.documents[key] = uploadedUrl;
+          } catch (uploadErr) {
+            console.warn(`Cloudinary upload failed for document ${key}, storing directly:`, uploadErr.message);
+          }
+        }
+      }
+    }
+
+    // Capture original state snapshot
+    const originalData = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      mobile: user.mobile,
+      email: user.email,
+      dob: user.dob,
+      address: user.address,
+      province: user.province,
+      city: user.city,
+      documents: {
+        nicFront: user.documents?.nicFront || "",
+        nicBack: user.documents?.nicBack || "",
+        vehicleReg: user.documents?.vehicleReg || "",
+        revenueLicense: user.documents?.revenueLicense || ""
+      }
+    };
+
+    // Determine request type
+    let finalType = requestType || "Personal & Contact";
+    if (sanitizedChanges.documents && (sanitizedChanges.firstName || sanitizedChanges.lastName || sanitizedChanges.mobile || sanitizedChanges.email || sanitizedChanges.address)) {
+      finalType = "Personal & Documents";
+    } else if (sanitizedChanges.documents && !sanitizedChanges.firstName && !sanitizedChanges.lastName && !sanitizedChanges.mobile && !sanitizedChanges.email && !sanitizedChanges.address) {
+      finalType = "KYC Documents";
+    }
+
+    const newRequest = new ProfileUpdateRequest({
+      userNic: user.nic,
+      userReferenceNumber: user.referenceNumber || "",
+      userName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+      userEmail: user.email || "",
+      userMobile: user.mobile || "",
+      branch: user.branch || "Galle",
+      requestType: finalType,
+      originalData,
+      requestedChanges: sanitizedChanges,
+      status: "Pending"
+    });
+
+    await newRequest.save();
+
+    res.status(201).json({
+      message: "Your profile update request has been submitted to your branch for review.",
+      request: newRequest
+    });
+  } catch (err) {
+    console.error("Submit profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// 11. GET policy holder's profile update requests
+router.get("/profile-update-requests", async (req, res) => {
+  try {
+    const { nic } = req.query;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC query parameter is required." });
+    }
+
+    const cleanNic = nic.trim();
+    const requests = await ProfileUpdateRequest.find({ userNic: cleanNic }).sort({ createdAt: -1 });
+
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch policy holder profile update requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 export default router;
+

@@ -75,6 +75,9 @@ export default function PolicyHolderProfile() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"personal" | "vehicles" | "bank" | "documents" | "security">("personal");
 
+  // Profile Update Requests state
+  const [updateRequests, setUpdateRequests] = useState<any[]>([]);
+
   // Edit Mode state for Personal info
   const [isEditingPersonal, setIsEditingPersonal] = useState(false);
   const [personalForm, setPersonalForm] = useState({
@@ -85,6 +88,21 @@ export default function PolicyHolderProfile() {
     address: "",
     province: "",
     city: ""
+  });
+
+  // Edit Mode state for KYC Documents
+  const [isEditingDocs, setIsEditingDocs] = useState(false);
+  const [docUploads, setDocUploads] = useState<{ [key: string]: string }>({
+    nicFront: "",
+    nicBack: "",
+    vehicleReg: "",
+    revenueLicense: ""
+  });
+  const [docUploadPreviews, setDocUploadPreviews] = useState<{ [key: string]: string }>({
+    nicFront: "",
+    nicBack: "",
+    vehicleReg: "",
+    revenueLicense: ""
   });
 
   // Edit Mode state for Bank info
@@ -137,6 +155,7 @@ export default function PolicyHolderProfile() {
         setUser(parsed);
         initForms(parsed);
         fetchFreshProfile(parsed.nic);
+        fetchUpdateRequests(parsed.nic);
       } catch (e) {
         console.error("Error parsing logged_in_user session", e);
         router.push("/Login");
@@ -182,6 +201,18 @@ export default function PolicyHolderProfile() {
       console.error("Failed to fetch fresh profile:", e);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUpdateRequests = async (nic: string) => {
+    try {
+      const res = await fetch(`${API_URL}/policy-holder/profile-update-requests?nic=${encodeURIComponent(nic)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUpdateRequests(data.requests || []);
+      }
+    } catch (e) {
+      console.error("Failed to fetch update requests:", e);
     }
   };
 
@@ -300,7 +331,7 @@ export default function PolicyHolderProfile() {
     }
   };
 
-  // Save Personal Details Handler
+  // Submit Personal Details Edit Request to Branch
   const handleSavePersonal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.nic) return;
@@ -312,41 +343,134 @@ export default function PolicyHolderProfile() {
 
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/policy-holder/profile`, {
-        method: "PUT",
+      const res = await fetch(`${API_URL}/policy-holder/profile-update-request`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nic: user.nic,
-          firstName: personalForm.firstName.trim(),
-          lastName: personalForm.lastName.trim(),
-          mobile: personalForm.mobile.trim(),
-          email: personalForm.email.trim(),
-          address: personalForm.address.trim(),
-          province: personalForm.province.trim(),
-          city: personalForm.city.trim()
+          requestType: "Personal & Contact",
+          requestedChanges: {
+            firstName: personalForm.firstName.trim(),
+            lastName: personalForm.lastName.trim(),
+            mobile: personalForm.mobile.trim(),
+            email: personalForm.email.trim(),
+            address: personalForm.address.trim(),
+            province: personalForm.province.trim(),
+            city: personalForm.city.trim()
+          }
         })
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update personal details.");
+      if (!res.ok) throw new Error(data.error || "Failed to submit personal details update request.");
 
-      const updatedUser = { ...user, ...data.user };
-      setUser(updatedUser);
-      sessionStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
-      window.dispatchEvent(new Event("user-profile-updated"));
       setIsEditingPersonal(false);
+      await fetchUpdateRequests(user.nic);
 
       setPopup({
         show: true,
-        title: "Profile Updated",
-        message: "Your personal and contact information has been updated.",
+        title: "Edit Request Submitted",
+        message: `Your personal information update request has been sent to ${user?.branch || "Galle"} Branch for verification. Once approved by branch staff, your database records will be automatically updated and you will receive an email and notification.`,
         type: "success"
       });
     } catch (err: any) {
       setPopup({
         show: true,
-        title: "Update Failed",
-        message: err.message || "Could not update information.",
+        title: "Submission Failed",
+        message: err.message || "Could not submit update request.",
+        type: "error"
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Handle KYC Document file selection
+  const handleDocFileSelect = (key: string, file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      setPopup({
+        show: true,
+        title: "Invalid File",
+        message: "Please select an image file (PNG, JPG, WEBP).",
+        type: "error"
+      });
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setPopup({
+        show: true,
+        title: "File Too Large",
+        message: "File size must be less than 8MB.",
+        type: "error"
+      });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setDocUploads(prev => ({ ...prev, [key]: base64 }));
+      setDocUploadPreviews(prev => ({ ...prev, [key]: base64 }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Submit KYC Documents Edit Request to Branch
+  const handleSaveDocuments = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user?.nic) return;
+
+    // Check if at least one document is selected
+    const hasChanges = Object.values(docUploads).some(v => Boolean(v));
+    if (!hasChanges) {
+      setPopup({
+        show: true,
+        title: "No Documents Selected",
+        message: "Please select at least one document to update.",
+        type: "alert"
+      });
+      return;
+    }
+
+    const activeDocChanges: any = {};
+    for (const [k, v] of Object.entries(docUploads)) {
+      if (v) activeDocChanges[k] = v;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(`${API_URL}/policy-holder/profile-update-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nic: user.nic,
+          requestType: "KYC Documents",
+          requestedChanges: {
+            documents: activeDocChanges
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to submit documents update request.");
+
+      setIsEditingDocs(false);
+      setDocUploads({ nicFront: "", nicBack: "", vehicleReg: "", revenueLicense: "" });
+      setDocUploadPreviews({ nicFront: "", nicBack: "", vehicleReg: "", revenueLicense: "" });
+      await fetchUpdateRequests(user.nic);
+
+      setPopup({
+        show: true,
+        title: "Documents Submitted for Approval",
+        message: `Your updated KYC & policy verification documents have been submitted to ${user?.branch || "Galle"} Branch for review. Once verified and approved, they will be updated in your profile.`,
+        type: "success"
+      });
+    } catch (err: any) {
+      setPopup({
+        show: true,
+        title: "Submission Failed",
+        message: err.message || "Could not submit documents update request.",
         type: "error"
       });
     } finally {
@@ -650,183 +774,254 @@ export default function PolicyHolderProfile() {
         {/* ======================================================== */}
         {/* TAB 1: Personal Details                                  */}
         {/* ======================================================== */}
-        {activeTab === "personal" && (
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col gap-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div>
-                <h3 className="text-base font-bold text-slate-900 tracking-tight">Personal & Contact Information</h3>
-                <p className="text-xs text-slate-400 font-medium mt-0.5">Manage your identity details, email, and registered residential address</p>
+        {activeTab === "personal" && (() => {
+          const pendingReq = updateRequests.find(r => r.status === "Pending" && (r.requestType?.includes("Personal") || r.requestType?.includes("Contact")));
+          const recentRejected = updateRequests.find(r => r.status === "Rejected" && (r.requestType?.includes("Personal") || r.requestType?.includes("Contact")));
+
+          return (
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col gap-6">
+              
+              {/* Pending Request Alert Banner */}
+              {pendingReq && (
+                <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 flex items-start gap-3">
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" strokeWidth={2.5} />
+                  <div>
+                    <h4 className="text-xs font-bold text-amber-800">Edit Request Under Branch Review</h4>
+                    <p className="text-xs text-amber-700 font-medium mt-0.5">
+                      You submitted a profile update request on {formatDate(pendingReq.createdAt)} to <strong className="font-semibold">{user?.branch || "Galle"} Branch</strong>. It will be updated automatically in the system once verified and approved by branch staff.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Recent Rejected Banner */}
+              {!pendingReq && recentRejected && (
+                <div className="bg-red-50/80 border border-red-200/80 rounded-2xl p-4 flex items-start gap-3">
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-600 shrink-0 mt-0.5" strokeWidth={2.5} />
+                  <div>
+                    <h4 className="text-xs font-bold text-red-800">Previous Request Rejected by Branch</h4>
+                    <p className="text-xs text-red-700 font-medium mt-0.5">
+                      Reason: <strong className="font-semibold">{recentRejected.reviewNote || "Information mismatch"}</strong>. You may update your details below and re-submit for approval.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 tracking-tight">Personal & Contact Information</h3>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">
+                    Changes to personal identity & contact information are submitted to your branch for verification & approval
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsEditingPersonal(!isEditingPersonal)}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border flex items-center gap-1.5 shadow-2xs ${
+                    isEditingPersonal
+                      ? "bg-slate-100 text-slate-700 border-slate-200"
+                      : "bg-[#102A43] text-white border-[#102A43] hover:bg-[#000080]"
+                  }`}
+                >
+                  <HugeiconsIcon icon={isEditingPersonal ? Cancel01Icon : Edit02Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                  <span>{isEditingPersonal ? "Cancel Editing" : "Edit Details"}</span>
+                </button>
               </div>
-              <button
-                onClick={() => setIsEditingPersonal(!isEditingPersonal)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border flex items-center gap-1.5 shadow-2xs ${
-                  isEditingPersonal
-                    ? "bg-slate-100 text-slate-700 border-slate-200"
-                    : "bg-[#102A43] text-white border-[#102A43] hover:bg-[#000080]"
-                }`}
-              >
-                <HugeiconsIcon icon={isEditingPersonal ? Cancel01Icon : Edit02Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
-                <span>{isEditingPersonal ? "Cancel Editing" : "Edit Details"}</span>
-              </button>
-            </div>
 
-            {isEditingPersonal ? (
-              <form onSubmit={handleSavePersonal} className="flex flex-col gap-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">First Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={personalForm.firstName}
-                      onChange={(e) => setPersonalForm({ ...personalForm, firstName: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    />
-                  </div>
+              {isEditingPersonal ? (
+                <form onSubmit={handleSavePersonal} className="flex flex-col gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">First Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={personalForm.firstName}
+                        onChange={(e) => setPersonalForm({ ...personalForm, firstName: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      />
+                    </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Last Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={personalForm.lastName}
-                      onChange={(e) => setPersonalForm({ ...personalForm, lastName: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    />
-                  </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Last Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={personalForm.lastName}
+                        onChange={(e) => setPersonalForm({ ...personalForm, lastName: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      />
+                    </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">National ID (NIC - Read Only)</label>
-                    <input
-                      type="text"
-                      disabled
-                      value={user?.nic || ""}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500 cursor-not-allowed font-mono"
-                    />
-                  </div>
+                    {/* Strictly Non-Editable NIC */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">National ID (NIC)</label>
+                        <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">Locked / Read-Only</span>
+                      </div>
+                      <input
+                        type="text"
+                        disabled
+                        value={user?.nic || ""}
+                        title="NIC cannot be edited"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100/80 text-xs font-bold text-slate-500 cursor-not-allowed font-mono select-none"
+                      />
+                    </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Date of Birth (Read Only)</label>
-                    <input
-                      type="text"
-                      disabled
-                      value={formatDate(user?.dob)}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-semibold text-slate-500 cursor-not-allowed"
-                    />
-                  </div>
+                    {/* Strictly Non-Editable Assigned Branch */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Assigned Branch</label>
+                        <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">Locked / Read-Only</span>
+                      </div>
+                      <input
+                        type="text"
+                        disabled
+                        value={`${user?.branch || "Galle"} Branch`}
+                        title="Branch cannot be edited directly"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100/80 text-xs font-bold text-slate-500 cursor-not-allowed select-none"
+                      />
+                    </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Mobile Phone Number</label>
-                    <input
-                      type="text"
-                      required
-                      value={personalForm.mobile}
-                      onChange={(e) => setPersonalForm({ ...personalForm, mobile: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono"
-                    />
-                  </div>
+                    {/* Strictly Non-Editable Policy Reference Number */}
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Policy Holder Reference No.</label>
+                        <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">Locked / Read-Only</span>
+                      </div>
+                      <input
+                        type="text"
+                        disabled
+                        value={user?.referenceNumber || "SAN-PH-001"}
+                        title="Reference number cannot be changed"
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100/80 text-xs font-bold text-slate-500 cursor-not-allowed font-mono select-none"
+                      />
+                    </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      value={personalForm.email}
-                      onChange={(e) => setPersonalForm({ ...personalForm, email: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    />
-                  </div>
-                </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Mobile Phone Number</label>
+                      <input
+                        type="text"
+                        required
+                        value={personalForm.mobile}
+                        onChange={(e) => setPersonalForm({ ...personalForm, mobile: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 font-mono"
+                      />
+                    </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Residential Home Address</label>
-                  <textarea
-                    rows={2}
-                    required
-                    value={personalForm.address}
-                    onChange={(e) => setPersonalForm({ ...personalForm, address: e.target.value })}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Province</label>
-                    <select
-                      value={personalForm.province}
-                      onChange={(e) => setPersonalForm({ ...personalForm, province: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    >
-                      <option value="">Select Province</option>
-                      {SRI_LANKA_PROVINCES.map((p) => (
-                        <option key={p} value={p}>{p}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">City / District</label>
-                    <input
-                      type="text"
-                      value={personalForm.city}
-                      onChange={(e) => setPersonalForm({ ...personalForm, city: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditingPersonal(false)}
-                    className="px-6 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="px-6 py-2.5 rounded-full bg-[#000080] hover:bg-[#000066] text-white text-xs font-semibold shadow-md cursor-pointer border-none flex items-center gap-2"
-                  >
-                    {saving && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
-                    <span>Save Changes</span>
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[
-                  { label: "Full Name", value: `${user?.firstName} ${user?.lastName}` },
-                  { label: "National ID (NIC)", value: user?.nic, isMono: true, verified: true },
-                  { label: "Date of Birth", value: formatDate(user?.dob) },
-                  { label: "Email Address", value: user?.email, isMono: true },
-                  { label: "Mobile Number", value: user?.mobile, isMono: true },
-                  { label: "Assigned Branch", value: `${user?.branch || "Galle"} Branch` },
-                  { label: "Province", value: user?.province || "-" },
-                  { label: "City / District", value: user?.city || "-" },
-                  { label: "Policy Reference", value: user?.referenceNumber || "SAN-PH-001", isMono: true }
-                ].map((item, idx) => (
-                  <div key={idx} className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-1">
-                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{item.label}</span>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-xs font-bold text-slate-800 truncate ${item.isMono ? 'font-mono' : ''}`}>
-                        {item.value}
-                      </span>
-                      {item.verified && (
-                        <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
-                      )}
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Email Address</label>
+                      <input
+                        type="email"
+                        required
+                        value={personalForm.email}
+                        onChange={(e) => setPersonalForm({ ...personalForm, email: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      />
                     </div>
                   </div>
-                ))}
 
-                <div className="sm:col-span-2 lg:col-span-3 bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-1">
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Residential Home Address</span>
-                  <span className="text-xs font-bold text-slate-800 leading-relaxed">{user?.address || "-"}</span>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Residential Home Address</label>
+                    <textarea
+                      rows={2}
+                      required
+                      value={personalForm.address}
+                      onChange={(e) => setPersonalForm({ ...personalForm, address: e.target.value })}
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500 resize-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Province</label>
+                      <select
+                        value={personalForm.province}
+                        onChange={(e) => setPersonalForm({ ...personalForm, province: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      >
+                        <option value="">Select Province</option>
+                        {SRI_LANKA_PROVINCES.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">City / District</label>
+                      <input
+                        type="text"
+                        value={personalForm.city}
+                        onChange={(e) => setPersonalForm({ ...personalForm, city: e.target.value })}
+                        className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                    <p className="text-[11px] text-slate-400 italic">
+                      * Saving will send an approval request to {user?.branch || "Galle"} Branch. Changes reflect immediately upon approval.
+                    </p>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingPersonal(false)}
+                        className="px-6 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={saving}
+                        className="px-6 py-2.5 rounded-full bg-[#000080] hover:bg-[#000066] text-white text-xs font-semibold shadow-md cursor-pointer border-none flex items-center gap-2"
+                      >
+                        {saving && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                        <span>Submit for Branch Approval</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[
+                    { label: "Full Name", value: `${user?.firstName} ${user?.lastName}` },
+                    { label: "National ID (NIC)", value: user?.nic, isMono: true, verified: true, locked: true },
+                    { label: "Assigned Branch", value: `${user?.branch || "Galle"} Branch`, locked: true },
+                    { label: "Policy Reference", value: user?.referenceNumber || "SAN-PH-001", isMono: true, locked: true },
+                    { label: "Date of Birth", value: formatDate(user?.dob) },
+                    { label: "Email Address", value: user?.email, isMono: true },
+                    { label: "Mobile Number", value: user?.mobile, isMono: true },
+                    { label: "Province", value: user?.province || "-" },
+                    { label: "City / District", value: user?.city || "-" }
+                  ].map((item, idx) => (
+                    <div key={idx} className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{item.label}</span>
+                        {item.locked && (
+                          <span className="text-[9px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60">
+                            Locked
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold text-slate-800 truncate ${item.isMono ? 'font-mono' : ''}`}>
+                          {item.value}
+                        </span>
+                        {item.verified && (
+                          <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-4 h-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="sm:col-span-2 lg:col-span-3 bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Residential Home Address</span>
+                    <span className="text-xs font-bold text-slate-800 leading-relaxed">{user?.address || "-"}</span>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          );
+        })()}
 
         {/* ======================================================== */}
         {/* TAB 2: Insured Vehicles                                  */}
@@ -1018,63 +1213,198 @@ export default function PolicyHolderProfile() {
         {/* ======================================================== */}
         {/* TAB 4: KYC Documents                                     */}
         {/* ======================================================== */}
-        {activeTab === "documents" && (
-          <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col gap-6">
-            <div className="border-b border-slate-100 pb-4">
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">Registered KYC & Policy Documents</h3>
-              <p className="text-xs text-slate-400 font-medium mt-0.5">Verification documents provided during account registration and vehicle onboarding</p>
-            </div>
+        {activeTab === "documents" && (() => {
+          const pendingDocReq = updateRequests.find(r => r.status === "Pending" && (r.requestType?.includes("KYC") || r.requestType?.includes("Documents")));
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {[
-                { label: "National ID (Front)", url: user?.documents?.nicFront },
-                { label: "National ID (Back)", url: user?.documents?.nicBack },
-                { label: "Vehicle Registration (CR)", url: user?.documents?.vehicleReg },
-                { label: "Revenue License", url: user?.documents?.revenueLicense }
-              ].map((doc, idx) => {
-                const isUploaded = Boolean(doc.url);
-                const fullUrl = getFullImageUrl(doc.url);
+          const docDefs = [
+            { key: "nicFront", label: "National ID (Front View)" },
+            { key: "nicBack", label: "National ID (Back View)" },
+            { key: "vehicleReg", label: "Vehicle Registration (CR Book)" },
+            { key: "revenueLicense", label: "Revenue License" }
+          ];
 
-                return (
-                  <div key={idx} className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between gap-4">
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <span className="text-xs font-bold text-slate-800">{doc.label}</span>
-                        <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                          isUploaded ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200"
+          return (
+            <div className="bg-white border border-slate-200/80 rounded-3xl p-6 sm:p-8 shadow-xs flex flex-col gap-6">
+              
+              {/* Pending Request Alert Banner */}
+              {pendingDocReq && (
+                <div className="bg-amber-50/80 border border-amber-200/80 rounded-2xl p-4 flex items-start gap-3">
+                  <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" strokeWidth={2.5} />
+                  <div>
+                    <h4 className="text-xs font-bold text-amber-800">KYC Documents Update Pending Branch Review</h4>
+                    <p className="text-xs text-amber-700 font-medium mt-0.5">
+                      You submitted new KYC documents on {formatDate(pendingDocReq.createdAt)} to <strong className="font-semibold">{user?.branch || "Galle"} Branch</strong>. They will be verified and approved shortly.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 tracking-tight">Registered KYC & Policy Documents</h3>
+                  <p className="text-xs text-slate-400 font-medium mt-0.5">Verification documents provided during account registration and vehicle onboarding</p>
+                </div>
+                <button
+                  onClick={() => {
+                    setIsEditingDocs(!isEditingDocs);
+                    if (isEditingDocs) {
+                      setDocUploads({ nicFront: "", nicBack: "", vehicleReg: "", revenueLicense: "" });
+                      setDocUploadPreviews({ nicFront: "", nicBack: "", vehicleReg: "", revenueLicense: "" });
+                    }
+                  }}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border flex items-center gap-1.5 shadow-2xs ${
+                    isEditingDocs
+                      ? "bg-slate-100 text-slate-700 border-slate-200"
+                      : "bg-[#102A43] text-white border-[#102A43] hover:bg-[#000080]"
+                  }`}
+                >
+                  <HugeiconsIcon icon={isEditingDocs ? Cancel01Icon : Edit02Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                  <span>{isEditingDocs ? "Cancel Updating" : "Update Documents"}</span>
+                </button>
+              </div>
+
+              {isEditingDocs ? (
+                <form onSubmit={handleSaveDocuments} className="flex flex-col gap-6">
+                  <div className="bg-blue-50/70 border border-blue-200/70 rounded-2xl p-4 text-xs text-blue-900 font-medium">
+                    Select new files for the documents you wish to update. Once submitted, your <strong className="font-bold">{user?.branch || "Galle"} Branch</strong> will review and verify them before updating your profile.
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    {docDefs.map((doc) => {
+                      const existingUrl = (user?.documents as any)?.[doc.key];
+                      const newPreview = docUploadPreviews[doc.key];
+                      const previewSrc = newPreview || getFullImageUrl(existingUrl);
+                      const isNewlySelected = Boolean(newPreview);
+
+                      return (
+                        <div key={doc.key} className={`bg-slate-50/70 border rounded-2xl p-4 flex flex-col justify-between gap-3 ${
+                          isNewlySelected ? "border-blue-400 ring-2 ring-blue-100" : "border-slate-200/80"
                         }`}>
-                          {isUploaded ? "Verified" : "Missing"}
-                        </span>
-                      </div>
-                      <div className="w-full aspect-[4/3] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative">
-                        {isUploaded && fullUrl ? (
-                          <img
-                            src={fullUrl}
-                            alt={doc.label}
+                          <div>
+                            <div className="flex items-center justify-between gap-1 mb-2">
+                              <span className="text-xs font-bold text-slate-800">{doc.label}</span>
+                              {isNewlySelected ? (
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 border border-blue-300">
+                                  New Selected
+                                </span>
+                              ) : existingUrl ? (
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Current
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-200 text-slate-600">
+                                  Missing
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="w-full aspect-[4/3] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative group">
+                              {previewSrc ? (
+                                <img
+                                  src={previewSrc}
+                                  alt={doc.label}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span className="text-[11px] text-slate-400 italic">No File Selected</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <label className="w-full py-2 bg-white hover:bg-slate-50 border border-slate-300 hover:border-slate-400 text-slate-700 font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs">
+                            <HugeiconsIcon icon={Camera01Icon} className="w-3.5 h-3.5 text-slate-500" strokeWidth={2} />
+                            <span>{isNewlySelected ? "Change File" : "Choose New File"}</span>
+                            <input
+                              type="file"
+                              accept="image/png, image/jpeg, image/webp"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleDocFileSelect(doc.key, file);
+                              }}
+                              className="hidden"
+                            />
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100">
+                    <p className="text-[11px] text-slate-400 italic">
+                      * Documents will be sent for review to {user?.branch || "Galle"} Branch.
+                    </p>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsEditingDocs(false);
+                          setDocUploads({ nicFront: "", nicBack: "", vehicleReg: "", revenueLicense: "" });
+                          setDocUploadPreviews({ nicFront: "", nicBack: "", vehicleReg: "", revenueLicense: "" });
+                        }}
+                        className="px-6 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-50 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={saving || !Object.values(docUploads).some(Boolean)}
+                        className="px-6 py-2.5 rounded-full bg-[#000080] hover:bg-[#000066] disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-xs font-semibold shadow-md cursor-pointer border-none flex items-center gap-2"
+                      >
+                        {saving && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                        <span>Submit Documents for Branch Approval</span>
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  {docDefs.map((doc, idx) => {
+                    const docUrl = (user?.documents as any)?.[doc.key];
+                    const isUploaded = Boolean(docUrl);
+                    const fullUrl = getFullImageUrl(docUrl);
+
+                    return (
+                      <div key={idx} className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 flex flex-col justify-between gap-4">
+                        <div>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="text-xs font-bold text-slate-800">{doc.label}</span>
+                            <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                              isUploaded ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200"
+                            }`}>
+                              {isUploaded ? "Verified" : "Missing"}
+                            </span>
+                          </div>
+                          <div className="w-full aspect-[4/3] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center relative">
+                            {isUploaded && fullUrl ? (
+                              <img
+                                src={fullUrl}
+                                alt={doc.label}
+                                onClick={() => setPreviewDoc({ url: fullUrl, title: doc.label })}
+                                className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
+                              />
+                            ) : (
+                              <span className="text-[11px] text-slate-400 italic">No Document</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {isUploaded && fullUrl && (
+                          <button
                             onClick={() => setPreviewDoc({ url: fullUrl, title: doc.label })}
-                            className="w-full h-full object-cover cursor-pointer hover:scale-105 transition-transform"
-                          />
-                        ) : (
-                          <span className="text-[11px] text-slate-400 italic">No Document</span>
+                            className="w-full py-2 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#102A43] font-semibold text-xs rounded-xl transition-all cursor-pointer border-none flex items-center justify-center gap-1.5"
+                          >
+                            <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" strokeWidth={2} />
+                            <span>View Document</span>
+                          </button>
                         )}
                       </div>
-                    </div>
-
-                    {isUploaded && fullUrl && (
-                      <button
-                        onClick={() => setPreviewDoc({ url: fullUrl, title: doc.label })}
-                        className="w-full py-2 bg-[#000080]/10 hover:bg-[#000080] hover:text-white text-[#102A43] font-semibold text-xs rounded-xl transition-all cursor-pointer border-none flex items-center justify-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" strokeWidth={2} />
-                        <span>View Document</span>
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* ======================================================== */}
         {/* TAB 5: Account Security                                  */}
