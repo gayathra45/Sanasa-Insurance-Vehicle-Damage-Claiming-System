@@ -25,6 +25,7 @@ import {
   Edit02Icon,
   Download01Icon,
   ViewIcon,
+  ViewOffSlashIcon,
   Loading03Icon,
   Cancel01Icon,
   ArrowRight01Icon,
@@ -106,6 +107,9 @@ export default function PolicyHolderProfile() {
     newPassword: "",
     confirmPassword: ""
   });
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
   // Document preview modal
@@ -398,6 +402,16 @@ export default function PolicyHolderProfile() {
     e.preventDefault();
     if (!user?.nic) return;
 
+    if (!passwordForm.currentPassword) {
+      setPopup({
+        show: true,
+        title: "Current Password Required",
+        message: "Please enter your current password to authorize this update.",
+        type: "error"
+      });
+      return;
+    }
+
     if (!passwordForm.newPassword || passwordForm.newPassword.length < 6) {
       setPopup({
         show: true,
@@ -425,6 +439,7 @@ export default function PolicyHolderProfile() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nic: user.nic,
+          currentPassword: passwordForm.currentPassword,
           newPassword: passwordForm.newPassword
         })
       });
@@ -1072,28 +1087,76 @@ export default function PolicyHolderProfile() {
             </div>
 
             <form onSubmit={handleChangePassword} className="flex flex-col gap-5">
+              {/* Current Password Field */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">New Password</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="At least 6 characters"
-                  value={passwordForm.newPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
+                <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                  Current Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    required
+                    placeholder="Enter your current password"
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                    className="w-full pl-4 pr-11 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="absolute right-3 text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer flex items-center justify-center p-1"
+                  >
+                    <HugeiconsIcon icon={showCurrentPassword ? ViewOffSlashIcon : ViewIcon} className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </div>
               </div>
 
+              {/* New Password Field */}
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">Confirm New Password</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Re-type new password"
-                  value={passwordForm.confirmPassword}
-                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
-                />
+                <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                  New Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    required
+                    placeholder="At least 6 characters"
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                    className="w-full pl-4 pr-11 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer flex items-center justify-center p-1"
+                  >
+                    <HugeiconsIcon icon={showNewPassword ? ViewOffSlashIcon : ViewIcon} className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm New Password Field */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider">
+                  Confirm New Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    placeholder="Re-type new password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                    className="w-full pl-4 pr-11 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer flex items-center justify-center p-1"
+                  >
+                    <HugeiconsIcon icon={showConfirmPassword ? ViewOffSlashIcon : ViewIcon} className="w-4 h-4" strokeWidth={2} />
+                  </button>
+                </div>
               </div>
 
               <div className="pt-2">

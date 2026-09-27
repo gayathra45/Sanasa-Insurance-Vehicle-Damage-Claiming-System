@@ -510,7 +510,7 @@ router.get("/profile", async (req, res) => {
 // 9. PUT update policy holder profile (photo, mobile, address, bankDetails, etc.)
 router.put("/profile", async (req, res) => {
   try {
-    const { nic, firstName, lastName, mobile, email, address, province, city, bankDetails, profilePhoto, newPassword } = req.body;
+    const { nic, firstName, lastName, mobile, email, address, province, city, bankDetails, profilePhoto, currentPassword, newPassword } = req.body;
     if (!nic) {
       return res.status(400).json({ error: "NIC is required to update profile." });
     }
@@ -553,6 +553,13 @@ router.put("/profile", async (req, res) => {
     }
 
     if (newPassword && newPassword.trim().length >= 6) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: "Current password is required to change password." });
+      }
+      const hashedCurrent = hashPassword(currentPassword.trim());
+      if (user.password !== hashedCurrent) {
+        return res.status(400).json({ error: "Current password is incorrect. Please enter your existing password." });
+      }
       user.password = hashPassword(newPassword.trim());
     }
 
