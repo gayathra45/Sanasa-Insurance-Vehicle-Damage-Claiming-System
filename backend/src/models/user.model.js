@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   address: { type: String, required: true },
   province: { type: String, required: true },
   city: { type: String, required: true },
+  profilePhoto: { type: String, default: "" },
   password: { type: String, required: true },
   vehicles: [
     {

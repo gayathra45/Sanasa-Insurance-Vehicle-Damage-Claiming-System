@@ -474,12 +474,97 @@ router.delete("/delete-claim/:claimNumber", async (req, res) => {
     }
 
     // Delete the claim
-    await Claim.findOneAndDelete({ cleanClaimNum });
+    await Claim.findOneAndDelete({ claimNumber: cleanClaimNum });
 
     res.json({ message: "Claim cancelled and deleted successfully." });
   } catch (err) {
     console.error("Delete claim API error:", err);
     res.status(500).json({ error: "An internal server error occurred while deleting the claim." });
+  }
+});
+
+// 8. GET policy holder profile by NIC
+router.get("/profile", async (req, res) => {
+  try {
+    const { nic, email } = req.query;
+    if (!nic && !email) {
+      return res.status(400).json({ error: "NIC or Email query parameter is required." });
+    }
+
+    const query = {};
+    if (nic) query.nic = nic.trim();
+    if (email) query.email = email.trim().toLowerCase();
+
+    const user = await User.findOne(query, { password: 0 });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    res.json({ user });
+  } catch (err) {
+    console.error("Get policy holder profile error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// 9. PUT update policy holder profile (photo, mobile, address, bankDetails, etc.)
+router.put("/profile", async (req, res) => {
+  try {
+    const { nic, firstName, lastName, mobile, email, address, province, city, bankDetails, profilePhoto, newPassword } = req.body;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC is required to update profile." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: cleanNic });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    if (firstName) user.firstName = firstName.trim();
+    if (lastName) user.lastName = lastName.trim();
+    if (mobile) user.mobile = mobile.trim();
+    if (email) user.email = email.trim().toLowerCase();
+    if (address) user.address = address.trim();
+    if (province) user.province = province.trim();
+    if (city) user.city = city.trim();
+
+    if (bankDetails) {
+      user.bankDetails = {
+        bankName: bankDetails.bankName || user.bankDetails?.bankName || "",
+        branchName: bankDetails.branchName || user.bankDetails?.branchName || "",
+        accountNumber: bankDetails.accountNumber || user.bankDetails?.accountNumber || "",
+        accountHolderName: bankDetails.accountHolderName || user.bankDetails?.accountHolderName || ""
+      };
+    }
+
+    if (profilePhoto !== undefined) {
+      if (profilePhoto && profilePhoto.startsWith("data:image")) {
+        try {
+          const photoUrl = await uploadToCloudinary(profilePhoto, "policy_holders/avatars");
+          user.profilePhoto = photoUrl;
+        } catch (uploadErr) {
+          console.warn("Cloudinary upload failed for avatar, storing direct:", uploadErr.message);
+          user.profilePhoto = profilePhoto;
+        }
+      } else {
+        user.profilePhoto = profilePhoto;
+      }
+    }
+
+    if (newPassword && newPassword.trim().length >= 6) {
+      user.password = hashPassword(newPassword.trim());
+    }
+
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.json({ message: "Profile updated successfully.", user: userObj });
+  } catch (err) {
+    console.error("Update policy holder profile error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
   }
 });
 

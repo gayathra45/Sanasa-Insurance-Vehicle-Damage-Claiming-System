@@ -99,12 +99,31 @@ export default function PolicyHolderNavbar() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
 
-  // Load language from localStorage on mount
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Load language and user session from localStorage / sessionStorage on mount
   useEffect(() => {
     const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
     if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
       setLang(savedLang);
     }
+
+    const loadUser = () => {
+      if (typeof window !== "undefined") {
+        const userStr = sessionStorage.getItem("logged_in_user");
+        if (userStr) {
+          try {
+            setCurrentUser(JSON.parse(userStr));
+          } catch (e) {
+            console.error("Error loading user in navbar", e);
+          }
+        }
+      }
+    };
+
+    loadUser();
+    window.addEventListener("user-profile-updated", loadUser);
+    return () => window.removeEventListener("user-profile-updated", loadUser);
   }, []);
 
   // Close dropdowns when clicking outside
@@ -344,35 +363,61 @@ export default function PolicyHolderNavbar() {
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
-                className="p-1.5 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 bg-transparent border-none cursor-pointer focus:outline-none flex items-center justify-center"
+                className="p-1 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 bg-transparent border-none cursor-pointer focus:outline-none flex items-center justify-center"
                 aria-label="User Profile"
                 aria-expanded={profileMenuOpen}
               >
-                <HugeiconsIcon icon={UserCircleIcon} className="w-7 h-7" strokeWidth={1.8} />
+                {currentUser?.profilePhoto ? (
+                  <img
+                    src={currentUser.profilePhoto}
+                    alt="Profile Avatar"
+                    className="w-8 h-8 rounded-full object-cover border-2 border-sky-500 shadow-2xs"
+                  />
+                ) : (
+                  <HugeiconsIcon icon={UserCircleIcon} className="w-8 h-8" strokeWidth={1.8} />
+                )}
               </button>
 
               {/* Dropdown Menu */}
               {profileMenuOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2 z-50 transition-all duration-200 animate-in fade-in slide-in-from-top-2"
+                  className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2.5 z-50 transition-all duration-200 animate-in fade-in slide-in-from-top-2 select-none"
                 >
+                  {/* User info header */}
+                  <div className="px-5 py-2 flex flex-col gap-0.5 border-b border-slate-100">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Policy Holder
+                    </span>
+                    <span className="text-sm font-semibold text-slate-800 truncate">
+                      {currentUser ? `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim() || "Policy Holder" : "Policy Holder"}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500 truncate font-mono">
+                      {currentUser?.email || currentUser?.nic || ""}
+                    </span>
+                    {currentUser?.referenceNumber && (
+                      <span className="text-[9px] font-bold text-[#0284c7] bg-sky-50 px-2 py-0.5 rounded-md w-fit mt-1">
+                        Ref: {currentUser.referenceNumber}
+                      </span>
+                    )}
+                  </div>
+
                   <Link
-                    href="/Policy_Holder/Home"
+                    href="/Policy_Holder/Profile"
                     onClick={() => setProfileMenuOpen(false)}
-                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-medium text-sm transition-colors no-underline"
+                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-semibold text-xs transition-colors no-underline mt-1"
                   >
                     <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-slate-500" strokeWidth={2} />
-                    {t.myProfile}
+                    <span>{t.myProfile}</span>
                   </Link>
 
                   <div className="mx-4 my-1 border-t border-slate-100" />
 
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-medium text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
+                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-semibold text-xs transition-colors text-left bg-transparent border-none cursor-pointer"
                   >
                     <HugeiconsIcon icon={Logout01Icon} className="w-4 h-4 text-red-500" strokeWidth={2} />
-                    {t.logout}
+                    <span>{t.logout}</span>
                   </button>
                 </div>
               )}
