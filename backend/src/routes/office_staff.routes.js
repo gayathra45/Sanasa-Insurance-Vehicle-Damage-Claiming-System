@@ -431,11 +431,13 @@ router.post("/policy-holders/:nic/vehicles", async (req, res) => {
   }
 });
 
-// PUT update policy holder details: /api/office-staff/policy-holders/:nic
+// PUT update policy holder details by Branch Staff: /api/office-staff/policy-holders/:nic
 router.put("/policy-holders/:nic", async (req, res) => {
   try {
     const { nic } = req.params;
     const {
+      newNic,
+      referenceNumber,
       firstName,
       lastName,
       mobile,
@@ -467,6 +469,43 @@ router.put("/policy-holders/:nic", async (req, res) => {
       });
     }
 
+    // 1. Handle NIC change by Branch Staff (with cascading updates to claims & update requests)
+    const targetNic = (newNic || req.body.nic || "").trim().toUpperCase();
+    if (targetNic && targetNic !== user.nic.toUpperCase()) {
+      const existingUserWithNic = await User.findOne({
+        nic: targetNic,
+        _id: { $ne: user._id }
+      });
+      if (existingUserWithNic) {
+        return res.status(400).json({ error: `Another policy holder is already registered with NIC ${targetNic}.` });
+      }
+      const oldNic = user.nic;
+      user.nic = targetNic;
+
+      // Cascade update to claims & profile update requests
+      await Claim.updateMany({ userNic: { $regex: new RegExp(`^${cleanNic}$`, "i") } }, { userNic: targetNic });
+      await ProfileUpdateRequest.updateMany({ userNic: { $regex: new RegExp(`^${cleanNic}$`, "i") } }, { userNic: targetNic });
+    }
+
+    // 2. Handle Policy Holder Reference Number change by Branch Staff
+    if (referenceNumber && referenceNumber.trim() && referenceNumber.trim() !== user.referenceNumber) {
+      const cleanRef = referenceNumber.trim().toUpperCase();
+      const existingUserWithRef = await User.findOne({
+        referenceNumber: cleanRef,
+        _id: { $ne: user._id }
+      });
+      if (existingUserWithRef) {
+        return res.status(400).json({ error: `Another policy holder is already registered with Reference No. ${cleanRef}.` });
+      }
+      user.referenceNumber = cleanRef;
+      await ProfileUpdateRequest.updateMany({ userNic: user.nic }, { userReferenceNumber: cleanRef });
+    }
+
+    // 3. Handle Assigned Branch change by Branch Staff
+    if (branch && branch.trim()) {
+      user.branch = branch.trim();
+    }
+
     if (firstName) user.firstName = firstName.trim();
     if (lastName) user.lastName = lastName.trim();
     if (mobile) user.mobile = mobile.trim();
@@ -475,7 +514,6 @@ router.put("/policy-holders/:nic", async (req, res) => {
     if (address) user.address = address.trim();
     if (city) user.city = city.trim();
     if (province) user.province = province.trim();
-    if (branch) user.branch = branch.trim();
     if (status) user.status = status.trim();
 
     if (bankDetails) {
@@ -490,7 +528,7 @@ router.put("/policy-holders/:nic", async (req, res) => {
     await user.save();
 
     res.json({
-      message: "Policy holder details updated successfully.",
+      message: "Policy holder details updated successfully by Branch.",
       policyHolder: user
     });
   } catch (err) {

@@ -856,13 +856,13 @@ export default function PolicyHolderProfile() {
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">National ID (NIC)</label>
-                        <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">Locked / Read-Only</span>
+                        <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Branch Authority Only</span>
                       </div>
                       <input
                         type="text"
                         disabled
                         value={user?.nic || ""}
-                        title="NIC cannot be edited"
+                        title="NIC can only be edited by assigned branch staff"
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100/80 text-xs font-bold text-slate-500 cursor-not-allowed font-mono select-none"
                       />
                     </div>
@@ -871,13 +871,13 @@ export default function PolicyHolderProfile() {
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Assigned Branch</label>
-                        <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">Locked / Read-Only</span>
+                        <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Branch Authority Only</span>
                       </div>
                       <input
                         type="text"
                         disabled
                         value={`${user?.branch || "Galle"} Branch`}
-                        title="Branch cannot be edited directly"
+                        title="Branch assignment can only be modified by branch staff"
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100/80 text-xs font-bold text-slate-500 cursor-not-allowed select-none"
                       />
                     </div>
@@ -886,13 +886,13 @@ export default function PolicyHolderProfile() {
                     <div className="flex flex-col gap-1.5">
                       <div className="flex items-center justify-between">
                         <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Policy Holder Reference No.</label>
-                        <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded">Locked / Read-Only</span>
+                        <span className="text-[10px] text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Branch Authority Only</span>
                       </div>
                       <input
                         type="text"
                         disabled
                         value={user?.referenceNumber || "SAN-PH-001"}
-                        title="Reference number cannot be changed"
+                        title="Reference number can only be modified by branch staff"
                         className="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-100/80 text-xs font-bold text-slate-500 cursor-not-allowed font-mono select-none"
                       />
                     </div>
@@ -998,7 +998,7 @@ export default function PolicyHolderProfile() {
                         <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{item.label}</span>
                         {item.locked && (
                           <span className="text-[9px] text-amber-700 font-bold bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60">
-                            Locked
+                            Branch Only
                           </span>
                         )}
                       </div>

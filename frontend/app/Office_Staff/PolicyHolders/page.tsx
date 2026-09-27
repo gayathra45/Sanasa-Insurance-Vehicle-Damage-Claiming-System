@@ -229,6 +229,8 @@ export default function OfficeStaffPolicyHolders() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [savingHolder, setSavingHolder] = useState(false);
   const [editFormData, setEditFormData] = useState({
+    nic: "",
+    referenceNumber: "",
     firstName: "",
     lastName: "",
     mobile: "",
@@ -488,6 +490,8 @@ export default function OfficeStaffPolicyHolders() {
       setSelectedHolder(target);
     }
     setEditFormData({
+      nic: target.nic || "",
+      referenceNumber: target.referenceNumber || "",
       firstName: target.firstName || "",
       lastName: target.lastName || "",
       mobile: target.mobile || "",
@@ -620,6 +624,16 @@ export default function OfficeStaffPolicyHolders() {
       return;
     }
 
+    if (!editFormData.nic.trim()) {
+      setCustomPopup({
+        show: true,
+        title: "Validation Error",
+        message: "National ID (NIC) is required.",
+        type: "error"
+      });
+      return;
+    }
+
     if (!editFormData.firstName.trim() || !editFormData.lastName.trim()) {
       setCustomPopup({
         show: true,
@@ -630,12 +644,16 @@ export default function OfficeStaffPolicyHolders() {
       return;
     }
 
+    const previousNic = selectedHolder.nic;
+
     try {
       setSavingHolder(true);
-      const res = await fetch(`${API_URL}/office-staff/policy-holders/${encodeURIComponent(selectedHolder.nic)}`, {
+      const res = await fetch(`${API_URL}/office-staff/policy-holders/${encodeURIComponent(previousNic)}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          newNic: editFormData.nic.trim().toUpperCase(),
+          referenceNumber: editFormData.referenceNumber.trim().toUpperCase(),
           firstName: editFormData.firstName,
           lastName: editFormData.lastName,
           mobile: editFormData.mobile,
@@ -664,6 +682,8 @@ export default function OfficeStaffPolicyHolders() {
       const updatedHolder: PolicyHolder = {
         ...selectedHolder,
         ...data.policyHolder,
+        nic: data.policyHolder?.nic || editFormData.nic.trim().toUpperCase(),
+        referenceNumber: data.policyHolder?.referenceNumber || editFormData.referenceNumber.trim().toUpperCase(),
         bankDetails: data.policyHolder?.bankDetails || {
           bankName: editFormData.bankName,
           branchName: editFormData.branchName,
@@ -673,16 +693,16 @@ export default function OfficeStaffPolicyHolders() {
       };
 
       setSelectedHolder(updatedHolder);
-      setPolicyHolders(prev => prev.map(h => h.nic === selectedHolder.nic ? updatedHolder : h));
+      setPolicyHolders(prev => prev.map(h => (h.nic === previousNic || h.nic === updatedHolder.nic) ? updatedHolder : h));
       if (searchScope === "islandwide") {
-        setIslandResults(prev => prev.map(h => h.nic === selectedHolder.nic ? updatedHolder : h));
+        setIslandResults(prev => prev.map(h => (h.nic === previousNic || h.nic === updatedHolder.nic) ? updatedHolder : h));
       }
 
       setShowEditModal(false);
       setCustomPopup({
         show: true,
-        title: "Details Updated Successfully",
-        message: `Policy holder details for ${updatedHolder.firstName} ${updatedHolder.lastName} have been successfully updated.`,
+        title: "Policy Holder Updated",
+        message: `Policy holder details (including NIC, Reference No, and Branch) for ${updatedHolder.firstName} ${updatedHolder.lastName} have been successfully updated in database.`,
         type: "success"
       });
     } catch (err: any) {
@@ -2396,15 +2416,32 @@ export default function OfficeStaffPolicyHolders() {
                     />
                   </div>
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      National ID (NIC)
+                    <label className="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                      <span>National ID (NIC) <span className="text-red-500">*</span></span>
+                      <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-bold">Branch Authority Only</span>
                     </label>
                     <input
                       type="text"
-                      disabled
-                      value={selectedHolder.nic}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-100 text-slate-500 text-xs font-semibold font-mono cursor-not-allowed"
+                      required
+                      value={editFormData.nic}
+                      onChange={(e) => setEditFormData({ ...editFormData, nic: e.target.value.trim().toUpperCase() })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/20 text-slate-800 text-xs font-semibold font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
                     />
+                    <p className="text-[10px] text-slate-400 mt-1">Changing NIC updates user profile and associated records.</p>
+                  </div>
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                      <span>Policy Holder Ref No.</span>
+                      <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-bold">Branch Authority Only</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. POL-2024-8891"
+                      value={editFormData.referenceNumber}
+                      onChange={(e) => setEditFormData({ ...editFormData, referenceNumber: e.target.value.trim().toUpperCase() })}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/20 text-slate-800 text-xs font-semibold font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-1">Official Sanasa policy holder membership reference.</p>
                   </div>
                   <div>
                     <label className="block font-semibold text-slate-700 mb-1">
@@ -2503,13 +2540,14 @@ export default function OfficeStaffPolicyHolders() {
                     </select>
                   </div>
                   <div>
-                    <label className="block font-semibold text-slate-700 mb-1">
-                      Assigned Branch
+                    <label className="block font-semibold text-slate-700 mb-1 flex items-center justify-between">
+                      <span>Assigned Branch <span className="text-red-500">*</span></span>
+                      <span className="text-[10px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded border border-amber-200 font-bold">Branch Authority Only</span>
                     </label>
                     <select
                       value={editFormData.branch}
                       onChange={(e) => setEditFormData({ ...editFormData, branch: e.target.value })}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-slate-400 bg-white"
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-amber-300 bg-amber-50/20 text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-amber-500 bg-white"
                     >
                       <option value="">Select Branch</option>
                       {SRI_LANKA_BRANCHES.map((b) => (
