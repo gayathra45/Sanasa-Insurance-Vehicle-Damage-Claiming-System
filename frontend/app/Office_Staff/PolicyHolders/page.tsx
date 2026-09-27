@@ -67,6 +67,7 @@ interface PolicyHolder {
   city: string;
   branch: string;
   referenceNumber: string;
+  profilePhoto?: string;
   vehicles?: Vehicle[];
   documents?: Documents;
   bankDetails?: BankDetails;
@@ -1017,13 +1018,26 @@ export default function OfficeStaffPolicyHolders() {
                           className="bg-white border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent hover:border-blue-400 border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden group"
                         >
                           {/* Col 1: Applicant Name & Ref */}
-                          <div className="flex flex-col min-w-0 select-none">
-                            <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
-                              {holder.firstName} {holder.lastName}
-                            </h3>
-                            <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-1.5 w-fit">
-                              Ref: {holder.referenceNumber || "SAN-PH"}
-                            </span>
+                          <div className="flex items-center gap-3 min-w-0 select-none">
+                            <div className="w-10 h-10 rounded-xl bg-[#102A43] text-white flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden shadow-2xs border border-slate-100">
+                              {holder.profilePhoto ? (
+                                <img
+                                  src={getFullImageUrl(holder.profilePhoto)}
+                                  alt={holder.firstName}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <span>{(holder.firstName || "P").substring(0, 1).toUpperCase()}</span>
+                              )}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
+                                {holder.firstName} {holder.lastName}
+                              </h3>
+                              <span className="text-[9px] text-slate-400 font-semibold tracking-wider uppercase bg-slate-100 px-2 py-0.5 rounded mt-0.5 w-fit">
+                                Ref: {holder.referenceNumber || "SAN-PH"}
+                              </span>
+                            </div>
                           </div>
 
                           {/* Col 2: NIC */}
@@ -1125,8 +1139,17 @@ export default function OfficeStaffPolicyHolders() {
             {/* Modal Header */}
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 select-none bg-white">
               <div className="flex items-center gap-3.5 min-w-0 pr-4">
-                <div className="w-12 h-12 rounded-2xl bg-[#102A43] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-                  {(selectedHolder.firstName || "P").substring(0, 1).toUpperCase()}
+                <div className="w-12 h-12 rounded-2xl bg-[#102A43] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0 overflow-hidden border border-slate-200">
+                  {selectedHolder.profilePhoto ? (
+                    <img
+                      src={getFullImageUrl(selectedHolder.profilePhoto)}
+                      alt={`${selectedHolder.firstName} ${selectedHolder.lastName}`}
+                      onClick={() => setPreviewImage({ url: getFullImageUrl(selectedHolder.profilePhoto), title: `${selectedHolder.firstName} ${selectedHolder.lastName} - Profile Photo` })}
+                      className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <span>{(selectedHolder.firstName || "P").substring(0, 1).toUpperCase()}</span>
+                  )}
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2.5 flex-wrap">

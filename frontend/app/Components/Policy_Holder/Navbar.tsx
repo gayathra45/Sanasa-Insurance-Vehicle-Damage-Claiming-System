@@ -201,6 +201,12 @@ export default function PolicyHolderNavbar() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
+  const getAvatarUrl = (rawUrl?: string) => {
+    if (!rawUrl) return "";
+    if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://") || rawUrl.startsWith("data:")) return rawUrl;
+    return `http://localhost:5000${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+  };
+
   const t = translations[lang];
 
   const filteredBranches = branches.filter(b => {
@@ -369,7 +375,7 @@ export default function PolicyHolderNavbar() {
               >
                 {currentUser?.profilePhoto ? (
                   <img
-                    src={currentUser.profilePhoto}
+                    src={getAvatarUrl(currentUser.profilePhoto)}
                     alt="Profile Avatar"
                     className="w-8 h-8 rounded-full object-cover border-2 border-sky-500 shadow-2xs"
                   />

@@ -47,6 +47,7 @@ interface Registration {
   city: string;
   branch: string;
   referenceNumber: string;
+  profilePhoto?: string;
   vehicles?: Vehicle[];
   documents?: {
     nicFront?: string;
@@ -757,11 +758,25 @@ export default function RegistrationsPage() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
           <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-2xl flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0 select-none">
-              <div>
-                <h2 className="text-[22px] font-semibold text-[#0f2d3a] tracking-tight leading-none">
-                  {selectedReg.firstName} {selectedReg.lastName}
-                </h2>
-                <p className="text-xs text-slate-400 font-medium mt-1.5">Ref: {selectedReg.referenceNumber}</p>
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-2xl bg-[#102A43] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0 overflow-hidden border border-slate-200">
+                  {selectedReg.profilePhoto ? (
+                    <img
+                      src={getFullDocUrl(selectedReg.profilePhoto)}
+                      alt={`${selectedReg.firstName} ${selectedReg.lastName}`}
+                      onClick={() => setPreviewImage(getFullDocUrl(selectedReg.profilePhoto))}
+                      className="w-full h-full object-cover cursor-zoom-in hover:scale-105 transition-transform"
+                    />
+                  ) : (
+                    <span>{(selectedReg.firstName || "P").substring(0, 1).toUpperCase()}</span>
+                  )}
+                </div>
+                <div>
+                  <h2 className="text-[22px] font-semibold text-[#0f2d3a] tracking-tight leading-none">
+                    {selectedReg.firstName} {selectedReg.lastName}
+                  </h2>
+                  <p className="text-xs text-slate-400 font-medium mt-1.5">Ref: {selectedReg.referenceNumber}</p>
+                </div>
               </div>
               <button
                 onClick={() => setSelectedReg(null)}
