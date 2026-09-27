@@ -1045,22 +1045,22 @@ export default function AgentsPage() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 font-medium mt-2">
-                  ID: {selectedAgentDetails.agentId} • {selectedAgentDetails.branch} Branch
+                  ID: <span className="font-semibold text-slate-700">{selectedAgentDetails.agentId}</span> • <span className="font-semibold text-[#102A43]">{selectedAgentDetails.branch} Branch</span>
                 </p>
               </div>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => handleOpenEditAgent(selectedAgentDetails)}
-                  className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-full text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs active:scale-95"
+                  className="bg-[#102A43] hover:bg-[#000080] active:scale-95 text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer border-none shadow-xs flex items-center gap-1.5"
                 >
-                  <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-blue-600" strokeWidth={2.5} />
+                  <HugeiconsIcon icon={Edit02Icon} className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
                   <span>Edit Details</span>
                 </button>
                 <button
                   onClick={() => setSelectedAgentDetails(null)}
-                  className="text-slate-400 hover:text-slate-700 text-2xl font-semibold border-none bg-transparent cursor-pointer transition-colors p-1"
+                  className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-all cursor-pointer border-none"
                 >
-                  &times;
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
                 </button>
               </div>
             </div>
@@ -1159,32 +1159,23 @@ export default function AgentsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex justify-between items-center px-8 py-5 border-t border-slate-200 bg-slate-50 shrink-0">
+            <div className="flex justify-between items-center px-8 py-4 border-t border-slate-200 bg-slate-50 shrink-0 select-none">
               <button
                 onClick={() => {
                   setSelectedAgentDetails(null);
                   handleDeleteAgent(selectedAgentDetails._id);
                 }}
-                className="px-6 py-3 bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
+                className="px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-semibold text-xs rounded-full border border-red-200 cursor-pointer active:scale-95 transition-all flex items-center gap-1.5"
               >
-                <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4 text-red-500" strokeWidth={2.5} />
-                Delete Agent
+                <HugeiconsIcon icon={Delete02Icon} className="w-3.5 h-3.5 text-red-500" strokeWidth={2.5} />
+                <span>Delete Agent</span>
               </button>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handleOpenEditAgent(selectedAgentDetails)}
-                  className="px-6 py-3 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-full text-xs font-semibold shadow-md cursor-pointer border-none outline-none transition-all flex items-center gap-1.5"
-                >
-                  <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                  <span>Edit Agent</span>
-                </button>
-                <button
-                  onClick={() => setSelectedAgentDetails(null)}
-                  className="px-8 py-3 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-sm font-semibold shadow-md cursor-pointer border-none outline-none transition-all"
-                >
-                  Close
-                </button>
-              </div>
+              <button
+                onClick={() => setSelectedAgentDetails(null)}
+                className="px-8 py-2.5 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-semibold shadow-md cursor-pointer border-none outline-none transition-all"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
