@@ -555,12 +555,9 @@ export default function AdminStaffPage() {
                     >
                       {/* Col 1: Branch & Name */}
                       <div className="flex flex-col min-w-0 select-none">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="w-2 h-2 rounded-full shrink-0 bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.7)]" />
-                          <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
-                            {staff.branch} Branch
-                          </h3>
-                        </div>
+                        <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
+                          {staff.branch} Branch
+                        </h3>
                         <span className="text-[10px] text-slate-600 font-bold block mt-1">
                           {staff.name}
                         </span>
