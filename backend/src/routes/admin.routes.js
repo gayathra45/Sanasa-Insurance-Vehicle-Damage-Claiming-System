@@ -311,6 +311,10 @@ router.get("/notifications", async (req, res) => {
           link: `/Admin/Agents?email=${agent.email}`,
           actionLabel: "View Agent",
           agent
+        });
+      }
+    });
+
     // 4. Branch Profile Update Request notifications
     const branchRequests = await BranchProfileUpdateRequest.find({ status: "Pending" }).sort({ createdAt: -1 });
     branchRequests.forEach((brReq) => {
