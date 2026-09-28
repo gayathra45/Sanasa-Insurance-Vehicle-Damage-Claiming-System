@@ -120,7 +120,8 @@ export default function BranchProfilePage() {
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    reason: ""
   });
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
@@ -439,7 +440,7 @@ export default function BranchProfilePage() {
     }
   };
 
-  // Handle Password Change
+  // Handle Password Change Request (Requires Admin Approval)
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!branch?.email) return;
@@ -448,7 +449,7 @@ export default function BranchProfilePage() {
       setPopup({
         show: true,
         title: "Missing Fields",
-        message: "Please fill in all password fields.",
+        message: "Please fill in all required password fields.",
         type: "error"
       });
       return;
@@ -476,36 +477,40 @@ export default function BranchProfilePage() {
 
     setChangingPassword(true);
     try {
-      const res = await fetch(`${API_URL}/office-staff/change-password`, {
+      const res = await fetch(`${API_URL}/office-staff/request-password-change`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: branch.email,
           currentPassword: passwordForm.currentPassword,
-          newPassword: passwordForm.newPassword
+          newPassword: passwordForm.newPassword,
+          reason: passwordForm.reason
         })
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to change password.");
+      if (!res.ok) throw new Error(data.error || "Failed to submit password change request.");
 
       setPopup({
         show: true,
-        title: "Password Updated",
-        message: "Your branch account password has been changed successfully.",
+        title: "Password Change Requested",
+        message: "Your password update request has been submitted to Head Office Administration for approval. Your current active password remains valid until Admin approves the change.",
         type: "success"
       });
 
       setPasswordForm({
         currentPassword: "",
         newPassword: "",
-        confirmPassword: ""
+        confirmPassword: "",
+        reason: ""
       });
+
+      await fetchRequests(branch.email);
     } catch (err: any) {
       setPopup({
         show: true,
-        title: "Password Update Failed",
-        message: err.message || "Failed to change password. Please check your current password.",
+        title: "Password Request Failed",
+        message: err.message || "Failed to submit password request. Please check your current password.",
         type: "error"
       });
     } finally {
@@ -514,6 +519,9 @@ export default function BranchProfilePage() {
   };
 
   const pendingRequest = updateRequests.find((r) => r.status === "Pending");
+  const pendingPasswordRequest = updateRequests.find(
+    (r) => r.requestType === "Password & Security" && r.status === "Pending"
+  );
 
   // Location helpers for dynamic dropdowns
   const availableDistricts = editForm.province && sriLankaLocations[editForm.province]
@@ -1295,7 +1303,9 @@ export default function BranchProfilePage() {
                                 Requested Modifications:
                               </span>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                                {Object.entries(req.requestedChanges || {}).map(([key, val]) => (
+                                {Object.entries(req.requestedChanges || {})
+                                  .filter(([key]) => key !== "pendingPasswordHash")
+                                  .map(([key, val]) => (
                                   <div key={key} className="p-2.5 bg-white rounded-xl border border-slate-200 flex flex-col">
                                     <span className="text-[10px] font-semibold text-slate-400 capitalize">
                                       {key.replace(/([A-Z])/g, " $1")}
@@ -1344,19 +1354,61 @@ export default function BranchProfilePage() {
                 {/* TAB 4: SECURITY & PASSWORD */}
                 {activeTab === "security" && (
                   <div className="bg-white rounded-2xl p-6 lg:p-8 border border-slate-200/80 shadow-sm flex flex-col gap-6 max-w-2xl">
-                    <div>
-                      <h3 className="text-base font-bold text-slate-800">
-                        Branch Account Password & Security
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Ensure branch staff credentials remain protected with a strong, secure password.
-                      </p>
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-[#102A43]" strokeWidth={2} />
+                          <h3 className="text-base font-bold text-slate-800">
+                            Branch Account Password & Security
+                          </h3>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                          For security and compliance, setting a new branch password requires current password verification and approval from Head Office Administration.
+                        </p>
+                      </div>
                     </div>
+
+                    {/* Pending Password Request Alert Banner */}
+                    {pendingPasswordRequest ? (
+                      <div className="p-4 rounded-xl bg-amber-50/80 border border-amber-200/80 flex flex-col gap-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse shrink-0" />
+                            <span className="text-xs font-bold text-amber-900">
+                              Password Change Request Pending Admin Approval
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full border border-amber-300">
+                            Under Review
+                          </span>
+                        </div>
+                        <p className="text-xs text-amber-800 leading-relaxed">
+                          A request to update your branch login password was submitted on{" "}
+                          <strong className="font-semibold">{formatDateTime(pendingPasswordRequest.createdAt)}</strong>. Head Office Admin has been notified to review and verify this change.
+                        </p>
+                        {pendingPasswordRequest.reason && (
+                          <div className="mt-1 p-2.5 bg-white/70 rounded-lg border border-amber-200 text-xs text-amber-900">
+                            <span className="font-bold text-amber-950">Submitted Note: </span>
+                            {pendingPasswordRequest.reason}
+                          </div>
+                        )}
+                        <p className="text-[11px] text-amber-700/90 italic mt-0.5">
+                          * Your current active password remains valid until Head Office Admin approves the change. Submitting the form below will update your pending request.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-start gap-2.5">
+                        <HugeiconsIcon icon={AlertCircleIcon} className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                        <span>
+                          Once submitted, your request will be reviewed by Head Office Admin. Your existing password will remain active until approval is confirmed.
+                        </span>
+                      </div>
+                    )}
 
                     <form onSubmit={handlePasswordSubmit} className="flex flex-col gap-4">
                       <div>
                         <label className="block text-xs font-bold text-slate-600 mb-1.5">
-                          Current Password *
+                          Current Active Password *
                         </label>
                         <div className="relative">
                           <input
@@ -1386,7 +1438,7 @@ export default function BranchProfilePage() {
                             type={showNewPw ? "text" : "password"}
                             value={passwordForm.newPassword}
                             onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                            placeholder="Enter new strong password"
+                            placeholder="Enter new strong password (min. 6 characters)"
                             className="w-full px-3.5 py-2.5 pr-10 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#102A43]/20 focus:border-[#102A43] transition-all bg-slate-50/50"
                             required
                           />
@@ -1423,6 +1475,19 @@ export default function BranchProfilePage() {
                         </div>
                       </div>
 
+                      <div>
+                        <label className="block text-xs font-bold text-slate-600 mb-1.5">
+                          Reason / Remarks for Admin (Optional)
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={passwordForm.reason}
+                          onChange={(e) => setPasswordForm({ ...passwordForm, reason: e.target.value })}
+                          placeholder="e.g. Scheduled quarterly credential update, staff handover, etc."
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#102A43]/20 focus:border-[#102A43] transition-all bg-slate-50/50 resize-none"
+                        />
+                      </div>
+
                       <div className="pt-2">
                         <button
                           type="submit"
@@ -1432,12 +1497,12 @@ export default function BranchProfilePage() {
                           {changingPassword ? (
                             <>
                               <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />
-                              <span>Updating Password...</span>
+                              <span>Submitting Request to Admin...</span>
                             </>
                           ) : (
                             <>
                               <HugeiconsIcon icon={LockPasswordIcon} className="w-4 h-4" strokeWidth={2.5} />
-                              <span>Update Password</span>
+                              <span>{pendingPasswordRequest ? "Update Password Change Request" : "Submit Password Change Request"}</span>
                             </>
                           )}
                         </button>

@@ -12,7 +12,8 @@ const branchProfileUpdateRequestSchema = new mongoose.Schema({
       "Branch Details",
       "Contact & Location",
       "Staff & Operations",
-      "Full Profile Update"
+      "Full Profile Update",
+      "Password & Security"
     ],
     default: "Branch Details"
   },

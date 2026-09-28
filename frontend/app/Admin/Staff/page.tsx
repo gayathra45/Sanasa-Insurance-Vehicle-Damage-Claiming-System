@@ -1511,8 +1511,13 @@ export default function AdminStaffPage() {
                           <span className="text-[11px] font-semibold text-slate-400 block">
                             Submitted: {new Date(req.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                           </span>
-                          <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md mt-1 inline-block">
-                            {req.requestType}
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md mt-1 inline-flex items-center gap-1 ${
+                            req.requestType === "Password & Security"
+                              ? "bg-purple-100 text-purple-800 border border-purple-200"
+                              : "bg-slate-100 text-slate-600"
+                          }`}>
+                            {req.requestType === "Password & Security" && <HugeiconsIcon icon={Key01Icon} className="w-3 h-3 text-purple-700" />}
+                            <span>{req.requestType}</span>
                           </span>
                         </div>
                       </div>
@@ -1531,7 +1536,9 @@ export default function AdminStaffPage() {
                           Requested Field Modifications:
                         </span>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                          {Object.entries(req.requestedChanges || {}).map(([key, val]) => (
+                          {Object.entries(req.requestedChanges || {})
+                            .filter(([key]) => key !== "pendingPasswordHash")
+                            .map(([key, val]) => (
                             <div key={key} className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl flex flex-col gap-1">
                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                                 {key.replace(/([A-Z])/g, " $1")}

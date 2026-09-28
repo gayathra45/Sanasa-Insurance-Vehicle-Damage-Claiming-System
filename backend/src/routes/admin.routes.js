@@ -318,12 +318,15 @@ router.get("/notifications", async (req, res) => {
     // 4. Branch Profile Update Request notifications
     const branchRequests = await BranchProfileUpdateRequest.find({ status: "Pending" }).sort({ createdAt: -1 });
     branchRequests.forEach((brReq) => {
+      const isPasswordReq = brReq.requestType === "Password & Security";
       compiled.push({
         id: `${brReq._id}-branch-profile-req`,
         type: "action",
         category: "branches",
-        title: "Branch Profile Edit Request",
-        description: `The ${brReq.branchName} Branch submitted a profile update request (${brReq.requestType}) awaiting Admin review.`,
+        title: isPasswordReq ? "Branch Password Change Request" : "Branch Profile Edit Request",
+        description: isPasswordReq
+          ? `The ${brReq.branchName} Branch submitted a new password change request awaiting Admin approval.`
+          : `The ${brReq.branchName} Branch submitted a profile update request (${brReq.requestType}) awaiting Admin review.`,
         date: brReq.createdAt,
         isUrgent: true,
         link: `/Admin/Staff?tab=requests&requestId=${brReq._id}`,
@@ -624,8 +627,18 @@ router.get("/branch-profile-requests", async (req, res) => {
       query.branchName = branch.trim();
     }
 
-    const requests = await BranchProfileUpdateRequest.find(query).sort({ createdAt: -1 });
-    res.json({ requests });
+    const requests = await BranchProfileUpdateRequest.find(query).sort({ createdAt: -1 }).lean();
+    
+    // Sanitize any sensitive password hash from output
+    const sanitizedRequests = requests.map((r) => {
+      if (r.requestedChanges && r.requestedChanges.pendingPasswordHash) {
+        const { pendingPasswordHash, ...restChanges } = r.requestedChanges;
+        return { ...r, requestedChanges: restChanges };
+      }
+      return r;
+    });
+
+    res.json({ requests: sanitizedRequests });
   } catch (err) {
     console.error("Fetch branch profile requests error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
@@ -656,6 +669,12 @@ router.post("/branch-profile-requests/approve", async (req, res) => {
 
     const changes = updateRequest.requestedChanges || {};
 
+    // Apply approved password change if present
+    if (changes.pendingPasswordHash) {
+      staff.password = changes.pendingPasswordHash;
+      staff.mustChangePassword = false;
+    }
+
     // Apply approved changes to OfficeStaff record
     if (changes.name !== undefined && changes.name.trim()) staff.name = changes.name.trim();
     if (changes.mobile !== undefined && changes.mobile.trim()) staff.mobile = changes.mobile.trim();
@@ -679,7 +698,9 @@ router.post("/branch-profile-requests/approve", async (req, res) => {
     updateRequest.status = "Approved";
     updateRequest.reviewedBy = adminName || "Admin";
     updateRequest.reviewedAt = new Date();
-    updateRequest.reviewNote = reviewNote || "Branch profile updates verified and approved.";
+    updateRequest.reviewNote = reviewNote || (updateRequest.requestType === "Password & Security" 
+      ? "Branch password change verified and approved by Head Office Admin." 
+      : "Branch profile updates verified and approved.");
     updateRequest.updatedAt = new Date();
     await updateRequest.save();
 

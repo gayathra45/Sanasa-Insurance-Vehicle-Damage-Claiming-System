@@ -1822,6 +1822,83 @@ router.post("/profile-update-request", async (req, res) => {
   }
 });
 
+// POST request branch password change (requires Admin approval): /api/office-staff/request-password-change
+router.post("/request-password-change", async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword, reason } = req.body;
+    if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Email, current password, and new password are required." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters long." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const staff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (!staff) {
+      return res.status(404).json({ error: "Office staff member not found." });
+    }
+
+    // Verify current existing password
+    const hashedCurrent = hashPassword(currentPassword);
+    if (staff.password !== hashedCurrent) {
+      return res.status(400).json({ error: "Incorrect current password. Please enter your active password to authenticate this request." });
+    }
+
+    const hashedNew = hashPassword(newPassword);
+    if (hashedNew === staff.password) {
+      return res.status(400).json({ error: "New password cannot be the same as your current password." });
+    }
+
+    // Check if there is already an active Pending request of type Password & Security
+    const existingPending = await BranchProfileUpdateRequest.findOne({
+      branchId: staff._id,
+      requestType: "Password & Security",
+      status: "Pending"
+    });
+
+    const originalData = {
+      "Account Security": "Current Branch Password (Active)"
+    };
+
+    const requestedChanges = {
+      "Account Security": "New Password (Awaiting Admin Approval)",
+      pendingPasswordHash: hashedNew
+    };
+
+    let savedRequest;
+    if (existingPending) {
+      existingPending.requestedChanges = requestedChanges;
+      existingPending.reason = reason ? reason.trim() : existingPending.reason;
+      existingPending.updatedAt = new Date();
+      savedRequest = await existingPending.save();
+    } else {
+      savedRequest = new BranchProfileUpdateRequest({
+        branchId: staff._id,
+        branchName: staff.branch,
+        staffName: staff.name,
+        email: staff.email,
+        mobile: staff.mobile,
+        requestType: "Password & Security",
+        originalData,
+        requestedChanges,
+        reason: reason ? reason.trim() : "Branch requested password change via Security settings.",
+        status: "Pending"
+      });
+      await savedRequest.save();
+    }
+
+    res.status(201).json({
+      message: "Password change request submitted successfully. It has been routed to Head Office Administration for review and approval.",
+      request: savedRequest
+    });
+  } catch (err) {
+    console.error("Request branch password change error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred while submitting password change request." });
+  }
+});
+
 // GET branch's own profile update requests: /api/office-staff/profile-update-requests
 router.get("/profile-update-requests", async (req, res) => {
   try {
@@ -1834,8 +1911,18 @@ router.get("/profile-update-requests", async (req, res) => {
     if (email) query.email = email.trim().toLowerCase();
     else if (branch) query.branchName = branch.trim();
 
-    const requests = await BranchProfileUpdateRequest.find(query).sort({ createdAt: -1 });
-    res.json({ requests });
+    const requests = await BranchProfileUpdateRequest.find(query).sort({ createdAt: -1 }).lean();
+    
+    // Sanitize pending password hash from output
+    const sanitizedRequests = requests.map((r) => {
+      if (r.requestedChanges && r.requestedChanges.pendingPasswordHash) {
+        const { pendingPasswordHash, ...restChanges } = r.requestedChanges;
+        return { ...r, requestedChanges: restChanges };
+      }
+      return r;
+    });
+
+    res.json({ requests: sanitizedRequests });
   } catch (err) {
     console.error("Fetch branch profile update requests error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
