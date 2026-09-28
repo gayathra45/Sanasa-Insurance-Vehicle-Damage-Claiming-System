@@ -2479,5 +2479,360 @@ router.post("/sessions/terminate-branch", async (req, res) => {
   }
 });
 
+// ==========================================
+// --- API: Admin Agent Management ---
+// ==========================================
+
+// GET all agents with filters and analytics: /api/admin/agents
+router.get("/agents", async (req, res) => {
+  try {
+    const { branch, availability, province, search, sortBy } = req.query;
+    const query = {};
+
+    if (branch && branch !== "All") {
+      query.branch = { $regex: new RegExp(`^${branch.trim()}$`, "i") };
+    }
+    if (availability && availability !== "All") {
+      query.availability = availability;
+    }
+    if (province && province !== "All") {
+      query.province = { $regex: new RegExp(`^${province.trim()}$`, "i") };
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      query.$or = [
+        { name: { $regex: escaped, $options: "i" } },
+        { email: { $regex: escaped, $options: "i" } },
+        { agentId: { $regex: escaped, $options: "i" } },
+        { nic: { $regex: escaped, $options: "i" } },
+        { phone: { $regex: escaped, $options: "i" } },
+        { district: { $regex: escaped, $options: "i" } },
+        { city: { $regex: escaped, $options: "i" } }
+      ];
+    }
+
+    // Sort order
+    let sortOptions = { createdAt: -1 };
+    if (sortBy === "oldest") sortOptions = { createdAt: 1 };
+    else if (sortBy === "name-asc") sortOptions = { name: 1 };
+    else if (sortBy === "name-desc") sortOptions = { name: -1 };
+
+    const agents = await Agent.find(query, { password: 0 }).sort(sortOptions).lean();
+
+    // Summary statistics
+    const [totalAgents, activeAgents, offlineAgents, distinctBranches] = await Promise.all([
+      Agent.countDocuments(),
+      Agent.countDocuments({ availability: "Active" }),
+      Agent.countDocuments({ availability: "Offline" }),
+      Agent.distinct("branch")
+    ]);
+
+    res.json({
+      agents,
+      summary: {
+        totalAgents,
+        activeAgents,
+        offlineAgents,
+        totalBranches: distinctBranches.length
+      }
+    });
+  } catch (err) {
+    console.error("Admin fetch agents error:", err);
+    res.status(500).json({ error: "Failed to load insurance agents." });
+  }
+});
+
+// GET single agent details + assigned claims & login activity: /api/admin/agents/:id
+router.get("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { $or: [{ agentId: id }, { email: id.toLowerCase() }] };
+
+    const agent = await Agent.findOne(query, { password: 0 }).lean();
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    // Fetch assigned claims
+    const claims = await Claim.find({
+      $or: [
+        { assignedAgent: agent.name },
+        { assignedAgentEmail: agent.email }
+      ]
+    }).sort({ incidentDate: -1 }).limit(20).lean();
+
+    // Fetch login activity history
+    const loginActivities = await LoginActivity.find({
+      $or: [
+        { userId: agent._id },
+        { userEmail: agent.email.toLowerCase() },
+        { userNic: agent.nic }
+      ]
+    }).sort({ createdAt: -1 }).limit(30).lean();
+
+    res.json({
+      agent,
+      claims,
+      loginActivities
+    });
+  } catch (err) {
+    console.error("Admin fetch agent details error:", err);
+    res.status(500).json({ error: "Failed to load agent details." });
+  }
+});
+
+// POST register new agent: /api/admin/agents
+router.post("/agents", async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      nic,
+      address,
+      dob,
+      branch,
+      phone,
+      city,
+      district,
+      area,
+      province,
+      bankName,
+      bankBranch,
+      accountNumber,
+      accountType,
+      accountHolderName
+    } = req.body;
+
+    if (!name || !email || !nic || !branch || !phone || !dob || !address) {
+      return res.status(400).json({ error: "Name, Email, NIC, Branch, Phone, DOB, and Address are required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanNic = nic.trim().toUpperCase();
+
+    const existingAgent = await Agent.findOne({
+      $or: [{ email: cleanEmail }, { nic: cleanNic }]
+    });
+    if (existingAgent) {
+      return res.status(400).json({ error: "An agent with this Email or NIC already exists." });
+    }
+
+    const totalAgents = await Agent.countDocuments();
+    const nextAgentId = `AGT-${String(totalAgents + 1).padStart(4, "0")}`;
+
+    // Generate random 8-character temporary password
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let tempPassword = "";
+    for (let i = 0; i < 8; i++) {
+      tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const hashedPassword = hashPassword(tempPassword);
+
+    const newAgent = new Agent({
+      agentId: nextAgentId,
+      name: name.trim(),
+      email: cleanEmail,
+      password: hashedPassword,
+      nic: cleanNic,
+      dob: dob.trim(),
+      address: address.trim(),
+      phone: phone.trim(),
+      city: district ? district.trim() : (city ? city.trim() : ""),
+      district: district ? district.trim() : "",
+      area: area ? area.trim() : "",
+      province: province ? province.trim() : "",
+      branch: branch.trim(),
+      bankName: bankName ? bankName.trim() : "",
+      bankBranch: bankBranch ? bankBranch.trim() : "",
+      accountNumber: accountNumber ? accountNumber.trim() : "",
+      accountType: accountType ? accountType.trim() : "",
+      accountHolderName: accountHolderName ? accountHolderName.trim() : "",
+      status: "active",
+      availability: "Active",
+      mustChangePassword: true
+    });
+
+    await newAgent.save();
+
+    // Dispatch email notification with credentials
+    try {
+      const emailHtml = getBaseTemplate({
+        title: "Welcome to Sanasa Insurance — Field Agent Access",
+        preheader: "Your Sanasa Agent credentials have been issued.",
+        bodyContent: `
+          <p style="margin: 0 0 16px 0; color: #334155; font-size: 15px;">Dear <strong>${name.trim()}</strong>,</p>
+          <p style="margin: 0 0 16px 0; color: #334155; font-size: 14px; line-height: 1.6;">
+            Your insurance field agent profile has been officially created by Head Office Administration. You may now log in to the Sanasa Agent Mobile Application.
+          </p>
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Agent ID:</strong> <span style="font-family: monospace; color: #000080; font-weight: bold;">${nextAgentId}</span></p>
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Branch Office:</strong> ${branch.trim()}</p>
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Login Email:</strong> ${cleanEmail}</p>
+            <p style="margin: 0; font-size: 13px; color: #64748b;"><strong>Temporary Password:</strong> <span style="font-family: monospace; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: bold;">${tempPassword}</span></p>
+          </div>
+          <p style="margin: 0; color: #64748b; font-size: 12px;">Please change your password immediately upon first login.</p>
+        `
+      });
+
+      await sendEmail({
+        to: cleanEmail,
+        subject: "Sanasa Insurance — Field Agent Login Credentials",
+        html: emailHtml
+      });
+    } catch (mailErr) {
+      console.error("Agent welcome email sending failed:", mailErr);
+    }
+
+    res.status(201).json({
+      message: `Agent ${newAgent.name} (${newAgent.agentId}) created successfully.`,
+      agent: newAgent,
+      tempPassword
+    });
+  } catch (err) {
+    console.error("Admin create agent error:", err);
+    res.status(500).json({ error: err.message || "Failed to create agent." });
+  }
+});
+
+// PUT update agent: /api/admin/agents/:id
+router.put("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      email,
+      nic,
+      address,
+      dob,
+      branch,
+      phone,
+      city,
+      district,
+      area,
+      province,
+      bankName,
+      bankBranch,
+      accountNumber,
+      accountType,
+      accountHolderName,
+      availability,
+      status
+    } = req.body;
+
+    const agent = await Agent.findById(id);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    if (name) agent.name = name.trim();
+    if (email) agent.email = email.trim().toLowerCase();
+    if (nic) agent.nic = nic.trim().toUpperCase();
+    if (address) agent.address = address.trim();
+    if (dob) agent.dob = dob.trim();
+    if (branch) agent.branch = branch.trim();
+    if (phone) agent.phone = phone.trim();
+    if (city !== undefined) agent.city = city.trim();
+    if (district !== undefined) agent.district = district.trim();
+    if (area !== undefined) agent.area = area.trim();
+    if (province !== undefined) agent.province = province.trim();
+    if (bankName !== undefined) agent.bankName = bankName.trim();
+    if (bankBranch !== undefined) agent.bankBranch = bankBranch.trim();
+    if (accountNumber !== undefined) agent.accountNumber = accountNumber.trim();
+    if (accountType !== undefined) agent.accountType = accountType.trim();
+    if (accountHolderName !== undefined) agent.accountHolderName = accountHolderName.trim();
+    if (availability) agent.availability = availability;
+    if (status) agent.status = status;
+
+    await agent.save();
+
+    res.json({
+      message: `Agent profile for ${agent.name} updated successfully.`,
+      agent
+    });
+  } catch (err) {
+    console.error("Admin update agent error:", err);
+    res.status(500).json({ error: err.message || "Failed to update agent profile." });
+  }
+});
+
+// DELETE agent: /api/admin/agents/:id
+router.delete("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await Agent.findByIdAndDelete(id);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    res.json({
+      message: `Agent ${agent.name} (${agent.agentId}) has been removed.`
+    });
+  } catch (err) {
+    console.error("Admin delete agent error:", err);
+    res.status(500).json({ error: "Failed to delete agent." });
+  }
+});
+
+// POST reset agent password: /api/admin/agents/:id/reset-password
+router.post("/agents/:id/reset-password", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await Agent.findById(id);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let tempPassword = "";
+    for (let i = 0; i < 8; i++) {
+      tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    agent.password = hashPassword(tempPassword);
+    agent.mustChangePassword = true;
+    agent.forceLogoutAt = new Date();
+    await agent.save();
+
+    try {
+      const emailHtml = getBaseTemplate({
+        title: "Password Reset — Sanasa Field Agent",
+        preheader: "Your Sanasa Agent password has been reset by Administrator.",
+        bodyContent: `
+          <p style="margin: 0 0 16px 0; color: #334155; font-size: 15px;">Dear <strong>${agent.name}</strong>,</p>
+          <p style="margin: 0 0 16px 0; color: #334155; font-size: 14px; line-height: 1.6;">
+            Your account password has been reset by Head Office Administrator. Use the temporary password below to log in:
+          </p>
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Agent ID:</strong> ${agent.agentId}</p>
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Email:</strong> ${agent.email}</p>
+            <p style="margin: 0; font-size: 13px; color: #64748b;"><strong>New Temporary Password:</strong> <span style="font-family: monospace; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: bold;">${tempPassword}</span></p>
+          </div>
+          <p style="margin: 0; color: #64748b; font-size: 12px;">Please change your password immediately upon login.</p>
+        `
+      });
+
+      await sendEmail({
+        to: agent.email,
+        subject: "Sanasa Insurance — Agent Password Reset",
+        html: emailHtml
+      });
+    } catch (mailErr) {
+      console.error("Agent password reset email failed:", mailErr);
+    }
+
+    res.json({
+      message: `Password for agent ${agent.name} has been reset. Temporary credentials dispatched via email.`,
+      tempPassword
+    });
+  } catch (err) {
+    console.error("Admin reset agent password error:", err);
+    res.status(500).json({ error: "Failed to reset agent password." });
+  }
+});
+
 export default router;
 
