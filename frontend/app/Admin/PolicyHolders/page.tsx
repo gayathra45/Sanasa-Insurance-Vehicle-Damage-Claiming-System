@@ -66,6 +66,24 @@ interface Documents {
   revenueLicense?: string;
 }
 
+interface LoginActivityRecord {
+  _id: string;
+  userType: string;
+  userId?: string;
+  userName?: string;
+  userEmail: string;
+  userNic?: string;
+  branch: string;
+  action: string;
+  ipAddress: string;
+  device: string;
+  browser?: string;
+  os?: string;
+  status: string;
+  details?: string;
+  createdAt: string;
+}
+
 interface PolicyHolder {
   _id: string;
   firstName: string;
@@ -87,6 +105,10 @@ interface PolicyHolder {
   totalClaimsCount?: number;
   activeClaimsCount?: number;
   totalApprovedPayout?: number;
+  lastLoginAt?: string | null;
+  lastLoginIp?: string;
+  lastLoginDevice?: string;
+  loginCount?: number;
   createdAt: string;
 }
 
@@ -179,8 +201,10 @@ export default function AdminPolicyHoldersPage() {
   // Modals
   const [viewingHolder, setViewingHolder] = useState<PolicyHolder | null>(null);
   const [holderClaims, setHolderClaims] = useState<ClaimRecord[]>([]);
+  const [holderLoginActivities, setHolderLoginActivities] = useState<LoginActivityRecord[]>([]);
   const [loadingClaims, setLoadingClaims] = useState(false);
-  const [activeViewTab, setActiveViewTab] = useState<"overview" | "vehicles" | "documents" | "claims">("overview");
+  const [loadingLoginActivities, setLoadingLoginActivities] = useState(false);
+  const [activeViewTab, setActiveViewTab] = useState<"overview" | "vehicles" | "documents" | "claims" | "activity">("overview");
 
   const [editingHolder, setEditingHolder] = useState<PolicyHolder | null>(null);
   const [editFormData, setEditFormData] = useState({
@@ -259,20 +283,26 @@ export default function AdminPolicyHoldersPage() {
     fetchPolicyholders();
   }, [fetchPolicyholders]);
 
-  // Load Single Holder Claims
-  const loadHolderClaims = async (nic: string) => {
+  // Load Single Holder Claims & Login Activity
+  const loadHolderDetails = async (nic: string) => {
     if (!nic) return;
     setLoadingClaims(true);
+    setLoadingLoginActivities(true);
     try {
       const res = await fetch(`${API_URL}/admin/policyholders/${encodeURIComponent(nic)}`);
       if (res.ok) {
         const data = await res.json();
         setHolderClaims(data.claims || []);
+        setHolderLoginActivities(data.loginActivities || []);
+        if (data.policyholder) {
+          setViewingHolder(data.policyholder);
+        }
       }
     } catch (err) {
-      console.error("Error loading claims for policyholder:", err);
+      console.error("Error loading details for policyholder:", err);
     } finally {
       setLoadingClaims(false);
+      setLoadingLoginActivities(false);
     }
   };
 
@@ -281,7 +311,8 @@ export default function AdminPolicyHoldersPage() {
     setViewingHolder(holder);
     setActiveViewTab("overview");
     setHolderClaims([]);
-    loadHolderClaims(holder.nic);
+    setHolderLoginActivities([]);
+    loadHolderDetails(holder.nic);
   };
 
   // Open Edit Modal
@@ -792,11 +823,21 @@ export default function AdminPolicyHoldersPage() {
                             </div>
                           </td>
 
-                          {/* Contact */}
+                          {/* Contact & Last Active */}
                           <td className="py-3.5 px-4">
                             <div className="flex flex-col">
                               <span className="text-slate-800 font-medium">{holder.mobile}</span>
                               <span className="text-[11px] text-slate-400 truncate max-w-[140px]">{holder.email}</span>
+                              {holder.lastLoginAt ? (
+                                <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5" title={`IP: ${holder.lastLoginIp || "—"} | ${holder.lastLoginDevice || "Web"}`}>
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                  Active {formatSriLankaDate(holder.lastLoginAt)}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 font-normal mt-0.5">
+                                  Never logged in
+                                </span>
+                              )}
                             </div>
                           </td>
 
@@ -952,7 +993,8 @@ export default function AdminPolicyHoldersPage() {
                 { id: "overview", label: "Overview & Bank" },
                 { id: "vehicles", label: `Vehicles (${viewingHolder.vehicles?.length || 0})` },
                 { id: "documents", label: "KYC Documents" },
-                { id: "claims", label: `Claims History (${holderClaims.length})` }
+                { id: "claims", label: `Claims History (${holderClaims.length})` },
+                { id: "activity", label: `Activity & Login Details (${holderLoginActivities.length})` }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1214,6 +1256,110 @@ export default function AdminPolicyHoldersPage() {
                     </div>
                   ) : (
                     <p className="text-slate-400 py-8 text-center">No insurance claims filed under this policyholder.</p>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 5: ACTIVITY & LOGIN DETAILS */}
+              {activeViewTab === "activity" && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs font-semibold text-slate-800 block">
+                        Policyholder Authentication & Activity Audit Log
+                      </span>
+                      <span className="text-[11px] text-slate-500">
+                        Detailed record of portal logins, IP addresses, and device environments used by this account.
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Summary Metric Cards */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-0.5">Last Active</span>
+                      <span className="font-semibold text-slate-800 text-xs block truncate">
+                        {viewingHolder.lastLoginAt ? formatSriLankaDateTime(viewingHolder.lastLoginAt) : "Never logged in"}
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-0.5">Total Login Sessions</span>
+                      <span className="font-bold text-slate-800 text-xs block">
+                        {viewingHolder.loginCount || holderLoginActivities.length || 0} session(s)
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-0.5">Last Known IP</span>
+                      <span className="font-mono font-semibold text-slate-800 text-xs block truncate">
+                        {viewingHolder.lastLoginIp || (holderLoginActivities[0]?.ipAddress) || "—"}
+                      </span>
+                    </div>
+
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70">
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase block mb-0.5">Primary Device</span>
+                      <span className="font-semibold text-slate-800 text-xs block truncate" title={viewingHolder.lastLoginDevice || holderLoginActivities[0]?.device || "Web Browser"}>
+                        {viewingHolder.lastLoginDevice || holderLoginActivities[0]?.device || "Web Browser"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Activity History Table */}
+                  {loadingLoginActivities ? (
+                    <div className="py-8 flex justify-center"><SimpleLoader /></div>
+                  ) : holderLoginActivities.length > 0 ? (
+                    <div className="border border-slate-200 rounded-xl overflow-hidden">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-semibold">
+                          <tr>
+                            <th className="py-2.5 px-3">Date & Time</th>
+                            <th className="py-2.5 px-3">Action</th>
+                            <th className="py-2.5 px-3">IP Address</th>
+                            <th className="py-2.5 px-3">Device / OS</th>
+                            <th className="py-2.5 px-3">Browser</th>
+                            <th className="py-2.5 px-3 text-right">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {holderLoginActivities.map((act) => (
+                            <tr key={act._id} className="hover:bg-slate-50/60 transition-colors">
+                              <td className="py-2.5 px-3 font-medium text-slate-800 whitespace-nowrap">
+                                {formatSriLankaDateTime(act.createdAt)}
+                              </td>
+                              <td className="py-2.5 px-3 font-semibold text-slate-900">
+                                {act.action || "Login"}
+                              </td>
+                              <td className="py-2.5 px-3 font-mono text-slate-600">
+                                {act.ipAddress || "127.0.0.1"}
+                              </td>
+                              <td className="py-2.5 px-3 text-slate-700">
+                                <span>{act.device || "Web"}</span>
+                                {act.os && <span className="text-slate-400 text-[10px] ml-1">({act.os})</span>}
+                              </td>
+                              <td className="py-2.5 px-3 text-slate-600">
+                                {act.browser || "Chrome"}
+                              </td>
+                              <td className="py-2.5 px-3 text-right">
+                                <span className={`text-[10px] px-2 py-0.5 rounded font-medium ${
+                                  act.status === "Success"
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : act.status === "Failed"
+                                    ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                    : "bg-amber-50 text-amber-700 border border-amber-200"
+                                }`}>
+                                  {act.status || "Success"}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-8 text-center text-slate-400">
+                      No past login activity recorded for this policyholder yet. Logins are captured automatically upon user sign-in.
+                    </div>
                   )}
                 </div>
               )}

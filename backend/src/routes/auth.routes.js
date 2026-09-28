@@ -4,7 +4,7 @@ import Agent from "../models/agent.model.js";
 import OfficeStaff from "../models/office_staff.model.js";
 import Admin from "../models/admin.model.js";
 import { hashPassword } from "../utils/crypto.js";
-import { logAgentActivity } from "../utils/activity.js";
+import { logAgentActivity, logLoginActivity } from "../utils/activity.js";
 
 const router = express.Router();
 
@@ -41,6 +41,19 @@ router.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Your account is pending approval from the office staff of your nearest branch. You will receive an email notification once your registration is approved." });
       }
 
+      await logLoginActivity({
+        req,
+        userType: "PolicyHolder",
+        userId: user._id,
+        userName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+        userEmail: user.email,
+        userNic: user.nic,
+        branch: user.branch || "Galle",
+        action: "Login",
+        status: "Success",
+        details: "Policyholder portal login successful."
+      });
+
       const userObj = user.toObject();
       delete userObj.password;
 
@@ -59,18 +72,44 @@ router.post("/login", async (req, res) => {
       agent.availability = "Active";
       await agent.save();
 
-      const agentObj = agent.toObject();
-      delete agentObj.password;
-
       const userAgent = req.headers["user-agent"] || "";
       const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
       const deviceType = isMobile ? "Mobile App" : "Web";
       await logAgentActivity(agent.email, "Login", deviceType, `Logged in successfully via ${deviceType}`);
 
+      await logLoginActivity({
+        req,
+        userType: "Agent",
+        userId: agent._id,
+        userName: agent.name,
+        userEmail: agent.email,
+        userNic: agent.nic,
+        branch: agent.branch || "Galle",
+        action: "Login",
+        status: "Success",
+        details: `Insurance Agent logged in via ${deviceType}`
+      });
+
+      const agentObj = agent.toObject();
+      delete agentObj.password;
+
       return res.json({ role: "insurance_agent", agent: agentObj });
     }
 
     if (staff && staff.password === hashedInput) {
+      await logLoginActivity({
+        req,
+        userType: "OfficeStaff",
+        userId: staff._id,
+        userName: staff.name,
+        userEmail: staff.email,
+        userNic: staff.mobile,
+        branch: staff.branch || "Galle",
+        action: "Login",
+        status: "Success",
+        details: `Branch staff (${staff.branch}) login successful.`
+      });
+
       const staffObj = staff.toObject();
       delete staffObj.password;
       return res.json({ role: "office_staff", staff: staffObj });
@@ -82,6 +121,19 @@ router.post("/login", async (req, res) => {
       } else if (admin.status === "Rejected") {
         return res.status(400).json({ error: "Your administrator registration request has been rejected." });
       }
+
+      await logLoginActivity({
+        req,
+        userType: "Admin",
+        userId: admin._id,
+        userName: admin.name,
+        userEmail: admin.email,
+        userNic: admin.nic,
+        branch: "Head Office",
+        action: "Login",
+        status: "Success",
+        details: "Administrator logged into Admin Console."
+      });
 
       const adminObj = admin.toObject();
       delete adminObj.password;

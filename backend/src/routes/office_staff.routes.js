@@ -15,6 +15,7 @@ import BranchProfileUpdateRequest from "../models/branch_profile_update_request.
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate, sendProfileUpdateStatusEmail, sendAgentProfileUpdateStatusEmail } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
+import { logLoginActivity } from "../utils/activity.js";
 import { 
   analyzeAccidentDamage, 
   analyzeAccidentDamageWithCostSheet, 
@@ -45,6 +46,20 @@ router.post("/login", async (req, res) => {
     if (staff.password !== hashedInput) {
       return res.status(400).json({ error: "Invalid Email or Password." });
     }
+
+    // Record login activity
+    await logLoginActivity({
+      req,
+      userType: "OfficeStaff",
+      userId: staff._id,
+      userName: staff.name,
+      userEmail: staff.email,
+      userNic: staff.mobile,
+      branch: staff.branch || "Galle",
+      action: "Login",
+      status: "Success",
+      details: `Branch staff (${staff.branch}) login successful.`
+    });
 
     // Return staff details without password
     const staffObj = staff.toObject();

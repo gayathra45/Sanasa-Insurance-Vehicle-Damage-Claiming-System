@@ -69,6 +69,8 @@ export default function AdminStaffPage() {
   // View Staff states
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingStaff, setViewingStaff] = useState<any | null>(null);
+  const [branchLoginActivities, setBranchLoginActivities] = useState<any[]>([]);
+  const [loadingBranchDetails, setLoadingBranchDetails] = useState(false);
 
   // Password reset request states
   const [showRequestsModal, setShowRequestsModal] = useState(false);
@@ -315,9 +317,26 @@ export default function AdminStaffPage() {
     }
   };
 
-  const triggerView = (staff: any) => {
+  const triggerView = async (staff: any) => {
     setViewingStaff(staff);
+    setBranchLoginActivities([]);
     setShowViewModal(true);
+    setLoadingBranchDetails(true);
+    try {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/staff/${staff._id}/details`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.staff) {
+          setViewingStaff(data.staff);
+        }
+        setBranchLoginActivities(data.loginActivities || []);
+      }
+    } catch (err) {
+      console.error("Error fetching branch details & login activities:", err);
+    } finally {
+      setLoadingBranchDetails(false);
+    }
   };
 
   const triggerEdit = (staff: any) => {
@@ -584,6 +603,16 @@ export default function AdminStaffPage() {
                         <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Contact Info</span>
                         <span className="text-slate-700 font-semibold text-xs truncate" title={staff.email}>{staff.email}</span>
                         <span className="text-slate-600 font-medium text-xs mt-0.5">{staff.mobile}</span>
+                        {staff.lastLoginAt ? (
+                          <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5" title={`IP: ${staff.lastLoginIp || "—"} | ${staff.lastLoginDevice || "Web"}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                            Active {new Date(staff.lastLoginAt).toLocaleDateString()}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-normal mt-0.5">
+                            Never logged in
+                          </span>
+                        )}
                       </div>
 
                       {/* Col 5: Staff Count */}
@@ -1279,7 +1308,7 @@ export default function AdminStaffPage() {
       {/* View Branch Staff details Modal */}
       {showViewModal && viewingStaff && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-2xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
@@ -1288,7 +1317,7 @@ export default function AdminStaffPage() {
                   {viewingStaff.branch} Branch Profile
                 </h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
-                  Office Staff Registry Information
+                  Office Staff Registry & Login Governance Information
                 </p>
               </div>
               <button
@@ -1357,8 +1386,93 @@ export default function AdminStaffPage() {
                 </div>
               </div>
 
+              {/* Grid 3: Branch Login & Activity Details */}
+              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-4">
+                <div className="flex items-center justify-between border-b pb-2">
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider select-none">
+                    Branch Login & Session Activity
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {branchLoginActivities.length} Recent Event(s)
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white p-3 rounded-xl border border-slate-200/70">
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Last Login</span>
+                    <span className="text-slate-800 text-xs font-semibold block truncate">
+                      {viewingStaff.lastLoginAt ? new Date(viewingStaff.lastLoginAt).toLocaleString() : "Never logged in"}
+                    </span>
+                  </div>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200/70">
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Total Logins</span>
+                    <span className="text-slate-800 text-xs font-bold block">
+                      {viewingStaff.loginCount || branchLoginActivities.length || 0} times
+                    </span>
+                  </div>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200/70">
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Last IP Address</span>
+                    <span className="text-slate-800 font-mono text-xs font-semibold block truncate">
+                      {viewingStaff.lastLoginIp || branchLoginActivities[0]?.ipAddress || "—"}
+                    </span>
+                  </div>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200/70">
+                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Device Client</span>
+                    <span className="text-slate-800 text-xs font-semibold block truncate" title={viewingStaff.lastLoginDevice || branchLoginActivities[0]?.device || "Web Browser"}>
+                      {viewingStaff.lastLoginDevice || branchLoginActivities[0]?.device || "Web Browser"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Login Activity Table */}
+                {loadingBranchDetails ? (
+                  <div className="py-4 flex justify-center"><SimpleLoader message="Loading branch activity..." theme="slate" /></div>
+                ) : branchLoginActivities.length > 0 ? (
+                  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase font-semibold">
+                        <tr>
+                          <th className="py-2 px-3">Date & Time</th>
+                          <th className="py-2 px-3">Action</th>
+                          <th className="py-2 px-3">IP Address</th>
+                          <th className="py-2 px-3">Device / Browser</th>
+                          <th className="py-2 px-3 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-[11px]">
+                        {branchLoginActivities.slice(0, 5).map((act) => (
+                          <tr key={act._id}>
+                            <td className="py-2 px-3 text-slate-700 whitespace-nowrap">
+                              {new Date(act.createdAt).toLocaleString()}
+                            </td>
+                            <td className="py-2 px-3 font-semibold text-slate-900">
+                              {act.action || "Login"}
+                            </td>
+                            <td className="py-2 px-3 font-mono text-slate-600">
+                              {act.ipAddress || "127.0.0.1"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-600">
+                              {act.device} {act.browser ? `(${act.browser})` : ""}
+                            </td>
+                            <td className="py-2 px-3 text-right">
+                              <span className="text-[9px] px-2 py-0.5 rounded font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                {act.status || "Success"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-3 text-slate-400 text-xs">
+                    No login sessions captured for this branch yet.
+                  </div>
+                )}
+              </div>
+
               {/* Close Button */}
-              <div className="flex justify-end mt-4 select-none">
+              <div className="flex justify-end mt-2 select-none">
                 <button
                   type="button"
                   onClick={() => {

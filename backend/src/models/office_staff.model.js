@@ -25,6 +25,10 @@ const officeStaffSchema = new mongoose.Schema({
   profilePhoto: { type: String, default: "" }, // Branch Image / Photo
   notes: { type: String, default: "" }, // Branch description or notes
   resetRequestStatus: { type: String, default: "None" }, // "None", "Pending", "Approved"
+  lastLoginAt: { type: Date, default: null },
+  lastLoginIp: { type: String, default: "" },
+  lastLoginDevice: { type: String, default: "" },
+  loginCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 
