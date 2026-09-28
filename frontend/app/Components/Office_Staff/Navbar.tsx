@@ -32,7 +32,6 @@ export default function OfficeStaffNavbar() {
 
   const menuItems = [
     { name: "Home", href: "/Office_Staff/Dashboard" },
-    { name: "Branch Profile", href: "/Office_Staff/Profile" },
     { name: "Claims", href: "/Office_Staff/Claims" },
     { name: "Registrations", href: "/Office_Staff/Registrations" },
     { name: "Policy Holders", href: "/Office_Staff/PolicyHolders" },
