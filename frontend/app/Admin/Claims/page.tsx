@@ -673,47 +673,51 @@ export default function AdminClaimsPage() {
             </div>
 
             {/* Filter Tabs & Secondary Dropdowns */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-3 select-none">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                {/* Status Filter Tabs */}
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                  {[
-                    { id: "All", label: "All Claims", count: summary.totalClaims },
-                    { id: "Pending", label: "Pending", count: summary.pendingClaims },
-                    { id: "In Progress", label: "In Progress", count: summary.inProgressClaims },
-                    { id: "Approved", label: "Approved", count: summary.approvedClaims },
-                    { id: "Rejected", label: "Rejected", count: summary.rejectedClaims }
-                  ].map((tab) => {
-                    const isActive = activeTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border-none outline-none ${
-                          isActive
-                            ? "bg-[#000080] text-white shadow-sm"
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-4 select-none">
+              {/* Top Row: Status Filter Segmented Navigation Tabs */}
+              <div className="flex items-center gap-2 overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden pb-0.5">
+                {[
+                  { id: "All", label: "All Claims", count: summary.totalClaims },
+                  { id: "Pending", label: "Pending Review", count: summary.pendingClaims },
+                  { id: "In Progress", label: "In Progress", count: summary.inProgressClaims },
+                  { id: "Approved", label: "Approved Payouts", count: summary.approvedClaims },
+                  { id: "Rejected", label: "Rejected Claims", count: summary.rejectedClaims }
+                ].map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap border-none outline-none ${
+                        isActive
+                          ? "bg-[#000080] text-white shadow-md shadow-blue-900/15 hover:bg-[#000066]"
+                          : "bg-slate-100/80 text-slate-600 hover:bg-slate-200/80"
+                      }`}
+                    >
+                      <span>{tab.label}</span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                          isActive ? "bg-white/20 text-white" : "bg-white text-slate-700 shadow-xs border border-slate-200/60"
                         }`}
                       >
-                        <span>{tab.label}</span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                            isActive ? "bg-white/20 text-white" : "bg-white text-slate-600 shadow-xs"
-                          }`}
-                        >
-                          {tab.count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-                {/* Dropdown Filters */}
-                <div className="flex flex-wrap items-center gap-2">
+              {/* Bottom Row: 4 Dedicated Filter Selectors in a Structured 4-Column Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-slate-100">
+                {/* Damage Category */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-0.5">
+                    Damage Category
+                  </label>
                   <select
                     value={selectedDamageType}
                     onChange={(e) => setSelectedDamageType(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all cursor-pointer shadow-xs"
                   >
                     <option value="All">All Damage Types</option>
                     {DAMAGE_CATEGORIES.filter((c) => c !== "All").map((cat) => (
@@ -722,11 +726,17 @@ export default function AdminClaimsPage() {
                       </option>
                     ))}
                   </select>
+                </div>
 
+                {/* Branch Office */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-0.5">
+                    Branch Location
+                  </label>
                   <select
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all cursor-pointer shadow-xs"
                   >
                     <option value="All">All Branches</option>
                     {SRI_LANKA_BRANCHES.filter((b) => b !== "All").map((br) => (
@@ -735,11 +745,17 @@ export default function AdminClaimsPage() {
                       </option>
                     ))}
                   </select>
+                </div>
 
+                {/* Priority Level */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-0.5">
+                    Claim Priority
+                  </label>
                   <select
                     value={selectedPriority}
                     onChange={(e) => setSelectedPriority(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all cursor-pointer shadow-xs"
                   >
                     <option value="All">All Priorities</option>
                     <option value="Urgent">Urgent</option>
@@ -747,13 +763,19 @@ export default function AdminClaimsPage() {
                     <option value="Normal">Normal</option>
                     <option value="Low">Low</option>
                   </select>
+                </div>
 
+                {/* Sorting Order */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider pl-0.5">
+                    Sort Claims By
+                  </label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all cursor-pointer shadow-xs"
                   >
-                    <option value="newest">Newest First</option>
+                    <option value="newest">Newest Submitted First</option>
                     <option value="oldest">Oldest First</option>
                     <option value="amount-desc">Payout: High to Low</option>
                     <option value="amount-asc">Payout: Low to High</option>
@@ -767,31 +789,31 @@ export default function AdminClaimsPage() {
                 selectedPriority !== "All" ||
                 searchQuery ||
                 activeTab !== "All") && (
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 text-slate-500">
+                <div className="flex items-center justify-between text-xs pt-3 border-t border-slate-100 text-slate-500">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="font-semibold text-slate-400">Active Filters:</span>
                     {activeTab !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
+                      <span className="bg-blue-50 text-[#000080] border border-blue-200/80 px-2.5 py-0.5 rounded-lg font-bold text-[11px]">
                         Status: {activeTab}
                       </span>
                     )}
                     {selectedBranch !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg font-bold text-[11px]">
                         Branch: {selectedBranch}
                       </span>
                     )}
                     {selectedDamageType !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg font-bold text-[11px]">
                         Type: {selectedDamageType}
                       </span>
                     )}
                     {selectedPriority !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg font-bold text-[11px]">
                         Priority: {selectedPriority}
                       </span>
                     )}
                     {searchQuery && (
-                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-lg font-bold text-[11px]">
                         Search: &quot;{searchQuery}&quot;
                       </span>
                     )}
@@ -799,9 +821,9 @@ export default function AdminClaimsPage() {
 
                   <button
                     onClick={handleResetFilters}
-                    className="text-blue-600 hover:text-blue-800 font-bold cursor-pointer transition-colors"
+                    className="text-rose-600 hover:text-rose-700 font-bold cursor-pointer transition-colors bg-rose-50 hover:bg-rose-100 px-3 py-1 rounded-lg border border-rose-200/80 text-xs"
                   >
-                    Reset All
+                    Reset Filters
                   </button>
                 </div>
               )}
