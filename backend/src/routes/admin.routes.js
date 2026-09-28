@@ -7,8 +7,9 @@ import OfficeStaff from "../models/office_staff.model.js";
 import Agent from "../models/agent.model.js";
 import AgentActivity from "../models/agent_activity.model.js";
 import Inquiry from "../models/inquiry.model.js";
+import BranchProfileUpdateRequest from "../models/branch_profile_update_request.model.js";
 import { hashPassword } from "../utils/crypto.js";
-import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { sendEmail, getBaseTemplate, sendBranchProfileUpdateStatusEmail } from "../utils/email.js";
 
 const router = express.Router();
 
@@ -136,6 +137,10 @@ router.get("/dashboard-stats", async (req, res) => {
     const pendingAdminResets = await Admin.find({ resetRequestStatus: "Pending" }, { password: 0 })
       .sort({ createdAt: -1 });
 
+    // 6. Pending Branch Profile Update Requests
+    const pendingBranchProfileRequests = await BranchProfileUpdateRequest.find({ status: "Pending" })
+      .sort({ createdAt: -1 });
+
     res.json({
       stats: {
         policyHolders: policyHoldersCount,
@@ -143,12 +148,14 @@ router.get("/dashboard-stats", async (req, res) => {
         activeClaims: activeClaimsCount,
         pendingClaims: pendingClaimsCount,
         totalAgents: totalAgentsCount,
-        totalBranches: totalBranchesCount
+        totalBranches: totalBranchesCount,
+        pendingBranchProfileRequestsCount: pendingBranchProfileRequests.length
       },
       branches,
       monthlyClaims,
       pendingBranchResets,
-      pendingAdminResets
+      pendingAdminResets,
+      pendingBranchProfileRequests
     });
   } catch (err) {
     console.error("Admin dashboard stats API error:", err);
@@ -304,8 +311,21 @@ router.get("/notifications", async (req, res) => {
           link: `/Admin/Agents?email=${agent.email}`,
           actionLabel: "View Agent",
           agent
-        });
-      }
+    // 4. Branch Profile Update Request notifications
+    const branchRequests = await BranchProfileUpdateRequest.find({ status: "Pending" }).sort({ createdAt: -1 });
+    branchRequests.forEach((brReq) => {
+      compiled.push({
+        id: `${brReq._id}-branch-profile-req`,
+        type: "action",
+        category: "branches",
+        title: "Branch Profile Edit Request",
+        description: `The ${brReq.branchName} Branch submitted a profile update request (${brReq.requestType}) awaiting Admin review.`,
+        date: brReq.createdAt,
+        isUrgent: true,
+        link: `/Admin/Staff?tab=requests&requestId=${brReq._id}`,
+        actionLabel: "Review Request",
+        branchRequest: brReq
+      });
     });
 
     // Sort: Urgent first, then newest first
@@ -581,6 +601,146 @@ router.post("/staff/password-requests/reject", async (req, res) => {
   } catch (err) {
     console.error("Reject staff password request error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// ==========================================
+// --- API: Branch Profile Update Requests (Admin Review) ---
+// ==========================================
+
+// GET all branch profile update requests: /api/admin/branch-profile-requests
+router.get("/branch-profile-requests", async (req, res) => {
+  try {
+    const { status, branch } = req.query;
+    const query = {};
+    if (status && status !== "All") {
+      query.status = status;
+    }
+    if (branch) {
+      query.branchName = branch.trim();
+    }
+
+    const requests = await BranchProfileUpdateRequest.find(query).sort({ createdAt: -1 });
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch branch profile requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST approve branch profile update request: /api/admin/branch-profile-requests/approve
+router.post("/branch-profile-requests/approve", async (req, res) => {
+  try {
+    const { requestId, adminName, reviewNote } = req.body;
+    if (!requestId) {
+      return res.status(400).json({ error: "Request ID is required." });
+    }
+
+    const updateRequest = await BranchProfileUpdateRequest.findById(requestId);
+    if (!updateRequest) {
+      return res.status(404).json({ error: "Branch profile update request not found." });
+    }
+
+    if (updateRequest.status === "Approved") {
+      return res.status(400).json({ error: "This request has already been approved." });
+    }
+
+    const staff = await OfficeStaff.findById(updateRequest.branchId);
+    if (!staff) {
+      return res.status(404).json({ error: "Associated branch office staff record not found." });
+    }
+
+    const changes = updateRequest.requestedChanges || {};
+
+    // Apply approved changes to OfficeStaff record
+    if (changes.name !== undefined && changes.name.trim()) staff.name = changes.name.trim();
+    if (changes.mobile !== undefined && changes.mobile.trim()) staff.mobile = changes.mobile.trim();
+    if (changes.branch !== undefined && changes.branch.trim()) staff.branch = changes.branch.trim();
+    if (changes.province !== undefined && changes.province.trim()) staff.province = changes.province.trim();
+    if (changes.district !== undefined && changes.district.trim()) staff.district = changes.district.trim();
+    if (changes.area !== undefined && changes.area.trim()) staff.area = changes.area.trim();
+    if (changes.location !== undefined && changes.location.trim()) staff.location = changes.location.trim();
+    if (changes.staffCount !== undefined && changes.staffCount !== null) staff.staffCount = Number(changes.staffCount);
+    if (changes.hotline !== undefined) staff.hotline = changes.hotline.trim();
+    if (changes.managerName !== undefined) staff.managerName = changes.managerName.trim();
+    if (changes.managerEmail !== undefined) staff.managerEmail = changes.managerEmail.trim().toLowerCase();
+    if (changes.managerMobile !== undefined) staff.managerMobile = changes.managerMobile.trim();
+    if (changes.operatingHours !== undefined) staff.operatingHours = changes.operatingHours.trim();
+    if (changes.notes !== undefined) staff.notes = changes.notes.trim();
+    if (changes.profilePhoto !== undefined) staff.profilePhoto = changes.profilePhoto;
+
+    await staff.save();
+
+    // Mark update request as Approved
+    updateRequest.status = "Approved";
+    updateRequest.reviewedBy = adminName || "Admin";
+    updateRequest.reviewedAt = new Date();
+    updateRequest.reviewNote = reviewNote || "Branch profile updates verified and approved.";
+    updateRequest.updatedAt = new Date();
+    await updateRequest.save();
+
+    // Send email notification to branch
+    await sendBranchProfileUpdateStatusEmail(
+      updateRequest.email,
+      updateRequest.branchName,
+      updateRequest.staffName,
+      "Approved",
+      updateRequest.requestType,
+      updateRequest.reviewNote
+    );
+
+    const staffObj = staff.toObject();
+    delete staffObj.password;
+
+    res.json({
+      message: `Branch profile update request for ${updateRequest.branchName} Branch has been approved successfully.`,
+      request: updateRequest,
+      staff: staffObj
+    });
+  } catch (err) {
+    console.error("Approve branch profile request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// POST reject branch profile update request: /api/admin/branch-profile-requests/reject
+router.post("/branch-profile-requests/reject", async (req, res) => {
+  try {
+    const { requestId, adminName, reviewNote } = req.body;
+    if (!requestId) {
+      return res.status(400).json({ error: "Request ID is required." });
+    }
+
+    const updateRequest = await BranchProfileUpdateRequest.findById(requestId);
+    if (!updateRequest) {
+      return res.status(404).json({ error: "Branch profile update request not found." });
+    }
+
+    // Mark update request as Rejected
+    updateRequest.status = "Rejected";
+    updateRequest.reviewedBy = adminName || "Admin";
+    updateRequest.reviewedAt = new Date();
+    updateRequest.reviewNote = reviewNote || "Request was not approved. Please contact Head Office administration.";
+    updateRequest.updatedAt = new Date();
+    await updateRequest.save();
+
+    // Send email notification to branch
+    await sendBranchProfileUpdateStatusEmail(
+      updateRequest.email,
+      updateRequest.branchName,
+      updateRequest.staffName,
+      "Rejected",
+      updateRequest.requestType,
+      updateRequest.reviewNote
+    );
+
+    res.json({
+      message: `Branch profile update request for ${updateRequest.branchName} Branch has been rejected.`,
+      request: updateRequest
+    });
+  } catch (err) {
+    console.error("Reject branch profile request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
   }
 });
 

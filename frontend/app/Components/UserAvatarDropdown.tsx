@@ -82,10 +82,37 @@ export default function UserAvatarDropdown({ userType }: UserAvatarDropdownProps
 
           <div className="mx-4 my-2 border-t border-slate-100" />
 
+          {/* Navigation Links */}
+          {userType === "office_staff" && (
+            <button
+              onClick={() => {
+                setProfileMenuOpen(false);
+                router.push("/Office_Staff/Profile");
+              }}
+              className="flex items-center gap-3 w-full px-5 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
+            >
+              <HugeiconsIcon icon={UserCircleIcon} className="w-5 h-5 text-slate-500" strokeWidth={2} />
+              <span>Branch Profile</span>
+            </button>
+          )}
+
+          {userType === "admin" && (
+            <button
+              onClick={() => {
+                setProfileMenuOpen(false);
+                router.push("/Admin/Staff");
+              }}
+              className="flex items-center gap-3 w-full px-5 py-2.5 text-slate-700 hover:bg-slate-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
+            >
+              <HugeiconsIcon icon={UserCircleIcon} className="w-5 h-5 text-slate-500" strokeWidth={2} />
+              <span>Staff Management</span>
+            </button>
+          )}
+
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-5 py-3 text-red-500 hover:bg-red-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
+            className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-semibold text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
           >
             <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5 text-red-500" strokeWidth={2} />
             Logout

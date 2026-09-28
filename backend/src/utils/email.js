@@ -493,3 +493,86 @@ export async function sendAgentProfileUpdateStatusEmail(agentEmail, agentName, a
   }
 }
 
+export async function sendBranchProfileUpdateStatusEmail(branchEmail, branchName, staffName, status, requestType, reviewNote = "") {
+  try {
+    if (!branchEmail || branchEmail.trim() === "") return;
+
+    const cleanEmail = branchEmail.trim().toLowerCase();
+    const isApproved = status === "Approved";
+    const subject = isApproved
+      ? `[Sanasa Insurance] Branch Profile Update Approved — ${branchName || "Branch Office"}`
+      : `[Sanasa Insurance] Branch Profile Update Review Decision — ${branchName || "Branch Office"}`;
+
+    const formattedTime = formatSriLankaDateTime(new Date());
+
+    const bodyHtml = `
+      <h2 style="color: ${isApproved ? '#059669' : '#dc2626'}; margin-top: 0;">
+        ${isApproved ? "Branch Profile Update Approved" : "Branch Profile Update Not Approved"}
+      </h2>
+      <p>Dear <strong>${staffName || branchName || "Branch Team"}</strong>,</p>
+      <p>
+        The request to update branch profile and operational details for the <strong>${branchName} Branch</strong> 
+        has been reviewed by the <strong>Head Office Administration</strong>.
+      </p>
+
+      <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 540px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; width: 35%; color: #4a5568;">Review Status:</td>
+          <td style="padding: 12px 16px; color: ${isApproved ? '#059669' : '#dc2626'}; font-weight: 700;">
+            ${status.toUpperCase()}
+          </td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Category:</td>
+          <td style="padding: 12px 16px; color: #1a202c; font-weight: 600;">${requestType || "Branch Details & Operations"}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Reviewing Authority:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">Sanasa General Insurance Head Office</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Processed At:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${formattedTime} (Sri Lanka Time)</td>
+        </tr>
+        ${
+          reviewNote
+            ? `
+        <tr style="background-color: ${isApproved ? '#ecfdf5' : '#fef2f2'};">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Admin Note / Remarks:</td>
+          <td style="padding: 12px 16px; color: ${isApproved ? '#065f46' : '#991b1b'}; font-weight: 500;">
+            ${reviewNote}
+          </td>
+        </tr>
+        `
+            : ""
+        }
+      </table>
+
+      ${
+        isApproved
+          ? `
+        <p style="background-color: #ecfdf5; border-left: 4px solid #10b981; padding: 14px; border-radius: 6px; font-size: 14px; color: #065f46;">
+          ✅ Your branch details and operational directory have been updated successfully in the centralized Sanasa Insurance database.
+        </p>
+      `
+          : `
+        <p style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 14px; border-radius: 6px; font-size: 14px; color: #991b1b;">
+          ⚠️ Your branch modification request was not approved. Please check the remarks above and consult Head Office Administration if needed.
+        </p>
+      `
+      }
+
+      <p style="margin-top: 25px; font-size: 14px; color: #4a5568;">
+        You can log in to the Sanasa Branch Office portal to view your branch profile, active claims, and assigned agents.
+      </p>
+    `;
+
+    const htmlBody = getBaseTemplate(subject, bodyHtml, "Sanasa General Insurance • Head Office");
+    await sendEmail(cleanEmail, subject, htmlBody);
+    console.log(`✅ Branch profile update status email sent successfully to ${cleanEmail}`);
+  } catch (error) {
+    console.error("❌ Error sending branch profile update status email:", error);
+  }
+}
+
+

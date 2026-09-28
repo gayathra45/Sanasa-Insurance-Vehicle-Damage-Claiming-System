@@ -16,7 +16,8 @@ import {
   Call02Icon,
   ArrowRight01Icon,
   Cancel01Icon,
-  Notification01Icon
+  Notification01Icon,
+  Building01Icon
 } from "@hugeicons/core-free-icons";
 
 export default function OfficeStaffNavbar() {
@@ -31,6 +32,7 @@ export default function OfficeStaffNavbar() {
 
   const menuItems = [
     { name: "Home", href: "/Office_Staff/Dashboard" },
+    { name: "Branch Profile", href: "/Office_Staff/Profile" },
     { name: "Claims", href: "/Office_Staff/Claims" },
     { name: "Registrations", href: "/Office_Staff/Registrations" },
     { name: "Policy Holders", href: "/Office_Staff/PolicyHolders" },
@@ -45,6 +47,9 @@ export default function OfficeStaffNavbar() {
       case "home":
       case "dashboard":
         return <HugeiconsIcon icon={DashboardSquare01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "branch profile":
+      case "profile":
+        return <HugeiconsIcon icon={Building01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "claims":
         return <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "registrations":

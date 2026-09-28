@@ -17,6 +17,13 @@ const officeStaffSchema = new mongoose.Schema({
   resetOtpRequestedAt: { type: Date },
   resetSessionToken: { type: String },
   resetSessionExpires: { type: Date },
+  hotline: { type: String, default: "" }, // Branch Hotline / Landline
+  managerName: { type: String, default: "" }, // Branch Manager Name
+  managerEmail: { type: String, default: "" }, // Branch Manager Email
+  managerMobile: { type: String, default: "" }, // Branch Manager Mobile
+  operatingHours: { type: String, default: "Mon - Fri: 8:30 AM - 5:00 PM | Sat: 8:30 AM - 1:00 PM" }, // Operating Hours
+  profilePhoto: { type: String, default: "" }, // Branch Image / Photo
+  notes: { type: String, default: "" }, // Branch description or notes
   resetRequestStatus: { type: String, default: "None" }, // "None", "Pending", "Approved"
   createdAt: { type: Date, default: Date.now }
 });

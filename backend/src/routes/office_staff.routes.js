@@ -11,6 +11,7 @@ import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
 import ProfileUpdateRequest from "../models/profile_update_request.model.js";
 import AgentProfileUpdateRequest from "../models/agent_profile_update_request.model.js";
+import BranchProfileUpdateRequest from "../models/branch_profile_update_request.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate, sendProfileUpdateStatusEmail, sendAgentProfileUpdateStatusEmail } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
@@ -1676,6 +1677,202 @@ router.patch("/agent-profile-update-requests/:id/review", async (req, res) => {
     });
   } catch (err) {
     console.error("Review agent profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// ==========================================
+// --- API: Branch Profile Management & Requests ---
+// ==========================================
+
+// GET branch profile details & live branch stats: /api/office-staff/profile
+router.get("/profile", async (req, res) => {
+  try {
+    const { email, branch } = req.query;
+    if (!email && !branch) {
+      return res.status(400).json({ error: "Branch email or branch name is required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    else if (branch) query.branch = branch.trim();
+
+    const staff = await OfficeStaff.findOne(query, { password: 0 });
+    if (!staff) {
+      return res.status(404).json({ error: "Branch office profile not found." });
+    }
+
+    const branchName = staff.branch;
+
+    // Fetch live branch statistics
+    const [policyHoldersCount, agentsCount, totalClaimsCount, activeClaimsCount, pendingClaimsCount] = await Promise.all([
+      User.countDocuments({ branch: branchName }),
+      Agent.countDocuments({ branch: branchName }),
+      Claim.countDocuments({ branch: branchName }),
+      Claim.countDocuments({ branch: branchName, status: "In Progress" }),
+      Claim.countDocuments({ branch: branchName, status: "Pending" })
+    ]);
+
+    res.json({
+      branch: staff,
+      stats: {
+        totalPolicyHolders: policyHoldersCount,
+        totalAgents: agentsCount,
+        totalClaims: totalClaimsCount,
+        activeClaims: activeClaimsCount,
+        pendingClaims: pendingClaimsCount
+      }
+    });
+  } catch (err) {
+    console.error("Fetch branch profile error:", err);
+    res.status(500).json({ error: "An internal server error occurred while retrieving branch profile." });
+  }
+});
+
+// POST submit a branch profile update request to Admin: /api/office-staff/profile-update-request
+router.post("/profile-update-request", async (req, res) => {
+  try {
+    const { email, requestType, requestedChanges, reason } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Branch email is required." });
+    }
+
+    if (!requestedChanges || Object.keys(requestedChanges).length === 0) {
+      return res.status(400).json({ error: "No changes specified in request." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const staff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (!staff) {
+      return res.status(404).json({ error: "Branch office not found." });
+    }
+
+    // Check if there is already an active Pending request from this branch
+    const existingPending = await BranchProfileUpdateRequest.findOne({
+      branchId: staff._id,
+      status: "Pending"
+    });
+
+    const originalData = {
+      name: staff.name || "",
+      email: staff.email || "",
+      mobile: staff.mobile || "",
+      branch: staff.branch || "",
+      province: staff.province || "",
+      district: staff.district || "",
+      area: staff.area || "",
+      location: staff.location || "",
+      staffCount: staff.staffCount || 1,
+      hotline: staff.hotline || "",
+      managerName: staff.managerName || "",
+      managerEmail: staff.managerEmail || "",
+      managerMobile: staff.managerMobile || "",
+      operatingHours: staff.operatingHours || "",
+      notes: staff.notes || ""
+    };
+
+    // Sanitize requested changes
+    const allowedFields = [
+      "name", "mobile", "branch", "province", "district", "area", "location",
+      "staffCount", "hotline", "managerName", "managerEmail", "managerMobile",
+      "operatingHours", "notes", "profilePhoto"
+    ];
+
+    const sanitizedChanges = {};
+    for (const field of allowedFields) {
+      if (requestedChanges[field] !== undefined) {
+        sanitizedChanges[field] = typeof requestedChanges[field] === "string" 
+          ? requestedChanges[field].trim() 
+          : requestedChanges[field];
+      }
+    }
+
+    let savedRequest;
+    if (existingPending) {
+      // Update existing pending request
+      existingPending.requestType = requestType || existingPending.requestType || "Branch Details";
+      existingPending.requestedChanges = { ...existingPending.requestedChanges, ...sanitizedChanges };
+      existingPending.reason = reason !== undefined ? reason.trim() : existingPending.reason;
+      existingPending.updatedAt = new Date();
+      savedRequest = await existingPending.save();
+    } else {
+      // Create new pending request
+      savedRequest = new BranchProfileUpdateRequest({
+        branchId: staff._id,
+        branchName: staff.branch,
+        staffName: staff.name,
+        email: staff.email,
+        mobile: staff.mobile,
+        requestType: requestType || "Branch Details",
+        originalData,
+        requestedChanges: sanitizedChanges,
+        reason: reason ? reason.trim() : "",
+        status: "Pending"
+      });
+      await savedRequest.save();
+    }
+
+    res.status(201).json({
+      message: "Branch profile update request submitted successfully. It has been routed to the Head Office Admin for verification.",
+      request: savedRequest
+    });
+  } catch (err) {
+    console.error("Submit branch profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// GET branch's own profile update requests: /api/office-staff/profile-update-requests
+router.get("/profile-update-requests", async (req, res) => {
+  try {
+    const { email, branch } = req.query;
+    if (!email && !branch) {
+      return res.status(400).json({ error: "Branch email or branch name is required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    else if (branch) query.branchName = branch.trim();
+
+    const requests = await BranchProfileUpdateRequest.find(query).sort({ createdAt: -1 });
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch branch profile update requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PUT update branch profile photo: /api/office-staff/profile-photo
+router.put("/profile-photo", async (req, res) => {
+  try {
+    const { email, photo } = req.body;
+    if (!email || !photo) {
+      return res.status(400).json({ error: "Branch email and photo are required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const staff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (!staff) {
+      return res.status(404).json({ error: "Branch office not found." });
+    }
+
+    let photoUrl = photo;
+    if (photo.startsWith("data:image")) {
+      const uploadRes = await uploadToCloudinary(photo, `branch_photos/${staff.branch}`);
+      if (uploadRes && uploadRes.url) {
+        photoUrl = uploadRes.url;
+      }
+    }
+
+    staff.profilePhoto = photoUrl;
+    await staff.save();
+
+    res.json({
+      message: "Branch profile photo updated successfully.",
+      profilePhoto: photoUrl
+    });
+  } catch (err) {
+    console.error("Update branch profile photo error:", err);
     res.status(500).json({ error: err.message || "An internal server error occurred." });
   }
 });

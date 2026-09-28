@@ -77,6 +77,15 @@ export default function AdminStaffPage() {
   const [actioningRequestId, setActioningRequestId] = useState<string | null>(null);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
 
+  // Branch Profile Update Request states
+  const [showBranchRequestsModal, setShowBranchRequestsModal] = useState(false);
+  const [branchRequests, setBranchRequests] = useState<any[]>([]);
+  const [loadingBranchRequests, setLoadingBranchRequests] = useState(false);
+  const [pendingBranchRequestsCount, setPendingBranchRequestsCount] = useState(0);
+  const [branchRequestFilter, setBranchRequestFilter] = useState<"Pending" | "All" | "Approved" | "Rejected">("Pending");
+  const [actioningBranchRequestId, setActioningBranchRequestId] = useState<string | null>(null);
+  const [branchAdminNotes, setBranchAdminNotes] = useState<Record<string, string>>({});
+
   // Fetch pending requests count on load
   const fetchCount = async () => {
     try {
@@ -107,11 +116,81 @@ export default function AdminStaffPage() {
     }
   };
 
+  const fetchBranchRequests = async () => {
+    setLoadingBranchRequests(true);
+    try {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/branch-profile-requests`);
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.requests)) {
+        setBranchRequests(data.requests);
+        const pending = data.requests.filter((r: any) => r.status === "Pending");
+        setPendingBranchRequestsCount(pending.length);
+      }
+    } catch (err) {
+      console.error("Error fetching branch profile update requests:", err);
+    } finally {
+      setLoadingBranchRequests(false);
+    }
+  };
+
   useEffect(() => {
     fetchCount();
     fetchPasswordRequests();
+    fetchBranchRequests();
     fetchStaff();
   }, []);
+
+  const handleApproveBranchRequest = async (requestId: string) => {
+    setActioningBranchRequestId(requestId);
+    try {
+      const baseUrl = API_URL;
+      const reviewNote = branchAdminNotes[requestId] || "Branch details verified and approved by Head Office Admin.";
+      const res = await fetch(`${baseUrl}/admin/branch-profile-requests/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId,
+          adminName: "System Admin",
+          reviewNote
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to approve branch update request.");
+
+      // Refresh branch requests & staff directory
+      await Promise.all([fetchBranchRequests(), fetchStaff()]);
+    } catch (err: any) {
+      alert(err.message || "Failed to approve branch request.");
+    } finally {
+      setActioningBranchRequestId(null);
+    }
+  };
+
+  const handleRejectBranchRequest = async (requestId: string) => {
+    setActioningBranchRequestId(requestId);
+    try {
+      const baseUrl = API_URL;
+      const reviewNote = branchAdminNotes[requestId] || "Request was not approved. Please consult Head Office administration.";
+      const res = await fetch(`${baseUrl}/admin/branch-profile-requests/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId,
+          adminName: "System Admin",
+          reviewNote
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reject branch update request.");
+
+      await fetchBranchRequests();
+    } catch (err: any) {
+      alert(err.message || "Failed to reject branch request.");
+    } finally {
+      setActioningBranchRequestId(null);
+    }
+  };
 
   const fetchPasswordRequests = async () => {
     setLoadingRequests(true);
@@ -409,6 +488,22 @@ export default function AdminStaffPage() {
                   {pendingRequestsCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] w-5 h-5 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
                       {pendingRequestsCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    fetchBranchRequests();
+                    setShowBranchRequestsModal(true);
+                  }}
+                  className="flex-1 md:flex-none py-2.5 px-5 bg-white hover:bg-blue-50/50 border border-blue-200 hover:scale-105 active:scale-95 text-[#000080] rounded-xl text-xs font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5 relative"
+                >
+                  <HugeiconsIcon icon={Building01Icon} className="w-4 h-4 text-[#000080]" strokeWidth={2.5} />
+                  <span>Profile Edit Requests</span>
+                  {pendingBranchRequestsCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[9px] w-5 h-5 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
+                      {pendingBranchRequestsCount}
                     </span>
                   )}
                 </button>
@@ -1278,6 +1373,261 @@ export default function AdminStaffPage() {
                   Close Profile
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Branch Profile Update Requests Review Modal */}
+      {showBranchRequestsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[92vh]">
+            
+            {/* Modal Header */}
+            <div className="px-8 pt-7 pb-4 select-none bg-white flex justify-between items-center shrink-0 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#000080] flex items-center justify-center">
+                  <HugeiconsIcon icon={Building01Icon} className="w-5 h-5" strokeWidth={2.2} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[22px] font-bold text-slate-900 tracking-tight leading-none">
+                      Branch Profile Edit Requests
+                    </h2>
+                    {pendingBranchRequestsCount > 0 && (
+                      <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {pendingBranchRequestsCount} Pending
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-semibold mt-1">
+                    Review and authorize modifications submitted by branch office staff.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={fetchBranchRequests}
+                  className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all"
+                  title="Refresh requests"
+                >
+                  <HugeiconsIcon icon={RefreshIcon} className="w-4 h-4" strokeWidth={2.5} />
+                </button>
+                <button
+                  onClick={() => setShowBranchRequestsModal(false)}
+                  className="text-slate-400 hover:text-slate-600 bg-transparent border-none outline-none cursor-pointer transition-colors p-1"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-2 px-8 py-3 bg-slate-50 border-b border-slate-200/60 select-none overflow-x-auto shrink-0">
+              {(["Pending", "All", "Approved", "Rejected"] as const).map((filter) => {
+                const count = filter === "All"
+                  ? branchRequests.length
+                  : branchRequests.filter((r) => r.status === filter).length;
+                const isActive = branchRequestFilter === filter;
+
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => setBranchRequestFilter(filter)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border-none outline-none ${
+                      isActive
+                        ? "bg-[#000080] text-white shadow-sm"
+                        : "bg-white text-slate-600 hover:bg-slate-200/60"
+                    }`}
+                  >
+                    <span>{filter}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Requests List */}
+            <div className="p-8 flex-1 overflow-y-auto flex flex-col gap-5 bg-slate-50/50">
+              {loadingBranchRequests ? (
+                <SimpleLoader message="Loading branch modification requests..." theme="slate" />
+              ) : (() => {
+                const filtered = branchRequests.filter((r) => {
+                  if (branchRequestFilter === "All") return true;
+                  return r.status === branchRequestFilter;
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center text-slate-400 font-semibold">
+                      No branch profile update requests found under &quot;{branchRequestFilter}&quot;.
+                    </div>
+                  );
+                }
+
+                return filtered.map((req) => {
+                  const isActioning = actioningBranchRequestId === req._id;
+                  const currentNote = branchAdminNotes[req._id] || "";
+
+                  return (
+                    <div
+                      key={req._id}
+                      className={`bg-white rounded-2xl border p-6 flex flex-col gap-4 shadow-sm transition-all ${
+                        req.status === "Pending"
+                          ? "border-amber-200/80 shadow-amber-500/5 ring-1 ring-amber-100"
+                          : req.status === "Approved"
+                          ? "border-emerald-200"
+                          : "border-rose-200"
+                      }`}
+                    >
+                      {/* Top row */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
+                              req.status === "Pending"
+                                ? "bg-amber-100 text-amber-800 border border-amber-300 animate-pulse"
+                                : req.status === "Approved"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                : "bg-rose-100 text-rose-800 border border-rose-300"
+                            }`}
+                          >
+                            {req.status}
+                          </span>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900">
+                              {req.branchName} Branch — {req.staffName}
+                            </h4>
+                            <span className="text-xs text-slate-500">
+                              Email: {req.email} • Mobile: {req.mobile || "N/A"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-[11px] font-semibold text-slate-400 block">
+                            Submitted: {new Date(req.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          <span className="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md mt-1 inline-block">
+                            {req.requestType}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Branch explanation reason */}
+                      {req.reason && (
+                        <div className="p-3.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs text-blue-900">
+                          <strong className="font-bold text-blue-950">Branch Remarks: </strong>
+                          {req.reason}
+                        </div>
+                      )}
+
+                      {/* Comparison Table */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          Requested Field Modifications:
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                          {Object.entries(req.requestedChanges || {}).map(([key, val]) => (
+                            <div key={key} className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl flex flex-col gap-1">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                {key.replace(/([A-Z])/g, " $1")}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-400 line-through text-[11px] truncate max-w-[150px]">
+                                  {String(req.originalData?.[key] || "None")}
+                                </span>
+                                <span className="text-slate-400 font-bold">→</span>
+                                <span className="text-emerald-700 font-bold truncate">
+                                  {String(val || "None")}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Admin Decision Bar */}
+                      {req.status === "Pending" ? (
+                        <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                              Admin Review Note / Reason (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={currentNote}
+                              onChange={(e) =>
+                                setBranchAdminNotes({
+                                  ...branchAdminNotes,
+                                  [req._id]: e.target.value
+                                })
+                              }
+                              placeholder="e.g. Branch relocation verified, approved."
+                              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#000080] bg-white"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-end gap-3">
+                            <button
+                              type="button"
+                              disabled={isActioning}
+                              onClick={() => handleRejectBranchRequest(req._id)}
+                              className="px-5 py-2 bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                            >
+                              <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                              <span>Reject</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={isActioning}
+                              onClick={() => handleApproveBranchRequest(req._id)}
+                              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                            >
+                              {isActioning ? (
+                                <>
+                                  <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />
+                                  <span>Processing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                                  <span>Approve & Apply to Database</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600">
+                          <div>
+                            <strong className="font-semibold text-slate-700">Admin Remarks: </strong>
+                            {req.reviewNote || "No remarks provided."}
+                          </div>
+                          <span className="text-[11px] text-slate-400 shrink-0">
+                            Processed by {req.reviewedBy || "Admin"} on {new Date(req.reviewedAt || req.updatedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-8 py-4 bg-white border-t border-slate-100 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowBranchRequestsModal(false)}
+                className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-xs font-bold transition-all cursor-pointer border-none outline-none"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
