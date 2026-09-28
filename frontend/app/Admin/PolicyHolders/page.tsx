@@ -201,22 +201,6 @@ export default function AdminPolicyHoldersPage() {
   });
   const [savingHolder, setSavingHolder] = useState(false);
 
-  // Add / Edit Vehicle state
-  const [vehicleModalHolder, setVehicleModalHolder] = useState<PolicyHolder | null>(null);
-  const [editingVehiclePlate, setEditingVehiclePlate] = useState<string | null>(null);
-  const [vehicleFormData, setVehicleFormData] = useState({
-    numberPlate: "",
-    vehicleType: "Car",
-    company: "",
-    model: "",
-    year: new Date().getFullYear().toString(),
-    engineNumber: "",
-    chassisNumber: "",
-    policyNumber: "",
-    status: "Approved"
-  });
-  const [savingVehicle, setSavingVehicle] = useState(false);
-
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [deletingHolder, setDeletingHolder] = useState<PolicyHolder | null>(null);
@@ -349,108 +333,6 @@ export default function AdminPolicyHoldersPage() {
       showToast(err.message || "Failed to update policyholder", "error");
     } finally {
       setSavingHolder(false);
-    }
-  };
-
-  // Open Add Vehicle Modal
-  const openAddVehicleModal = (holder: PolicyHolder) => {
-    setVehicleModalHolder(holder);
-    setEditingVehiclePlate(null);
-    setVehicleFormData({
-      numberPlate: "",
-      vehicleType: "Car",
-      company: "",
-      model: "",
-      year: new Date().getFullYear().toString(),
-      engineNumber: "",
-      chassisNumber: "",
-      policyNumber: "",
-      status: "Approved"
-    });
-  };
-
-  // Open Edit Vehicle Modal
-  const openEditVehicleModal = (holder: PolicyHolder, v: Vehicle) => {
-    setVehicleModalHolder(holder);
-    setEditingVehiclePlate(v.numberPlate);
-    setVehicleFormData({
-      numberPlate: v.numberPlate,
-      vehicleType: v.vehicleType || "Car",
-      company: v.company || "",
-      model: v.model || "",
-      year: v.year || new Date().getFullYear().toString(),
-      engineNumber: v.engineNumber || "",
-      chassisNumber: v.chassisNumber || "",
-      policyNumber: v.policyNumber || "",
-      status: v.status || "Approved"
-    });
-  };
-
-  // Save Vehicle
-  const handleSaveVehicle = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!vehicleModalHolder) return;
-
-    setSavingVehicle(true);
-    try {
-      const url = editingVehiclePlate
-        ? `${API_URL}/admin/policyholders/${vehicleModalHolder._id}/vehicles/${encodeURIComponent(editingVehiclePlate)}`
-        : `${API_URL}/admin/policyholders/${vehicleModalHolder._id}/vehicles`;
-
-      const method = editingVehiclePlate ? "PUT" : "POST";
-
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(vehicleFormData)
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save vehicle");
-
-      showToast(
-        editingVehiclePlate
-          ? `Vehicle ${vehicleFormData.numberPlate} updated.`
-          : `Vehicle ${vehicleFormData.numberPlate} registered.`,
-        "success"
-      );
-
-      setVehicleModalHolder(null);
-      setEditingVehiclePlate(null);
-      fetchPolicyholders(true);
-
-      if (viewingHolder && viewingHolder._id === vehicleModalHolder._id) {
-        setViewingHolder(data.policyholder);
-      }
-    } catch (err: any) {
-      console.error("Save vehicle error:", err);
-      showToast(err.message || "Failed to save vehicle", "error");
-    } finally {
-      setSavingVehicle(false);
-    }
-  };
-
-  // Delete Vehicle
-  const handleDeleteVehicle = async (holder: PolicyHolder, plate: string) => {
-    if (!confirm(`Are you sure you want to remove vehicle ${plate}?`)) return;
-
-    try {
-      const res = await fetch(
-        `${API_URL}/admin/policyholders/${holder._id}/vehicles/${encodeURIComponent(plate)}`,
-        { method: "DELETE" }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to remove vehicle");
-
-      showToast(`Vehicle ${plate} removed.`, "info");
-      fetchPolicyholders(true);
-
-      if (viewingHolder && viewingHolder._id === holder._id) {
-        setViewingHolder(data.policyholder);
-      }
-    } catch (err: any) {
-      console.error("Delete vehicle error:", err);
-      showToast(err.message || "Failed to delete vehicle", "error");
     }
   };
 
@@ -999,14 +881,6 @@ export default function AdminPolicyHoldersPage() {
                               </button>
 
                               <button
-                                onClick={() => openAddVehicleModal(holder)}
-                                title="Add Vehicle"
-                                className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-slate-100 rounded-lg transition-all"
-                              >
-                                <HugeiconsIcon icon={Add01Icon} className="w-4 h-4" />
-                              </button>
-
-                              <button
                                 onClick={() => setDeletingHolder(holder)}
                                 title="Delete Policyholder"
                                 className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-all"
@@ -1182,14 +1056,9 @@ export default function AdminPolicyHoldersPage() {
               {activeViewTab === "vehicles" && (
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-semibold text-slate-700">Registered Vehicle Policies</span>
-                    <button
-                      onClick={() => openAddVehicleModal(viewingHolder)}
-                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1"
-                    >
-                      <HugeiconsIcon icon={Add01Icon} className="w-3.5 h-3.5" />
-                      <span>Add Vehicle</span>
-                    </button>
+                    <span className="text-xs font-semibold text-slate-700">
+                      Registered Vehicle Policies ({viewingHolder.vehicles?.length || 0})
+                    </span>
                   </div>
 
                   {viewingHolder.vehicles && viewingHolder.vehicles.length > 0 ? (
@@ -1223,21 +1092,6 @@ export default function AdminPolicyHoldersPage() {
                               <span className="text-slate-400">Chassis #:</span>
                               <span className="font-mono text-slate-800">{v.chassisNumber}</span>
                             </div>
-                          </div>
-
-                          <div className="pt-2 flex justify-end gap-2">
-                            <button
-                              onClick={() => openEditVehicleModal(viewingHolder, v)}
-                              className="text-xs text-blue-600 hover:underline font-medium"
-                            >
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteVehicle(viewingHolder, v.numberPlate)}
-                              className="text-xs text-rose-600 hover:underline font-medium"
-                            >
-                              Delete
-                            </button>
                           </div>
                         </div>
                       ))}
@@ -1547,137 +1401,7 @@ export default function AdminPolicyHoldersPage() {
       )}
 
       {/* ========================================== */}
-      {/* --- MODAL 3: Add / Edit Vehicle Modal --- */}
-      {/* ========================================== */}
-      {vehicleModalHolder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-sm font-bold text-slate-900">
-                {editingVehiclePlate ? "Edit Vehicle" : "Register Vehicle"} — {vehicleModalHolder.firstName}
-              </h3>
-              <button
-                onClick={() => setVehicleModalHolder(null)}
-                className="p-1 text-slate-400 hover:text-slate-700 rounded"
-              >
-                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveVehicle} className="p-6 space-y-3.5 text-xs">
-              <div>
-                <label className="block text-slate-600 font-semibold mb-1">Number Plate *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. WP CAC-8921"
-                  value={vehicleFormData.numberPlate}
-                  onChange={(e) => setVehicleFormData({ ...vehicleFormData, numberPlate: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Vehicle Type</label>
-                  <select
-                    value={vehicleFormData.vehicleType}
-                    onChange={(e) => setVehicleFormData({ ...vehicleFormData, vehicleType: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
-                  >
-                    <option value="Car">Car</option>
-                    <option value="Van">Van</option>
-                    <option value="SUV">SUV</option>
-                    <option value="Motorcycle">Motorcycle</option>
-                    <option value="Three Wheeler">Three Wheeler</option>
-                    <option value="Lorry">Lorry</option>
-                    <option value="Bus">Bus</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Manufacture Year</label>
-                  <input
-                    type="number"
-                    required
-                    value={vehicleFormData.year}
-                    onChange={(e) => setVehicleFormData({ ...vehicleFormData, year: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Make / Company *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Toyota"
-                    value={vehicleFormData.company}
-                    onChange={(e) => setVehicleFormData({ ...vehicleFormData, company: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Model *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Prius"
-                    value={vehicleFormData.model}
-                    onChange={(e) => setVehicleFormData({ ...vehicleFormData, model: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Engine Number</label>
-                  <input
-                    type="text"
-                    placeholder="Engine #"
-                    value={vehicleFormData.engineNumber}
-                    onChange={(e) => setVehicleFormData({ ...vehicleFormData, engineNumber: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800"
-                  />
-                </div>
-                <div>
-                  <label className="block text-slate-600 font-semibold mb-1">Chassis Number</label>
-                  <input
-                    type="text"
-                    placeholder="Chassis #"
-                    value={vehicleFormData.chassisNumber}
-                    onChange={(e) => setVehicleFormData({ ...vehicleFormData, chassisNumber: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-mono text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setVehicleModalHolder(null)}
-                  className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold hover:bg-slate-100"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={savingVehicle}
-                  className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                >
-                  {savingVehicle && <HugeiconsIcon icon={Loading03Icon} className="w-3.5 h-3.5 animate-spin" />}
-                  <span>{editingVehiclePlate ? "Update Vehicle" : "Add Vehicle"}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* --- MODAL 4: Summaries & Reports --- */}
+      {/* --- MODAL 3: Summaries & Reports --- */}
       {/* ========================================== */}
       {showReportsModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
@@ -1762,7 +1486,7 @@ export default function AdminPolicyHoldersPage() {
       )}
 
       {/* ========================================== */}
-      {/* --- MODAL 5: Fullscreen Lightbox --- */}
+      {/* --- MODAL 4: Fullscreen Lightbox --- */}
       {/* ========================================== */}
       {lightboxImage && (
         <div
@@ -1776,7 +1500,7 @@ export default function AdminPolicyHoldersPage() {
       )}
 
       {/* ========================================== */}
-      {/* --- MODAL 6: Delete Confirmation --- */}
+      {/* --- MODAL 5: Delete Confirmation --- */}
       {/* ========================================== */}
       {deletingHolder && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
