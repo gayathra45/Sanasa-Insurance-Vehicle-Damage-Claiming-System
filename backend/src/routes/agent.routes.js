@@ -576,4 +576,141 @@ router.get("/profile-update-requests", async (req, res) => {
   }
 });
 
+// Helper function to auto-offline stale agents (last active > 3 minutes ago)
+const syncStaleAgents = async () => {
+  try {
+    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+    await Agent.updateMany(
+      {
+        availability: "Active",
+        $or: [
+          { lastSeenAt: { $lt: threeMinutesAgo } },
+          { lastSeenAt: { $exists: false } }
+        ]
+      },
+      { $set: { availability: "Offline" } }
+    );
+  } catch (e) {
+    console.error("Auto-sync stale agents error:", e);
+  }
+};
+
+// GET agent availability status: /api/agent/availability
+router.get("/availability", async (req, res) => {
+  try {
+    const { email, agentId } = req.query;
+    if (!email && !agentId) {
+      return res.status(400).json({ error: "Agent email or agentId is required." });
+    }
+
+    // Run background stale sync
+    await syncStaleAgents();
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    if (agentId) query.agentId = agentId.trim().toUpperCase();
+
+    const agent = await Agent.findOne(query, "availability lastSeenAt status name agentId");
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    res.json({
+      availability: agent.availability || "Offline",
+      lastSeenAt: agent.lastSeenAt,
+      status: agent.status,
+      agentId: agent.agentId,
+      name: agent.name
+    });
+  } catch (err) {
+    console.error("Fetch agent availability error:", err);
+    res.status(500).json({ error: "Failed to fetch agent availability." });
+  }
+});
+
+// POST update agent availability status: /api/agent/availability
+router.post("/availability", async (req, res) => {
+  try {
+    const { email, agentId, availability } = req.body;
+    if ((!email && !agentId) || !availability) {
+      return res.status(400).json({ error: "email/agentId and availability ('Active' or 'Offline') are required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    if (agentId) query.agentId = agentId.trim().toUpperCase();
+
+    const targetAvailability = availability === "Active" ? "Active" : "Offline";
+    const now = new Date();
+
+    const agent = await Agent.findOne(query);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    agent.availability = targetAvailability;
+    agent.lastSeenAt = now;
+    if (targetAvailability === "Offline") {
+      // If going offline, remove forceLogout flags or reset token
+    }
+    await agent.save();
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web";
+    
+    // Log status transition activity
+    await logAgentActivity(
+      agent.email,
+      targetAvailability === "Active" ? "Duty Available" : "Duty Offline",
+      deviceType,
+      `Agent duty status updated to ${targetAvailability === "Active" ? "Active (Online)" : "Offline (Off Duty)"}`
+    );
+
+    res.json({
+      message: `Agent availability updated to ${targetAvailability}.`,
+      availability: targetAvailability,
+      lastSeenAt: now
+    });
+  } catch (err) {
+    console.error("Update agent availability error:", err);
+    res.status(500).json({ error: "Failed to update agent availability." });
+  }
+});
+
+// POST agent heartbeat ping: /api/agent/heartbeat
+router.post("/heartbeat", async (req, res) => {
+  try {
+    const { email, agentId } = req.body;
+    if (!email && !agentId) {
+      return res.status(400).json({ error: "email or agentId is required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    if (agentId) query.agentId = agentId.trim().toUpperCase();
+
+    const now = new Date();
+    const agent = await Agent.findOneAndUpdate(
+      query,
+      { $set: { lastSeenAt: now, availability: "Active" } },
+      { new: true, select: "availability lastSeenAt forceLogoutAt name" }
+    );
+
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    res.json({
+      alive: true,
+      availability: agent.availability,
+      lastSeenAt: agent.lastSeenAt,
+      forceLogoutAt: agent.forceLogoutAt
+    });
+  } catch (err) {
+    console.error("Agent heartbeat error:", err);
+    res.status(500).json({ error: "Heartbeat failed." });
+  }
+});
+
 export default router;

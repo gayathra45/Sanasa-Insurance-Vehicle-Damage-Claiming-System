@@ -631,10 +631,29 @@ export default function AgentDashboard() {
   const [availability, setAvailability] = useState<"Active" | "Offline">("Active");
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
 
-  // Automatically go offline on browser tab close/exit
+  // Automatically keep heartbeat active while online, and go offline on browser tab close/exit
   useEffect(() => {
     if (!agentEmail) return;
-    const handleUnload = () => {
+
+    // Send initial heartbeat
+    fetch(`${API_URL}/agent/heartbeat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: agentEmail })
+    }).catch(() => {});
+
+    // Periodic heartbeat every 40s to keep lastSeenAt fresh
+    const heartbeatInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetch(`${API_URL}/agent/heartbeat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: agentEmail })
+        }).catch(() => {});
+      }
+    }, 40000);
+
+    const handleOfflineBeacon = () => {
       const url = `${API_URL}/agent/availability`;
       const payload = JSON.stringify({ email: agentEmail, availability: "Offline" });
       if (navigator.sendBeacon) {
@@ -646,15 +665,34 @@ export default function AgentDashboard() {
           headers: { "Content-Type": "application/json" },
           body: payload,
           keepalive: true
-        });
+        }).catch(() => {});
       }
     };
 
-    window.addEventListener("beforeunload", handleUnload);
-    window.addEventListener("unload", handleUnload);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        // Tab hidden or user switched away
+      } else if (document.visibilityState === "visible") {
+        // Tab restored to view - refresh heartbeat
+        fetch(`${API_URL}/agent/heartbeat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: agentEmail })
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener("beforeunload", handleOfflineBeacon);
+    window.addEventListener("unload", handleOfflineBeacon);
+    window.addEventListener("pagehide", handleOfflineBeacon);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
-      window.removeEventListener("beforeunload", handleUnload);
-      window.removeEventListener("unload", handleUnload);
+      clearInterval(heartbeatInterval);
+      window.removeEventListener("beforeunload", handleOfflineBeacon);
+      window.removeEventListener("unload", handleOfflineBeacon);
+      window.removeEventListener("pagehide", handleOfflineBeacon);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [agentEmail]);
 

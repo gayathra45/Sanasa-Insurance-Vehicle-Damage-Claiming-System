@@ -36,6 +36,7 @@ const agentSchema = new mongoose.Schema({
   lastLoginIp: { type: String, default: "" },
   lastLoginDevice: { type: String, default: "" },
   loginCount: { type: Number, default: 0 },
+  lastSeenAt: { type: Date, default: Date.now },
   forceLogoutAt: { type: Date, default: null },
   sessionRevokedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now }
