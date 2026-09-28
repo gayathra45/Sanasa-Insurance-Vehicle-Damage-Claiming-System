@@ -610,99 +610,98 @@ export default function AdminPolicyHoldersPage() {
             </div>
 
             {/* Toolbar: Search, Filters & Actions */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm space-y-4 select-none">
-              {/* Top Row */}
-              <div className="flex flex-col md:flex-row justify-between items-center gap-3">
-                {/* Search */}
-                <div className="relative w-full md:w-[380px]">
-                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <HugeiconsIcon icon={Search01Icon} className="w-4 h-4" />
-                  </span>
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by Name, NIC, Mobile, Ref #, Plate..."
-                    className="w-full pl-10 pr-4 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 transition-all bg-slate-50/50"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery("")}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Right Actions */}
-                <div className="flex items-center gap-2.5 w-full md:w-auto">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm select-none">
+              {/* Search Bar */}
+              <div className="relative w-full md:w-[350px]">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
+                </span>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search policyholder by name, NIC, mobile..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm bg-slate-50/50"
+                />
+                {searchQuery && (
                   <button
-                    onClick={() => fetchPolicyholders(true)}
-                    disabled={refreshing}
-                    title="Refresh"
-                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
-                    <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
                   </button>
-
-                  <button
-                    onClick={() => setShowReportsModal(true)}
-                    className="py-2 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all border border-slate-200 cursor-pointer flex items-center gap-1.5"
-                  >
-                    <HugeiconsIcon icon={Analytics01Icon} className="w-4 h-4" />
-                    <span>Distribution & Reports</span>
-                  </button>
-
-                  <button
-                    onClick={handleExportCSV}
-                    className="py-2 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all border border-slate-200 cursor-pointer flex items-center gap-1.5"
-                  >
-                    <HugeiconsIcon icon={Download01Icon} className="w-4 h-4" />
-                    <span>Export CSV</span>
-                  </button>
-                </div>
+                )}
               </div>
 
-              {/* Status Filter Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar border-t border-slate-100 pt-3">
-                {[
-                  { id: "All", label: "All Policyholders", count: summary.totalPolicyholders },
-                  { id: "Approved", label: "Approved Accounts", count: summary.approvedPolicyholders },
-                  { id: "Pending", label: "Pending Verification", count: summary.pendingPolicyholders }
-                ].map((tab) => {
-                  const isActive = activeTab === tab.id;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                        isActive
-                          ? "bg-slate-900 text-white font-semibold"
-                          : "text-slate-600 hover:bg-slate-100"
-                      }`}
-                    >
-                      <span>{tab.label}</span>
-                      <span
-                        className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
-                          isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+                <button
+                  onClick={() => fetchPolicyholders(true)}
+                  disabled={refreshing}
+                  title="Refresh Policyholders"
+                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={2.5} />
+                </button>
+
+                <button
+                  onClick={() => setShowReportsModal(true)}
+                  className="flex-1 md:flex-none py-2.5 px-5 bg-white hover:bg-blue-50/50 border border-blue-200 hover:scale-105 active:scale-95 text-[#000080] rounded-xl text-xs font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5 relative"
+                >
+                  <HugeiconsIcon icon={Analytics01Icon} className="w-4 h-4 text-[#000080]" strokeWidth={2.5} />
+                  <span>Distribution & Reports</span>
+                </button>
+
+                <button
+                  onClick={handleExportCSV}
+                  className="flex-1 md:flex-none py-2.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 hover:scale-105 active:scale-95 text-slate-700 rounded-xl text-xs font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5 relative"
+                >
+                  <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2.5} />
+                  <span>Export CSV</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Tabs & Secondary Dropdowns */}
+            <div className="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-3 select-none">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                {/* Status Filter Tabs */}
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                  {[
+                    { id: "All", label: "All Policyholders", count: summary.totalPolicyholders },
+                    { id: "Approved", label: "Approved Accounts", count: summary.approvedPolicyholders },
+                    { id: "Pending", label: "Pending Verification", count: summary.pendingPolicyholders }
+                  ].map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id as any)}
+                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border-none outline-none ${
+                          isActive
+                            ? "bg-[#000080] text-white shadow-sm"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
                         }`}
                       >
-                        {tab.count}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                        <span>{tab.label}</span>
+                        <span
+                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                            isActive ? "bg-white/20 text-white" : "bg-white text-slate-600 shadow-xs"
+                          }`}
+                        >
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
 
-              {/* Dropdown Filters Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-1">
-                {/* Branch */}
-                <div>
+                {/* Dropdown Filters */}
+                <div className="flex flex-wrap items-center gap-2">
                   <select
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
                   >
                     <option value="All">All Branches</option>
                     {SRI_LANKA_BRANCHES.filter((b) => b !== "All").map((br) => (
@@ -711,14 +710,11 @@ export default function AdminPolicyHoldersPage() {
                       </option>
                     ))}
                   </select>
-                </div>
 
-                {/* Province */}
-                <div>
                   <select
                     value={selectedProvince}
                     onChange={(e) => setSelectedProvince(e.target.value)}
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
                   >
                     <option value="All">All Provinces</option>
                     {SRI_LANKA_PROVINCES.filter((p) => p !== "All").map((prov) => (
@@ -727,14 +723,11 @@ export default function AdminPolicyHoldersPage() {
                       </option>
                     ))}
                   </select>
-                </div>
 
-                {/* Sort */}
-                <div>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
                   >
                     <option value="newest">Newest First</option>
                     <option value="oldest">Oldest First</option>
@@ -745,30 +738,27 @@ export default function AdminPolicyHoldersPage() {
               </div>
 
               {/* Active Filter Tags */}
-              {(selectedBranch !== "All" ||
-                selectedProvince !== "All" ||
-                searchQuery ||
-                activeTab !== "All") && (
+              {(selectedBranch !== "All" || selectedProvince !== "All" || searchQuery || activeTab !== "All") && (
                 <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 text-slate-500">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span>Filters active:</span>
+                    <span className="font-semibold text-slate-400">Active Filters:</span>
                     {activeTab !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
                         Status: {activeTab}
                       </span>
                     )}
                     {selectedBranch !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
                         Branch: {selectedBranch}
                       </span>
                     )}
                     {selectedProvince !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
                         Province: {selectedProvince}
                       </span>
                     )}
                     {searchQuery && (
-                      <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
+                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
                         Search: &quot;{searchQuery}&quot;
                       </span>
                     )}
@@ -776,206 +766,117 @@ export default function AdminPolicyHoldersPage() {
 
                   <button
                     onClick={handleResetFilters}
-                    className="text-blue-600 hover:underline font-medium cursor-pointer"
+                    className="text-blue-600 hover:text-blue-800 font-bold cursor-pointer transition-colors"
                   >
-                    Reset
+                    Reset All
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Policyholders Table Card */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 shadow-sm overflow-hidden flex flex-col">
-              {loading ? (
-                <div className="py-20 flex flex-col items-center justify-center gap-3">
-                  <SimpleLoader />
-                  <p className="text-xs text-slate-400">Loading policyholders...</p>
+            {/* Policyholders Table Card Grid Section */}
+            {loading ? (
+              <SimpleLoader message="Loading policyholders directory..." theme="slate" />
+            ) : policyholders.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-[20px] p-16 text-center text-slate-400 font-bold select-none shadow-sm">
+                No policyholder profiles found matching your query.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {/* Table Header */}
+                <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,2.1fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                  <div>Policyholder & Profile</div>
+                  <div>NIC / Province</div>
+                  <div>Branch & Location</div>
+                  <div>Contact Info</div>
+                  <div>Vehicles Count</div>
+                  <div className="text-right">Actions</div>
                 </div>
-              ) : policyholders.length === 0 ? (
-                <div className="py-16 px-6 text-center flex flex-col items-center justify-center">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
-                    <HugeiconsIcon icon={UserMultiple02Icon} className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-slate-800">No Policyholders Found</h3>
-                  <p className="text-xs text-slate-500 max-w-sm mt-1 mb-4">
-                    No policyholder records matched the active search query or selected branch/status filters.
-                  </p>
-                  <button
-                    onClick={handleResetFilters}
-                    className="bg-slate-900 text-white text-xs font-semibold px-4 py-2 rounded-xl"
+
+                {/* Table Rows (Card rows with blue left accent border matching Staff page) */}
+                {policyholders.map((holder) => (
+                  <div
+                    key={holder._id}
+                    className="bg-white border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,2.1fr)] md:items-center gap-4 transition-all duration-200 shadow-sm hover:shadow-md relative overflow-hidden group"
                   >
-                    Reset Filters
-                  </button>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 border-b border-slate-200/70 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                        <th className="py-3 px-5">Policyholder</th>
-                        <th className="py-3 px-4">NIC & DOB</th>
-                        <th className="py-3 px-4">Contact</th>
-                        <th className="py-3 px-4">Branch & Location</th>
-                        <th className="py-3 px-4">Vehicles</th>
-                        <th className="py-3 px-4">Claims</th>
-                        <th className="py-3 px-4">Status</th>
-                        <th className="py-3 px-5 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 text-xs text-slate-700">
-                      {policyholders.map((holder) => (
-                        <tr
-                          key={holder._id}
-                          className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    {/* Col 1: Policyholder & Ref */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
+                        {holder.firstName} {holder.lastName}
+                      </h3>
+                      <span className="text-[10px] text-slate-600 font-bold font-mono block mt-1">
+                        {holder.referenceNumber || `#${holder._id.slice(-6)}`}
+                      </span>
+                    </div>
+
+                    {/* Col 2: NIC / Province */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">NIC / Province</span>
+                      <span className="text-slate-700 font-semibold text-xs font-mono">{holder.nic}</span>
+                      <span className="text-[10px] text-slate-500 font-semibold truncate">{holder.province || "—"}</span>
+                    </div>
+
+                    {/* Col 3: Branch & Location */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Branch & Location</span>
+                      <span className="text-slate-700 text-xs font-semibold truncate" title={holder.branch || "Galle"}>
+                        {holder.branch || "Galle"} Branch
+                      </span>
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mt-0.5 truncate">{holder.city || holder.address || "Sri Lanka"}</span>
+                    </div>
+
+                    {/* Col 4: Contact Info */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Contact Info</span>
+                      <span className="text-slate-700 font-semibold text-xs truncate" title={holder.email}>{holder.email}</span>
+                      <span className="text-slate-600 font-medium text-xs mt-0.5">{holder.mobile}</span>
+                      {holder.lastLoginAt ? (
+                        <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5" title={`IP: ${holder.lastLoginIp || "—"} | ${holder.lastLoginDevice || "Web"}`}>
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                          Active {formatSriLankaDate(holder.lastLoginAt)}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-slate-400 font-normal mt-0.5">
+                          Never logged in
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Col 5: Vehicles Count */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Vehicles Count</span>
+                      <span className="bg-slate-100 text-slate-800 font-semibold text-xs px-2.5 py-1 rounded-md w-fit text-center">
+                        {holder.vehicles?.length || 0} vehicle{holder.vehicles?.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+
+                    {/* Col 6: Actions */}
+                    <div className="flex items-center justify-between md:justify-end gap-2 pt-3 md:pt-0 border-t md:border-0 border-slate-100">
+                      <div className="flex items-center gap-1.5">
+                        <button
                           onClick={() => openDetailsModal(holder)}
+                          className="bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-800 font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm border border-slate-200"
                         >
-                          {/* Policyholder Name & Ref */}
-                          <td className="py-3.5 px-5">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-bold text-slate-700 shrink-0 text-xs uppercase overflow-hidden">
-                                {holder.profilePhoto ? (
-                                  <img
-                                    src={getFullImageUrl(holder.profilePhoto)}
-                                    alt={holder.firstName}
-                                    className="w-full h-full object-cover"
-                                  />
-                                ) : (
-                                  <span>{holder.firstName?.charAt(0) || "U"}</span>
-                                )}
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="font-semibold text-slate-900">
-                                  {holder.firstName} {holder.lastName}
-                                </span>
-                                <span className="text-[11px] text-slate-400 font-mono">
-                                  {holder.referenceNumber || `#${holder._id.slice(-6)}`}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* NIC & DOB */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex flex-col">
-                              <span className="font-mono font-medium text-slate-800">{holder.nic}</span>
-                              <span className="text-[11px] text-slate-400">{holder.dob || "—"}</span>
-                            </div>
-                          </td>
-
-                          {/* Contact & Last Active */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex flex-col">
-                              <span className="text-slate-800 font-medium">{holder.mobile}</span>
-                              <span className="text-[11px] text-slate-400 truncate max-w-[140px]">{holder.email}</span>
-                              {holder.lastLoginAt ? (
-                                <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5" title={`IP: ${holder.lastLoginIp || "—"} | ${holder.lastLoginDevice || "Web"}`}>
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                                  Active {formatSriLankaDate(holder.lastLoginAt)}
-                                </span>
-                              ) : (
-                                <span className="text-[10px] text-slate-400 font-normal mt-0.5">
-                                  Never logged in
-                                </span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Branch & Location */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex flex-col">
-                              <span className="font-medium text-slate-800">{holder.branch || "Galle"}</span>
-                              <span className="text-[11px] text-slate-400">{holder.city || holder.province}</span>
-                            </div>
-                          </td>
-
-                          {/* Vehicles */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex flex-col gap-1">
-                              <span className="font-semibold text-slate-800">
-                                {holder.vehicles?.length || 0} vehicle(s)
-                              </span>
-                              {holder.vehicles && holder.vehicles.length > 0 && (
-                                <div className="flex flex-wrap gap-1">
-                                  {holder.vehicles.slice(0, 2).map((v, i) => (
-                                    <span
-                                      key={i}
-                                      className="text-[10px] font-mono font-medium bg-slate-100 text-slate-700 px-1.5 py-0.2 rounded"
-                                    >
-                                      {v.numberPlate}
-                                    </span>
-                                  ))}
-                                  {holder.vehicles.length > 2 && (
-                                    <span className="text-[10px] text-slate-400">+{holder.vehicles.length - 2}</span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Claims */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex flex-col">
-                              <span className="font-medium text-slate-800">
-                                {holder.totalClaimsCount || 0} claim(s)
-                              </span>
-                              {holder.activeClaimsCount ? (
-                                <span className="text-[10px] text-amber-700 font-medium">
-                                  {holder.activeClaimsCount} active
-                                </span>
-                              ) : (
-                                <span className="text-[10px] text-slate-400">0 active</span>
-                              )}
-                            </div>
-                          </td>
-
-                          {/* Status */}
-                          <td className="py-3.5 px-4">
-                            <span
-                              className={`text-[11px] px-2.5 py-0.5 rounded-full font-medium ${
-                                holder.status === "Approved"
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : "bg-amber-50 text-amber-700 border border-amber-200"
-                              }`}
-                            >
-                              {holder.status || "Pending"}
-                            </span>
-                          </td>
-
-                          {/* Actions */}
-                          <td className="py-3.5 px-5 text-right" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => openDetailsModal(holder)}
-                                title="View Profile & Documents"
-                                className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-all"
-                              >
-                                <HugeiconsIcon icon={ViewIcon} className="w-4 h-4" />
-                              </button>
-
-                              <button
-                                onClick={() => openEditModal(holder)}
-                                title="Edit Policyholder Profile"
-                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-all"
-                              >
-                                <HugeiconsIcon icon={Edit02Icon} className="w-4 h-4" />
-                              </button>
-
-                              <button
-                                onClick={() => setDeletingHolder(holder)}
-                                title="Delete Policyholder"
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-100 rounded-lg transition-all"
-                              >
-                                <HugeiconsIcon icon={Delete02Icon} className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+                          View
+                        </button>
+                        <button
+                          onClick={() => openEditModal(holder)}
+                          className="bg-[#000080] hover:bg-[#000066] active:scale-95 text-white font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => setDeletingHolder(holder)}
+                          className="bg-[#ef4444] hover:bg-[#dc2626] active:scale-95 text-white font-semibold text-[11px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </main>
         </div>
       </div>
