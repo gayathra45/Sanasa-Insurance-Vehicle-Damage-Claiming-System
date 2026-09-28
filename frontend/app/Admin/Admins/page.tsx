@@ -99,9 +99,9 @@ export default function AdminAdminsPage() {
     }
   }, []);
 
-  const fetchActiveAdmins = async (isRefresh = false) => {
+  const fetchActiveAdmins = async (isRefresh = false, isSilent = false) => {
     if (isRefresh) setRefreshing(true);
-    else setLoadingAdmins(true);
+    else if (!isSilent) setLoadingAdmins(true);
     try {
       const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/admins/all`);
@@ -110,14 +110,16 @@ export default function AdminAdminsPage() {
         setActiveAdmins(data.admins || []);
         if (isRefresh) showToast("Administrators directory refreshed.", "success");
       } else {
-        throw new Error(data.error || "Failed to load admins.");
+        if (!isSilent) throw new Error(data.error || "Failed to load admins.");
       }
     } catch (err: any) {
-      console.error("Error fetching active admins:", err);
-      showToast(err.message || "Failed to fetch active admins", "error");
+      if (!isSilent) {
+        console.error("Error fetching active admins:", err);
+        showToast(err.message || "Failed to fetch active admins", "error");
+      }
     } finally {
-      setLoadingAdmins(false);
-      setRefreshing(false);
+      if (!isSilent) setLoadingAdmins(false);
+      if (isRefresh) setRefreshing(false);
     }
   };
 
@@ -143,6 +145,29 @@ export default function AdminAdminsPage() {
       console.error("Error fetching pending counts:", err);
     }
   };
+
+  // Real-time automatic background polling (every 6s) + instant refresh on tab focus
+  useEffect(() => {
+    const liveInterval = setInterval(() => {
+      if (document.visibilityState === "visible" && !submittingAdmin) {
+        fetchActiveAdmins(false, true);
+        if (currentAdmin) fetchPendingCounts(currentAdmin);
+      }
+    }, 6000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchActiveAdmins(false, true);
+        if (currentAdmin) fetchPendingCounts(currentAdmin);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(liveInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [currentAdmin, submittingAdmin]);
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -511,13 +536,18 @@ export default function AdminAdminsPage() {
                   )}
                 </button>
 
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-[11px] font-bold text-emerald-700 select-none shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Live Sync</span>
+                </div>
+
                 <button
                   onClick={() => {
                     fetchActiveAdmins(true);
                     if (currentAdmin) fetchPendingCounts(currentAdmin);
                   }}
                   disabled={refreshing || loadingAdmins}
-                  title="Refresh Administrators"
+                  title="Manual Refresh"
                   className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                 >
                   <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={2.5} />

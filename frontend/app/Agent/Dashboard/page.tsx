@@ -642,7 +642,7 @@ export default function AgentDashboard() {
       body: JSON.stringify({ email: agentEmail })
     }).catch(() => {});
 
-    // Periodic heartbeat every 40s to keep lastSeenAt fresh
+    // Periodic heartbeat every 20s to keep lastSeenAt fresh
     const heartbeatInterval = setInterval(() => {
       if (document.visibilityState === "visible") {
         fetch(`${API_URL}/agent/heartbeat`, {
@@ -651,7 +651,7 @@ export default function AgentDashboard() {
           body: JSON.stringify({ email: agentEmail })
         }).catch(() => {});
       }
-    }, 40000);
+    }, 20000);
 
     const handleOfflineBeacon = () => {
       const url = `${API_URL}/agent/availability`;

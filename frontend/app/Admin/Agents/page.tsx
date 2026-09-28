@@ -197,10 +197,10 @@ export default function AdminAgentsPage() {
     }, 3500);
   };
 
-  // Fetch Agents from API
-  const fetchAgents = useCallback(async (isRefresh = false) => {
+  // Fetch Agents from API with Real-time Background Sync
+  const fetchAgents = useCallback(async (isRefresh = false, isSilent = false) => {
     if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    else if (!isSilent) setLoading(true);
 
     try {
       const params = new URLSearchParams();
@@ -220,17 +220,40 @@ export default function AdminAgentsPage() {
       }
       if (isRefresh) showToast("Agents directory updated.", "success");
     } catch (err: any) {
-      console.error("Fetch agents error:", err);
-      showToast(err.message || "Failed to load agents", "error");
+      if (!isSilent) {
+        console.error("Fetch agents error:", err);
+        showToast(err.message || "Failed to load agents", "error");
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (!isSilent) setLoading(false);
+      if (isRefresh) setRefreshing(false);
     }
   }, [selectedBranch, selectedProvince, activeTab, searchQuery, sortBy]);
 
   useEffect(() => {
     fetchAgents();
   }, [fetchAgents]);
+
+  // Real-time automatic background polling (every 4s) + instant refresh on tab focus
+  useEffect(() => {
+    const liveInterval = setInterval(() => {
+      if (document.visibilityState === "visible" && !submitting && !isDeleting) {
+        fetchAgents(false, true);
+      }
+    }, 4000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchAgents(false, true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(liveInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchAgents, submitting, isDeleting]);
 
   // Load single agent details for View Modal
   const loadAgentDetails = async (id: string) => {
@@ -677,10 +700,15 @@ export default function AdminAgentsPage() {
                   <span>Export CSV</span>
                 </button>
 
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-[11px] font-bold text-emerald-700 select-none shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Live Sync</span>
+                </div>
+
                 <button
                   onClick={() => fetchAgents(true)}
                   disabled={refreshing || loading}
-                  title="Refresh Agents"
+                  title="Manual Refresh"
                   className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                 >
                   <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={2.5} />

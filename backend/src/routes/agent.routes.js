@@ -576,24 +576,29 @@ router.get("/profile-update-requests", async (req, res) => {
   }
 });
 
-// Helper function to auto-offline stale agents (last active > 3 minutes ago)
-const syncStaleAgents = async () => {
+// Helper function to auto-offline stale agents (last active > 60 seconds ago)
+export const syncStaleAgents = async () => {
   try {
-    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+    const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
     await Agent.updateMany(
       {
         availability: "Active",
         $or: [
-          { lastSeenAt: { $lt: threeMinutesAgo } },
+          { lastSeenAt: { $lt: sixtySecondsAgo } },
           { lastSeenAt: { $exists: false } }
         ]
       },
       { $set: { availability: "Offline" } }
     );
   } catch (e) {
-    console.error("Auto-sync stale agents error:", e);
+    // Suppress transient DB connection errors
   }
 };
+
+// Start background recurring presence sweeper interval (every 10 seconds)
+if (!global.__sanasaAgentPresenceWorker) {
+  global.__sanasaAgentPresenceWorker = setInterval(syncStaleAgents, 10000);
+}
 
 // GET agent availability status: /api/agent/availability
 router.get("/availability", async (req, res) => {

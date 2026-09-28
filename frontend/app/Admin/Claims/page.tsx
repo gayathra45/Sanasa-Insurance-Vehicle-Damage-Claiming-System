@@ -278,10 +278,10 @@ export default function AdminClaimsPage() {
     }, 3500);
   };
 
-  // Fetch Claims
-  const fetchClaims = useCallback(async (isRefresh = false) => {
+  // Fetch Claims with Real-time Background Sync
+  const fetchClaims = useCallback(async (isRefresh = false, isSilent = false) => {
     if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    else if (!isSilent) setLoading(true);
 
     try {
       const params = new URLSearchParams();
@@ -301,11 +301,13 @@ export default function AdminClaimsPage() {
         setSummary(data.summary);
       }
     } catch (err: any) {
-      console.error("Error fetching claims:", err);
-      showToast(err.message || "Failed to load claims", "error");
+      if (!isSilent) {
+        console.error("Error fetching claims:", err);
+        showToast(err.message || "Failed to load claims", "error");
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (!isSilent) setLoading(false);
+      if (isRefresh) setRefreshing(false);
     }
   }, [selectedBranch, activeTab, selectedDamageType, selectedPriority, searchQuery, sortBy]);
 
@@ -326,6 +328,29 @@ export default function AdminClaimsPage() {
     fetchClaims();
     fetchAgents();
   }, [fetchClaims]);
+
+  // Real-time automatic background polling (every 5s) + instant refresh on tab focus
+  useEffect(() => {
+    const liveInterval = setInterval(() => {
+      if (document.visibilityState === "visible" && !savingDecision && !isDeleting) {
+        fetchClaims(false, true);
+        fetchAgents();
+      }
+    }, 5000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchClaims(false, true);
+        fetchAgents();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(liveInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchClaims, savingDecision, isDeleting]);
 
   // Filtered Claims
   const filteredClaims = useMemo(() => {
@@ -645,10 +670,15 @@ export default function AdminClaimsPage() {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-[11px] font-bold text-emerald-700 select-none shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Live Sync</span>
+                </div>
+
                 <button
                   onClick={() => fetchClaims(true)}
                   disabled={refreshing}
-                  title="Refresh Claims"
+                  title="Manual Refresh"
                   className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                 >
                   <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={2.5} />

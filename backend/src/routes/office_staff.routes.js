@@ -668,13 +668,13 @@ router.get("/agents", async (req, res) => {
       return res.status(400).json({ error: "Branch query parameter is required." });
     }
 
-    // Automatically sync stale active agents to Offline (> 3 mins inactivity)
-    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+    // Automatically sync stale active agents to Offline (> 60s inactivity)
+    const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
     await Agent.updateMany(
       {
         availability: "Active",
         $or: [
-          { lastSeenAt: { $lt: threeMinutesAgo } },
+          { lastSeenAt: { $lt: sixtySecondsAgo } },
           { lastSeenAt: { $exists: false } }
         ]
       },

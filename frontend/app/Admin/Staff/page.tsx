@@ -109,8 +109,8 @@ export default function AdminStaffPage() {
     }
   };
 
-  const fetchStaff = async () => {
-    setLoadingStaff(true);
+  const fetchStaff = async (isSilent = false) => {
+    if (!isSilent) setLoadingStaff(true);
     try {
       const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/staff`);
@@ -119,14 +119,14 @@ export default function AdminStaffPage() {
         setStaffList(data.staff || []);
       }
     } catch (err) {
-      console.error("Error fetching staff list:", err);
+      if (!isSilent) console.error("Error fetching staff list:", err);
     } finally {
-      setLoadingStaff(false);
+      if (!isSilent) setLoadingStaff(false);
     }
   };
 
-  const fetchBranchRequests = async () => {
-    setLoadingBranchRequests(true);
+  const fetchBranchRequests = async (isSilent = false) => {
+    if (!isSilent) setLoadingBranchRequests(true);
     try {
       const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/branch-profile-requests`);
@@ -137,9 +137,9 @@ export default function AdminStaffPage() {
         setPendingBranchRequestsCount(pending.length);
       }
     } catch (err) {
-      console.error("Error fetching branch profile update requests:", err);
+      if (!isSilent) console.error("Error fetching branch profile update requests:", err);
     } finally {
-      setLoadingBranchRequests(false);
+      if (!isSilent) setLoadingBranchRequests(false);
     }
   };
 
@@ -149,6 +149,31 @@ export default function AdminStaffPage() {
     fetchBranchRequests();
     fetchStaff();
   }, []);
+
+  // Real-time automatic background polling (every 6s) + instant refresh on tab focus
+  useEffect(() => {
+    const liveInterval = setInterval(() => {
+      if (document.visibilityState === "visible" && !submittingStaff && !editingStaff) {
+        fetchStaff(true);
+        fetchBranchRequests(true);
+        fetchCount();
+      }
+    }, 6000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchStaff(true);
+        fetchBranchRequests(true);
+        fetchCount();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(liveInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [submittingStaff, editingStaff]);
 
   const handleApproveBranchRequest = async (requestId: string) => {
     setActioningBranchRequestId(requestId);
@@ -580,6 +605,24 @@ export default function AdminStaffPage() {
                       {pendingBranchRequestsCount}
                     </span>
                   )}
+                </button>
+
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-[11px] font-bold text-emerald-700 select-none shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Live Sync</span>
+                </div>
+
+                <button
+                  onClick={() => {
+                    fetchStaff();
+                    fetchBranchRequests();
+                    fetchCount();
+                  }}
+                  disabled={loadingStaff}
+                  title="Manual Refresh"
+                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${loadingStaff ? "animate-spin" : ""}`} strokeWidth={2.5} />
                 </button>
               </div>
             </div>
@@ -1605,7 +1648,7 @@ export default function AdminStaffPage() {
 
               <div className="flex items-center gap-2">
                 <button
-                  onClick={fetchBranchRequests}
+                  onClick={() => fetchBranchRequests()}
                   className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all"
                   title="Refresh requests"
                 >

@@ -1676,6 +1676,25 @@ ${inspectionReportText.trim()}
     return () => clearInterval(interval);
   }, [agentEmail]);
 
+  // Periodic heartbeat ping while Active (every 20s)
+  useEffect(() => {
+    if (!agentEmail || availability !== "Active") return;
+    const sendHeartbeat = async () => {
+      try {
+        await fetch(`${API_BASE_URL}/api/agent/heartbeat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: agentEmail }),
+        });
+      } catch (err) {
+        // silent on transient network fluctuation
+      }
+    };
+    sendHeartbeat();
+    const hbInterval = setInterval(sendHeartbeat, 20000);
+    return () => clearInterval(hbInterval);
+  }, [agentEmail, availability]);
+
   // Poll claims in background for real-time updates
   useEffect(() => {
     if (!agentEmail) return;

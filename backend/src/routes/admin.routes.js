@@ -2486,13 +2486,13 @@ router.post("/sessions/terminate-branch", async (req, res) => {
 // GET all agents with filters and analytics: /api/admin/agents
 router.get("/agents", async (req, res) => {
   try {
-    // Automatically update agents who haven't been active in > 3 minutes to Offline
-    const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+    // Automatically update agents who haven't been active in > 60 seconds to Offline
+    const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
     await Agent.updateMany(
       {
         availability: "Active",
         $or: [
-          { lastSeenAt: { $lt: threeMinutesAgo } },
+          { lastSeenAt: { $lt: sixtySecondsAgo } },
           { lastSeenAt: { $exists: false } }
         ]
       },

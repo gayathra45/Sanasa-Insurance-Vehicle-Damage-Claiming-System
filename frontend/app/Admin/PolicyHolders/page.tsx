@@ -255,10 +255,10 @@ export default function AdminPolicyHoldersPage() {
     return `${API_URL.replace("/api", "")}/uploads/${rawUrl}`;
   };
 
-  // Fetch Policyholders
-  const fetchPolicyholders = useCallback(async (isRefresh = false) => {
+  // Fetch Policyholders with Real-time Background Sync
+  const fetchPolicyholders = useCallback(async (isRefresh = false, isSilent = false) => {
     if (isRefresh) setRefreshing(true);
-    else setLoading(true);
+    else if (!isSilent) setLoading(true);
 
     try {
       const params = new URLSearchParams();
@@ -277,17 +277,40 @@ export default function AdminPolicyHoldersPage() {
         setSummary(data.summary);
       }
     } catch (err: any) {
-      console.error("Error fetching policyholders:", err);
-      showToast(err.message || "Failed to load policyholders", "error");
+      if (!isSilent) {
+        console.error("Error fetching policyholders:", err);
+        showToast(err.message || "Failed to load policyholders", "error");
+      }
     } finally {
-      setLoading(false);
-      setRefreshing(false);
+      if (!isSilent) setLoading(false);
+      if (isRefresh) setRefreshing(false);
     }
   }, [selectedBranch, activeTab, selectedProvince, searchQuery, sortBy]);
 
   useEffect(() => {
     fetchPolicyholders();
   }, [fetchPolicyholders]);
+
+  // Real-time automatic background polling (every 5s) + instant refresh on tab focus
+  useEffect(() => {
+    const liveInterval = setInterval(() => {
+      if (document.visibilityState === "visible" && !savingHolder && !isDeleting) {
+        fetchPolicyholders(false, true);
+      }
+    }, 5000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchPolicyholders(false, true);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(liveInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [fetchPolicyholders, savingHolder, isDeleting]);
 
   // Load Single Holder Claims & Login Activity
   const loadHolderDetails = async (nic: string) => {
@@ -635,10 +658,15 @@ export default function AdminPolicyHoldersPage() {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-[11px] font-bold text-emerald-700 select-none shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Live Sync</span>
+                </div>
+
                 <button
                   onClick={() => fetchPolicyholders(true)}
                   disabled={refreshing}
-                  title="Refresh Policyholders"
+                  title="Manual Refresh"
                   className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
                 >
                   <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={2.5} />
