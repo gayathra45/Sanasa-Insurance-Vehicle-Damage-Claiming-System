@@ -1456,5 +1456,123 @@ router.post("/contact/send-email", async (req, res) => {
   }
 });
 
+// ==========================================
+// --- API: Agent Management (Admin) ---
+// ==========================================
+
+// GET all agents: /api/admin/agents
+router.get("/agents", async (req, res) => {
+  try {
+    const { branch, status, search } = req.query;
+    const query = {};
+
+    if (branch && branch !== "All") {
+      query.branch = branch.trim();
+    }
+    if (status && status !== "All") {
+      query.status = status.trim().toLowerCase();
+    }
+    if (search) {
+      const q = search.trim();
+      query.$or = [
+        { name: { $regex: q, $options: "i" } },
+        { email: { $regex: q, $options: "i" } },
+        { agentId: { $regex: q, $options: "i" } },
+        { nic: { $regex: q, $options: "i" } },
+        { phone: { $regex: q, $options: "i" } },
+        { branch: { $regex: q, $options: "i" } },
+        { district: { $regex: q, $options: "i" } }
+      ];
+    }
+
+    const agents = await Agent.find(query, { password: 0 }).sort({ createdAt: -1 });
+    res.json({ agents });
+  } catch (err) {
+    console.error("Fetch agents for admin error:", err);
+    res.status(500).json({ error: "Failed to fetch agents directory." });
+  }
+});
+
+// GET single agent by ID: /api/admin/agents/:id
+router.get("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await Agent.findById(id, { password: 0 });
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    const totalClaims = await Claim.countDocuments({ assignedAgent: agent.email });
+    const activeClaims = await Claim.countDocuments({ assignedAgent: agent.email, status: { $in: ["Pending", "In Progress"] } });
+
+    res.json({ agent, stats: { totalClaims, activeClaims } });
+  } catch (err) {
+    console.error("Fetch single agent error:", err);
+    res.status(500).json({ error: "Failed to fetch agent profile." });
+  }
+});
+
+// PUT update agent details (Admin DB update): /api/admin/agents/:id
+router.put("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name, email, nic, phone, dob, address, city, district, area, province,
+      branch, bankName, bankBranch, accountNumber, accountType, accountHolderName,
+      status, availability, profilePhoto
+    } = req.body;
+
+    const agent = await Agent.findById(id);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    if (name !== undefined) agent.name = name.trim();
+    if (email !== undefined) agent.email = email.trim().toLowerCase();
+    if (nic !== undefined) agent.nic = nic.trim().toUpperCase();
+    if (phone !== undefined) agent.phone = phone.trim();
+    if (dob !== undefined) agent.dob = dob.trim();
+    if (address !== undefined) agent.address = address.trim();
+    if (city !== undefined) agent.city = city.trim();
+    if (district !== undefined) agent.district = district.trim();
+    if (area !== undefined) agent.area = area.trim();
+    if (province !== undefined) agent.province = province.trim();
+    if (branch !== undefined) agent.branch = branch.trim();
+    if (bankName !== undefined) agent.bankName = bankName.trim();
+    if (bankBranch !== undefined) agent.bankBranch = bankBranch.trim();
+    if (accountNumber !== undefined) agent.accountNumber = accountNumber.trim();
+    if (accountType !== undefined) agent.accountType = accountType.trim();
+    if (accountHolderName !== undefined) agent.accountHolderName = accountHolderName.trim();
+    if (status !== undefined) agent.status = status.trim().toLowerCase();
+    if (availability !== undefined) agent.availability = availability.trim() === "Offline" ? "Offline" : "Active";
+    if (profilePhoto !== undefined) agent.profilePhoto = profilePhoto;
+
+    await agent.save();
+
+    const agentObj = agent.toObject();
+    delete agentObj.password;
+
+    res.json({ message: "Agent record updated successfully in database.", agent: agentObj });
+  } catch (err) {
+    console.error("Admin update agent error:", err);
+    res.status(500).json({ error: err.message || "Failed to update agent record." });
+  }
+});
+
+// DELETE agent: /api/admin/agents/:id
+router.delete("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await Agent.findByIdAndDelete(id);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+    res.json({ message: "Agent profile deleted successfully from database." });
+  } catch (err) {
+    console.error("Delete agent error:", err);
+    res.status(500).json({ error: "Failed to delete agent profile." });
+  }
+});
+
 export default router;
 
