@@ -1693,5 +1693,315 @@ router.delete("/claims/:id", async (req, res) => {
   }
 });
 
+// ===============================================
+// --- API: Policyholders Management (Admin) ---
+// ===============================================
+
+// GET all policyholders with executive metrics & search: /api/admin/policyholders
+router.get("/policyholders", async (req, res) => {
+  try {
+    const { branch, status, search, province, sortBy } = req.query;
+    const query = {};
+
+    if (branch && branch !== "All") {
+      query.branch = { $regex: new RegExp(`^${branch.trim()}$`, "i") };
+    }
+    if (status && status !== "All") {
+      query.status = status.trim();
+    }
+    if (province && province !== "All") {
+      query.province = { $regex: new RegExp(`^${province.trim()}$`, "i") };
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const cleanPlate = q.replace(/[\s-]/g, "");
+      query.$or = [
+        { nic: { $regex: escaped, $options: "i" } },
+        { firstName: { $regex: escaped, $options: "i" } },
+        { lastName: { $regex: escaped, $options: "i" } },
+        { email: { $regex: escaped, $options: "i" } },
+        { mobile: { $regex: escaped, $options: "i" } },
+        { referenceNumber: { $regex: escaped, $options: "i" } },
+        { city: { $regex: escaped, $options: "i" } },
+        { branch: { $regex: escaped, $options: "i" } },
+        { "vehicles.numberPlate": { $regex: cleanPlate || escaped, $options: "i" } },
+        { "vehicles.policyNumber": { $regex: escaped, $options: "i" } }
+      ];
+    }
+
+    let sortOption = { createdAt: -1 };
+    if (sortBy === "oldest") sortOption = { createdAt: 1 };
+    else if (sortBy === "name-asc") sortOption = { firstName: 1, lastName: 1 };
+    else if (sortBy === "name-desc") sortOption = { firstName: -1, lastName: -1 };
+
+    const rawUsers = await User.find(query, { password: 0 }).sort(sortOption).lean();
+
+    // Attach claims counts per policyholder
+    const nics = rawUsers.map((u) => u.nic).filter(Boolean);
+    const claims = await Claim.find({ userNic: { $in: nics } }, { userNic: 1, status: 1, amount: 1 }).lean();
+    
+    const claimsMap = {};
+    claims.forEach((c) => {
+      if (!claimsMap[c.userNic]) {
+        claimsMap[c.userNic] = { total: 0, active: 0, approvedPayout: 0 };
+      }
+      claimsMap[c.userNic].total += 1;
+      if (c.status === "In Progress" || c.status === "Pending") {
+        claimsMap[c.userNic].active += 1;
+      }
+      if (c.status === "Approved" && c.amount) {
+        claimsMap[c.userNic].approvedPayout += c.amount;
+      }
+    });
+
+    const policyholders = rawUsers.map((u) => {
+      const cData = claimsMap[u.nic] || { total: 0, active: 0, approvedPayout: 0 };
+      return {
+        ...u,
+        totalClaimsCount: cData.total,
+        activeClaimsCount: cData.active,
+        totalApprovedPayout: cData.approvedPayout
+      };
+    });
+
+    // Compute Overall Summary Metrics across all users
+    const allUsers = await User.find({}, { status: 1, branch: 1, province: 1, vehicles: 1, createdAt: 1 }).lean();
+    const totalPolicyholders = allUsers.length;
+    const approvedPolicyholders = allUsers.filter((u) => u.status === "Approved").length;
+    const pendingPolicyholders = allUsers.filter((u) => u.status === "Pending" || !u.status).length;
+    
+    let totalVehicles = 0;
+    const branchMap = {};
+    const provinceMap = {};
+
+    allUsers.forEach((u) => {
+      const vCount = u.vehicles ? u.vehicles.length : 0;
+      totalVehicles += vCount;
+
+      const br = u.branch || "General";
+      if (!branchMap[br]) branchMap[br] = { count: 0, vehicles: 0, pending: 0 };
+      branchMap[br].count += 1;
+      branchMap[br].vehicles += vCount;
+      if (u.status === "Pending" || !u.status) branchMap[br].pending += 1;
+
+      const prov = u.province || "Other";
+      provinceMap[prov] = (provinceMap[prov] || 0) + 1;
+    });
+
+    res.json({
+      policyholders,
+      summary: {
+        totalPolicyholders,
+        approvedPolicyholders,
+        pendingPolicyholders,
+        totalVehicles,
+        branchBreakdown: branchMap,
+        provinceDistribution: provinceMap
+      }
+    });
+  } catch (err) {
+    console.error("Admin fetch policyholders error:", err);
+    res.status(500).json({ error: "Failed to fetch policyholders." });
+  }
+});
+
+// GET single policyholder by ID or NIC with full details & claims: /api/admin/policyholders/:id
+router.get("/policyholders/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query, { password: 0 }).lean();
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    const claims = await Claim.find({ userNic: user.nic }).sort({ createdAt: -1 }).lean();
+    res.json({ policyholder: user, claims });
+  } catch (err) {
+    console.error("Admin fetch single policyholder error:", err);
+    res.status(500).json({ error: "Failed to fetch policyholder details." });
+  }
+});
+
+// PUT update policyholder profile / status (Admin Authority): /api/admin/policyholders/:id
+router.put("/policyholders/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      firstName,
+      lastName,
+      mobile,
+      email,
+      dob,
+      address,
+      city,
+      province,
+      branch,
+      status,
+      bankName,
+      branchName,
+      accountNumber,
+      accountHolderName
+    } = req.body;
+
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    if (firstName !== undefined) user.firstName = firstName.trim();
+    if (lastName !== undefined) user.lastName = lastName.trim();
+    if (mobile !== undefined) user.mobile = mobile.trim();
+    if (email !== undefined) user.email = email.trim().toLowerCase();
+    if (dob !== undefined) user.dob = dob.trim();
+    if (address !== undefined) user.address = address.trim();
+    if (city !== undefined) user.city = city.trim();
+    if (province !== undefined) user.province = province.trim();
+    if (branch !== undefined) user.branch = branch.trim();
+    if (status !== undefined) user.status = status.trim();
+
+    if (!user.bankDetails) user.bankDetails = {};
+    if (bankName !== undefined) user.bankDetails.bankName = bankName.trim();
+    if (branchName !== undefined) user.bankDetails.branchName = branchName.trim();
+    if (accountNumber !== undefined) user.bankDetails.accountNumber = accountNumber.trim();
+    if (accountHolderName !== undefined) user.bankDetails.accountHolderName = accountHolderName.trim();
+
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ message: "Policyholder updated successfully.", policyholder: userObj });
+  } catch (err) {
+    console.error("Admin update policyholder error:", err);
+    res.status(500).json({ error: err.message || "Failed to update policyholder." });
+  }
+});
+
+// DELETE policyholder record (Admin Authority): /api/admin/policyholders/:id
+router.delete("/policyholders/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const deleted = await User.findOneAndDelete(query);
+    if (!deleted) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+    res.json({ message: `Policyholder ${deleted.firstName} ${deleted.lastName} removed successfully.` });
+  } catch (err) {
+    console.error("Admin delete policyholder error:", err);
+    res.status(500).json({ error: "Failed to delete policyholder." });
+  }
+});
+
+// POST add vehicle to policyholder (Admin): /api/admin/policyholders/:id/vehicles
+router.post("/policyholders/:id/vehicles", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { numberPlate, vehicleType, company, model, year, engineNumber, chassisNumber, policyNumber, status } = req.body;
+
+    if (!numberPlate || !company || !model || !year) {
+      return res.status(400).json({ error: "Number plate, company, model, and year are required." });
+    }
+
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    const cleanPlate = numberPlate.replace(/[\s-]/g, "").toUpperCase();
+    const existing = user.vehicles.find((v) => v.numberPlate.replace(/[\s-]/g, "").toUpperCase() === cleanPlate);
+    if (existing) {
+      return res.status(400).json({ error: `Vehicle ${numberPlate} is already registered under this policyholder.` });
+    }
+
+    const newVehicle = {
+      numberPlate: numberPlate.trim().toUpperCase(),
+      vehicleType: (vehicleType || "Car").trim(),
+      company: company.trim(),
+      model: model.trim(),
+      year: String(year).trim(),
+      engineNumber: (engineNumber || "ENG-" + Math.floor(100000 + Math.random() * 900000)).trim(),
+      chassisNumber: (chassisNumber || "CHS-" + Math.floor(100000 + Math.random() * 900000)).trim(),
+      policyNumber: (policyNumber || "POL-" + Math.floor(100000 + Math.random() * 900000)).trim(),
+      status: (status || "Approved").trim()
+    };
+
+    user.vehicles.push(newVehicle);
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ message: "Vehicle added successfully.", policyholder: userObj });
+  } catch (err) {
+    console.error("Admin add vehicle error:", err);
+    res.status(500).json({ error: err.message || "Failed to add vehicle." });
+  }
+});
+
+// PUT update vehicle of policyholder (Admin): /api/admin/policyholders/:id/vehicles/:plate
+router.put("/policyholders/:id/vehicles/:plate", async (req, res) => {
+  try {
+    const { id, plate } = req.params;
+    const { vehicleType, company, model, year, engineNumber, chassisNumber, policyNumber, status } = req.body;
+
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    const cleanPlate = plate.replace(/[\s-]/g, "").toUpperCase();
+    const vehicle = user.vehicles.find((v) => v.numberPlate.replace(/[\s-]/g, "").toUpperCase() === cleanPlate);
+    if (!vehicle) {
+      return res.status(404).json({ error: "Vehicle not found under this policyholder." });
+    }
+
+    if (vehicleType !== undefined) vehicle.vehicleType = vehicleType.trim();
+    if (company !== undefined) vehicle.company = company.trim();
+    if (model !== undefined) vehicle.model = model.trim();
+    if (year !== undefined) vehicle.year = String(year).trim();
+    if (engineNumber !== undefined) vehicle.engineNumber = engineNumber.trim();
+    if (chassisNumber !== undefined) vehicle.chassisNumber = chassisNumber.trim();
+    if (policyNumber !== undefined) vehicle.policyNumber = policyNumber.trim();
+    if (status !== undefined) vehicle.status = status.trim();
+
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ message: "Vehicle updated successfully.", policyholder: userObj });
+  } catch (err) {
+    console.error("Admin update vehicle error:", err);
+    res.status(500).json({ error: err.message || "Failed to update vehicle." });
+  }
+});
+
+// DELETE vehicle from policyholder (Admin): /api/admin/policyholders/:id/vehicles/:plate
+router.delete("/policyholders/:id/vehicles/:plate", async (req, res) => {
+  try {
+    const { id, plate } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    const cleanPlate = plate.replace(/[\s-]/g, "").toUpperCase();
+    user.vehicles = user.vehicles.filter((v) => v.numberPlate.replace(/[\s-]/g, "").toUpperCase() !== cleanPlate);
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ message: "Vehicle removed successfully.", policyholder: userObj });
+  } catch (err) {
+    console.error("Admin delete vehicle error:", err);
+    res.status(500).json({ error: err.message || "Failed to delete vehicle." });
+  }
+});
+
 export default router;
 
