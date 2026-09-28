@@ -49,6 +49,8 @@ const userSchema = new mongoose.Schema({
   lastLoginIp: { type: String, default: "" },
   lastLoginDevice: { type: String, default: "" },
   loginCount: { type: Number, default: 0 },
+  forceLogoutAt: { type: Date, default: null },
+  sessionRevokedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 

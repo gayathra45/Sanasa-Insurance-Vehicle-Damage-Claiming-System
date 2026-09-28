@@ -15,10 +15,11 @@ import {
   Analytics01Icon,
   Call02Icon,
   ArrowRight01Icon,
-  Cancel01Icon,
   Notification01Icon,
-  Building01Icon
+  Building01Icon,
+  Cancel01Icon
 } from "@hugeicons/core-free-icons";
+import { API_URL } from "@/app/config";
 
 export default function OfficeStaffNavbar() {
   const pathname = usePathname();
@@ -28,6 +29,47 @@ export default function OfficeStaffNavbar() {
     const handleOpen = () => setIsMobileOpen(true);
     window.addEventListener("open-mobile-menu", handleOpen);
     return () => window.removeEventListener("open-mobile-menu", handleOpen);
+  }, []);
+
+  // Real-time Session Status Monitor
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const staffStr = sessionStorage.getItem("logged_in_staff");
+    if (!staffStr) return;
+
+    const checkSession = async () => {
+      try {
+        const staff = JSON.parse(staffStr);
+        if (!staff?._id) return;
+
+        const res = await fetch(`${API_URL}/auth/session-status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userType: "OfficeStaff",
+            userId: staff._id,
+            loginTimestamp: staff.lastLoginAt
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.valid === false) {
+            sessionStorage.clear();
+            window.location.href = `/Login?message=${encodeURIComponent(data.reason || "Your login session was terminated by an administrator.")}`;
+          }
+        }
+      } catch (e) {
+        // network silent
+      }
+    };
+
+    const interval = setInterval(checkSession, 10000);
+    window.addEventListener("focus", checkSession);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", checkSession);
+    };
   }, []);
 
   const menuItems = [

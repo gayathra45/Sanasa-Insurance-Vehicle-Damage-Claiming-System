@@ -25,7 +25,7 @@ import {
   Call02Icon,
   Key01Icon,
   Tick01Icon,
-
+  Logout01Icon,
 } from "@hugeicons/core-free-icons";
 
 export default function AdminStaffPage() {
@@ -87,6 +87,13 @@ export default function AdminStaffPage() {
   const [branchRequestFilter, setBranchRequestFilter] = useState<"Pending" | "All" | "Approved" | "Rejected">("Pending");
   const [actioningBranchRequestId, setActioningBranchRequestId] = useState<string | null>(null);
   const [branchAdminNotes, setBranchAdminNotes] = useState<Record<string, string>>({});
+
+  // Branch Session Termination states
+  const [terminatingBranchSession, setTerminatingBranchSession] = useState(false);
+  const [showTerminateBranchModal, setShowTerminateBranchModal] = useState(false);
+  const [terminateBranchMode, setTerminateBranchMode] = useState<"single" | "branch-wide">("single");
+  const [branchTerminateReason, setBranchTerminateReason] = useState("");
+  const [terminateToastMessage, setTerminateToastMessage] = useState<string | null>(null);
 
   // Fetch pending requests count on load
   const fetchCount = async () => {
@@ -418,6 +425,54 @@ export default function AdminStaffPage() {
       setStaffList(prev => prev.filter(s => s._id !== id));
     } catch (err: any) {
       alert(err.message || "Failed to delete office staff.");
+    }
+  };
+
+  // Terminate Branch Login Session or Entire Branch Active Sessions
+  const handleTerminateBranchSession = async (mode: "single" | "branch-wide") => {
+    if (!viewingStaff) return;
+    setTerminatingBranchSession(true);
+    try {
+      const baseUrl = API_URL;
+      let endpoint = `${baseUrl}/admin/sessions/terminate`;
+      let body: any = {
+        userType: "OfficeStaff",
+        targetId: viewingStaff._id,
+        reason: branchTerminateReason.trim() || (mode === "single" ? "Administrative session termination" : `Branch session reset for ${viewingStaff.branch}`),
+        adminName: "System Admin"
+      };
+
+      if (mode === "branch-wide") {
+        endpoint = `${baseUrl}/admin/sessions/terminate-branch`;
+        body = {
+          branch: viewingStaff.branch,
+          reason: branchTerminateReason.trim() || `Administrative branch-wide session reset for ${viewingStaff.branch}`,
+          adminName: "System Admin"
+        };
+      }
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to terminate branch session.");
+
+      setTerminateToastMessage(data.message || (mode === "single" ? "Branch login session terminated." : `All ${viewingStaff.branch} active sessions terminated.`));
+      setShowTerminateBranchModal(false);
+      setBranchTerminateReason("");
+
+      // Refresh branch details & directory
+      if (viewingStaff._id) {
+        triggerView(viewingStaff);
+      }
+      fetchStaff();
+      setTimeout(() => setTerminateToastMessage(null), 4500);
+    } catch (err: any) {
+      alert(err.message || "Failed to terminate session.");
+    } finally {
+      setTerminatingBranchSession(false);
     }
   };
 
@@ -1388,13 +1443,44 @@ export default function AdminStaffPage() {
 
               {/* Grid 3: Branch Login & Activity Details */}
               <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-4">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider select-none">
-                    Branch Login & Session Activity
-                  </span>
-                  <span className="text-[10px] font-bold text-slate-400">
-                    {branchLoginActivities.length} Recent Event(s)
-                  </span>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
+                  <div>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider select-none block">
+                      Branch Login & Session Activity
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      {branchLoginActivities.length} Recent Event(s)
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTerminateBranchMode("single");
+                        setBranchTerminateReason("");
+                        setShowTerminateBranchModal(true);
+                      }}
+                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
+                      title="Force logout this branch staff's active session"
+                    >
+                      <HugeiconsIcon icon={Logout01Icon} className="w-3.5 h-3.5 text-rose-600" strokeWidth={2.2} />
+                      <span>Terminate Staff Session</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTerminateBranchMode("branch-wide");
+                        setBranchTerminateReason("");
+                        setShowTerminateBranchModal(true);
+                      }}
+                      className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
+                      title={`Force logout all active sessions in ${viewingStaff.branch} branch (Staff & Policyholders)`}
+                    >
+                      <HugeiconsIcon icon={AlertCircleIcon} className="w-3.5 h-3.5 text-amber-700" strokeWidth={2.2} />
+                      <span>Revoke All Branch Sessions</span>
+                    </button>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1748,6 +1834,96 @@ export default function AdminStaffPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+    
+      {/* Terminate Branch Session Confirmation Modal */}
+      {showTerminateBranchModal && viewingStaff && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-md shadow-2xl p-7 flex flex-col gap-5 relative">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                terminateBranchMode === "single" ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-700"
+              }`}>
+                <HugeiconsIcon icon={Logout01Icon} className="w-6 h-6" strokeWidth={2.2} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-slate-900 leading-tight">
+                  {terminateBranchMode === "single"
+                    ? `Terminate ${viewingStaff.branch} Staff Session?`
+                    : `Revoke All ${viewingStaff.branch} Sessions?`}
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  {terminateBranchMode === "single"
+                    ? `This will immediately invalidate the current login session for ${viewingStaff.name}. The staff member will be logged out on their next action.`
+                    : `This will invalidate active login sessions for BOTH the ${viewingStaff.branch} branch staff AND all policyholders registered under this branch.`}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1.5">
+                Revocation Reason / Note (Optional)
+              </label>
+              <input
+                type="text"
+                value={branchTerminateReason}
+                onChange={(e) => setBranchTerminateReason(e.target.value)}
+                placeholder={terminateBranchMode === "single" ? "e.g. Session security review" : "e.g. Branch maintenance / Security reset"}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-slate-50/50"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={terminatingBranchSession}
+                onClick={() => {
+                  setShowTerminateBranchModal(false);
+                  setBranchTerminateReason("");
+                }}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer border-none outline-none disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={terminatingBranchSession}
+                onClick={() => handleTerminateBranchSession(terminateBranchMode)}
+                className={`px-6 py-2.5 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer border-none outline-none disabled:opacity-50 ${
+                  terminateBranchMode === "single"
+                    ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
+                    : "bg-amber-600 hover:bg-amber-700 shadow-amber-600/20"
+                }`}
+              >
+                {terminatingBranchSession ? (
+                  <>
+                    <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />
+                    <span>Terminating...</span>
+                  </>
+                ) : (
+                  <>
+                    <HugeiconsIcon icon={Logout01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                    <span>Confirm Terminate</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification Banner */}
+      {terminateToastMessage && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 text-xs font-medium animate-fadeIn">
+          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+          <span>{terminateToastMessage}</span>
+          <button
+            onClick={() => setTerminateToastMessage(null)}
+            className="ml-2 text-slate-400 hover:text-white"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+          </button>
         </div>
       )}
     

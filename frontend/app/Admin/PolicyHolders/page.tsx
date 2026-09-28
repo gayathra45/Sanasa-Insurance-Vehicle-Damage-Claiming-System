@@ -32,7 +32,8 @@ import {
   Add01Icon,
   Mail01Icon,
   Call02Icon,
-  Location01Icon
+  Location01Icon,
+  Logout01Icon
 } from "@hugeicons/core-free-icons";
 
 // ==========================================
@@ -230,6 +231,11 @@ export default function AdminPolicyHoldersPage() {
   const [deletingHolder, setDeletingHolder] = useState<PolicyHolder | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Session termination states
+  const [terminatingSession, setTerminatingSession] = useState(false);
+  const [showTerminateConfirm, setShowTerminateConfirm] = useState(false);
+  const [terminateReason, setTerminateReason] = useState("");
+
   // Toast message
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
 
@@ -389,6 +395,39 @@ export default function AdminPolicyHoldersPage() {
       showToast(err.message || "Failed to delete policyholder", "error");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Terminate Policyholder Active Session (Force Logout)
+  const handleTerminateHolderSession = async () => {
+    if (!viewingHolder) return;
+    setTerminatingSession(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/sessions/terminate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userType: "PolicyHolder",
+          targetId: viewingHolder._id,
+          reason: terminateReason || "Administrator Security Action",
+          adminName: "System Admin"
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to terminate login session.");
+
+      showToast(`Active login session for ${viewingHolder.firstName} ${viewingHolder.lastName} terminated successfully.`, "success");
+      setShowTerminateConfirm(false);
+      setTerminateReason("");
+
+      // Reload activity audit logs
+      loadHolderDetails(viewingHolder.nic);
+    } catch (err: any) {
+      console.error("Terminate session error:", err);
+      showToast(err.message || "Failed to terminate session", "error");
+    } finally {
+      setTerminatingSession(false);
     }
   };
 
@@ -1263,7 +1302,7 @@ export default function AdminPolicyHoldersPage() {
               {/* TAB 5: ACTIVITY & LOGIN DETAILS */}
               {activeViewTab === "activity" && (
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <div>
                       <span className="text-xs font-semibold text-slate-800 block">
                         Policyholder Authentication & Activity Audit Log
@@ -1272,6 +1311,15 @@ export default function AdminPolicyHoldersPage() {
                         Detailed record of portal logins, IP addresses, and device environments used by this account.
                       </span>
                     </div>
+
+                    <button
+                      onClick={() => setShowTerminateConfirm(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-semibold shadow-xs transition-all cursor-pointer"
+                      title="Force logout active session for this policyholder"
+                    >
+                      <HugeiconsIcon icon={Logout01Icon} className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Terminate Active Session</span>
+                    </button>
                   </div>
 
                   {/* Summary Metric Cards */}
@@ -1670,6 +1718,57 @@ export default function AdminPolicyHoldersPage() {
                 className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs disabled:opacity-50"
               >
                 {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* --- MODAL 6: Force Logout Confirmation --- */}
+      {/* ========================================== */}
+      {showTerminateConfirm && viewingHolder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-200 text-left">
+            <div className="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center mb-3">
+              <HugeiconsIcon icon={Logout01Icon} className="w-5 h-5" />
+            </div>
+
+            <h3 className="text-sm font-bold text-slate-900">
+              Terminate Active Portal Session?
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 mb-3 leading-relaxed">
+              This will forcefully log out <strong>{viewingHolder.firstName} {viewingHolder.lastName}</strong> ({viewingHolder.nic}) from all devices and invalidate active sessions.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">Reason / Note (Optional)</label>
+              <input
+                type="text"
+                value={terminateReason}
+                onChange={(e) => setTerminateReason(e.target.value)}
+                placeholder="e.g. Security check, unauthorized access flag"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-400"
+              />
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setShowTerminateConfirm(false);
+                  setTerminateReason("");
+                }}
+                disabled={terminatingSession}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-semibold text-xs cursor-pointer hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTerminateHolderSession}
+                disabled={terminatingSession}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+              >
+                {terminatingSession ? "Terminating..." : "Force Logout"}
               </button>
             </div>
           </div>

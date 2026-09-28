@@ -2344,5 +2344,140 @@ router.get("/login-activity/user/:id", async (req, res) => {
   }
 });
 
+// ==========================================
+// --- API: Session Management & Force Logout ---
+// ==========================================
+
+// POST terminate / log out an active login session (Admin authority): /api/admin/sessions/terminate
+router.post("/sessions/terminate", async (req, res) => {
+  try {
+    const { userType, targetId, reason, adminName } = req.body;
+
+    if (!userType || !targetId) {
+      return res.status(400).json({ error: "userType and targetId are required." });
+    }
+
+    let targetDoc = null;
+    let displayName = "";
+    let email = "";
+    let nicOrMobile = "";
+    let branch = "Head Office";
+
+    const now = new Date();
+
+    if (userType === "PolicyHolder") {
+      const query = mongoose.Types.ObjectId.isValid(targetId) ? { _id: targetId } : { nic: targetId.trim() };
+      targetDoc = await User.findOne(query);
+      if (!targetDoc) return res.status(404).json({ error: "Policyholder not found." });
+      displayName = `${targetDoc.firstName || ""} ${targetDoc.lastName || ""}`.trim();
+      email = targetDoc.email;
+      nicOrMobile = targetDoc.nic;
+      branch = targetDoc.branch || "Galle";
+    } else if (userType === "OfficeStaff") {
+      targetDoc = await OfficeStaff.findById(targetId);
+      if (!targetDoc) return res.status(404).json({ error: "Branch office staff record not found." });
+      displayName = `${targetDoc.branch} Branch (${targetDoc.name})`;
+      email = targetDoc.email;
+      nicOrMobile = targetDoc.mobile;
+      branch = targetDoc.branch || "Galle";
+    } else if (userType === "Agent") {
+      const query = mongoose.Types.ObjectId.isValid(targetId) ? { _id: targetId } : { email: targetId.trim().toLowerCase() };
+      targetDoc = await Agent.findOne(query);
+      if (!targetDoc) return res.status(404).json({ error: "Agent record not found." });
+      displayName = targetDoc.name;
+      email = targetDoc.email;
+      nicOrMobile = targetDoc.nic;
+      branch = targetDoc.branch || "Galle";
+      targetDoc.availability = "Offline";
+    } else if (userType === "Admin") {
+      targetDoc = await Admin.findById(targetId);
+      if (!targetDoc) return res.status(404).json({ error: "Administrator record not found." });
+      displayName = targetDoc.name;
+      email = targetDoc.email;
+      nicOrMobile = targetDoc.nic;
+      branch = "Head Office";
+    } else {
+      return res.status(400).json({ error: "Invalid userType specified." });
+    }
+
+    // Invalidate session
+    targetDoc.forceLogoutAt = now;
+    targetDoc.sessionRevokedAt = now;
+    targetDoc.resetSessionToken = undefined;
+    targetDoc.resetSessionExpires = undefined;
+    await targetDoc.save();
+
+    // Record audit activity log entry
+    await logLoginActivity({
+      req,
+      userType,
+      userId: targetDoc._id,
+      userName: displayName,
+      userEmail: email,
+      userNic: nicOrMobile,
+      branch,
+      action: "Session Revoked",
+      status: "Warning",
+      details: `Active login session forcefully terminated by Administrator (${adminName || "System Admin"}). Reason: ${reason || "Security governance action."}`
+    });
+
+    res.json({
+      message: `Active login session for ${displayName} has been terminated successfully.`,
+      targetId: targetDoc._id,
+      userType,
+      forceLogoutAt: now
+    });
+  } catch (err) {
+    console.error("Terminate session error:", err);
+    res.status(500).json({ error: err.message || "Failed to terminate user login session." });
+  }
+});
+
+// POST terminate all sessions for a branch: /api/admin/sessions/terminate-branch
+router.post("/sessions/terminate-branch", async (req, res) => {
+  try {
+    const { branch, reason, adminName } = req.body;
+    if (!branch || branch === "All") {
+      return res.status(400).json({ error: "Specific branch name is required." });
+    }
+
+    const now = new Date();
+    const branchClean = branch.trim();
+
+    // Terminate branch staff
+    await OfficeStaff.updateMany(
+      { branch: { $regex: new RegExp(`^${branchClean}$`, "i") } },
+      { $set: { forceLogoutAt: now, sessionRevokedAt: now, resetSessionToken: undefined } }
+    );
+
+    // Terminate policyholders under branch
+    const usersResult = await User.updateMany(
+      { branch: { $regex: new RegExp(`^${branchClean}$`, "i") } },
+      { $set: { forceLogoutAt: now, sessionRevokedAt: now, resetSessionToken: undefined } }
+    );
+
+    // Audit log
+    await logLoginActivity({
+      req,
+      userType: "OfficeStaff",
+      userName: `${branchClean} Branch Staff & Users`,
+      userEmail: `${branchClean.toLowerCase()}@sanasainsurance.lk`,
+      branch: branchClean,
+      action: "Branch Sessions Revoked",
+      status: "Warning",
+      details: `All active sessions in ${branchClean} branch revoked by Admin (${adminName || "System Admin"}). ${usersResult.modifiedCount} user session(s) reset. Reason: ${reason || "Branch Session Reset"}`
+    });
+
+    res.json({
+      message: `All active sessions for ${branchClean} branch have been revoked.`,
+      modifiedUsersCount: usersResult.modifiedCount,
+      forceLogoutAt: now
+    });
+  } catch (err) {
+    console.error("Terminate branch sessions error:", err);
+    res.status(500).json({ error: "Failed to reset branch sessions." });
+  }
+});
+
 export default router;
 

@@ -41,6 +41,11 @@ router.post("/login", async (req, res) => {
         return res.status(400).json({ error: "Your account is pending approval from the office staff of your nearest branch. You will receive an email notification once your registration is approved." });
       }
 
+      user.lastLoginAt = new Date();
+      user.forceLogoutAt = null;
+      user.loginCount = (user.loginCount || 0) + 1;
+      await user.save();
+
       await logLoginActivity({
         req,
         userType: "PolicyHolder",
@@ -61,7 +66,7 @@ router.post("/login", async (req, res) => {
         userObj.vehicles = userObj.vehicles.filter(v => !v.status || v.status === "Approved");
       }
 
-      return res.json({ role: "policy_holder", user: userObj });
+      return res.json({ role: "policy_holder", user: userObj, sessionStartedAt: user.lastLoginAt });
     }
 
     if (agent && agent.password === hashedInput) {
@@ -70,6 +75,9 @@ router.post("/login", async (req, res) => {
       }
 
       agent.availability = "Active";
+      agent.lastLoginAt = new Date();
+      agent.forceLogoutAt = null;
+      agent.loginCount = (agent.loginCount || 0) + 1;
       await agent.save();
 
       const userAgent = req.headers["user-agent"] || "";
@@ -93,10 +101,15 @@ router.post("/login", async (req, res) => {
       const agentObj = agent.toObject();
       delete agentObj.password;
 
-      return res.json({ role: "insurance_agent", agent: agentObj });
+      return res.json({ role: "insurance_agent", agent: agentObj, sessionStartedAt: agent.lastLoginAt });
     }
 
     if (staff && staff.password === hashedInput) {
+      staff.lastLoginAt = new Date();
+      staff.forceLogoutAt = null;
+      staff.loginCount = (staff.loginCount || 0) + 1;
+      await staff.save();
+
       await logLoginActivity({
         req,
         userType: "OfficeStaff",
@@ -112,7 +125,7 @@ router.post("/login", async (req, res) => {
 
       const staffObj = staff.toObject();
       delete staffObj.password;
-      return res.json({ role: "office_staff", staff: staffObj });
+      return res.json({ role: "office_staff", staff: staffObj, sessionStartedAt: staff.lastLoginAt });
     }
 
     if (admin && admin.password === hashedInput) {
@@ -121,6 +134,11 @@ router.post("/login", async (req, res) => {
       } else if (admin.status === "Rejected") {
         return res.status(400).json({ error: "Your administrator registration request has been rejected." });
       }
+
+      admin.lastLoginAt = new Date();
+      admin.forceLogoutAt = null;
+      admin.loginCount = (admin.loginCount || 0) + 1;
+      await admin.save();
 
       await logLoginActivity({
         req,
@@ -137,7 +155,7 @@ router.post("/login", async (req, res) => {
 
       const adminObj = admin.toObject();
       delete adminObj.password;
-      return res.json({ role: "admin", admin: adminObj });
+      return res.json({ role: "admin", admin: adminObj, sessionStartedAt: admin.lastLoginAt });
     }
 
     // If we reach here, either the username/nic doesn't exist, or the password was incorrect.
@@ -146,6 +164,52 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Unified login API error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST /api/auth/session-status - Check if active session was revoked by Administrator
+router.post("/session-status", async (req, res) => {
+  try {
+    const { userType, userId, loginTimestamp } = req.body;
+    if (!userType || !userId) {
+      return res.status(400).json({ error: "userType and userId are required." });
+    }
+
+    let doc = null;
+    const cleanType = String(userType).toLowerCase();
+
+    if (cleanType === "policyholder" || cleanType === "policy_holder" || cleanType === "user") {
+      doc = await User.findById(userId);
+    } else if (cleanType === "officestaff" || cleanType === "office_staff" || cleanType === "staff") {
+      doc = await OfficeStaff.findById(userId);
+    } else if (cleanType === "agent" || cleanType === "insurance_agent") {
+      doc = await Agent.findById(userId);
+    } else if (cleanType === "admin") {
+      doc = await Admin.findById(userId);
+    }
+
+    if (!doc) {
+      return res.json({ valid: false, reason: "Account not found or deleted." });
+    }
+
+    if (doc.forceLogoutAt) {
+      const forceLogoutTime = new Date(doc.forceLogoutAt).getTime();
+      const loginTime = loginTimestamp ? new Date(loginTimestamp).getTime() : 0;
+      
+      // If forceLogout occurred around or after user's login timestamp
+      if (!loginTimestamp || forceLogoutTime >= loginTime - 2000) {
+        return res.json({
+          valid: false,
+          reason: "Your active session has been forcefully terminated by the Administrator.",
+          forceLogoutAt: doc.forceLogoutAt
+        });
+      }
+    }
+
+    return res.json({ valid: true });
+  } catch (err) {
+    console.error("Session status check error:", err);
+    return res.status(500).json({ error: "Failed to verify session status." });
   }
 });
 

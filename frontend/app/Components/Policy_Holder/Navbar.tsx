@@ -15,10 +15,11 @@ import {
   UserIcon,
   Logout01Icon,
   Menu01Icon,
-  Cancel01Icon,
   Search01Icon,
-  Location01Icon
+  Location01Icon,
+  Cancel01Icon
 } from "@hugeicons/core-free-icons";
+import { API_URL } from "@/app/config";
 
 const translations = {
   en: {
@@ -124,6 +125,47 @@ export default function PolicyHolderNavbar() {
     loadUser();
     window.addEventListener("user-profile-updated", loadUser);
     return () => window.removeEventListener("user-profile-updated", loadUser);
+  }, []);
+
+  // Real-time Session Status Monitor
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const userStr = sessionStorage.getItem("logged_in_user");
+    if (!userStr) return;
+
+    const checkSession = async () => {
+      try {
+        const user = JSON.parse(userStr);
+        if (!user?._id) return;
+
+        const res = await fetch(`${API_URL}/auth/session-status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userType: "PolicyHolder",
+            userId: user._id,
+            loginTimestamp: user.lastLoginAt
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.valid === false) {
+            sessionStorage.clear();
+            window.location.href = `/Login?message=${encodeURIComponent(data.reason || "Your login session was terminated by an administrator.")}`;
+          }
+        }
+      } catch (e) {
+        // network silent
+      }
+    };
+
+    const interval = setInterval(checkSession, 10000);
+    window.addEventListener("focus", checkSession);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", checkSession);
+    };
   }, []);
 
   // Close dropdowns when clicking outside
