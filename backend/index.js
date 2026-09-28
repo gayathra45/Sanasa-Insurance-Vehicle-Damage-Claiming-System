@@ -82,4 +82,4 @@ const startServer = async () => {
 };
 
 startServer();
-// Trigger server restart check
+// Server initialization active

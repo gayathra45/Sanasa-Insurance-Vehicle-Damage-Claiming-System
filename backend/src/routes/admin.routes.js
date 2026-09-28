@@ -1,5 +1,6 @@
 import express from "express";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import Admin from "../models/admin.model.js";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
@@ -1499,7 +1500,196 @@ router.post("/contact/send-email", async (req, res) => {
     });
   } catch (err) {
     console.error("Admin send email error:", err);
-    res.status(500).json({ error: "Failed to dispatch email communication." });
+    res.status(500).json({ error: "Failed to send email." });
+  }
+});
+// ==========================================
+// --- API: Claims Management (Admin Console) ---
+// ==========================================
+
+// GET all claims with executive analytics & filters: /api/admin/claims
+router.get("/claims", async (req, res) => {
+  try {
+    const { branch, status, damageType, priority, search, sortBy } = req.query;
+    const query = {};
+
+    if (branch && branch !== "All") query.branch = branch.trim();
+    if (status && status !== "All") query.status = status.trim();
+    if (damageType && damageType !== "All") query.damageType = damageType.trim();
+    if (priority && priority !== "All") query.priority = priority.trim();
+
+    if (search) {
+      const q = search.trim();
+      query.$or = [
+        { claimNumber: { $regex: q, $options: "i" } },
+        { userNic: { $regex: q, $options: "i" } },
+        { vehiclePlate: { $regex: q, $options: "i" } },
+        { branch: { $regex: q, $options: "i" } },
+        { assignedAgent: { $regex: q, $options: "i" } },
+        { location: { $regex: q, $options: "i" } }
+      ];
+    }
+
+    let sortOption = { createdAt: -1 };
+    if (sortBy === "oldest") sortOption = { createdAt: 1 };
+    else if (sortBy === "amount-desc") sortOption = { amount: -1 };
+    else if (sortBy === "amount-asc") sortOption = { amount: 1 };
+
+    const rawClaims = await Claim.find(query).sort(sortOption).lean();
+
+    // Attach policy holder info
+    const nics = Array.from(new Set(rawClaims.map(c => c.userNic).filter(Boolean)));
+    const users = await User.find(
+      { nic: { $in: nics } },
+      { nic: 1, email: 1, mobile: 1, firstName: 1, lastName: 1, vehicles: 1, bankDetails: 1 }
+    ).lean();
+    const userMap = new Map(users.map(u => [u.nic, u]));
+
+    const claims = rawClaims.map(c => {
+      const u = userMap.get(c.userNic);
+      const fullName = u ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "Policy Holder";
+      const vehicle = u?.vehicles?.find((v) => (v.numberPlate || "").replace(/[\s-]/g, "").toUpperCase() === (c.vehiclePlate || "").replace(/[\s-]/g, "").toUpperCase());
+
+      return {
+        ...c,
+        policyHolderName: fullName,
+        policyHolderEmail: u?.email || "",
+        policyHolderMobile: u?.mobile || "",
+        vehicleDetails: vehicle ? `${vehicle.company || ""} ${vehicle.model || ""}`.trim() : ""
+      };
+    });
+
+    // Executive Metrics & Summary Calculations across entire dataset
+    const allClaims = await Claim.find({}, { status: 1, amount: 1, branch: 1, damageType: 1, createdAt: 1 }).lean();
+    const totalClaimsCount = allClaims.length;
+    const pendingClaimsCount = allClaims.filter(c => c.status === "Pending").length;
+    const inProgressClaimsCount = allClaims.filter(c => c.status === "In Progress" || c.currentStep === 2 || c.currentStep === 3).length;
+    const approvedClaimsCount = allClaims.filter(c => c.status === "Approved").length;
+    const rejectedClaimsCount = allClaims.filter(c => c.status === "Rejected").length;
+
+    const totalApprovedPayout = allClaims
+      .filter(c => c.status === "Approved" && c.amount)
+      .reduce((sum, c) => sum + (c.amount || 0), 0);
+
+    const totalEstimatedLoss = allClaims
+      .filter(c => c.amount)
+      .reduce((sum, c) => sum + (c.amount || 0), 0);
+
+    // Damage Type Category Distribution
+    const damageTypeMap = {};
+    allClaims.forEach(c => {
+      const cat = c.damageType || "Other";
+      damageTypeMap[cat] = (damageTypeMap[cat] || 0) + 1;
+    });
+
+    // Branch Breakdown
+    const branchMap = {};
+    allClaims.forEach(c => {
+      const br = c.branch || "General";
+      if (!branchMap[br]) branchMap[br] = { count: 0, approvedPayout: 0, pending: 0 };
+      branchMap[br].count += 1;
+      if (c.status === "Approved" && c.amount) branchMap[br].approvedPayout += c.amount;
+      if (c.status === "Pending") branchMap[br].pending += 1;
+    });
+
+    res.json({
+      claims,
+      summary: {
+        totalClaims: totalClaimsCount,
+        pendingClaims: pendingClaimsCount,
+        inProgressClaims: inProgressClaimsCount,
+        approvedClaims: approvedClaimsCount,
+        rejectedClaims: rejectedClaimsCount,
+        totalApprovedPayout,
+        totalEstimatedLoss,
+        categoryDistribution: damageTypeMap,
+        branchBreakdown: branchMap
+      }
+    });
+  } catch (err) {
+    console.error("Admin fetch claims error:", err);
+    res.status(500).json({ error: "Failed to fetch claims report." });
+  }
+});
+
+// GET single claim by ID or Claim Number: /api/admin/claims/:id
+router.get("/claims/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { claimNumber: id.trim().toUpperCase() };
+    const claim = await Claim.findOne(query).lean();
+    if (!claim) {
+      return res.status(404).json({ error: "Claim record not found." });
+    }
+
+    // Attach user profile
+    const user = await User.findOne({ nic: claim.userNic }, { password: 0 }).lean();
+    res.json({ claim, user });
+  } catch (err) {
+    console.error("Admin fetch single claim error:", err);
+    res.status(500).json({ error: "Failed to fetch claim details." });
+  }
+});
+
+// PUT update / override claim decision (Admin Authority): /api/admin/claims/:id
+router.put("/claims/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, amount, priority, branch, assignedAgent, rejectionReason, adminNote, currentStep } = req.body;
+
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { claimNumber: id.trim().toUpperCase() };
+    const claim = await Claim.findOne(query);
+    if (!claim) {
+      return res.status(404).json({ error: "Claim record not found." });
+    }
+
+    if (status !== undefined) claim.status = status.trim();
+    if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
+    if (priority !== undefined) claim.priority = priority.trim();
+    if (branch !== undefined) claim.branch = branch.trim();
+    if (assignedAgent !== undefined) claim.assignedAgent = assignedAgent.trim();
+    if (rejectionReason !== undefined) claim.rejectionReason = rejectionReason.trim();
+    if (currentStep !== undefined) claim.currentStep = Number(currentStep);
+
+    if (adminNote && adminNote.trim()) {
+      claim.notes.push({
+        text: `[Admin Override] ${adminNote.trim()}`,
+        addedBy: "System Admin",
+        addedAt: new Date()
+      });
+      claim.messages.push({
+        sender: "System Admin",
+        message: adminNote.trim(),
+        sentAt: new Date(),
+        recipient: "Policy Holder"
+      });
+    }
+
+    claim.isManuallyUpdated = true;
+    claim.manualUpdateAt = new Date();
+    claim.manualUpdateBy = "System Admin";
+
+    await claim.save();
+    res.json({ message: "Claim record updated successfully.", claim });
+  } catch (err) {
+    console.error("Admin update claim error:", err);
+    res.status(500).json({ error: err.message || "Failed to update claim record." });
+  }
+});
+
+// DELETE single claim by ID (Admin Authority): /api/admin/claims/:id
+router.delete("/claims/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { claimNumber: id.trim().toUpperCase() };
+    const deleted = await Claim.findOneAndDelete(query);
+    if (!deleted) {
+      return res.status(404).json({ error: "Claim record not found." });
+    }
+    res.json({ message: `Claim ${deleted.claimNumber} removed successfully.` });
+  } catch (err) {
+    console.error("Admin delete claim error:", err);
+    res.status(500).json({ error: "Failed to delete claim." });
   }
 });
 
