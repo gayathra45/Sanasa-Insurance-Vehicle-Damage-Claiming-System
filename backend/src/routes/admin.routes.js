@@ -2847,5 +2847,288 @@ router.post("/agents/:id/reset-password", async (req, res) => {
   }
 });
 
+// GET comprehensive executive analytics & system overview: /api/admin/comprehensive-analytics
+router.get("/comprehensive-analytics", async (req, res) => {
+  try {
+    const { branch, timeRange, province, search } = req.query;
+
+    // Build date filter
+    const now = new Date();
+    let dateMatch = {};
+    if (timeRange === "today") {
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      dateMatch = { createdAt: { $gte: startOfDay } };
+    } else if (timeRange === "7days") {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      dateMatch = { createdAt: { $gte: d } };
+    } else if (timeRange === "30days") {
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      dateMatch = { createdAt: { $gte: d } };
+    } else if (timeRange === "90days") {
+      const d = new Date();
+      d.setDate(d.getDate() - 90);
+      dateMatch = { createdAt: { $gte: d } };
+    } else if (timeRange === "thisyear") {
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      dateMatch = { createdAt: { $gte: startOfYear } };
+    }
+
+    // Branch filter
+    const branchMatch = (branch && branch !== "All")
+      ? { branch: { $regex: new RegExp(`^${branch.trim()}$`, "i") } }
+      : {};
+
+    const claimQuery = { ...dateMatch, ...branchMatch };
+
+    // 1. Fetch claims data for KPIs and deep aggregation
+    const [claims, allClaims, allUsers, allAgents, allStaff] = await Promise.all([
+      Claim.find(claimQuery).lean(),
+      Claim.find().lean(),
+      User.find().lean(),
+      Agent.find().lean(),
+      OfficeStaff.find().lean()
+    ]);
+
+    // KPI sums
+    const totalClaimsCount = claims.length;
+    let approvedClaimsCount = 0;
+    let pendingClaimsCount = 0;
+    let inProgressClaimsCount = 0;
+    let rejectedClaimsCount = 0;
+    let totalApprovedPayout = 0;
+    let totalEstimatedLoss = 0;
+    const damageTypeMap = {};
+    const priorityMap = {};
+    const monthlyTrendMap = {};
+    const branchClaimsMap = {};
+
+    claims.forEach(c => {
+      const status = c.status || "Pending";
+      if (status === "Approved") {
+        approvedClaimsCount++;
+        totalApprovedPayout += (Number(c.amount) || 0);
+      } else if (status === "Pending") {
+        pendingClaimsCount++;
+      } else if (status === "In Progress") {
+        inProgressClaimsCount++;
+      } else if (status === "Rejected") {
+        rejectedClaimsCount++;
+      }
+
+      if (c.amount) {
+        totalEstimatedLoss += Number(c.amount);
+      }
+
+      // Damage categories
+      const dtype = c.damageType || "Other";
+      if (!damageTypeMap[dtype]) damageTypeMap[dtype] = { count: 0, amount: 0 };
+      damageTypeMap[dtype].count++;
+      if (c.amount) damageTypeMap[dtype].amount += Number(c.amount);
+
+      // Priority
+      const prio = c.priority || "Normal";
+      priorityMap[prio] = (priorityMap[prio] || 0) + 1;
+
+      // Branch claims
+      const br = c.branch || "Head Office";
+      if (!branchClaimsMap[br]) {
+        branchClaimsMap[br] = { total: 0, approved: 0, pending: 0, inProgress: 0, rejected: 0, payout: 0 };
+      }
+      branchClaimsMap[br].total++;
+      if (status === "Approved") {
+        branchClaimsMap[br].approved++;
+        branchClaimsMap[br].payout += (Number(c.amount) || 0);
+      } else if (status === "Pending") branchClaimsMap[br].pending++;
+      else if (status === "In Progress") branchClaimsMap[br].inProgress++;
+      else if (status === "Rejected") branchClaimsMap[br].rejected++;
+
+      // Monthly breakdown
+      const cDate = c.createdAt ? new Date(c.createdAt) : new Date();
+      const monthKey = `${cDate.getFullYear()}-${String(cDate.getMonth() + 1).padStart(2, '0')}`;
+      if (!monthlyTrendMap[monthKey]) {
+        monthlyTrendMap[monthKey] = { monthKey, submitted: 0, approved: 0, rejected: 0, payout: 0 };
+      }
+      monthlyTrendMap[monthKey].submitted++;
+      if (status === "Approved") {
+        monthlyTrendMap[monthKey].approved++;
+        monthlyTrendMap[monthKey].payout += (Number(c.amount) || 0);
+      } else if (status === "Rejected") {
+        monthlyTrendMap[monthKey].rejected++;
+      }
+    });
+
+    // 2. Policyholders & Vehicles breakdown
+    let totalVehicles = 0;
+    let approvedHolders = 0;
+    let pendingHolders = 0;
+    const vehicleTypeMap = {};
+    const provinceMap = {};
+
+    allUsers.forEach(u => {
+      if (u.status === "Approved") approvedHolders++;
+      else pendingHolders++;
+
+      const prov = u.province || "Western Province";
+      provinceMap[prov] = (provinceMap[prov] || 0) + 1;
+
+      if (Array.isArray(u.vehicles)) {
+        totalVehicles += u.vehicles.length;
+        u.vehicles.forEach(v => {
+          const vtype = v.vehicleType || "Car";
+          vehicleTypeMap[vtype] = (vehicleTypeMap[vtype] || 0) + 1;
+        });
+      }
+    });
+
+    // 3. Agents breakdown
+    let activeAgentsCount = 0;
+    let offlineAgentsCount = 0;
+    const agentPerformanceList = allAgents.map(a => {
+      if (a.availability === "Active") activeAgentsCount++;
+      else offlineAgentsCount++;
+
+      const assigned = allClaims.filter(c => c.assignedAgent && (c.assignedAgent.toLowerCase() === a.email?.toLowerCase() || c.assignedAgent === a.agentId));
+      const completed = assigned.filter(c => c.inspectionSubmitted || c.status === "Approved");
+      const evalSum = assigned.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
+
+      return {
+        _id: a._id,
+        agentId: a.agentId,
+        name: a.name,
+        email: a.email,
+        phone: a.phone || a.mobile || "",
+        branch: a.branch,
+        availability: a.availability || "Offline",
+        assignedClaimsCount: assigned.length,
+        completedClaimsCount: completed.length,
+        evaluatedLossLKR: evalSum,
+        lastSeenAt: a.lastSeenAt,
+        status: a.status
+      };
+    }).sort((a, b) => b.assignedClaimsCount - a.assignedClaimsCount);
+
+    // 4. Branch Network Performance Table
+    const sriLankaBranches = [
+      "Colombo", "Galle", "Kandy", "Matara", "Gampaha", "Kurunegala", "Negombo",
+      "Jaffna", "Ratnapura", "Kalutara", "Anuradhapura", "Badulla", "Batticaloa",
+      "Trincomalee", "Hambantota", "Kegalle", "Matale", "Nuwara Eliya", "Puttalam",
+      "Polonnaruwa", "Monaragala", "Ampara", "Mannar", "Vavuniya", "Sooriyawewa", "Head Office"
+    ];
+
+    const branchMatrix = sriLankaBranches.map(branchName => {
+      const bStaff = allStaff.find(s => s.branch && s.branch.toLowerCase().trim() === branchName.toLowerCase().trim());
+      const bStats = branchClaimsMap[branchName] || { total: 0, approved: 0, pending: 0, inProgress: 0, rejected: 0, payout: 0 };
+      const bAgents = allAgents.filter(a => a.branch && a.branch.toLowerCase().trim() === branchName.toLowerCase().trim());
+      const bActiveAgents = bAgents.filter(a => a.availability === "Active").length;
+      const bHolders = allUsers.filter(u => u.branch && u.branch.toLowerCase().trim() === branchName.toLowerCase().trim()).length;
+
+      return {
+        branch: branchName,
+        district: bStaff?.district || "-",
+        province: bStaff?.province || "-",
+        staffCount: bStaff?.staffCount || 1,
+        agentCount: bAgents.length,
+        activeAgentCount: bActiveAgents,
+        policyholdersCount: bHolders,
+        totalClaims: bStats.total,
+        approvedClaims: bStats.approved,
+        pendingClaims: bStats.pending,
+        inProgressClaims: bStats.inProgress,
+        rejectedClaims: bStats.rejected,
+        totalPayoutLKR: bStats.payout,
+        avgPayoutLKR: bStats.approved > 0 ? Math.round(bStats.payout / bStats.approved) : 0,
+        resolutionRate: bStats.total > 0 ? Math.round((bStats.approved / bStats.total) * 100) : 0
+      };
+    }).sort((a, b) => b.totalClaims - a.totalClaims);
+
+    // 5. Recent Login Activity & Security
+    const recentLogins = await LoginActivity.find().sort({ createdAt: -1 }).limit(30).lean();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayLoginsCount = await LoginActivity.countDocuments({ createdAt: { $gte: startOfToday } });
+    const successLoginsCount = await LoginActivity.countDocuments({ status: "Success" });
+    const totalLoginsCount = await LoginActivity.countDocuments();
+    const loginSuccessRate = totalLoginsCount > 0 ? Math.round((successLoginsCount / totalLoginsCount) * 100) : 98;
+
+    // Build last 6 months list for clean bar visualization
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const last6Months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const mLabel = `${monthNames[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`;
+      const found = monthlyTrendMap[mKey] || { submitted: 0, approved: 0, rejected: 0, payout: 0 };
+      last6Months.push({
+        key: mKey,
+        label: mLabel,
+        submitted: found.submitted,
+        approved: found.approved,
+        rejected: found.rejected,
+        payout: found.payout
+      });
+    }
+
+    // Damage categories array
+    const damageCategoriesArray = Object.keys(damageTypeMap).map(k => ({
+      category: k,
+      count: damageTypeMap[k].count,
+      amount: damageTypeMap[k].amount,
+      percentage: totalClaimsCount > 0 ? Math.round((damageTypeMap[k].count / totalClaimsCount) * 100) : 0
+    })).sort((a, b) => b.count - a.count);
+
+    // Vehicle types array
+    const vehicleTypesArray = Object.keys(vehicleTypeMap).map(k => ({
+      vehicleType: k,
+      count: vehicleTypeMap[k],
+      percentage: totalVehicles > 0 ? Math.round((vehicleTypeMap[k] / totalVehicles) * 100) : 0
+    })).sort((a, b) => b.count - a.count);
+
+    // Province distribution array
+    const provinceArray = Object.keys(provinceMap).map(k => ({
+      province: k,
+      count: provinceMap[k],
+      percentage: allUsers.length > 0 ? Math.round((provinceMap[k] / allUsers.length) * 100) : 0
+    })).sort((a, b) => b.count - a.count);
+
+    res.json({
+      summary: {
+        totalClaims: totalClaimsCount,
+        approvedClaims: approvedClaimsCount,
+        pendingClaims: pendingClaimsCount,
+        inProgressClaims: inProgressClaimsCount,
+        rejectedClaims: rejectedClaimsCount,
+        approvalRate: totalClaimsCount > 0 ? Math.round((approvedClaimsCount / totalClaimsCount) * 100) : 0,
+        totalApprovedPayout,
+        totalEstimatedLoss,
+        avgPayoutPerClaim: approvedClaimsCount > 0 ? Math.round(totalApprovedPayout / approvedClaimsCount) : 0,
+        totalPolicyholders: allUsers.length,
+        approvedPolicyholders: approvedHolders,
+        pendingPolicyholders: pendingHolders,
+        totalVehicles,
+        totalAgents: allAgents.length,
+        activeAgents: activeAgentsCount,
+        offlineAgents: offlineAgentsCount,
+        agentDutyRate: allAgents.length > 0 ? Math.round((activeAgentsCount / allAgents.length) * 100) : 0,
+        totalBranches: allStaff.length || sriLankaBranches.length,
+        totalStaffMembers: allStaff.reduce((acc, s) => acc + (s.staffCount || 1), 0),
+        todayLogins: todayLoginsCount,
+        loginSuccessRate
+      },
+      monthlyTrends: last6Months,
+      damageCategories: damageCategoriesArray,
+      priorityDistribution: priorityMap,
+      branchMatrix,
+      vehicleTypes: vehicleTypesArray,
+      provinceDistribution: provinceArray,
+      agentPerformance: agentPerformanceList,
+      recentLogins
+    });
+  } catch (err) {
+    console.error("Comprehensive analytics API error:", err);
+    res.status(500).json({ error: "Failed to generate comprehensive system analytics." });
+  }
+});
+
 export default router;
 
