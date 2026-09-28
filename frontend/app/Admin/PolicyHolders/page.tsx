@@ -663,45 +663,54 @@ export default function AdminPolicyHoldersPage() {
             </div>
 
             {/* Filter Tabs & Secondary Dropdowns */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-3 select-none">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                {/* Status Filter Tabs */}
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-                  {[
-                    { id: "All", label: "All Policyholders", count: summary.totalPolicyholders },
-                    { id: "Approved", label: "Approved Accounts", count: summary.approvedPolicyholders },
-                    { id: "Pending", label: "Pending Verification", count: summary.pendingPolicyholders }
-                  ].map((tab) => {
-                    const isActive = activeTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
-                        className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer whitespace-nowrap border-none outline-none ${
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-4 select-none">
+              {/* Top Row: Status Filter Segmented Navigation Tabs Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60 w-full">
+                {[
+                  { id: "All", label: "All Policyholders", count: summary.totalPolicyholders },
+                  { id: "Approved", label: "Approved Accounts", count: summary.approvedPolicyholders },
+                  { id: "Pending", label: "Pending Verification", count: summary.pendingPolicyholders }
+                ].map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none outline-none ${
+                        isActive
+                          ? "bg-[#000080] text-white shadow-md shadow-blue-900/20"
+                          : "bg-white/70 hover:bg-white text-slate-600 hover:text-slate-900 shadow-2xs hover:shadow-xs"
+                      }`}
+                    >
+                      <span className="truncate">{tab.label}</span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
                           isActive
-                            ? "bg-[#000080] text-white shadow-sm"
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-200/70"
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-100 text-slate-700 border border-slate-200/60"
                         }`}
                       >
-                        <span>{tab.label}</span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                            isActive ? "bg-white/20 text-white" : "bg-white text-slate-600 shadow-xs"
-                          }`}
-                        >
-                          {tab.count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
 
-                {/* Dropdown Filters */}
-                <div className="flex flex-wrap items-center gap-2">
+              {/* Bottom Row: 3 Dedicated Filter Selectors in a Structured 3-Column Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-3 border-t border-slate-100">
+                {/* Branch Location */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5 pl-0.5">
+                    <HugeiconsIcon icon={Building01Icon} className="w-3.5 h-3.5 text-slate-400" />
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Branch Location
+                    </label>
+                  </div>
                   <select
                     value={selectedBranch}
                     onChange={(e) => setSelectedBranch(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100/60 focus:bg-white border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all cursor-pointer shadow-2xs"
                   >
                     <option value="All">All Branches</option>
                     {SRI_LANKA_BRANCHES.filter((b) => b !== "All").map((br) => (
@@ -710,11 +719,20 @@ export default function AdminPolicyHoldersPage() {
                       </option>
                     ))}
                   </select>
+                </div>
 
+                {/* Province Location */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5 pl-0.5">
+                    <HugeiconsIcon icon={Location01Icon} className="w-3.5 h-3.5 text-slate-400" />
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Province Location
+                    </label>
+                  </div>
                   <select
                     value={selectedProvince}
                     onChange={(e) => setSelectedProvince(e.target.value)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100/60 focus:bg-white border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all cursor-pointer shadow-2xs"
                   >
                     <option value="All">All Provinces</option>
                     {SRI_LANKA_PROVINCES.filter((p) => p !== "All").map((prov) => (
@@ -723,11 +741,20 @@ export default function AdminPolicyHoldersPage() {
                       </option>
                     ))}
                   </select>
+                </div>
 
+                {/* Sorting Order */}
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex items-center gap-1.5 pl-0.5">
+                    <HugeiconsIcon icon={Analytics01Icon} className="w-3.5 h-3.5 text-slate-400" />
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                      Sort Policyholders By
+                    </label>
+                  </div>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as any)}
-                    className="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 hover:bg-slate-100/60 focus:bg-white border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all cursor-pointer shadow-2xs"
                   >
                     <option value="newest">Newest First</option>
                     <option value="oldest">Oldest First</option>
@@ -737,39 +764,85 @@ export default function AdminPolicyHoldersPage() {
                 </div>
               </div>
 
-              {/* Active Filter Tags */}
-              {(selectedBranch !== "All" || selectedProvince !== "All" || searchQuery || activeTab !== "All") && (
-                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-100 text-slate-500">
+              {/* Active Filter Tags & Reset Bar */}
+              {(selectedBranch !== "All" || selectedProvince !== "All" || searchQuery || activeTab !== "All" || sortBy !== "newest") && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs pt-3 border-t border-slate-100 text-slate-500">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <span className="font-semibold text-slate-400">Active Filters:</span>
+                    <span className="font-bold text-slate-400 text-[11px] uppercase tracking-wider">Active Filters:</span>
                     {activeTab !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
+                      <span className="inline-flex items-center gap-1 bg-blue-50 text-[#000080] border border-blue-200 px-2.5 py-1 rounded-lg font-bold text-[11px]">
                         Status: {activeTab}
+                        <button
+                          onClick={() => setActiveTab("All")}
+                          className="hover:text-rose-600 cursor-pointer ml-0.5"
+                          title="Clear status filter"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" />
+                        </button>
                       </span>
                     )}
                     {selectedBranch !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
+                      <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg font-bold text-[11px]">
                         Branch: {selectedBranch}
+                        <button
+                          onClick={() => setSelectedBranch("All")}
+                          className="hover:text-rose-600 cursor-pointer ml-0.5"
+                          title="Clear branch filter"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" />
+                        </button>
                       </span>
                     )}
                     {selectedProvince !== "All" && (
-                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
+                      <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg font-bold text-[11px]">
                         Province: {selectedProvince}
+                        <button
+                          onClick={() => setSelectedProvince("All")}
+                          className="hover:text-rose-600 cursor-pointer ml-0.5"
+                          title="Clear province filter"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" />
+                        </button>
                       </span>
                     )}
                     {searchQuery && (
-                      <span className="bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-md font-bold text-[11px]">
+                      <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg font-bold text-[11px]">
                         Search: &quot;{searchQuery}&quot;
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="hover:text-rose-600 cursor-pointer ml-0.5"
+                          title="Clear search query"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" />
+                        </button>
+                      </span>
+                    )}
+                    {sortBy !== "newest" && (
+                      <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg font-bold text-[11px]">
+                        Sorted
+                        <button
+                          onClick={() => setSortBy("newest")}
+                          className="hover:text-rose-600 cursor-pointer ml-0.5"
+                          title="Reset sort"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" />
+                        </button>
                       </span>
                     )}
                   </div>
 
-                  <button
-                    onClick={handleResetFilters}
-                    className="text-blue-600 hover:text-blue-800 font-bold cursor-pointer transition-colors"
-                  >
-                    Reset All
-                  </button>
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                    <span className="text-[11px] text-slate-400 font-semibold">
+                      Showing <strong className="text-slate-700">{policyholders.length}</strong> of {summary.totalPolicyholders}
+                    </span>
+                    <button
+                      onClick={handleResetFilters}
+                      className="text-rose-600 hover:text-rose-700 font-bold cursor-pointer transition-colors bg-rose-50 hover:bg-rose-100 px-3 py-1 rounded-lg border border-rose-200/80 text-xs flex items-center gap-1"
+                    >
+                      <HugeiconsIcon icon={RefreshIcon} className="w-3 h-3" />
+                      <span>Reset Filters</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>

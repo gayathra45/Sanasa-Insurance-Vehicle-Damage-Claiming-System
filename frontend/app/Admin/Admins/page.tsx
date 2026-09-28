@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import SimpleLoader from "@/app/Components/SimpleLoader";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  BubbleChatIcon,
   Menu01Icon,
   SecurityCheckIcon,
   Add01Icon,
@@ -18,9 +17,14 @@ import {
   Cancel01Icon,
   AlertCircleIcon,
   CheckmarkCircle01Icon,
+  Alert02Icon,
   UserIcon,
   Key01Icon,
-
+  Search01Icon,
+  ViewIcon,
+  Clock01Icon,
+  Mail01Icon,
+  Call02Icon
 } from "@hugeicons/core-free-icons";
 
 export default function AdminAdminsPage() {
@@ -30,6 +34,11 @@ export default function AdminAdminsPage() {
   // Active Admins list state
   const [activeAdmins, setActiveAdmins] = useState<any[]>([]);
   const [loadingAdmins, setLoadingAdmins] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<"All" | "Active" | "Self">("All");
 
   // Register Admin Form / Modal states
   const [showRegisterModal, setShowRegisterModal] = useState(false);
@@ -55,9 +64,23 @@ export default function AdminAdminsPage() {
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [actioningRequestId, setActioningRequestId] = useState<string | null>(null);
 
+  // View Admin Modal state
+  const [viewingAdmin, setViewingAdmin] = useState<any | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+
   // Badge counts
   const [pendingCount, setPendingCount] = useState(0);
   const [requestsCount, setRequestsCount] = useState(0);
+
+  // Toast Notification
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
+
+  const showToast = (text: string, type: "success" | "error" | "info" = "success") => {
+    setToastMessage({ text, type });
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  };
 
   // Fetch logged in admin on load
   useEffect(() => {
@@ -76,19 +99,25 @@ export default function AdminAdminsPage() {
     }
   }, []);
 
-  const fetchActiveAdmins = async () => {
-    setLoadingAdmins(true);
+  const fetchActiveAdmins = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoadingAdmins(true);
     try {
       const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/admins/all`);
       const data = await res.json();
       if (res.ok) {
         setActiveAdmins(data.admins || []);
+        if (isRefresh) showToast("Administrators directory refreshed.", "success");
+      } else {
+        throw new Error(data.error || "Failed to load admins.");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error fetching active admins:", err);
+      showToast(err.message || "Failed to fetch active admins", "error");
     } finally {
       setLoadingAdmins(false);
+      setRefreshing(false);
     }
   };
 
@@ -159,6 +188,7 @@ export default function AdminAdminsPage() {
 
       setFormSuccess(data.message || "Registration request submitted successfully!");
       setFormData({ name: "", email: "", mobile: "", nic: "" });
+      showToast("Admin registration request created.", "success");
       
       // Refresh count/list
       if (currentAdmin) fetchPendingCounts(currentAdmin);
@@ -166,7 +196,7 @@ export default function AdminAdminsPage() {
       setTimeout(() => {
         setShowRegisterModal(false);
         setFormSuccess("");
-      }, 2000);
+      }, 1500);
     } catch (err: any) {
       setFormError(err.message || "An error occurred.");
     } finally {
@@ -191,11 +221,12 @@ export default function AdminAdminsPage() {
       if (!res.ok) throw new Error(data.error || "Failed to approve administrator.");
 
       // Refresh states
-      setPendingAdmins(prev => prev.filter(a => a._id !== targetAdminId));
-      setPendingCount(prev => Math.max(0, prev - 1));
+      setPendingAdmins((prev) => prev.filter((a) => a._id !== targetAdminId));
+      setPendingCount((prev) => Math.max(0, prev - 1));
       fetchActiveAdmins();
+      showToast("Administrator approved successfully.", "success");
     } catch (err: any) {
-      alert(err.message || "An error occurred.");
+      showToast(err.message || "An error occurred.", "error");
     } finally {
       setActioningAdminId(null);
     }
@@ -218,10 +249,11 @@ export default function AdminAdminsPage() {
       if (!res.ok) throw new Error(data.error || "Failed to reject request.");
 
       // Refresh states
-      setPendingAdmins(prev => prev.filter(a => a._id !== targetAdminId));
-      setPendingCount(prev => Math.max(0, prev - 1));
+      setPendingAdmins((prev) => prev.filter((a) => a._id !== targetAdminId));
+      setPendingCount((prev) => Math.max(0, prev - 1));
+      showToast("Registration request rejected.", "info");
     } catch (err: any) {
-      alert(err.message || "An error occurred.");
+      showToast(err.message || "An error occurred.", "error");
     } finally {
       setActioningAdminId(null);
     }
@@ -239,10 +271,11 @@ export default function AdminAdminsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to approve request.");
 
-      setPasswordRequests(prev => prev.filter(r => r._id !== adminId));
-      setRequestsCount(prev => Math.max(0, prev - 1));
+      setPasswordRequests((prev) => prev.filter((r) => r._id !== adminId));
+      setRequestsCount((prev) => Math.max(0, prev - 1));
+      showToast("Password reset OTP approved and dispatched.", "success");
     } catch (err: any) {
-      alert(err.message || "An error occurred.");
+      showToast(err.message || "An error occurred.", "error");
     } finally {
       setActioningRequestId(null);
     }
@@ -260,17 +293,58 @@ export default function AdminAdminsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to reject request.");
 
-      setPasswordRequests(prev => prev.filter(r => r._id !== adminId));
-      setRequestsCount(prev => Math.max(0, prev - 1));
+      setPasswordRequests((prev) => prev.filter((r) => r._id !== adminId));
+      setRequestsCount((prev) => Math.max(0, prev - 1));
+      showToast("Password reset request rejected.", "info");
     } catch (err: any) {
-      alert(err.message || "An error occurred.");
+      showToast(err.message || "An error occurred.", "error");
     } finally {
       setActioningRequestId(null);
     }
   };
 
+  // Filtered Admins computation
+  const filteredAdmins = useMemo(() => {
+    return activeAdmins.filter((admin) => {
+      // Tab filter
+      if (activeTab === "Self" && currentAdmin) {
+        if (admin._id !== currentAdmin._id && admin.email !== currentAdmin.email) return false;
+      }
+
+      // Search query filter
+      const q = searchQuery.toLowerCase().trim();
+      if (!q) return true;
+      return (
+        admin.name?.toLowerCase().includes(q) ||
+        admin.email?.toLowerCase().includes(q) ||
+        admin.mobile?.includes(q) ||
+        admin.nic?.toLowerCase().includes(q)
+      );
+    });
+  }, [activeAdmins, activeTab, currentAdmin, searchQuery]);
+
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-800">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <div
+            className={`px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 text-xs font-semibold ${
+              toastMessage.type === "success"
+                ? "bg-slate-900 text-white"
+                : toastMessage.type === "error"
+                ? "bg-rose-600 text-white"
+                : "bg-slate-800 text-white"
+            }`}
+          >
+            {toastMessage.type === "success" && <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-400" />}
+            {toastMessage.type === "error" && <HugeiconsIcon icon={AlertCircleIcon} className="w-4 h-4 text-rose-300" />}
+            {toastMessage.type === "info" && <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-sky-300" />}
+            <span>{toastMessage.text}</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-1 flex-row min-h-0">
         <AdminNavbar />
 
@@ -284,12 +358,20 @@ export default function AdminAdminsPage() {
               >
                 <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
+              {/* Mobile page title */}
+              <h1 className="lg:hidden text-lg font-semibold text-slate-800 tracking-tight">
+                Admins
+              </h1>
+              {/* Desktop welcome title */}
               <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">Admin Portal</span>
-                <span className="hidden lg:inline"> — Administrators Management</span>
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
+                  Admin Portal
+                </span>
+                <span className="hidden lg:inline"> — System Administrators Management</span>
               </h1>
             </div>
-            <div className="flex items-center gap-5">
+
+            <div className="flex items-center gap-4">
               <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full text-slate-600 border border-slate-200">
                 System Admin
               </div>
@@ -297,25 +379,93 @@ export default function AdminAdminsPage() {
             </div>
           </header>
 
-          <main className="flex-1 p-4 lg:p-8 bg-slate-50 flex flex-col items-center gap-8 overflow-y-auto">
-            {/* Center Console Card */}
-            <div className="bg-white rounded-3xl p-10 border border-slate-100 shadow-xl max-w-md w-full text-center flex flex-col items-center gap-6 relative overflow-hidden">
-              <div className="absolute top-[-10%] right-[-10%] w-32 h-32 rounded-full bg-blue-500/5 blur-[50px] pointer-events-none" />
-              <div className="absolute bottom-[-10%] left-[-10%] w-32 h-32 rounded-full bg-[#102A43]/5 blur-[50px] pointer-events-none" />
-
-              <div className="w-20 h-20 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-[#102A43] shadow-inner select-none animate-pulse">
-                <HugeiconsIcon icon={SecurityCheckIcon} className="w-10 h-10" strokeWidth={1.5} />
+          {/* Main Content Area */}
+          <main className="flex-1 p-6 lg:p-8 bg-slate-50 flex flex-col gap-6 max-w-7xl w-full mx-auto">
+            {/* Top Summaries (Clean 4 Cards matching Staff and Policyholder pages) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 select-none">
+              {/* Total Admins */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-slate-500">Total Administrators</div>
+                  <div className="text-2xl font-bold text-slate-900 mt-1">
+                    {activeAdmins.length + pendingCount}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Head office system admins</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
+                  <HugeiconsIcon icon={SecurityCheckIcon} className="w-5 h-5" />
+                </div>
               </div>
 
-              <div>
-                <h2 className="text-2xl font-semibold text-slate-800 tracking-tight">System Administrators</h2>
-                <p className="text-slate-500 font-semibold text-sm mt-2 leading-relaxed">
-                  Register new system administrators, approve registration requests, and dispatch secure password resets.
-                </p>
+              {/* Active Admins */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-emerald-700">Active Admins</div>
+                  <div className="text-2xl font-bold text-emerald-600 mt-1">
+                    {activeAdmins.length}
+                  </div>
+                  <div className="text-[11px] text-emerald-600/80 mt-0.5">Verified & active logins</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" />
+                </div>
+              </div>
+
+              {/* Pending Approvals */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-amber-700">Pending Approvals</div>
+                  <div className="text-2xl font-bold text-amber-600 mt-1">
+                    {pendingCount}
+                  </div>
+                  <div className="text-[11px] text-amber-600/80 mt-0.5">Awaiting dual verification</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" />
+                </div>
+              </div>
+
+              {/* Password Reset Requests */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-sm flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold text-blue-700">Password Requests</div>
+                  <div className="text-2xl font-bold text-blue-600 mt-1">
+                    {requestsCount}
+                  </div>
+                  <div className="text-[11px] text-blue-500 mt-0.5">Admin reset requests</div>
+                </div>
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <HugeiconsIcon icon={SquareLock02Icon} className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            {/* Top Toolbar Action Area */}
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm select-none">
+              {/* Search Bar */}
+              <div className="relative w-full md:w-[350px]">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
+                </span>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search admin by name, email, NIC, mobile..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm bg-slate-50/50 font-medium"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
 
               {/* Action Buttons */}
-              <div className="w-full flex flex-col gap-3 select-none">
+              <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
                 <button
                   onClick={() => {
                     setFormData({ name: "", email: "", mobile: "", nic: "" });
@@ -323,9 +473,9 @@ export default function AdminAdminsPage() {
                     setFormSuccess("");
                     setShowRegisterModal(true);
                   }}
-                  className="w-full py-4 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-2xl text-base font-bold shadow-lg shadow-slate-900/20 transition-all border-none outline-none cursor-pointer flex items-center justify-center gap-2"
+                  className="flex-1 md:flex-none py-2.5 px-5 bg-[#000080] hover:bg-[#000066] hover:scale-105 active:scale-95 text-white rounded-xl text-xs font-bold shadow-sm transition-all border-none outline-none cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  <HugeiconsIcon icon={Add01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                  <HugeiconsIcon icon={Add01Icon} className="w-4 h-4" strokeWidth={2.5} />
                   <span>Add New Administrator</span>
                 </button>
 
@@ -334,12 +484,12 @@ export default function AdminAdminsPage() {
                     if (currentAdmin) fetchPendingCounts(currentAdmin);
                     setShowPendingModal(true);
                   }}
-                  className="w-full py-4 bg-white hover:bg-slate-50 border border-slate-200 active:scale-95 text-slate-700 rounded-2xl text-base font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-2 relative"
+                  className="flex-1 md:flex-none py-2.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 hover:scale-105 active:scale-95 text-slate-700 rounded-xl text-xs font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5 relative"
                 >
-                  <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5" strokeWidth={2} />
+                  <HugeiconsIcon icon={UserMultiple02Icon} className="w-4 h-4" strokeWidth={2} />
                   <span>Pending Registrations</span>
                   {pendingCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-6 h-6 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
+                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] w-5 h-5 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
                       {pendingCount}
                     </span>
                   )}
@@ -350,70 +500,217 @@ export default function AdminAdminsPage() {
                     if (currentAdmin) fetchPendingCounts(currentAdmin);
                     setShowRequestsModal(true);
                   }}
-                  className="w-full py-4 bg-white hover:bg-slate-50 border border-slate-200 active:scale-95 text-slate-700 rounded-2xl text-base font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-2 relative"
+                  className="flex-1 md:flex-none py-2.5 px-5 bg-white hover:bg-blue-50/50 border border-blue-200 hover:scale-105 active:scale-95 text-[#000080] rounded-xl text-xs font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5 relative"
                 >
-                  <HugeiconsIcon icon={SquareLock02Icon} className="w-5 h-5" strokeWidth={2.5} />
+                  <HugeiconsIcon icon={SquareLock02Icon} className="w-4 h-4 text-[#000080]" strokeWidth={2.5} />
                   <span>Password Reset Requests</span>
                   {requestsCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-6 h-6 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
+                    <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[9px] w-5 h-5 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
                       {requestsCount}
                     </span>
                   )}
                 </button>
+
+                <button
+                  onClick={() => {
+                    fetchActiveAdmins(true);
+                    if (currentAdmin) fetchPendingCounts(currentAdmin);
+                  }}
+                  disabled={refreshing || loadingAdmins}
+                  title="Refresh Administrators"
+                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={2.5} />
+                </button>
               </div>
             </div>
 
-            {/* Active Admins list */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-lg max-w-4xl w-full overflow-hidden">
-              <div className="p-6 border-b border-slate-100 select-none bg-slate-50/75 flex justify-between items-center">
-                <div>
-                  <h3 className="font-bold text-slate-800 text-base">Active Administrators</h3>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1">Authorized system admins directory</p>
-                </div>
-                <button
-                  onClick={fetchActiveAdmins}
-                  className="p-2 hover:bg-slate-200 rounded-full text-slate-500 hover:text-slate-700 transition-all cursor-pointer focus:outline-none"
-                  title="Reload Active Admins"
-                >
-                  <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${loadingAdmins ? "animate-spin" : ""}`} strokeWidth={2.5} />
-                </button>
+            {/* Filter Tabs & Quick Views */}
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-4 select-none">
+              {/* Segmented Control Tabs */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60 w-full">
+                {[
+                  { id: "All", label: "All Administrators", count: activeAdmins.length },
+                  { id: "Active", label: "Active Accounts", count: activeAdmins.length },
+                  { id: "Self", label: "My Profile", count: 1 }
+                ].map((tab) => {
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none outline-none ${
+                        isActive
+                          ? "bg-[#000080] text-white shadow-md shadow-blue-900/20"
+                          : "bg-white/70 hover:bg-white text-slate-600 hover:text-slate-900 shadow-2xs hover:shadow-xs"
+                      }`}
+                    >
+                      <span className="truncate">{tab.label}</span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${
+                          isActive
+                            ? "bg-white/20 text-white"
+                            : "bg-slate-100 text-slate-700 border border-slate-200/60"
+                        }`}
+                      >
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
-              {loadingAdmins ? (
-                <SimpleLoader message="Loading admins directory..." theme="slate" />
-              ) : activeAdmins.length === 0 ? (
-                <div className="text-center py-12 text-slate-400 select-none">
-                  No active admins found in the system.
-                </div>
-              ) : (
-                <div className="overflow-x-auto w-full">
-                  <table className="w-full text-left text-xs border-collapse">
-                    <thead>
-                      <tr className="bg-slate-100/50 text-slate-400 font-bold select-none border-b border-slate-100 uppercase tracking-wider text-[10px]">
-                        <th className="py-4 px-6">Name</th>
-                        <th className="py-4 px-6">Email Address</th>
-                        <th className="py-4 px-6">Mobile</th>
-                        <th className="py-4 px-6">NIC</th>
-                        <th className="py-4 px-6">Joined Date</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
-                      {activeAdmins.map((admin) => (
-                        <tr key={admin._id} className="hover:bg-slate-50/75 transition-colors">
-                          <td className="py-4 px-6 font-bold text-slate-800">{admin.name}</td>
-                          <td className="py-4 px-6 text-slate-600 select-all">{admin.email}</td>
-                          <td className="py-4 px-6 text-slate-600">{admin.mobile}</td>
-                          <td className="py-4 px-6 text-slate-600 uppercase">{admin.nic}</td>
-                          <td className="py-4 px-6 text-slate-400 select-none">
-                            {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A"}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {/* Active Filter Tags */}
+              {(searchQuery || activeTab !== "All") && (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs pt-3 border-t border-slate-100 text-slate-500">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="font-bold text-slate-400 text-[11px] uppercase tracking-wider">Active Filters:</span>
+                    {activeTab !== "All" && (
+                      <span className="inline-flex items-center gap-1 bg-blue-50 text-[#000080] border border-blue-200 px-2.5 py-1 rounded-lg font-bold text-[11px]">
+                        Filter: {activeTab === "Self" ? "My Profile" : activeTab}
+                        <button
+                          onClick={() => setActiveTab("All")}
+                          className="hover:text-rose-600 cursor-pointer ml-0.5"
+                          title="Clear filter"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" />
+                        </button>
+                      </span>
+                    )}
+                    {searchQuery && (
+                      <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-700 border border-slate-200 px-2.5 py-1 rounded-lg font-bold text-[11px]">
+                        Search: &quot;{searchQuery}&quot;
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="hover:text-rose-600 cursor-pointer ml-0.5"
+                          title="Clear search query"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                    <span className="text-[11px] text-slate-400 font-semibold">
+                      Showing <strong className="text-slate-700">{filteredAdmins.length}</strong> of {activeAdmins.length}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setActiveTab("All");
+                        setSearchQuery("");
+                      }}
+                      className="text-rose-600 hover:text-rose-700 font-bold cursor-pointer transition-colors bg-rose-50 hover:bg-rose-100 px-3 py-1 rounded-lg border border-rose-200/80 text-xs flex items-center gap-1"
+                    >
+                      <HugeiconsIcon icon={RefreshIcon} className="w-3 h-3" />
+                      <span>Reset Filters</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
+
+            {/* Administrators Table Card Grid Section */}
+            {loadingAdmins ? (
+              <SimpleLoader message="Loading administrators directory..." theme="slate" />
+            ) : filteredAdmins.length === 0 ? (
+              <div className="bg-white border border-slate-200 rounded-[20px] p-16 text-center text-slate-400 font-bold select-none shadow-sm">
+                No system administrators found matching your query.
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {/* Table Header (Desktop) */}
+                <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.2fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                  <div>Administrator & Profile</div>
+                  <div>Email Address</div>
+                  <div>Mobile & NIC</div>
+                  <div>Joined Date</div>
+                  <div>Account Status</div>
+                  <div className="text-right">Actions</div>
+                </div>
+
+                {/* Table Rows (Card rows with blue left accent border matching Staff & Policyholder pages) */}
+                {filteredAdmins.map((admin) => {
+                  const isCurrent = currentAdmin && (admin._id === currentAdmin._id || admin.email === currentAdmin.email);
+                  return (
+                    <div
+                      key={admin._id}
+                      className="bg-white border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.2fr)] md:items-center gap-4 transition-all duration-200 shadow-sm hover:shadow-md relative overflow-hidden group"
+                    >
+                      {/* Col 1: Administrator & Profile */}
+                      <div className="flex items-center gap-3 min-w-0 select-none">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 text-[#102A43] flex items-center justify-center font-bold text-sm shrink-0 shadow-inner">
+                          {admin.name?.charAt(0) || "A"}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
+                              {admin.name}
+                            </h3>
+                            {isCurrent && (
+                              <span className="bg-blue-100 text-[#000080] text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">
+                            System Administrator
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Col 2: Email Address */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Email Address</span>
+                        <span className="text-slate-700 font-semibold text-xs truncate select-all">{admin.email}</span>
+                        <span className="text-[10px] text-slate-400 font-medium">Head Office</span>
+                      </div>
+
+                      {/* Col 3: Mobile & NIC */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Mobile & NIC</span>
+                        <span className="text-slate-700 font-semibold text-xs font-mono">{admin.mobile || "—"}</span>
+                        <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5 truncate font-mono">{admin.nic || "—"}</span>
+                      </div>
+
+                      {/* Col 4: Joined Date */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Joined Date</span>
+                        <span className="text-slate-700 text-xs font-semibold truncate">
+                          {admin.createdAt ? new Date(admin.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A"}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium">Authorized</span>
+                      </div>
+
+                      {/* Col 5: Account Status */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Status</span>
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 w-fit text-center">
+                          Active
+                        </span>
+                      </div>
+
+                      {/* Col 6: Actions */}
+                      <div className="flex items-center justify-between md:justify-end gap-2 pt-3 md:pt-0 border-t md:border-0 border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => {
+                              setViewingAdmin(admin);
+                              setShowViewModal(true);
+                            }}
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 text-xs font-bold px-3 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer flex items-center gap-1.5 border border-slate-200/80 shadow-2xs"
+                            title="View Administrator Details"
+                          >
+                            <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+                            <span>View</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </main>
         </div>
       </div>
@@ -424,8 +721,8 @@ export default function AdminAdminsPage() {
           <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Register Admin Request</h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Define new admin profile for approval</p>
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Register Administrator Request</h2>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Define new admin profile for dual approval</p>
               </div>
               <button
                 onClick={() => setShowRegisterModal(false)}
@@ -463,7 +760,7 @@ export default function AdminAdminsPage() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter Full Name"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all font-semibold bg-white"
                   />
                 </div>
 
@@ -476,7 +773,7 @@ export default function AdminAdminsPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="example@sanasainsurance.lk"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all font-semibold bg-white"
                   />
                 </div>
 
@@ -490,7 +787,7 @@ export default function AdminAdminsPage() {
                       value={formData.mobile}
                       onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
                       placeholder="e.g. 0771234567"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all font-semibold bg-white"
                     />
                   </div>
 
@@ -503,7 +800,7 @@ export default function AdminAdminsPage() {
                       value={formData.nic}
                       onChange={(e) => setFormData({ ...formData, nic: e.target.value })}
                       placeholder="e.g. 199912345678"
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0f2d4a] transition-all font-semibold bg-white"
+                      className="w-full px-4 py-3 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#000080]/15 focus:border-[#000080] transition-all font-semibold bg-white"
                     />
                   </div>
                 </div>
@@ -544,7 +841,7 @@ export default function AdminAdminsPage() {
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
                 <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Pending Admin Requests</h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Approve new admins to join the system</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Approve new administrators to join the system</p>
               </div>
               <button
                 onClick={() => setShowPendingModal(false)}
@@ -637,7 +934,7 @@ export default function AdminAdminsPage() {
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
                 <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Admin Password Requests</h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Review, approve and dispatch reset codes to admins</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Review, approve and dispatch reset OTP to admins</p>
               </div>
               <button
                 onClick={() => setShowRequestsModal(false)}
@@ -718,15 +1015,90 @@ export default function AdminAdminsPage() {
           </div>
         </div>
       )}
-    
-      {/* Floating Chat Bubble Button */}
-      <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
-        aria-label="Chat support"
-      >
-        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
-      </button>
 
+      {/* MODAL 4: View Admin Details */}
+      {showViewModal && viewingAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
+            <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
+              <div>
+                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">Admin Profile Details</h2>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">Authorized system administrator credentials</p>
+              </div>
+              <button
+                onClick={() => setShowViewModal(false)}
+                className="text-slate-400 hover:text-slate-600 bg-transparent border-none outline-none cursor-pointer transition-colors p-1"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+              </button>
+            </div>
+
+            <div className="border-b border-black mx-8 mb-4 shrink-0" />
+
+            <div className="px-8 pb-6 flex-1 overflow-y-auto flex flex-col gap-5 text-left">
+              <div className="flex items-center gap-4 bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#000080] text-white flex items-center justify-center font-bold text-xl shadow-md">
+                  {viewingAdmin.name?.charAt(0) || "A"}
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">{viewingAdmin.name}</h3>
+                  <span className="text-xs text-slate-500 font-semibold">System Administrator</span>
+                  <span className="block text-[10px] text-emerald-600 font-bold uppercase tracking-wider mt-0.5">Authorized Status</span>
+                </div>
+              </div>
+
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col gap-3 text-xs">
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-200/60">
+                  <span className="font-bold text-slate-400 uppercase text-[10px] flex items-center gap-1.5">
+                    <HugeiconsIcon icon={Mail01Icon} className="w-3.5 h-3.5" />
+                    Email Address
+                  </span>
+                  <span className="font-semibold text-slate-800 select-all">{viewingAdmin.email}</span>
+                </div>
+
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-200/60">
+                  <span className="font-bold text-slate-400 uppercase text-[10px] flex items-center gap-1.5">
+                    <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5" />
+                    Mobile Number
+                  </span>
+                  <span className="font-semibold text-slate-800 font-mono">{viewingAdmin.mobile || "—"}</span>
+                </div>
+
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-200/60">
+                  <span className="font-bold text-slate-400 uppercase text-[10px]">NIC Number</span>
+                  <span className="font-semibold text-slate-800 uppercase font-mono">{viewingAdmin.nic || "—"}</span>
+                </div>
+
+                <div className="flex items-center justify-between py-1.5 border-b border-slate-200/60">
+                  <span className="font-bold text-slate-400 uppercase text-[10px] flex items-center gap-1.5">
+                    <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5" />
+                    Joined Date
+                  </span>
+                  <span className="font-semibold text-slate-800">
+                    {viewingAdmin.createdAt ? new Date(viewingAdmin.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }) : "N/A"}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between py-1.5">
+                  <span className="font-bold text-slate-400 uppercase text-[10px]">Access Level</span>
+                  <span className="font-bold text-[#000080] bg-blue-100 px-2.5 py-0.5 rounded-md text-[11px]">
+                    Super Administrator
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-8 py-5 bg-white border-t border-slate-100 flex justify-end shrink-0 select-none">
+              <button
+                onClick={() => setShowViewModal(false)}
+                className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs px-6 py-2 rounded-full transition-all border-none cursor-pointer"
+              >
+                Close Profile
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
