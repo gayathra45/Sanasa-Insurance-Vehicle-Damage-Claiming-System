@@ -1,30 +1,13 @@
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 
-const isAndroidEmulator = (): boolean => {
-  if (Platform.OS !== "android") return false;
-  const c: any = Platform.constants || {};
-  const model = String(c.Model || "").toLowerCase();
-  const brand = String(c.Brand || "").toLowerCase();
-  const fingerprint = String(c.Fingerprint || "").toLowerCase();
-  const serial = String(c.Serial || "").toLowerCase();
-  const manufacturer = String(c.Manufacturer || "").toLowerCase();
-
-  return (
-    model.includes("sdk") ||
-    model.includes("emulator") ||
-    model.includes("gphone") ||
-    (brand.includes("google") && model.includes("gphone")) ||
-    fingerprint.includes("generic") ||
-    serial.includes("emulator") ||
-    manufacturer.includes("genymotion")
-  );
-};
-
 const getApiBaseUrl = () => {
-  // 1. Android Emulator loopback to host PC
-  if (isAndroidEmulator()) {
-    console.log("MOBILE API BASE URL (Android Emulator): http://10.0.2.2:5000");
+  // 1. Android — always route through 10.0.2.2 (emulator host loopback).
+  //    isAndroidEmulator() detection via Platform.constants is unreliable
+  //    on first bundle load. Since this project targets the emulator,
+  //    we hard-route all Android traffic through 10.0.2.2.
+  if (Platform.OS === "android") {
+    console.log("MOBILE API BASE URL (Android): http://10.0.2.2:5000");
     return "http://10.0.2.2:5000";
   }
 
@@ -50,6 +33,7 @@ export const API_BASE_URL = getApiBaseUrl();
 // Global safety patch for React Native / Hermes whatwg-fetch bugs:
 // 1. RangeError: Failed to construct 'Response': The status provided (0) is outside the range [200, 599].
 // 2. SyntaxError: JSON Parse error: Unexpected end of input on empty response bodies.
+// 3. TypeError: Network request failed — silenced so polls don't spam the error overlay.
 if (typeof global !== "undefined" && global.fetch && !(global as any).__sanasa_fetch_patched) {
   (global as any).__sanasa_fetch_patched = true;
   const _origFetch = global.fetch;
@@ -59,13 +43,10 @@ if (typeof global !== "undefined" && global.fetch && !(global as any).__sanasa_f
       const res = await _origFetch.apply(this, args as any);
 
       // Safe .json() parser to prevent 'Unexpected end of input' crashes
-      const _origJson = res.json.bind(res);
       res.json = async function () {
         try {
           const text = await res.text();
-          if (!text || text.trim().length === 0) {
-            return {};
-          }
+          if (!text || text.trim().length === 0) return {};
           return JSON.parse(text);
         } catch {
           return {};
@@ -74,13 +55,24 @@ if (typeof global !== "undefined" && global.fetch && !(global as any).__sanasa_f
 
       return res;
     } catch (err: any) {
-      // Catch Hermes RangeError when whatwg-fetch passes status: 0
-      if (err instanceof RangeError && String(err.message).includes("status provided (0)")) {
+      const msg = String(err?.message || "");
+
+      // Hermes RangeError when whatwg-fetch passes status: 0
+      if (err instanceof RangeError && msg.includes("status provided (0)")) {
         return new Response(JSON.stringify({ error: "Network connection failed" }), {
           status: 503,
           headers: { "Content-Type": "application/json" },
         });
       }
+
+      // Network request failed — return empty 503 so callers handle gracefully
+      if (msg.includes("Network request failed")) {
+        return new Response(JSON.stringify({ error: "Network request failed" }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
       throw err;
     }
   };
