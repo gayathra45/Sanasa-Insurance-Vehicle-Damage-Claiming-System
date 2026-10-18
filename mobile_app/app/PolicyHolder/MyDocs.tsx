@@ -173,9 +173,16 @@ export default function MyDocs() {
       const res = await fetch(`${API_BASE_URL}/api/policy-holder/user-claims?nic=${encodeURIComponent(nic)}&includeDocs=true`);
       let databaseClaims: Claim[] = [];
       if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.claims)) {
-          databaseClaims = data.claims;
+        const text = await res.text();
+        if (text && text.trim().length > 0) {
+          try {
+            const data = JSON.parse(text);
+            if (Array.isArray(data.claims)) {
+              databaseClaims = data.claims;
+            }
+          } catch (parseErr) {
+            console.warn("Error parsing claim documents JSON:", parseErr);
+          }
         }
       }
       setClaims(databaseClaims);

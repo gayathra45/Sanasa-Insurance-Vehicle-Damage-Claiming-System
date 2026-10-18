@@ -281,13 +281,17 @@ export default function PolicyHolderDashboard() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/policy-holder/vehicles?nic=${encodeURIComponent(nic)}&_=${Date.now()}`);
       if (res.ok) {
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await res.json();
-          if (Array.isArray(data.vehicles)) {
-            setVehicles(data.vehicles);
-            const updatedUser = { ...currentUserObj, vehicles: data.vehicles };
-            await AsyncStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
+        const text = await res.text();
+        if (text && text.trim().length > 0) {
+          try {
+            const data = JSON.parse(text);
+            if (Array.isArray(data.vehicles)) {
+              setVehicles(data.vehicles);
+              const updatedUser = { ...currentUserObj, vehicles: data.vehicles };
+              await AsyncStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
+            }
+          } catch (parseErr) {
+            console.warn("Error parsing vehicles JSON:", parseErr);
           }
         }
       }
