@@ -47,6 +47,45 @@ const getApiBaseUrl = () => {
 
 export const API_BASE_URL = getApiBaseUrl();
 
+// Global safety patch for React Native / Hermes whatwg-fetch bugs:
+// 1. RangeError: Failed to construct 'Response': The status provided (0) is outside the range [200, 599].
+// 2. SyntaxError: JSON Parse error: Unexpected end of input on empty response bodies.
+if (typeof global !== "undefined" && global.fetch && !(global as any).__sanasa_fetch_patched) {
+  (global as any).__sanasa_fetch_patched = true;
+  const _origFetch = global.fetch;
+
+  global.fetch = async function (...args: any[]) {
+    try {
+      const res = await _origFetch.apply(this, args as any);
+
+      // Safe .json() parser to prevent 'Unexpected end of input' crashes
+      const _origJson = res.json.bind(res);
+      res.json = async function () {
+        try {
+          const text = await res.text();
+          if (!text || text.trim().length === 0) {
+            return {};
+          }
+          return JSON.parse(text);
+        } catch {
+          return {};
+        }
+      };
+
+      return res;
+    } catch (err: any) {
+      // Catch Hermes RangeError when whatwg-fetch passes status: 0
+      if (err instanceof RangeError && String(err.message).includes("status provided (0)")) {
+        return new Response(JSON.stringify({ error: "Network connection failed" }), {
+          status: 503,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      throw err;
+    }
+  };
+}
+
 export default function Config() {
   return null;
 }
