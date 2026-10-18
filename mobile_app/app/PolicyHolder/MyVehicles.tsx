@@ -727,7 +727,7 @@ export default function MyVehicles() {
                   style={styles.modalCloseBtn}
                   onPress={() => setIsAddModalOpen(false)}
                 >
-                  <Text style={styles.modalCloseBtnText}>&lt; Close</Text>
+                  <Text style={styles.modalCloseBtnText}>Close</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.modalSubmitBtn, isSubmitting && { opacity: 0.7 }]}
@@ -735,7 +735,7 @@ export default function MyVehicles() {
                   onPress={handleAddVehicleSubmit}
                 >
                   <Text style={styles.modalSubmitBtnText}>
-                    {isSubmitting ? "Submitting..." : "Submit >"}
+                    {isSubmitting ? "Submitting..." : "Submit"}
                   </Text>
                 </TouchableOpacity>
               </View>
