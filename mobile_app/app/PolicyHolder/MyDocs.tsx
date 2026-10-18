@@ -533,7 +533,7 @@ export default function MyDocs() {
                     style={styles.modalCloseBtn}
                     onPress={() => setUploadModalOpen(false)}
                   >
-                    <Text style={styles.modalBtnText}>&lt; Close</Text>
+                    <Text style={styles.modalBtnText}>Close</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={[styles.modalSubmitBtn, isUploading && { opacity: 0.6 }]}
@@ -543,7 +543,7 @@ export default function MyDocs() {
                     {isUploading ? (
                       <ActivityIndicator size="small" color="#ffffff" />
                     ) : (
-                      <Text style={styles.modalBtnText}>Submit &gt;</Text>
+                      <Text style={styles.modalBtnText}>Submit</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -605,7 +605,7 @@ export default function MyDocs() {
                   style={styles.modalCloseBtn}
                   onPress={() => setUploadedListModalOpen(false)}
                 >
-                  <Text style={styles.modalBtnText}>&lt; Close</Text>
+                  <Text style={styles.modalBtnText}>Close</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -682,7 +682,7 @@ export default function MyDocs() {
                       style={styles.modalCloseBtn}
                       onPress={() => setViewModalOpen(false)}
                     >
-                      <Text style={styles.modalBtnText}>&lt; Close</Text>
+                      <Text style={styles.modalBtnText}>Close</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
