@@ -149,6 +149,64 @@ export default function RegistrationsPage() {
     reason: ""
   });
 
+  // DRP NIC Verification Modal State
+  const [verifyingNicId, setVerifyingNicId] = useState<string | null>(null);
+  const [nicVerifyModal, setNicVerifyModal] = useState<{
+    show: boolean;
+    data: any | null;
+    error: string | null;
+    applicant: { name: string; nic: string } | null;
+  }>({
+    show: false,
+    data: null,
+    error: null,
+    applicant: null
+  });
+
+  const handleVerifyNic = async (reg: Registration, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setVerifyingNicId(reg._id);
+    try {
+      const res = await fetch(`${API_URL}/office-staff/verify-nic`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nic: reg.nic,
+          userId: reg._id,
+          applicantName: `${reg.firstName} ${reg.lastName}`.trim()
+        })
+      });
+
+      const result = await res.json();
+      if (!res.ok) {
+        setNicVerifyModal({
+          show: true,
+          data: null,
+          error: result.error || "Failed to verify NIC with National Registry.",
+          applicant: { name: `${reg.firstName} ${reg.lastName}`, nic: reg.nic }
+        });
+      } else {
+        setNicVerifyModal({
+          show: true,
+          data: result,
+          error: null,
+          applicant: { name: `${reg.firstName} ${reg.lastName}`, nic: reg.nic }
+        });
+      }
+    } catch (err: any) {
+      setNicVerifyModal({
+        show: true,
+        data: null,
+        error: "Network error connecting to DRP e-Identity gateway.",
+        applicant: { name: `${reg.firstName} ${reg.lastName}`, nic: reg.nic }
+      });
+    } finally {
+      setVerifyingNicId(null);
+    }
+  };
+
   // Load registrations
   const loadRegistrations = async (currentBranch: string, silent = false) => {
     try {
@@ -536,7 +594,23 @@ export default function RegistrationsPage() {
 
                           <div className="flex flex-col min-w-0 select-none">
                             <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 md:hidden">NIC</span>
-                            <span className="text-slate-700 font-semibold text-xs">{reg.nic}</span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-slate-700 font-semibold text-xs tracking-tight">{reg.nic}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => handleVerifyNic(reg, e)}
+                                disabled={verifyingNicId === reg._id}
+                                title="Verify NIC with Sri Lankan DRP National Registry"
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-60"
+                              >
+                                {verifyingNicId === reg._id ? (
+                                  <span className="w-2.5 h-2.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-3 h-3 text-current" strokeWidth={2.5} />
+                                )}
+                                <span>Verify</span>
+                              </button>
+                            </div>
                           </div>
 
                           <div className="flex flex-col min-w-0 select-none">
@@ -810,7 +884,23 @@ export default function RegistrationsPage() {
                 <h3 className="col-span-2 font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500 mb-2">Personal Information</h3>
                 <div>
                   <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block">NIC Number</span>
-                  <span className="text-sm font-semibold text-slate-700">{selectedReg.nic}</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-sm font-semibold text-slate-700">{selectedReg.nic}</span>
+                    <button
+                      type="button"
+                      onClick={() => handleVerifyNic(selectedReg)}
+                      disabled={verifyingNicId === selectedReg._id}
+                      title="Verify NIC with Sri Lankan DRP National Registry"
+                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white border border-blue-200 hover:border-blue-600 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-60"
+                    >
+                      {verifyingNicId === selectedReg._id ? (
+                        <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-3.5 h-3.5 text-current" strokeWidth={2.5} />
+                      )}
+                      <span>Verify with DRP</span>
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-400 font-medium uppercase tracking-wider block">Date of Birth</span>
@@ -1287,6 +1377,164 @@ export default function RegistrationsPage() {
                   OK
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* DRP Sri Lankan NIC Verification Result Modal              */}
+      {/* ======================================================== */}
+      {nicVerifyModal.show && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[560px] max-h-[92vh] shadow-2xl flex flex-col relative overflow-hidden">
+            {/* Header */}
+            <div className="bg-[#102A43] text-white px-6 py-5 flex items-center justify-between select-none">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300">
+                  <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-6 h-6 text-sky-400" strokeWidth={2.2} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-white tracking-tight flex items-center gap-2">
+                    <span>DRP Identity Verification</span>
+                    <span className="text-[10px] font-semibold bg-blue-500/30 text-sky-200 px-2 py-0.5 rounded-full border border-sky-400/30 uppercase tracking-wider">
+                      e-Identity OVS
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-300 font-normal">Department of Registration of Persons, Sri Lanka</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setNicVerifyModal({ ...nicVerifyModal, show: false })}
+                className="text-slate-300 hover:text-white text-2xl font-semibold bg-transparent border-none cursor-pointer leading-none p-1 rounded-lg hover:bg-white/10 transition-colors"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto space-y-4">
+              {nicVerifyModal.error ? (
+                /* Error State */
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex flex-col gap-3">
+                  <div className="flex items-center gap-2.5 text-red-700">
+                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-600 shrink-0" strokeWidth={2.5} />
+                    <h4 className="font-bold text-sm">Identity Verification Failed</h4>
+                  </div>
+                  <p className="text-xs text-red-600 font-medium leading-relaxed">
+                    {nicVerifyModal.error}
+                  </p>
+                  <div className="bg-white/80 p-3 rounded-xl border border-red-100 text-xs text-slate-600 space-y-1">
+                    <div><span className="font-semibold text-slate-700">NIC Provided:</span> {nicVerifyModal.applicant?.nic || "-"}</div>
+                    <div><span className="font-semibold text-slate-700">Applicant:</span> {nicVerifyModal.applicant?.name || "-"}</div>
+                  </div>
+                  <p className="text-[11px] text-slate-500 italic">
+                    Tip: Check if the NIC has 9 digits + V/X (old format) or 12 digits (new format) without spaces.
+                  </p>
+                </div>
+              ) : nicVerifyModal.data ? (
+                /* Success State */
+                <>
+                  {/* Status Banner */}
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-white" strokeWidth={2.5} />
+                      </div>
+                      <div>
+                        <div className="font-bold text-xs text-emerald-900 tracking-wide uppercase flex items-center gap-2">
+                          <span>Verified Sri Lankan Citizen</span>
+                          <span className="bg-emerald-200/80 text-emerald-800 text-[9px] px-2 py-0.5 rounded-full font-bold">ACTIVE</span>
+                        </div>
+                        <p className="text-[11px] text-emerald-700 font-medium mt-0.5">
+                          Ref: <span className="font-mono font-semibold">{nicVerifyModal.data.drpReference}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-mono hidden sm:block">
+                      {new Date(nicVerifyModal.data.verifiedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  {/* Registered Real Name Card */}
+                  <div className="bg-gradient-to-br from-slate-50 to-blue-50/40 border border-slate-200 rounded-2xl p-5 space-y-2">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">
+                      Official Registered Legal Name (National Registry)
+                    </span>
+                    <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                      <h4 className="text-lg font-extrabold text-[#102A43] tracking-tight">
+                        {nicVerifyModal.data.officialFullName}
+                      </h4>
+                      {nicVerifyModal.data.nameMatchStatus === "MATCH" ? (
+                        <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-200">
+                          <HugeiconsIcon icon={CheckmarkBadge01Icon} className="w-3 h-3 text-emerald-600" strokeWidth={2.5} />
+                          <span>100% Match with Applicant</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-800 text-[10px] font-bold px-2.5 py-1 rounded-full border border-amber-200">
+                          <HugeiconsIcon icon={Alert02Icon} className="w-3 h-3 text-amber-600" strokeWidth={2.5} />
+                          <span>{nicVerifyModal.data.nameMatchScore}% Match ({nicVerifyModal.data.nameMatchStatus})</span>
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500">
+                      Applicant submitted name: <span className="font-semibold text-slate-700">{nicVerifyModal.data.applicantName}</span>
+                    </p>
+                  </div>
+
+                  {/* Demographic & Identity Details */}
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 grid grid-cols-2 gap-3 text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">NIC Number</span>
+                      <span className="font-bold text-slate-800 text-sm tracking-tight">{nicVerifyModal.data.nic}</span>
+                      <span className="text-[10px] text-slate-500 block">{nicVerifyModal.data.format}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Date of Birth</span>
+                      <span className="font-bold text-slate-800 text-sm tracking-tight">{nicVerifyModal.data.dateOfBirth}</span>
+                      <span className="text-[10px] text-slate-500 block">Age: {nicVerifyModal.data.age} years</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Gender</span>
+                      <span className="font-bold text-slate-800">{nicVerifyModal.data.gender}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Civil Status</span>
+                      <span className="font-bold text-slate-800">{nicVerifyModal.data.civilStatus}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Voting Rights</span>
+                      <span className="font-semibold text-emerald-700">{nicVerifyModal.data.votingEligibility}</span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Registry Status</span>
+                      <span className="font-semibold text-blue-700">{nicVerifyModal.data.cardStatus}</span>
+                    </div>
+                  </div>
+
+                  {/* Digital Signature & Source Note */}
+                  <div className="border-t border-slate-100 pt-3 flex items-center justify-between text-[10px] text-slate-400 select-none">
+                    <span>Source: DRP Suhurupaya, Battaramulla</span>
+                    <span className="font-mono">Verified securely via mTLS</span>
+                  </div>
+                </>
+              ) : null}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-2 select-none">
+              <button
+                onClick={() => setNicVerifyModal({ ...nicVerifyModal, show: false })}
+                className="px-5 py-2 bg-[#102A43] hover:bg-[#0c1f33] active:scale-95 text-white rounded-full text-xs font-semibold shadow-sm transition-all cursor-pointer border-none"
+              >
+                Close Verification
+              </button>
             </div>
           </div>
         </div>

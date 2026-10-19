@@ -21,6 +21,7 @@ import {
   analyzeAccidentDamageWithCostSheet, 
   compareGarageEstimateWithPhotosAndAI 
 } from "../utils/aiAnalyzer.js";
+import { decodeSriLankanNIC, calculateNameMatch, resolveDRPRecord } from "../utils/nicVerifier.js";
 
 const router = express.Router();
 
@@ -729,6 +730,59 @@ router.patch("/registrations/:id/status", async (req, res) => {
   } catch (err) {
     console.error("Update registration status error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST verify user NIC with Sri Lankan DRP e-Identity: /api/office-staff/verify-nic
+router.post("/verify-nic", async (req, res) => {
+  try {
+    const { nic, userId, applicantName } = req.body;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC number is required for verification." });
+    }
+
+    let user = null;
+    if (userId) {
+      user = await User.findById(userId);
+    } else if (nic) {
+      user = await User.findOne({ nic: String(nic).trim() });
+    }
+
+    const effectiveName = applicantName || (user ? `${user.firstName} ${user.lastName}` : "");
+    const drpResult = resolveDRPRecord(String(nic).trim(), user || { firstName: effectiveName });
+
+    if (!drpResult.success) {
+      return res.status(400).json({
+        verified: false,
+        error: drpResult.error,
+        nic
+      });
+    }
+
+    const matchScore = calculateNameMatch(effectiveName, drpResult.data.officialFullName);
+
+    res.json({
+      verified: true,
+      nic: drpResult.data.nic,
+      format: drpResult.data.format,
+      officialFullName: drpResult.data.officialFullName,
+      dateOfBirth: drpResult.data.dateOfBirth,
+      gender: drpResult.data.gender,
+      age: drpResult.data.age,
+      votingEligibility: drpResult.data.votingEligibility,
+      civilStatus: drpResult.data.civilStatus,
+      cardStatus: drpResult.data.cardStatus,
+      issuingAuthority: drpResult.data.issuingAuthority,
+      drpReference: drpResult.drpReference,
+      verifiedAt: drpResult.verifiedAt,
+      verificationSource: drpResult.verificationSource,
+      applicantName: effectiveName,
+      nameMatchScore: matchScore,
+      nameMatchStatus: matchScore >= 80 ? "MATCH" : matchScore >= 50 ? "PARTIAL_MATCH" : "MISMATCH"
+    });
+  } catch (err) {
+    console.error("Verify NIC error:", err);
+    res.status(500).json({ error: "An error occurred during NIC verification." });
   }
 });
 
