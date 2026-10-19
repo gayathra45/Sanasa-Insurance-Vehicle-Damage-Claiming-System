@@ -3913,30 +3913,64 @@ function OfficeStaffClaimsPageContent() {
                     Add Note
                   </button>
 
-                  {/* Decision Action Buttons: Approve & Reject */}
-                  {selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setApprovingAmount(String(selectedClaim.garageEstimateComparison?.garageEstimatedTotal || selectedClaim.aiAnalysis?.totalEstimatedCost || selectedClaim.amount || ""));
-                          setActiveSubModal("decision_approve");
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                        Approve Claim
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubModal("decision_reject")}
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                        Reject Claim
-                      </button>
-                    </>
-                  )}
+                  {/* Decision Action Buttons: Only show when inspection/review is ready (Step 5 Decision), or reject before assignment */}
+                  {(() => {
+                    const hasAgent = Boolean(
+                      selectedClaim.assignedAgent &&
+                      selectedClaim.assignedAgent.trim() !== "" &&
+                      selectedClaim.assignedAgent.toLowerCase() !== "unassigned"
+                    );
+                    const hasInspection = Boolean(selectedClaim.inspectionSubmitted || selectedClaim.inspectionReport);
+                    const hasReview = Boolean(selectedClaim.garageEstimateComparison?.isCompared);
+
+                    // Final Decision (Approve / Reject) only shows when Inspection & Review are completed (Step 5 Decision)
+                    const canMakeFinalDecision = (hasInspection || hasReview || (selectedClaim.currentStep && selectedClaim.currentStep >= 4)) &&
+                      selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected";
+
+                    // Before agent assignment, branch can reject an invalid claim early
+                    const canRejectInitial = !hasAgent && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected";
+
+                    if (canMakeFinalDecision) {
+                      return (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setApprovingAmount(String(selectedClaim.garageEstimateComparison?.garageEstimatedTotal || selectedClaim.aiAnalysis?.totalEstimatedCost || selectedClaim.amount || ""));
+                              setActiveSubModal("decision_approve");
+                            }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
+                          >
+                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                            Approve Claim
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveSubModal("decision_reject")}
+                            className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
+                          >
+                            <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                            Reject Claim
+                          </button>
+                        </>
+                      );
+                    }
+
+                    if (canRejectInitial) {
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => setActiveSubModal("decision_reject")}
+                          className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                          Reject Claim
+                        </button>
+                      );
+                    }
+
+                    return null;
+                  })()}
                 </div>
 
                 {/* Internal Notes — Bottom Section */}
