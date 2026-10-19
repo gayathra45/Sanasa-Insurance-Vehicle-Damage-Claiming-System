@@ -1162,7 +1162,22 @@ router.post("/claims/:claimNumber/decision", async (req, res) => {
 
     if (action === "Approve") {
       claim.status = "Approved";
-      claim.currentStep = 5;
+      
+      // Determine realistic step based on actual progress:
+      const hasAgent = Boolean(claim.assignedAgent && claim.assignedAgent.trim() !== "" && claim.assignedAgent.toLowerCase() !== "unassigned");
+      const hasInspection = Boolean(claim.inspectionSubmitted || claim.inspectionReport);
+      const hasReview = Boolean(claim.garageEstimateComparison?.isCompared);
+
+      if (!hasAgent) {
+        claim.currentStep = 1;
+      } else if (!hasInspection) {
+        claim.currentStep = 2;
+      } else if (!hasReview) {
+        claim.currentStep = 3;
+      } else {
+        claim.currentStep = 5;
+      }
+
       const approvedAmount = Number(amount) || claim.garageEstimateComparison?.garageEstimatedTotal || claim.aiAnalysis?.totalEstimatedCost || claim.amount || 0;
       claim.amount = approvedAmount;
       claim.rejectionReason = "";

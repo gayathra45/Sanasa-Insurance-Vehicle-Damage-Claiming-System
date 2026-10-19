@@ -1007,27 +1007,31 @@ function OfficeStaffClaimsPageContent() {
   };
 
   const getStepperSteps = (claim: Claim) => {
-    const isAssigned = claim.currentStep >= 2;
-    const isInspection = claim.currentStep >= 3;
-    const isReview = claim.currentStep >= 4;
-    const isDecision = claim.currentStep >= 5 || claim.status === "Approved" || claim.status === "Rejected";
-    const isPayment = claim.currentStep >= 6 || (claim.status === "Approved" && claim.amount !== null);
+    const isAssigned = Boolean(
+      claim.assignedAgent &&
+      claim.assignedAgent.trim() !== "" &&
+      claim.assignedAgent.toLowerCase() !== "unassigned"
+    );
+    const isInspection = Boolean(claim.inspectionSubmitted || claim.inspectionReport);
+    const isReview = Boolean(claim.garageEstimateComparison?.isCompared);
+    const isPayment = Boolean(claim.paymentReceipt);
+    const isDecision = (claim.status === "Approved" || claim.status === "Rejected") && (isReview || isInspection || isPayment);
 
     return [
-      { num: "01", label: "Submitted", active: true },
-      { num: "02", label: "Assigned", active: isAssigned },
-      { num: "03", label: "Inspection", active: isInspection },
-      { num: "04", label: "Review", active: isReview },
-      { num: "05", label: "Decision", active: isDecision },
-      { num: "06", label: "Payment", active: isPayment },
+      { num: "01", label: "Submitted", active: true, completed: true },
+      { num: "02", label: "Assigned", active: isAssigned, completed: isAssigned },
+      { num: "03", label: "Inspection", active: isInspection, completed: isInspection },
+      { num: "04", label: "Review", active: isReview, completed: isReview },
+      { num: "05", label: "Decision", active: isDecision, completed: isDecision },
+      { num: "06", label: "Payment", active: isPayment, completed: isPayment },
     ];
   };
 
   const getStepperPercent = (claim: Claim) => {
     const steps = getStepperSteps(claim);
-    const activeCount = steps.filter(s => s.active).length;
-    if (activeCount <= 1) return 0;
-    return ((activeCount - 1) / 5) * 100;
+    const completedCount = steps.filter(s => s.completed).length;
+    if (completedCount <= 1) return 0;
+    return ((completedCount - 1) / 5) * 100;
   };
 
   // Filtering claims based on tabs and search query
@@ -3250,17 +3254,19 @@ function OfficeStaffClaimsPageContent() {
             </div>
           )}
 
-          {/* APPROVE CLAIM DECISION MODAL */}
+          {/* APPROVE CLAIM SIMPLE CONFIRMATION MODAL */}
           {activeSubModal === "decision_approve" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[650px] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden text-left">
-              <div className="px-8 pt-6 pb-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">✅</span>
+            <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[480px] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden text-left animate-in fade-in zoom-in-95">
+              <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex justify-between items-center bg-emerald-50/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700 shadow-xs">
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-6 h-6 text-emerald-600" strokeWidth={2.5} />
+                  </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
+                    <h2 className="text-base font-bold text-slate-900 tracking-tight leading-none">
                       Approve Insurance Claim
                     </h2>
-                    <p className="text-xs text-slate-500 mt-1 font-normal">
+                    <p className="text-xs text-slate-500 mt-1 font-medium">
                       {selectedClaim.claimNumber} • {selectedClaim.vehiclePlate}
                     </p>
                   </div>
@@ -3268,96 +3274,63 @@ function OfficeStaffClaimsPageContent() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition-all border-none bg-transparent cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition-all border-none bg-transparent cursor-pointer"
                 >
                   <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
                 </button>
               </div>
 
-              <div className="p-8 flex flex-col gap-5 overflow-y-auto max-h-[70vh]">
-                {/* Cost Comparison Reference Box */}
-                <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 flex flex-col gap-2">
-                  <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Estimated Settlement Reference</span>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-medium block">AI Assessed Cost</span>
-                      <span className="text-xs font-bold text-slate-800 font-mono">
-                        LKR {(selectedClaim.aiAnalysis?.totalEstimatedCost || 0).toLocaleString()}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-medium block">Garage Quoted Cost</span>
-                      <span className="text-xs font-bold text-slate-800 font-mono">
-                        {selectedClaim.garageEstimateComparison?.garageEstimatedTotal ? `LKR ${selectedClaim.garageEstimateComparison.garageEstimatedTotal.toLocaleString()}` : "N/A"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-medium block">Forensic Status</span>
-                      <span className="text-xs font-bold text-emerald-700">
-                        {selectedClaim.garageEstimateComparison?.verdict || "Loss Estimated"}
-                      </span>
-                    </div>
+              <div className="p-6 flex flex-col gap-4">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs space-y-1.5">
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Policy Holder:</span>
+                    <strong className="text-slate-900">{selectedClaim.policyHolderName || "N/A"}</strong>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Vehicle Plate:</span>
+                    <strong className="text-slate-900">{selectedClaim.vehiclePlate || "N/A"}</strong>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Current Stage:</span>
+                    <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 text-[11px]">
+                      {selectedClaim.status || "Submitted"}
+                    </span>
                   </div>
                 </div>
 
-                {/* Approved Settlement Amount Input */}
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Are you sure you want to approve this claim? The claim status will be updated to <strong className="text-emerald-700 font-semibold">Approved</strong> and recorded in the system.
+                </p>
+
+                {/* Optional Approval Note */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-800">
-                    Approved Payout Amount (LKR) <span className="text-red-500">*</span>
-                  </label>
+                  <label className="text-xs font-semibold text-slate-700">Approval Remarks / Note (Optional)</label>
                   <input
-                    type="number"
-                    value={approvingAmount}
-                    onChange={(e) => setApprovingAmount(e.target.value)}
-                    placeholder="e.g. 175000"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-                  />
-                  <span className="text-[10px] text-slate-400 font-normal">
-                    Amount will be committed as final settlement payout for claim {selectedClaim.claimNumber}.
-                  </span>
-                </div>
-
-                {/* Policyholder Bank Info preview */}
-                {selectedClaim.policyHolderBankDetails && (
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs space-y-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Policy Holder Bank Settlement Profile</span>
-                    <div className="grid grid-cols-2 gap-2 text-slate-700 font-medium pt-1">
-                      <div>Bank: <strong className="text-slate-900">{selectedClaim.policyHolderBankDetails.bankName || "N/A"}</strong></div>
-                      <div>Branch: <strong className="text-slate-900">{selectedClaim.policyHolderBankDetails.branchName || "N/A"}</strong></div>
-                      <div>Account: <strong className="text-slate-900">{selectedClaim.policyHolderBankDetails.accountNumber || "N/A"}</strong></div>
-                      <div>Holder: <strong className="text-slate-900">{selectedClaim.policyHolderBankDetails.accountHolderName || "N/A"}</strong></div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Approval Remarks */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-800">Approval Remarks / Notes (Optional)</label>
-                  <textarea
-                    rows={2}
+                    type="text"
                     value={approvalNote}
                     onChange={(e) => setApprovalNote(e.target.value)}
-                    placeholder="e.g. Approved based on verified accident photos and garage estimate within acceptable range."
-                    className="w-full p-3 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                    placeholder="e.g. Approved by branch office staff"
+                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
               </div>
 
-              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="px-5 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer bg-white"
+                  className="px-4 py-2 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer bg-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => handleClaimDecision("Approve")}
-                  disabled={updatingClaim || !approvingAmount}
-                  className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                  disabled={updatingClaim}
+                  className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  {updatingClaim ? "Approving Claim..." : "Confirm & Approve Claim"}
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                  <span>{updatingClaim ? "Approving..." : "Confirm Approval"}</span>
                 </button>
               </div>
             </div>
@@ -3839,25 +3812,29 @@ function OfficeStaffClaimsPageContent() {
                     {getStepperSteps(selectedClaim).map((stepObj, idx) => {
                       const stepNum = idx + 1;
                       
-                      // Calculate step status
+                      // Calculate step status based on REAL task completion:
+                      const allSteps = getStepperSteps(selectedClaim);
+                      const isCompleted = stepObj.completed;
+                      
+                      // Active step is the FIRST step that has not yet been completed
+                      const activeStepIndex = allSteps.findIndex(s => !s.completed);
+                      const isActive = !isCompleted && (activeStepIndex === -1 ? false : activeStepIndex === idx);
+
                       let stepStatus: "completed" | "active" | "pending" = "pending";
                       if (selectedClaim.status === "Rejected") {
-                        if (stepNum <= 5) {
-                          stepStatus = "completed";
-                        } else {
-                          stepStatus = "pending";
-                        }
-                      } else {
-                        const isPaid = (selectedClaim.status === "Approved" || selectedClaim.currentStep >= 6) && !!selectedClaim.paymentReceipt;
-                        if (isPaid) {
-                          stepStatus = "completed";
-                        } else if (stepNum < selectedClaim.currentStep) {
-                          stepStatus = "completed";
-                        } else if (stepNum === selectedClaim.currentStep) {
+                        if (stepNum === 5) {
                           stepStatus = "active";
+                        } else if (isCompleted) {
+                          stepStatus = "completed";
                         } else {
                           stepStatus = "pending";
                         }
+                      } else if (isCompleted) {
+                        stepStatus = "completed";
+                      } else if (isActive) {
+                        stepStatus = "active";
+                      } else {
+                        stepStatus = "pending";
                       }
 
                       let circleStyle = "";
