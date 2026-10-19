@@ -12,7 +12,6 @@ interface A11yState {
   readingGuide: boolean;
   reduceMotion: boolean;
   brightness: number;        // 60 – 140
-  darkMode: boolean;
 }
 
 const DEFAULT: A11yState = {
@@ -22,7 +21,6 @@ const DEFAULT: A11yState = {
   readingGuide: false,
   reduceMotion: false,
   brightness: 100,
-  darkMode: false,
 };
 
 const STORAGE_KEY = "sanasa_a11y_v3";
@@ -48,8 +46,8 @@ function applyState(s: A11yState) {
   // Reduce motion
   root.classList.toggle("a11y-no-motion", s.reduceMotion);
 
-  // Dark mode
-  root.classList.toggle("a11y-dark", s.darkMode);
+  // Clean up any legacy dark mode class
+  root.classList.remove("a11y-dark");
 }
 
 function loadState(): A11yState {
@@ -221,8 +219,7 @@ export default function AccessibilityWidget() {
     state.grayscale ||
     state.readingGuide ||
     state.reduceMotion ||
-    state.brightness !== 100 ||
-    state.darkMode;
+    state.brightness !== 100;
 
   const activeCount = [
     state.textSize !== 0,
@@ -231,7 +228,6 @@ export default function AccessibilityWidget() {
     state.readingGuide,
     state.reduceMotion,
     state.brightness !== 100,
-    state.darkMode,
   ].filter(Boolean).length;
 
   // Icon colours
@@ -245,29 +241,6 @@ export default function AccessibilityWidget() {
         .a11y-no-motion *, .a11y-no-motion *::before, .a11y-no-motion *::after {
           animation-duration: 0.001ms !important;
           transition-duration: 0.001ms !important;
-        }
-
-        /* Dark mode overlay */
-        .a11y-dark body {
-          background: #0f172a !important;
-          color: #e2e8f0 !important;
-        }
-        .a11y-dark nav,
-        .a11y-dark header,
-        .a11y-dark footer,
-        .a11y-dark section,
-        .a11y-dark main,
-        .a11y-dark div:not([id^="a11y"]) {
-          background-color: #0f172a !important;
-          color: #e2e8f0 !important;
-          border-color: #334155 !important;
-        }
-        .a11y-dark img { opacity: 0.88; }
-        .a11y-dark a { color: #38bdf8 !important; }
-        .a11y-dark button:not([id^="a11y"]) {
-          background-color: #1e293b !important;
-          color: #e2e8f0 !important;
-          border-color: #334155 !important;
         }
 
         /* Brightness slider thumb */
@@ -545,28 +518,6 @@ export default function AccessibilityWidget() {
             <div>
               <SectionLabel>Display</SectionLabel>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-
-                {/* Dark / Light Mode */}
-                <Tile
-                  id="a11y-tile-darkmode"
-                  active={state.darkMode}
-                  onClick={() => toggle("darkMode")}
-                  label={state.darkMode ? "Dark Mode" : "Light Mode"}
-                  icon={
-                    state.darkMode ? (
-                      // Moon icon — dark mode active
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" fill="white" />
-                      </svg>
-                    ) : (
-                      // Sun icon — light mode
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={ic(false)} strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="4" />
-                        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
-                      </svg>
-                    )
-                  }
-                />
 
                 {/* High Contrast */}
                 <Tile
