@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
+import AccessibilityWidget from "./AccessibilityWidget";
 import {
   Call02Icon,
   Building04Icon,
@@ -154,6 +155,7 @@ export default function Navbar() {
   });
 
   return (
+    <>
     <div className="w-full h-[93px] md:h-[101px] select-none">
       <nav
         className={`fixed left-0 right-0 w-full bg-white border-b border-gray-200 z-50 transition-all duration-300 ease-in-out shadow-md ${
@@ -434,5 +436,9 @@ export default function Navbar() {
         </div>
       )}
     </div>
+
+    {/* Accessibility Control Center — visible on all public pages */}
+    <AccessibilityWidget />
+    </>
   );
 }
