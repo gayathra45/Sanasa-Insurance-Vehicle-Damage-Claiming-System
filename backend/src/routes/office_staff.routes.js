@@ -1145,6 +1145,97 @@ router.post("/claims/:claimNumber/compare-garage-estimate", async (req, res) => 
   }
 });
 
+// POST approve physical inspection report: /api/office-staff/claims/:claimNumber/approve-inspection
+router.post("/claims/:claimNumber/approve-inspection", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    claim.inspectionApproved = true;
+    claim.status = "Review";
+    claim.currentStep = 4; // Advance to Step 4 Review in tracking
+
+    // Auto-request Garage Estimate Report from Policy Holder
+    claim.documentsRequested = true;
+    claim.documentRequestTo = "Policy Holder";
+    const requested = new Set(claim.requestedDocuments || []);
+    requested.add("Garage Estimate Report");
+    claim.requestedDocuments = Array.from(requested);
+
+    claim.messages.push({
+      sender: "Office Staff",
+      message: "Physical vehicle inspection report approved by branch office. Policy holder has been requested to upload the official Garage Estimate quotation document.",
+      sentAt: new Date(),
+      recipient: "All"
+    });
+
+    claim.markModified("requestedDocuments");
+    await claim.save();
+
+    // Send email notification to user to upload garage estimate
+    try {
+      const user = await User.findOne({ nic: claim.userNic });
+      if (user && user.email) {
+        const subject = `Physical Inspection Approved — Action Required for Claim ${claim.claimNumber}`;
+        const htmlBody = getBaseTemplate(
+          "Inspection Approved & Action Required",
+          `Dear ${user.firstName || "Policy Holder"},<br><br>The physical inspection report for your insurance claim <strong>${claim.claimNumber}</strong> has been <strong>approved</strong> by our branch office.<br><br>` +
+          `<strong>Next Step:</strong> Please log in to your policy holder portal and upload your official <strong>Garage Estimate Report</strong> to proceed with forensic cost cross-checking and payout disbursement.`
+        );
+        const textBody = `Claim ${claim.claimNumber}: Inspection approved. Please upload your Garage Estimate Report in the portal.`;
+        await sendEmail(user.email, subject, htmlBody, textBody);
+      }
+    } catch (mailErr) {
+      console.warn("Failed to send inspection approval email:", mailErr.message);
+    }
+
+    res.json({
+      message: "Physical inspection report approved. Garage Estimate Report requested from policy holder.",
+      claim
+    });
+  } catch (err) {
+    console.error("Approve inspection error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST reject physical inspection report: /api/office-staff/claims/:claimNumber/reject-inspection
+router.post("/claims/:claimNumber/reject-inspection", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    const { reason } = req.body;
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    claim.inspectionApproved = false;
+    claim.inspectionSubmitted = false;
+    claim.status = "In Progress";
+    claim.currentStep = 3; // Keep at step 3 Inspection
+
+    claim.messages.push({
+      sender: "Office Staff",
+      message: `Physical inspection report rejected by branch office.${reason ? ` Reason: ${reason}` : " Please re-inspect vehicle."}`,
+      sentAt: new Date(),
+      recipient: "Agent"
+    });
+
+    await claim.save();
+
+    res.json({
+      message: "Physical inspection report rejected and agent notified.",
+      claim
+    });
+  } catch (err) {
+    console.error("Reject inspection error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 // POST approve or reject claim: /api/office-staff/claims/:claimNumber/decision
 router.post("/claims/:claimNumber/decision", async (req, res) => {
   try {
@@ -1162,21 +1253,7 @@ router.post("/claims/:claimNumber/decision", async (req, res) => {
 
     if (action === "Approve") {
       claim.status = "Approved";
-      
-      // Determine realistic step based on actual progress:
-      const hasAgent = Boolean(claim.assignedAgent && claim.assignedAgent.trim() !== "" && claim.assignedAgent.toLowerCase() !== "unassigned");
-      const hasInspection = Boolean(claim.inspectionSubmitted || claim.inspectionReport);
-      const hasReview = Boolean(claim.garageEstimateComparison?.isCompared);
-
-      if (!hasAgent) {
-        claim.currentStep = 1;
-      } else if (!hasInspection) {
-        claim.currentStep = 2;
-      } else if (!hasReview) {
-        claim.currentStep = 3;
-      } else {
-        claim.currentStep = 5;
-      }
+      claim.currentStep = 5; // Step 5: Decision / Approved
 
       const approvedAmount = Number(amount) || claim.garageEstimateComparison?.garageEstimatedTotal || claim.aiAnalysis?.totalEstimatedCost || claim.amount || 0;
       claim.amount = approvedAmount;

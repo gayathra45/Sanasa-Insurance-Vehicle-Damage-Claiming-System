@@ -87,6 +87,7 @@ interface Claim {
   priority?: string;
   inspectionReport?: string;
   inspectionSubmitted?: boolean;
+  inspectionApproved?: boolean;
   paymentReceipt?: string;
   bankName?: string;
   bankBranch?: string;
@@ -615,6 +616,58 @@ function OfficeStaffClaimsPageContent() {
   const [rejectionReasonChoice, setRejectionReasonChoice] = useState<string>("Damaged parts do not match accident photo evidence");
   const [customRejectionText, setCustomRejectionText] = useState<string>("");
   const [comparingGarage, setComparingGarage] = useState(false);
+  const [isApprovingInspection, setIsApprovingInspection] = useState(false);
+  const [isRejectingInspection, setIsRejectingInspection] = useState(false);
+
+  const handleApproveInspection = async () => {
+    if (!selectedClaim) return;
+    try {
+      setIsApprovingInspection(true);
+      const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(selectedClaim.claimNumber)}/approve-inspection`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setClaims(prev => prev.map(c => c.claimNumber === selectedClaim.claimNumber ? { ...c, ...data.claim } : c));
+        setSelectedClaim(prev => prev && prev.claimNumber === selectedClaim.claimNumber ? { ...prev, ...data.claim } : prev);
+        alert("Physical inspection approved! Document request for official Garage Estimate Report dispatched to policy holder.");
+      } else {
+        alert(data.error || "Failed to approve inspection.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Error approving inspection: " + err.message);
+    } finally {
+      setIsApprovingInspection(false);
+    }
+  };
+
+  const handleRejectInspection = async () => {
+    if (!selectedClaim) return;
+    const reason = window.prompt("Enter rejection reason for agent:", "Physical inspection details incomplete or photos unclear");
+    if (reason === null) return;
+    try {
+      setIsRejectingInspection(true);
+      const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(selectedClaim.claimNumber)}/reject-inspection`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setClaims(prev => prev.map(c => c.claimNumber === selectedClaim.claimNumber ? { ...c, ...data.claim } : c));
+        setSelectedClaim(prev => prev && prev.claimNumber === selectedClaim.claimNumber ? { ...prev, ...data.claim } : prev);
+        alert("Physical inspection report rejected. Agent notified to re-inspect.");
+      } else {
+        alert(data.error || "Failed to reject inspection.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Error rejecting inspection: " + err.message);
+    } finally {
+      setIsRejectingInspection(false);
+    }
+  };
 
   const handleClaimDecision = async (action: "Approve" | "Reject") => {
     if (!selectedClaim) return;
@@ -641,7 +694,9 @@ function OfficeStaffClaimsPageContent() {
         setClaims(prev => prev.map(c => c.claimNumber === selectedClaim.claimNumber ? { ...c, ...data.claim } : c));
         setSelectedClaim(prev => prev && prev.claimNumber === selectedClaim.claimNumber ? { ...prev, ...data.claim } : prev);
         alert("Claim successfully " + (action === "Approve" ? "APPROVED" : "REJECTED") + "!");
-        setActiveSubModal(null);
+        if (activeSubModal !== "inspection") {
+          setActiveSubModal(null);
+        }
       } else {
         alert(data.error || ("Failed to " + action.toLowerCase() + " claim."));
       }
@@ -1013,9 +1068,9 @@ function OfficeStaffClaimsPageContent() {
       claim.assignedAgent.toLowerCase() !== "unassigned"
     );
     const isInspection = Boolean(claim.inspectionSubmitted || claim.inspectionReport);
-    const isReview = Boolean(claim.garageEstimateComparison?.isCompared);
-    const isPayment = Boolean(claim.paymentReceipt);
-    const isDecision = (claim.status === "Approved" || claim.status === "Rejected") && (isReview || isInspection || isPayment);
+    const isReview = Boolean(claim.inspectionApproved || claim.status === "Review" || (claim.currentStep && claim.currentStep >= 4) || claim.garageEstimateComparison?.isCompared);
+    const isDecision = (claim.status === "Approved" || claim.status === "Settled" || claim.status === "Rejected");
+    const isPayment = Boolean(claim.paymentReceipt || claim.status === "Settled");
 
     return [
       { num: "01", label: "Submitted", active: true, completed: true },
@@ -1351,24 +1406,22 @@ function OfficeStaffClaimsPageContent() {
 
               {/* Scrollable Inspection & Assessment Body */}
               <div className="px-8 py-6 flex-1 overflow-y-auto space-y-6">
-                
-                {/* 1. PHYSICAL INSPECTION REPORT FINDINGS (SUBMITTED BY AGENT) */}
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-5">
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">??</span>
-                      <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-                        1. Physical Vehicle Findings (Agent Submission)
-                      </h3>
-                    </div>
-                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      Physical Inspection Completed
-                    </span>
-                  </div>
+                {(() => {
+                  const isInspectionApproved = Boolean(
+                    selectedClaim.inspectionApproved ||
+                    selectedClaim.status === "Review" ||
+                    selectedClaim.status === "Approved" ||
+                    selectedClaim.status === "Settled" ||
+                    (selectedClaim.currentStep && selectedClaim.currentStep >= 4)
+                  );
 
-                  {(() => {
-                    const parsedReport = parseInspectionReport(selectedClaim.inspectionReport || "");
-                    const parsed = (parsedReport && !parsedReport.isRaw) ? parsedReport : {
+                  return (
+                    <>
+                      {/* 1. PHYSICAL INSPECTION REPORT FINDINGS (SUBMITTED BY AGENT) */}
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-5">
+                        {(() => {
+                          const parsedReport = parseInspectionReport(selectedClaim.inspectionReport || "");
+                          const parsed = (parsedReport && !parsedReport.isRaw) ? parsedReport : {
                       isRaw: false,
                       odometer: "N/A",
                       fuelLevel: "N/A",
@@ -1389,74 +1442,134 @@ function OfficeStaffClaimsPageContent() {
                       });
 
                     return (
-                      <div className="space-y-4">
-                        {/* 4 Metric Badges */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Odometer Mileage</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.odometer || "N/A"}</span>
+                      <>
+                        <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">📋</span>
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                              1. Physical Vehicle Findings (Agent Submission)
+                            </h3>
                           </div>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Fuel Level</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.fuelLevel || "N/A"}</span>
-                          </div>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Recommended Action</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.recommendedAction || "Repairable (Minor)"}</span>
-                          </div>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Pre-Existing Damage</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block truncate" title={parsed.preExistingDamage}>
-                              {parsed.preExistingDamage !== "None reported." ? parsed.preExistingDamage : "None reported"}
-                            </span>
-                          </div>
+                          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                            isInspectionApproved
+                              ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
+                              : "text-amber-800 bg-amber-100 border border-amber-300"
+                          }`}>
+                            {isInspectionApproved ? "✓ Physical Inspection Approved" : "Inspection Report Pending Approval"}
+                          </span>
                         </div>
 
-                        {/* Damage Checklist Grid */}
-                        <div>
-                          <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Component Damage Checklist</span>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                            {Object.entries(parsed.checklist || {}).map(([key, val]) => (
-                              <div key={key} className="flex justify-between items-center py-1 border-b border-slate-100 last:border-0 text-xs px-1">
-                                <span className="text-slate-600 font-medium">{key}:</span>
-                                <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${
-                                  val === "None" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                                  val === "Minor" ? "bg-amber-50 text-amber-700 border border-amber-200" :
-                                  "bg-rose-50 text-rose-700 border border-rose-200"
-                                }`}>
-                                  {val}
-                                </span>
-                              </div>
-                            ))}
+                        <div className="space-y-4">
+                          {/* 4 Metric Badges */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="bg-white border border-slate-200 rounded-xl p-3">
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Odometer Mileage</span>
+                              <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.odometer || "N/A"}</span>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3">
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Fuel Level</span>
+                              <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.fuelLevel || "N/A"}</span>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3">
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Recommended Action</span>
+                              <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.recommendedAction || "Repairable (Minor)"}</span>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3">
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Pre-Existing Damage</span>
+                              <span className="text-xs font-bold text-slate-800 mt-0.5 block truncate" title={parsed.preExistingDamage}>
+                                {parsed.preExistingDamage !== "None reported." ? parsed.preExistingDamage : "None reported"}
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Physical Remarks */}
-                        <div>
-                          <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-1.5">Agent Physical Inspection Remarks</span>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
-                            {parsed.physicalInspectionNotes || "No physical remarks recorded."}
-                          </div>
-                        </div>
-
-                        {/* Inspection Photos */}
-                        {agentPhotos.length > 0 && (
+                          {/* Damage Checklist Grid */}
                           <div>
-                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Agent On-Site Photos ({agentPhotos.length})</span>
-                            <div className="flex flex-wrap gap-2.5">
-                              {agentPhotos.map((p, idx) => (
-                                <div
-                                  key={idx}
-                                  onClick={() => setPreviewImage(p.url)}
-                                  className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
-                                >
-                                  <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
+                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Component Damage Checklist</span>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                              {Object.entries(parsed.checklist || {}).map(([key, val]) => (
+                                <div key={key} className="flex justify-between items-center py-1 border-b border-slate-100 last:border-0 text-xs px-1">
+                                  <span className="text-slate-600 font-medium">{key}:</span>
+                                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${
+                                    val === "None" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                                    val === "Minor" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                                    "bg-rose-50 text-rose-700 border border-rose-200"
+                                  }`}>
+                                    {val}
+                                  </span>
                                 </div>
                               ))}
                             </div>
                           </div>
-                        )}
-                      </div>
+
+                          {/* Physical Remarks */}
+                          <div>
+                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-1.5">Agent Physical Inspection Remarks</span>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
+                              {parsed.physicalInspectionNotes || "No physical remarks recorded."}
+                            </div>
+                          </div>
+
+                          {/* Inspection Photos (Hidden during approval time, displayed once approved) */}
+                          {isInspectionApproved && agentPhotos.length > 0 && (
+                            <div>
+                              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Agent On-Site Photos ({agentPhotos.length})</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {agentPhotos.map((p, idx) => (
+                                  <div
+                                    key={idx}
+                                    onClick={() => setPreviewImage(p.url)}
+                                    className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
+                                  >
+                                    <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Action Bar: Approve or Reject Inspection Report */}
+                          {!isInspectionApproved && (
+                            <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-xs">
+                              <div>
+                                <span className="text-xs font-bold text-amber-950 block">Action Required: Review Physical Inspection Findings</span>
+                                <p className="text-[11px] text-amber-800 font-medium mt-0.5 leading-relaxed">
+                                  Approve the inspection report to update the tracking timeline to "Review" (Step 4) and dispatch the Garage Estimate upload request to the policy holder.
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+                                <button
+                                  type="button"
+                                  onClick={handleRejectInspection}
+                                  disabled={isRejectingInspection || isApprovingInspection}
+                                  className="px-4 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                                >
+                                  {isRejectingInspection ? "Rejecting..." : "Reject Inspection"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleApproveInspection}
+                                  disabled={isApprovingInspection || isRejectingInspection}
+                                  className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                                >
+                                  <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4" strokeWidth={3} />
+                                  {isApprovingInspection ? "Approving..." : "Approve Inspection Report"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {isInspectionApproved && (
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-900 font-medium">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold">✓ Physical Inspection Report Approved & Verified by Branch Office</span>
+                              </div>
+                              <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                                Step 4 Review Active
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </>
                     );
                   })()}
                 </div>
@@ -1583,7 +1696,7 @@ function OfficeStaffClaimsPageContent() {
                 </div>
 
                 {/* 3. GARAGE ESTIMATE DOCUMENT REQUEST & POLICY HOLDER SUBMISSION */}
-                {(() => {
+                {isInspectionApproved && (() => {
                   const garageDoc = (selectedClaim.additionalDocuments || []).find(
                     (d) => d.name && d.name.toLowerCase().includes("garage")
                   ) || (selectedClaim.additionalDocuments && selectedClaim.additionalDocuments.find(d => d.uploadedBy === "Policy Holder"));
@@ -1592,7 +1705,7 @@ function OfficeStaffClaimsPageContent() {
                     <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-5 space-y-4">
                       <div className="flex justify-between items-center border-b border-amber-200 pb-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-base">??</span>
+                          <span className="text-base">📋</span>
                           <h3 className="text-sm font-bold text-amber-950 uppercase tracking-wider">
                             3. Garage Estimate Report from Policy Holder
                           </h3>
@@ -1635,7 +1748,7 @@ function OfficeStaffClaimsPageContent() {
                 })()}
 
                 {/* 4. GARAGE ESTIMATE VS. AI BENCHMARK FORENSIC COMPARISON */}
-                {(() => {
+                {isInspectionApproved && (() => {
                   const garageDoc = (selectedClaim.additionalDocuments || []).find(
                     (d) => d.name && d.name.toLowerCase().includes("garage")
                   );
@@ -1644,7 +1757,7 @@ function OfficeStaffClaimsPageContent() {
                     <div className="bg-emerald-50/50 border border-emerald-200 rounded-2xl p-5 space-y-4">
                       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-200 pb-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-base">??</span>
+                          <span className="text-base">📋</span>
                           <h3 className="text-sm font-bold text-emerald-950 uppercase tracking-wider">
                             4. Garage vs. AI Benchmark & Photo Cross-Check
                           </h3>
@@ -1656,7 +1769,7 @@ function OfficeStaffClaimsPageContent() {
                             disabled={comparingGarageClaim === selectedClaim.claimNumber}
                             className="px-4 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
                           >
-                            {comparingGarageClaim === selectedClaim.claimNumber ? "Comparing..." : "? Run Cost Comparison"}
+                            {comparingGarageClaim === selectedClaim.claimNumber ? "Comparing..." : "🔍 Run Cost Comparison"}
                           </button>
                         )}
                       </div>
@@ -1741,7 +1854,7 @@ function OfficeStaffClaimsPageContent() {
                                           <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                                             p.matchesAccidentPhotos ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
                                           }`}>
-                                            {p.matchesAccidentPhotos ? "? Photo Verified" : "? Discrepancy"}
+                                            {p.matchesAccidentPhotos ? "✓ Photo Verified" : "⚠ Discrepancy"}
                                           </span>
                                         </td>
                                         <td className="py-2.5 px-4 text-[11px] text-slate-600 font-medium">{p.notes}</td>
@@ -1757,6 +1870,120 @@ function OfficeStaffClaimsPageContent() {
                     </div>
                   );
                 })()}
+
+                {/* SETTLEMENT AMOUNT ENTERING & APPROVAL SECTION */}
+                {isInspectionApproved && selectedClaim.status !== "Approved" && selectedClaim.status !== "Settled" && (
+                  <div className="bg-white border-2 border-emerald-300 rounded-2xl p-5 space-y-4 shadow-sm">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-100 pb-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2.5} />
+                          Final Settlement Determination & Claim Approval
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Enter the approved claim settlement payout amount. Submitting will approve the claim and unlock bank disbursement (Section 5).
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                        Step 4 → Step 5
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Settlement Amount */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 block">
+                          Approved Settlement Payout (LKR) <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                            LKR
+                          </span>
+                          <input
+                            type="number"
+                            value={approvingAmount}
+                            onChange={(e) => setApprovingAmount(e.target.value)}
+                            placeholder={
+                              selectedClaim.garageEstimateComparison?.garageEstimatedTotal
+                                ? String(selectedClaim.garageEstimateComparison.garageEstimatedTotal)
+                                : selectedClaim.aiAnalysis?.totalEstimatedCost
+                                ? String(selectedClaim.aiAnalysis.totalEstimatedCost)
+                                : "Enter amount in LKR"
+                            }
+                            className="w-full pl-12 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm font-extrabold text-slate-900 font-mono bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all"
+                          />
+                        </div>
+
+                        {/* Quick Fill Helpers */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {selectedClaim.garageEstimateComparison?.garageEstimatedTotal ? (
+                            <button
+                              type="button"
+                              onClick={() => setApprovingAmount(String(selectedClaim.garageEstimateComparison?.garageEstimatedTotal))}
+                              className="text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                            >
+                              Use Garage Total: LKR {selectedClaim.garageEstimateComparison.garageEstimatedTotal.toLocaleString()}
+                            </button>
+                          ) : null}
+                          {selectedClaim.aiAnalysis?.totalEstimatedCost ? (
+                            <button
+                              type="button"
+                              onClick={() => setApprovingAmount(String(selectedClaim.aiAnalysis?.totalEstimatedCost))}
+                              className="text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                            >
+                              Use AI Loss: LKR {selectedClaim.aiAnalysis.totalEstimatedCost.toLocaleString()}
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {/* Approval / Settlement Note */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 block">
+                          Approval & Settlement Remarks
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={approvalNote}
+                          onChange={(e) => setApprovalNote(e.target.value)}
+                          placeholder="e.g. Approved based on forensic photo verification and verified garage estimate."
+                          className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2 border-t border-slate-100">
+                      <div className="text-[11px] text-slate-400">
+                        Bank disbursement instructions will automatically be presented to proceed with fund transfer once approved.
+                      </div>
+                      <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                        <button
+                          type="button"
+                          onClick={() => handleClaimDecision("Approve")}
+                          disabled={updatingClaim}
+                          className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-2"
+                        >
+                          <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4" strokeWidth={3} />
+                          {updatingClaim ? "Submitting Settlement..." : "Submit Settlement & Approve Claim"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Summary Banner if already approved */}
+                {isInspectionApproved && (selectedClaim.status === "Approved" || selectedClaim.status === "Settled") && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-center justify-between text-xs text-emerald-900 font-medium">
+                    <div className="flex items-center gap-2">
+                      <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={3} />
+                      <span className="font-bold">Claim Settlement Approved: LKR {(selectedClaim.amount || 0).toLocaleString()}</span>
+                    </div>
+                    <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                      Proceed to Bank Settlement Below
+                    </span>
+                  </div>
+                )}
 
                 {/* 5. POST-APPROVAL PAYMENT SETTLEMENT & RECEIPT WORKFLOW */}
                 {(selectedClaim.status === "Approved" || selectedClaim.status === "Settled") && (
@@ -1903,7 +2130,10 @@ function OfficeStaffClaimsPageContent() {
                     )}
                   </div>
                 )}
-              </div>
+              </>
+            );
+          })()}
+        </div>
 
               {/* Footer Decision Action Bar inside Inspection Modal */}
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 select-none">

@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const claimSchema = new mongoose.Schema({
   claimNumber: { type: String, required: true, unique: true },
@@ -42,6 +42,7 @@ const claimSchema = new mongoose.Schema({
   documentRequestTo: { type: String, default: "" },
   inspectionReport: { type: String, default: "" },
   inspectionSubmitted: { type: Boolean, default: false },
+  inspectionApproved: { type: Boolean, default: false },
   paymentReceipt: { type: String, default: "" },
   paymentReceiptFileName: { type: String, default: "" },
   paymentSettledAt: { type: Date, default: null },
