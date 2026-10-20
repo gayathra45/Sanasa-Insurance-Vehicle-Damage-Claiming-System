@@ -123,7 +123,7 @@ const parseInspectionReport = (reportText?: string | null) => {
       if (!trimmed) return;
 
       if (trimmed.startsWith("• Odometer:")) {
-        odometer = trimmed.replace("• Odometer:", "").trim();
+        odometer = trimmed.replace("• Odometer:", "").replace(/km/gi, "").trim();
       } else if (trimmed.startsWith("• Fuel Level:")) {
         fuelLevel = trimmed.replace("• Fuel Level:", "").trim();
       } else if (trimmed.startsWith("• Recommended Action:")) {
@@ -386,13 +386,16 @@ export default function AgentDashboard() {
   const [wheelsDmg, setWheelsDmg] = useState("None");
   const activeClaimIdRef = useRef<string | null>(null);
   const handledParamClaimIdRef = useRef<string | null>(null);
-
   const closeDetailModal = () => {
     activeClaimIdRef.current = null;
+    handledParamClaimIdRef.current = selectedClaim?.claimNumber || selectedClaim?._id || "closed";
     if (activeInspectionStep === 5) {
       setActiveTab("activity");
     }
     setSelectedClaim(null);
+    if (claimId) {
+      router.replace("/Agent/Dashboard/page");
+    }
   };
 
   // Synchronize wizard activeInspectionStep on claim selection (preserves in-progress form during background polling)
@@ -682,15 +685,18 @@ export default function AgentDashboard() {
       return;
     }
 
+    const cleanOdometer = odometer.replace(/km/gi, "").trim();
+    const cleanAmount = Number(assessmentAmount.replace(/[^0-9.]/g, "")) || 0;
+
     const formattedReport = `
 ==================================================
            VEHICLE CLAIM INSPECTION REPORT
 ==================================================
 [1. VEHICLE CONDITION DETAILS]
-• Odometer: ${odometer.trim()} km
+• Odometer: ${cleanOdometer} km
 • Fuel Level: ${fuelLevel}
 • Recommended Action: ${recommendedAction}
-• Estimated Cost: LKR ${Number(assessmentAmount).toLocaleString()}
+• Estimated Cost: LKR ${cleanAmount.toLocaleString()}
 
 [2. COMPONENT DAMAGE CHECKLIST]
 • Front Bumper: [${frontBumperDmg}]
@@ -717,7 +723,7 @@ ${inspectionReportText.trim()}
         body: JSON.stringify({
           inspectionReport: formattedReport,
           inspectionSubmitted: true,
-          amount: Number(assessmentAmount),
+          amount: cleanAmount,
           status: "In Progress"
         }),
       });
@@ -1720,12 +1726,13 @@ ${inspectionReportText.trim()}
     return () => clearInterval(pollInterval);
   }, [agentEmail, selectedClaim]);
 
-  // Auto-open claim details when claimId is passed via params
+  // Auto-open claim details once when claimId is passed via params
   useEffect(() => {
     if (claimId && claims.length > 0) {
-      if (!selectedClaim || (selectedClaim._id !== claimId && selectedClaim.claimNumber !== claimId)) {
+      if (handledParamClaimIdRef.current !== claimId) {
         const matched = claims.find(c => c._id === claimId || c.claimNumber === claimId);
         if (matched) {
+          handledParamClaimIdRef.current = claimId;
           setSelectedClaim(matched);
           if (step === "4") {
             setActiveInspectionStep(4);
@@ -1733,7 +1740,7 @@ ${inspectionReportText.trim()}
         }
       }
     }
-  }, [claimId, claims, step, selectedClaim]);
+  }, [claimId, claims, step]);
 
   // ── Animations ─────────────────────────────────────────────────────────
   useEffect(() => {

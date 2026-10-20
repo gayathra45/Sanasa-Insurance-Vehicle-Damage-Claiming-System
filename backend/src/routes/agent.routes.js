@@ -134,7 +134,15 @@ router.post("/claims/:id/status", async (req, res) => {
     }
 
     if (status !== undefined && !declineClaim && !rejectClaim) claim.status = status;
-    if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
+    if (amount !== undefined) {
+      if (amount === "" || amount === null) {
+        claim.amount = null;
+      } else {
+        const cleaned = typeof amount === "string" ? amount.replace(/[^0-9.]/g, "") : amount;
+        const num = Number(cleaned);
+        claim.amount = isNaN(num) ? null : num;
+      }
+    }
     if (inspectionReport !== undefined) claim.inspectionReport = inspectionReport;
     if (inspectionSubmitted !== undefined) {
       claim.inspectionSubmitted = inspectionSubmitted;
@@ -160,24 +168,28 @@ router.post("/claims/:id/status", async (req, res) => {
       await logAgentActivity(agentToLog, "Claim Updated", deviceType, `Updated status to ${status} for claim: ${claim.claimNumber}`);
     }
 
-    // Send activity email to agent
+    // Send activity email to agent (isolated in try-catch so email failure never rolls back or blocks claim update)
     if (agentToLog) {
-      let activityText = "Claim Updated";
-      let customMsg = "You updated the claim details.";
-      if (acceptClaim) {
-        activityText = "Claim Accepted";
-        customMsg = "You have successfully accepted this claim assignment. The physical inspection is now marked in progress.";
-      } else if (declineClaim || rejectClaim) {
-        activityText = "Claim Assignment Declined";
-        customMsg = "You declined this claim assignment. The claim has been returned to the branch office for reassignment.";
-      } else if (inspectionSubmitted) {
-        activityText = "Inspection Report Submitted";
-        customMsg = "You have successfully submitted the physical vehicle inspection report. The claim is now ready for office staff review.";
-      } else if (status !== undefined) {
-        activityText = `Status Updated: ${status}`;
-        customMsg = `You updated the claim status to: ${status}.`;
+      try {
+        let activityText = "Claim Updated";
+        let customMsg = "You updated the claim details.";
+        if (acceptClaim) {
+          activityText = "Claim Accepted";
+          customMsg = "You have successfully accepted this claim assignment. The physical inspection is now marked in progress.";
+        } else if (declineClaim || rejectClaim) {
+          activityText = "Claim Assignment Declined";
+          customMsg = "You declined this claim assignment. The claim has been returned to the branch office for reassignment.";
+        } else if (inspectionSubmitted) {
+          activityText = "Inspection Report Submitted";
+          customMsg = "You have successfully submitted the physical vehicle inspection report. The claim is now ready for office staff review.";
+        } else if (status !== undefined) {
+          activityText = `Status Updated: ${status}`;
+          customMsg = `You updated the claim status to: ${status}.`;
+        }
+        await sendAgentActivityEmail(agentToLog, activityText, claim, customMsg);
+      } catch (mailErr) {
+        console.warn("Failed to send agent activity email, continuing:", mailErr.message);
       }
-      await sendAgentActivityEmail(agentToLog, activityText, claim, customMsg);
     }
 
     res.json({ message: "Claim status updated successfully", claim });
