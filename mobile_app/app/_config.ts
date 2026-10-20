@@ -19,7 +19,7 @@ const getApiBaseUrl = () => {
 
   // 3. Physical device or Web - resolve host IP from Expo hostUri or fallback
   const hostUri = Constants.expoConfig?.hostUri;
-  let url = "http://10.251.143.160:5000";
+  let url = "http://192.168.17.132:5000";
   if (hostUri) {
     const ip = hostUri.split(":")[0];
     url = `http://${ip}:5000`;

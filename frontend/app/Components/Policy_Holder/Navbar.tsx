@@ -20,6 +20,7 @@ import {
   Cancel01Icon
 } from "@hugeicons/core-free-icons";
 import { API_URL } from "@/app/config";
+import AccessibilityWidget from "@/app/Components/Homepage/AccessibilityWidget";
 
 const translations = {
   en: {
@@ -271,6 +272,7 @@ export default function PolicyHolderNavbar() {
   ];
 
   return (
+    <>
     <div className="w-full h-[93px] md:h-[101px] select-none">
       <nav
         className={`fixed left-0 right-0 w-full bg-white border-b border-gray-200 z-50 transition-all duration-300 ease-in-out shadow-md ${
@@ -611,5 +613,9 @@ export default function PolicyHolderNavbar() {
         </div>
       )}
     </div>
+
+    {/* Accessibility Control Center — visible on all Policy Holder pages */}
+    <AccessibilityWidget />
+    </>
   );
 }
