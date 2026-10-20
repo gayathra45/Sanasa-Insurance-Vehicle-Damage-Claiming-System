@@ -1347,7 +1347,7 @@ const styles = StyleSheet.create({
 
   /* Custom Alert Styles */
   alertOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(15, 23, 42, 0.6)",
     alignItems: "center", justifyContent: "center",
     zIndex: 9999,

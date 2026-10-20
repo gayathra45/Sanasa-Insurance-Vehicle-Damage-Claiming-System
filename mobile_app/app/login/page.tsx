@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(4, 18, 21, 0.88)",
   },
   ambientLightTop: {
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
     textDecorationLine: "underline",
   },
   alertOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(2, 11, 13, 0.95)",
     alignItems: "center",
     justifyContent: "center",

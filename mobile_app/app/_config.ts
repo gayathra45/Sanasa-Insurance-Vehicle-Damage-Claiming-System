@@ -19,7 +19,7 @@ const getApiBaseUrl = () => {
 
   // 3. Physical device or Web - resolve host IP from Expo hostUri or fallback
   const hostUri = Constants.expoConfig?.hostUri;
-  let url = "http://192.168.42.36:5000";
+  let url = "http://10.124.136.160:5000";
   if (hostUri) {
     const ip = hostUri.split(":")[0];
     url = `http://${ip}:5000`;
@@ -34,11 +34,12 @@ export const API_BASE_URL = getApiBaseUrl();
 // 1. RangeError: Failed to construct 'Response': The status provided (0) is outside the range [200, 599].
 // 2. SyntaxError: JSON Parse error: Unexpected end of input on empty response bodies.
 // 3. TypeError: Network request failed — silenced so polls don't spam the error overlay.
-if (typeof global !== "undefined" && global.fetch && !(global as any).__sanasa_fetch_patched) {
-  (global as any).__sanasa_fetch_patched = true;
-  const _origFetch = global.fetch;
+const _global = typeof globalThis !== "undefined" ? (globalThis as any) : {};
+if (_global.fetch && !_global.__sanasa_fetch_patched) {
+  _global.__sanasa_fetch_patched = true;
+  const _origFetch = _global.fetch;
 
-  global.fetch = async function (...args: any[]) {
+  _global.fetch = async function (...args: any[]) {
     try {
       const res = await _origFetch.apply(this, args as any);
 

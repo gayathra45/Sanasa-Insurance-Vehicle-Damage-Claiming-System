@@ -1165,7 +1165,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(4, 18, 21, 0.88)",
   },
   scrollContent: {
@@ -1572,7 +1572,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(2, 11, 13, 0.95)",
     alignItems: "center",
     justifyContent: "center",
@@ -1722,7 +1722,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   alertOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(2, 11, 13, 0.95)",
     alignItems: "center",
     justifyContent: "center",

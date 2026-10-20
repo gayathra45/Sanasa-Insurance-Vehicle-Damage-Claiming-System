@@ -1145,7 +1145,7 @@ const styles: any = StyleSheet.create({
     fontWeight: "700",
   },
   alertOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(2, 11, 13, 0.95)",
     alignItems: "center",
     justifyContent: "center",

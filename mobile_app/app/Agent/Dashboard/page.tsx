@@ -2201,7 +2201,7 @@ ${inspectionReportText.trim()}
               >
                 <LinearGradient
                   colors={["rgba(239, 68, 68, 0.15)", "rgba(239, 68, 68, 0.02)"]}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.cardHeaderRow}>
                   <View style={[styles.glowDot, { backgroundColor: "#ef4444", shadowColor: "#ef4444" }]} />
@@ -2221,7 +2221,7 @@ ${inspectionReportText.trim()}
               >
                 <LinearGradient
                   colors={["rgba(6, 182, 212, 0.15)", "rgba(6, 182, 212, 0.02)"]}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.cardHeaderRow}>
                   <View style={[styles.glowDot, { backgroundColor: "#06b6d4", shadowColor: "#06b6d4" }]} />
@@ -2241,7 +2241,7 @@ ${inspectionReportText.trim()}
               >
                 <LinearGradient
                   colors={["rgba(34, 197, 94, 0.15)", "rgba(34, 197, 94, 0.02)"]}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.cardHeaderRow}>
                   <View style={[styles.glowDot, { backgroundColor: "#22c55e", shadowColor: "#22c55e" }]} />
@@ -4065,7 +4065,7 @@ const styles = StyleSheet.create({
 
   /* Custom alert */
   alertOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(15, 23, 42, 0.6)",
     alignItems: "center", justifyContent: "center",
     zIndex: 9999,
