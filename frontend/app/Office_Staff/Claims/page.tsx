@@ -3727,7 +3727,7 @@ function OfficeStaffClaimsPageContent() {
 
                     {/* Cyan Buttons Stack */}
                     <div className="pt-2 flex flex-col gap-3">
-                      {(selectedClaim.inspectionSubmitted || selectedClaim.inspectionReport || selectedClaim.currentStep >= 3 || selectedClaim.aiAnalysis) && (
+                      {Boolean(selectedClaim.inspectionSubmitted || (selectedClaim.inspectionReport && selectedClaim.inspectionReport.trim().length > 0)) && (
                         <button
                           type="button"
                           onClick={() => {
