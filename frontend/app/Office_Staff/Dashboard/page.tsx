@@ -202,7 +202,8 @@ export default function OfficeStaffDashboard() {
       try {
         const res = await fetch(`${API_URL}/office-staff/dashboard-stats?branch=${encodeURIComponent(currentBranch)}`);
         if (!res.ok) {
-          throw new Error("Failed to load dashboard metrics.");
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || errData?.message || `Failed to load dashboard metrics (Status: ${res.status})`);
         }
         const data = await res.json();
         if (data.stats) {
@@ -243,16 +244,19 @@ export default function OfficeStaffDashboard() {
 
         // Format registrations list from DB
         const formattedRegs = (data.newRegistrations || []).map((user: any) => ({
-          name: `${user.firstName} ${user.lastName}`,
-          vehiclesCount: user.vehicles ? user.vehicles.length : 0,
-          date: new Date(user.createdAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
+          name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Applicant",
+          vehiclesCount: Array.isArray(user.vehicles) ? user.vehicles.length : 0,
+          date: user.createdAt
+            ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })
+            : "Recently",
         }));
         setNewRegistrations(formattedRegs);
+        setError(""); // Clear error on successful fetch
       } catch (err: any) {
-        console.error(err);
+        console.error("Dashboard stats error:", err);
         setError(err.message || "Failed to load branch statistics");
       } finally {
         setLoading(false);

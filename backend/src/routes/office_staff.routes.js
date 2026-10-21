@@ -108,45 +108,85 @@ router.post("/change-password", async (req, res) => {
 // GET dashboard statistics: /api/office-staff/dashboard-stats
 router.get("/dashboard-stats", async (req, res) => {
   try {
-    const branch = req.query.branch ? req.query.branch.trim() : "Galle";
+    const rawBranch = req.query.branch;
+    const branchInput = (
+      typeof rawBranch === "string"
+        ? rawBranch.trim()
+        : Array.isArray(rawBranch) && rawBranch.length > 0 && typeof rawBranch[0] === "string"
+        ? rawBranch[0].trim()
+        : ""
+    ) || "Galle";
 
-    // 1. Calculate stats counts for the branch
+    // Build flexible branch query to match either "Colombo" or "Colombo Branch"
+    const baseBranchName = branchInput.replace(/\s+Branch$/i, "").trim();
+    const branchCondition = {
+      $in: [
+        branchInput,
+        baseBranchName,
+        `${baseBranchName} Branch`,
+        new RegExp(`^${baseBranchName}(?:\\s+Branch)?$`, "i")
+      ]
+    };
+
+    // 1. Calculate stats counts for the branch with safe fallbacks
     const unassignedClaims = await Claim.countDocuments({
-      branch,
+      branch: branchCondition,
       $or: [
         { assignedAgent: { $exists: false } },
         { assignedAgent: null },
         { assignedAgent: "" }
       ]
+    }).catch(err => {
+      console.warn("Error counting unassigned claims:", err.message);
+      return 0;
     });
 
     const newRegistrationsCount = await User.countDocuments({
-      branch,
+      branch: branchCondition,
       status: { $ne: "Approved" }
+    }).catch(err => {
+      console.warn("Error counting new registrations:", err.message);
+      return 0;
     });
 
     const activeClaims = await Claim.countDocuments({
-      branch,
+      branch: branchCondition,
       status: { $in: ["In Progress", "Approved", "Investigating"] }
+    }).catch(err => {
+      console.warn("Error counting active claims:", err.message);
+      return 0;
     });
 
     const pendingClaims = await Claim.countDocuments({
-      branch,
+      branch: branchCondition,
       status: "Pending"
+    }).catch(err => {
+      console.warn("Error counting pending claims:", err.message);
+      return 0;
     });
 
     // 2. Fetch recent new claims for the branch
-    const newClaims = await Claim.find({ branch })
+    const newClaims = await Claim.find({ branch: branchCondition })
       .sort({ createdAt: -1 })
-      .limit(20);
+      .limit(20)
+      .lean()
+      .catch(err => {
+        console.warn("Error finding new claims:", err.message);
+        return [];
+      });
 
     // 3. Fetch recent new registrations for the branch
     const newRegistrations = await User.find({
-      branch,
+      branch: branchCondition,
       status: { $ne: "Approved" }
     })
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(10)
+      .lean()
+      .catch(err => {
+        console.warn("Error finding new registrations:", err.message);
+        return [];
+      });
 
     res.json({
       stats: {
@@ -160,7 +200,10 @@ router.get("/dashboard-stats", async (req, res) => {
     });
   } catch (err) {
     console.error("Office staff dashboard stats API error:", err);
-    res.status(500).json({ error: "Failed to load dashboard metrics." });
+    res.status(500).json({ 
+      error: "Failed to load dashboard metrics.",
+      message: err.message
+    });
   }
 });
 
