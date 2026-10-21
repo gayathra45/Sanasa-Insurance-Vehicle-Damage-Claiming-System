@@ -634,7 +634,7 @@ export default function AdminDashboard() {
                           pendingBranchResets.map((staff) => (
                             <div key={staff._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
                               <div className="flex flex-col">
-                                <span className="text-xs font-semibold text-slate-850">{staff.branch} Branch</span>
+                                <span className="text-xs font-bold text-slate-900">{staff.branch} Branch</span>
                                 <span className="text-[10px] text-slate-500 font-medium mt-0.5">{staff.email}</span>
                                 <span className="text-[10px] text-slate-500 font-medium">{staff.mobile}</span>
                               </div>
@@ -649,7 +649,7 @@ export default function AdminDashboard() {
                                 <button
                                   onClick={() => handleBranchReset(staff._id, "reject")}
                                   disabled={actioningId !== null}
-                                  className="flex-1 py-1.5 bg-white hover:bg-slate-50 text-slate-550 border border-slate-200 text-[10px] font-semibold rounded-lg transition-all cursor-pointer outline-none disabled:opacity-50"
+                                  className="flex-1 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-semibold rounded-lg transition-all cursor-pointer outline-none disabled:opacity-50"
                                 >
                                   Reject
                                 </button>
@@ -679,7 +679,7 @@ export default function AdminDashboard() {
                           pendingAdminResets.map((admin) => (
                             <div key={admin._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
                               <div className="flex flex-col">
-                                <span className="text-xs font-semibold text-slate-850">{admin.name}</span>
+                                <span className="text-xs font-bold text-slate-900">{admin.name}</span>
                                 <span className="text-[10px] text-slate-500 font-medium mt-0.5">Email: {admin.email}</span>
                                 <span className="text-[10px] text-slate-500 font-medium">NIC: {admin.nic}</span>
                               </div>

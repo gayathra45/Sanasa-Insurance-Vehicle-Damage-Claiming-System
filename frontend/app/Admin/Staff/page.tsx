@@ -1411,10 +1411,10 @@ export default function AdminStaffPage() {
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
-                  {viewingStaff.branch} Branch Profile
+                <h2 className="text-[24px] font-bold text-slate-900 tracking-tight leading-none">
+                  {viewingStaff.branch?.endsWith("Branch") ? viewingStaff.branch : `${viewingStaff.branch} Branch`} Profile
                 </h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
+                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-1.5">
                   Office Staff Registry & Login Governance Information
                 </p>
               </div>
@@ -1430,68 +1430,68 @@ export default function AdminStaffPage() {
             </div>
             
             {/* Horizontal Divider Line */}
-            <div className="border-b border-black mx-8 mb-4 shrink-0" />
+            <div className="border-b border-slate-200 mx-8 mb-4 shrink-0" />
 
             {/* Modal Content */}
             <div className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-5 text-left">
               {/* Branch Profile Name Card */}
-              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-1">
-                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest block">Profile Name</span>
-                <span className="text-base font-semibold text-slate-800">{viewingStaff.name}</span>
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 flex flex-col gap-1 shadow-2xs">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Profile Name</span>
+                <span className="text-base font-bold text-slate-900">{viewingStaff.name}</span>
               </div>
 
               {/* Grid 1: Location details */}
-              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-4">
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Location & Geography</span>
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 shadow-2xs">
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200/80 pb-1.5 select-none">Location & Geography</span>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Province</span>
-                    <span className="text-slate-850 text-xs font-bold">{viewingStaff.province}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Province</span>
+                    <span className="text-slate-900 text-sm font-bold block">{viewingStaff.province}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">District</span>
-                    <span className="text-slate-850 text-xs font-bold">{viewingStaff.district}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">District</span>
+                    <span className="text-slate-900 text-sm font-bold block">{viewingStaff.district}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Area</span>
-                    <span className="text-slate-850 text-xs font-bold">{viewingStaff.area}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Area</span>
+                    <span className="text-slate-900 text-sm font-bold block">{viewingStaff.area}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Staff Count</span>
-                    <span className="text-[#0f2d4a] text-xs font-bold">{viewingStaff.staffCount} members</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Staff Count</span>
+                    <span className="text-[#0f2d4a] text-sm font-bold block">{viewingStaff.staffCount} members</span>
                   </div>
                 </div>
                 <div className="mt-1">
-                  <span className="text-[9px] font-medium text-slate-400 uppercase block mb-1">Office Location Address</span>
-                  <p className="text-slate-750 text-xs font-semibold leading-relaxed bg-white border border-slate-200/60 rounded-xl p-3">
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Office Location Address</span>
+                  <p className="text-slate-900 text-sm font-medium leading-relaxed bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
                     {viewingStaff.location}
                   </p>
                 </div>
               </div>
 
               {/* Grid 2: Contact Info */}
-              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-4">
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Contact Details</span>
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 shadow-2xs">
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200/80 pb-1.5 select-none">Contact Details</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Email Address</span>
-                    <span className="text-slate-800 text-xs font-bold block break-all">{viewingStaff.email}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Email Address</span>
+                    <span className="text-slate-900 text-sm font-bold block break-all">{viewingStaff.email}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Mobile Number</span>
-                    <span className="text-slate-800 text-xs font-bold block">{viewingStaff.mobile}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Mobile Number</span>
+                    <span className="text-slate-900 text-sm font-bold block">{viewingStaff.mobile}</span>
                   </div>
                 </div>
               </div>
 
               {/* Grid 3: Branch Login & Activity Details */}
-              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-3">
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 shadow-2xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
                   <div>
-                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider select-none block">
+                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider select-none block">
                       Branch Login & Session Activity
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400">
+                    <span className="text-[10px] font-bold text-slate-500">
                       {branchLoginActivities.length} Recent Event(s)
                     </span>
                   </div>
@@ -1527,27 +1527,27 @@ export default function AdminStaffPage() {
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/70">
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Last Login</span>
-                    <span className="text-slate-800 text-xs font-semibold block truncate">
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Last Login</span>
+                    <span className="text-slate-900 text-xs font-bold block truncate">
                       {viewingStaff.lastLoginAt ? new Date(viewingStaff.lastLoginAt).toLocaleString() : "Never logged in"}
                     </span>
                   </div>
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/70">
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Total Logins</span>
-                    <span className="text-slate-800 text-xs font-bold block">
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Total Logins</span>
+                    <span className="text-slate-900 text-xs font-bold block">
                       {viewingStaff.loginCount || branchLoginActivities.length || 0} times
                     </span>
                   </div>
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/70">
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Last IP Address</span>
-                    <span className="text-slate-800 font-mono text-xs font-semibold block truncate">
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Last IP Address</span>
+                    <span className="text-slate-900 font-mono text-xs font-bold block truncate">
                       {viewingStaff.lastLoginIp || branchLoginActivities[0]?.ipAddress || "—"}
                     </span>
                   </div>
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/70">
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Device Client</span>
-                    <span className="text-slate-800 text-xs font-semibold block truncate" title={viewingStaff.lastLoginDevice || branchLoginActivities[0]?.device || "Web Browser"}>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Device Client</span>
+                    <span className="text-slate-900 text-xs font-bold block truncate" title={viewingStaff.lastLoginDevice || branchLoginActivities[0]?.device || "Web Browser"}>
                       {viewingStaff.lastLoginDevice || branchLoginActivities[0]?.device || "Web Browser"}
                     </span>
                   </div>
