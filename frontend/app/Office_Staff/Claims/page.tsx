@@ -1491,8 +1491,7 @@ function OfficeStaffClaimsPageContent() {
                     selectedClaim.inspectionApproved ||
                     selectedClaim.status === "Approved" ||
                     selectedClaim.status === "Settled" ||
-                    selectedClaim.status === "Completed" ||
-                    (selectedClaim.currentStep && selectedClaim.currentStep >= 4)
+                    selectedClaim.status === "Completed"
                   );
 
                   const isClaimApprovedOrSettled = Boolean(
@@ -1610,8 +1609,8 @@ function OfficeStaffClaimsPageContent() {
                             </div>
                           </div>
 
-                          {/* Inspection Photos (Hidden during approval time, displayed once approved) */}
-                          {isInspectionApproved && agentPhotos.length > 0 && (
+                          {/* Inspection Photos */}
+                          {agentPhotos.length > 0 && (
                             <div>
                               <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Agent On-Site Photos ({agentPhotos.length})</span>
                               <div className="flex flex-wrap gap-2.5">
