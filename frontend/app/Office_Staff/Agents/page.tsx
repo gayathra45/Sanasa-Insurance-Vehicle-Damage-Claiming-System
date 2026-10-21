@@ -7,6 +7,7 @@ import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import SimpleLoader from "@/app/Components/SimpleLoader";
+import { compressImage } from "../../utils/imageCompressor";
 import { sriLankaBanks } from "../../utils/banks";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -343,22 +344,15 @@ export default function AgentsPage() {
 
     setSubmittingAgent(true);
     try {
-      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = error => reject(error);
-      });
-
       let nicFrontBase64 = "";
       let nicBackBase64 = "";
       let birthCertificateBase64 = "";
       let policeReportBase64 = "";
 
-      if (nicFront) nicFrontBase64 = await toBase64(nicFront);
-      if (nicBack) nicBackBase64 = await toBase64(nicBack);
-      if (birthCertificate) birthCertificateBase64 = await toBase64(birthCertificate);
-      if (policeReport) policeReportBase64 = await toBase64(policeReport);
+      if (nicFront) nicFrontBase64 = await compressImage(nicFront);
+      if (nicBack) nicBackBase64 = await compressImage(nicBack);
+      if (birthCertificate) birthCertificateBase64 = await compressImage(birthCertificate);
+      if (policeReport) policeReportBase64 = await compressImage(policeReport);
 
       const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/office-staff/agents`, {
@@ -529,13 +523,7 @@ export default function AgentsPage() {
     try {
       let documentBase64 = "";
       if (deleteDoc) {
-        const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = error => reject(error);
-        });
-        documentBase64 = await toBase64(deleteDoc);
+        documentBase64 = await compressImage(deleteDoc);
       }
 
       const baseUrl = API_URL;

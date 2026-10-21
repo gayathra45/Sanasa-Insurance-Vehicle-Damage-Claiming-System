@@ -7,6 +7,7 @@ import AgentNavbar from "@/app/Components/Agent/Navbar";
 import AgentFooter from "@/app/Components/Agent/Footer";
 import { API_URL } from "@/app/config";
 import { sriLankaBanks } from "@/app/utils/banks";
+import { compressImage } from "@/app/utils/imageCompressor";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UserCircleIcon,
@@ -422,20 +423,26 @@ export default function AgentProfilePage() {
   };
 
   // Photo Upload Handler
-  const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setPopup({ show: true, title: "File Too Large", message: "Photo file size must be less than 5MB.", type: "error" });
+    if (file.size > 10 * 1024 * 1024) {
+      setPopup({ show: true, title: "File Too Large", message: "Photo file size must be less than 10MB.", type: "error" });
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPreviewPhoto(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const compressedDataUrl = await compressImage(file, 800, 800, 0.75);
+      setPreviewPhoto(compressedDataUrl);
+    } catch (err) {
+      console.error("Photo compression failed:", err);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreviewPhoto(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSavePhoto = async () => {
