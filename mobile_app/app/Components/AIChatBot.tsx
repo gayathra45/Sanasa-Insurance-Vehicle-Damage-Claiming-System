@@ -15,6 +15,7 @@ import {
   TouchableWithoutFeedback,
   Linking,
 } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { API_BASE_URL } from "../_config";
@@ -35,6 +36,27 @@ interface AIChatBotProps {
 
 const QUICK_PROMPTS = [
   {
+    label: "📋 What are my claims?",
+    text: "What are my registered claims?",
+    bgColor: "#f0f9ff",
+    borderColor: "#bae6fd",
+    textColor: "#0369a1",
+  },
+  {
+    label: "🚗 My Vehicles",
+    text: "What are my registered vehicles?",
+    bgColor: "#ecfdf5",
+    borderColor: "#a7f3d0",
+    textColor: "#047857",
+  },
+  {
+    label: "👤 My Profile",
+    text: "What are my registered profile details?",
+    bgColor: "#f5f3ff",
+    borderColor: "#ddd6fe",
+    textColor: "#6d28d9",
+  },
+  {
     label: "🚗 File Accident Claim",
     text: "How do I file a vehicle accident claim step-by-step?",
     bgColor: "#fff1f2",
@@ -44,23 +66,16 @@ const QUICK_PROMPTS = [
   {
     label: "🛡️ Comprehensive Cover",
     text: "What does Sanasa Comprehensive Motor Insurance cover?",
-    bgColor: "#f0f9ff",
-    borderColor: "#bae6fd",
-    textColor: "#0369a1",
-  },
-  {
-    label: "📋 Required Documents",
-    text: "What documents do I need to submit for an accident claim?",
-    bgColor: "#fffbeb",
-    borderColor: "#fde68a",
-    textColor: "#b45309",
+    bgColor: "#eef2ff",
+    borderColor: "#c7d2fe",
+    textColor: "#4338ca",
   },
   {
     label: "🚨 24/7 Hotline",
     text: "What is the 24/7 Sanasa emergency accident hotline?",
-    bgColor: "#ecfdf5",
-    borderColor: "#a7f3d0",
-    textColor: "#047857",
+    bgColor: "#f0fdfa",
+    borderColor: "#99f6e4",
+    textColor: "#0f766e",
   },
 ];
 
@@ -75,7 +90,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     {
       id: "welcome-1",
       sender: "ai",
-      text: "Hello! I am **Sanasa AI**, your vehicle insurance assistant.\n\nI can help you with accident claims, coverages, required documents, and 24/7 emergency roadside assistance across Sri Lanka.\n\nHow can I help you today?",
+      text: "Hello! I am **Sanasa AI**, your vehicle insurance assistant.\n\nI can help you with:\n• Claim details (enter your Claim ID like `CLM-0000-0014`)\n• Checking your registered claims & vehicles\n• Step-by-step accident claims & required documents\n• 24/7 emergency roadside assistance across Sri Lanka\n\nHow can I help you today?",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -124,6 +139,22 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     setIsLoading(true);
     scrollToBottom();
 
+    // Retrieve logged in user info from AsyncStorage
+    let userNic = "";
+    let userEmail = "";
+    let userName = "";
+    try {
+      const userStr = await AsyncStorage.getItem("logged_in_user");
+      if (userStr) {
+        const u = JSON.parse(userStr);
+        userNic = u.nic || "";
+        userEmail = u.email || "";
+        userName = u.firstName ? `${u.firstName} ${u.lastName || ""}`.trim() : "";
+      }
+    } catch (e) {
+      console.warn("Could not read logged_in_user from AsyncStorage", e);
+    }
+
     try {
       const history = messages.slice(-8).map((m) => ({
         role: m.sender === "user" ? "user" : "model",
@@ -137,6 +168,9 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
           message: textToSend,
           history,
           userRole,
+          userNic,
+          userEmail,
+          userName,
         }),
       });
 
@@ -179,31 +213,74 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     ]);
   };
 
-  // Helper to render bold text and bullet points cleanly
+  // Helper to render bold text, bullet points, clickable links, and code pills
   const renderFormattedText = (text: string, isUser: boolean) => {
     const lines = text.split("\n");
     return lines.map((line, lIdx) => {
-      const parts = line.split(/(\*\*.*?\*\*)/g);
-      return (
-        <Text
-          key={lIdx}
-          style={[
-            styles.messageText,
-            isUser ? styles.userMessageText : styles.aiMessageText,
-            line.trim().startsWith("•") || line.trim().startsWith("-") ? styles.bulletLine : null,
-          ]}
-        >
-          {parts.map((part, pIdx) => {
-            if (part.startsWith("**") && part.endsWith("**")) {
-              return (
-                <Text key={pIdx} style={styles.boldText}>
-                  {part.slice(2, -2)}
-                </Text>
+      // Check for markdown link: [label](url)
+      const linkMatch = line.match(/\[(.*?)\]\((.*?)\)/);
+      if (linkMatch && !isUser) {
+        const label = linkMatch[1];
+        const rawUrl = linkMatch[2];
+        const targetUrl = rawUrl.startsWith("http")
+          ? rawUrl
+          : `${API_BASE_URL}${rawUrl.startsWith("/") ? "" : "/"}${rawUrl}`;
+
+        return (
+          <TouchableOpacity
+            key={lIdx}
+            activeOpacity={0.8}
+            style={styles.linkBadge}
+            onPress={() => {
+              Linking.openURL(targetUrl).catch((err) =>
+                console.warn("Could not open link:", err)
               );
-            }
-            return part;
-          })}
-        </Text>
+            }}
+          >
+            <Ionicons name="document-text-outline" size={14} color="#0284c7" />
+            <Text style={styles.linkBadgeText}>
+              {label.replace(/^\/api\/claims\//, "Claim Report ")}
+            </Text>
+            <Ionicons name="open-outline" size={12} color="#0284c7" style={{ marginLeft: 3 }} />
+          </TouchableOpacity>
+        );
+      }
+
+      const parts = line.split(/(\*\*.*?\*\*|`.*?`)/g);
+      const isBullet = line.trim().startsWith("•") || line.trim().startsWith("-");
+
+      return (
+        <View key={lIdx} style={[styles.textLineWrap, isBullet ? styles.bulletLineWrap : null]}>
+          <Text
+            style={[
+              styles.messageText,
+              isUser ? styles.userMessageText : styles.aiMessageText,
+            ]}
+          >
+            {parts.map((part, pIdx) => {
+              if (part.startsWith("**") && part.endsWith("**")) {
+                return (
+                  <Text key={pIdx} style={styles.boldText}>
+                    {part.slice(2, -2)}
+                  </Text>
+                );
+              }
+              if (part.startsWith("`") && part.endsWith("`") && !isUser) {
+                const codeVal = part.slice(1, -1);
+                return (
+                  <Text
+                    key={pIdx}
+                    onPress={() => handleSend(codeVal)}
+                    style={styles.codeTextPressable}
+                  >
+                    {" "}{codeVal}{" "}
+                  </Text>
+                );
+              }
+              return part;
+            })}
+          </Text>
+        </View>
       );
     });
   };
@@ -890,11 +967,44 @@ const styles = StyleSheet.create({
   aiMessageText: {
     color: "#0f172a",
   },
+  textLineWrap: {
+    marginVertical: 1,
+  },
+  bulletLineWrap: {
+    paddingLeft: 4,
+  },
   bulletLine: {
     marginVertical: 1,
   },
   boldText: {
     fontWeight: "800",
+  },
+  linkBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f9ff",
+    borderColor: "#bae6fd",
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    marginVertical: 4,
+    alignSelf: "flex-start",
+  },
+  linkBadgeText: {
+    fontSize: 11.5,
+    color: "#0284c7",
+    fontWeight: "700",
+    marginLeft: 4,
+    textDecorationLine: "underline",
+  },
+  codeTextPressable: {
+    backgroundColor: "#e0f2fe",
+    color: "#0369a1",
+    fontWeight: "700",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    fontSize: 11.5,
+    textDecorationLine: "underline",
   },
   timestampText: {
     fontSize: 9,
