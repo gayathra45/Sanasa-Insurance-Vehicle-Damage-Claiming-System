@@ -22,6 +22,7 @@ import {
   Loading03Icon
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
+import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 interface RegistrationItem {
   name: string;
@@ -53,6 +54,7 @@ export default function OfficeStaffDashboard() {
   const [error, setError] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
   const [detailedClaim, setDetailedClaim] = useState<any | null>(null);
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
 
   // --- Password Modal States ---
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -197,6 +199,7 @@ export default function OfficeStaffDashboard() {
     }
     setBranch(currentBranch);
     setStaffEmail(email);
+    setViewedClaims(getViewedClaims("office_staff"));
 
     async function fetchStats() {
       try {
@@ -521,9 +524,14 @@ export default function OfficeStaffDashboard() {
                               <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 flex-1 min-w-0">
                                 {/* Title / Urgency */}
                                 <div className="flex-shrink-0">
-                                  <span className={`font-semibold text-base ${headerTextClass} block`}>
-                                    {claim.urgency}
-                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`font-semibold text-base ${headerTextClass} block`}>
+                                      {claim.urgency}
+                                    </span>
+                                    {isClaimUnread(claim.rawClaim || claim, viewedClaims) && (
+                                      <UnreadDot />
+                                    )}
+                                  </div>
                                   <span className="text-[11px] font-semibold text-slate-400 block tracking-wider uppercase">
                                     {claim.id}
                                   </span>
@@ -552,7 +560,10 @@ export default function OfficeStaffDashboard() {
                                   {claim.time}
                                 </span>
                                 <button
-                                  onClick={() => setSelectedClaim(claim.rawClaim)}
+                                  onClick={() => {
+                                    markClaimAsRead(claim.rawClaim || claim.id, viewedClaims, setViewedClaims, "office_staff");
+                                    setSelectedClaim(claim.rawClaim);
+                                  }}
                                   className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-semibold text-[13px] px-6 py-3 rounded-full transition-all tracking-wide cursor-pointer focus:outline-none shadow-sm shadow-slate-500/20 whitespace-nowrap text-center border-none"
                                 >
                                   Details

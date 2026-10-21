@@ -109,15 +109,18 @@ export default function NotificationsPage() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
 
-    const requested = (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+    const requested = (claim.requestedDocuments || []).filter(name => {
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      return rec !== "agent" && rec !== "insurance_agent";
+    });
     const submittedNames = (claim.additionalDocuments || []).map((d: any) => (d.name || d.title || "").toLowerCase());
     const hasGarageComparison = Boolean(claim.garageEstimateComparison?.garageDocumentUrl || claim.garageEstimateComparison?.garageEstimateAmount);
 

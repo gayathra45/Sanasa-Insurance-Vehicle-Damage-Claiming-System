@@ -160,10 +160,10 @@ export default function PolicyHolderDocuments() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
@@ -177,7 +177,10 @@ export default function PolicyHolderDocuments() {
     }
 
     return (claim.requestedDocuments || []).filter(name => {
-      if (getRecipientForDoc(name) !== "User") return false;
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      // Only filter out if specifically requested from Agent
+      if (rec === "agent" || rec === "insurance_agent") return false;
+
       const normName = name.trim().toLowerCase();
       const alreadyUploaded = uploadedNames.some(u => 
         u === normName ||
@@ -218,15 +221,34 @@ export default function PolicyHolderDocuments() {
     return submitted;
   };
 
-  const getDocRequestNote = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "";
-    const msg = [...claim.messages]
+  const getDocRequestMsg = (claim: Claim, docName: string) => {
+    if (!claim.messages || claim.messages.length === 0) return null;
+    const lowerDoc = docName.toLowerCase();
+    return [...claim.messages]
       .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+      .find(m => {
+        if (!m.message) return false;
+        const lowerMsg = m.message.toLowerCase();
+        return (
+          lowerMsg.includes(`requested: ${lowerDoc}`) ||
+          lowerMsg.includes(lowerDoc) ||
+          (lowerDoc.includes("garage") && lowerMsg.includes("garage")) ||
+          (lowerDoc.includes("estimate") && lowerMsg.includes("estimate")) ||
+          (lowerDoc.includes("police") && lowerMsg.includes("police")) ||
+          (lowerDoc.includes("license") && lowerMsg.includes("license"))
+        );
+      });
+  };
+
+  const getDocRequestNote = (claim: Claim, docName: string): string => {
+    const msg = getDocRequestMsg(claim, docName);
     if (msg && msg.message) {
       const idx = msg.message.indexOf("Message:");
       if (idx !== -1) {
         return msg.message.substring(idx + 8).trim();
+      }
+      if (msg.message.toLowerCase().includes("requested")) {
+        return msg.message;
       }
     }
     return "";
@@ -365,21 +387,18 @@ export default function PolicyHolderDocuments() {
   };
 
   const getDocRequestTime = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "";
-    const msg = [...claim.messages]
-      .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    const msg = getDocRequestMsg(claim, docName);
     if (msg && msg.sentAt) {
       return formatDateTimeString(msg.sentAt);
+    }
+    if (claim.updatedAt) {
+      return formatDateTimeString(claim.updatedAt);
     }
     return "";
   };
 
   const getDocRequestSender = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "Office Staff";
-    const msg = [...claim.messages]
-      .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    const msg = getDocRequestMsg(claim, docName);
     return msg ? (msg.sender || "Office Staff") : "Office Staff";
   };
 
@@ -388,7 +407,9 @@ export default function PolicyHolderDocuments() {
     // Initialize file selection state
     const initialFiles: { [docName: string]: { file: File | null; preview: string } } = {};
     const userDocs = getUserRequestedDocs(claim);
-    const docs = userDocs.length > 0 ? userDocs : ["Police Report", "Repair Estimate"];
+    const docs = userDocs.length > 0 
+      ? userDocs 
+      : (claim.requestedDocuments && claim.requestedDocuments.length > 0 ? claim.requestedDocuments : ["Document"]);
     
     docs.forEach(docName => {
       initialFiles[docName] = { file: null, preview: "" };
@@ -503,7 +524,7 @@ export default function PolicyHolderDocuments() {
   };
 
   // Compile Requested Documents List
-  const requestedDocsList = claims.filter(c => c.documentsRequested && getUserRequestedDocs(c).length > 0);
+  const requestedDocsList = claims.filter(c => (c.documentsRequested || (c.requestedDocuments && c.requestedDocuments.length > 0)) && getUserRequestedDocs(c).length > 0);
 
   // Compile Grouped Uploaded Documents by Claim ID
   const groupedClaimsList = claims.map(claim => {
@@ -781,60 +802,69 @@ export default function PolicyHolderDocuments() {
                     Claim {uploadTargetClaim.claimNumber}
                   </h2>
                   <p className="text-slate-400 text-[14px] font-normal mt-1">
-                    Staff has requested a {getUserRequestedDocs(uploadTargetClaim).join(" & ")}
+                    Staff has requested {Object.keys(uploadFiles).join(" & ") || "the required document(s)"}
                   </p>
                 </div>
 
                 <hr className="border-t border-slate-200 mt-5 mb-5" />
 
                 <div className="flex flex-col gap-4.5 mt-2">
-                  {Object.entries(uploadFiles).map(([docName, val]) => (
-                    <div 
-                      key={docName} 
-                      className="w-full border border-slate-300 rounded-full py-4 px-8 flex items-center justify-between min-h-[62px] bg-white transition-all"
-                    >
-                      <span className="text-slate-800 text-[16px] font-medium select-none">
-                        {docName}
-                      </span>
-
-                      <div className="flex items-center gap-3">
-                        {val.file === null ? (
-                          <span
-                            onClick={() => fileInputRefs.current[docName]?.click()}
-                            className="text-red-500 hover:text-red-600 font-semibold text-[15px] cursor-pointer hover:underline select-none"
-                          >
-                            Upload
+                  {Object.entries(uploadFiles).map(([docName, val]) => {
+                    const note = uploadTargetClaim ? getDocRequestNote(uploadTargetClaim, docName) : "";
+                    return (
+                      <div key={docName} className="flex flex-col gap-1.5">
+                        <div 
+                          className="w-full border border-slate-300 rounded-full py-4 px-8 flex items-center justify-between min-h-[62px] bg-white transition-all shadow-xs"
+                        >
+                          <span className="text-slate-800 text-[16px] font-medium select-none">
+                            {docName}
                           </span>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span 
-                              className="text-emerald-600 font-medium text-sm truncate max-w-[200px]"
-                              title={val.file.name}
-                            >
-                              ✓ {val.file.name}
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveFile(docName)}
-                              className="text-red-500 hover:text-red-600 cursor-pointer bg-transparent border-none p-1 transition-colors flex items-center justify-center"
-                              title="Remove file"
-                            >
-                              <HugeiconsIcon icon={Delete02Icon} className="w-5 h-5" strokeWidth={2.2} />
-                            </button>
+
+                          <div className="flex items-center gap-3">
+                            {val.file === null ? (
+                              <span
+                                onClick={() => fileInputRefs.current[docName]?.click()}
+                                className="text-red-500 hover:text-red-600 font-semibold text-[15px] cursor-pointer hover:underline select-none"
+                              >
+                                Upload
+                              </span>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span 
+                                  className="text-emerald-600 font-medium text-sm truncate max-w-[200px]"
+                                  title={val.file.name}
+                                >
+                                  ✓ {val.file.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveFile(docName)}
+                                  className="text-red-500 hover:text-red-600 cursor-pointer bg-transparent border-none p-1 transition-colors flex items-center justify-center"
+                                  title="Remove file"
+                                >
+                                  <HugeiconsIcon icon={Delete02Icon} className="w-5 h-5" strokeWidth={2.2} />
+                                </button>
+                              </div>
+                            )}
                           </div>
+
+                          {/* Hidden File Input */}
+                          <input
+                            type="file"
+                            ref={el => { fileInputRefs.current[docName] = el; }}
+                            onChange={(e) => handleFileChange(e, docName)}
+                            accept="image/*,application/pdf"
+                            className="hidden"
+                          />
+                        </div>
+                        {note && (
+                          <p className="text-xs text-slate-500 italic pl-5 -mt-0.5 mb-1">
+                            Note: "{note}"
+                          </p>
                         )}
                       </div>
-
-                      {/* Hidden File Input */}
-                      <input
-                        type="file"
-                        ref={el => { fileInputRefs.current[docName] = el; }}
-                        onChange={(e) => handleFileChange(e, docName)}
-                        accept="image/*,application/pdf"
-                        className="hidden"
-                      />
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="flex flex-row justify-end items-center gap-3 mt-10">

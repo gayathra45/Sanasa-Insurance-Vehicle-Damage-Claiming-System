@@ -297,11 +297,24 @@ router.get("/stats", async (req, res) => {
 // GET all claims for a specific branch: /api/office-staff/claims
 router.get("/claims", async (req, res) => {
   try {
-    const { branch } = req.query;
-    if (!branch) {
-      return res.status(400).json({ error: "Branch query parameter is required." });
-    }
-    const claims = await Claim.find({ branch: branch.trim() }).sort({ createdAt: -1 }).lean();
+    const rawBranch = req.query.branch;
+    const branchInput = (
+      typeof rawBranch === "string"
+        ? rawBranch.trim()
+        : Array.isArray(rawBranch) && rawBranch.length > 0 && typeof rawBranch[0] === "string"
+        ? rawBranch[0].trim()
+        : ""
+    ) || "Galle";
+    const baseBranchName = branchInput.replace(/\s+Branch$/i, "").trim();
+    const branchCondition = {
+      $in: [
+        branchInput,
+        baseBranchName,
+        `${baseBranchName} Branch`,
+        new RegExp(`^${baseBranchName}(?:\\s+Branch)?$`, "i")
+      ]
+    };
+    const claims = await Claim.find({ branch: branchCondition }).sort({ createdAt: -1 }).lean();
 
     // Attach policy holder user profile info & bank details
     const nics = claims.map(c => c.userNic).filter(Boolean);
@@ -1124,6 +1137,7 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
       recipient: "All"
     });
 
+    claim.updatedAt = new Date();
     await claim.save();
 
     res.json({
@@ -1243,6 +1257,7 @@ router.post("/claims/:claimNumber/approve-inspection", async (req, res) => {
       recipient: "All"
     });
 
+    claim.updatedAt = new Date();
     claim.markModified("requestedDocuments");
     await claim.save();
 

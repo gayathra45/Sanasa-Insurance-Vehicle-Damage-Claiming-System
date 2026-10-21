@@ -316,10 +316,10 @@ function TrackClaimsContent() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
@@ -333,7 +333,8 @@ function TrackClaimsContent() {
     }
 
     return (claim.requestedDocuments || []).filter(name => {
-      if (getRecipientForDoc(name) !== "User") return false;
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      if (rec === "agent" || rec === "insurance_agent") return false;
       const normName = name.trim().toLowerCase();
       const alreadyUploaded = uploadedNames.some(u => 
         u === normName ||
@@ -374,35 +375,51 @@ function TrackClaimsContent() {
     return submitted;
   };
 
-  const getDocRequestNote = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "";
-    const msg = [...claim.messages]
+  const getDocRequestMsg = (claim: Claim, docName: string) => {
+    if (!claim.messages || claim.messages.length === 0) return null;
+    const lowerDoc = docName.toLowerCase();
+    return [...claim.messages]
       .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+      .find(m => {
+        if (!m.message) return false;
+        const lowerMsg = m.message.toLowerCase();
+        return (
+          lowerMsg.includes(`requested: ${lowerDoc}`) ||
+          lowerMsg.includes(lowerDoc) ||
+          (lowerDoc.includes("garage") && lowerMsg.includes("garage")) ||
+          (lowerDoc.includes("estimate") && lowerMsg.includes("estimate")) ||
+          (lowerDoc.includes("police") && lowerMsg.includes("police")) ||
+          (lowerDoc.includes("license") && lowerMsg.includes("license"))
+        );
+      });
+  };
+
+  const getDocRequestNote = (claim: Claim, docName: string): string => {
+    const msg = getDocRequestMsg(claim, docName);
     if (msg && msg.message) {
       const idx = msg.message.indexOf("Message:");
       if (idx !== -1) {
         return msg.message.substring(idx + 8).trim();
+      }
+      if (msg.message.toLowerCase().includes("requested")) {
+        return msg.message;
       }
     }
     return "";
   };
 
   const getDocRequestSender = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "Office Staff";
-    const msg = [...claim.messages]
-      .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    const msg = getDocRequestMsg(claim, docName);
     return msg ? (msg.sender || "Office Staff") : "Office Staff";
   };
 
   const getDocRequestTime = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "";
-    const msg = [...claim.messages]
-      .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    const msg = getDocRequestMsg(claim, docName);
     if (msg && msg.sentAt) {
       return formatDateTimeString(msg.sentAt);
+    }
+    if (claim.updatedAt) {
+      return formatDateTimeString(claim.updatedAt);
     }
     return "";
   };
@@ -954,7 +971,7 @@ function TrackClaimsContent() {
               )}
 
               {/* Documents Requested Banner (Action Required) */}
-              {trackedClaim.documentsRequested && getUserRequestedDocs(trackedClaim).length > 0 && (
+              {(trackedClaim.documentsRequested || (trackedClaim.requestedDocuments && trackedClaim.requestedDocuments.length > 0)) && getUserRequestedDocs(trackedClaim).length > 0 && (
                 <div className="mb-6 p-6 rounded-[24px] bg-[#ffeaea]/80 border border-[#ffd1d1] flex flex-col gap-3 transition-all duration-300">
                   <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#df3d3d] animate-pulse" />

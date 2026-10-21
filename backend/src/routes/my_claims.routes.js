@@ -196,6 +196,7 @@ router.post("/upload-garage-estimate/:claimNumber", async (req, res) => {
     claim.markModified("requestedDocuments");
     claim.markModified("additionalDocuments");
     claim.markModified("garageEstimateComparison");
+    claim.updatedAt = new Date();
     await claim.save();
 
     res.json({
@@ -358,6 +359,7 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
     claim.markModified("requestedDocuments");
     claim.markModified("additionalDocuments");
     claim.markModified("garageEstimateComparison");
+    claim.updatedAt = new Date();
     await claim.save();
 
     // Send activity update email to agent
