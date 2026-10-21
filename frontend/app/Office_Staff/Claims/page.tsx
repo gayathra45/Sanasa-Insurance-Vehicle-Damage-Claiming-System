@@ -474,13 +474,23 @@ function OfficeStaffClaimsPageContent() {
         setClaims((prevClaims) =>
           prevClaims.map((c) =>
             c.claimNumber === claimNumber
-              ? { ...c, garageEstimateComparison: data.garageEstimateComparison, status: "Review", currentStep: 4 }
+              ? {
+                  ...c,
+                  garageEstimateComparison: data.garageEstimateComparison,
+                  status: data.claim?.status || (c.status === "Approved" || c.status === "Settled" || c.status === "Completed" ? c.status : "Review"),
+                  currentStep: data.claim?.currentStep || (c.currentStep && c.currentStep >= 4 ? c.currentStep : 4)
+                }
               : c
           )
         );
         setSelectedClaim((prev) =>
           prev && prev.claimNumber === claimNumber
-            ? { ...prev, garageEstimateComparison: data.garageEstimateComparison, status: "Review", currentStep: 4 }
+            ? {
+                ...prev,
+                garageEstimateComparison: data.garageEstimateComparison,
+                status: data.claim?.status || (prev.status === "Approved" || prev.status === "Settled" || prev.status === "Completed" ? prev.status : "Review"),
+                currentStep: data.claim?.currentStep || (prev.currentStep && prev.currentStep >= 4 ? prev.currentStep : 4)
+              }
             : prev
         );
         if (!isAuto) {
@@ -1480,7 +1490,24 @@ function OfficeStaffClaimsPageContent() {
                   const isInspectionApproved = Boolean(
                     selectedClaim.inspectionApproved ||
                     selectedClaim.status === "Approved" ||
-                    selectedClaim.status === "Settled"
+                    selectedClaim.status === "Settled" ||
+                    selectedClaim.status === "Completed" ||
+                    (selectedClaim.currentStep && selectedClaim.currentStep >= 4)
+                  );
+
+                  const isClaimApprovedOrSettled = Boolean(
+                    selectedClaim.status === "Approved" ||
+                    selectedClaim.status === "Settled" ||
+                    selectedClaim.status === "Completed" ||
+                    selectedClaim.paymentReceipt ||
+                    (selectedClaim.currentStep && selectedClaim.currentStep >= 5)
+                  );
+
+                  const isClaimPaymentSettled = Boolean(
+                    selectedClaim.status === "Settled" ||
+                    selectedClaim.status === "Completed" ||
+                    Boolean(selectedClaim.paymentReceipt) ||
+                    (selectedClaim.currentStep && selectedClaim.currentStep >= 6)
                   );
 
                   const garageDoc = (selectedClaim.additionalDocuments || []).find(
@@ -2057,7 +2084,7 @@ function OfficeStaffClaimsPageContent() {
                 )}
 
                 {/* SETTLEMENT AMOUNT ENTERING & APPROVAL SECTION */}
-                {isInspectionApproved && hasGarageDoc && selectedClaim.status !== "Approved" && selectedClaim.status !== "Settled" && (
+                {isInspectionApproved && hasGarageDoc && !isClaimApprovedOrSettled && selectedClaim.status !== "Rejected" && (
                   <div className="bg-white border-2 border-emerald-300 rounded-2xl p-5 space-y-4 shadow-sm">
                     <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-100 pb-3">
                       <div>
@@ -2169,20 +2196,20 @@ function OfficeStaffClaimsPageContent() {
                 )}
 
                 {/* Summary Banner if already approved */}
-                {isInspectionApproved && (selectedClaim.status === "Approved" || selectedClaim.status === "Settled") && (
+                {isInspectionApproved && isClaimApprovedOrSettled && (
                   <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-center justify-between text-xs text-emerald-900 font-medium">
                     <div className="flex items-center gap-2">
                       <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={3} />
                       <span className="font-bold">Claim Settlement Approved: LKR {(selectedClaim.amount || 0).toLocaleString()}</span>
                     </div>
                     <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                      Proceed to Bank Settlement Below
+                      {isClaimPaymentSettled ? "Payment Disbursed" : "Proceed to Bank Settlement Below"}
                     </span>
                   </div>
                 )}
 
                 {/* 5. POST-APPROVAL PAYMENT SETTLEMENT & RECEIPT WORKFLOW */}
-                {(selectedClaim.status === "Approved" || selectedClaim.status === "Settled") && (
+                {isClaimApprovedOrSettled && (
                   <div className="bg-blue-50/50 border border-blue-200 rounded-2xl p-5 space-y-4">
                     <div className="flex justify-between items-center border-b border-blue-200 pb-3">
                       <div className="flex items-center gap-2">
@@ -2192,9 +2219,9 @@ function OfficeStaffClaimsPageContent() {
                         </h3>
                       </div>
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                        selectedClaim.status === "Settled" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                        isClaimPaymentSettled ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
                       }`}>
-                        {selectedClaim.status === "Settled" ? "Payment Completed" : "Payment Pending Disbursement"}
+                        {isClaimPaymentSettled ? "Payment Completed" : "Payment Pending Disbursement"}
                       </span>
                     </div>
 
@@ -2232,7 +2259,7 @@ function OfficeStaffClaimsPageContent() {
                     </div>
 
                     {/* Payment Receipt Upload & Completion Box */}
-                    {selectedClaim.status === "Approved" && (
+                    {!isClaimPaymentSettled && (
                       <div className="bg-white border border-blue-200 rounded-xl p-5 space-y-4">
                         <div className="flex flex-col gap-1">
                           <span className="text-xs font-bold text-slate-800">
@@ -2295,14 +2322,14 @@ function OfficeStaffClaimsPageContent() {
                             disabled={isSettlingPayment || !settlingReceiptFile}
                             className="px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2"
                           >
-                            {isSettlingPayment ? "Uploading & Settling..." : "? Confirm Payment & Settle Claim"}
+                            {isSettlingPayment ? "Uploading & Settling..." : "💳 Confirm Payment & Settle Claim"}
                           </button>
                         </div>
                       </div>
                     )}
 
                     {/* If Already Settled */}
-                    {selectedClaim.status === "Settled" && (
+                    {isClaimPaymentSettled && (
                       <div className="bg-white border border-emerald-200 rounded-xl p-4 flex justify-between items-center">
                         <div>
                           <span className="text-xs font-bold text-emerald-800 block">Payment Disbursed Successfully</span>
@@ -2334,7 +2361,7 @@ function OfficeStaffClaimsPageContent() {
               {/* Footer Action Bar inside Inspection Modal */}
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 select-none">
                 <div className="text-xs text-slate-500 font-medium">
-                  {selectedClaim.status === "Settled" || selectedClaim.status === "Completed" ? (
+                  {selectedClaim.status === "Settled" || selectedClaim.status === "Completed" || selectedClaim.paymentReceipt ? (
                     <span className="text-emerald-700 font-bold">✓ Claim Completed & Settled</span>
                   ) : selectedClaim.status === "Approved" ? (
                     <span className="text-emerald-700 font-bold">✓ Claim Decision: Approved</span>
