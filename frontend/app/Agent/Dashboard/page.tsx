@@ -2404,7 +2404,7 @@ export default function AgentDashboard() {
       )}
 
       {/* Floating Chat Bubble / Support Helpdesk Chat */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      <div className="fixed bottom-8 right-8 z-40 flex flex-col items-end gap-3">
         {showSupportChat && (
           <div className="bg-white border border-slate-100 rounded-3xl w-[320px] md:w-[350px] shadow-2xl flex flex-col overflow-hidden duration-300">
             {/* Header */}
