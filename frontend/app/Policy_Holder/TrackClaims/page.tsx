@@ -61,6 +61,7 @@ interface Claim {
   };
   additionalDocuments?: { name: string; url: string; uploadedAt: string; uploadedBy?: string }[];
   createdAt?: string;
+  updatedAt?: string;
   aiAnalysis?: {
     isAnalyzed: boolean;
     damagedItems?: {
@@ -417,9 +418,6 @@ function TrackClaimsContent() {
     const msg = getDocRequestMsg(claim, docName);
     if (msg && msg.sentAt) {
       return formatDateTimeString(msg.sentAt);
-    }
-    if (claim.updatedAt) {
-      return formatDateTimeString(claim.updatedAt);
     }
     return "";
   };

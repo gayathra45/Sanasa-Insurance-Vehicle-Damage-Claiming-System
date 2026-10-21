@@ -158,22 +158,29 @@ router.post("/upload-garage-estimate/:claimNumber", async (req, res) => {
     const allUrls = [
       ...(claim.accidentPhotos?.front || []),
       ...(claim.accidentPhotos?.rear || []),
-      ...(claim.accidentPhotos?.side || [])
+      ...(claim.accidentPhotos?.side || []),
+      ...(claim.additionalDocuments || []).filter(d => d.uploadedBy === "Agent" && d.url).map(d => d.url)
     ];
 
     let base64Photos = [];
     if (allUrls.length > 0) {
-      try {
-        base64Photos = await Promise.all(
-          allUrls.map(async (url) => {
-            const response = await fetch(url);
+      const photoPromises = allUrls.slice(0, 6).map(async (url) => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (response.ok) {
             const arrayBuffer = await response.arrayBuffer();
             return Buffer.from(arrayBuffer).toString("base64");
-          })
-        );
-      } catch (err) {
-        console.warn("Could not convert accident photos to base64:", err.message);
-      }
+          }
+        } catch (fetchErr) {
+          console.warn(`Failed fetching photo from ${url}:`, fetchErr.message);
+        }
+        return null;
+      });
+      const fetched = await Promise.all(photoPromises);
+      base64Photos = fetched.filter(Boolean);
     }
 
     // Run AI comparison between garage doc and accident photos
@@ -282,23 +289,38 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
           }
 
           // If this is a garage estimate report, auto-trigger AI comparison against accident photos
-          if (documentName.toLowerCase().includes("garage")) {
+          const isGarageDoc = documentName.toLowerCase().includes("garage") || 
+                              documentName.toLowerCase().includes("estimate") ||
+                              (claim.requestedDocuments && claim.requestedDocuments.some(r => r.toLowerCase().includes("garage") || r.toLowerCase().includes("estimate")));
+          
+          if (isGarageDoc) {
             try {
               const allUrls = [
                 ...(claim.accidentPhotos?.front || []),
                 ...(claim.accidentPhotos?.rear || []),
-                ...(claim.accidentPhotos?.side || [])
+                ...(claim.accidentPhotos?.side || []),
+                ...(claim.additionalDocuments || []).filter(d => d.uploadedBy === "Agent" && d.url).map(d => d.url)
               ];
 
               let base64Photos = [];
               if (allUrls.length > 0) {
-                base64Photos = await Promise.all(
-                  allUrls.map(async (url) => {
-                    const response = await fetch(url);
-                    const arrayBuffer = await response.arrayBuffer();
-                    return Buffer.from(arrayBuffer).toString("base64");
-                  })
-                );
+                const photoPromises = allUrls.slice(0, 6).map(async (url) => {
+                  try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000);
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (response.ok) {
+                      const arrayBuffer = await response.arrayBuffer();
+                      return Buffer.from(arrayBuffer).toString("base64");
+                    }
+                  } catch (fetchErr) {
+                    console.warn(`Failed fetching photo from ${url}:`, fetchErr.message);
+                  }
+                  return null;
+                });
+                const fetched = await Promise.all(photoPromises);
+                base64Photos = fetched.filter(Boolean);
               }
 
               const comparison = await compareGarageEstimateWithPhotosAndAI(
@@ -309,6 +331,14 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
               );
               comparison.garageDocumentUrl = uploadedUrl;
               claim.garageEstimateComparison = comparison;
+
+              // Append AI evaluation message
+              claim.messages.push({
+                sender: "Sanasa AI",
+                message: `AI Forensic Comparison completed for Garage Estimate. Match Confidence: ${comparison.matchConfidenceScore}%. Verdict: ${comparison.verdict}. Cost Variance: ${comparison.costDifferencePercentage}%.`,
+                sentAt: new Date(),
+                recipient: "All"
+              });
             } catch (aiErr) {
               console.warn("Garage estimate auto-comparison warning:", aiErr.message);
             }

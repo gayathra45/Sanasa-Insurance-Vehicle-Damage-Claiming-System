@@ -58,6 +58,8 @@ interface Claim {
   };
   additionalDocuments?: AdditionalDoc[];
   garageEstimateComparison?: any;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const translations = {
@@ -390,9 +392,6 @@ export default function PolicyHolderDocuments() {
     const msg = getDocRequestMsg(claim, docName);
     if (msg && msg.sentAt) {
       return formatDateTimeString(msg.sentAt);
-    }
-    if (claim.updatedAt) {
-      return formatDateTimeString(claim.updatedAt);
     }
     return "";
   };

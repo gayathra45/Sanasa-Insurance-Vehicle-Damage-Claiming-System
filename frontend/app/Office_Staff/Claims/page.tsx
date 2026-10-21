@@ -463,7 +463,7 @@ function OfficeStaffClaimsPageContent() {
 
   const [analyzingClaim, setAnalyzingClaim] = useState<string | null>(null);
 
-  const handleCompareGarageEstimate = async (claimNumber: string) => {
+  const handleCompareGarageEstimate = async (claimNumber: string, isAuto: boolean = false) => {
     try {
       setComparingGarageClaim(claimNumber);
       const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(claimNumber)}/compare-garage-estimate`, {
@@ -483,17 +483,43 @@ function OfficeStaffClaimsPageContent() {
             ? { ...prev, garageEstimateComparison: data.garageEstimateComparison, status: "Review", currentStep: 4 }
             : prev
         );
-        alert("Garage estimate comparison & photo cross-check completed successfully!");
+        if (!isAuto) {
+          alert("Garage estimate comparison & photo cross-check completed successfully!");
+        }
       } else {
-        alert(data.error || "Failed to compare garage estimate.");
+        if (!isAuto) {
+          alert(data.error || "Failed to compare garage estimate.");
+        }
       }
     } catch (err) {
       console.error(err);
-      alert("An error occurred during garage comparison.");
+      if (!isAuto) {
+        alert("An error occurred during garage comparison.");
+      }
     } finally {
       setComparingGarageClaim(null);
     }
   };
+
+  // Automatically calculate garage estimate vs. AI benchmark as soon as a garage document is detected
+  useEffect(() => {
+    if (!selectedClaim) return;
+    const isInspectionApproved = Boolean(
+      selectedClaim.inspectionApproved ||
+      (selectedClaim.currentStep && selectedClaim.currentStep >= 4)
+    );
+    const hasGarageDoc = (selectedClaim.additionalDocuments || []).some(
+      d => d.name && (d.name.toLowerCase().includes("garage") || d.name.toLowerCase().includes("estimate"))
+    );
+    if (
+      isInspectionApproved &&
+      hasGarageDoc &&
+      !selectedClaim.garageEstimateComparison?.isCompared &&
+      comparingGarageClaim !== selectedClaim.claimNumber
+    ) {
+      handleCompareGarageEstimate(selectedClaim.claimNumber, true);
+    }
+  }, [selectedClaim?._id, selectedClaim?.claimNumber, selectedClaim?.garageEstimateComparison?.isCompared, selectedClaim?.additionalDocuments?.length]);
 
   const handleSettlePayment = async () => {
     if (!selectedClaim) return;
@@ -1887,17 +1913,46 @@ function OfficeStaffClaimsPageContent() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber)}
+                        onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber, false)}
                         disabled={comparingGarageClaim === selectedClaim.claimNumber}
                         className="px-4 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
                       >
-                        {comparingGarageClaim === selectedClaim.claimNumber ? "Comparing..." : "🔍 Run Cost Comparison"}
+                        {comparingGarageClaim === selectedClaim.claimNumber ? (
+                          <>
+                            <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Calculating...</span>
+                          </>
+                        ) : selectedClaim.garageEstimateComparison?.isCompared ? (
+                          <span>🔄 Recalculate Comparison</span>
+                        ) : (
+                          <span>🔍 Run Cost Comparison</span>
+                        )}
                       </button>
                     </div>
 
                     {!selectedClaim.garageEstimateComparison?.isCompared ? (
-                      <div className="bg-white border border-emerald-200 rounded-xl p-4 text-xs text-slate-600 text-center font-medium">
-                        Click &apos;Run Cost Comparison&apos; above to compare the uploaded garage quotation against AI loss benchmarks and accident photos.
+                      <div className="bg-white border border-emerald-200 rounded-xl p-6 text-center space-y-2">
+                        {comparingGarageClaim === selectedClaim.claimNumber ? (
+                          <div className="flex flex-col items-center justify-center gap-2 py-2">
+                            <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-xs text-emerald-800 font-semibold">
+                              AI is automatically cross-checking the uploaded garage quotation with accident photos and loss benchmarks...
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-xs text-slate-600 font-medium">
+                              Uploaded garage quotation is ready for forensic comparison against AI loss benchmarks and accident photos.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber, false)}
+                              className="mt-2 px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              🔍 Run Cost Comparison Now
+                            </button>
+                          </>
+                        )}
                       </div>
                     ) : (
                       <div className="space-y-4">
@@ -1958,27 +2013,37 @@ function OfficeStaffClaimsPageContent() {
                               <table className="w-full text-xs text-left">
                                 <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100">
                                   <tr>
-                                    <th className="py-2.5 px-4">Claimed Component</th>
-                                    <th className="py-2.5 px-3 text-right">Garage Cost</th>
-                                    <th className="py-2.5 px-3 text-right">AI Cost</th>
-                                    <th className="py-2.5 px-3 text-center">Photo Evidence</th>
-                                    <th className="py-2.5 px-4">Auditor / Forensic Notes</th>
+                                    <th className="py-2.5 px-4 font-bold text-slate-700 min-w-[190px]">Claimed Component</th>
+                                    <th className="py-2.5 px-3 text-right font-bold text-slate-700 whitespace-nowrap min-w-[110px]">Garage Cost</th>
+                                    <th className="py-2.5 px-3 text-right font-bold text-slate-700 whitespace-nowrap min-w-[110px]">AI Cost</th>
+                                    <th className="py-2.5 px-4 text-center font-bold text-slate-700 whitespace-nowrap min-w-[150px]">Photo Evidence</th>
+                                    <th className="py-2.5 px-4 font-bold text-slate-700 min-w-[240px]">Auditor / Forensic Notes</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                   {(selectedClaim.garageEstimateComparison.photoVerificationDetails || []).map((p, idx) => (
                                     <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                                      <td className="py-2.5 px-4 font-semibold text-slate-800">{p.item}</td>
-                                      <td className="py-2.5 px-3 text-right font-mono text-slate-800">LKR {p.garageCost.toLocaleString()}</td>
-                                      <td className="py-2.5 px-3 text-right font-mono text-slate-600">LKR {p.aiCost.toLocaleString()}</td>
-                                      <td className="py-2.5 px-3 text-center">
-                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                          p.matchesAccidentPhotos ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
-                                        }`}>
-                                          {p.matchesAccidentPhotos ? "✓ Photo Verified" : "⚠ Discrepancy"}
-                                        </span>
+                                      <td className="py-3 px-4 font-semibold text-slate-800">{p.item}</td>
+                                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">LKR {Number(p.garageCost || 0).toLocaleString()}</td>
+                                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-600 whitespace-nowrap">LKR {Number(p.aiCost || 0).toLocaleString()}</td>
+                                      <td className="py-3 px-4 text-center whitespace-nowrap align-middle">
+                                        {p.matchesAccidentPhotos ? (
+                                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 shadow-2xs whitespace-nowrap tracking-tight">
+                                            <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Photo Verified</span>
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/80 shadow-2xs whitespace-nowrap tracking-tight">
+                                            <svg className="w-3.5 h-3.5 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <span>Discrepancy</span>
+                                          </span>
+                                        )}
                                       </td>
-                                      <td className="py-2.5 px-4 text-[11px] text-slate-600 font-medium">{p.notes}</td>
+                                      <td className="py-3 px-4 text-[11px] text-slate-600 font-normal leading-relaxed">{p.notes}</td>
                                     </tr>
                                   ))}
                                 </tbody>
