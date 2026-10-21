@@ -76,9 +76,11 @@ export default function WebAIChatBot() {
     pathname?.includes("/Admin/")
   );
 
-  // User instructions: "policy holder new claim apply process to dont add"
+  // User instructions: exclude claim apply process and login pages
   const isExcluded = Boolean(
-    pathname?.includes("/Policy_Holder/New_Claim")
+    pathname?.includes("/Policy_Holder/New_Claim") ||
+    pathname === "/Login" ||
+    pathname?.toLowerCase().startsWith("/login")
   );
 
   // Aligned perfectly with existing right-8 position; stacked above with clean 12px gap
