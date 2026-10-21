@@ -24,8 +24,9 @@ import {
   Delete02Icon,
   Car01Icon,
   SmartPhone01Icon,
-
+  Download01Icon,
 } from "@hugeicons/core-free-icons";
+import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
 
 interface ClaimMessage {
   sender: string;
@@ -1360,10 +1361,19 @@ export default function AgentMyClaims() {
                   <h2 className="font-semibold text-slate-800 text-xl tracking-tight truncate">
                     {getPolicyHolderName(selectedClaim.userNic)}
                   </h2>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider">
                       ID: {selectedClaim.claimNumber}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
+                      className="border border-sky-300 text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg px-2.5 py-1 text-[10px] font-semibold transition-all cursor-pointer inline-flex items-center gap-1 active:scale-95 shadow-2xs"
+                      title="Download Official Claim PDF Report"
+                    >
+                      <HugeiconsIcon icon={Download01Icon} className="w-3 h-3 text-sky-600" strokeWidth={2} />
+                      <span>PDF Report</span>
+                    </button>
                     <span className={`border rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
                       selectedClaim.status.toLowerCase() === "pending"
                         ? "border-amber-300 text-amber-700 bg-amber-50/50"

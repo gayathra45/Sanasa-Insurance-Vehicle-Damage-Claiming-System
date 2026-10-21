@@ -15,9 +15,11 @@ import {
   CheckmarkCircle01Icon,
   ViewIcon,
   File01Icon,
+  Download01Icon,
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 import { translateText } from "@/app/utils/translator";
+import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
 
 interface Claim {
   claimNumber: string;
@@ -749,10 +751,19 @@ function TrackClaimsContent() {
         ) : trackedClaim ? (
           <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-[24px] shadow-lg overflow-hidden transition-all duration-300">
             {/* Header */}
-            <div className="px-8 py-5 bg-slate-50 border-b border-slate-200">
+            <div className="px-8 py-5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
                 {t.detailsTitle} – {trackedClaim.claimNumber}
               </h3>
+              <button
+                type="button"
+                onClick={() => downloadClaimPdf(trackedClaim.claimNumber)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95 w-fit"
+                title="Download Official Claim PDF Report"
+              >
+                <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                <span>Download PDF</span>
+              </button>
             </div>
 
             {/* Tracker Panel */}

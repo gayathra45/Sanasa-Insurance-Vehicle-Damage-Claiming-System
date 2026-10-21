@@ -20,6 +20,7 @@ import {
   Linking,
   Image,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -396,6 +397,16 @@ export default function AgentDashboard() {
     setSelectedClaim(null);
     if (claimId) {
       router.replace("/Agent/Dashboard/page");
+    }
+  };
+
+  const openClaimPdf = async (claimNum?: string) => {
+    if (!claimNum) return;
+    const url = `${API_BASE_URL}/api/claims/${claimNum}/report`;
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Linking.openURL(url);
     }
   };
 
@@ -2630,13 +2641,33 @@ ${inspectionReportText.trim()}
                     </Text>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.popupCloseBtn}
-                  onPress={closeDetailModal}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="close" size={18} color="#475569" />
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <TouchableOpacity
+                    onPress={() => openClaimPdf(selectedClaim?.claimNumber)}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      backgroundColor: "#f0fdf4",
+                      borderWidth: 1,
+                      borderColor: "#86efac",
+                      paddingHorizontal: 9,
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Ionicons name="download-outline" size={13} color="#15803d" />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#15803d" }}>PDF</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.popupCloseBtn}
+                    onPress={closeDetailModal}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="close" size={18} color="#475569" />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Wizard Stepper Visualizer */}

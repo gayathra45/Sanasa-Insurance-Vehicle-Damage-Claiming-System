@@ -19,9 +19,11 @@ import {
   Analytics01Icon,
   File01Icon,
   Time02Icon,
+  Download01Icon,
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 import { translateText } from "@/app/utils/translator";
+import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
 
 interface AdditionalDoc {
   name: string;
@@ -861,11 +863,19 @@ export default function MyClaims() {
                     </div>
 
                     {/* Action */}
-                    <div className="text-left md:text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-start md:justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => downloadClaimPdf(claim.claimNumber)}
+                        className="p-1.5 rounded-lg border border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-700 transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center justify-center"
+                        title="Download Official Claim PDF Report"
+                      >
+                        <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                      </button>
                       <button
                         type="button"
                         onClick={() => setSelectedClaim(claim)}
-                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-semibold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-semibold text-[10px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
                       >
                         {t.view}
                       </button>
@@ -967,9 +977,20 @@ export default function MyClaims() {
               
               {/* Modal Header Title */}
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
-                  Claim Details – {selectedClaim.claimNumber}
-                </h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
+                    Claim Details – {selectedClaim.claimNumber}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                    title="Download Official Claim Status PDF Report"
+                  >
+                    <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                    <span>Download PDF</span>
+                  </button>
+                </div>
                 <button
                   onClick={() => setSelectedClaim(null)}
                   className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer"

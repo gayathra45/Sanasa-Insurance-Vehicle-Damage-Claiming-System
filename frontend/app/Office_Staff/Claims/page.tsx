@@ -27,8 +27,10 @@ import {
   Delete02Icon,
   Tick01Icon,
   BubbleChatIcon,
-  Location01Icon
+  Location01Icon,
+  Download01Icon
 } from "@hugeicons/core-free-icons";
+import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
 
 interface ClaimMessage {
   sender: string;
@@ -1394,6 +1396,15 @@ function OfficeStaffClaimsPageContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                    title="Download Official Claim PDF Report"
+                  >
+                    <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                    <span>Download PDF</span>
+                  </button>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                     selectedClaim.status === "Approved" ? "bg-emerald-100 text-emerald-800" :
                     selectedClaim.status === "Settled" ? "bg-blue-100 text-blue-800" :
@@ -3700,9 +3711,20 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Modal Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white flex justify-between items-center">
-                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
-                  {selectedClaim.claimNumber}
-                </h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
+                    {selectedClaim.claimNumber}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                    title="Download Official Claim PDF Report"
+                  >
+                    <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                    <span>Download PDF</span>
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={() => {

@@ -15,8 +15,10 @@ import {
   Keyboard,
   Image,
   Modal,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
 import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
@@ -314,6 +316,16 @@ export default function TrackClaims() {
     }
   };
 
+  const openClaimPdf = async (claimNum?: string) => {
+    if (!claimNum) return;
+    const url = `${API_BASE_URL}/api/claims/${claimNum}/report`;
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Linking.openURL(url);
+    }
+  };
+
   const handleTrack = async () => {
     const cleanId = claimId.trim().toUpperCase();
     if (!cleanId) {
@@ -504,12 +516,32 @@ export default function TrackClaims() {
             {/* Header info card */}
             <View style={styles.claimSummaryCard}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <View>
+                <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.cardHeaderTitle}>{trackedClaim.claimNumber}</Text>
                   <Text style={styles.cardHeaderSub}>{lang === "en" ? "Registered vehicle: " : lang === "si" ? "ලියාපදිංචි වාහනය: " : "பதிவுசெய்யப்பட்ட வாகனம்: "}{formatNumberPlate(trackedClaim.vehiclePlate)}</Text>
                 </View>
-                <View style={styles.badgeWrap}>
-                  <Text style={styles.badgeLabel}>{trackedClaim.status === "Pending" ? t.trackClaims.notAssessed : trackedClaim.status === "In Progress" ? (lang === "en" ? "In Progress" : lang === "si" ? "ක්‍රියාත්මක වෙමින්" : "செயல்பாட்டில்") : trackedClaim.status}</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <TouchableOpacity
+                    onPress={() => openClaimPdf(trackedClaim.claimNumber)}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      backgroundColor: "#f0fdf4",
+                      borderWidth: 1,
+                      borderColor: "#86efac",
+                      paddingHorizontal: 8,
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Ionicons name="download-outline" size={13} color="#15803d" />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#15803d" }}>PDF</Text>
+                  </TouchableOpacity>
+                  <View style={styles.badgeWrap}>
+                    <Text style={styles.badgeLabel}>{trackedClaim.status === "Pending" ? t.trackClaims.notAssessed : trackedClaim.status === "In Progress" ? (lang === "en" ? "In Progress" : lang === "si" ? "ක්‍රියාත්මක වෙමින්" : "செயல்பாட்டில்") : trackedClaim.status}</Text>
+                  </View>
                 </View>
               </View>
             </View>
