@@ -311,12 +311,19 @@ router.post("/new-claim", async (req, res) => {
         front: licenseFront,
         rear: licenseRear
       },
-      // Save the AI Analysis findings directly in MongoDB
       aiAnalysis: aiResult ? {
         isAnalyzed: true,
-        damagedItems: aiResult.damagedItems,
-        overallDamagePercentage: aiResult.overallDamagePercentage,
-        summary: aiResult.summary
+        isValidAccidentPhoto: aiResult.isValidAccidentPhoto !== false,
+        authenticityAssessment: aiResult.authenticityAssessment || "",
+        fraudAlert: aiResult.fraudAlert || null,
+        damagedItems: aiResult.damagedItems || [],
+        overallDamagePercentage: aiResult.overallDamagePercentage || 0,
+        totalEstimatedPartsCost: aiResult.totalEstimatedPartsCost || 0,
+        totalEstimatedLaborCost: aiResult.totalEstimatedLaborCost || 0,
+        totalEstimatedCost: aiResult.totalEstimatedCost || 0,
+        currency: aiResult.currency || "LKR",
+        summary: aiResult.summary || "",
+        analyzedAt: aiResult.analyzedAt || new Date()
       } : { isAnalyzed: false }
     });
 

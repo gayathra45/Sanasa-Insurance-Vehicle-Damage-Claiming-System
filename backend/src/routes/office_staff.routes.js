@@ -994,12 +994,15 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
       ...(claim.accidentPhotos?.side || [])
     ];
 
-    // Convert Cloudinary URLs to Base64 format for Gemini (if any exist)
+    // Convert Cloudinary URLs or data URIs to Base64 format for Gemini (if any exist)
     let base64Photos = [];
     if (allUrls.length > 0) {
       try {
         base64Photos = await Promise.all(
           allUrls.map(async (url) => {
+            if (typeof url === "string" && (url.startsWith("data:") || !url.startsWith("http"))) {
+              return url.includes(",") ? url.split(",")[1] : url;
+            }
             const response = await fetch(url);
             const arrayBuffer = await response.arrayBuffer();
             return Buffer.from(arrayBuffer).toString("base64");

@@ -1600,24 +1600,47 @@ function OfficeStaffClaimsPageContent() {
 
                 {/* 2. AI DAMAGE ASSESSMENT & ESTIMATION COST SHEET */}
                 <div className="bg-indigo-50/50 border border-indigo-200 rounded-2xl p-5 space-y-4">
-                  <div className="flex justify-between items-center border-b border-indigo-100 pb-3">
+                  <div className="flex flex-wrap justify-between items-center gap-2 border-b border-indigo-100 pb-3">
                     <div className="flex items-center gap-2">
                       <span className="text-base">🤖</span>
                       <h3 className="text-sm font-bold text-indigo-950 uppercase tracking-wider">
                         2. AI Loss Assessment & Estimation Cost Sheet
                       </h3>
                     </div>
-                    {selectedClaim.aiAnalysis?.isAnalyzed && (
-                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                        selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
-                          ? "text-rose-700 bg-rose-100 border border-rose-200"
-                          : "text-indigo-700 bg-indigo-100"
-                      }`}>
-                        {selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
-                          ? "⚠️ Photo Validation Alert"
-                          : "Assessed via Gemini Vision"}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {selectedClaim.aiAnalysis?.isAnalyzed && (
+                        <button
+                          type="button"
+                          onClick={() => handleRunAIAnalysis(selectedClaim.claimNumber)}
+                          disabled={analyzingClaim === selectedClaim.claimNumber}
+                          className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                          title="Recalculate damage and cost sheet with Gemini AI"
+                        >
+                          {analyzingClaim === selectedClaim.claimNumber ? (
+                            <>
+                              <span className="animate-spin text-xs">⏳</span>
+                              <span>Calculating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>⚡</span>
+                              <span>Recalculate AI Assessment</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                      {selectedClaim.aiAnalysis?.isAnalyzed && (
+                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                          selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
+                            ? "text-rose-700 bg-rose-100 border border-rose-200"
+                            : "text-indigo-700 bg-indigo-100"
+                        }`}>
+                          {selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
+                            ? "⚠️ Photo Validation Alert"
+                            : "Assessed via Gemini Vision"}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {!selectedClaim.aiAnalysis?.isAnalyzed ? (
@@ -1718,33 +1741,50 @@ function OfficeStaffClaimsPageContent() {
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
-                                  {(selectedClaim.aiAnalysis.damagedItems || []).map((item, idx) => (
-                                    <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                                      <td className="py-2.5 px-4 font-semibold text-slate-800">
-                                        <div>{item.item}</div>
-                                        {item.description && (
-                                          <div className="text-[10px] text-slate-400 font-normal mt-0.5">{item.description}</div>
-                                        )}
-                                      </td>
-                                      <td className="py-2.5 px-3 text-center font-bold text-amber-600">{item.damagePercentage}%</td>
-                                      <td className="py-2.5 px-3 text-center">
-                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                          item.action === "Replace" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
-                                        }`}>
-                                          {item.action || "Repair"}
-                                        </span>
-                                      </td>
-                                      <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                                        LKR {(item.estimatedPartCost || 0).toLocaleString()}
-                                      </td>
-                                      <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                                        LKR {(item.estimatedLaborCost || 0).toLocaleString()}
-                                      </td>
-                                      <td className="py-2.5 px-4 text-right font-bold font-mono text-slate-900">
-                                        LKR {(item.totalItemCost || (item.estimatedPartCost || 0) + (item.estimatedLaborCost || 0)).toLocaleString()}
+                                  {(!selectedClaim.aiAnalysis.damagedItems || selectedClaim.aiAnalysis.damagedItems.length === 0) ? (
+                                    <tr>
+                                      <td colSpan={6} className="py-6 px-4 text-center text-slate-500 bg-slate-50/30">
+                                        <p className="font-semibold text-xs text-slate-600 mb-1">No itemized damaged parts calculated yet.</p>
+                                        <p className="text-[11px] text-slate-400 mb-3">Run AI loss assessment to generate automotive parts and labor cost breakdown.</p>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRunAIAnalysis(selectedClaim.claimNumber)}
+                                          disabled={analyzingClaim === selectedClaim.claimNumber}
+                                          className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all disabled:opacity-50"
+                                        >
+                                          {analyzingClaim === selectedClaim.claimNumber ? "Analyzing..." : "⚡ Calculate Loss & Itemized Cost Sheet"}
+                                        </button>
                                       </td>
                                     </tr>
-                                  ))}
+                                  ) : (
+                                    selectedClaim.aiAnalysis.damagedItems.map((item, idx) => (
+                                      <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                                        <td className="py-2.5 px-4 font-semibold text-slate-800">
+                                          <div>{item.item}</div>
+                                          {item.description && (
+                                            <div className="text-[10px] text-slate-400 font-normal mt-0.5">{item.description}</div>
+                                          )}
+                                        </td>
+                                        <td className="py-2.5 px-3 text-center font-bold text-amber-600">{item.damagePercentage}%</td>
+                                        <td className="py-2.5 px-3 text-center">
+                                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                            item.action === "Replace" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                                          }`}>
+                                            {item.action || "Repair"}
+                                          </span>
+                                        </td>
+                                        <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                                          LKR {(item.estimatedPartCost || 0).toLocaleString()}
+                                        </td>
+                                        <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                                          LKR {(item.estimatedLaborCost || 0).toLocaleString()}
+                                        </td>
+                                        <td className="py-2.5 px-4 text-right font-bold font-mono text-slate-900">
+                                          LKR {(item.totalItemCost || (item.estimatedPartCost || 0) + (item.estimatedLaborCost || 0)).toLocaleString()}
+                                        </td>
+                                      </tr>
+                                    ))
+                                  )}
                                 </tbody>
                               </table>
                             </div>

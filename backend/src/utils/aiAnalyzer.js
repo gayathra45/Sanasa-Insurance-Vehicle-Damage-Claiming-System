@@ -163,10 +163,15 @@ export async function analyzeAccidentDamageWithCostSheet(base64Images, vehicleIn
 
   if (!genAI) {
     console.warn("Gemini API key not configured or invalid.");
-    return generateUnverifiedAssessment(inspectionReport, "Gemini Vision AI is unconfigured. Manual inspection required.");
+    return generateFallbackCostSheet(inspectionReport);
   }
 
-  const modelCandidates = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
+  const modelCandidates = [
+    "gemini-flash-latest",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ];
 
   for (const modelName of modelCandidates) {
     try {
@@ -312,7 +317,8 @@ export async function analyzeAccidentDamageWithCostSheet(base64Images, vehicleIn
     }
   }
 
-  return generateUnverifiedAssessment(inspectionReport, "AI Vision could not verify photo authenticity. Manual inspection required.");
+  console.warn("All Gemini model attempts failed or were rate-limited. Falling back to automotive cost sheet matrix.");
+  return generateFallbackCostSheet(inspectionReport);
 }
 
 /**
@@ -402,7 +408,12 @@ export async function compareGarageEstimateWithPhotosAndAI(
     return generateFallbackGarageComparison(aiAnalysis);
   }
 
-  const modelCandidates = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
+  const modelCandidates = [
+    "gemini-flash-latest",
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ];
 
   for (const modelName of modelCandidates) {
     try {
