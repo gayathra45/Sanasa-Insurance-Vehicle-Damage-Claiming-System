@@ -12,7 +12,8 @@ import {
   ActivityIndicator,
   Animated,
   Dimensions,
-  SafeAreaView,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -54,7 +55,6 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
 
   const scrollViewRef = useRef<ScrollView>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const fabScale = useRef(new Animated.Value(1)).current;
 
   // Pulse animation for online indicator
   useEffect(() => {
@@ -72,28 +72,26 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     }, 120);
   };
 
-  const handleSend = async (customText?: string) => {
-    const textToSend = (customText || inputText).trim();
+  const handleSend = async (manualText?: string) => {
+    const textToSend = (manualText || inputText).trim();
     if (!textToSend || isLoading) return;
 
     const userMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
+      id: `user-${Date.now()}`,
       sender: "user",
       text: textToSend,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    setInputText("");
+    setMessages((prev) => [...prev, userMsg]);
+    if (!manualText) setInputText("");
     setIsLoading(true);
     scrollToBottom();
 
     try {
-      // Map history for Gemini API
-      const history = newMessages.slice(-8).map((m) => ({
+      const history = messages.slice(-8).map((m) => ({
         role: m.sender === "user" ? "user" : "model",
-        text: m.text,
+        parts: [{ text: m.text }],
       }));
 
       const res = await fetch(`${API_BASE_URL}/api/chat/message`, {
@@ -147,7 +145,6 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
   const renderFormattedText = (text: string, isUser: boolean) => {
     const lines = text.split("\n");
     return lines.map((line, lIdx) => {
-      // Parse markdown bold **text**
       const parts = line.split(/(\*\*.*?\*\*)/g);
       return (
         <Text
@@ -175,7 +172,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
 
   return (
     <>
-      {/* ─── Simple Clean Floating AI Icon ─── */}
+      {/* ─── Floating Circular AI Button ─── */}
       <View style={[styles.fabContainer, { bottom: bottomOffset }]} pointerEvents="box-none">
         <TouchableOpacity
           activeOpacity={0.88}
@@ -197,140 +194,162 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
         </TouchableOpacity>
       </View>
 
-      {/* ─── Full Chat Modal ─── */}
+      {/* ─── Modern Popup Card / Bottom Sheet Modal ─── */}
       <Modal
         visible={modalVisible}
         animationType="slide"
-        transparent={false}
+        transparent={true}
+        statusBarTranslucent={true}
         onRequestClose={() => setModalVisible(false)}
       >
-        <SafeAreaView style={styles.modalRoot}>
-          {/* Header */}
-          <LinearGradient
-            colors={["#0a192f", "#0d2a3a", "#1e3a8a"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={styles.modalHeader}
-          >
-            <View style={styles.headerLeft}>
-              <View style={styles.headerAvatar}>
-                <MaterialCommunityIcons name="robot" size={24} color="#38bdf8" />
-                <View style={styles.avatarOnlineDot} />
-              </View>
-              <View>
-                <View style={styles.headerTitleRow}>
-                  <Text style={styles.headerTitle}>Sanasa AI Assistant</Text>
-                  <View style={styles.verifiedBadge}>
-                    <Ionicons name="checkmark-circle" size={13} color="#38bdf8" />
-                  </View>
-                </View>
-                <Text style={styles.headerSubtitle}>Vehicle & Motor Insurance Specialist</Text>
-              </View>
-            </View>
+        <View style={styles.popupOverlay}>
+          {/* Dimmed backdrop area - tap to close */}
+          <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+            <View style={styles.backdropDismiss} />
+          </TouchableWithoutFeedback>
 
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                onPress={clearChat}
-                style={styles.headerBtn}
-                title="Clear chat"
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name="trash-outline" size={18} color="#94a3b8" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setModalVisible(false)}
-                style={[styles.headerBtn, styles.headerCloseBtn]}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name="close" size={20} color="#ffffff" />
-              </TouchableOpacity>
-            </View>
-          </LinearGradient>
-
-          {/* Quick Prompts Bar */}
-          <View style={styles.quickPromptsContainer}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickPromptsScroll}>
-              {QUICK_PROMPTS.map((prompt, index) => (
-                <TouchableOpacity
-                  key={index}
-                  activeOpacity={0.8}
-                  style={styles.quickPromptChip}
-                  onPress={() => handleSend(prompt.text)}
-                  disabled={isLoading}
-                >
-                  <Text style={styles.quickPromptText}>{prompt.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-
-          {/* Messages ScrollView */}
+          {/* Elevated Popup Card Sheet */}
           <KeyboardAvoidingView
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            style={styles.chatBody}
-            keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={styles.popupSheet}
           >
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.messagesScroll}
-              contentContainerStyle={styles.messagesContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
+            {/* Top Drag Handle Notch */}
+            <View style={styles.notchContainer}>
+              <View style={styles.notchPill} />
+            </View>
+
+            {/* Popup Header */}
+            <LinearGradient
+              colors={["#0a192f", "#0f2d4a", "#1e3a8a"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.popupHeader}
             >
-              {messages.map((msg) => {
-                const isUser = msg.sender === "user";
-                return (
-                  <View
-                    key={msg.id}
-                    style={[
-                      styles.messageRow,
-                      isUser ? styles.userMessageRow : styles.aiMessageRow,
-                    ]}
+              <View style={styles.headerLeft}>
+                <View style={styles.headerAvatar}>
+                  <MaterialCommunityIcons name="robot" size={22} color="#38bdf8" />
+                  <View style={styles.avatarOnlineDot} />
+                </View>
+                <View>
+                  <View style={styles.headerTitleRow}>
+                    <Text style={styles.headerTitle}>Sanasa AI Assistant</Text>
+                    <Ionicons name="checkmark-circle" size={13} color="#38bdf8" style={styles.verifiedBadge} />
+                  </View>
+                  <Text style={styles.headerSubtitle}>Vehicle & Motor Insurance Specialist</Text>
+                </View>
+              </View>
+
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  onPress={clearChat}
+                  style={styles.headerBtn}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="refresh-outline" size={17} color="#94a3b8" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => setModalVisible(false)}
+                  style={[styles.headerBtn, styles.headerCloseBtn]}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Ionicons name="close" size={17} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+
+            {/* Quick Prompts Bar */}
+            <View style={styles.quickPromptsBar}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.quickPromptsScroll}
+                keyboardShouldPersistTaps="handled"
+              >
+                {QUICK_PROMPTS.map((prompt, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    activeOpacity={0.75}
+                    style={styles.quickPromptChip}
+                    onPress={() => handleSend(prompt.text)}
+                    disabled={isLoading}
                   >
-                    {!isUser && (
-                      <View style={styles.aiBubbleAvatar}>
-                        <MaterialCommunityIcons name="shield-car" size={18} color="#0284c7" />
-                      </View>
-                    )}
+                    <Text style={styles.quickPromptText}>{prompt.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            {/* Message Stream */}
+            <View style={styles.messagesWrapper}>
+              <ScrollView
+                ref={scrollViewRef}
+                style={styles.messagesScroll}
+                contentContainerStyle={styles.messagesContent}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+              >
+                {messages.map((msg) => {
+                  const isUser = msg.sender === "user";
+                  return (
                     <View
+                      key={msg.id}
                       style={[
-                        styles.messageBubble,
-                        isUser ? styles.userBubble : styles.aiBubble,
+                        styles.messageRow,
+                        isUser ? styles.userMessageRow : styles.aiMessageRow,
                       ]}
                     >
-                      {renderFormattedText(msg.text, isUser)}
-                      <Text
+                      {!isUser && (
+                        <View style={styles.aiBubbleAvatar}>
+                          <MaterialCommunityIcons name="robot" size={15} color="#0284c7" />
+                        </View>
+                      )}
+                      <View
                         style={[
-                          styles.timestampText,
-                          isUser ? styles.userTimestamp : styles.aiTimestamp,
+                          styles.messageBubble,
+                          isUser ? styles.userBubble : styles.aiBubble,
                         ]}
                       >
-                        {msg.timestamp}
-                      </Text>
+                        {renderFormattedText(msg.text, isUser)}
+                        <Text
+                          style={[
+                            styles.timestampText,
+                            isUser ? styles.userTimestamp : styles.aiTimestamp,
+                          ]}
+                        >
+                          {msg.timestamp}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+
+                {/* Typing status */}
+                {isLoading && (
+                  <View style={[styles.messageRow, styles.aiMessageRow]}>
+                    <View style={styles.aiBubbleAvatar}>
+                      <ActivityIndicator size="small" color="#0284c7" />
+                    </View>
+                    <View style={[styles.messageBubble, styles.aiBubble, styles.typingBubble]}>
+                      <View style={styles.typingDotRow}>
+                        <View style={styles.typingDot} />
+                        <View style={[styles.typingDot, { opacity: 0.7 }]} />
+                        <View style={[styles.typingDot, { opacity: 0.4 }]} />
+                      </View>
+                      <Text style={styles.typingText}>Sanasa AI is thinking...</Text>
                     </View>
                   </View>
-                );
-              })}
+                )}
+              </ScrollView>
+            </View>
 
-              {/* Typing indicator */}
-              {isLoading && (
-                <View style={[styles.messageRow, styles.aiMessageRow]}>
-                  <View style={styles.aiBubbleAvatar}>
-                    <ActivityIndicator size="small" color="#0284c7" />
-                  </View>
-                  <View style={[styles.messageBubble, styles.aiBubble, styles.typingBubble]}>
-                    <Text style={styles.typingText}>Sanasa AI is analyzing vehicle guidelines...</Text>
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-
-            {/* Input Bar */}
+            {/* Compact Clean Input Bar */}
             <View style={styles.inputContainer}>
               <View style={styles.inputWrap}>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Ask about vehicle claims, policies, covers..."
+                  placeholder="Ask about vehicle claims, coverages..."
                   placeholderTextColor="#94a3b8"
                   value={inputText}
                   onChangeText={setInputText}
@@ -345,6 +364,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                   ]}
                   onPress={() => handleSend()}
                   disabled={!inputText.trim() || isLoading}
+                  activeOpacity={0.8}
                 >
                   {isLoading ? (
                     <ActivityIndicator size="small" color="#ffffff" />
@@ -354,11 +374,11 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                 </TouchableOpacity>
               </View>
               <Text style={styles.disclaimerText}>
-                Sanasa General Insurance PLC • Dedicated Vehicle & Motor Insurance AI
+                Sanasa General Insurance PLC • Official Motor AI Assistant
               </Text>
             </View>
           </KeyboardAvoidingView>
-        </SafeAreaView>
+        </View>
       </Modal>
     </>
   );
@@ -368,21 +388,21 @@ const styles = StyleSheet.create({
   /* Floating Action Button */
   fabContainer: {
     position: "absolute",
-    right: 16,
+    right: 18,
     zIndex: 9999,
   },
   fabTouch: {
-    borderRadius: 27,
+    borderRadius: 28,
     shadowColor: "#0284c7",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 10,
   },
   fabCircle: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
@@ -391,8 +411,8 @@ const styles = StyleSheet.create({
   },
   onlineDot: {
     position: "absolute",
-    top: 2,
-    right: 3,
+    top: 3,
+    right: 4,
     width: 10,
     height: 10,
     borderRadius: 5,
@@ -401,31 +421,67 @@ const styles = StyleSheet.create({
     borderColor: "#0d2a3a",
   },
 
-  /* Modal Root */
-  modalRoot: {
+  /* Popup Overlay & Sheet */
+  popupOverlay: {
     flex: 1,
-    backgroundColor: "#f8fafc",
+    backgroundColor: "rgba(10, 25, 47, 0.62)",
+    justifyContent: "flex-end",
   },
-  modalHeader: {
+  backdropDismiss: {
+    flex: 1,
+  },
+  popupSheet: {
+    height: SCREEN_H * 0.82,
+    backgroundColor: "#ffffff",
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    overflow: "hidden",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: -6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 25,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+    borderBottomWidth: 0,
+  },
+
+  /* Notch Handle */
+  notchContainer: {
+    alignItems: "center",
+    paddingTop: 8,
+    paddingBottom: 6,
+    backgroundColor: "#0a192f",
+  },
+  notchPill: {
+    width: 38,
+    height: 4.5,
+    borderRadius: 3,
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
+  },
+
+  /* Header */
+  popupHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 18,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    paddingTop: 2,
     borderBottomWidth: 1,
     borderBottomColor: "rgba(255, 255, 255, 0.08)",
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
     flex: 1,
   },
   headerAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     borderWidth: 1.5,
     borderColor: "#38bdf8",
     alignItems: "center",
@@ -434,23 +490,23 @@ const styles = StyleSheet.create({
   },
   avatarOnlineDot: {
     position: "absolute",
-    bottom: 1,
-    right: 1,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    bottom: -1,
+    right: -1,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
     backgroundColor: "#10b981",
-    borderWidth: 2,
-    borderColor: "#0d2a3a",
+    borderWidth: 1.5,
+    borderColor: "#0f2d4a",
   },
   headerTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 5,
   },
   headerTitle: {
     color: "#ffffff",
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: "800",
     letterSpacing: -0.2,
   },
@@ -459,70 +515,76 @@ const styles = StyleSheet.create({
   },
   headerSubtitle: {
     color: "#94a3b8",
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: "500",
     marginTop: 1,
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 6,
   },
   headerBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     alignItems: "center",
     justifyContent: "center",
   },
   headerCloseBtn: {
-    backgroundColor: "rgba(239, 68, 68, 0.8)",
+    backgroundColor: "rgba(239, 68, 68, 0.85)",
   },
 
   /* Quick Prompts Bar */
-  quickPromptsContainer: {
-    backgroundColor: "#ffffff",
+  quickPromptsBar: {
+    backgroundColor: "#f8fafc",
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
-    paddingVertical: 8,
+    paddingVertical: 7,
   },
   quickPromptsScroll: {
-    paddingHorizontal: 16,
-    gap: 8,
+    paddingHorizontal: 14,
+    gap: 7,
   },
   quickPromptChip: {
-    backgroundColor: "#f1f5f9",
+    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#cbd5e1",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    borderColor: "#e2e8f0",
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
   },
   quickPromptText: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: "700",
-    color: "#0f172a",
+    color: "#1e293b",
   },
 
-  /* Chat Body */
-  chatBody: {
+  /* Messages Area */
+  messagesWrapper: {
     flex: 1,
+    backgroundColor: "#f8fafc",
   },
   messagesScroll: {
     flex: 1,
   },
   messagesContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 20,
-    gap: 12,
+    paddingHorizontal: 14,
+    paddingTop: 12,
+    paddingBottom: 16,
+    gap: 10,
   },
   messageRow: {
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 8,
-    marginVertical: 3,
+    gap: 7,
+    marginVertical: 2,
   },
   userMessageRow: {
     justifyContent: "flex-end",
@@ -531,53 +593,73 @@ const styles = StyleSheet.create({
     justifyContent: "flex-start",
   },
   aiBubbleAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: "#e0f2fe",
+    borderWidth: 1,
+    borderColor: "#bae6fd",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   messageBubble: {
-    maxWidth: SCREEN_W * 0.76,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 18,
+    maxWidth: SCREEN_W * 0.78,
+    paddingHorizontal: 13,
+    paddingVertical: 9,
+    borderRadius: 16,
   },
   userBubble: {
-    backgroundColor: "#0d2a3a",
-    borderBottomRightRadius: 4,
+    backgroundColor: "#0f2d4a",
+    borderBottomRightRadius: 3,
+    shadowColor: "#0f2d4a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   aiBubble: {
     backgroundColor: "#ffffff",
-    borderBottomLeftRadius: 4,
+    borderBottomLeftRadius: 3,
     borderWidth: 1,
     borderColor: "#e2e8f0",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
   },
   typingBubble: {
     backgroundColor: "#f8fafc",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     borderStyle: "dashed",
   },
+  typingDotRow: {
+    flexDirection: "row",
+    gap: 3,
+  },
+  typingDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: "#0284c7",
+  },
   typingText: {
-    fontSize: 12,
+    fontSize: 11.5,
     color: "#64748b",
     fontStyle: "italic",
   },
   messageText: {
-    fontSize: 13,
-    lineHeight: 19,
+    fontSize: 12.5,
+    lineHeight: 18,
   },
   userMessageText: {
     color: "#ffffff",
   },
   aiMessageText: {
-    color: "#1e293b",
+    color: "#0f172a",
   },
   bulletLine: {
     marginVertical: 1,
@@ -586,8 +668,8 @@ const styles = StyleSheet.create({
     fontWeight: "800",
   },
   timestampText: {
-    fontSize: 9.5,
-    marginTop: 4,
+    fontSize: 9,
+    marginTop: 3,
     textAlign: "right",
   },
   userTimestamp: {
@@ -597,53 +679,53 @@ const styles = StyleSheet.create({
     color: "#94a3b8",
   },
 
-  /* Input Bar */
+  /* Compact Input Bar */
   inputContainer: {
     backgroundColor: "#ffffff",
     borderTopWidth: 1,
     borderTopColor: "#e2e8f0",
-    paddingHorizontal: 14,
+    paddingHorizontal: 12,
     paddingTop: 8,
-    paddingBottom: Platform.OS === "ios" ? 18 : 10,
+    paddingBottom: Platform.OS === "ios" ? 22 : 12,
   },
   inputWrap: {
     flexDirection: "row",
     alignItems: "flex-end",
     backgroundColor: "#f8fafc",
-    borderRadius: 24,
+    borderRadius: 22,
     borderWidth: 1,
-    borderColor: "#cbd5e1",
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    borderColor: "#e2e8f0",
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     gap: 8,
   },
   textInput: {
     flex: 1,
-    maxHeight: 90,
-    minHeight: 36,
-    fontSize: 13,
+    maxHeight: 80,
+    minHeight: 34,
+    fontSize: 12.5,
     color: "#0f172a",
-    paddingTop: 8,
-    paddingBottom: 8,
+    paddingTop: 7,
+    paddingBottom: 7,
   },
   sendButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#0284c7",
+    backgroundColor: "#0f2d4a",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 2,
+    marginBottom: 1,
   },
   sendButtonDisabled: {
-    backgroundColor: "#94a3b8",
-    opacity: 0.5,
+    backgroundColor: "#cbd5e1",
+    opacity: 0.6,
   },
   disclaimerText: {
     textAlign: "center",
-    fontSize: 10,
+    fontSize: 9.5,
     color: "#94a3b8",
-    marginTop: 6,
+    marginTop: 5,
     fontWeight: "500",
   },
 });
