@@ -28,6 +28,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
 import AgentNavbar from "../../Components/Agent/page";
+import AIChatBot from "../../Components/AIChatBot";
 import { API_BASE_URL } from "../../_config";
 import { compressImageMobile } from "../../../utils/imageCompressor";
 import { useLanguage } from "../../../utils/translations";
@@ -2499,10 +2500,8 @@ ${inspectionReportText.trim()}
         </Animated.View>
       </ScrollView>
 
-      {/* ── FLOATING SUPPORT ── */}
-      <TouchableOpacity style={styles.floatingSupport} onPress={showSupportAlert} activeOpacity={0.8}>
-        <Ionicons name="chatbubble-ellipses" size={24} color="#ffffff" />
-      </TouchableOpacity>
+      {/* Sanasa Vehicle Insurance AI Assistant */}
+      <AIChatBot userRole="agent" bottomOffset={96} />
 
       <AgentNavbar activeTab="home" />
 

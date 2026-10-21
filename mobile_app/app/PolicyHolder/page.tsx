@@ -24,6 +24,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import LanguageModal from "../Components/PolicyHolder/LanguageModal";
+import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 import { translateTextMobile } from "../../utils/translator";
 
@@ -962,10 +963,8 @@ export default function PolicyHolderDashboard() {
         </Animated.View>
       </ScrollView>
 
-      {/* Floating support */}
-      <TouchableOpacity style={styles.floatingSupport} onPress={showSupportAlert} activeOpacity={0.8}>
-        <Ionicons name="chatbubble-ellipses" size={26} color="#ffffff" />
-      </TouchableOpacity>
+      {/* Sanasa Vehicle Insurance AI Assistant */}
+      <AIChatBot userRole="policy_holder" bottomOffset={96} />
 
       <PolicyHolderNavbar />
 

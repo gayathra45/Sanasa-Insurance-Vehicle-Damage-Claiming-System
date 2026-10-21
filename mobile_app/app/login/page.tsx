@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../_config";
 
 import { useLanguage } from "../../utils/translations";
+import AIChatBot from "../Components/AIChatBot";
 
 export default function MobileLogin() {
   const { lang, changeLang, t } = useLanguage();
@@ -237,6 +238,9 @@ export default function MobileLogin() {
           </View>
         </View>
       )}
+
+      {/* Sanasa Vehicle Insurance AI Assistant */}
+      <AIChatBot userRole="policy_holder" bottomOffset={24} />
     </ImageBackground>
   );
 }

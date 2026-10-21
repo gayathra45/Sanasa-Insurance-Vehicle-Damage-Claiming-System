@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Afacad } from "next/font/google";
 import "./globals.css";
+import WebAIChatBot from "./Components/AIChatBot";
 
 const afacad = Afacad({
   variable: "--font-afacad",
@@ -27,6 +28,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         {children}
+        <WebAIChatBot />
       </body>
     </html>
   );

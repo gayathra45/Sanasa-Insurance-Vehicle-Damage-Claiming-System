@@ -16,6 +16,7 @@ import officeStaffRouter from "./src/routes/office_staff.routes.js";
 import agentRouter from "./src/routes/agent.routes.js";
 import authRouter from "./src/routes/auth.routes.js";
 import translateRouter from "./src/routes/translate.routes.js";
+import chatRouter from "./src/routes/chat.routes.js";
 
 
 
@@ -48,6 +49,7 @@ app.use("/api/office-staff", officeStaffRouter);
 app.use("/api/agent", agentRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/translate", translateRouter);
+app.use("/api/chat", chatRouter);
 
 
 

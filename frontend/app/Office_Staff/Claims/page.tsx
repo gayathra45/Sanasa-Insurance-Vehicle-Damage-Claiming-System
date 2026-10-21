@@ -1389,7 +1389,7 @@ function OfficeStaffClaimsPageContent() {
                       Vehicle Physical Inspection Report & Loss Assessment
                     </h2>
                     <p className="text-xs text-slate-500 mt-1 font-medium">
-                      Claim {selectedClaim.claimNumber} � {formatPlate(selectedClaim.vehiclePlate)} � Agent: {selectedClaim.assignedAgent || "Assigned Agent"}
+                      Claim {selectedClaim.claimNumber} • {formatPlate(selectedClaim.vehiclePlate)} • Agent: {selectedClaim.assignedAgent || "Assigned Agent"}
                     </p>
                   </div>
                 </div>
@@ -1591,7 +1591,7 @@ function OfficeStaffClaimsPageContent() {
                 <div className="bg-indigo-50/50 border border-indigo-200 rounded-2xl p-5 space-y-4">
                   <div className="flex justify-between items-center border-b border-indigo-100 pb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-base">??</span>
+                      <span className="text-base">🤖</span>
                       <h3 className="text-sm font-bold text-indigo-950 uppercase tracking-wider">
                         2. AI Loss Assessment & Estimation Cost Sheet
                       </h3>
@@ -2035,7 +2035,7 @@ function OfficeStaffClaimsPageContent() {
                   <div className="bg-blue-50/50 border border-blue-200 rounded-2xl p-5 space-y-4">
                     <div className="flex justify-between items-center border-b border-blue-200 pb-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">??</span>
+                        <span className="text-base">💳</span>
                         <h3 className="text-sm font-bold text-blue-950 uppercase tracking-wider">
                           5. Policy Holder Bank Account & Payment Settlement
                         </h3>
@@ -2074,7 +2074,7 @@ function OfficeStaffClaimsPageContent() {
                         <div>
                           <span className="text-slate-400 block text-[10px]">Account Number</span>
                           <strong className="text-slate-900 font-mono block mt-0.5">
-                            {selectedClaim.policyHolderBankDetails?.accountNumber || selectedClaim.bankAccount || "�"}
+                            {selectedClaim.policyHolderBankDetails?.accountNumber || selectedClaim.bankAccount || "—"}
                           </strong>
                         </div>
                       </div>
@@ -2157,7 +2157,7 @@ function OfficeStaffClaimsPageContent() {
                           <span className="text-xs font-bold text-emerald-800 block">Payment Disbursed Successfully</span>
                           <span className="text-[11px] text-slate-500">
                             Amount: <strong>LKR {(selectedClaim.amount || 0).toLocaleString()}</strong>
-                            {selectedClaim.paymentSettledAt && ` � Settled on ${formatSriLankaDateTime(selectedClaim.paymentSettledAt)}`}
+                            {selectedClaim.paymentSettledAt && ` • Settled on ${formatSriLankaDateTime(selectedClaim.paymentSettledAt)}`}
                           </span>
                         </div>
                         {selectedClaim.paymentReceipt && (
@@ -2184,9 +2184,9 @@ function OfficeStaffClaimsPageContent() {
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 select-none">
                 <div className="text-xs text-slate-500 font-medium">
                   {selectedClaim.status === "Approved" || selectedClaim.status === "Settled" ? (
-                    <span className="text-emerald-700 font-bold">? Claim Decision: Approved</span>
+                    <span className="text-emerald-700 font-bold">✓ Claim Decision: Approved</span>
                   ) : selectedClaim.status === "Rejected" ? (
-                    <span className="text-red-700 font-bold">? Claim Decision: Rejected</span>
+                    <span className="text-red-700 font-bold">✕ Claim Decision: Rejected</span>
                   ) : (
                     <span>Ready for branch review and settlement decision</span>
                   )}
