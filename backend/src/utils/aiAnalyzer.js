@@ -167,10 +167,10 @@ export async function analyzeAccidentDamageWithCostSheet(base64Images, vehicleIn
   }
 
   const modelCandidates = [
-    "gemini-flash-latest",
-    "gemini-3.1-flash-lite",
     "gemini-3.5-flash",
-    "gemini-3.8-flash"
+    "gemini-3.8-flash",
+    "gemini-flash-latest",
+    "gemini-3.1-flash-lite"
   ];
 
   for (const modelName of modelCandidates) {
@@ -409,10 +409,10 @@ export async function compareGarageEstimateWithPhotosAndAI(
   }
 
   const modelCandidates = [
-    "gemini-flash-latest",
-    "gemini-3.1-flash-lite",
     "gemini-3.5-flash",
-    "gemini-3.8-flash"
+    "gemini-3.8-flash",
+    "gemini-flash-latest",
+    "gemini-3.1-flash-lite"
   ];
 
   for (const modelName of modelCandidates) {

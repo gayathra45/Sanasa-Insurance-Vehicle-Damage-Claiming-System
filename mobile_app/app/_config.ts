@@ -3,6 +3,7 @@ import { Platform, LogBox } from "react-native";
 
 // Ignore recurring background polling and connection warnings in developer LogBox
 LogBox.ignoreLogs([
+  "Cannot connect to Expo CLI",
   "Background claims polling failed",
   "Error fetching availability",
   "Failed to connect",
