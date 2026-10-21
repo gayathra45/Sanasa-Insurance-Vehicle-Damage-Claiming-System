@@ -513,9 +513,7 @@ export default function FileNewClaim() {
       return next;
     });
 
-    if (previews.length > 0) {
-      await checkDuplicatePhotos(previews, base64s, `Third-Party #${index + 1} License`);
-    }
+    // License photos are identity documents and do not require duplicate check
   };
 
   const removeOtherLicensePhoto = (index: number, photoIdx: number) => {

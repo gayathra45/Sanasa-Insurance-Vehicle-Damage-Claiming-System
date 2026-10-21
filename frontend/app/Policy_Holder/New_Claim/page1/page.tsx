@@ -138,7 +138,8 @@ export default function UploadDocumentsPage() {
   const handleFileChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
     stateSetter: React.Dispatch<React.SetStateAction<FileUploadState>>,
-    typeLabel: string
+    typeLabel: string,
+    isLicense: boolean = false
   ) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
@@ -162,8 +163,10 @@ export default function UploadDocumentsPage() {
         previews: [...prev.previews, ...newPreviews],
       }));
 
-      // Trigger automatic duplicate identification
-      await checkDuplicateFiles(validFiles, newPreviews, typeLabel);
+      // Trigger automatic duplicate identification only for non-license accident photos
+      if (!isLicense) {
+        await checkDuplicateFiles(validFiles, newPreviews, typeLabel);
+      }
     }
   };
 
@@ -319,10 +322,9 @@ export default function UploadDocumentsPage() {
     stateSetter: React.Dispatch<React.SetStateAction<FileUploadState>>,
     inputRef: React.RefObject<HTMLInputElement | null>,
     isLicense: boolean = false
-  ) => {
-    const cardText = isLicense ? "Click to upload License Photos" : "Click to upload accident Photos";
+      const cardText = isLicense ? "Click to upload License Photos" : "Click to upload accident Photos";
     const typeLabel = isLicense ? `License ${label}` : `Accident ${label}`;
-    const cardHasDuplicate = state.previews.some((p) => !!duplicatesMap[p]);
+    const cardHasDuplicate = !isLicense && state.previews.some((p) => !!duplicatesMap[p]);
 
     return (
       <div className="flex flex-col flex-1">
@@ -332,7 +334,7 @@ export default function UploadDocumentsPage() {
           ref={inputRef}
           multiple
           accept="image/*,video/*,application/pdf"
-          onChange={(e) => handleFileChange(e, stateSetter, typeLabel)}
+          onChange={(e) => handleFileChange(e, stateSetter, typeLabel, isLicense)}
           className="hidden"
         />
 
@@ -360,7 +362,7 @@ export default function UploadDocumentsPage() {
               {state.previews.map((preview, idx) => {
                 const file = state.files[idx];
                 const isVideo = file && file.type.startsWith("video/");
-                const dup = duplicatesMap[preview];
+                const dup = !isLicense && duplicatesMap[preview];
 
                 return (
                   <div

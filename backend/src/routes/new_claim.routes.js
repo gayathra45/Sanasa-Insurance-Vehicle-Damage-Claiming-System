@@ -97,6 +97,10 @@ router.post("/check-duplicate-photos", async (req, res) => {
 
     for (const item of photos) {
       if (!item.base64) continue;
+      // Driving licenses are personal identity documents and should never be flagged as duplicate crash photos
+      if (item.type && (item.type.toLowerCase().includes("license") || item.type.toLowerCase().includes("driving"))) {
+        continue;
+      }
       const buffer = extractBase64Buffer(item.base64);
       if (!buffer) continue;
 
@@ -356,10 +360,8 @@ router.post("/new-claim", async (req, res) => {
       (accidentPhotos?.front || []).forEach(b => recordHash(b, "Accident Front"));
       (accidentPhotos?.rear || []).forEach(b => recordHash(b, "Accident Rear"));
       (accidentPhotos?.side || []).forEach(b => recordHash(b, "Accident Side"));
-      (drivingLicense?.front || []).forEach(b => recordHash(b, "License Front"));
-      (drivingLicense?.rear || []).forEach(b => recordHash(b, "License Rear"));
+      // Note: Driving licenses are personal identity documents and are excluded from PhotoHash duplicate checks
       (otherVehicleDetails || []).forEach(ov => {
-        (ov.licensePhotos || []).forEach(b => recordHash(b, "Other Vehicle License"));
         (ov.vehiclePhotos || []).forEach(b => recordHash(b, "Other Vehicle Damage"));
       });
 
