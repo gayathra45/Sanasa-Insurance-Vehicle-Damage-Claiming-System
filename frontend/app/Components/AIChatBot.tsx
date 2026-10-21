@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -18,52 +18,299 @@ interface ChatMessage {
   timestamp: string;
 }
 
-const QUICK_PROMPTS = [
-  {
-    label: "📋 What are my claims?",
-    text: "What are my registered claims?",
-    colorClass: "bg-sky-50/90 hover:bg-sky-100 text-sky-700 border-sky-200",
-  },
-  {
-    label: "🚗 My Registered Vehicles",
-    text: "What are my registered vehicles?",
-    colorClass: "bg-emerald-50/90 hover:bg-emerald-100 text-emerald-700 border-emerald-200",
-  },
-  {
-    label: "👤 My Profile Details",
-    text: "What are my registered profile details?",
-    colorClass: "bg-violet-50/90 hover:bg-violet-100 text-violet-700 border-violet-200",
-  },
-  {
-    label: "🚗 File Accident Claim",
-    text: "How do I file a vehicle accident claim step-by-step?",
-    colorClass: "bg-rose-50/90 hover:bg-rose-100 text-rose-700 border-rose-200",
-  },
-  {
-    label: "🛡️ Comprehensive Cover",
-    text: "What does Sanasa Comprehensive Motor Insurance cover?",
-    colorClass: "bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border-indigo-200",
-  },
-  {
-    label: "🚨 24/7 Hotline",
-    text: "What is the 24/7 Sanasa emergency accident hotline?",
-    colorClass: "bg-teal-50/90 hover:bg-teal-100 text-teal-700 border-teal-200",
-  },
-];
+type UserRole = "guest" | "policy_holder" | "agent" | "office_staff" | "admin";
+
+interface QuickPrompt {
+  label: string;
+  text: string;
+  colorClass: string;
+}
+
+const PROMPTS_BY_ROLE: Record<UserRole, QuickPrompt[]> = {
+  guest: [
+    {
+      label: "🛡️ Comprehensive Cover",
+      text: "What does Sanasa Comprehensive Motor Insurance cover?",
+      colorClass: "bg-sky-50/90 hover:bg-sky-100 text-sky-700 border-sky-200",
+    },
+    {
+      label: "🚗 Third-Party Only",
+      text: "What is covered under Third Party Motor Insurance in Sri Lanka?",
+      colorClass: "bg-emerald-50/90 hover:bg-emerald-100 text-emerald-700 border-emerald-200",
+    },
+    {
+      label: "📋 How to File a Claim",
+      text: "What is the step-by-step procedure to report an accident and file a claim?",
+      colorClass: "bg-rose-50/90 hover:bg-rose-100 text-rose-700 border-rose-200",
+    },
+    {
+      label: "📄 Required Claim Documents",
+      text: "What documents are required to claim motor insurance?",
+      colorClass: "bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border-indigo-200",
+    },
+    {
+      label: "🚨 24/7 Accident Hotline",
+      text: "What is the 24/7 Sanasa emergency accident hotline?",
+      colorClass: "bg-teal-50/90 hover:bg-teal-100 text-teal-700 border-teal-200",
+    },
+    {
+      label: "🏢 Sanasa Branches",
+      text: "Where are Sanasa General Insurance branch offices located?",
+      colorClass: "bg-amber-50/90 hover:bg-amber-100 text-amber-700 border-amber-200",
+    },
+  ],
+  policy_holder: [
+    {
+      label: "📋 What are my claims?",
+      text: "What are my registered claims?",
+      colorClass: "bg-sky-50/90 hover:bg-sky-100 text-sky-700 border-sky-200",
+    },
+    {
+      label: "🚗 My Registered Vehicles",
+      text: "What are my registered vehicles?",
+      colorClass: "bg-emerald-50/90 hover:bg-emerald-100 text-emerald-700 border-emerald-200",
+    },
+    {
+      label: "👤 My Profile Details",
+      text: "What are my registered profile details?",
+      colorClass: "bg-violet-50/90 hover:bg-violet-100 text-violet-700 border-violet-200",
+    },
+    {
+      label: "🚗 File Accident Claim",
+      text: "How do I file a vehicle accident claim step-by-step?",
+      colorClass: "bg-rose-50/90 hover:bg-rose-100 text-rose-700 border-rose-200",
+    },
+    {
+      label: "📄 Document Checklist",
+      text: "What documents do I need to submit for my claim?",
+      colorClass: "bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border-indigo-200",
+    },
+    {
+      label: "🚨 24/7 Hotline",
+      text: "What is the 24/7 Sanasa emergency accident hotline?",
+      colorClass: "bg-teal-50/90 hover:bg-teal-100 text-teal-700 border-teal-200",
+    },
+  ],
+  agent: [
+    {
+      label: "📋 Inspection Checklist",
+      text: "What is the on-site physical inspection checklist and procedure?",
+      colorClass: "bg-sky-50/90 hover:bg-sky-100 text-sky-700 border-sky-200",
+    },
+    {
+      label: "📸 Mandatory Inspection Photos",
+      text: "What photos must an agent take during accident damage inspection?",
+      colorClass: "bg-emerald-50/90 hover:bg-emerald-100 text-emerald-700 border-emerald-200",
+    },
+    {
+      label: "🛠️ Garage Estimate Verification",
+      text: "How do I cross-check garage repair estimate quotations?",
+      colorClass: "bg-amber-50/90 hover:bg-amber-100 text-amber-700 border-amber-200",
+    },
+    {
+      label: "📝 Physical Report Guidelines",
+      text: "What remarks and component damage details are needed in the inspection report?",
+      colorClass: "bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border-indigo-200",
+    },
+    {
+      label: "🚨 Emergency Claims Desk",
+      text: "How do I contact the head office emergency claims desk?",
+      colorClass: "bg-rose-50/90 hover:bg-rose-100 text-rose-700 border-rose-200",
+    },
+  ],
+  office_staff: [
+    {
+      label: "📋 Claim Approval Protocol",
+      text: "What are the approval criteria and steps for motor claim settlement?",
+      colorClass: "bg-sky-50/90 hover:bg-sky-100 text-sky-700 border-sky-200",
+    },
+    {
+      label: "⚖️ Garage vs AI Assessment",
+      text: "How do I evaluate garage estimates against AI damage assessments?",
+      colorClass: "bg-emerald-50/90 hover:bg-emerald-100 text-emerald-700 border-emerald-200",
+    },
+    {
+      label: "🔍 Fraud Detection Flags",
+      text: "What are the key fraud indicators in vehicle accident claims?",
+      colorClass: "bg-rose-50/90 hover:bg-rose-100 text-rose-700 border-rose-200",
+    },
+    {
+      label: "💳 Settlement Payment Protocol",
+      text: "What are the rules and required vouchers for settling claims to bank accounts?",
+      colorClass: "bg-amber-50/90 hover:bg-amber-100 text-amber-700 border-amber-200",
+    },
+  ],
+  admin: [
+    {
+      label: "📊 System Operations",
+      text: "Give an overview of claims processing workflows and system health.",
+      colorClass: "bg-sky-50/90 hover:bg-sky-100 text-sky-700 border-sky-200",
+    },
+    {
+      label: "👥 Staff & Agent Governance",
+      text: "What are the guidelines for managing staff and agent role permissions?",
+      colorClass: "bg-emerald-50/90 hover:bg-emerald-100 text-emerald-700 border-emerald-200",
+    },
+    {
+      label: "🛡️ Audit & Security Rules",
+      text: "What audit logging and security compliance standards are enforced?",
+      colorClass: "bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border-indigo-200",
+    },
+  ],
+};
+
+const getInitialWelcome = (role: UserRole, name?: string): ChatMessage[] => {
+  const time = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  if (role === "guest") {
+    return [
+      {
+        id: "welcome-guest",
+        sender: "ai",
+        text: "Hello! I am **Sanasa AI**, your official Vehicle & Motor Insurance assistant.\n\nI can provide general information on:\n• Comprehensive & Third-Party insurance policies\n• Step-by-step accident claim procedures & documents\n• 24/7 emergency roadside assistance across Sri Lanka\n• Sanasa branch locations & customer service\n\nHow can I help you today?",
+        timestamp: time,
+      },
+    ];
+  }
+
+  if (role === "policy_holder") {
+    return [
+      {
+        id: "welcome-policy",
+        sender: "ai",
+        text: `Hello${name ? ` **${name}**` : ""}! I am your personal **Sanasa Policyholder Assistant**.\n\nI can help you with:\n• Checking your active and past claims\n• Viewing registered insured vehicles & policy numbers\n• Step-by-step guidance on filing a new accident claim\n• 24/7 roadside emergency hotline\n\nWhat would you like to check today?`,
+        timestamp: time,
+      },
+    ];
+  }
+
+  if (role === "agent") {
+    return [
+      {
+        id: "welcome-agent",
+        sender: "ai",
+        text: `Hello${name ? ` **${name}**` : ""}! I am the **Sanasa Agent Field Assistant**.\n\nI can assist you with:\n• On-site vehicle inspection standards & checklist\n• Mandatory photo evidence requirements\n• Garage estimate assessments\n• Reporting and submission workflows\n\nHow can I support your field assessment today?`,
+        timestamp: time,
+      },
+    ];
+  }
+
+  if (role === "office_staff") {
+    return [
+      {
+        id: "welcome-staff",
+        sender: "ai",
+        text: `Hello${name ? ` **${name}**` : ""}! I am the **Sanasa Staff Operations Assistant**.\n\nI can assist you with:\n• Claim evaluation & approval protocols\n• Comparing garage estimates with AI assessments\n• Photo damage cross-checks\n• Settlement payout voucher requirements\n\nWhat would you like to review today?`,
+        timestamp: time,
+      },
+    ];
+  }
+
+  return [
+    {
+      id: "welcome-admin",
+      sender: "ai",
+      text: "Hello Administrator! I am the **Sanasa Admin Operations Assistant**.\n\nI can assist you with system operational metrics, staff governance, policy auditing, and security protocols.\n\nHow can I help you today?",
+      timestamp: time,
+    },
+  ];
+};
 
 export default function WebAIChatBot() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [inputText, setInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome-1",
-      sender: "ai",
-      text: "Hello! I am **Sanasa AI**, your dedicated Vehicle & Motor Insurance assistant.\n\nI can help you with:\n• Claim details (enter your Claim ID like `CLM-0000-0014`)\n• Checking your registered claims & vehicles\n• Step-by-step accident claims & required documents\n• 24/7 emergency roadside assistance across Sri Lanka\n\nHow can I help you today?",
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-    },
-  ]);
+
+  // Role and authenticated user context state
+  const [currentRole, setCurrentRole] = useState<UserRole>("guest");
+  const [userInfo, setUserInfo] = useState<{ name: string; nic: string; email: string }>({
+    name: "",
+    nic: "",
+    email: "",
+  });
+
+  // Independent chat history per role to ensure 100% privacy and separation
+  const [threads, setThreads] = useState<Record<UserRole, ChatMessage[]>>({
+    guest: getInitialWelcome("guest"),
+    policy_holder: getInitialWelcome("policy_holder"),
+    agent: getInitialWelcome("agent"),
+    office_staff: getInitialWelcome("office_staff"),
+    admin: getInitialWelcome("admin"),
+  });
+
+  // Detect role and logged-in user on pathname/mount change
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    if (pathname?.includes("/Policy_Holder/")) {
+      let uName = "Policyholder";
+      let uNic = "";
+      let uEmail = "";
+      try {
+        const uStr = sessionStorage.getItem("logged_in_user");
+        if (uStr) {
+          const u = JSON.parse(uStr);
+          uName = u.firstName ? `${u.firstName} ${u.lastName || ""}`.trim() : "Policyholder";
+          uNic = u.nic || "";
+          uEmail = u.email || "";
+        }
+      } catch {}
+      setCurrentRole("policy_holder");
+      setUserInfo({ name: uName, nic: uNic, email: uEmail });
+      setThreads((prev) => ({
+        ...prev,
+        policy_holder: prev.policy_holder.length > 0 ? prev.policy_holder : getInitialWelcome("policy_holder", uName),
+      }));
+    } else if (pathname?.includes("/Agent/")) {
+      let aName = "Agent";
+      let aNic = "";
+      let aEmail = "";
+      try {
+        const aStr = sessionStorage.getItem("logged_in_agent");
+        if (aStr) {
+          const a = JSON.parse(aStr);
+          aName = a.name || "Agent";
+          aNic = a.nic || "";
+          aEmail = a.email || "";
+        }
+      } catch {}
+      setCurrentRole("agent");
+      setUserInfo({ name: aName, nic: aNic, email: aEmail });
+      setThreads((prev) => ({
+        ...prev,
+        agent: prev.agent.length > 0 ? prev.agent : getInitialWelcome("agent", aName),
+      }));
+    } else if (pathname?.includes("/Office_Staff/")) {
+      let sName = "Staff Officer";
+      let sNic = "";
+      let sEmail = "";
+      try {
+        const sStr = sessionStorage.getItem("logged_in_staff");
+        if (sStr) {
+          const s = JSON.parse(sStr);
+          sName = s.name || "Staff Officer";
+          sNic = s.nic || "";
+          sEmail = s.email || "";
+        }
+      } catch {}
+      setCurrentRole("office_staff");
+      setUserInfo({ name: sName, nic: sNic, email: sEmail });
+      setThreads((prev) => ({
+        ...prev,
+        office_staff: prev.office_staff.length > 0 ? prev.office_staff : getInitialWelcome("office_staff", sName),
+      }));
+    } else if (pathname?.includes("/Admin/")) {
+      setCurrentRole("admin");
+      setUserInfo({ name: "Administrator", nic: "", email: "" });
+    } else {
+      // Home page, About, Services, etc. (Public / Guest)
+      setCurrentRole("guest");
+      setUserInfo({ name: "", nic: "", email: "" });
+    }
+  }, [pathname]);
+
+  const messages = threads[currentRole] || getInitialWelcome(currentRole, userInfo.name);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -85,8 +332,6 @@ export default function WebAIChatBot() {
 
   // Aligned perfectly with existing right-8 position; stacked above with clean 12px gap
   const bottomPositionClass = hasExistingBottomChat ? "bottom-[112px] right-8" : "bottom-8 right-8";
-
-  if (isExcluded) return null;
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -112,32 +357,17 @@ export default function WebAIChatBot() {
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    const updatedMessages = [...messages, userMsg];
+    setThreads((prev) => ({
+      ...prev,
+      [currentRole]: updatedMessages,
+    }));
     setInputText("");
     setIsLoading(true);
     scrollToBottom();
 
-    // Extract user info from session storage
-    let userNic = "";
-    let userEmail = "";
-    let userName = "";
     try {
-      if (typeof window !== "undefined") {
-        const userStr = sessionStorage.getItem("logged_in_user");
-        if (userStr) {
-          const u = JSON.parse(userStr);
-          userNic = u.nic || "";
-          userEmail = u.email || "";
-          userName = u.firstName ? `${u.firstName} ${u.lastName || ""}`.trim() : "";
-        }
-      }
-    } catch (e) {
-      console.warn("Could not read logged_in_user from sessionStorage", e);
-    }
-
-    try {
-      const history = newMessages.slice(-8).map((m) => ({
+      const history = updatedMessages.slice(-8).map((m) => ({
         role: m.sender === "user" ? "user" : "model",
         text: m.text,
       }));
@@ -149,10 +379,10 @@ export default function WebAIChatBot() {
         body: JSON.stringify({
           message: textToSend,
           history,
-          userRole: pathname?.includes("/Agent/") ? "agent" : "policy_holder",
-          userNic,
-          userEmail,
-          userName,
+          userRole: currentRole,
+          userNic: userInfo.nic,
+          userEmail: userInfo.email,
+          userName: userInfo.name,
         }),
       });
 
@@ -168,7 +398,10 @@ export default function WebAIChatBot() {
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
-      setMessages((prev) => [...prev, aiMsg]);
+      setThreads((prev) => ({
+        ...prev,
+        [currentRole]: [...(prev[currentRole] || []), aiMsg],
+      }));
     } catch (err) {
       console.warn("AI Chat send error:", err);
       const errorMsg: ChatMessage = {
@@ -177,7 +410,10 @@ export default function WebAIChatBot() {
         text: "⚠️ Connection to Sanasa AI failed. Please check your network or call the Sanasa 24/7 Accident Hotline at **011-2303300**.",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
-      setMessages((prev) => [...prev, errorMsg]);
+      setThreads((prev) => ({
+        ...prev,
+        [currentRole]: [...(prev[currentRole] || []), errorMsg],
+      }));
     } finally {
       setIsLoading(false);
       scrollToBottom();
@@ -185,14 +421,10 @@ export default function WebAIChatBot() {
   };
 
   const clearChat = () => {
-    setMessages([
-      {
-        id: `welcome-${Date.now()}`,
-        sender: "ai",
-        text: "Conversation cleared. How can I assist you with your vehicle insurance or claim?",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      },
-    ]);
+    setThreads((prev) => ({
+      ...prev,
+      [currentRole]: getInitialWelcome(currentRole, userInfo.name),
+    }));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -202,9 +434,42 @@ export default function WebAIChatBot() {
     }
   };
 
+  // Header dynamic titles based on user role
+  const headerDetails = useMemo(() => {
+    if (currentRole === "policy_holder") {
+      return {
+        title: userInfo.name ? `Sanasa AI • ${userInfo.name.split(" ")[0]}` : "Policyholder Assistant",
+        subtitle: "Policyholder Portal • Private & Verified",
+      };
+    }
+    if (currentRole === "agent") {
+      return {
+        title: userInfo.name ? `Field AI • ${userInfo.name.split(" ")[0]}` : "Agent Assistant",
+        subtitle: "Inspection & Field Assessment Portal",
+      };
+    }
+    if (currentRole === "office_staff") {
+      return {
+        title: userInfo.name ? `Operations AI • ${userInfo.name.split(" ")[0]}` : "Operations Staff AI",
+        subtitle: "Claim Review & Approval Portal",
+      };
+    }
+    if (currentRole === "admin") {
+      return {
+        title: "Sanasa Admin AI",
+        subtitle: "Governance & Operations Portal",
+      };
+    }
+    return {
+      title: "Sanasa AI Assistant",
+      subtitle: "Vehicle & Motor Insurance Specialist",
+    };
+  }, [currentRole, userInfo.name]);
+
+  const currentPrompts = PROMPTS_BY_ROLE[currentRole] || PROMPTS_BY_ROLE.guest;
+
   const renderFormattedText = (text: string) => {
     const lines = text.split("\n");
-    const baseApi = API_URL.replace(/\/$/, "");
 
     return lines.map((line, lIdx) => {
       // Parse markdown link: [label](url)
@@ -295,6 +560,8 @@ export default function WebAIChatBot() {
     });
   };
 
+  if (isExcluded) return null;
+
   return (
     <>
       {/* ── COLORFUL FLOATING AI BUTTON ── */}
@@ -303,7 +570,9 @@ export default function WebAIChatBot() {
           <div className="relative group flex items-center justify-center">
             {/* Tooltip on hover */}
             <div className="absolute right-full mr-3 px-3 py-1.5 rounded-xl bg-[#0a192f] text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-xl border border-sky-400/20 flex items-center gap-2">
-              <span className="text-[#00ddff] font-bold">Sanasa AI</span>
+              <span className="text-[#00ddff] font-bold">
+                {currentRole === "policy_holder" ? "My AI Assistant" : currentRole === "agent" ? "Agent Field AI" : currentRole === "office_staff" ? "Operations AI" : "Sanasa AI"}
+              </span>
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
 
@@ -334,11 +603,11 @@ export default function WebAIChatBot() {
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="font-bold text-sm text-white tracking-tight">Sanasa AI Assistant</h3>
+                  <h3 className="font-bold text-sm text-white tracking-tight">{headerDetails.title}</h3>
                   <span className="text-[11px] text-[#00ddff] font-bold">✓</span>
                 </div>
-                <p className="text-[11px] text-sky-200/90 font-medium">
-                  Vehicle Insurance Specialist • <span className="text-emerald-300 font-semibold">Online</span>
+                <p className="text-[11px] text-sky-200/90 font-medium truncate max-w-[200px]">
+                  {headerDetails.subtitle}
                 </p>
               </div>
             </div>
@@ -363,9 +632,9 @@ export default function WebAIChatBot() {
             </div>
           </div>
 
-          {/* Colorful Quick Prompts Bar */}
+          {/* Colorful Quick Prompts Bar (Specific to the active user role) */}
           <div className="bg-slate-50/80 border-b border-slate-100 px-3 py-2 overflow-x-auto flex gap-1.5 no-scrollbar">
-            {QUICK_PROMPTS.map((p, idx) => (
+            {currentPrompts.map((p, idx) => (
               <button
                 key={idx}
                 type="button"
@@ -437,7 +706,15 @@ export default function WebAIChatBot() {
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask about vehicle claims, coverages..."
+                placeholder={
+                  currentRole === "policy_holder"
+                    ? "Ask about your claims, vehicles, or filing..."
+                    : currentRole === "agent"
+                    ? "Ask about on-site inspections, photos..."
+                    : currentRole === "office_staff"
+                    ? "Ask about claim verification, garage estimates..."
+                    : "Ask about Sanasa vehicle policies, claims..."
+                }
                 className="flex-1 bg-transparent border-none outline-none text-xs text-slate-800 placeholder:text-slate-400 resize-none max-h-20 py-1.5"
               />
               <button
@@ -450,7 +727,16 @@ export default function WebAIChatBot() {
               </button>
             </div>
             <div className="text-[10px] text-slate-400 text-center mt-1.5 font-medium">
-              Sanasa General Insurance PLC • <span className="text-sky-600 font-semibold">Motor AI Assistant</span>
+              Sanasa General Insurance PLC •{" "}
+              <span className="text-sky-600 font-semibold">
+                {currentRole === "policy_holder"
+                  ? "Policyholder AI"
+                  : currentRole === "agent"
+                  ? "Field Agent AI"
+                  : currentRole === "office_staff"
+                  ? "Operations AI"
+                  : "General AI Assistant"}
+              </span>
             </div>
           </div>
         </div>

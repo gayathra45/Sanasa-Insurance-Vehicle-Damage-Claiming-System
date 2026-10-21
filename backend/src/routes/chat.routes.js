@@ -244,12 +244,41 @@ router.post("/message", async (req, res) => {
 
     const cleanMsg = message.trim();
     const lowerMsg = cleanMsg.toLowerCase();
+    const isGuest = userRole === "guest" || userRole === "public" || !userRole;
+
+    // ── PRIVACY GUARDRAILS FOR PUBLIC GUEST (HOMEPAGE) ───────────────────────
+    if (isGuest) {
+      const asksPersonal =
+        lowerMsg.includes("my claim") ||
+        lowerMsg.includes("my claims") ||
+        lowerMsg.includes("what are my claim") ||
+        lowerMsg.includes("show my claim") ||
+        lowerMsg.includes("list my claim") ||
+        lowerMsg.includes("my vehicle") ||
+        lowerMsg.includes("my vehicles") ||
+        lowerMsg.includes("what vehicles") ||
+        lowerMsg.includes("my profile") ||
+        lowerMsg.includes("my account") ||
+        lowerMsg.includes("who am i") ||
+        lowerMsg.includes("my info") ||
+        lowerMsg.includes("about me") ||
+        cleanMsg.match(/\b(\d{9}[vVxX]|\d{12})\b/) ||
+        cleanMsg.match(/\b(CLM[-\s]?[0-9a-zA-Z]+(?:[-\s]?[0-9a-zA-Z]+)*)\b/i) ||
+        cleanMsg.match(/\b([A-Z]{2,3}[-\s]?\d{4})\b/i);
+
+      if (asksPersonal) {
+        return res.json({
+          reply: `🔒 **Account Privacy Notice**\n\nFor security and data privacy, personal insurance records (claims, registered vehicles, and personal profiles) are **not accessible on the public homepage**.\n\nPlease **[Log in to your Sanasa Portal](/Login)** to securely view and manage your personal claims, policies, and profile.\n\n*If you have general questions about Sanasa insurance plans, coverage options, required documents, or emergency hotlines, feel free to ask!*`,
+          source: "guest_privacy_guardrail"
+        });
+      }
+    }
 
     // ── 1. Check for Explicit Claim ID in Query ──────────────────────────────
     const claimMatch = cleanMsg.match(/\b(CLM[-\s]?[0-9a-zA-Z]+(?:[-\s]?[0-9a-zA-Z]+)*)\b/i);
     let matchedClaim = null;
 
-    if (claimMatch && claimMatch[1]) {
+    if (claimMatch && claimMatch[1] && !isGuest) {
       const rawClaimId = claimMatch[1].trim();
       // Normalize e.g. "CLM 0000 0014" -> "CLM-0000-0014"
       const normalizedRegex = new RegExp("^" + rawClaimId.replace(/[\s-]/g, "[- ]?"), "i");
@@ -264,9 +293,19 @@ router.post("/message", async (req, res) => {
         lowerMsg.includes("what is") ||
         lowerMsg.includes("show");
 
-      if (matchedClaim && isSimpleClaimQuery) {
-        const reply = formatClaimDetails(matchedClaim);
-        return res.json({ reply, source: "database_claim_lookup", claimNumber: matchedClaim.claimNumber });
+      if (matchedClaim) {
+        const activeNic = (userNic || "").trim().toUpperCase();
+        if (userRole === "policy_holder" && activeNic && matchedClaim.userNic && matchedClaim.userNic.toUpperCase() !== activeNic) {
+          return res.json({
+            reply: `🔒 For privacy and data security, you can only view claims registered under your own verified policyholder account.`,
+            source: "policyholder_privacy_guardrail"
+          });
+        }
+
+        if (isSimpleClaimQuery) {
+          const reply = formatClaimDetails(matchedClaim);
+          return res.json({ reply, source: "database_claim_lookup", claimNumber: matchedClaim.claimNumber });
+        }
       } else if (!matchedClaim && (lowerMsg.startsWith("clm") || lowerMsg.includes("status of clm"))) {
         return res.json({
           reply: `🔍 I searched the Sanasa Claims Registry for **${rawClaimId.toUpperCase()}**, but could not find any active claim matching that ID.\n\nPlease double check the claim number (format: \`CLM-XXXX-XXXX\`) or provide your **NIC number** so I can find all claims registered to your account.`,
@@ -290,9 +329,9 @@ router.post("/message", async (req, res) => {
 
     // Extract potential NIC from text if not passed in session
     const nicMatch = cleanMsg.match(/\b(\d{9}[vVxX]|\d{12})\b/);
-    const activeNic = (userNic || (nicMatch ? nicMatch[1] : "")).trim().toUpperCase();
+    const activeNic = (!isGuest && userRole === "policy_holder") ? (userNic || (nicMatch ? nicMatch[1] : "")).trim().toUpperCase() : "";
 
-    if (isAskingMyClaims) {
+    if (isAskingMyClaims && !isGuest) {
       if (activeNic) {
         const userClaims = await Claim.find({ userNic: activeNic }).sort({ _id: -1 }).limit(10);
         if (userClaims && userClaims.length > 0) {
@@ -321,7 +360,7 @@ router.post("/message", async (req, res) => {
       lowerMsg.includes("registered vehicle") ||
       lowerMsg.includes("my polic");
 
-    if (isAskingVehicles) {
+    if (isAskingVehicles && !isGuest) {
       if (activeNic) {
         const userDoc = await User.findOne({ nic: activeNic });
         if (userDoc && Array.isArray(userDoc.vehicles) && userDoc.vehicles.length > 0) {
@@ -351,7 +390,7 @@ router.post("/message", async (req, res) => {
       lowerMsg.includes("my info") ||
       lowerMsg.includes("about me");
 
-    if (isAskingUserDetails) {
+    if (isAskingUserDetails && !isGuest) {
       if (activeNic) {
         const userDoc = await User.findOne({ nic: activeNic });
         if (userDoc) {
@@ -372,7 +411,7 @@ router.post("/message", async (req, res) => {
       nicMatch &&
       (cleanMsg.length < 25 || lowerMsg.startsWith("nic") || lowerMsg.includes("my nic"));
 
-    if (isDirectNic && activeNic) {
+    if (isDirectNic && activeNic && !isGuest) {
       const userClaims = await Claim.find({ userNic: activeNic }).sort({ _id: -1 }).limit(5);
       const userDoc = await User.findOne({ nic: activeNic });
 
@@ -399,9 +438,9 @@ router.post("/message", async (req, res) => {
       }
     }
 
-    // ── 6. Check for Vehicle Plate Query (e.g. "WP CAB-1234", "CAB-1234") ─────
+    // ── 6. Check for Vehicle Plate Query (staff/agents only) ───────────────────
     const plateMatch = cleanMsg.match(/\b([A-Z]{2,3}[-\s]?\d{4})\b/i);
-    if (plateMatch && (lowerMsg.includes("claim") || lowerMsg.includes("status") || lowerMsg.includes("detail") || cleanMsg.length < 16)) {
+    if (plateMatch && !isGuest && (userRole === "agent" || userRole === "office_staff" || userRole === "admin")) {
       const rawPlate = plateMatch[1].replace(/[\s-]/g, "");
       const plateRegex = new RegExp(rawPlate.slice(0, -4) + "[- ]?" + rawPlate.slice(-4), "i");
       const plateClaim = await Claim.findOne({ vehiclePlate: plateRegex }).sort({ _id: -1 });
@@ -420,11 +459,24 @@ router.post("/message", async (req, res) => {
 
     // ── 5. Build Real-Time Context for Gemini Prompt ──────────────────────────
     let dynamicContext = "";
-    if (activeNic) {
+    if (isGuest) {
+      dynamicContext += `\n[ROLE: PUBLIC HOMEPAGE GUEST ASSISTANT]:\n` +
+        `You are assisting an anonymous public visitor on the Sanasa General Insurance public website.\n` +
+        `- Answer general questions about vehicle insurance policies, comprehensive cover, third-party liability, claim procedures, required documents, and 24/7 accident hotline (011-2303300).\n` +
+        `- STRICT PRIVACY RULE: Do NOT disclose or look up any personal customer data, claims, or vehicle records in this public chat. If the user asks for personal records or status, instruct them to log in to the Sanasa Portal.\n`;
+    } else if (userRole === "agent") {
+      dynamicContext += `\n[ROLE: FIELD AGENT ASSISTANT - ${userName || "Agent"}]:\n` +
+        `You are assisting a Sanasa field insurance agent.\n` +
+        `- Provide guidance on on-site vehicle inspections, mandatory photo angles, assessing damage severity, checking repair garage quotations, and submitting physical inspection reports.\n`;
+    } else if (userRole === "office_staff") {
+      dynamicContext += `\n[ROLE: OFFICE OPERATIONS ASSISTANT - ${userName || "Staff"}]:\n` +
+        `You are assisting a Sanasa office staff claim officer.\n` +
+        `- Provide guidance on claim evaluation, cross-checking garage estimates with AI damage analysis, fraud red flags, approving inspections, and issuing settlement payment vouchers.\n`;
+    } else if (userRole === "policy_holder" && activeNic) {
       try {
         const userClaims = await Claim.find({ userNic: activeNic }).sort({ _id: -1 }).limit(5);
         const userDoc = await User.findOne({ nic: activeNic });
-        dynamicContext += `\n[VERIFIED DATABASE CONTEXT FOR CURRENT USER]:\n`;
+        dynamicContext += `\n[VERIFIED DATABASE CONTEXT FOR LOGGED-IN POLICYHOLDER]:\n`;
         dynamicContext += `User NIC: ${activeNic}\n`;
         if (userDoc) {
           dynamicContext += `Name: ${userDoc.firstName || ""} ${userDoc.lastName || ""}\n`;
@@ -445,7 +497,7 @@ router.post("/message", async (req, res) => {
       }
     }
 
-    if (matchedClaim) {
+    if (matchedClaim && !isGuest) {
       dynamicContext += `\n[SPECIFIC CLAIM LOOKUP RECORD FOR ${matchedClaim.claimNumber}]:\n`;
       dynamicContext += `Claim Number: ${matchedClaim.claimNumber}\n`;
       dynamicContext += `Status: ${matchedClaim.status} (Step ${matchedClaim.currentStep || 1} of 5)\n`;

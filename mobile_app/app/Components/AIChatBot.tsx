@@ -34,7 +34,7 @@ interface AIChatBotProps {
   bottomOffset?: number;
 }
 
-const QUICK_PROMPTS = [
+const POLICYHOLDER_PROMPTS = [
   {
     label: "📋 What are my claims?",
     text: "What are my registered claims?",
@@ -79,7 +79,46 @@ const QUICK_PROMPTS = [
   },
 ];
 
+const AGENT_PROMPTS = [
+  {
+    label: "📋 Inspection Checklist",
+    text: "What is the on-site physical inspection checklist and procedure?",
+    bgColor: "#f0f9ff",
+    borderColor: "#bae6fd",
+    textColor: "#0369a1",
+  },
+  {
+    label: "📸 Mandatory Photos",
+    text: "What photos must an agent take during accident damage inspection?",
+    bgColor: "#ecfdf5",
+    borderColor: "#a7f3d0",
+    textColor: "#047857",
+  },
+  {
+    label: "🛠️ Garage Estimate Check",
+    text: "How do I cross-check garage repair estimate quotations?",
+    bgColor: "#fff7ed",
+    borderColor: "#fed7aa",
+    textColor: "#c2410c",
+  },
+  {
+    label: "📝 Inspection Report",
+    text: "What remarks and component damage details are needed in the inspection report?",
+    bgColor: "#eef2ff",
+    borderColor: "#c7d2fe",
+    textColor: "#4338ca",
+  },
+  {
+    label: "🚨 Emergency Desk",
+    text: "How do I contact the head office emergency claims desk?",
+    bgColor: "#fff1f2",
+    borderColor: "#fecdd3",
+    textColor: "#be123c",
+  },
+];
+
 export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 90 }: AIChatBotProps) {
+  const quickPrompts = userRole === "agent" ? AGENT_PROMPTS : POLICYHOLDER_PROMPTS;
   const [modalVisible, setModalVisible] = useState(false);
   const [supportModalVisible, setSupportModalVisible] = useState(false);
   const [inputText, setInputText] = useState("");
@@ -90,7 +129,9 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     {
       id: "welcome-1",
       sender: "ai",
-      text: "Hello! I am **Sanasa AI**, your vehicle insurance assistant.\n\nI can help you with:\n• Claim details (enter your Claim ID like `CLM-0000-0014`)\n• Checking your registered claims & vehicles\n• Step-by-step accident claims & required documents\n• 24/7 emergency roadside assistance across Sri Lanka\n\nHow can I help you today?",
+      text: userRole === "agent"
+        ? "Hello! I am **Sanasa Field AI**, your dedicated Agent Inspection Assistant.\n\nI can assist you with:\n• On-site physical vehicle inspection checklist\n• Required photo evidence standards\n• Reviewing repair garage quotations\n• Emergency claims desk contact\n\nHow can I help you today?"
+        : "Hello! I am **Sanasa AI**, your vehicle insurance assistant.\n\nI can help you with:\n• Claim details (enter your Claim ID like `CLM-0000-0014`)\n• Checking your registered claims & vehicles\n• Step-by-step accident claims & required documents\n• 24/7 emergency roadside assistance across Sri Lanka\n\nHow can I help you today?",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -393,10 +434,14 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                 </View>
                 <View>
                   <View style={styles.headerTitleRow}>
-                    <Text style={styles.headerTitle}>Sanasa AI Assistant</Text>
+                    <Text style={styles.headerTitle}>
+                      {userRole === "agent" ? "Sanasa Field AI" : "Sanasa AI Assistant"}
+                    </Text>
                     <Ionicons name="checkmark-circle" size={13} color="#00ddff" style={styles.verifiedBadge} />
                   </View>
-                  <Text style={styles.headerSubtitle}>Vehicle Insurance Specialist • Online</Text>
+                  <Text style={styles.headerSubtitle}>
+                    {userRole === "agent" ? "Agent Field Assistant • Online" : "Vehicle Insurance Specialist • Online"}
+                  </Text>
                 </View>
               </View>
 
@@ -428,7 +473,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                 contentContainerStyle={styles.quickPromptsScroll}
                 keyboardShouldPersistTaps="handled"
               >
-                {QUICK_PROMPTS.map((prompt, index) => (
+                {quickPrompts.map((prompt, index) => (
                   <TouchableOpacity
                     key={index}
                     activeOpacity={0.75}
