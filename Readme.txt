@@ -1,5 +1,5 @@
 Backend start : cd .\backend\ 
-               npm start
+               npm run dev
 
 Frontend start : cd .\frontend\
                  npm run dev
@@ -17,7 +17,7 @@ Git branch move - git branch
 Login Details
 
 Policy Holder - email - gayathrasamuditha45@gmail.com
-                password - gayathra123
+                password - gayathra45
 
 
 
@@ -31,7 +31,7 @@ Agent         - email - oshitha@gmail.com
 
 
 Office Staff  - email - galle@gmail.com
-                password - galle12
+                password - galle123
 
                 email - matara@gmail.com
                 password - matara123
