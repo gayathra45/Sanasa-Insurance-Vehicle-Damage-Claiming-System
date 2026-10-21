@@ -1283,8 +1283,9 @@ router.post("/claims/:claimNumber/decision", async (req, res) => {
       claim.status = "Approved";
       claim.currentStep = 5; // Step 5: Decision / Approved
 
-      const approvedAmount = Number(amount) || claim.garageEstimateComparison?.garageEstimatedTotal || claim.aiAnalysis?.totalEstimatedCost || claim.amount || 0;
+      const approvedAmount = Number(amount) || 0;
       claim.amount = approvedAmount;
+      claim.approvedAmount = approvedAmount;
       claim.rejectionReason = "";
 
       claim.messages.push({
@@ -1353,13 +1354,14 @@ router.post("/claims/:claimNumber/settle-payment", async (req, res) => {
     // Upload receipt to Cloudinary
     const uploadedUrl = await uploadToCloudinary(receiptFile, "claims/payment_receipts");
 
-    const finalAmount = Number(amountPaid) || claim.amount || claim.garageEstimateComparison?.garageEstimatedTotal || claim.aiAnalysis?.totalEstimatedCost || 0;
+    const finalAmount = Number(amountPaid) || claim.approvedAmount || claim.amount || 0;
     claim.paymentReceipt = uploadedUrl;
     claim.paymentReceiptFileName = receiptFileName || "Payment_Receipt.pdf";
     claim.paymentSettledAt = new Date();
     claim.paymentSettledBy = "Office Staff";
     claim.paymentNote = paymentNote || "";
     claim.amount = finalAmount;
+    claim.approvedAmount = finalAmount;
     claim.status = "Settled";
     claim.currentStep = 6;
 

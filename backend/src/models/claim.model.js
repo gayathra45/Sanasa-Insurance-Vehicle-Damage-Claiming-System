@@ -36,6 +36,8 @@ const claimSchema = new mongoose.Schema({
   assignedAgent: { type: String, default: "", index: true },
   priority: { type: String, default: "Normal" },
   amount: { type: Number, default: null },
+  approvedAmount: { type: Number, default: null },
+  agentEstimatedAmount: { type: Number, default: null },
   currentStep: { type: Number, default: 1 },
   documentsRequested: { type: Boolean, default: false },
   requestedDocuments: { type: [String], default: [] },

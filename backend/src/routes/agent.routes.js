@@ -136,11 +136,14 @@ router.post("/claims/:id/status", async (req, res) => {
     if (status !== undefined && !declineClaim && !rejectClaim) claim.status = status;
     if (amount !== undefined) {
       if (amount === "" || amount === null) {
-        claim.amount = null;
+        claim.agentEstimatedAmount = null;
       } else {
         const cleaned = typeof amount === "string" ? amount.replace(/[^0-9.]/g, "") : amount;
         const num = Number(cleaned);
-        claim.amount = isNaN(num) ? null : num;
+        claim.agentEstimatedAmount = isNaN(num) ? null : num;
+      }
+      if (claim.status !== "Approved" && claim.status !== "Settled" && claim.status !== "Completed") {
+        claim.amount = null;
       }
     }
     if (inspectionReport !== undefined) claim.inspectionReport = inspectionReport;

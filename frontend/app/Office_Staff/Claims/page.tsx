@@ -70,6 +70,8 @@ interface Claim {
   branch: string;
   assignedAgent: string;
   amount: number | null;
+  approvedAmount?: number | null;
+  agentEstimatedAmount?: number | null;
   currentStep: number;
   documentsRequested: boolean;
   requestedDocuments: string[];
@@ -1258,7 +1260,10 @@ function OfficeStaffClaimsPageContent() {
                           key={claim._id}
                           onClick={() => {
                             setSelectedClaim(claim);
-                            setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
+                            const approvedVal = (claim.status === "Approved" || claim.status === "Settled" || claim.status === "Completed")
+                              ? (claim.approvedAmount || claim.amount)
+                              : null;
+                            setAssessmentAmount(typeof approvedVal === "number" ? approvedVal.toString() : "");
                           }}
                           className={`bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-colors duration-150 cursor-pointer shadow-xs hover:border-slate-300 relative overflow-hidden ${cardThemeClass}`}
                         >
@@ -1327,10 +1332,16 @@ function OfficeStaffClaimsPageContent() {
                           <div className="flex flex-col select-none min-w-0">
                             <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 md:hidden">Assessment</span>
                             <span className="text-xs font-semibold text-slate-700">
-                              {typeof claim.amount === "number" ? (
-                                `Rs. ${claim.amount.toLocaleString()}`
+                              {(claim.status === "Approved" || claim.status === "Settled" || claim.status === "Completed") && (claim.approvedAmount || claim.amount) ? (
+                                <span className="text-slate-800 font-bold">
+                                  Rs. {(claim.approvedAmount || claim.amount)!.toLocaleString()}
+                                </span>
+                              ) : claim.status === "Rejected" ? (
+                                <span className="text-slate-400 font-normal italic text-[11px]">Rejected</span>
                               ) : (
-                                <span className="text-slate-400 font-normal italic text-[11px]">Not Assessed</span>
+                                <span className="text-amber-600 font-semibold text-[10px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                  Pending Approval
+                                </span>
                               )}
                             </span>
                           </div>
@@ -3797,7 +3808,15 @@ function OfficeStaffClaimsPageContent() {
                         Submitted At : <span className="font-medium text-slate-600">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
                       </p>
                       <p>
-                        Est. Amount : <span className="font-medium text-slate-600">{selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
+                        Branch Approved Amount : <span className={
+                          (selectedClaim.status === "Approved" || selectedClaim.status === "Settled" || selectedClaim.status === "Completed") && (selectedClaim.approvedAmount || selectedClaim.amount)
+                            ? "font-bold text-emerald-700"
+                            : "font-semibold text-amber-600 text-xs bg-amber-50 px-2 py-0.5 rounded border border-amber-200"
+                        }>
+                          {(selectedClaim.status === "Approved" || selectedClaim.status === "Settled" || selectedClaim.status === "Completed") && (selectedClaim.approvedAmount || selectedClaim.amount)
+                            ? `LKR ${(selectedClaim.approvedAmount || selectedClaim.amount)!.toLocaleString()}`
+                            : "Pending Branch Approval"}
+                        </span>
                       </p>
                     </div>
                   </div>
