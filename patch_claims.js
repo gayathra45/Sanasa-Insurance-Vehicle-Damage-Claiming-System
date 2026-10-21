@@ -1,4 +1,4 @@
-﻿const fs = require("fs");
+const fs = require("fs");
 let code = fs.readFileSync("frontend/app/Office_Staff/Claims/page.tsx", "utf8");
 
 // 1. Interface replacement
@@ -75,11 +75,11 @@ const newSubModal = `const [activeSubModal, setActiveSubModal] = useState<"docum
     try {
       setUpdatingClaim(true);
       const reason = action === "Reject" 
-        ? (customRejectionText.trim() ? `${rejectionReasonChoice}: ${customRejectionText.trim()}` : rejectionReasonChoice)
+        ? (customRejectionText.trim() ? \`\${rejectionReasonChoice}: \${customRejectionText.trim()}\` : rejectionReasonChoice)
         : "";
       const amt = action === "Approve" ? (Number(approvingAmount) || selectedClaim.garageEstimateComparison?.garageEstimatedTotal || selectedClaim.aiAnalysis?.totalEstimatedCost || selectedClaim.amount || 0) : null;
 
-      const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(selectedClaim.claimNumber)}/decision`, {
+      const res = await fetch(\`\${API_URL}/office-staff/claims/\${encodeURIComponent(selectedClaim.claimNumber)}/decision\`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -94,14 +94,14 @@ const newSubModal = `const [activeSubModal, setActiveSubModal] = useState<"docum
       if (res.ok) {
         setClaims(prev => prev.map(c => c.claimNumber === selectedClaim.claimNumber ? { ...c, ...data.claim } : c));
         setSelectedClaim(prev => prev && prev.claimNumber === selectedClaim.claimNumber ? { ...prev, ...data.claim } : prev);
-        alert(`Claim successfully ${action === "Approve" ? "APPROVED" : "REJECTED"}!`);
+        alert(\`Claim successfully \${action === "Approve" ? "APPROVED" : "REJECTED"}!\`);
         setActiveSubModal(null);
       } else {
-        alert(data.error || `Failed to ${action.toLowerCase()} claim.`);
+        alert(data.error || \`Failed to \${action.toLowerCase()} claim.\`);
       }
     } catch (err) {
       console.error(err);
-      alert(`An error occurred while trying to ${action.toLowerCase()} the claim.`);
+      alert(\`An error occurred while trying to \${action.toLowerCase()} the claim.\`);
     } finally {
       setUpdatingClaim(false);
     }
@@ -110,7 +110,7 @@ const newSubModal = `const [activeSubModal, setActiveSubModal] = useState<"docum
   const handleCompareGarageEstimate = async (claimNumber: string) => {
     try {
       setComparingGarage(true);
-      const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(claimNumber)}/compare-garage-estimate`, {
+      const res = await fetch(\`\${API_URL}/office-staff/claims/\${encodeURIComponent(claimNumber)}/compare-garage-estimate\`, {
         method: "POST"
       });
       const data = await res.json();
@@ -169,3 +169,5 @@ if (code.includes(oldRunAI)) {
 
 fs.writeFileSync("frontend/app/Office_Staff/Claims/page.tsx", code, "utf8");
 console.log("Part 1 applied!");
+
+
