@@ -58,7 +58,6 @@ interface Claim {
   };
   additionalDocuments?: AdditionalDoc[];
   garageEstimateComparison?: any;
-  createdAt?: string;
   updatedAt?: string;
 }
 
