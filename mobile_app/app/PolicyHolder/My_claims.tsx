@@ -214,37 +214,9 @@ export default function MyClaims() {
         }
       }
 
-      // Check local drafts
-      const lastStr = await AsyncStorage.getItem("last_submitted_claim");
-      let localClaims: Claim[] = [];
-      if (lastStr) {
-        const parsed = JSON.parse(lastStr);
-        const exists = databaseClaims.some((c) => c.claimNumber === parsed.claimNumber);
-        if (!exists) {
-          localClaims.push({
-            claimNumber: parsed.claimNumber,
-            vehiclePlate: parsed.vehiclePlate,
-            incidentDate: formatDateString(parsed.incidentDate),
-            incidentTime: parsed.incidentTime,
-            damageType: parsed.damageType,
-            amount: "Pending",
-            status: "Pending",
-            description: parsed.description,
-            otherVehicleDetails: parsed.otherVehicleDetails,
-            location: parsed.location,
-            officer: "Not Assigned",
-            documentsRequested: false,
-            requestedDocuments: [],
-            currentStep: 1,
-            messages: [],
-            accidentPhotos: parsed.accidentPhotos || {},
-            drivingLicense: parsed.drivingLicense || {},
-            additionalDocuments: parsed.additionalDocuments || []
-          });
-        }
-      }
-
-      setClaims([...localClaims, ...databaseClaims]);
+      // The database is the single source of truth for claims
+      await AsyncStorage.removeItem("last_submitted_claim");
+      setClaims(databaseClaims);
     } catch (err) {
       console.error("Error fetching claims in app:", err);
     } finally {

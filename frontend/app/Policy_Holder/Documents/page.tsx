@@ -338,22 +338,12 @@ export default function PolicyHolderDocuments() {
         }
       }
 
-      // Check local session for recently submitted claims
-      let localClaims: Claim[] = [];
-      const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-      if (lastSubmitted) {
-        try {
-          const parsed = JSON.parse(lastSubmitted);
-          const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
-          if (!exists) {
-            localClaims.push(parsed);
-          }
-        } catch (err) {
-          console.error("Error parsing local claim context", err);
-        }
+      // The database is the single source of truth for claims
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("last_submitted_claim");
       }
 
-      setClaims([...localClaims, ...databaseClaims]);
+      setClaims(databaseClaims);
     } catch (err) {
       console.error("Error loading user documents", err);
     } finally {

@@ -162,19 +162,12 @@ export default function PolicyHolderNotifications() {
         console.warn("Could not load edit requests for notifications:", errEdit);
       }
 
-      // Check for last submitted claim
-      let localClaims: Claim[] = [];
-      const lastStr = sessionStorage.getItem("last_submitted_claim");
-      if (lastStr) {
-        try {
-          const parsed = JSON.parse(lastStr);
-          if (!dbClaims.some((c) => c.claimNumber === parsed.claimNumber)) {
-            localClaims.push(parsed);
-          }
-        } catch (e) {}
+      // The database is the single source of truth for claims
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("last_submitted_claim");
       }
 
-      const allClaims = [...localClaims, ...dbClaims];
+      const allClaims = dbClaims;
       const compiled: NotificationItem[] = [];
 
       allClaims.forEach((claim) => {

@@ -128,6 +128,14 @@ router.post("/check-duplicate-photos", async (req, res) => {
       }
 
       if (match) {
+        // Verify that the matched claim still exists in the database
+        const existingClaim = await Claim.findOne({ claimNumber: match.claimNumber }, { _id: 1 });
+        if (!existingClaim) {
+          // Claim was deleted from database, clean up the orphaned photo hash
+          await PhotoHash.deleteMany({ claimNumber: match.claimNumber });
+          continue;
+        }
+
         duplicates.push({
           photoId: item.id || item.type,
           photoType: item.type || "Accident Photo",

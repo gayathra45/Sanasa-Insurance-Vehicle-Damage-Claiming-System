@@ -482,48 +482,18 @@ function TrackClaimsContent() {
           }
         }
 
-        let localClaims: Claim[] = [];
-        try {
-          const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-          if (lastSubmitted) {
-            const parsed = JSON.parse(lastSubmitted);
-            const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
-            if (!exists) {
-              localClaims.push({
-                claimNumber: parsed.claimNumber,
-                vehiclePlate: parsed.vehiclePlate,
-                incidentDate: formatDateString(parsed.incidentDate),
-                incidentTime: parsed.incidentTime,
-                damageType: parsed.damageType,
-                amount: "Pending",
-                status: "Pending",
-                description: parsed.description,
-                otherVehicleDetails: parsed.otherVehicleDetails,
-                location: parsed.location,
-                officer: "Not Assigned",
-                documentsRequested: false,
-                requestedDocuments: [],
-                currentStep: 1,
-                messages: [],
-                accidentPhotos: parsed.accidentPhotos || {},
-                drivingLicense: parsed.drivingLicense || {},
-                additionalDocuments: parsed.additionalDocuments || [],
-                createdAt: parsed.createdAt || new Date().toISOString()
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Error parsing local claim draft", err);
+        // The database is the single source of truth for claims
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("last_submitted_claim");
         }
 
-        const combined = [...localClaims, ...databaseClaims];
-        setClaimsList(combined);
+        setClaimsList(databaseClaims);
 
         // Check if query parameter 'id' exists
         const idParam = searchParams.get("id");
         if (idParam) {
           setClaimId(idParam);
-          const found = combined.find(c => c.claimNumber.toLowerCase() === idParam.toLowerCase());
+          const found = databaseClaims.find(c => c.claimNumber.toLowerCase() === idParam.toLowerCase());
           if (found) {
             setTrackedClaim(found);
           }
@@ -659,7 +629,7 @@ function TrackClaimsContent() {
       }
     }
 
-    const isFullyPaid = (status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
+    const isFullyPaid = (status.toLowerCase() === "settled" || status.toLowerCase() === "completed" || status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
 
     const steps = [
       { num: "01", label: "Submitted" },

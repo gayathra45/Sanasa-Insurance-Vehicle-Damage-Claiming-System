@@ -380,18 +380,12 @@ export default function PolicyHolderHome() {
                 }
               }
 
-              // Check for local session submitted claims
-              let localClaims: any[] = [];
-              const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-              if (lastSubmitted) {
-                const parsed = JSON.parse(lastSubmitted);
-                const exists = dbClaims.some(c => c.claimNumber === parsed.claimNumber);
-                if (!exists) {
-                  localClaims.push(parsed);
-                }
+              // The database is the single source of truth for claims
+              if (typeof window !== "undefined") {
+                sessionStorage.removeItem("last_submitted_claim");
               }
 
-              const allClaims = [...localClaims, ...dbClaims];
+              const allClaims = dbClaims;
 
               // A claim is pending if status is not approved, done, or rejected
               const pendingClaims = allClaims.filter(c => {

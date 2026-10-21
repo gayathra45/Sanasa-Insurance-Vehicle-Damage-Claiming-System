@@ -170,13 +170,8 @@ export default function NotificationsPage() {
         if (Array.isArray(data.claims)) dbClaims = data.claims;
       }
       
-      const lastStr = await AsyncStorage.getItem("last_submitted_claim");
-      let localClaims: Claim[] = [];
-      if (lastStr) {
-        const parsed = JSON.parse(lastStr);
-        if (!dbClaims.some((c) => c.claimNumber === parsed.claimNumber)) localClaims.push(parsed);
-      }
-      const all = [...localClaims, ...dbClaims];
+      await AsyncStorage.removeItem("last_submitted_claim");
+      const all = dbClaims;
 
       const notifs: Notification[] = [];
       all.forEach((claim) => {

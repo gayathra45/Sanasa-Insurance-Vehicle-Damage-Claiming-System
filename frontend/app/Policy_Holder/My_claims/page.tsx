@@ -434,49 +434,18 @@ export default function MyClaims() {
       }
     }
 
-    // 3. Fallback to check if a claim was recently submitted in current session
-    let localClaims: Claim[] = [];
-    try {
-      const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-      if (lastSubmitted) {
-        const parsed = JSON.parse(lastSubmitted);
-        // Verify if it is already in database claims to prevent duplication
-        const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
-        if (!exists) {
-          localClaims.push({
-            claimNumber: parsed.claimNumber,
-            vehiclePlate: parsed.vehiclePlate,
-            incidentDate: formatDateString(parsed.incidentDate),
-            incidentTime: parsed.incidentTime,
-            damageType: parsed.damageType,
-            amount: "Pending",
-            status: "Pending",
-            description: parsed.description,
-            otherVehicleDetails: parsed.otherVehicleDetails,
-            location: parsed.location,
-            officer: "Not Assigned",
-            documentsRequested: false,
-            requestedDocuments: [],
-            currentStep: 1,
-            messages: [],
-            accidentPhotos: {},
-            drivingLicense: {},
-            additionalDocuments: [],
-            createdAt: parsed.createdAt || parsed.incidentDate || new Date().toISOString()
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Error parsing local claim draft", err);
+    // The database is the single source of truth for claims
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("last_submitted_claim");
     }
 
-    // 4. Combine recently submitted claims with database claims
-    const updatedClaims = [...localClaims, ...databaseClaims];
-    setClaims(updatedClaims);
+    setClaims(databaseClaims);
     if (selectedClaim) {
-      const updated = updatedClaims.find(c => c.claimNumber === selectedClaim.claimNumber);
+      const updated = databaseClaims.find(c => c.claimNumber === selectedClaim.claimNumber);
       if (updated) {
         setSelectedClaim(updated);
+      } else {
+        setSelectedClaim(null);
       }
     }
     if (showLoading) setIsLoading(false);
@@ -508,6 +477,13 @@ export default function MyClaims() {
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
+    if (s.includes("settled") || s.includes("completed")) {
+      return (
+        <span className="text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
+          Completed
+        </span>
+      );
+    }
     if (s.includes("pending") || s.includes("progress")) {
       return (
         <span className="text-orange-500 bg-orange-50/45 border border-orange-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
@@ -526,6 +502,13 @@ export default function MyClaims() {
       return (
         <span className="text-green-500 bg-green-50/45 border border-green-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
           Approved
+        </span>
+      );
+    }
+    if (s.includes("rejected")) {
+      return (
+        <span className="text-rose-600 bg-rose-50 border border-rose-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
+          Rejected
         </span>
       );
     }
@@ -819,7 +802,9 @@ export default function MyClaims() {
               filteredClaims.map((claim) => {
                 const s = claim.status.toLowerCase();
                 let borderLeftColor = "border-l-4 border-l-sky-400";
-                if (s.includes("review") || s.includes("submit")) {
+                if (s.includes("settled") || s.includes("completed")) {
+                  borderLeftColor = "border-l-4 border-l-emerald-500";
+                } else if (s.includes("review") || s.includes("submit")) {
                   borderLeftColor = "border-l-4 border-l-blue-600";
                 } else if (s.includes("approved") || s.includes("active") || s.includes("done")) {
                   borderLeftColor = "border-l-4 border-l-[#0f2d4a]";
@@ -928,7 +913,7 @@ export default function MyClaims() {
             }
           }
 
-          const isFullyPaid = (status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
+          const isFullyPaid = (status.toLowerCase() === "settled" || status.toLowerCase() === "completed" || status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
 
           const steps = [
             { num: "01", label: "Submitted" },
