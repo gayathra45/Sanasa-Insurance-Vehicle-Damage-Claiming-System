@@ -27,6 +27,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
 import AgentNavbar from "../../Components/Agent/page";
+import AIChatBot from "../../Components/AIChatBot";
 import { API_BASE_URL } from "../../_config";
 import { compressImageMobile } from "../../../utils/imageCompressor";
 
@@ -2353,6 +2354,11 @@ ${inspectionReportText.trim()}
           </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      {/* Sanasa Vehicle Insurance AI Assistant & Support Chat */}
+      {!(selectedClaim && activeInspectionStep === 4) && (
+        <AIChatBot userRole="agent" bottomOffset={96} />
+      )}
 
       <AgentNavbar activeTab="claims" />
     </View>

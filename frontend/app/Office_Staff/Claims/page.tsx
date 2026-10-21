@@ -4805,6 +4805,22 @@ function OfficeStaffClaimsPageContent() {
         </div>
       )}
 
+      {/* Floating Action Chat Button */}
+      <button
+        type="button"
+        onClick={() => {
+          if (claims.length > 0 && !selectedClaim) {
+            setSelectedClaim(claims[0]);
+          }
+          const chatEl = document.querySelector("#claim-chat-section");
+          if (chatEl) chatEl.scrollIntoView({ behavior: "smooth" });
+        }}
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        aria-label="Chat support"
+      >
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+      </button>
+
     </div>
   );
 }
@@ -4841,16 +4857,7 @@ function formatMessageTime(dateStr: string) {
 
 export default function OfficeStaffClaimsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Loading claims...
-      {/* Floating Chat Bubble Button */}
-      <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
-        aria-label="Chat support"
-      >
-        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
-      </button>
-
-    </div>}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Loading claims...</div>}>
       <OfficeStaffClaimsPageContent />
     </Suspense>
   );

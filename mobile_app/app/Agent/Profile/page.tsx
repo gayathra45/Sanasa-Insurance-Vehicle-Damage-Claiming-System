@@ -22,6 +22,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import AgentNavbar from "../../Components/Agent/page";
+import AIChatBot from "../../Components/AIChatBot";
 import { API_BASE_URL } from "../../_config";
 import { compressImageMobile } from "../../../utils/imageCompressor";
 import { sriLankaBanks } from "../../../utils/banks";
@@ -1917,6 +1918,7 @@ export default function AgentProfilePage() {
       )}
 
       {/* Bottom Navbar with Profile active */}
+      <AIChatBot userRole="agent" bottomOffset={96} />
       <AgentNavbar activeTab="profile" />
     </View>
   );

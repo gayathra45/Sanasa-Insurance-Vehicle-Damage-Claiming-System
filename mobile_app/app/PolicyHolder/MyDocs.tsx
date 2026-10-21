@@ -19,6 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
+import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 import { compressImageMobile } from "../../utils/imageCompressor";
 
@@ -700,6 +701,7 @@ export default function MyDocs() {
         </View>
       </Modal>
 
+      <AIChatBot userRole="policy_holder" bottomOffset={96} />
       <PolicyHolderNavbar />
     </View>
   );

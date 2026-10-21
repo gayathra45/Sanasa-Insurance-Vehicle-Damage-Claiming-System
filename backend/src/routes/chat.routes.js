@@ -116,7 +116,41 @@ router.post("/message", async (req, res) => {
       return res.json({ reply, source: "knowledge_engine" });
     }
 
-    const modelCandidates = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
+    const modelCandidates = [
+      "gemini-2.5-flash",
+      "gemini-1.5-flash-latest",
+      "gemini-1.5-flash",
+      "gemini-2.0-flash-exp",
+      "gemini-1.5-pro-latest"
+    ];
+
+    // Clean and validate history to strictly conform to Gemini API requirements:
+    // 1. First message MUST be 'user'
+    // 2. Roles MUST alternate 'user' -> 'model' -> 'user'
+    // 3. Last message in history before sendMessage must be 'model'
+    const formattedHistory = [];
+    for (const item of (history || []).slice(-10)) {
+      const text = item.text || (item.parts && item.parts[0]?.text) || "";
+      if (text) {
+        const role = item.role === "user" ? "user" : "model";
+        // Cannot start with 'model'
+        if (formattedHistory.length === 0 && role === "model") {
+          continue;
+        }
+        // Avoid duplicate consecutive roles
+        if (formattedHistory.length > 0 && formattedHistory[formattedHistory.length - 1].role === role) {
+          continue;
+        }
+        formattedHistory.push({
+          role,
+          parts: [{ text: String(text) }]
+        });
+      }
+    }
+    // Since sendMessage will send the next 'user' message, the history must end on 'model'
+    if (formattedHistory.length > 0 && formattedHistory[formattedHistory.length - 1].role === "user") {
+      formattedHistory.pop();
+    }
 
     for (const modelName of modelCandidates) {
       try {
@@ -125,21 +159,10 @@ router.post("/message", async (req, res) => {
           systemInstruction: SYSTEM_INSTRUCTION
         });
 
-        // Convert incoming history to Gemini Chat format
-        const formattedHistory = [];
-        for (const item of (history || []).slice(-10)) {
-          if (item && item.role && item.text) {
-            formattedHistory.push({
-              role: item.role === "user" ? "user" : "model",
-              parts: [{ text: String(item.text) }]
-            });
-          }
-        }
-
         const chat = model.startChat({
           history: formattedHistory,
           generationConfig: {
-            temperature: 0.2, // Low temperature for high precision and strict adherence to facts
+            temperature: 0.2,
             maxOutputTokens: 600,
           }
         });

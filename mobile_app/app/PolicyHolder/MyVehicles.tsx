@@ -20,6 +20,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useNavigation } from "expo-router";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
+import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 
 interface Vehicle {
@@ -744,6 +745,7 @@ export default function MyVehicles() {
         </View>
       </Modal>
 
+      <AIChatBot userRole="policy_holder" bottomOffset={96} />
       <PolicyHolderNavbar />
 
       {customAlert && (

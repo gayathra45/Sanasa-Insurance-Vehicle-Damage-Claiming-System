@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AgentNavbar from "../../Components/Agent/page";
+import AIChatBot from "../../Components/AIChatBot";
 
 export default function AgentContact() {
   const [customAlert, setCustomAlert] = useState<{
@@ -158,11 +159,7 @@ export default function AgentContact() {
 
       </ScrollView>
 
-      {/* Floating support */}
-      <TouchableOpacity style={styles.floatingSupport} onPress={handleChatPress} activeOpacity={0.8}>
-        <Ionicons name="chatbubble-ellipses" size={26} color="#ffffff" />
-      </TouchableOpacity>
-
+      <AIChatBot userRole="agent" bottomOffset={96} />
       <AgentNavbar activeTab="contact" />
 
       {/* Custom Alert Modal */}

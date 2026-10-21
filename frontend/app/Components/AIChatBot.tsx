@@ -66,8 +66,15 @@ export default function WebAIChatBot() {
     pathname?.includes("/Admin/")
   );
 
+  // User instructions: "policy holder new claim apply process to dont add"
+  const isExcluded = Boolean(
+    pathname?.includes("/Policy_Holder/New_Claim")
+  );
+
   // Aligned perfectly with existing right-8 position; stacked above with clean 12px gap
   const bottomPositionClass = hasExistingBottomChat ? "bottom-[112px] right-8" : "bottom-8 right-8";
+
+  if (isExcluded) return null;
 
   const scrollToBottom = () => {
     setTimeout(() => {

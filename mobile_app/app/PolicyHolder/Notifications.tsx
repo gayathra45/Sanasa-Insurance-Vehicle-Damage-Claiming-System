@@ -17,6 +17,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router, useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -1013,6 +1014,8 @@ export default function NotificationsPage() {
           </View>
         </View>
       </Modal>
+
+      <AIChatBot userRole="policy_holder" bottomOffset={24} />
     </View>
   );
 }

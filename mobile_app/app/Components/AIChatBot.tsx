@@ -13,6 +13,7 @@ import {
   Animated,
   Dimensions,
   TouchableWithoutFeedback,
+  Linking,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -65,8 +66,11 @@ const QUICK_PROMPTS = [
 
 export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 90 }: AIChatBotProps) {
   const [modalVisible, setModalVisible] = useState(false);
+  const [supportModalVisible, setSupportModalVisible] = useState(false);
   const [inputText, setInputText] = useState("");
+  const [supportInputText, setSupportInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSupportSending, setIsSupportSending] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome-1",
@@ -75,8 +79,17 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
+  const [supportMessages, setSupportMessages] = useState<ChatMessage[]>([
+    {
+      id: "supp-welcome",
+      sender: "ai",
+      text: "👋 Welcome to Sanasa General Insurance Customer Care & Helpdesk.\n\nOur live support officers are available to assist with policy renewals, active claim inquiries, and 24/7 emergency towing across Sri Lanka.\n\nHow can we help you right now?",
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    },
+  ]);
 
   const scrollViewRef = useRef<ScrollView>(null);
+  const supportScrollRef = useRef<ScrollView>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   // Pulse animation for online indicator
@@ -195,10 +208,51 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     });
   };
 
+  const handleSupportSend = async () => {
+    const text = supportInputText.trim();
+    if (!text || isSupportSending) return;
+
+    const userMsg: ChatMessage = {
+      id: `supp-user-${Date.now()}`,
+      sender: "user",
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    setSupportMessages((prev) => [...prev, userMsg]);
+    setSupportInputText("");
+    setIsSupportSending(true);
+    setTimeout(() => supportScrollRef.current?.scrollToEnd({ animated: true }), 100);
+
+    setTimeout(() => {
+      const replyMsg: ChatMessage = {
+        id: `supp-rep-${Date.now()}`,
+        sender: "ai",
+        text: "Thank you for reaching Sanasa Support! A customer service officer has received your message and will review your file immediately. For urgent roadside assistance, call our 24/7 hotline at 1301 or 011 280 9200.",
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setSupportMessages((prev) => [...prev, replyMsg]);
+      setIsSupportSending(false);
+      setTimeout(() => supportScrollRef.current?.scrollToEnd({ animated: true }), 100);
+    }, 1000);
+  };
+
   return (
     <>
-      {/* ─── Colorful Floating Action Button ─── */}
+      {/* ─── Floating Action Buttons: Support Chat & AI Chat ─── */}
       <View style={[styles.fabContainer, { bottom: bottomOffset }]} pointerEvents="box-none">
+        {/* Support Chat Button (Cyan - matching Web) */}
+        <TouchableOpacity
+          activeOpacity={0.88}
+          style={styles.supportFabTouch}
+          onPress={() => setSupportModalVisible(true)}
+        >
+          <View style={styles.supportFabCircle}>
+            <Ionicons name="chatbubble-ellipses" size={24} color="#ffffff" />
+          </View>
+        </TouchableOpacity>
+
+        {/* AI Chat Button (Navy/Sky Gradient with Robot) */}
         <TouchableOpacity
           activeOpacity={0.88}
           style={styles.fabTouch}
@@ -213,7 +267,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
             end={{ x: 1, y: 1 }}
             style={styles.fabCircle}
           >
-            <MaterialCommunityIcons name="robot" size={26} color="#ffffff" />
+            <MaterialCommunityIcons name="robot" size={24} color="#ffffff" />
             <Animated.View style={[styles.onlineDot, { transform: [{ scale: pulseAnim }] }]} />
           </LinearGradient>
         </TouchableOpacity>
@@ -405,6 +459,159 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
           </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      {/* ─── Support Live Helpdesk Modal ─── */}
+      <Modal
+        visible={supportModalVisible}
+        animationType="slide"
+        transparent={true}
+        statusBarTranslucent={true}
+        onRequestClose={() => setSupportModalVisible(false)}
+      >
+        <View style={styles.popupOverlay}>
+          <TouchableWithoutFeedback onPress={() => setSupportModalVisible(false)}>
+            <View style={styles.backdropDismiss} />
+          </TouchableWithoutFeedback>
+
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={styles.popupSheet}
+          >
+            {/* Header */}
+            <LinearGradient
+              colors={["#00b4d8", "#0077b6", "#03045e"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.popupHeader}
+            >
+              <View style={styles.headerLeft}>
+                <View style={[styles.headerAvatar, { backgroundColor: "rgba(255, 255, 255, 0.2)", borderColor: "rgba(255, 255, 255, 0.4)" }]}>
+                  <Ionicons name="chatbubble-ellipses" size={18} color="#ffffff" />
+                </View>
+                <View>
+                  <View style={styles.headerTitleRow}>
+                    <Text style={styles.headerTitle}>Sanasa Support Helpdesk</Text>
+                  </View>
+                  <Text style={styles.headerSubtitle}>Live Customer Care & Emergency Assist</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.headerActionBtn}
+                onPress={() => setSupportModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={20} color="#ffffff" />
+              </TouchableOpacity>
+            </LinearGradient>
+
+            {/* Quick Contact Buttons Row */}
+            <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: "#f8fafc", borderBottomWidth: 1, borderBottomColor: "#f1f5f9" }}>
+              <TouchableOpacity
+                onPress={() => Linking.openURL("tel:1301")}
+                style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: "#0284c7", paddingVertical: 8, borderRadius: 10 }}
+              >
+                <Ionicons name="call" size={13} color="#ffffff" />
+                <Text style={{ fontSize: 11, fontWeight: "700", color: "#ffffff" }}>Hotline 1301</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => Linking.openURL("mailto:claims@sanasainsurance.lk")}
+                style={{ flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, backgroundColor: "#f0fdf4", borderWidth: 1, borderColor: "#86efac", paddingVertical: 8, borderRadius: 10 }}
+              >
+                <Ionicons name="mail" size={13} color="#15803d" />
+                <Text style={{ fontSize: 11, fontWeight: "700", color: "#15803d" }}>Email Support</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Messages Scroll Body */}
+            <View style={styles.messagesWrapper}>
+              <ScrollView
+                ref={supportScrollRef}
+                style={styles.messagesScroll}
+                contentContainerStyle={styles.messagesContent}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                {supportMessages.map((msg) => {
+                  const isUser = msg.sender === "user";
+                  return (
+                    <View
+                      key={msg.id}
+                      style={[
+                        styles.messageRow,
+                        isUser ? styles.userMessageRow : styles.aiMessageRow,
+                      ]}
+                    >
+                      {!isUser && (
+                        <View style={[styles.aiBubbleAvatar, { backgroundColor: "#00ddff" }]}>
+                          <Ionicons name="headset" size={13} color="#ffffff" />
+                        </View>
+                      )}
+                      <View
+                        style={[
+                          styles.messageBubble,
+                          isUser ? styles.userBubble : [styles.aiBubble, { borderColor: "#bae6fd" }],
+                        ]}
+                      >
+                        {renderFormattedText(msg.text, isUser)}
+                        <Text
+                          style={[
+                            styles.timestampText,
+                            isUser ? styles.userTimestamp : styles.aiTimestamp,
+                          ]}
+                        >
+                          {msg.timestamp}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+
+                {isSupportSending && (
+                  <View style={[styles.messageRow, styles.aiMessageRow]}>
+                    <View style={[styles.aiBubbleAvatar, { backgroundColor: "#00ddff" }]}>
+                      <ActivityIndicator size="small" color="#ffffff" />
+                    </View>
+                    <View style={[styles.messageBubble, styles.aiBubble, styles.typingBubble]}>
+                      <Text style={styles.typingText}>Support agent typing...</Text>
+                    </View>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+
+            {/* Input Bar */}
+            <View style={styles.inputContainer}>
+              <View style={styles.inputWrap}>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="Type message to Sanasa Support..."
+                  placeholderTextColor="#94a3b8"
+                  value={supportInputText}
+                  onChangeText={setSupportInputText}
+                  multiline
+                  maxLength={300}
+                  editable={!isSupportSending}
+                />
+                <TouchableOpacity
+                  style={[
+                    styles.sendButton,
+                    { backgroundColor: "#00ddff" },
+                    (!supportInputText.trim() || isSupportSending) && styles.sendButtonDisabled,
+                  ]}
+                  onPress={handleSupportSend}
+                  disabled={!supportInputText.trim() || isSupportSending}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="paper-plane" size={16} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.disclaimerText}>
+                Sanasa General Insurance • <Text style={[styles.disclaimerAccent, { color: "#00ddff" }]}>Live Helpdesk Support</Text>
+              </Text>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -415,19 +622,39 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 18,
     zIndex: 9999,
+    alignItems: "center",
+  },
+  supportFabTouch: {
+    borderRadius: 25,
+    shadowColor: "#00ddff",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
+    elevation: 8,
+    marginBottom: 10,
+  },
+  supportFabCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#00ddff",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "rgba(255, 255, 255, 0.4)",
   },
   fabTouch: {
-    borderRadius: 28,
+    borderRadius: 25,
     shadowColor: "#0284c7",
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.45,
     shadowRadius: 10,
     elevation: 10,
   },
   fabCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: "center",
     justifyContent: "center",
     position: "relative",

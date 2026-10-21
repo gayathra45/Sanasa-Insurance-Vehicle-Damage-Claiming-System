@@ -2511,8 +2511,10 @@ ${inspectionReportText.trim()}
         </Animated.View>
       </ScrollView>
 
-      {/* Sanasa Vehicle Insurance AI Assistant */}
-      <AIChatBot userRole="agent" bottomOffset={96} />
+      {/* Sanasa Vehicle Insurance AI Assistant & Support Chat */}
+      {!(selectedClaim && activeInspectionStep === 4) && (
+        <AIChatBot userRole="agent" bottomOffset={96} />
+      )}
 
       <AgentNavbar activeTab="home" />
 
