@@ -222,9 +222,14 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
       if (linkMatch && !isUser) {
         const label = linkMatch[1];
         const rawUrl = linkMatch[2];
+        const serverRoot = API_BASE_URL.replace(/\/api\/?$/, "").replace(/\/$/, "");
         const targetUrl = rawUrl.startsWith("http")
           ? rawUrl
-          : `${API_BASE_URL}${rawUrl.startsWith("/") ? "" : "/"}${rawUrl}`;
+          : `${serverRoot}/${rawUrl.replace(/^\//, "")}`;
+
+        const displayLabel = label.startsWith("/")
+          ? "Download Official Claim Dossier"
+          : label;
 
         return (
           <TouchableOpacity
@@ -239,7 +244,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
           >
             <Ionicons name="document-text-outline" size={14} color="#0284c7" />
             <Text style={styles.linkBadgeText}>
-              {label.replace(/^\/api\/claims\//, "Claim Report ")}
+              {displayLabel}
             </Text>
             <Ionicons name="open-outline" size={12} color="#0284c7" style={{ marginLeft: 3 }} />
           </TouchableOpacity>

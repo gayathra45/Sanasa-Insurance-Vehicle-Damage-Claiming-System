@@ -224,9 +224,14 @@ export default function WebAIChatBot() {
           }
           const label = match[1];
           const rawUrl = match[2];
+          const serverRoot = API_URL.replace(/\/api\/?$/, "").replace(/\/$/, "");
           const targetUrl = rawUrl.startsWith("http")
             ? rawUrl
-            : `${baseApi}${rawUrl.startsWith("/") ? "" : "/"}${rawUrl}`;
+            : `${serverRoot}/${rawUrl.replace(/^\//, "")}`;
+
+          const displayLabel = label.startsWith("/")
+            ? "Download Official Claim Dossier"
+            : label;
 
           elements.push(
             <a
@@ -234,9 +239,11 @@ export default function WebAIChatBot() {
               href={targetUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-semibold text-sky-700 hover:text-sky-900 underline bg-sky-50 hover:bg-sky-100 px-2 py-0.5 rounded-md transition-colors my-0.5 text-xs border border-sky-200"
+              className="inline-flex items-center gap-1.5 font-semibold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 px-2.5 py-1 rounded-lg transition-all my-1 text-xs border border-sky-300 shadow-xs group"
             >
-              📄 {label.replace(/^\/api\/claims\//, "Claim Report ")}
+              <span>📄</span>
+              <span className="underline group-hover:text-sky-950">{displayLabel}</span>
+              <span className="text-[10px] text-sky-500 font-bold ml-0.5">↗</span>
             </a>
           );
           lastIdx = match.index + match[0].length;

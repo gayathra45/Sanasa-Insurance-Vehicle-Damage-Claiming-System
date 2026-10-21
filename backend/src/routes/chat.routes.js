@@ -138,7 +138,7 @@ function formatClaimDetails(claim) {
     response += `• **Payment Settlement**: Pending direct bank transfer into policyholder account.\n`;
   }
 
-  response += `\n📄 **Official PDF Dossier**: You can download or print the full official report with Sanasa seal at [/api/claims/${claim.claimNumber}/report](/api/claims/${claim.claimNumber}/report).\n\n`;
+  response += `\n📄 **Official PDF Dossier**: You can download or print the full official report with Sanasa seal at [Download Official PDF Dossier](/api/claims/${claim.claimNumber}/report).\n\n`;
   response += `💡 *Would you like more details on the inspection breakdown, garage estimate, or payment settlement?*`;
 
   return response;
@@ -157,7 +157,7 @@ function formatUserClaimsList(claims, nic) {
     response += `   • **Status**: ${statusEmoji} **${c.status}**\n`;
     response += `   • **Date**: ${c.incidentDate || "N/A"} • **Damage**: ${c.damageType || "General"}\n`;
     response += `   • **Assessment**: ${formatCurrency(c.amount)}\n`;
-    response += `   • **Report**: [/api/claims/${c.claimNumber}/report](/api/claims/${c.claimNumber}/report)\n\n`;
+    response += `   • **Report**: [Download PDF Report](/api/claims/${c.claimNumber}/report)\n\n`;
   });
 
   response += `💡 *Type any Claim ID above (e.g. \`${claims[0].claimNumber}\`) to view its full breakdown or download the PDF.*`;
