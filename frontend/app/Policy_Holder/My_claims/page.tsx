@@ -24,6 +24,7 @@ import {
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 import { translateText } from "@/app/utils/translator";
 import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
+import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 interface AdditionalDoc {
   name: string;
@@ -190,6 +191,7 @@ export default function MyClaims() {
   const [isCancellingClaim, setIsCancellingClaim] = useState(false);
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
 
   const getDocUrl = (url?: string) => {
     if (!url) return "";
@@ -199,8 +201,9 @@ export default function MyClaims() {
     return `${API_URL.replace("/api", "")}/uploads/${url}`;
   };
 
-  // Load language from localStorage on mount
+  // Load language and viewed claims from localStorage on mount
   useEffect(() => {
+    setViewedClaims(getViewedClaims("policy_holder"));
     const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
     if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
       setLang(savedLang);
@@ -826,12 +829,20 @@ export default function MyClaims() {
                 return (
                   <div
                     key={claim.claimNumber}
-                    onClick={() => setSelectedClaim(claim)}
+                    onClick={() => {
+                      markClaimAsRead((claim as any)._id || claim.claimNumber, viewedClaims, setViewedClaims, "policy_holder");
+                      setSelectedClaim(claim);
+                    }}
                     className={`bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${borderLeftColor}`}
                   >
                     {/* Claim Info */}
                     <div className="flex flex-col min-w-0 select-none">
-                      <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
+                        {isClaimUnread((claim as any), viewedClaims) && (
+                          <UnreadDot />
+                        )}
+                      </div>
                       {claim.createdAt && (
                         <span className="text-[10px] text-slate-400 font-normal mt-1 block">Submitted: {formatSriLankaDateTime(claim.createdAt)}</span>
                       )}

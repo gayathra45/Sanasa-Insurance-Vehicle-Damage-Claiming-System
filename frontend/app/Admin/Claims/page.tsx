@@ -29,6 +29,7 @@ import {
   Analytics01Icon,
   Clock01Icon
 } from "@hugeicons/core-free-icons";
+import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 // ==========================================
 // --- Type Definitions ---
@@ -224,6 +225,7 @@ const SRI_LANKA_BRANCHES = [
 export default function AdminClaimsPage() {
   // Data States
   const [claims, setClaims] = useState<Claim[]>([]);
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
   const [summary, setSummary] = useState<ClaimsSummary>({
     totalClaims: 0,
     pendingClaims: 0,
@@ -325,6 +327,7 @@ export default function AdminClaimsPage() {
   };
 
   useEffect(() => {
+    setViewedClaims(getViewedClaims("admin"));
     fetchClaims();
     fetchAgents();
   }, [fetchClaims]);
@@ -954,9 +957,14 @@ export default function AdminClaimsPage() {
                   >
                     {/* Col 1: Claim # & Policyholder */}
                     <div className="flex flex-col min-w-0 select-none">
-                      <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate font-mono">
-                        #{claim.claimNumber}
-                      </h3>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate font-mono">
+                          #{claim.claimNumber}
+                        </h3>
+                        {isClaimUnread(claim, viewedClaims) && (
+                          <UnreadDot />
+                        )}
+                      </div>
                       <span className="text-[10px] text-slate-600 font-bold block mt-1 truncate">
                         {claim.policyHolderName || "Policyholder"}
                       </span>
@@ -1017,6 +1025,7 @@ export default function AdminClaimsPage() {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => {
+                            markClaimAsRead(claim._id, viewedClaims, setViewedClaims, "admin");
                             setViewingClaim(claim);
                             setActiveViewTab("overview");
                           }}

@@ -31,6 +31,7 @@ import {
   Download01Icon
 } from "@hugeicons/core-free-icons";
 import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
+import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 interface ClaimMessage {
   sender: string;
@@ -430,6 +431,7 @@ function OfficeStaffClaimsPageContent() {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"All" | "Pending" | "In Progress" | "Approved" | "Rejected">("All");
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
 
   // Modal / Detail / Action states
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
@@ -827,6 +829,8 @@ function OfficeStaffClaimsPageContent() {
       }
     }
 
+    setViewedClaims(getViewedClaims("office_staff"));
+
     if (currentBranch) {
       loadClaimsAndAgents(currentBranch);
     }
@@ -1216,7 +1220,7 @@ function OfficeStaffClaimsPageContent() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {/* Header Row for Desktop */}
-                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-3 text-[10px] font-medium text-slate-400 uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-4 border-l-transparent mb-1">
+                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,1.1fr)_minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-3 text-[10px] font-medium text-slate-400 uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-4 border-l-transparent mb-1">
                       <div className="flex flex-col select-none min-w-0">Claim Info</div>
                       <div className="flex flex-col select-none min-w-0">Vehicle No</div>
                       <div className="flex flex-col select-none min-w-0">Damage Type</div>
@@ -1259,13 +1263,14 @@ function OfficeStaffClaimsPageContent() {
                         <div
                           key={claim._id}
                           onClick={() => {
+                            markClaimAsRead(claim._id, viewedClaims, setViewedClaims, "office_staff");
                             setSelectedClaim(claim);
                             const approvedVal = (claim.status === "Approved" || claim.status === "Settled" || claim.status === "Completed")
                               ? (claim.approvedAmount || claim.amount)
                               : null;
                             setAssessmentAmount(typeof approvedVal === "number" ? approvedVal.toString() : "");
                           }}
-                          className={`bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-colors duration-150 cursor-pointer shadow-xs hover:border-slate-300 relative overflow-hidden ${cardThemeClass}`}
+                          className={`bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,1.1fr)_minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-colors duration-150 cursor-pointer shadow-xs hover:border-slate-300 relative overflow-hidden ${cardThemeClass}`}
                         >
                           {/* Claim ID & Date */}
                           <div className="flex flex-col select-none min-w-0">
@@ -1274,6 +1279,9 @@ function OfficeStaffClaimsPageContent() {
                               <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap">
                                 {claim.claimNumber}
                               </h3>
+                              {isClaimUnread(claim, viewedClaims) && (
+                                <UnreadDot className="ml-0.5" />
+                              )}
                               {isUrgent && (
                                 <span className="bg-red-100 text-red-700 text-[8px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded whitespace-nowrap">Urgent</span>
                               )}
@@ -1331,19 +1339,19 @@ function OfficeStaffClaimsPageContent() {
                           {/* Assessment */}
                           <div className="flex flex-col select-none min-w-0">
                             <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 md:hidden">Assessment</span>
-                            <span className="text-xs font-semibold text-slate-700">
+                            <div className="text-xs font-semibold text-slate-700 flex items-center">
                               {(claim.status === "Approved" || claim.status === "Settled" || claim.status === "Completed") && (claim.approvedAmount || claim.amount) ? (
-                                <span className="text-slate-800 font-bold">
+                                <span className="text-slate-800 font-bold whitespace-nowrap">
                                   Rs. {(claim.approvedAmount || claim.amount)!.toLocaleString()}
                                 </span>
                               ) : claim.status === "Rejected" ? (
-                                <span className="text-slate-400 font-normal italic text-[11px]">Rejected</span>
+                                <span className="text-slate-400 font-normal italic text-[11px] whitespace-nowrap">Rejected</span>
                               ) : (
-                                <span className="text-amber-600 font-semibold text-[10px] bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                                <span className="inline-flex items-center justify-center text-amber-700 font-semibold text-[9.5px] bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 whitespace-nowrap w-fit shadow-2xs">
                                   Pending Approval
                                 </span>
                               )}
-                            </span>
+                            </div>
                           </div>
 
                           {/* Status Badge */}
@@ -2069,26 +2077,26 @@ function OfficeStaffClaimsPageContent() {
                       <div className="text-[11px] text-slate-400">
                         Bank disbursement instructions will automatically be presented to proceed with fund transfer once approved.
                       </div>
-                      <div className="flex items-center gap-2.5 w-full sm:w-auto">
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
                         <button
                           type="button"
                           onClick={() => {
                             setRejectionReasonText("");
                             setActiveSubModal("decision_reject");
                           }}
-                          className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer inline-flex items-center justify-center gap-1.5"
+                          className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-xs shadow-xs transition-all active:scale-95 cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
                         >
-                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
-                          Reject Claim
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          Reject
                         </button>
                         <button
                           type="button"
                           onClick={() => handleClaimDecision("Approve")}
                           disabled={updatingClaim}
-                          className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-2"
+                          className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
                         >
-                          <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4" strokeWidth={3} />
-                          {updatingClaim ? "Submitting Settlement..." : "Submit Settlement & Approve Claim"}
+                          <HugeiconsIcon icon={Tick01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          {updatingClaim ? "Approving..." : "Approve"}
                         </button>
                       </div>
                     </div>

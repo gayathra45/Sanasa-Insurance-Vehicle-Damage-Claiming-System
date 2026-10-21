@@ -134,7 +134,7 @@ const claimSchema = new mongoose.Schema({
     reviewedAt: { type: Date, default: null },
     reviewedBy: { type: String, default: "" }
   }
-});
+}, { timestamps: true });
 
 const Claim = mongoose.model("Claim", claimSchema);
 export default Claim;

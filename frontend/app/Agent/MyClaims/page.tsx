@@ -27,6 +27,7 @@ import {
   Download01Icon,
 } from "@hugeicons/core-free-icons";
 import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
+import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 interface ClaimMessage {
   sender: string;
@@ -376,8 +377,9 @@ export default function AgentMyClaims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [filteredClaims, setFilteredClaims] = useState<Claim[]>([]);
 
-  // Load language from localStorage on mount
+  // Load language and viewed claims from localStorage on mount
   useEffect(() => {
+    setViewedClaims(getViewedClaims("agent"));
     const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
     if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
       setLang(savedLang);
@@ -400,6 +402,7 @@ export default function AgentMyClaims() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "urgent" | "new" | "pending">("all");
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
 
   // Selected claim modal states
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
@@ -1024,6 +1027,9 @@ export default function AgentMyClaims() {
                         <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
                         <div className="text-sm font-semibold text-slate-800 flex items-center gap-2 flex-wrap">
                           {claim.claimNumber}
+                          {isClaimUnread(claim, viewedClaims) && (
+                            <UnreadDot />
+                          )}
                           <span className={`text-[9px] font-semibold uppercase px-3 py-1 rounded-full select-none tracking-wide border ${badgeStyle}`}>
                             {badgeLabel}
                           </span>
@@ -1062,7 +1068,10 @@ export default function AgentMyClaims() {
 
                     {/* Action button */}
                     <button
-                      onClick={() => setSelectedClaim(claim)}
+                      onClick={() => {
+                        markClaimAsRead(claim._id, viewedClaims, setViewedClaims, "agent");
+                        setSelectedClaim(claim);
+                      }}
                       className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-semibold py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
                     >
                       {t.viewDetails}

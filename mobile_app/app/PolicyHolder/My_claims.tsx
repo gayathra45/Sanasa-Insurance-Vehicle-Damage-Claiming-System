@@ -27,6 +27,7 @@ import LanguageModal from "../Components/PolicyHolder/LanguageModal";
 import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 import { translateTextMobile } from "../../utils/translator";
+import { getViewedClaimsMobile, markClaimAsReadMobile, isClaimUnreadMobile, UnreadDotMobile } from "../../utils/unreadClaims";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -75,6 +76,14 @@ export default function MyClaims() {
   const [langModalVisible, setLangModalVisible] = useState(false);
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    (async () => {
+      const viewed = await getViewedClaimsMobile("policy_holder");
+      setViewedClaims(viewed);
+    })();
+  }, []);
 
   const getDocUrl = (url?: string) => {
     if (!url) return "";
@@ -452,7 +461,12 @@ export default function MyClaims() {
                 <View key={claim.claimNumber} style={styles.claimCard}>
                   <View style={styles.cardHeader}>
                     <View>
-                      <Text style={styles.claimIdText}>{claim.claimNumber}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Text style={styles.claimIdText}>{claim.claimNumber}</Text>
+                        {isClaimUnreadMobile(claim as any, viewedClaims) && (
+                          <UnreadDotMobile size={8} />
+                        )}
+                      </View>
                       <Text style={styles.claimVehicle}>{formatNumberPlate(claim.vehiclePlate)}</Text>
                     </View>
                     <View
@@ -485,7 +499,10 @@ export default function MyClaims() {
                   <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
                     <TouchableOpacity
                       style={[styles.viewDetailsBtn, { flex: 1, marginTop: 0 }]}
-                      onPress={() => setSelectedClaim(claim)}
+                      onPress={() => {
+                        markClaimAsReadMobile((claim as any)._id || claim.claimNumber, viewedClaims, setViewedClaims, "policy_holder");
+                        setSelectedClaim(claim);
+                      }}
                       activeOpacity={0.8}
                     >
                       <Text style={styles.viewDetailsBtnText}>{t.myClaims.viewDetails}</Text>

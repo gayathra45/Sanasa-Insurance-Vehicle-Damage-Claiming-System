@@ -30,6 +30,7 @@ import AgentNavbar from "../../Components/Agent/page";
 import AIChatBot from "../../Components/AIChatBot";
 import { API_BASE_URL } from "../../_config";
 import { compressImageMobile } from "../../../utils/imageCompressor";
+import { getViewedClaimsMobile, markClaimAsReadMobile, isClaimUnreadMobile, UnreadDotMobile } from "../../../utils/unreadClaims";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -248,6 +249,14 @@ export default function AgentClaimsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<"active" | "activity">("active");
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    (async () => {
+      const viewed = await getViewedClaimsMobile("agent");
+      setViewedClaims(viewed);
+    })();
+  }, []);
 
   // Modal details & edits
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
@@ -1863,7 +1872,10 @@ ${inspectionReportText.trim()}
                       borderLeftColor: isCompleted ? statusColor : "#1e3a8a",
                     },
                   ]}
-                  onPress={() => setSelectedClaim(claim)}
+                  onPress={() => {
+                    markClaimAsReadMobile(claim._id, viewedClaims, setViewedClaims, "agent");
+                    setSelectedClaim(claim);
+                  }}
                   activeOpacity={0.85}
                 >
                   {/* Left Side: Circular Status/Vehicle Icon Badge */}
@@ -1879,7 +1891,12 @@ ${inspectionReportText.trim()}
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     {/* Header Row: Plate Number and Status Badge */}
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-                      <Text style={styles.claimPlateText}>{formatNumberPlate(claim.vehiclePlate)}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Text style={styles.claimPlateText}>{formatNumberPlate(claim.vehiclePlate)}</Text>
+                        {isClaimUnreadMobile(claim, viewedClaims) && (
+                          <UnreadDotMobile size={8} />
+                        )}
+                      </View>
                       <View
                         style={[
                           styles.statusBadge,

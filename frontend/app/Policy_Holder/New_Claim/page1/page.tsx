@@ -322,7 +322,8 @@ export default function UploadDocumentsPage() {
     stateSetter: React.Dispatch<React.SetStateAction<FileUploadState>>,
     inputRef: React.RefObject<HTMLInputElement | null>,
     isLicense: boolean = false
-      const cardText = isLicense ? "Click to upload License Photos" : "Click to upload accident Photos";
+  ) => {
+    const cardText = isLicense ? "Click to upload License Photos" : "Click to upload accident Photos";
     const typeLabel = isLicense ? `License ${label}` : `Accident ${label}`;
     const cardHasDuplicate = !isLicense && state.previews.some((p) => !!duplicatesMap[p]);
 
