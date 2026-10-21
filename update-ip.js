@@ -67,6 +67,10 @@ if (fs.existsSync(mobileConfigPath)) {
   } else {
     console.log(`[IP Config Helper] ${mobileConfigPath} is already up to date.`);
   }
+} else {
+  console.log(`[IP Config Helper] Warning: ${mobileConfigPath} not found.`);
+}
+
 // 3. Auto-reverse port 5000 for connected Android emulator / device
 try {
   const { execSync } = require('child_process');
