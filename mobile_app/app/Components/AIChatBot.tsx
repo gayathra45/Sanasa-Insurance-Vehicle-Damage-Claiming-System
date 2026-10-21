@@ -13,7 +13,6 @@ import {
   Animated,
   Dimensions,
   TouchableWithoutFeedback,
-  Keyboard,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -34,10 +33,34 @@ interface AIChatBotProps {
 }
 
 const QUICK_PROMPTS = [
-  { label: "🚗 File Accident Claim", text: "How do I file a vehicle accident claim step-by-step?" },
-  { label: "🛡️ Comprehensive Cover", text: "What does Sanasa Comprehensive Motor Insurance cover?" },
-  { label: "📋 Required Documents", text: "What documents do I need to submit for an accident claim?" },
-  { label: "🚨 24/7 Hotline", text: "What is the 24/7 Sanasa emergency accident hotline?" },
+  {
+    label: "🚗 File Accident Claim",
+    text: "How do I file a vehicle accident claim step-by-step?",
+    bgColor: "#fff1f2",
+    borderColor: "#fecdd3",
+    textColor: "#be123c",
+  },
+  {
+    label: "🛡️ Comprehensive Cover",
+    text: "What does Sanasa Comprehensive Motor Insurance cover?",
+    bgColor: "#f0f9ff",
+    borderColor: "#bae6fd",
+    textColor: "#0369a1",
+  },
+  {
+    label: "📋 Required Documents",
+    text: "What documents do I need to submit for an accident claim?",
+    bgColor: "#fffbeb",
+    borderColor: "#fde68a",
+    textColor: "#b45309",
+  },
+  {
+    label: "🚨 24/7 Hotline",
+    text: "What is the 24/7 Sanasa emergency accident hotline?",
+    bgColor: "#ecfdf5",
+    borderColor: "#a7f3d0",
+    textColor: "#047857",
+  },
 ];
 
 export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 90 }: AIChatBotProps) {
@@ -48,7 +71,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     {
       id: "welcome-1",
       sender: "ai",
-      text: "👋 Hello! I am **Sanasa AI**, your dedicated Vehicle & Motor Insurance assistant.\n\nI can help you with accident claims, coverages, required documents, and 24/7 emergency roadside assistance across Sri Lanka.\n\nHow can I help you today?",
+      text: "Hello! I am **Sanasa AI**, your vehicle insurance assistant.\n\nI can help you with accident claims, coverages, required documents, and 24/7 emergency roadside assistance across Sri Lanka.\n\nHow can I help you today?",
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     },
   ]);
@@ -105,7 +128,9 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
       });
 
       const data = await res.json();
-      const replyText = data.reply || "I am currently unable to fetch an answer. Please dial 011-2303300 for 24/7 Sanasa Vehicle Assistance.";
+      const replyText =
+        data.reply ||
+        "I am currently unable to fetch an answer. Please dial 011-2303300 for 24/7 Sanasa Vehicle Assistance.";
 
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
@@ -135,7 +160,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
       {
         id: `welcome-${Date.now()}`,
         sender: "ai",
-        text: "Chat cleared. How can I help you with your vehicle insurance or claim?",
+        text: "Conversation cleared. How can I assist you with your vehicle insurance or claim?",
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       },
     ]);
@@ -172,7 +197,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
 
   return (
     <>
-      {/* ─── Floating Circular AI Button ─── */}
+      {/* ─── Colorful Floating Action Button ─── */}
       <View style={[styles.fabContainer, { bottom: bottomOffset }]} pointerEvents="box-none">
         <TouchableOpacity
           activeOpacity={0.88}
@@ -183,7 +208,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
           }}
         >
           <LinearGradient
-            colors={["#0a192f", "#0d2a3a", "#0284c7"]}
+            colors={["#0a192f", "#0f2d4a", "#0284c7"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.fabCircle}
@@ -194,7 +219,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
         </TouchableOpacity>
       </View>
 
-      {/* ─── Modern Popup Card / Bottom Sheet Modal ─── */}
+      {/* ─── Colorful Popup Modal ─── */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -203,7 +228,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.popupOverlay}>
-          {/* Dimmed backdrop area - tap to close */}
+          {/* Dimmed backdrop - tap to close */}
           <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
             <View style={styles.backdropDismiss} />
           </TouchableWithoutFeedback>
@@ -218,48 +243,48 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
               <View style={styles.notchPill} />
             </View>
 
-            {/* Popup Header */}
+            {/* Vibrant Gradient Header */}
             <LinearGradient
-              colors={["#0a192f", "#0f2d4a", "#1e3a8a"]}
+              colors={["#0a192f", "#0f2d4a", "#0284c7"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.popupHeader}
             >
               <View style={styles.headerLeft}>
                 <View style={styles.headerAvatar}>
-                  <MaterialCommunityIcons name="robot" size={22} color="#38bdf8" />
+                  <MaterialCommunityIcons name="robot" size={20} color="#00ddff" />
                   <View style={styles.avatarOnlineDot} />
                 </View>
                 <View>
                   <View style={styles.headerTitleRow}>
                     <Text style={styles.headerTitle}>Sanasa AI Assistant</Text>
-                    <Ionicons name="checkmark-circle" size={13} color="#38bdf8" style={styles.verifiedBadge} />
+                    <Ionicons name="checkmark-circle" size={13} color="#00ddff" style={styles.verifiedBadge} />
                   </View>
-                  <Text style={styles.headerSubtitle}>Vehicle & Motor Insurance Specialist</Text>
+                  <Text style={styles.headerSubtitle}>Vehicle Insurance Specialist • Online</Text>
                 </View>
               </View>
 
               <View style={styles.headerActions}>
                 <TouchableOpacity
                   onPress={clearChat}
-                  style={styles.headerBtn}
+                  style={styles.headerActionBtn}
                   activeOpacity={0.7}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="refresh-outline" size={17} color="#94a3b8" />
+                  <Ionicons name="refresh-outline" size={17} color="#93c5fd" />
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => setModalVisible(false)}
-                  style={[styles.headerBtn, styles.headerCloseBtn]}
+                  style={styles.headerActionBtn}
                   activeOpacity={0.7}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="close" size={17} color="#ffffff" />
+                  <Ionicons name="close" size={18} color="#ffffff" />
                 </TouchableOpacity>
               </View>
             </LinearGradient>
 
-            {/* Quick Prompts Bar */}
+            {/* Colorful Quick Prompts Bar */}
             <View style={styles.quickPromptsBar}>
               <ScrollView
                 horizontal
@@ -271,11 +296,16 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                   <TouchableOpacity
                     key={index}
                     activeOpacity={0.75}
-                    style={styles.quickPromptChip}
+                    style={[
+                      styles.quickPromptChip,
+                      { backgroundColor: prompt.bgColor, borderColor: prompt.borderColor },
+                    ]}
                     onPress={() => handleSend(prompt.text)}
                     disabled={isLoading}
                   >
-                    <Text style={styles.quickPromptText}>{prompt.label}</Text>
+                    <Text style={[styles.quickPromptText, { color: prompt.textColor }]}>
+                      {prompt.label}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -302,7 +332,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                     >
                       {!isUser && (
                         <View style={styles.aiBubbleAvatar}>
-                          <MaterialCommunityIcons name="robot" size={15} color="#0284c7" />
+                          <MaterialCommunityIcons name="robot" size={14} color="#ffffff" />
                         </View>
                       )}
                       <View
@@ -329,22 +359,17 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                 {isLoading && (
                   <View style={[styles.messageRow, styles.aiMessageRow]}>
                     <View style={styles.aiBubbleAvatar}>
-                      <ActivityIndicator size="small" color="#0284c7" />
+                      <ActivityIndicator size="small" color="#ffffff" />
                     </View>
                     <View style={[styles.messageBubble, styles.aiBubble, styles.typingBubble]}>
-                      <View style={styles.typingDotRow}>
-                        <View style={styles.typingDot} />
-                        <View style={[styles.typingDot, { opacity: 0.7 }]} />
-                        <View style={[styles.typingDot, { opacity: 0.4 }]} />
-                      </View>
-                      <Text style={styles.typingText}>Sanasa AI is thinking...</Text>
+                      <Text style={styles.typingText}>Sanasa AI is analyzing...</Text>
                     </View>
                   </View>
                 )}
               </ScrollView>
             </View>
 
-            {/* Compact Clean Input Bar */}
+            {/* Clean Colorful Input Bar */}
             <View style={styles.inputContainer}>
               <View style={styles.inputWrap}>
                 <TextInput
@@ -374,7 +399,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                 </TouchableOpacity>
               </View>
               <Text style={styles.disclaimerText}>
-                Sanasa General Insurance PLC • Official Motor AI Assistant
+                Sanasa General Insurance • <Text style={styles.disclaimerAccent}>Motor AI Assistant</Text>
               </Text>
             </View>
           </KeyboardAvoidingView>
@@ -395,7 +420,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     shadowColor: "#0284c7",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.45,
     shadowRadius: 10,
     elevation: 10,
   },
@@ -405,9 +430,9 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
     borderWidth: 1.5,
     borderColor: "rgba(255, 255, 255, 0.25)",
-    position: "relative",
   },
   onlineDot: {
     position: "absolute",
@@ -418,13 +443,13 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: "#10b981",
     borderWidth: 2,
-    borderColor: "#0d2a3a",
+    borderColor: "#0a192f",
   },
 
   /* Popup Overlay & Sheet */
   popupOverlay: {
     flex: 1,
-    backgroundColor: "rgba(10, 25, 47, 0.62)",
+    backgroundColor: "rgba(10, 25, 47, 0.6)",
     justifyContent: "flex-end",
   },
   backdropDismiss: {
@@ -433,43 +458,40 @@ const styles = StyleSheet.create({
   popupSheet: {
     height: SCREEN_H * 0.82,
     backgroundColor: "#ffffff",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     overflow: "hidden",
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
     elevation: 25,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
-    borderBottomWidth: 0,
   },
 
-  /* Notch Handle */
+  /* Drag Notch */
   notchContainer: {
     alignItems: "center",
     paddingTop: 8,
-    paddingBottom: 6,
+    paddingBottom: 4,
     backgroundColor: "#0a192f",
   },
   notchPill: {
     width: 38,
-    height: 4.5,
-    borderRadius: 3,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(56, 189, 248, 0.4)",
   },
 
-  /* Header */
+  /* Gradient Header */
   popupHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingBottom: 14,
-    paddingTop: 2,
+    paddingBottom: 12,
+    paddingTop: 4,
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.08)",
+    borderBottomColor: "rgba(255, 255, 255, 0.1)",
   },
   headerLeft: {
     flexDirection: "row",
@@ -478,12 +500,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
     borderWidth: 1.5,
-    borderColor: "#38bdf8",
+    borderColor: "#00ddff",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
@@ -492,9 +514,9 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: -1,
     right: -1,
-    width: 9,
-    height: 9,
-    borderRadius: 4.5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: "#10b981",
     borderWidth: 1.5,
     borderColor: "#0f2d4a",
@@ -514,26 +536,22 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   headerSubtitle: {
-    color: "#94a3b8",
+    color: "#93c5fd",
     fontSize: 10.5,
     fontWeight: "500",
-    marginTop: 1,
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  headerBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+  headerActionBtn: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
     alignItems: "center",
     justifyContent: "center",
-  },
-  headerCloseBtn: {
-    backgroundColor: "rgba(239, 68, 68, 0.85)",
   },
 
   /* Quick Prompts Bar */
@@ -548,12 +566,10 @@ const styles = StyleSheet.create({
     gap: 7,
   },
   quickPromptChip: {
-    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     paddingHorizontal: 11,
     paddingVertical: 5,
-    borderRadius: 14,
+    borderRadius: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
@@ -563,7 +579,6 @@ const styles = StyleSheet.create({
   quickPromptText: {
     fontSize: 11,
     fontWeight: "700",
-    color: "#1e293b",
   },
 
   /* Messages Area */
@@ -596,9 +611,7 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: "#e0f2fe",
-    borderWidth: 1,
-    borderColor: "#bae6fd",
+    backgroundColor: "#0284c7",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 3,
@@ -611,7 +624,7 @@ const styles = StyleSheet.create({
   },
   userBubble: {
     backgroundColor: "#0f2d4a",
-    borderBottomRightRadius: 3,
+    borderBottomRightRadius: 2,
     shadowColor: "#0f2d4a",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -620,9 +633,9 @@ const styles = StyleSheet.create({
   },
   aiBubble: {
     backgroundColor: "#ffffff",
-    borderBottomLeftRadius: 3,
+    borderBottomLeftRadius: 2,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: "#e0f2fe",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
@@ -630,26 +643,15 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   typingBubble: {
-    backgroundColor: "#f8fafc",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
+    backgroundColor: "#ffffff",
     borderStyle: "dashed",
-  },
-  typingDotRow: {
-    flexDirection: "row",
-    gap: 3,
-  },
-  typingDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: "#0284c7",
+    borderColor: "#bae6fd",
   },
   typingText: {
     fontSize: 11.5,
-    color: "#64748b",
+    color: "#0284c7",
     fontStyle: "italic",
+    fontWeight: "500",
   },
   messageText: {
     fontSize: 12.5,
@@ -673,13 +675,13 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   userTimestamp: {
-    color: "#94a3b8",
+    color: "#7dd3fc",
   },
   aiTimestamp: {
     color: "#94a3b8",
   },
 
-  /* Compact Input Bar */
+  /* Compact Rounded Input Bar */
   inputContainer: {
     backgroundColor: "#ffffff",
     borderTopWidth: 1,
@@ -694,7 +696,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
     borderRadius: 22,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
+    borderColor: "#cbd5e1",
     paddingHorizontal: 12,
     paddingVertical: 5,
     gap: 8,
@@ -712,7 +714,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: "#0f2d4a",
+    backgroundColor: "#0284c7",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 1,
@@ -727,5 +729,9 @@ const styles = StyleSheet.create({
     color: "#94a3b8",
     marginTop: 5,
     fontWeight: "500",
+  },
+  disclaimerAccent: {
+    color: "#0284c7",
+    fontWeight: "700",
   },
 });
