@@ -591,13 +591,13 @@ export default function MyClaims() {
     if (statusFilter === "All") {
       matchesStatus = true;
     } else if (statusFilter === "Completed") {
-      matchesStatus = s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
+      matchesStatus = s.includes("settled") || s.includes("completed") || s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
     } else if (statusFilter === "Pending") {
       matchesStatus = s.includes("pending") || s.includes("progress");
     } else if (statusFilter === "Review") {
       matchesStatus = s.includes("review") || s.includes("submit");
     } else if (statusFilter === "Approved") {
-      matchesStatus = s.includes("approved") || s.includes("active") || s.includes("done");
+      matchesStatus = s.includes("settled") || s.includes("completed") || s.includes("approved") || s.includes("active") || s.includes("done");
     } else if (statusFilter === "Rejected") {
       matchesStatus = s.includes("rejected");
     }

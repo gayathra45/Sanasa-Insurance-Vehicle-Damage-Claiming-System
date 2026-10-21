@@ -989,15 +989,17 @@ export default function AdminClaimsPage() {
                     <div className="flex flex-col min-w-0 select-none">
                       <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Status & Payout</span>
                       <span className={`text-xs font-semibold px-2.5 py-1 rounded-md w-fit text-center ${
-                        claim.status === "Approved"
+                        claim.status === "Approved" || claim.status === "Settled" || claim.status === "Completed"
                           ? "bg-emerald-100 text-emerald-800"
                           : claim.status === "Pending"
                           ? "bg-amber-100 text-amber-800"
                           : claim.status === "In Progress"
                           ? "bg-blue-100 text-blue-800"
+                          : claim.status === "Review"
+                          ? "bg-purple-100 text-purple-800"
                           : "bg-rose-100 text-rose-800"
                       }`}>
-                        {claim.status}
+                        {claim.status === "Settled" || claim.status === "Completed" ? "Completed" : claim.status}
                       </span>
                       {claim.amount ? (
                         <span className="text-[10px] text-emerald-700 font-bold mt-1">

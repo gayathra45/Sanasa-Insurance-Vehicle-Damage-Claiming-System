@@ -1361,7 +1361,7 @@ router.post("/claims/:claimNumber/settle-payment", async (req, res) => {
     claim.paymentNote = paymentNote || "";
     claim.amount = finalAmount;
     claim.status = "Settled";
-    claim.currentStep = 5;
+    claim.currentStep = 6;
 
     // Add receipt to additional documents
     claim.additionalDocuments.push({

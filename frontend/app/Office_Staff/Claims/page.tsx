@@ -1035,10 +1035,10 @@ function OfficeStaffClaimsPageContent() {
 
   const getStatusStyle = (status: string, damageType: string = "", priority: string = "", paymentReceipt: string = "") => {
     const s = status.toLowerCase();
+    if (s.includes("settled") || s.includes("completed") || (s.includes("approved") && paymentReceipt)) {
+      return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+    }
     if (s.includes("approved") || s.includes("active") || s.includes("done")) {
-      if (paymentReceipt) {
-        return "bg-emerald-50 text-emerald-700 border border-emerald-200";
-      }
       return "bg-blue-50 text-blue-600 border border-blue-200";
     }
     if (s.includes("rejected") || s.includes("decline") || s.includes("cancel")) {
@@ -1075,13 +1075,14 @@ function OfficeStaffClaimsPageContent() {
     const isInspection = Boolean(claim.inspectionSubmitted || (claim.inspectionReport && claim.inspectionReport.trim().length > 0));
     const isReviewCompleted = Boolean(
       claim.inspectionApproved ||
+      claim.status === "Review" ||
       claim.status === "Approved" ||
       claim.status === "Settled" ||
-      claim.status === "Rejected" ||
-      (claim.currentStep && claim.currentStep >= 5)
+      claim.status === "Completed" ||
+      (claim.currentStep && claim.currentStep >= 4)
     );
-    const isDecisionCompleted = (claim.status === "Approved" || claim.status === "Settled" || claim.status === "Rejected");
-    const isPaymentCompleted = Boolean(claim.paymentReceipt || claim.status === "Settled");
+    const isDecisionCompleted = (claim.status === "Approved" || claim.status === "Settled" || claim.status === "Completed" || claim.status === "Rejected" || (claim.currentStep && claim.currentStep >= 5));
+    const isPaymentCompleted = Boolean(claim.paymentReceipt || claim.status === "Settled" || claim.status === "Completed" || (claim.currentStep && claim.currentStep >= 6));
 
     return [
       { num: "01", label: "Submitted", active: true, completed: true },
@@ -1105,7 +1106,7 @@ function OfficeStaffClaimsPageContent() {
     // 1. Filter by active tab
     if (activeTab === "Pending" && claim.status !== "Pending") return false;
     if (activeTab === "In Progress" && claim.status !== "In Progress") return false;
-    if (activeTab === "Approved" && claim.status !== "Approved") return false;
+    if (activeTab === "Approved" && claim.status !== "Approved" && claim.status !== "Settled" && claim.status !== "Completed") return false;
     if (activeTab === "Rejected" && claim.status !== "Rejected") return false;
 
     // 2. Filter by search query (Claim Number, Plate, or NIC)
@@ -1185,7 +1186,7 @@ function OfficeStaffClaimsPageContent() {
                             : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/60"
                         }`}
                       >
-                        {tab} ({tab === "All" ? claims.length : claims.filter(c => c.status === tab).length})
+                        {tab} ({tab === "All" ? claims.length : tab === "Approved" ? claims.filter(c => c.status === "Approved" || c.status === "Settled" || c.status === "Completed").length : claims.filter(c => c.status === tab).length})
                       </button>
                     ))}
                   </div>
@@ -1229,7 +1230,8 @@ function OfficeStaffClaimsPageContent() {
                       const isUrgent = claim.priority === "Urgent" || claim.damageType.toLowerCase().includes("severe") || claim.description.toLowerCase().includes("urgent");
                       const isApproved = s.includes("approved") || s.includes("active") || s.includes("done");
                       const isRejected = s.includes("rejected");
-                      const isCompleted = isApproved && !!claim.paymentReceipt;
+                      const isCompleted = s.includes("settled") || s.includes("completed") || (isApproved && !!claim.paymentReceipt);
+                      const isReview = s.includes("review");
 
                       let cardThemeClass = "";
                       let indicatorDot = "";
@@ -1240,6 +1242,9 @@ function OfficeStaffClaimsPageContent() {
                       } else if (isApproved) {
                         cardThemeClass = "border-l-4 border-l-blue-500 hover:bg-slate-50/40";
                         indicatorDot = "bg-blue-500";
+                      } else if (isReview) {
+                        cardThemeClass = "border-l-4 border-l-purple-500 hover:bg-slate-50/40";
+                        indicatorDot = "bg-purple-500";
                       } else if (isRejected) {
                         cardThemeClass = "border-l-4 border-l-slate-400 hover:bg-slate-50/40";
                         indicatorDot = "bg-slate-400";
@@ -1334,7 +1339,7 @@ function OfficeStaffClaimsPageContent() {
                           <div className="flex flex-col select-none items-center min-w-0">
                             <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 md:hidden">Status</span>
                             <span className={`text-[9px] font-semibold px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority, claim.paymentReceipt)}`}>
-                              {claim.status.toLowerCase() === "approved" && claim.paymentReceipt ? "Completed" : claim.status}
+                              {claim.status.toLowerCase() === "settled" || claim.status.toLowerCase() === "completed" || (claim.status.toLowerCase() === "approved" && claim.paymentReceipt) ? "Completed" : claim.status}
                             </span>
                           </div>
 
@@ -1406,13 +1411,13 @@ function OfficeStaffClaimsPageContent() {
                     <span>Download PDF</span>
                   </button>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    selectedClaim.status === "Settled" || selectedClaim.status === "Completed" ? "bg-emerald-100 text-emerald-800" :
                     selectedClaim.status === "Approved" ? "bg-emerald-100 text-emerald-800" :
-                    selectedClaim.status === "Settled" ? "bg-blue-100 text-blue-800" :
                     selectedClaim.status === "Rejected" ? "bg-red-100 text-red-800" :
                     selectedClaim.status === "Review" ? "bg-purple-100 text-purple-800" :
                     "bg-amber-100 text-amber-800"
                   }`}>
-                    {selectedClaim.status}
+                    {selectedClaim.status === "Settled" || selectedClaim.status === "Completed" ? "Completed" : selectedClaim.status}
                   </span>
                   <button
                     type="button"
@@ -2056,6 +2061,17 @@ function OfficeStaffClaimsPageContent() {
                       <div className="flex items-center gap-2.5 w-full sm:w-auto">
                         <button
                           type="button"
+                          onClick={() => {
+                            setRejectionReasonText("");
+                            setActiveSubModal("decision_reject");
+                          }}
+                          className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 cursor-pointer inline-flex items-center justify-center gap-1.5"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
+                          Reject Claim
+                        </button>
+                        <button
+                          type="button"
                           onClick={() => handleClaimDecision("Approve")}
                           disabled={updatingClaim}
                           className="w-full sm:w-auto px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-2"
@@ -2231,15 +2247,19 @@ function OfficeStaffClaimsPageContent() {
           })()}
         </div>
 
-              {/* Footer Decision Action Bar inside Inspection Modal */}
+              {/* Footer Action Bar inside Inspection Modal */}
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 select-none">
                 <div className="text-xs text-slate-500 font-medium">
-                  {selectedClaim.status === "Approved" || selectedClaim.status === "Settled" ? (
+                  {selectedClaim.status === "Settled" || selectedClaim.status === "Completed" ? (
+                    <span className="text-emerald-700 font-bold">✓ Claim Completed & Settled</span>
+                  ) : selectedClaim.status === "Approved" ? (
                     <span className="text-emerald-700 font-bold">✓ Claim Decision: Approved</span>
                   ) : selectedClaim.status === "Rejected" ? (
                     <span className="text-red-700 font-bold">✕ Claim Decision: Rejected</span>
+                  ) : selectedClaim.status === "Review" ? (
+                    <span className="text-purple-700 font-bold">⟳ Step 4 Review: Verify Benchmarks & Enter Passed Settlement Amount in Section 4</span>
                   ) : (
-                    <span>Ready for branch review and settlement decision</span>
+                    <span>Physical inspection submitted. Review and approve/reject inspection above in Section 1.</span>
                   )}
                 </div>
                 
@@ -2247,53 +2267,10 @@ function OfficeStaffClaimsPageContent() {
                   <button
                     type="button"
                     onClick={() => setActiveSubModal(null)}
-                    className="px-5 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer bg-white"
+                    className="px-6 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer bg-white"
                   >
                     Close Inspection
                   </button>
-
-                  {/* Approve & Reject Decision Buttons inside Inspection Modal */}
-                  {(selectedClaim.status === "Pending" || selectedClaim.status === "In Progress" || selectedClaim.status === "Review") && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRejectionReasonText("");
-                          setActiveSubModal("decision_reject");
-                        }}
-                        className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
-                        Reject Claim
-                      </button>
-                      {Boolean(
-                        selectedClaim.inspectionApproved &&
-                        ((selectedClaim.additionalDocuments || []).some(d => d.name && (d.name.toLowerCase().includes("garage") || d.name.toLowerCase().includes("quotation") || d.name.toLowerCase().includes("estimate"))) ||
-                         (selectedClaim.additionalDocuments || []).some(d => d.uploadedBy === "Policy Holder" && (d.name.toLowerCase().includes("estimate") || d.name.toLowerCase().includes("repair"))) ||
-                         selectedClaim.garageEstimateComparison?.isCompared)
-                      ) && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setApprovingAmount(
-                              selectedClaim.garageEstimateComparison?.garageEstimatedTotal
-                                ? String(selectedClaim.garageEstimateComparison.garageEstimatedTotal)
-                                : selectedClaim.aiAnalysis?.totalEstimatedCost
-                                ? String(selectedClaim.aiAnalysis.totalEstimatedCost)
-                                : selectedClaim.amount
-                                ? String(selectedClaim.amount)
-                                : ""
-                            );
-                            setActiveSubModal("decision_approve");
-                          }}
-                          className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
-                        >
-                          <HugeiconsIcon icon={Tick01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
-                          Approve Claim
-                        </button>
-                      )}
-                    </>
-                  )}
                 </div>
               </div>
             </div>
@@ -3835,7 +3812,21 @@ function OfficeStaffClaimsPageContent() {
                         Type : <span className="font-medium text-slate-600">{selectedClaim.damageType}</span>
                       </div>
                       <div>
-                        Status : <span className={selectedClaim.priority === "Urgent" || selectedClaim.status === "Rejected" ? "text-red-500 font-semibold" : "font-medium text-slate-600"}>{selectedClaim.status}</span>
+                        Status : <span className={
+                          selectedClaim.status === "Settled" || selectedClaim.status === "Completed" || (selectedClaim.status === "Approved" && selectedClaim.paymentReceipt)
+                            ? "text-emerald-600 font-bold"
+                            : selectedClaim.priority === "Urgent" || selectedClaim.status === "Rejected"
+                              ? "text-red-500 font-semibold"
+                              : selectedClaim.status === "Approved"
+                                ? "text-blue-600 font-semibold"
+                                : selectedClaim.status === "Review"
+                                  ? "text-purple-600 font-semibold"
+                                  : "font-medium text-slate-600"
+                        }>
+                          {selectedClaim.status === "Settled" || selectedClaim.status === "Completed" || (selectedClaim.status === "Approved" && selectedClaim.paymentReceipt)
+                            ? "Completed"
+                            : selectedClaim.status}
+                        </span>
                       </div>
                     </div>
 
