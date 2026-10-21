@@ -114,6 +114,9 @@ interface Claim {
   manualUpdateBy?: string;
   aiAnalysis?: {
     isAnalyzed: boolean;
+    isValidAccidentPhoto?: boolean;
+    authenticityAssessment?: string;
+    fraudAlert?: string;
     damagedItems?: {
       item: string;
       damagePercentage: number;
@@ -1594,8 +1597,14 @@ function OfficeStaffClaimsPageContent() {
                       </h3>
                     </div>
                     {selectedClaim.aiAnalysis?.isAnalyzed && (
-                      <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full">
-                        Assessed via Gemini Vision
+                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                        selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
+                          ? "text-rose-700 bg-rose-100 border border-rose-200"
+                          : "text-indigo-700 bg-indigo-100"
+                      }`}>
+                        {selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
+                          ? "⚠️ Photo Validation Alert"
+                          : "Assessed via Gemini Vision"}
                       </span>
                     )}
                   </div>
@@ -1603,7 +1612,7 @@ function OfficeStaffClaimsPageContent() {
                   {!selectedClaim.aiAnalysis?.isAnalyzed ? (
                     <div className="bg-white border border-indigo-200 rounded-xl p-5 text-center space-y-3">
                       <p className="text-xs text-slate-600 font-medium max-w-md mx-auto">
-                        Run the AI Damage Assessment engine to analyze accident photos and agent physical inspection notes, generate the itemized loss cost sheet in LKR, and automatically request the official Garage Estimate Report from the policy holder.
+                        Run the AI Damage Assessment engine to analyze accident photos and agent physical inspection notes, verify photo authenticity against fraud, and generate the itemized loss cost sheet in LKR.
                       </p>
                       <button
                         type="button"
@@ -1611,95 +1620,133 @@ function OfficeStaffClaimsPageContent() {
                         disabled={analyzingClaim === selectedClaim.claimNumber}
                         className="px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2"
                       >
-                        {analyzingClaim === selectedClaim.claimNumber ? "Analyzing Damage..." : "? Run AI Damage Assessment / Cost Sheet"}
+                        {analyzingClaim === selectedClaim.claimNumber ? "Analyzing Damage..." : "⚡ Run AI Damage Assessment / Cost Sheet"}
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {/* 4 Loss KPI Cards */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Estimated Loss</span>
-                          <span className="text-sm font-extrabold text-indigo-900 font-mono mt-0.5 block">
-                            LKR {(selectedClaim.aiAnalysis.totalEstimatedCost || 0).toLocaleString()}
-                          </span>
+                      {/* FRAUD / INVALID PHOTO WARNING BANNER */}
+                      {selectedClaim.aiAnalysis.isValidAccidentPhoto === false || selectedClaim.aiAnalysis.fraudAlert ? (
+                        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">🚨</span>
+                            <span className="text-xs font-extrabold text-rose-800 uppercase tracking-wide">
+                              AI Authenticity Alert: Non-Accident / Inauthentic Photos Detected
+                            </span>
+                          </div>
+                          <p className="text-xs text-rose-900 leading-relaxed bg-white border border-rose-200/80 rounded-lg p-3">
+                            <strong className="block text-rose-950 font-bold mb-0.5">Assessment Findings:</strong>
+                            {selectedClaim.aiAnalysis.fraudAlert || selectedClaim.aiAnalysis.summary || "The uploaded photos do not depict legitimate vehicle accident damage."}
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                            <div className="bg-white border border-rose-100 rounded-lg p-2.5">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Authenticity Verdict</span>
+                              <span className="text-xs font-bold text-rose-700 block mt-0.5">
+                                {selectedClaim.aiAnalysis.authenticityAssessment || "Fake / Irrelevant Image"}
+                              </span>
+                            </div>
+                            <div className="bg-white border border-rose-100 rounded-lg p-2.5">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Calculated Loss</span>
+                              <span className="text-xs font-extrabold text-slate-800 block mt-0.5 font-mono">
+                                LKR 0 (Halted)
+                              </span>
+                            </div>
+                            <div className="bg-white border border-rose-100 rounded-lg p-2.5">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Garage Estimate Workflow</span>
+                              <span className="text-xs font-bold text-amber-700 block mt-0.5">
+                                Blocked (Pending Manual Review)
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Parts Cost</span>
-                          <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
-                            LKR {(selectedClaim.aiAnalysis.totalEstimatedPartsCost || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Labor & Repair</span>
-                          <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
-                            LKR {(selectedClaim.aiAnalysis.totalEstimatedLaborCost || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Assessed Damage</span>
-                          <span className="text-sm font-extrabold text-amber-600 font-mono mt-0.5 block">
-                            {selectedClaim.aiAnalysis.overallDamagePercentage || 0}%
-                          </span>
-                        </div>
-                      </div>
+                      ) : (
+                        <>
+                          {/* 4 Loss KPI Cards */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Estimated Loss</span>
+                              <span className="text-sm font-extrabold text-indigo-900 font-mono mt-0.5 block">
+                                LKR {(selectedClaim.aiAnalysis.totalEstimatedCost || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Parts Cost</span>
+                              <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
+                                LKR {(selectedClaim.aiAnalysis.totalEstimatedPartsCost || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Labor & Repair</span>
+                              <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
+                                LKR {(selectedClaim.aiAnalysis.totalEstimatedLaborCost || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Assessed Damage</span>
+                              <span className="text-sm font-extrabold text-amber-600 font-mono mt-0.5 block">
+                                {selectedClaim.aiAnalysis.overallDamagePercentage || 0}%
+                              </span>
+                            </div>
+                          </div>
 
-                      {/* Itemized Cost Sheet Table */}
-                      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wider">
-                          Itemized Automotive Parts & Labor Cost Sheet (LKR)
-                        </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-xs text-left">
-                            <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100">
-                              <tr>
-                                <th className="py-2.5 px-4">Damaged Component / Assembly</th>
-                                <th className="py-2.5 px-3 text-center">Damage %</th>
-                                <th className="py-2.5 px-3 text-center">Action</th>
-                                <th className="py-2.5 px-3 text-right">Parts Cost</th>
-                                <th className="py-2.5 px-3 text-right">Labor Cost</th>
-                                <th className="py-2.5 px-4 text-right">Line Total</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {(selectedClaim.aiAnalysis.damagedItems || []).map((item, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                                  <td className="py-2.5 px-4 font-semibold text-slate-800">
-                                    <div>{item.item}</div>
-                                    {item.description && (
-                                      <div className="text-[10px] text-slate-400 font-normal mt-0.5">{item.description}</div>
-                                    )}
-                                  </td>
-                                  <td className="py-2.5 px-3 text-center font-bold text-amber-600">{item.damagePercentage}%</td>
-                                  <td className="py-2.5 px-3 text-center">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                      item.action === "Replace" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
-                                    }`}>
-                                      {item.action || "Repair"}
-                                    </span>
-                                  </td>
-                                  <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                                    LKR {(item.estimatedPartCost || 0).toLocaleString()}
-                                  </td>
-                                  <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                                    LKR {(item.estimatedLaborCost || 0).toLocaleString()}
-                                  </td>
-                                  <td className="py-2.5 px-4 text-right font-bold font-mono text-slate-900">
-                                    LKR {(item.totalItemCost || (item.estimatedPartCost || 0) + (item.estimatedLaborCost || 0)).toLocaleString()}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
+                          {/* Itemized Cost Sheet Table */}
+                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wider">
+                              Itemized Automotive Parts & Labor Cost Sheet (LKR)
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs text-left">
+                                <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100">
+                                  <tr>
+                                    <th className="py-2.5 px-4">Damaged Component / Assembly</th>
+                                    <th className="py-2.5 px-3 text-center">Damage %</th>
+                                    <th className="py-2.5 px-3 text-center">Action</th>
+                                    <th className="py-2.5 px-3 text-right">Parts Cost</th>
+                                    <th className="py-2.5 px-3 text-right">Labor Cost</th>
+                                    <th className="py-2.5 px-4 text-right">Line Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {(selectedClaim.aiAnalysis.damagedItems || []).map((item, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                                      <td className="py-2.5 px-4 font-semibold text-slate-800">
+                                        <div>{item.item}</div>
+                                        {item.description && (
+                                          <div className="text-[10px] text-slate-400 font-normal mt-0.5">{item.description}</div>
+                                        )}
+                                      </td>
+                                      <td className="py-2.5 px-3 text-center font-bold text-amber-600">{item.damagePercentage}%</td>
+                                      <td className="py-2.5 px-3 text-center">
+                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                          item.action === "Replace" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                                        }`}>
+                                          {item.action || "Repair"}
+                                        </span>
+                                      </td>
+                                      <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                                        LKR {(item.estimatedPartCost || 0).toLocaleString()}
+                                      </td>
+                                      <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                                        LKR {(item.estimatedLaborCost || 0).toLocaleString()}
+                                      </td>
+                                      <td className="py-2.5 px-4 text-right font-bold font-mono text-slate-900">
+                                        LKR {(item.totalItemCost || (item.estimatedPartCost || 0) + (item.estimatedLaborCost || 0)).toLocaleString()}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
 
-                      {/* AI Auditor Narrative Summary */}
-                      {selectedClaim.aiAnalysis.summary && (
-                        <div className="bg-white border border-indigo-100 rounded-xl p-3.5 text-xs text-slate-700 leading-relaxed font-medium">
-                          <strong className="text-indigo-950 font-bold block mb-1">AI Assessment Summary:</strong>
-                          {selectedClaim.aiAnalysis.summary}
-                        </div>
+                          {/* AI Auditor Narrative Summary */}
+                          {selectedClaim.aiAnalysis.summary && (
+                            <div className="bg-white border border-indigo-100 rounded-xl p-3.5 text-xs text-slate-700 leading-relaxed font-medium">
+                              <strong className="text-indigo-950 font-bold block mb-1">AI Assessment Summary:</strong>
+                              {selectedClaim.aiAnalysis.summary}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -4148,58 +4195,26 @@ function OfficeStaffClaimsPageContent() {
                     Add Note
                   </button>
 
-                  {/* Decision Action Buttons: Only show when inspection/review is ready (Step 5 Decision), or reject before assignment */}
+                  {/* First status only: allow early rejection before agent assignment/inspection. Final decision approval/rejection is handled inside Inspection Report & Tracking. */}
                   {(() => {
                     const hasAgent = Boolean(
                       selectedClaim.assignedAgent &&
                       selectedClaim.assignedAgent.trim() !== "" &&
                       selectedClaim.assignedAgent.toLowerCase() !== "unassigned"
                     );
-                    const hasInspection = Boolean(selectedClaim.inspectionSubmitted || selectedClaim.inspectionReport);
-                    const hasReview = Boolean(selectedClaim.garageEstimateComparison?.isCompared);
 
-                    // Final Decision (Approve / Reject) only shows when Inspection is approved and review underway (Step 5 Decision)
-                    const canMakeFinalDecision = Boolean(
-                      selectedClaim.inspectionApproved ||
-                      selectedClaim.garageEstimateComparison?.isCompared ||
-                      (selectedClaim.currentStep && selectedClaim.currentStep >= 5)
-                    ) && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected";
+                    // Only show early Reject button in the first status (Submitted / Pending / unassigned)
+                    const isFirstStatus = (selectedClaim.currentStep === 1 || selectedClaim.status === "Pending" || !hasAgent) &&
+                      selectedClaim.status !== "Approved" &&
+                      selectedClaim.status !== "Rejected" &&
+                      selectedClaim.status !== "Cancelled";
 
-                    // Before agent assignment, branch can reject an invalid claim early
-                    const canRejectInitial = !hasAgent && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected";
-
-                    if (canMakeFinalDecision) {
-                      return (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setApprovingAmount(String(selectedClaim.garageEstimateComparison?.garageEstimatedTotal || selectedClaim.aiAnalysis?.totalEstimatedCost || selectedClaim.amount || ""));
-                              setActiveSubModal("decision_approve");
-                            }}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
-                          >
-                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                            Approve Claim
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setActiveSubModal("decision_reject")}
-                            className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
-                          >
-                            <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                            Reject Claim
-                          </button>
-                        </>
-                      );
-                    }
-
-                    if (canRejectInitial) {
+                    if (isFirstStatus) {
                       return (
                         <button
                           type="button"
                           onClick={() => setActiveSubModal("decision_reject")}
-                          className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
+                          className="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
                         >
                           <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
                           Reject Claim

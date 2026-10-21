@@ -1025,8 +1025,13 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
       return res.status(500).json({ error: "AI Damage Assessment failed." });
     }
 
+    const isFraudOrInvalid = aiResult.isValidAccidentPhoto === false || Boolean(aiResult.fraudAlert);
+
     claim.aiAnalysis = {
       isAnalyzed: true,
+      isValidAccidentPhoto: !isFraudOrInvalid,
+      authenticityAssessment: aiResult.authenticityAssessment || (isFraudOrInvalid ? "Fake / Non-Accident Image" : "Genuine Accident Damage"),
+      fraudAlert: aiResult.fraudAlert || null,
       damagedItems: aiResult.damagedItems || [],
       overallDamagePercentage: aiResult.overallDamagePercentage || 0,
       totalEstimatedPartsCost: aiResult.totalEstimatedPartsCost || 0,
@@ -1037,7 +1042,27 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
       analyzedAt: new Date()
     };
 
-    // Auto-request Garage Estimate Report from Policy Holder for review and comparison
+    if (isFraudOrInvalid) {
+      // Photo verification failed - halt automatic workflow and alert staff
+      claim.status = "Review";
+      claim.messages.push({
+        sender: "Sanasa AI",
+        message: `🚨 AI FRAUD & AUTHENTICITY ALERT: The uploaded accident photos could not be verified as genuine vehicle accident damage. Reason: ${aiResult.fraudAlert || "Irrelevant, fake, or undamaged vehicle photos detected."}. Automated garage quotation request has been BLOCKED. Manual inspection required.`,
+        sentAt: new Date(),
+        recipient: "All"
+      });
+
+      await claim.save();
+
+      return res.json({
+        message: `AI Photo Verification Alert: ${aiResult.fraudAlert || "Photos do not depict legitimate vehicle accident damage."}`,
+        claim,
+        aiAnalysis: claim.aiAnalysis,
+        fraudAlert: aiResult.fraudAlert
+      });
+    }
+
+    // Genuine damage verified -> Auto-request Garage Estimate Report from Policy Holder for review and comparison
     claim.documentsRequested = true;
     const requested = new Set(claim.requestedDocuments || []);
     requested.add("Garage Estimate Report");

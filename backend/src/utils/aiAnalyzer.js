@@ -1,4 +1,4 @@
-﻿import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -115,22 +115,58 @@ function generateFallbackCostSheet(inspectionReport = "") {
 }
 
 /**
- * Analyzes vehicle accident photos, inspection report, and generates an itemized Estimation Damage Cost Sheet
+ * Fallback when photos are missing or AI engine is unavailable
+ */
+function generateUnverifiedAssessment(inspectionReport = "", reason = "Photo authenticity could not be verified automatically.") {
+  return {
+    isAnalyzed: true,
+    isValidAccidentPhoto: false,
+    authenticityAssessment: "Manual Verification Required",
+    fraudAlert: reason,
+    damagedItems: [],
+    overallDamagePercentage: 0,
+    totalEstimatedPartsCost: 0,
+    totalEstimatedLaborCost: 0,
+    totalEstimatedCost: 0,
+    currency: "LKR",
+    summary: inspectionReport
+      ? `Automated photo verification paused. Agent physical inspection notes: "${inspectionReport}". Manual staff verification required before generating any loss estimate.`
+      : "Automated photo validation could not be completed. Please review the submitted photos manually before proceeding.",
+    analyzedAt: new Date()
+  };
+}
+
+/**
+ * Analyzes vehicle accident photos, inspection report, and generates an itemized Estimation Damage Cost Sheet.
+ * Performs rigorous Anti-Fraud & Authenticity verification on submitted photos.
  * @param {Array<string>} base64Images - Array of base64 encoded photo strings
  * @param {Object} vehicleInfo - Vehicle details (plate, model, damageType)
  * @param {string} inspectionReport - Physical inspection notes submitted by Agent
  */
 export async function analyzeAccidentDamageWithCostSheet(base64Images, vehicleInfo = {}, inspectionReport = "") {
   if (!base64Images || base64Images.length === 0) {
-    return generateFallbackCostSheet(inspectionReport);
+    return {
+      isAnalyzed: true,
+      isValidAccidentPhoto: false,
+      authenticityAssessment: "No Photos Attached",
+      fraudAlert: "No accident photos were provided. Cannot calculate loss assessment without photographic evidence.",
+      damagedItems: [],
+      overallDamagePercentage: 0,
+      totalEstimatedPartsCost: 0,
+      totalEstimatedLaborCost: 0,
+      totalEstimatedCost: 0,
+      currency: "LKR",
+      summary: "No accident photos were submitted for this claim. Loss assessment cannot be calculated.",
+      analyzedAt: new Date()
+    };
   }
 
   if (!genAI) {
-    console.warn("Gemini API key not configured, using smart cost assessment engine.");
-    return generateFallbackCostSheet(inspectionReport);
+    console.warn("Gemini API key not configured or invalid.");
+    return generateUnverifiedAssessment(inspectionReport, "Gemini Vision AI is unconfigured. Manual inspection required.");
   }
 
-  const modelCandidates = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-3.6-flash"];
+  const modelCandidates = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
 
   for (const modelName of modelCandidates) {
     try {
@@ -138,27 +174,58 @@ export async function analyzeAccidentDamageWithCostSheet(base64Images, vehicleIn
       const imageParts = base64Images.slice(0, 6).map(img => fileToGenerativePart(img, "image/jpeg"));
 
       const prompt = `
-        You are a certified senior automobile insurance loss assessor in Sri Lanka.
-        You are provided with accident photos of a vehicle, along with the agent's physical inspection report.
+        You are a certified senior automobile insurance loss assessor and fraud detection auditor in Sri Lanka.
+        You are provided with photos submitted for a motor insurance accident claim, along with agent inspection notes.
         
         Vehicle Plate: ${vehicleInfo.vehiclePlate || "N/A"}
         Reported Damage Type: ${vehicleInfo.damageType || "N/A"}
         Agent Inspection Notes: "${inspectionReport || "None provided"}"
         
-        Task:
-        1. Examine each accident photo carefully to identify every damaged automotive component (e.g., Front Bumper, Headlight, Hood, Fender, Grille, Radiator, Door, Side Mirror, Rear Bumper).
-        2. For each damaged component, assess:
-           - Damage severity percentage (1% - 100%).
-           - Action needed: strictly either "Repair" or "Replace".
-           - Estimated Part Cost in Sri Lankan Rupees (LKR).
-           - Estimated Labor & Painting Cost in Sri Lankan Rupees (LKR).
-           - Total Item Cost = Part Cost + Labor Cost.
-        3. Calculate Overall Damage Percentage (1% - 100%).
-        4. Calculate Total Estimated Parts Cost, Total Estimated Labor Cost, and Grand Total Cost (LKR).
-        5. Provide an executive summary of the damage findings and repair scope.
+        STAGE 1: CRITICAL AUTHENTICITY & FRAUD CHECK
+        Examine the submitted photos with utmost scrutiny before calculating any costs:
+        1. Is an actual motor vehicle (car, van, motorcycle, three-wheeler, truck, bus) present in the photos?
+        2. Do the photos show genuine collision, impact, scratch, dent, or accident damage on the vehicle?
+        3. FRAUD DETECTION - Flag the photos as INVALID/FAKE if they are:
+           - Irrelevant non-vehicle photos (people, selfies, pets, animals, food, indoor furniture, rooms, landscapes, memes, screenshots of documents or random web graphics).
+           - Undamaged vehicles (photos of clean, pristine, undamaged vehicles where no collision or accident impact exists).
+           - Unidentifiable, totally blurred, pitch black, or corrupted images.
+        
+        IF THE PHOTOS ARE FAKE, IRRELEVANT, OR DO NOT SHOW VEHICLE ACCIDENT DAMAGE:
+        - "isValidAccidentPhoto": false
+        - "authenticityAssessment": "Fake / Non-Accident Image" (or "No Vehicle Damage Visible", "Irrelevant Photo")
+        - "fraudAlert": "Explain clearly why these photos are rejected (e.g. 'Photos depict household items/selfies and contain no damaged vehicle', or 'Vehicle shown in photo has no visible accident damage')."
+        - "damagedItems": []
+        - "overallDamagePercentage": 0
+        - "totalEstimatedPartsCost": 0
+        - "totalEstimatedLaborCost": 0
+        - "totalEstimatedCost": 0
+        - "summary": "AI Anti-Fraud Alert: Uploaded photos do not show legitimate vehicle accident damage. Assessment halted."
+        
+        STAGE 2: DAMAGE ASSESSMENT (ONLY IF ACCIDENT DAMAGE IS AUTHENTIC & VISIBLE)
+        If and ONLY if the photos clearly show a real vehicle with genuine accident damage:
+        - "isValidAccidentPhoto": true
+        - "authenticityAssessment": "Genuine Accident Damage"
+        - "fraudAlert": null
+        - Identify each visibly damaged automotive component (e.g., Front Bumper Assembly, Headlight Unit, Hood, Fender, Grille, Radiator, Door, Side Mirror, Rear Bumper).
+        - For each damaged component, assess:
+           * item: name of component
+           * damagePercentage: 1 to 100
+           * description: visual damage details
+           * action: strictly either "Repair" or "Replace"
+           * estimatedPartCost: realistic part cost in Sri Lankan Rupees (LKR)
+           * estimatedLaborCost: realistic labor & paint cost in Sri Lankan Rupees (LKR)
+           * totalItemCost = estimatedPartCost + estimatedLaborCost
+        - overallDamagePercentage: 1 to 100
+        - totalEstimatedPartsCost: sum of part costs (LKR)
+        - totalEstimatedLaborCost: sum of labor costs (LKR)
+        - totalEstimatedCost: grand total (LKR)
+        - summary: executive assessment summary
         
         Respond ONLY with a valid JSON object matching this schema exactly (no markdown surrounding explanation, valid JSON):
         {
+          "isValidAccidentPhoto": true,
+          "authenticityAssessment": "Genuine Accident Damage",
+          "fraudAlert": null,
           "damagedItems": [
             {
               "item": "Front Bumper Assembly",
@@ -185,7 +252,26 @@ export async function analyzeAccidentDamageWithCostSheet(base64Images, vehicleIn
 
       const parsed = safeParseJson(responseText);
 
-      // Ensure proper calculation sanity
+      // Handle fake/non-accident photos detected by Gemini
+      const isValid = parsed.isValidAccidentPhoto === true && !parsed.fraudAlert;
+      if (!isValid) {
+        return {
+          isAnalyzed: true,
+          isValidAccidentPhoto: false,
+          authenticityAssessment: parsed.authenticityAssessment || "Fake / Non-Accident Image",
+          fraudAlert: parsed.fraudAlert || "The uploaded photos do not depict legitimate vehicle accident damage.",
+          damagedItems: [],
+          overallDamagePercentage: 0,
+          totalEstimatedPartsCost: 0,
+          totalEstimatedLaborCost: 0,
+          totalEstimatedCost: 0,
+          currency: "LKR",
+          summary: parsed.summary || "AI Anti-Fraud Alert: Uploaded photos do not show legitimate vehicle accident damage. Assessment halted.",
+          analyzedAt: new Date()
+        };
+      }
+
+      // Valid genuine accident photos: calculate itemized costs
       let sumParts = 0;
       let sumLabor = 0;
       const items = (parsed.damagedItems || []).map(item => {
@@ -209,6 +295,9 @@ export async function analyzeAccidentDamageWithCostSheet(base64Images, vehicleIn
 
       return {
         isAnalyzed: true,
+        isValidAccidentPhoto: true,
+        authenticityAssessment: parsed.authenticityAssessment || "Genuine Accident Damage",
+        fraudAlert: null,
         damagedItems: items,
         overallDamagePercentage: Number(parsed.overallDamagePercentage) || 45,
         totalEstimatedPartsCost: sumParts,
@@ -223,7 +312,7 @@ export async function analyzeAccidentDamageWithCostSheet(base64Images, vehicleIn
     }
   }
 
-  return generateFallbackCostSheet(inspectionReport);
+  return generateUnverifiedAssessment(inspectionReport, "AI Vision could not verify photo authenticity. Manual inspection required.");
 }
 
 /**
@@ -313,7 +402,7 @@ export async function compareGarageEstimateWithPhotosAndAI(
     return generateFallbackGarageComparison(aiAnalysis);
   }
 
-  const modelCandidates = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-3.6-flash"];
+  const modelCandidates = ["gemini-1.5-flash", "gemini-2.0-flash", "gemini-1.5-pro"];
 
   for (const modelName of modelCandidates) {
     try {

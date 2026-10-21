@@ -86,6 +86,9 @@ const claimSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
   aiAnalysis: {
     isAnalyzed: { type: Boolean, default: false },
+    isValidAccidentPhoto: { type: Boolean, default: true },
+    authenticityAssessment: { type: String, default: "" },
+    fraudAlert: { type: String, default: "" },
     damagedItems: [
       {
         item: { type: String },
