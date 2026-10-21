@@ -506,8 +506,8 @@ export default function AgentDashboard() {
           setAvailability(data.availability);
         }
       }
-    } catch (e) {
-      console.error("Error fetching availability:", e);
+    } catch (e: any) {
+      console.warn("Agent availability offline / server reconnecting:", e?.message || e);
     }
   };
 
@@ -1731,8 +1731,8 @@ ${inspectionReportText.trim()}
             }
           }
         }
-      } catch (err) {
-        console.warn("Background claims polling failed:", err);
+      } catch (err: any) {
+        // Background poll gracefully skips cycle when server is restarting or network fluctuates
       }
     }, 7000);
     return () => clearInterval(pollInterval);

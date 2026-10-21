@@ -1,31 +1,47 @@
 import Constants from "expo-constants";
-import { Platform } from "react-native";
+import { Platform, LogBox } from "react-native";
+
+// Ignore recurring background polling and connection warnings in developer LogBox
+LogBox.ignoreLogs([
+  "Background claims polling failed",
+  "Error fetching availability",
+  "Failed to connect",
+  "ConnectException",
+  "Network request failed",
+  "fetch failed",
+]);
 
 const getApiBaseUrl = () => {
-  // 1. Android — always route through 10.0.2.2 (emulator host loopback).
-  //    isAndroidEmulator() detection via Platform.constants is unreliable
-  //    on first bundle load. Since this project targets the emulator,
-  //    we hard-route all Android traffic through 10.0.2.2.
+  // 1. Resolve host IP from Expo hostUri (Metro server IP)
+  const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
+  let metroIp = "";
+  if (hostUri) {
+    metroIp = hostUri.split(":")[0];
+  }
+
+  // 2. Physical device (Android or iOS) - must use local network IP
+  if (Constants.isDevice) {
+    const ip = metroIp || "192.168.42.36";
+    console.log(`MOBILE API BASE URL (Physical Device): http://${ip}:5000`);
+    return `http://${ip}:5000`;
+  }
+
+  // 3. Android Emulator - route through 10.0.2.2 (host loopback)
   if (Platform.OS === "android") {
-    console.log("MOBILE API BASE URL (Android): http://10.0.2.2:5000");
+    console.log("MOBILE API BASE URL (Android Emulator): http://10.0.2.2:5000");
     return "http://10.0.2.2:5000";
   }
 
-  // 2. iOS Simulator loopback
-  if (Platform.OS === "ios" && !Constants.isDevice) {
+  // 4. iOS Simulator loopback
+  if (Platform.OS === "ios") {
     console.log("MOBILE API BASE URL (iOS Simulator): http://localhost:5000");
     return "http://localhost:5000";
   }
 
-  // 3. Physical device or Web - resolve host IP from Expo hostUri or fallback
-  const hostUri = Constants.expoConfig?.hostUri;
-  let url = "http://192.168.42.36:5000";
-  if (hostUri) {
-    const ip = hostUri.split(":")[0];
-    url = `http://${ip}:5000`;
-  }
-  console.log("MOBILE API BASE URL:", url);
-  return url;
+  // 5. Fallback to detected LAN IP
+  const fallbackIp = metroIp || "192.168.42.36";
+  console.log("MOBILE API BASE URL (Fallback):", `http://${fallbackIp}:5000`);
+  return `http://${fallbackIp}:5000`;
 };
 
 export const API_BASE_URL = getApiBaseUrl();
@@ -33,7 +49,7 @@ export const API_BASE_URL = getApiBaseUrl();
 // Global safety patch for React Native / Hermes whatwg-fetch bugs:
 // 1. RangeError: Failed to construct 'Response': The status provided (0) is outside the range [200, 599].
 // 2. SyntaxError: JSON Parse error: Unexpected end of input on empty response bodies.
-// 3. TypeError: Network request failed — silenced so polls don't spam the error overlay.
+// 3. java.net.ConnectException / Network request failed — handled as 503 so background polling doesn't crash LogBox.
 const _global = typeof globalThis !== "undefined" ? (globalThis as any) : {};
 if (_global.fetch && !_global.__sanasa_fetch_patched) {
   _global.__sanasa_fetch_patched = true;
@@ -66,9 +82,18 @@ if (_global.fetch && !_global.__sanasa_fetch_patched) {
         });
       }
 
-      // Network request failed — return empty 503 so callers handle gracefully
-      if (msg.includes("Network request failed")) {
-        return new Response(JSON.stringify({ error: "Network request failed" }), {
+      // Catch ALL network connection refusal/offline errors so polling does not crash LogBox
+      const isNetworkDown =
+        msg.includes("Network request failed") ||
+        msg.includes("ConnectException") ||
+        msg.includes("Failed to connect") ||
+        msg.includes("fetch failed") ||
+        msg.includes("ECONNREFUSED") ||
+        msg.includes("ENOTFOUND") ||
+        msg.includes("NetworkError");
+
+      if (isNetworkDown) {
+        return new Response(JSON.stringify({ error: "Network connection offline" }), {
           status: 503,
           headers: { "Content-Type": "application/json" },
         });
