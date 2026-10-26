@@ -182,6 +182,8 @@ export default function MyVehicles() {
   const [isRedirectingToStripe, setIsRedirectingToStripe] = useState(false);
   const [paymentSuccessModal, setPaymentSuccessModal] = useState(false);
   const [paymentSuccessDetails, setPaymentSuccessDetails] = useState<{ plate: string; installment: string } | null>(null);
+  const [coverNoteModalOpen, setCoverNoteModalOpen] = useState(false);
+  const [coverNoteVehicle, setCoverNoteVehicle] = useState<Vehicle | null>(null);
 
   const getAddCardTitle = () => {
     switch (activeCategory) {
@@ -289,53 +291,75 @@ export default function MyVehicles() {
   };
 
 
-  // 1. Fetch vehicles list from Database (with real-time polling for branch approvals)
-  useEffect(() => {
-    let intervalId: any;
-    if (typeof window !== "undefined") {
-      const userStr = sessionStorage.getItem("logged_in_user");
-      if (userStr) {
-        try {
-          const user = JSON.parse(userStr);
-          if (user.nic) {
-            const fetchVehicles = async (showLoading = false) => {
-              if (showLoading) setIsLoading(true);
-              try {
-                const res = await fetch(`${API_URL}/policy-holder/vehicles?nic=${encodeURIComponent(user.nic)}`, {
-                  cache: "no-store"
-                });
-                if (res.ok) {
-                  const data = await res.json();
-                  if (Array.isArray(data.vehicles)) {
-                    setVehicles(data.vehicles);
-                    const updatedUser = { ...user, vehicles: data.vehicles };
-                    sessionStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
-                  }
-                }
-              } catch (err) {
-                console.error("Error fetching vehicles:", err);
-              } finally {
-                if (showLoading) setIsLoading(false);
-              }
-            };
-
-            // Run immediately with loading indicator
-            fetchVehicles(true);
-
-            // Poll every 5 seconds silently
-            intervalId = setInterval(() => fetchVehicles(false), 5000);
-          }
-        } catch (e) {
-          console.error(e);
-          setIsLoading(false);
-        }
-      } else {
-        setIsLoading(false);
-      }
+  // 1. Fetch vehicles list from Database
+  const fetchVehicles = async (showLoading = false) => {
+    if (typeof window === "undefined") return;
+    const userStr = sessionStorage.getItem("logged_in_user");
+    if (!userStr) {
+      if (showLoading) setIsLoading(false);
+      return;
     }
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
+    try {
+      const user = JSON.parse(userStr);
+      if (user.nic) {
+        if (showLoading) setIsLoading(true);
+        const res = await fetch(`${API_URL}/policy-holder/vehicles?nic=${encodeURIComponent(user.nic)}`, {
+          cache: "no-store"
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.vehicles)) {
+            setVehicles(data.vehicles);
+            const updatedUser = { ...user, vehicles: data.vehicles };
+            sessionStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
+
+            // Sync selected vehicle in open modal if present
+            if (selectedVehicleForModal?.numberPlate) {
+              const freshMatch = data.vehicles.find(
+                (v: Vehicle) => v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === selectedVehicleForModal.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()
+              );
+              if (freshMatch) {
+                setSelectedVehicleForModal(freshMatch);
+              }
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching vehicles:", err);
+    } finally {
+      if (showLoading) setIsLoading(false);
+    }
+  };
+
+  // Reusable function to fetch renewal & active installment data
+  const fetchRenewalData = async (plateToFetch?: string) => {
+    const targetPlate = plateToFetch || selectedVehicleForModal?.numberPlate;
+    if (!targetPlate) return;
+    try {
+      const plate = encodeURIComponent(targetPlate);
+      const [quoteRes, instRes] = await Promise.all([
+        fetch(`${API_URL}/renewals/vehicle-quote/${plate}`, { cache: "no-store" }),
+        fetch(`${API_URL}/renewals/active-installment/${plate}`, { cache: "no-store" })
+      ]);
+      if (quoteRes.ok) {
+        const qData = await quoteRes.json();
+        setRenewalInfo(qData);
+      }
+      if (instRes.ok) {
+        const iData = await instRes.json();
+        setActiveInstallmentInfo(iData);
+      }
+    } catch (e) {
+      console.error("Error fetching renewal details:", e);
+    }
+  };
+
+  // Real-time polling for vehicles list
+  useEffect(() => {
+    fetchVehicles(true);
+    const vehicleInterval = setInterval(() => fetchVehicles(false), 5000);
+    return () => clearInterval(vehicleInterval);
   }, []);
 
   // 2. Auto-open modal if plate query param is present in URL
@@ -354,9 +378,9 @@ export default function MyVehicles() {
     }
   }, [vehicles]);
 
-  // 3. Disable body scroll when modal is active
+  // 3. Disable body scroll when any modal is active
   useEffect(() => {
-    if (selectedVehicleForModal || isAddVehicleOpen || showSuccessModal) {
+    if (selectedVehicleForModal || isAddVehicleOpen || showSuccessModal || coverNoteModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -364,41 +388,42 @@ export default function MyVehicles() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [selectedVehicleForModal, isAddVehicleOpen, showSuccessModal, renewalWizardOpen, paymentSuccessModal]);
+  }, [selectedVehicleForModal, isAddVehicleOpen, showSuccessModal, renewalWizardOpen, paymentSuccessModal, coverNoteModalOpen]);
 
-  // 4. Fetch Renewal Quote & Active Installments when modal opens for a vehicle
+  // 4. Real-time background sync when modal is open for a vehicle (every 4s)
   useEffect(() => {
     if (selectedVehicleForModal?.numberPlate) {
-      const fetchRenewalData = async () => {
-        setLoadingRenewal(true);
-        try {
-          const plate = encodeURIComponent(selectedVehicleForModal.numberPlate);
-          const [quoteRes, instRes] = await Promise.all([
-            fetch(`${API_URL}/renewals/vehicle-quote/${plate}`, { cache: "no-store" }),
-            fetch(`${API_URL}/renewals/active-installment/${plate}`, { cache: "no-store" })
-          ]);
-          if (quoteRes.ok) {
-            const qData = await quoteRes.json();
-            setRenewalInfo(qData);
-          }
-          if (instRes.ok) {
-            const iData = await instRes.json();
-            setActiveInstallmentInfo(iData);
-          }
-        } catch (e) {
-          console.error("Error fetching renewal details:", e);
-        } finally {
-          setLoadingRenewal(false);
-        }
-      };
-      fetchRenewalData();
+      setLoadingRenewal(true);
+      fetchRenewalData(selectedVehicleForModal.numberPlate).finally(() => setLoadingRenewal(false));
+      const renewalInterval = setInterval(() => {
+        fetchRenewalData(selectedVehicleForModal.numberPlate);
+      }, 4000);
+      return () => clearInterval(renewalInterval);
     } else {
       setRenewalInfo(null);
       setActiveInstallmentInfo(null);
     }
-  }, [selectedVehicleForModal]);
+  }, [selectedVehicleForModal?.numberPlate]);
 
-  // 5. Verify Stripe session when redirected back from Stripe Checkout
+  // Window focus & tab visibility listener for immediate real-time sync without refresh
+  useEffect(() => {
+    const handleSyncOnActive = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchVehicles(false);
+        if (selectedVehicleForModal?.numberPlate) {
+          fetchRenewalData(selectedVehicleForModal.numberPlate);
+        }
+      }
+    };
+    window.addEventListener("focus", handleSyncOnActive);
+    document.addEventListener("visibilitychange", handleSyncOnActive);
+    return () => {
+      window.removeEventListener("focus", handleSyncOnActive);
+      document.removeEventListener("visibilitychange", handleSyncOnActive);
+    };
+  }, [selectedVehicleForModal?.numberPlate]);
+
+  // 5. Verify Stripe session on return from Stripe Checkout (Automatic Real-time Update)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
@@ -419,6 +444,12 @@ export default function MyVehicles() {
               setPaymentSuccessDetails({ plate: plate || "", installment: inst || "1" });
               setPaymentSuccessModal(true);
               window.history.replaceState({}, "", window.location.pathname);
+
+              // Instantly refresh vehicles list & active renewal quote without reloading
+              fetchVehicles(false);
+              if (plate) {
+                fetchRenewalData(plate);
+              }
             }
           })
           .catch((err) => console.error("Verify session error:", err));
@@ -466,31 +497,123 @@ export default function MyVehicles() {
     }, 3000);
   };
 
+  // Helper to extract comprehensive cover note details (including past payments and future schedules)
+  const generateCoverNoteContent = (vehicle: Vehicle) => {
+    const userStr = typeof window !== "undefined" ? sessionStorage.getItem("logged_in_user") : null;
+    const user = userStr ? JSON.parse(userStr) : null;
+    const renewal = activeInstallmentInfo?.renewal || renewalInfo?.renewalQuote;
+    const ownerName = renewal?.ownerName || (user ? `${user.firstName} ${user.lastName}` : "Valued Customer");
+    const nic = renewal?.nic || user?.nic || "N/A";
+    const branch = renewal?.branch || user?.branch || "General";
+    const installments: any[] = renewal?.installments || [];
+    const selectedPlan = renewal?.selectedPlan || "Comprehensive Annual Policy";
+    const totalAmount = renewal?.calculation?.totalRenewalAmount || 0;
+    const valuation = renewal?.calculation?.marketValuation || 0;
+    const paidInstallments = installments.filter((i) => i.status === "Paid");
+    const pendingInstallments = installments.filter((i) => i.status === "Pending");
+    const totalPaid = paidInstallments.reduce((sum, i) => sum + (i.amount || 0), 0);
+    const balanceDue = pendingInstallments.reduce((sum, i) => sum + (i.amount || 0), 0);
+    const expiry = renewalInfo?.expiryDate || vehicle.policyExpiryDate || "2027-11-20";
+    const lastPaid = paidInstallments.length > 0 ? paidInstallments[paidInstallments.length - 1] : null;
+
+    return {
+      ownerName,
+      nic,
+      branch,
+      renewal,
+      installments,
+      selectedPlan,
+      totalAmount,
+      valuation,
+      paidInstallments,
+      pendingInstallments,
+      totalPaid,
+      balanceDue,
+      expiry,
+      lastPaid
+    };
+  };
+
+  // Open rich printable Cover Note Certificate modal
+  const handleOpenCoverNote = (vehicle: Vehicle) => {
+    setCoverNoteVehicle(vehicle);
+    setCoverNoteModalOpen(true);
+  };
+
+  // Download official text Cover Note file with complete payment & schedule breakdown
   const handleDownloadCoverNote = (vehicle: Vehicle) => {
-    triggerToast(`Generating insurance certificate for ${formatNumberPlate(vehicle.numberPlate)}...`);
+    triggerToast(`Generating official insurance certificate for ${formatNumberPlate(vehicle.numberPlate)}...`);
+    const data = generateCoverNoteContent(vehicle);
+
     setTimeout(() => {
+      const textLines = [
+        `================================================================================`,
+        `           SANASA GENERAL INSURANCE COMPANY LIMITED`,
+        `           MOTOR INSURANCE POLICY CERTIFICATE / COVER NOTE`,
+        `================================================================================`,
+        `Certificate No : CN-${vehicle.policyNumber}-${new Date().getFullYear()}`,
+        `Issue Date     : ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`,
+        `Branch Office  : ${data.branch} Branch`,
+        ``,
+        `POLICY & INSURED DETAILS`,
+        `--------------------------------------------------------------------------------`,
+        `Policyholder   : ${data.ownerName}`,
+        `NIC Number     : ${data.nic}`,
+        `Policy Number  : ${vehicle.policyNumber}`,
+        `Coverage Type  : Comprehensive Vehicle Insurance Plan`,
+        `Coverage Status: ACTIVE COVERAGE`,
+        `Valid Until    : ${new Date(data.expiry).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`,
+        ``,
+        `VEHICLE SPECIFICATIONS`,
+        `--------------------------------------------------------------------------------`,
+        `Vehicle Plate  : ${formatNumberPlate(vehicle.numberPlate)}`,
+        `Vehicle Type   : ${vehicle.vehicleType}`,
+        `Make & Model   : ${vehicle.company} ${vehicle.model} (${vehicle.year})`,
+        `Engine Number  : ${vehicle.engineNumber}`,
+        `Chassis Number : ${vehicle.chassisNumber}`,
+        ``,
+        `PREMIUM & PAYMENT STRUCTURE`,
+        `--------------------------------------------------------------------------------`,
+        `Selected Plan  : ${data.selectedPlan}`,
+        data.valuation ? `Assessed Value : LKR ${data.valuation.toLocaleString()}` : ``,
+        data.totalAmount ? `Total Premium  : LKR ${data.totalAmount.toLocaleString()}` : ``,
+        `Amount Settled : LKR ${data.totalPaid.toLocaleString()}`,
+        `Balance Due    : LKR ${data.balanceDue.toLocaleString()}`,
+        ``,
+        `LAST PAID PAYMENT RECORD`,
+        `--------------------------------------------------------------------------------`,
+        data.lastPaid ? [
+          `Installment    : ${data.lastPaid.label || `Installment #${data.lastPaid.installmentNumber}`}`,
+          `Amount Paid    : LKR ${data.lastPaid.amount.toLocaleString()}`,
+          `Paid On        : ${new Date(data.lastPaid.paidAt || Date.now()).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`,
+          `Payment Method : Stripe Payment Gateway (Session: ${data.lastPaid.stripeSessionId ? data.lastPaid.stripeSessionId.slice(0, 24) + "..." : "Confirmed"})`,
+          `Status         : VERIFIED & CONFIRMED`
+        ].join("\n") : `No prior online installments recorded.`,
+        ``,
+        `SCHEDULE OF FUTURE PAYMENTS`,
+        `--------------------------------------------------------------------------------`,
+        data.pendingInstallments.length > 0 ? data.pendingInstallments.map((inst: any, idx: number) => {
+          return `[${idx === 0 ? "NEXT DUE" : "SCHEDULED"}] ${inst.label || `Installment #${inst.installmentNumber}`} | Amount: LKR ${inst.amount.toLocaleString()} | Due Date: ${new Date(inst.dueDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}`;
+        }).join("\n") : `All policy payments are fully settled. No outstanding balance.`,
+        ``,
+        `--------------------------------------------------------------------------------`,
+        `This document certifies that the motor vehicle specified above is covered`,
+        `under Sanasa General Insurance terms and conditions. The validity of coverage`,
+        `is subject to the continuous settlement of installments on or before due dates.`,
+        ``,
+        `Authorized Officer: Sanasa General Insurance Co. LTD.`,
+        `================================================================================`
+      ].filter(Boolean).join("\n");
+
       const element = document.createElement("a");
-      const file = new Blob([
-        `SANASA GENERAL INSURANCE COMPANY LIMITED\n`,
-        `POLICY CERTIFICATE / COVER NOTE\n`,
-        `========================================\n`,
-        `Policy Number: ${vehicle.policyNumber}\n`,
-        `Vehicle Number Plate: ${formatNumberPlate(vehicle.numberPlate)}\n`,
-        `Vehicle Type: ${vehicle.vehicleType}\n`,
-        `Make & Model: ${vehicle.company} ${vehicle.model} (${vehicle.year})\n`,
-        `Engine Number: ${vehicle.engineNumber}\n`,
-        `Chassis Number: ${vehicle.chassisNumber}\n`,
-        `Coverage Status: ACTIVE\n`,
-        `Validity Period: 2026-01-01 to 2026-12-31\n`,
-        `Authorized Signature: Sanasa General Insurance Co. LTD.`
-      ], { type: 'text/plain' });
+      const file = new Blob([textLines], { type: "text/plain" });
       element.href = URL.createObjectURL(file);
-      element.download = `Sanasa_Policy_${vehicle.numberPlate}.txt`;
+      element.download = `Sanasa_Cover_Note_${vehicle.numberPlate}.txt`;
       document.body.appendChild(element);
       element.click();
       document.body.removeChild(element);
       triggerToast(`Successfully downloaded Cover Note for ${formatNumberPlate(vehicle.numberPlate)}!`);
-    }, 1200);
+    }, 1000);
   };
 
   // Filter criteria: Search query & Category Tab
@@ -846,7 +969,7 @@ export default function MyVehicles() {
                   File a Claim
                 </Link>
                 <button
-                  onClick={() => handleDownloadCoverNote(selectedVehicleForModal)}
+                  onClick={() => handleOpenCoverNote(selectedVehicleForModal)}
                   className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-semibold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
                 >
                   <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" strokeWidth={2} />
@@ -932,6 +1055,131 @@ export default function MyVehicles() {
                     <span className="text-xs font-bold text-emerald-700 bg-white border border-emerald-200 px-3 py-1.5 rounded-full shadow-2xs">
                       Active
                     </span>
+                  </div>
+                </div>
+              )}
+
+              {/* PAYMENT SCHEDULE & TRANSACTION HISTORY */}
+              {activeInstallmentInfo?.renewal?.installments && activeInstallmentInfo.renewal.installments.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 select-none">
+                    
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-sm tracking-tight flex items-center gap-1.5">
+                          <HugeiconsIcon icon={Money01Icon} className="w-4 h-4 text-blue-600" />
+                          Payment Schedule & History
+                        </h4>
+                        <span className="text-[11px] text-slate-400">
+                          Plan: {activeInstallmentInfo.renewal.selectedPlan || "Installment Plan"}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-semibold">Total Premium</span>
+                        <strong className="text-xs font-bold text-slate-800">
+                          LKR {activeInstallmentInfo.renewal.calculation?.totalRenewalAmount?.toLocaleString()}
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* Progress Summary Cards */}
+                    <div className="grid grid-cols-3 gap-2 bg-white rounded-xl p-3 border border-slate-100 shadow-2xs mb-3 text-center">
+                      <div className="border-r border-slate-100 pr-1">
+                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Total Paid</span>
+                        <strong className="font-bold text-emerald-600 text-xs">
+                          LKR {activeInstallmentInfo.renewal.installments
+                            .filter((i: any) => i.status === "Paid")
+                            .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
+                            .toLocaleString()}
+                        </strong>
+                      </div>
+                      <div className="border-r border-slate-100 pr-1">
+                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Remaining</span>
+                        <strong className="font-bold text-slate-700 text-xs">
+                          LKR {activeInstallmentInfo.renewal.installments
+                            .filter((i: any) => i.status === "Pending")
+                            .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
+                            .toLocaleString()}
+                        </strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-400 text-[10px] uppercase font-semibold block">Progress</span>
+                        <strong className="font-bold text-blue-600 text-xs">
+                          {activeInstallmentInfo.paidCount || 1} of {activeInstallmentInfo.totalCount || activeInstallmentInfo.renewal.installments.length} Paid
+                        </strong>
+                      </div>
+                    </div>
+
+                    {/* List of installments */}
+                    <div className="space-y-2">
+                      {activeInstallmentInfo.renewal.installments.map((inst: any, idx: number) => {
+                        const isPaid = inst.status === "Paid";
+                        const isNext = !isPaid && activeInstallmentInfo.nextInstallment?.installmentNumber === inst.installmentNumber;
+
+                        return (
+                          <div
+                            key={inst._id || idx}
+                            className={`flex items-center justify-between p-3 rounded-xl border text-xs transition-all ${
+                              isPaid
+                                ? "bg-emerald-50/70 border-emerald-200/80"
+                                : isNext
+                                ? "bg-amber-50/70 border-amber-200/90 shadow-2xs"
+                                : "bg-white border-slate-100 opacity-80"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <div
+                                className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                  isPaid
+                                    ? "bg-emerald-600 text-white"
+                                    : isNext
+                                    ? "bg-amber-500 text-white"
+                                    : "bg-slate-200 text-slate-600"
+                                }`}
+                              >
+                                {isPaid ? "✓" : inst.installmentNumber}
+                              </div>
+                              <div>
+                                <h5 className="font-semibold text-slate-800 text-[12.5px] leading-tight">
+                                  {inst.label || `Installment #${inst.installmentNumber}`}
+                                </h5>
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                  {isPaid ? (
+                                    <span className="text-emerald-700 font-medium">
+                                      Paid on {new Date(inst.paidAt || Date.now()).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                                      {inst.stripeSessionId ? " • Stripe Verified" : ""}
+                                    </span>
+                                  ) : (
+                                    <span>
+                                      Due: <strong className="text-slate-700">{new Date(inst.dueDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong>
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="text-right flex items-center gap-2.5">
+                              <span className="font-bold text-slate-800 text-[12.5px]">
+                                LKR {inst.amount.toLocaleString()}
+                              </span>
+                              <span
+                                className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                  isPaid
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : isNext
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-slate-100 text-slate-500"
+                                }`}
+                              >
+                                {isPaid ? "Paid" : isNext ? "Next Due" : "Scheduled"}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
                   </div>
                 </div>
               )}
@@ -1270,13 +1518,252 @@ export default function MyVehicles() {
             <button
               onClick={() => {
                 setPaymentSuccessModal(false);
-                setSelectedVehicleForModal(null);
-                window.location.reload();
+                if (paymentSuccessDetails?.plate) {
+                  const matchingVehicle = vehicles.find(
+                    (v) => v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === paymentSuccessDetails.plate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()
+                  );
+                  if (matchingVehicle) {
+                    setSelectedVehicleForModal(matchingVehicle);
+                  }
+                  fetchRenewalData(paymentSuccessDetails.plate);
+                }
               }}
               className="w-full bg-[#102A43] hover:bg-[#1C3E63] text-white font-bold text-xs py-3 rounded-full transition-all cursor-pointer"
             >
-              Continue to Dashboard
+              View Updated Policy & Schedule
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* OFFICIAL COVER NOTE / CERTIFICATE PREVIEW MODAL */}
+      {coverNoteModalOpen && coverNoteVehicle && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center z-70 p-4 transition-all overflow-y-auto">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+            
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-gradient-to-r from-[#102A43] to-[#1C3E63] text-white flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-[#1fcbf2]">
+                  <HugeiconsIcon icon={SecurityCheckIcon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold leading-tight">Official Insurance Cover Note</h3>
+                  <p className="text-[11px] text-blue-200">
+                    Policy Certificate • {formatNumberPlate(coverNoteVehicle.numberPlate)}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCoverNoteModalOpen(false)}
+                className="text-white/70 hover:text-white text-2xl font-light w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Certificate Body (Printable container) */}
+            <div id="sanasa-cover-note-printable" className="p-6 overflow-y-auto flex-1 space-y-5 bg-white select-none">
+              
+              {/* Certificate Letterhead Banner */}
+              <div className="border-2 border-slate-900/10 rounded-2xl p-5 bg-gradient-to-b from-slate-50 to-white text-center relative overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-700 via-[#1fcbf2] to-emerald-600" />
+                <span className="text-[10px] tracking-widest font-black uppercase text-blue-900/70 block mb-1">
+                  Democratic Socialist Republic of Sri Lanka
+                </span>
+                <h2 className="text-lg font-black text-[#102A43] tracking-tight uppercase">
+                  SANASA GENERAL INSURANCE COMPANY LIMITED
+                </h2>
+                <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Certificate of Motor Vehicle Insurance / Cover Note
+                </p>
+                <div className="flex items-center justify-center gap-4 mt-2 text-[11px] text-slate-500">
+                  <span>Cert No: <strong className="text-slate-800">CN-{coverNoteVehicle.policyNumber}-{new Date().getFullYear()}</strong></span>
+                  <span>•</span>
+                  <span>Branch: <strong className="text-slate-800">{activeInstallmentInfo?.renewal?.branch || "Galle"} Branch</strong></span>
+                </div>
+              </div>
+
+              {/* Vehicle & Policy Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs bg-slate-50/80 p-4 rounded-2xl border border-slate-200/80">
+                <div>
+                  <span className="text-slate-400 text-[10px] uppercase font-semibold block">Policy Number</span>
+                  <strong className="text-slate-800 font-bold">{coverNoteVehicle.policyNumber}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] uppercase font-semibold block">Vehicle Number</span>
+                  <strong className="text-slate-800 font-bold">{formatNumberPlate(coverNoteVehicle.numberPlate)}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] uppercase font-semibold block">Make & Model</span>
+                  <span className="text-slate-800 font-semibold">{coverNoteVehicle.company} {coverNoteVehicle.model} ({coverNoteVehicle.year})</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] uppercase font-semibold block">Engine Number</span>
+                  <span className="text-slate-700 font-mono text-[11px]">{coverNoteVehicle.engineNumber}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] uppercase font-semibold block">Chassis Number</span>
+                  <span className="text-slate-700 font-mono text-[11px]">{coverNoteVehicle.chassisNumber}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 text-[10px] uppercase font-semibold block">Validity Period</span>
+                  <strong className="text-emerald-700 font-semibold">
+                    Until {new Date(renewalInfo?.expiryDate || coverNoteVehicle.policyExpiryDate || "2027-11-20").toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                  </strong>
+                </div>
+              </div>
+
+              {/* Payment Summary */}
+              {(() => {
+                const noteData = generateCoverNoteContent(coverNoteVehicle);
+                return (
+                  <div className="space-y-4">
+                    {/* Premium Breakdown Bar */}
+                    <div className="bg-blue-50/60 border border-blue-100 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div>
+                        <span className="text-slate-500 text-[10px] uppercase font-semibold block">Selected Payment Plan</span>
+                        <strong className="text-slate-900 font-bold">{noteData.selectedPlan}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 text-[10px] uppercase font-semibold block">Total Policy Premium</span>
+                        <strong className="text-slate-900 font-bold">LKR {noteData.totalAmount.toLocaleString()}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 text-[10px] uppercase font-semibold block">Amount Settled</span>
+                        <strong className="text-emerald-700 font-extrabold">LKR {noteData.totalPaid.toLocaleString()}</strong>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 text-[10px] uppercase font-semibold block">Outstanding Balance</span>
+                        <strong className="text-amber-700 font-extrabold">LKR {noteData.balanceDue.toLocaleString()}</strong>
+                      </div>
+                    </div>
+
+                    {/* Last Paid Payment Record */}
+                    {noteData.lastPaid && (
+                      <div className="border border-emerald-200 bg-emerald-50/50 rounded-2xl p-4">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
+                          Last Payment Received & Verified
+                        </span>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                          <div>
+                            <h5 className="font-bold text-slate-900">
+                              {noteData.lastPaid.label || `Installment #${noteData.lastPaid.installmentNumber}`}
+                            </h5>
+                            <p className="text-slate-500 text-[11px] mt-0.5">
+                              Settled on: <strong className="text-slate-800">{new Date(noteData.lastPaid.paidAt || Date.now()).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong> • Stripe Ref: <code className="text-slate-600 font-mono text-[10px]">{noteData.lastPaid.stripeSessionId ? noteData.lastPaid.stripeSessionId.slice(0, 24) + "..." : "Confirmed"}</code>
+                            </p>
+                          </div>
+                          <span className="text-emerald-700 font-black text-sm">
+                            LKR {noteData.lastPaid.amount.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Schedule of Future Payments */}
+                    {noteData.pendingInstallments.length > 0 && (
+                      <div className="border border-slate-200/80 rounded-2xl p-4 bg-slate-50/50">
+                        <h5 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-2.5 flex items-center justify-between">
+                          <span>Scheduled Future Payments</span>
+                          <span className="text-slate-400 font-normal lowercase">({noteData.pendingInstallments.length} remaining)</span>
+                        </h5>
+                        <div className="space-y-1.5">
+                          {noteData.pendingInstallments.map((inst: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-100 text-xs">
+                              <div className="flex items-center gap-2">
+                                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${idx === 0 ? "bg-amber-500 text-white" : "bg-slate-200 text-slate-600"}`}>
+                                  {inst.installmentNumber}
+                                </span>
+                                <div>
+                                  <span className="font-semibold text-slate-800 block leading-tight">{inst.label || `Installment #${inst.installmentNumber}`}</span>
+                                  <span className="text-[10px] text-slate-500">
+                                    Due Date: <strong>{new Date(inst.dueDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong>
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <span className="font-bold text-slate-800 text-xs block">LKR {inst.amount.toLocaleString()}</span>
+                                <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${idx === 0 ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-500"}`}>
+                                  {idx === 0 ? "Upcoming Due" : "Scheduled"}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Authorized Sanasa Seal & Terms */}
+              <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-[10px] text-slate-400">
+                <p className="max-w-xs leading-relaxed">
+                  This electronic Cover Note confirms active motor insurance coverage under Sanasa General Insurance Company Limited. Validity is contingent on prompt settlement of scheduled installments.
+                </p>
+                <div className="text-right sm:text-right flex flex-col items-end">
+                  <div className="w-24 h-8 border-b border-slate-300 mb-1 flex items-center justify-center text-slate-400 font-serif italic text-xs">
+                    Sanasa Auth
+                  </div>
+                  <strong className="text-slate-700 font-bold text-[11px]">Sanasa General Insurance Co. LTD</strong>
+                  <span className="text-[10px] text-slate-400">Underwriting Department</span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Actions */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 flex-shrink-0">
+              <button
+                onClick={() => setCoverNoteModalOpen(false)}
+                className="px-5 py-2.5 rounded-full border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+              >
+                Close
+              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleDownloadCoverNote(coverNoteVehicle)}
+                  className="px-4 py-2.5 rounded-full border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5"
+                >
+                  <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-600" />
+                  Download Note (.txt)
+                </button>
+                <button
+                  onClick={() => {
+                    const printableArea = document.getElementById("sanasa-cover-note-printable");
+                    if (!printableArea) return;
+                    const printWindow = window.open("", "_blank");
+                    if (!printWindow) return;
+                    printWindow.document.write(`
+                      <html>
+                        <head>
+                          <title>Sanasa_Cover_Note_${coverNoteVehicle.numberPlate}</title>
+                          <style>
+                            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; color: #1e293b; }
+                            h2 { margin: 0; color: #102a43; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                            th, td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 12px; text-align: left; }
+                            th { background: #f1f5f9; font-weight: bold; }
+                            .badge { font-weight: bold; color: #047857; }
+                          </style>
+                        </head>
+                        <body>
+                          ${printableArea.innerHTML}
+                          <script>window.onload = function() { window.print(); }<\/script>
+                        </body>
+                      </html>
+                    `);
+                    printWindow.document.close();
+                  }}
+                  className="bg-[#102A43] hover:bg-[#1C3E63] text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm hover:shadow transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <HugeiconsIcon icon={SecurityCheckIcon} className="w-4 h-4 text-emerald-400" />
+                  Print / Save PDF
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
       )}
