@@ -880,8 +880,8 @@ export default function MyVehicles() {
                 </button>
               </div>
 
-              {/* STEP 1: Unhidden Renew License Coverage Button (1 month early or if quote ready) */}
-              {(renewalInfo?.isWithin30Days || renewalInfo?.hasCalculatedQuote) && !activeInstallmentInfo?.isFullyPaid && (
+              {/* STEP 1: Unhidden Renew License Coverage Button - ONLY unhides after branch staff has calculated and submitted renewal quote */}
+              {renewalInfo?.hasCalculatedQuote && !!renewalInfo?.renewalQuote && !activeInstallmentInfo?.isFullyPaid && (
                 <div className="mt-4 pt-4 border-t border-slate-100">
                   <button
                     onClick={() => {

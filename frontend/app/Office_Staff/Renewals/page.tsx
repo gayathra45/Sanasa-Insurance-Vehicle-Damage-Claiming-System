@@ -6,7 +6,7 @@ import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import SimpleLoader from "@/app/Components/SimpleLoader";
-import { getVehicleIconContainer } from "@/app/Components/VehicleIcon";
+import { getVehicleIconContainer, getVehicleIconSvg } from "@/app/Components/VehicleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
@@ -379,98 +379,143 @@ export default function OfficeStaffRenewalsPage() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {filteredVehicles.map((item, idx) => {
-                  const hasQuote = !!item.renewalQuote;
-                  const isPaid = item.renewalQuote?.status === "Fully_Paid";
-                  const isPartial = item.renewalQuote?.status === "Partially_Paid";
+              <div className="bg-white border border-slate-200 rounded-[24px] shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-slate-200 select-none text-left">
+                    <thead className="bg-slate-50/80">
+                      <tr>
+                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                          Vehicle & Model
+                        </th>
+                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                          Number Plate
+                        </th>
+                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                          Policy Number
+                        </th>
+                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                          Policy Holder (Owner)
+                        </th>
+                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                          Expiration Date
+                        </th>
+                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+                          Renewal Fee
+                        </th>
+                        <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider text-right">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-xs">
+                      {filteredVehicles.map((item, idx) => {
+                        const hasQuote = !!item.renewalQuote;
+                        const isPaid = item.renewalQuote?.status === "Fully_Paid";
+                        const isPartial = item.renewalQuote?.status === "Partially_Paid";
 
-                  return (
-                    <div
-                      key={`${item.vehicle.numberPlate}-${idx}`}
-                      className="bg-white rounded-2xl border border-slate-200/80 shadow-xs hover:shadow-md transition-all p-5 flex flex-col justify-between"
-                    >
-                      <div>
-                        {/* Card Header */}
-                        <div className="flex items-start justify-between gap-3 mb-4">
-                          <div className="flex items-center gap-3">
-                            {getVehicleIconContainer(item.vehicle.vehicleType)}
-                            <div>
-                              <h4 className="font-bold text-slate-900 text-base leading-tight">
-                                {item.vehicle.company} {item.vehicle.model}
-                              </h4>
-                              <p className="text-xs text-slate-400 mt-0.5">Year: {item.vehicle.year}</p>
-                            </div>
-                          </div>
+                        return (
+                          <tr
+                            key={`${item.vehicle.numberPlate}-${idx}`}
+                            onClick={() => handleOpenDetails(item)}
+                            className="hover:bg-slate-50/60 transition-colors cursor-pointer group"
+                          >
+                            {/* Col 1: Vehicle & Model */}
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100/80 flex items-center justify-center text-blue-600 shrink-0">
+                                  {getVehicleIconSvg(item.vehicle.vehicleType, "w-4 h-4 text-blue-600")}
+                                </div>
+                                <div>
+                                  <h4 className="font-bold text-slate-800 text-sm leading-tight">
+                                    {item.vehicle.company} {item.vehicle.model}
+                                  </h4>
+                                  <span className="text-[11px] text-slate-400">
+                                    Year: {item.vehicle.year} | {item.vehicle.vehicleType}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
 
-                          {/* Status Badge */}
-                          {isPaid ? (
-                            <span className="text-[11px] font-bold px-2.5 py-1 bg-emerald-50 text-emerald-700 rounded-full border border-emerald-200">
-                              Renewed
-                            </span>
-                          ) : isPartial ? (
-                            <span className="text-[11px] font-bold px-2.5 py-1 bg-amber-50 text-amber-700 rounded-full border border-amber-200">
-                              Partially Paid
-                            </span>
-                          ) : hasQuote ? (
-                            <span className="text-[11px] font-bold px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full border border-blue-200">
-                              Quote Ready
-                            </span>
-                          ) : item.vehicle.daysRemaining <= 45 ? (
-                            <span className="text-[11px] font-bold px-2.5 py-1 bg-rose-50 text-rose-700 rounded-full border border-rose-200 animate-pulse">
-                              Expiring in {item.vehicle.daysRemaining}d
-                            </span>
-                          ) : (
-                            <span className="text-[11px] font-bold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full">
-                              Active
-                            </span>
-                          )}
-                        </div>
+                            {/* Col 2: Number Plate */}
+                            <td className="px-5 py-4 font-bold text-slate-800 tracking-wide text-xs">
+                              {item.vehicle.numberPlate}
+                            </td>
 
-                        {/* Card Details Grid */}
-                        <div className="bg-slate-50/70 rounded-xl p-3 text-xs space-y-2 border border-slate-100 mb-4">
-                          <div className="flex justify-between">
-                            <span className="text-slate-400 font-medium">Number Plate</span>
-                            <span className="font-bold text-slate-800">{item.vehicle.numberPlate}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-400 font-medium">Policy Number</span>
-                            <span className="font-semibold text-slate-700">{item.vehicle.policyNumber || "N/A"}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-400 font-medium">Owner</span>
-                            <span className="font-semibold text-slate-800">{item.owner.name}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-slate-400 font-medium">Expiry Date</span>
-                            <span className="font-bold text-slate-800">
-                              {formatDate(item.vehicle.calculatedExpiryDate)}
-                            </span>
-                          </div>
-                        </div>
+                            {/* Col 3: Policy Number */}
+                            <td className="px-5 py-4 font-semibold text-slate-700 text-xs">
+                              {item.vehicle.policyNumber || "N/A"}
+                            </td>
 
-                        {/* Calculated Fee Indicator */}
-                        {hasQuote && (
-                          <div className="bg-emerald-50/80 border border-emerald-200/60 rounded-xl p-2.5 mb-4 text-xs flex justify-between items-center text-emerald-800">
-                            <span>Calculated Renewal Fee:</span>
-                            <strong className="text-sm font-black">
-                              LKR {item.renewalQuote?.calculation?.totalRenewalAmount?.toLocaleString()}
-                            </strong>
-                          </div>
-                        )}
-                      </div>
+                            {/* Col 4: Owner & NIC */}
+                            <td className="px-5 py-4">
+                              <div className="font-semibold text-slate-800">{item.owner.name}</div>
+                              <div className="text-[10px] text-slate-400">
+                                NIC: {item.owner.nic} | {item.owner.mobile}
+                              </div>
+                            </td>
 
-                      {/* View Details Action Button */}
-                      <button
-                        onClick={() => handleOpenDetails(item)}
-                        className="w-full bg-[#102A43] hover:bg-[#1C3E63] text-white text-xs font-semibold py-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
-                      >
-                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4" />
-                        View Details & Calculate
-                      </button>
-                    </div>
-                  );
-                })}
+                            {/* Col 5: Expiration Date */}
+                            <td className="px-5 py-4">
+                              <div className="font-bold text-slate-800">
+                                {formatDate(item.vehicle.calculatedExpiryDate)}
+                              </div>
+                              <span
+                                className={`text-[9px] font-bold px-2 py-0.5 rounded-full inline-block mt-0.5 ${
+                                  isPaid
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                    : isPartial
+                                    ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                    : hasQuote
+                                    ? "bg-blue-50 text-blue-700 border border-blue-200"
+                                    : item.vehicle.daysRemaining <= 45
+                                    ? "bg-rose-50 text-rose-700 border border-rose-200"
+                                    : "bg-slate-100 text-slate-600"
+                                }`}
+                              >
+                                {isPaid
+                                  ? "Renewed"
+                                  : isPartial
+                                  ? "Partially Paid"
+                                  : hasQuote
+                                  ? "Quote Ready"
+                                  : `Expiring in ${item.vehicle.daysRemaining}d`}
+                              </span>
+                            </td>
+
+                            {/* Col 6: Renewal Fee */}
+                            <td className="px-5 py-4">
+                              {hasQuote ? (
+                                <div>
+                                  <span className="font-black text-xs text-emerald-600 block">
+                                    LKR {item.renewalQuote?.calculation?.totalRenewalAmount?.toLocaleString()}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400">Calculated</span>
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-slate-400 italic">Not Calculated</span>
+                              )}
+                            </td>
+
+                            {/* Col 7: Actions */}
+                            <td className="px-5 py-4 text-right">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenDetails(item);
+                                }}
+                                className="bg-[#102A43] hover:bg-[#1C3E63] text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5 active:scale-95"
+                              >
+                                <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
+                                <span>View & Calculate</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </div>
@@ -484,7 +529,9 @@ export default function OfficeStaffRenewalsPage() {
             {/* Modal Header */}
             <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between flex-shrink-0 bg-slate-50/50">
               <div className="flex items-center gap-3">
-                {getVehicleIconContainer(selectedItem.vehicle.vehicleType)}
+                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shrink-0">
+                  {getVehicleIconSvg(selectedItem.vehicle.vehicleType, "w-5 h-5 text-blue-600")}
+                </div>
                 <div>
                   <h3 className="text-lg font-bold text-[#102A43]">
                     {selectedItem.vehicle.company} {selectedItem.vehicle.model}
