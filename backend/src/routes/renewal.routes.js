@@ -291,9 +291,10 @@ router.get("/vehicle-quote/:numberPlate", async (req, res) => {
       }
     }
 
-    // Eligible for renewal if within 30 days of expiry OR if staff has calculated a quote
+    // Eligible for renewal if within 30 days of expiry AND branch staff has calculated a pending quote
     const isWithin30Days = daysRemaining !== null && daysRemaining <= 30;
-    const hasCalculatedQuote = !!renewal && renewal.status !== "Cancelled";
+    const hasCalculatedQuote = !!renewal && renewal.status === "Calculated";
+    const isRenewed = !!renewal && (renewal.status === "Partially_Paid" || renewal.status === "Fully_Paid");
 
     res.json({
       success: true,
@@ -301,6 +302,7 @@ router.get("/vehicle-quote/:numberPlate", async (req, res) => {
       isWithin30Days,
       daysRemaining,
       expiryDate,
+      isRenewed,
       renewalQuote: renewal || null
     });
   } catch (error) {
@@ -512,12 +514,15 @@ router.get("/active-installment/:numberPlate", async (req, res) => {
 
     const pendingInstallments = renewal.installments.filter((i) => i.status === "Pending");
     const nextInstallment = pendingInstallments.length > 0 ? pendingInstallments[0] : null;
+    const paidInstallments = renewal.installments.filter((i) => i.status === "Paid");
 
     res.json({
       success: true,
-      hasActivePlan: renewal.status === "Partially_Paid" || renewal.status === "Calculated",
+      hasActivePlan: renewal.status === "Partially_Paid" && !!nextInstallment,
       renewal,
       nextInstallment,
+      paidCount: paidInstallments.length,
+      totalCount: renewal.installments.length,
       isFullyPaid: renewal.status === "Fully_Paid"
     });
   } catch (error) {

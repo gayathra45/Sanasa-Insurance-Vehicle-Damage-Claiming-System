@@ -16,6 +16,8 @@ interface Vehicle {
   engineNumber: string;
   chassisNumber: string;
   policyNumber: string;
+  policyExpiryDate?: string;
+  renewalCycle?: string;
 }
 
 function formatNumberPlate(plate: string): string {
@@ -162,12 +164,15 @@ export default function MyVehicles() {
     isWithin30Days: boolean;
     daysRemaining: number | null;
     expiryDate: string | null;
+    isRenewed?: boolean;
     renewalQuote: any | null;
   } | null>(null);
   const [activeInstallmentInfo, setActiveInstallmentInfo] = useState<{
     hasActivePlan: boolean;
     nextInstallment: any | null;
     isFullyPaid: boolean;
+    paidCount?: number;
+    totalCount?: number;
     renewal: any | null;
   } | null>(null);
   const [loadingRenewal, setLoadingRenewal] = useState(false);
@@ -792,37 +797,6 @@ export default function MyVehicles() {
                 </div>
               </div>
 
-              {/* STEP 5: Installment Reminder Card (if policyholder selected installments and has next due payment) */}
-              {activeInstallmentInfo?.hasActivePlan && activeInstallmentInfo?.nextInstallment && (
-                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-4 mb-6 shadow-xs select-none">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 flex-shrink-0 mt-0.5">
-                        <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full inline-block mb-1">
-                          Upcoming Installment Due
-                        </span>
-                        <h4 className="font-bold text-slate-900 text-sm leading-tight">
-                          {activeInstallmentInfo.nextInstallment.label || `Installment #${activeInstallmentInfo.nextInstallment.installmentNumber}`}
-                        </h4>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Due: <strong className="text-slate-800">{new Date(activeInstallmentInfo.nextInstallment.dueDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong> | Amount: <strong className="text-amber-700 font-extrabold">LKR {activeInstallmentInfo.nextInstallment.amount.toLocaleString()}</strong>
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleInitiateStripePayment(activeInstallmentInfo.renewal._id, activeInstallmentInfo.nextInstallment.installmentNumber)}
-                      disabled={isRedirectingToStripe}
-                      className="bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap self-end sm:self-center"
-                    >
-                      <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
-                      {isRedirectingToStripe ? "Connecting..." : "Pay Installment"}
-                    </button>
-                  </div>
-                </div>
-              )}
 
               {/* 2-Column Specs Layout */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-normal text-slate-700 mb-8 px-2">
@@ -880,8 +854,10 @@ export default function MyVehicles() {
                 </button>
               </div>
 
-              {/* STEP 1: Unhidden Renew License Coverage Button - ONLY unhides after branch staff has calculated and submitted renewal quote */}
-              {renewalInfo?.hasCalculatedQuote && !!renewalInfo?.renewalQuote && !activeInstallmentInfo?.isFullyPaid && (
+              {/* STEP 1: Unhidden Renew License Coverage Button - ONLY shows when quote is calculated and awaiting initial payment */}
+              {renewalInfo?.hasCalculatedQuote &&
+                renewalInfo?.renewalQuote?.status === "Calculated" &&
+                (renewalInfo?.isWithin30Days || (renewalInfo?.daysRemaining !== null && renewalInfo?.daysRemaining <= 30)) && (
                 <div className="mt-4 pt-4 border-t border-slate-100">
                   <button
                     onClick={() => {
@@ -893,6 +869,70 @@ export default function MyVehicles() {
                     <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 text-white" strokeWidth={2} />
                     Renew License Coverage
                   </button>
+                </div>
+              )}
+
+              {/* Installment Reminder Card (if on active installment plan) */}
+              {activeInstallmentInfo?.hasActivePlan && activeInstallmentInfo?.nextInstallment && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-4.5 shadow-xs select-none">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 flex-shrink-0 mt-0.5">
+                          <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full inline-block">
+                              Active Installment Plan
+                            </span>
+                            <span className="text-[11px] font-semibold text-slate-500">
+                              ({activeInstallmentInfo.paidCount || 1} of {activeInstallmentInfo.totalCount || 4} Completed)
+                            </span>
+                          </div>
+                          <h4 className="font-bold text-slate-900 text-sm leading-tight">
+                            {activeInstallmentInfo.nextInstallment.label || `Installment #${activeInstallmentInfo.nextInstallment.installmentNumber}`}
+                          </h4>
+                          <p className="text-xs text-slate-500 mt-0.5">
+                            Due: <strong className="text-slate-800">{new Date(activeInstallmentInfo.nextInstallment.dueDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong> | Amount: <strong className="text-amber-700 font-extrabold">LKR {activeInstallmentInfo.nextInstallment.amount.toLocaleString()}</strong>
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleInitiateStripePayment(activeInstallmentInfo.renewal._id, activeInstallmentInfo.nextInstallment.installmentNumber)}
+                        disabled={isRedirectingToStripe}
+                        className="bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 text-white font-bold text-xs px-5 py-3 rounded-full shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap self-end sm:self-center"
+                      >
+                        <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                        {isRedirectingToStripe ? "Connecting..." : `Pay Installment #${activeInstallmentInfo.nextInstallment.installmentNumber}`}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Fully Paid Renewal Status Badge */}
+              {(renewalInfo?.renewalQuote?.status === "Fully_Paid" || activeInstallmentInfo?.isFullyPaid) && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <div className="bg-emerald-50 border border-emerald-200/80 rounded-2xl p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full inline-block mb-0.5">
+                          Policy Renewed
+                        </span>
+                        <h4 className="font-bold text-slate-900 text-sm">Coverage Up to Date</h4>
+                        <p className="text-xs text-slate-500">
+                          Coverage active until {new Date(renewalInfo?.expiryDate || selectedVehicleForModal.policyExpiryDate || Date.now()).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-bold text-emerald-700 bg-white border border-emerald-200 px-3 py-1.5 rounded-full shadow-2xs">
+                      Active
+                    </span>
+                  </div>
                 </div>
               )}
 
