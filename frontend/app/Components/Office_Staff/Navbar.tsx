@@ -17,7 +17,8 @@ import {
   ArrowRight01Icon,
   Notification01Icon,
   Building01Icon,
-  Cancel01Icon
+  Cancel01Icon,
+  RefreshIcon
 } from "@hugeicons/core-free-icons";
 import { API_URL } from "@/app/config";
 
@@ -77,6 +78,7 @@ export default function OfficeStaffNavbar() {
     { name: "Claims", href: "/Office_Staff/Claims" },
     { name: "Registrations", href: "/Office_Staff/Registrations" },
     { name: "Policy Holders", href: "/Office_Staff/PolicyHolders" },
+    { name: "Policy Renewals", href: "/Office_Staff/Renewals" },
     { name: "Agents", href: "/Office_Staff/Agents" },
     { name: "Reports", href: "/Office_Staff/Reports" },
     { name: "Notifications", href: "/Office_Staff/Notifications" },
@@ -97,6 +99,9 @@ export default function OfficeStaffNavbar() {
         return <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "policy holders":
         return <HugeiconsIcon icon={Folder01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "policy renewals":
+      case "renewals":
+        return <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "agents":
         return <HugeiconsIcon icon={Briefcase01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "staff":
@@ -135,7 +140,7 @@ export default function OfficeStaffNavbar() {
           {menuItems.map((item) => {
             // Check if active (matches exact path or prefix path)
             const isActive = pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href));
-            const hasChevron = ["policy holders", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+            const hasChevron = ["policy holders", "policy renewals", "renewals", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
 
             return (
               <Link

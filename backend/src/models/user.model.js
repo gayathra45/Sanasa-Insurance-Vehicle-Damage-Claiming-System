@@ -22,7 +22,9 @@ const userSchema = new mongoose.Schema({
       engineNumber: { type: String, required: true },
       chassisNumber: { type: String, required: true },
       policyNumber: { type: String, required: true },
-      status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" }
+      status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" },
+      renewalCycle: { type: String, default: "Annual (Jan 01 - Dec 31)" },
+      policyExpiryDate: { type: Date }
     }
   ],
   documents: {

@@ -33,7 +33,7 @@ function formatNumberPlate(plate: string): string {
 
 import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Car01Icon, SecurityCheckIcon, Search01Icon, Alert02Icon, ViewIcon, Add01Icon, AlertCircleIcon, Download01Icon, BubbleChatIcon, Clock01Icon, Loading03Icon, RefreshIcon } from "@hugeicons/core-free-icons";
+import { Car01Icon, SecurityCheckIcon, Search01Icon, Alert02Icon, ViewIcon, Add01Icon, AlertCircleIcon, Download01Icon, BubbleChatIcon, Clock01Icon, Loading03Icon, RefreshIcon, CreditCardIcon, CheckmarkCircle01Icon, Tick01Icon, Money01Icon } from "@hugeicons/core-free-icons";
 
 const translations = {
   en: {
@@ -155,6 +155,28 @@ export default function MyVehicles() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Renewal & Stripe Payment States
+  const [renewalInfo, setRenewalInfo] = useState<{
+    hasCalculatedQuote: boolean;
+    isWithin30Days: boolean;
+    daysRemaining: number | null;
+    expiryDate: string | null;
+    renewalQuote: any | null;
+  } | null>(null);
+  const [activeInstallmentInfo, setActiveInstallmentInfo] = useState<{
+    hasActivePlan: boolean;
+    nextInstallment: any | null;
+    isFullyPaid: boolean;
+    renewal: any | null;
+  } | null>(null);
+  const [loadingRenewal, setLoadingRenewal] = useState(false);
+  const [renewalWizardOpen, setRenewalWizardOpen] = useState(false);
+  const [renewalStep, setRenewalStep] = useState<1 | 2 | 3>(1);
+  const [selectedPlanType, setSelectedPlanType] = useState<"One-Time" | "2-Installments" | "4-Installments">("One-Time");
+  const [isRedirectingToStripe, setIsRedirectingToStripe] = useState(false);
+  const [paymentSuccessModal, setPaymentSuccessModal] = useState(false);
+  const [paymentSuccessDetails, setPaymentSuccessDetails] = useState<{ plate: string; installment: string } | null>(null);
 
   const getAddCardTitle = () => {
     switch (activeCategory) {
@@ -337,7 +359,100 @@ export default function MyVehicles() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [selectedVehicleForModal, isAddVehicleOpen, showSuccessModal]);
+  }, [selectedVehicleForModal, isAddVehicleOpen, showSuccessModal, renewalWizardOpen, paymentSuccessModal]);
+
+  // 4. Fetch Renewal Quote & Active Installments when modal opens for a vehicle
+  useEffect(() => {
+    if (selectedVehicleForModal?.numberPlate) {
+      const fetchRenewalData = async () => {
+        setLoadingRenewal(true);
+        try {
+          const plate = encodeURIComponent(selectedVehicleForModal.numberPlate);
+          const [quoteRes, instRes] = await Promise.all([
+            fetch(`${API_URL}/renewals/vehicle-quote/${plate}`, { cache: "no-store" }),
+            fetch(`${API_URL}/renewals/active-installment/${plate}`, { cache: "no-store" })
+          ]);
+          if (quoteRes.ok) {
+            const qData = await quoteRes.json();
+            setRenewalInfo(qData);
+          }
+          if (instRes.ok) {
+            const iData = await instRes.json();
+            setActiveInstallmentInfo(iData);
+          }
+        } catch (e) {
+          console.error("Error fetching renewal details:", e);
+        } finally {
+          setLoadingRenewal(false);
+        }
+      };
+      fetchRenewalData();
+    } else {
+      setRenewalInfo(null);
+      setActiveInstallmentInfo(null);
+    }
+  }, [selectedVehicleForModal]);
+
+  // 5. Verify Stripe session when redirected back from Stripe Checkout
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const isSuccess = urlParams.get("payment_success");
+      const sessionId = urlParams.get("session_id");
+      const plate = urlParams.get("plate");
+      const inst = urlParams.get("inst");
+
+      if (isSuccess === "true" && sessionId) {
+        fetch(`${API_URL}/renewals/verify-session`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId })
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              setPaymentSuccessDetails({ plate: plate || "", installment: inst || "1" });
+              setPaymentSuccessModal(true);
+              window.history.replaceState({}, "", window.location.pathname);
+            }
+          })
+          .catch((err) => console.error("Verify session error:", err));
+      }
+    }
+  }, []);
+
+  // Handler to start Stripe Checkout
+  const handleInitiateStripePayment = async (renewalId: string, installmentNumber: number = 1) => {
+    try {
+      setIsRedirectingToStripe(true);
+
+      // Save plan choice if using the wizard
+      if (renewalWizardOpen && selectedPlanType) {
+        await fetch(`${API_URL}/renewals/select-plan`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ renewalId, planType: selectedPlanType })
+        });
+      }
+
+      const res = await fetch(`${API_URL}/renewals/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ renewalId, installmentNumber })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create Stripe payment session.");
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    } catch (err: any) {
+      console.error("Stripe Checkout Error:", err);
+      alert(err.message || "Failed to connect to Stripe payment gateway.");
+      setIsRedirectingToStripe(false);
+    }
+  };
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -677,6 +792,38 @@ export default function MyVehicles() {
                 </div>
               </div>
 
+              {/* STEP 5: Installment Reminder Card (if policyholder selected installments and has next due payment) */}
+              {activeInstallmentInfo?.hasActivePlan && activeInstallmentInfo?.nextInstallment && (
+                <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/90 rounded-2xl p-4 mb-6 shadow-xs select-none">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 flex-shrink-0 mt-0.5">
+                        <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 bg-amber-100/90 px-2 py-0.5 rounded-full inline-block mb-1">
+                          Upcoming Installment Due
+                        </span>
+                        <h4 className="font-bold text-slate-900 text-sm leading-tight">
+                          {activeInstallmentInfo.nextInstallment.label || `Installment #${activeInstallmentInfo.nextInstallment.installmentNumber}`}
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Due: <strong className="text-slate-800">{new Date(activeInstallmentInfo.nextInstallment.dueDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong> | Amount: <strong className="text-amber-700 font-extrabold">LKR {activeInstallmentInfo.nextInstallment.amount.toLocaleString()}</strong>
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => handleInitiateStripePayment(activeInstallmentInfo.renewal._id, activeInstallmentInfo.nextInstallment.installmentNumber)}
+                      disabled={isRedirectingToStripe}
+                      className="bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 text-white font-bold text-xs px-5 py-2.5 rounded-full shadow-sm hover:shadow transition-all flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap self-end sm:self-center"
+                    >
+                      <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                      {isRedirectingToStripe ? "Connecting..." : "Pay Installment"}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* 2-Column Specs Layout */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-normal text-slate-700 mb-8 px-2">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
@@ -704,7 +851,9 @@ export default function MyVehicles() {
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
                   <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Renewal Cycle</span>
-                  <span className="font-semibold text-slate-800">Annual (Jan 01 - Dec 31)</span>
+                  <span className="font-semibold text-slate-800">
+                    {renewalInfo?.expiryDate ? `Expires on ${new Date(renewalInfo.expiryDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}` : "Annual (Jan 01 - Dec 31)"}
+                  </span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2 sm:col-span-2">
                   <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Insurance Plan Type</span>
@@ -731,6 +880,22 @@ export default function MyVehicles() {
                 </button>
               </div>
 
+              {/* STEP 1: Unhidden Renew License Coverage Button (1 month early or if quote ready) */}
+              {(renewalInfo?.isWithin30Days || renewalInfo?.hasCalculatedQuote) && !activeInstallmentInfo?.isFullyPaid && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <button
+                    onClick={() => {
+                      setRenewalStep(1);
+                      setRenewalWizardOpen(true);
+                    }}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0"
+                  >
+                    <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 text-white" strokeWidth={2} />
+                    Renew License Coverage
+                  </button>
+                </div>
+              )}
+
             </div>
 
             {/* Modal Footer */}
@@ -746,6 +911,336 @@ export default function MyVehicles() {
           </div>
         </div>
       )}
+
+      {/* RENEWAL CHECKOUT WIZARD MODAL (Steps 1, 2, 3) */}
+      {renewalWizardOpen && selectedVehicleForModal && renewalInfo?.renewalQuote && (
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center z-60 p-4 transition-all">
+          <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+            
+            {/* Wizard Header */}
+            <div className="px-6 py-4.5 bg-gradient-to-r from-[#102A43] to-[#204060] text-white flex items-center justify-between flex-shrink-0">
+              <div>
+                <h3 className="text-lg font-bold">Policy Coverage Renewal</h3>
+                <p className="text-xs text-blue-200">
+                  {selectedVehicleForModal.company} {selectedVehicleForModal.model} ({formatNumberPlate(selectedVehicleForModal.numberPlate)})
+                </p>
+              </div>
+              <button
+                onClick={() => setRenewalWizardOpen(false)}
+                className="text-white/70 hover:text-white text-2xl font-light w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10"
+              >
+                &times;
+              </button>
+            </div>
+
+            {/* Wizard Steps Progress Bar */}
+            <div className="bg-slate-50 px-6 py-3 border-b border-slate-200/80 flex items-center justify-between text-xs font-semibold">
+              <div className={`flex items-center gap-1.5 ${renewalStep >= 1 ? "text-blue-600 font-bold" : "text-slate-400"}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${renewalStep >= 1 ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-600"}`}>1</span>
+                <span>Quote Details</span>
+              </div>
+              <div className="h-0.5 flex-1 mx-3 bg-slate-200">
+                <div className={`h-full bg-blue-600 transition-all ${renewalStep === 1 ? "w-0" : renewalStep === 2 ? "w-1/2" : "w-full"}`} />
+              </div>
+              <div className={`flex items-center gap-1.5 ${renewalStep >= 2 ? "text-blue-600 font-bold" : "text-slate-400"}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${renewalStep >= 2 ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-600"}`}>2</span>
+                <span>Payment Mode</span>
+              </div>
+              <div className="h-0.5 flex-1 mx-3 bg-slate-200">
+                <div className={`h-full bg-blue-600 transition-all ${renewalStep === 3 ? "w-full" : "w-0"}`} />
+              </div>
+              <div className={`flex items-center gap-1.5 ${renewalStep >= 3 ? "text-blue-600 font-bold" : "text-slate-400"}`}>
+                <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${renewalStep === 3 ? "bg-blue-600 text-white" : "bg-slate-200 text-slate-600"}`}>3</span>
+                <span>Checkout</span>
+              </div>
+            </div>
+
+            {/* Step Body */}
+            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+
+              {/* STEP 1: Office Staff Calculated Renewal Breakdown */}
+              {renewalStep === 1 && (
+                <div className="space-y-4">
+                  <div className="bg-blue-50/70 border border-blue-200/60 rounded-2xl p-4">
+                    <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider block mb-1">
+                      Staff Assessment Completed
+                    </span>
+                    <h4 className="text-sm font-bold text-slate-900">
+                      Calculated by {renewalInfo.renewalQuote.calculatedBy?.staffName || "Branch Staff"} ({renewalInfo.renewalQuote.branch} Branch)
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      New Policy Period: <strong>1 Year Extension</strong>
+                    </p>
+                  </div>
+
+                  {/* Itemized Calculation Sheet */}
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-2.5 text-xs">
+                    <div className="flex justify-between text-slate-600">
+                      <span>Vehicle Valuation:</span>
+                      <span className="font-semibold text-slate-800">
+                        LKR {renewalInfo.renewalQuote.calculation?.marketValuation?.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Basic Premium ({renewalInfo.renewalQuote.calculation?.basicPremiumRate}%):</span>
+                      <span className="font-semibold text-slate-800">
+                        LKR {renewalInfo.renewalQuote.calculation?.basicPremium?.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-emerald-600">
+                      <span>No-Claim Bonus Discount ({renewalInfo.renewalQuote.calculation?.noClaimBonusDiscount}%):</span>
+                      <span className="font-semibold">
+                        - LKR {renewalInfo.renewalQuote.calculation?.discountAmount?.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-600">
+                      <span>Administrative Fee & Taxes:</span>
+                      <span className="font-semibold text-slate-800">
+                        + LKR {(renewalInfo.renewalQuote.calculation?.adminFee + (renewalInfo.renewalQuote.calculation?.govtTaxes || 0)).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm font-black text-[#102A43]">
+                      <span>Total Renewal License Fee:</span>
+                      <span className="text-lg text-emerald-600">
+                        LKR {renewalInfo.renewalQuote.calculation?.totalRenewalAmount?.toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: Select Payment Type (One-Time vs Installment) */}
+              {renewalStep === 2 && (
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-slate-900">Choose Your Payment Preference:</h4>
+
+                  {/* Option A: One-Time Full Payment */}
+                  <label
+                    onClick={() => setSelectedPlanType("One-Time")}
+                    className={`block p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                      selectedPlanType === "One-Time"
+                        ? "border-blue-600 bg-blue-50/50 shadow-xs"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="planType"
+                          checked={selectedPlanType === "One-Time"}
+                          onChange={() => setSelectedPlanType("One-Time")}
+                          className="w-4 h-4 text-blue-600"
+                        />
+                        <div>
+                          <span className="font-bold text-sm text-slate-900 block">One-Time Full Payment</span>
+                          <span className="text-xs text-slate-500">Pay the entire annual premium today</span>
+                        </div>
+                      </div>
+                      <strong className="text-sm font-extrabold text-blue-700">
+                        LKR {renewalInfo.renewalQuote.calculation?.totalRenewalAmount?.toLocaleString()}
+                      </strong>
+                    </div>
+                  </label>
+
+                  {/* Option B: 2-Part Installment */}
+                  <label
+                    onClick={() => setSelectedPlanType("2-Installments")}
+                    className={`block p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                      selectedPlanType === "2-Installments"
+                        ? "border-blue-600 bg-blue-50/50 shadow-xs"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="planType"
+                          checked={selectedPlanType === "2-Installments"}
+                          onChange={() => setSelectedPlanType("2-Installments")}
+                          className="w-4 h-4 text-blue-600"
+                        />
+                        <div>
+                          <span className="font-bold text-sm text-slate-900 block">2 Semi-Annual Installments</span>
+                          <span className="text-xs text-slate-500">50% upfront today + 50% in 6 months</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <strong className="text-sm font-extrabold text-blue-700 block">
+                          LKR {Math.round(renewalInfo.renewalQuote.calculation?.totalRenewalAmount / 2).toLocaleString()}
+                        </strong>
+                        <span className="text-[10px] text-slate-400">per installment (x2)</span>
+                      </div>
+                    </div>
+                  </label>
+
+                  {/* Option C: 4-Part Quarterly Installment */}
+                  <label
+                    onClick={() => setSelectedPlanType("4-Installments")}
+                    className={`block p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                      selectedPlanType === "4-Installments"
+                        ? "border-blue-600 bg-blue-50/50 shadow-xs"
+                        : "border-slate-200 bg-white hover:border-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="planType"
+                          checked={selectedPlanType === "4-Installments"}
+                          onChange={() => setSelectedPlanType("4-Installments")}
+                          className="w-4 h-4 text-blue-600"
+                        />
+                        <div>
+                          <span className="font-bold text-sm text-slate-900 block">4 Quarterly Installments</span>
+                          <span className="text-xs text-slate-500">25% upfront today + 3 quarterly payments</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <strong className="text-sm font-extrabold text-blue-700 block">
+                          LKR {Math.round(renewalInfo.renewalQuote.calculation?.totalRenewalAmount / 4).toLocaleString()}
+                        </strong>
+                        <span className="text-[10px] text-slate-400">per quarter (x4)</span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              )}
+
+              {/* STEP 3: Checkout Page & Stripe Gateway Action */}
+              {renewalStep === 3 && (
+                <div className="space-y-4">
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200/80 space-y-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+                      Checkout Summary
+                    </span>
+
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-600">Selected Plan:</span>
+                      <span className="font-bold text-slate-900">{selectedPlanType}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-slate-600">Total Renewal Fee:</span>
+                      <span className="font-semibold text-slate-800">
+                        LKR {renewalInfo.renewalQuote.calculation?.totalRenewalAmount?.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="border-t border-slate-200 pt-3 flex justify-between items-center">
+                      <div>
+                        <span className="font-extrabold text-sm text-slate-900 block">Amount Due Today:</span>
+                        <span className="text-[11px] text-slate-500">
+                          {selectedPlanType === "One-Time" ? "Full annual premium" : "First installment (Initial activation)"}
+                        </span>
+                      </div>
+                      <strong className="text-xl font-black text-blue-700">
+                        LKR{" "}
+                        {selectedPlanType === "One-Time"
+                          ? renewalInfo.renewalQuote.calculation?.totalRenewalAmount?.toLocaleString()
+                          : selectedPlanType === "2-Installments"
+                          ? Math.round(renewalInfo.renewalQuote.calculation?.totalRenewalAmount / 2).toLocaleString()
+                          : Math.round(renewalInfo.renewalQuote.calculation?.totalRenewalAmount / 4).toLocaleString()}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Payment Gateway Branding Card */}
+                  <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-2xl p-4 text-white flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-semibold text-blue-300 uppercase tracking-widest block">
+                        Secure Payment Gateway
+                      </span>
+                      <h5 className="font-bold text-sm mt-0.5">Stripe 256-Bit SSL Encrypted</h5>
+                      <span className="text-[11px] text-blue-200">Visa, Mastercard, Amex, Apple Pay</span>
+                    </div>
+                    <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white">
+                      <HugeiconsIcon icon={CreditCardIcon} className="w-6 h-6" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+
+            {/* Wizard Navigation Footer */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
+              {renewalStep > 1 ? (
+                <button
+                  onClick={() => setRenewalStep((prev) => (prev - 1) as 1 | 2 | 3)}
+                  className="px-5 py-2.5 rounded-full border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+                >
+                  Back
+                </button>
+              ) : (
+                <button
+                  onClick={() => setRenewalWizardOpen(false)}
+                  className="px-5 py-2.5 rounded-full border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
+
+              {renewalStep < 3 ? (
+                <button
+                  onClick={() => setRenewalStep((prev) => (prev + 1) as 1 | 2 | 3)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-6 py-2.5 rounded-full shadow-xs cursor-pointer flex items-center gap-1.5"
+                >
+                  Next Step
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleInitiateStripePayment(renewalInfo.renewalQuote._id, 1)}
+                  disabled={isRedirectingToStripe}
+                  className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white font-bold text-xs px-6 py-2.5 rounded-full shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-2"
+                >
+                  {isRedirectingToStripe ? (
+                    <>
+                      <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />
+                      Redirecting to Stripe...
+                    </>
+                  ) : (
+                    <>
+                      <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                      Pay with Stripe Gateway
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* PAYMENT SUCCESS CONFIRMATION MODAL (Step 4 update) */}
+      {paymentSuccessModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center z-70 p-4 transition-all">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 text-center shadow-2xl border border-slate-200 space-y-4">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-9 h-9" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900">Payment Successfully Completed!</h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Your Stripe transaction has been verified. The policy renewal for{" "}
+              <strong>{paymentSuccessDetails?.plate}</strong> has been updated in branch records and your active coverage extended.
+            </p>
+            <button
+              onClick={() => {
+                setPaymentSuccessModal(false);
+                setSelectedVehicleForModal(null);
+                window.location.reload();
+              }}
+              className="w-full bg-[#102A43] hover:bg-[#1C3E63] text-white font-bold text-xs py-3 rounded-full transition-all cursor-pointer"
+            >
+              Continue to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
+
 
       {/* Add Vehicle Popup Modal */}
       {isAddVehicleOpen && (

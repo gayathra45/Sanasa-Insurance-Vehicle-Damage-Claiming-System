@@ -18,6 +18,7 @@ import authRouter from "./src/routes/auth.routes.js";
 import translateRouter from "./src/routes/translate.routes.js";
 import chatRouter from "./src/routes/chat.routes.js";
 import claimReportRouter from "./src/routes/claim_report.routes.js";
+import renewalRouter from "./src/routes/renewal.routes.js";
 
 
 
@@ -52,6 +53,7 @@ app.use("/api/auth", authRouter);
 app.use("/api/translate", translateRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/claims", claimReportRouter);
+app.use("/api/renewals", renewalRouter);
 
 
 
