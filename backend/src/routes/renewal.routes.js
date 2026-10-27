@@ -35,7 +35,7 @@ function getVehicleExpiryDate(vehicle, userCreatedAt) {
  */
 router.get("/branch-expiring-vehicles", async (req, res) => {
   try {
-    const { branch, all } = req.query;
+    const { branch, all, filter } = req.query;
     if (!branch) {
       return res.status(400).json({ error: "Branch is required." });
     }
@@ -47,8 +47,6 @@ router.get("/branch-expiring-vehicles", async (req, res) => {
 
     const users = await User.find(query).lean();
     const now = new Date();
-    const fortyFiveDaysLater = new Date();
-    fortyFiveDaysLater.setDate(now.getDate() + 45);
 
     const vehicleItems = [];
 
@@ -64,17 +62,40 @@ router.get("/branch-expiring-vehicles", async (req, res) => {
 
         const isExpiringWithin1AndHalfMonths = daysRemaining >= -10 && daysRemaining <= 45;
 
-        // If 'all' is not true, only return vehicles within next 45 days
-        if (!all && !isExpiringWithin1AndHalfMonths) {
-          continue;
-        }
-
         // Check if there is an existing quote in PolicyRenewal
         const existingQuote = await PolicyRenewal.findOne({
           vehiclePlate: v.numberPlate
         })
           .sort({ createdAt: -1 })
           .lean();
+
+        const isPaid = !!existingQuote && (existingQuote.status === "Partially_Paid" || existingQuote.status === "Fully_Paid");
+
+        // Calculate latest payment timestamp
+        let latestPaymentDate = null;
+        if (isPaid && existingQuote.installments && existingQuote.installments.length > 0) {
+          const paidInst = existingQuote.installments.filter((i) => i.status === "Paid");
+          if (paidInst.length > 0) {
+            const times = paidInst.map((i) => new Date(i.paidAt || 0).getTime());
+            latestPaymentDate = new Date(Math.max(...times));
+          } else {
+            latestPaymentDate = existingQuote.updatedAt || existingQuote.createdAt;
+          }
+        } else if (isPaid) {
+          latestPaymentDate = existingQuote.updatedAt || existingQuote.createdAt;
+        }
+
+        // Filtering:
+        if (filter === "paid") {
+          if (!isPaid) continue;
+        } else if (filter === "expiring_soon") {
+          if (!isExpiringWithin1AndHalfMonths) continue;
+        } else if (all !== "true" && !all) {
+          // If not all and no specific filter, include vehicles expiring soon OR already paid in branch
+          if (!isExpiringWithin1AndHalfMonths && !isPaid) {
+            continue;
+          }
+        }
 
         vehicleItems.push({
           owner: {
@@ -94,13 +115,24 @@ router.get("/branch-expiring-vehicles", async (req, res) => {
             daysRemaining,
             isExpiringWithin1AndHalfMonths
           },
-          renewalQuote: existingQuote || null
+          renewalQuote: existingQuote || null,
+          isPaid,
+          latestPaymentDate
         });
       }
     }
 
-    // Sort: most imminent expiration first
-    vehicleItems.sort((a, b) => a.vehicle.daysRemaining - b.vehicle.daysRemaining);
+    if (filter === "paid") {
+      // Sort: most recently paid first
+      vehicleItems.sort((a, b) => {
+        const timeA = a.latestPaymentDate ? new Date(a.latestPaymentDate).getTime() : 0;
+        const timeB = b.latestPaymentDate ? new Date(b.latestPaymentDate).getTime() : 0;
+        return timeB - timeA;
+      });
+    } else {
+      // Sort: most imminent expiration first
+      vehicleItems.sort((a, b) => a.vehicle.daysRemaining - b.vehicle.daysRemaining);
+    }
 
     res.json({ success: true, count: vehicleItems.length, vehicles: vehicleItems });
   } catch (error) {

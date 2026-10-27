@@ -19,7 +19,9 @@ import {
   File01Icon,
   Loading03Icon,
   Tick01Icon,
-  Money01Icon
+  Money01Icon,
+  BubbleChatIcon,
+  ViewIcon
 } from "@hugeicons/core-free-icons";
 
 interface VehicleOwner {
@@ -73,12 +75,30 @@ interface RenewalQuote {
       dueOffsetMonths: number;
     }>;
   }>;
+  installments?: Array<{
+    _id?: string;
+    installmentNumber: number;
+    label: string;
+    amount: number;
+    dueDate: string;
+    status: string;
+    paidAt?: string;
+    stripeSessionId?: string;
+    stripePaymentIntentId?: string;
+  }>;
+  calculatedBy?: {
+    staffId?: string;
+    staffName?: string;
+    notes?: string;
+  };
 }
 
 interface VehicleRenewalItem {
   owner: VehicleOwner;
   vehicle: ExpiringVehicle;
   renewalQuote: RenewalQuote | null;
+  isPaid?: boolean;
+  latestPaymentDate?: string;
 }
 
 export default function OfficeStaffRenewalsPage() {
@@ -89,7 +109,7 @@ export default function OfficeStaffRenewalsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterMode, setFilterMode] = useState<"expiring_soon" | "all">("expiring_soon");
+  const [filterMode, setFilterMode] = useState<"expiring_soon" | "paid" | "all">("expiring_soon");
 
   // Detail Modal State
   const [selectedItem, setSelectedItem] = useState<VehicleRenewalItem | null>(null);
@@ -135,14 +155,13 @@ export default function OfficeStaffRenewalsPage() {
     }
   }, [router]);
 
-  // Load Vehicles for Branch
-  const loadVehicles = useCallback(async (currentBranch: string, mode: "expiring_soon" | "all") => {
+  // Load Vehicles for Branch (Always load all vehicles so tabs switch instantly)
+  const loadVehicles = useCallback(async (currentBranch: string) => {
     try {
       setLoading(true);
       setError("");
-      const isAll = mode === "all";
       const res = await fetch(
-        `${API_URL}/renewals/branch-expiring-vehicles?branch=${encodeURIComponent(currentBranch)}&all=${isAll}`
+        `${API_URL}/renewals/branch-expiring-vehicles?branch=${encodeURIComponent(currentBranch)}&all=true`
       );
       if (!res.ok) throw new Error("Failed to load branch expiring vehicles.");
       const data = await res.json();
@@ -157,9 +176,9 @@ export default function OfficeStaffRenewalsPage() {
 
   useEffect(() => {
     if (branch) {
-      loadVehicles(branch, filterMode);
+      loadVehicles(branch);
     }
-  }, [branch, filterMode, loadVehicles]);
+  }, [branch, loadVehicles]);
 
   // Open modal and prefill defaults
   const handleOpenDetails = (item: VehicleRenewalItem) => {
@@ -240,19 +259,42 @@ export default function OfficeStaffRenewalsPage() {
     }
   };
 
-  // Filtered List
-  const filteredVehicles = vehicles.filter((v) => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return true;
-    return (
-      v.vehicle.numberPlate?.toLowerCase().includes(q) ||
-      v.vehicle.model?.toLowerCase().includes(q) ||
-      v.vehicle.company?.toLowerCase().includes(q) ||
-      v.vehicle.policyNumber?.toLowerCase().includes(q) ||
-      v.owner.name?.toLowerCase().includes(q) ||
-      v.owner.nic?.toLowerCase().includes(q)
-    );
-  });
+  // Filtered and Sorted List
+  const filteredVehicles = vehicles
+    .filter((v) => {
+      const q = searchQuery.toLowerCase().trim();
+      if (q) {
+        const matches =
+          v.vehicle.numberPlate?.toLowerCase().includes(q) ||
+          v.vehicle.model?.toLowerCase().includes(q) ||
+          v.vehicle.company?.toLowerCase().includes(q) ||
+          v.vehicle.policyNumber?.toLowerCase().includes(q) ||
+          v.owner.name?.toLowerCase().includes(q) ||
+          v.owner.nic?.toLowerCase().includes(q);
+        if (!matches) return false;
+      }
+
+      if (filterMode === "expiring_soon") {
+        return v.vehicle.isExpiringWithin1AndHalfMonths && !v.isPaid;
+      }
+      if (filterMode === "paid") {
+        return (
+          v.isPaid ||
+          (v.renewalQuote &&
+            (v.renewalQuote.status === "Partially_Paid" || v.renewalQuote.status === "Fully_Paid"))
+        );
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (filterMode === "paid") {
+        // Sort: Most recently paid first
+        const timeA = a.latestPaymentDate ? new Date(a.latestPaymentDate).getTime() : 0;
+        const timeB = b.latestPaymentDate ? new Date(b.latestPaymentDate).getTime() : 0;
+        return timeB - timeA;
+      }
+      return a.vehicle.daysRemaining - b.vehicle.daysRemaining;
+    });
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "N/A";
@@ -323,26 +365,37 @@ export default function OfficeStaffRenewalsPage() {
               </div>
 
               {/* Mode Toggle Buttons */}
-              <div className="flex items-center gap-2 w-full sm:w-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
                 <button
                   onClick={() => setFilterMode("expiring_soon")}
-                  className={`flex-1 sm:flex-initial text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer ${
+                  className={`flex-1 sm:flex-initial text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                     filterMode === "expiring_soon"
                       ? "bg-blue-600 text-white shadow-sm"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
-                  Expiring in 1.5 Months ({vehicles.filter((v) => v.vehicle.isExpiringWithin1AndHalfMonths).length})
+                  Expiring in 1.5 Months ({vehicles.filter((v) => v.vehicle.isExpiringWithin1AndHalfMonths && !v.isPaid).length})
+                </button>
+                <button
+                  onClick={() => setFilterMode("paid")}
+                  className={`flex-1 sm:flex-initial text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-1.5 ${
+                    filterMode === "paid"
+                      ? "bg-emerald-600 text-white shadow-sm"
+                      : "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/60"
+                  }`}
+                >
+                  <span className={`w-2 h-2 rounded-full ${filterMode === "paid" ? "bg-white" : "bg-emerald-500"}`}></span>
+                  Already Paid / Renewed ({vehicles.filter((v) => v.isPaid || (v.renewalQuote && (v.renewalQuote.status === "Partially_Paid" || v.renewalQuote.status === "Fully_Paid"))).length})
                 </button>
                 <button
                   onClick={() => setFilterMode("all")}
-                  className={`flex-1 sm:flex-initial text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer ${
+                  className={`flex-1 sm:flex-initial text-xs font-semibold px-4 py-2 rounded-xl transition-all cursor-pointer whitespace-nowrap ${
                     filterMode === "all"
                       ? "bg-blue-600 text-white shadow-sm"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
-                  All Branch Vehicles
+                  All Branch Vehicles ({vehicles.length})
                 </button>
               </div>
             </div>
@@ -363,16 +416,18 @@ export default function OfficeStaffRenewalsPage() {
                 <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
                   <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">No Expiring Vehicles Found</h3>
+                <h3 className="text-lg font-bold text-slate-800">No Vehicles Found</h3>
                 <p className="text-slate-500 text-sm mt-1 max-w-md mx-auto">
                   {filterMode === "expiring_soon"
-                    ? "There are currently no registered vehicles under this branch scheduled to expire in the next 1.5 months. Switch to 'All Branch Vehicles' to view all registered vehicles."
+                    ? "There are currently no registered vehicles under this branch scheduled to expire in the next 1.5 months. Switch to 'Already Paid / Renewed' or 'All Branch Vehicles' to view more."
+                    : filterMode === "paid"
+                    ? "No already paid or renewed vehicle policies recorded for this branch yet."
                     : "No vehicles found matching your search filter."}
                 </p>
-                {filterMode === "expiring_soon" && (
+                {filterMode !== "all" && (
                   <button
                     onClick={() => setFilterMode("all")}
-                    className="mt-4 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-lg"
+                    className="mt-4 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 px-4 py-2 rounded-lg cursor-pointer"
                   >
                     View All Branch Vehicles
                   </button>
@@ -454,7 +509,7 @@ export default function OfficeStaffRenewalsPage() {
                               </div>
                             </td>
 
-                            {/* Col 5: Expiration Date */}
+                            {/* Col 5: Expiration Date & Status */}
                             <td className="px-5 py-4">
                               <div className="font-bold text-slate-800">
                                 {formatDate(item.vehicle.calculatedExpiryDate)}
@@ -473,13 +528,18 @@ export default function OfficeStaffRenewalsPage() {
                                 }`}
                               >
                                 {isPaid
-                                  ? "Renewed"
+                                  ? "Fully Paid"
                                   : isPartial
                                   ? "Partially Paid"
                                   : hasQuote
                                   ? "Quote Ready"
                                   : `Expiring in ${item.vehicle.daysRemaining}d`}
                               </span>
+                              {item.latestPaymentDate && (
+                                <span className="block text-[10px] text-emerald-600 font-semibold mt-0.5">
+                                  Paid: {new Date(item.latestPaymentDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                </span>
+                              )}
                             </td>
 
                             {/* Col 6: Renewal Fee */}
@@ -489,7 +549,9 @@ export default function OfficeStaffRenewalsPage() {
                                   <span className="font-black text-xs text-emerald-600 block">
                                     LKR {item.renewalQuote?.calculation?.totalRenewalAmount?.toLocaleString()}
                                   </span>
-                                  <span className="text-[10px] text-slate-400">Calculated</span>
+                                  <span className="text-[10px] text-slate-400">
+                                    {isPaid ? "Settled" : isPartial ? item.renewalQuote?.selectedPlan || "Installments" : "Calculated"}
+                                  </span>
                                 </div>
                               ) : (
                                 <span className="text-[11px] text-slate-400 italic">Not Calculated</span>
@@ -504,10 +566,14 @@ export default function OfficeStaffRenewalsPage() {
                                   e.stopPropagation();
                                   handleOpenDetails(item);
                                 }}
-                                className="bg-[#102A43] hover:bg-[#1C3E63] text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5 active:scale-95"
+                                className={`${
+                                  isPaid || isPartial
+                                    ? "bg-emerald-700 hover:bg-emerald-800"
+                                    : "bg-[#102A43] hover:bg-[#1C3E63]"
+                                } text-white font-semibold text-xs px-3.5 py-2 rounded-xl transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5 active:scale-95`}
                               >
-                                <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
-                                <span>View & Calculate</span>
+                                <HugeiconsIcon icon={isPaid || isPartial ? ViewIcon : File01Icon} className="w-3.5 h-3.5" />
+                                <span>{isPaid || isPartial ? "View Details & Plan" : "View & Calculate"}</span>
                               </button>
                             </td>
                           </tr>
@@ -610,12 +676,165 @@ export default function OfficeStaffRenewalsPage() {
                   </div>
                   <div>
                     <span className="text-slate-400 block font-medium">Policy Expiration</span>
-                    <span className="font-bold text-rose-600">
+                    <span className="font-bold text-emerald-700">
                       {formatDate(selectedItem.vehicle.calculatedExpiryDate)}
                     </span>
                   </div>
                 </div>
               </div>
+
+              {/* RENEWAL PAYMENT & INSTALLMENT OVERVIEW CARD */}
+              {selectedItem.renewalQuote && (
+                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4.5 select-none space-y-3.5">
+                  {/* Plan Type & Status Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200/60 pb-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-700 bg-blue-100/90 px-2.5 py-0.5 rounded-full inline-block">
+                          {selectedItem.renewalQuote.selectedPlan || "Renewal Assessment"}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full inline-block ${
+                            selectedItem.renewalQuote.status === "Fully_Paid"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : selectedItem.renewalQuote.status === "Partially_Paid"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-blue-100 text-blue-800"
+                          }`}
+                        >
+                          {selectedItem.renewalQuote.status === "Fully_Paid"
+                            ? "Fully Paid"
+                            : selectedItem.renewalQuote.status === "Partially_Paid"
+                            ? "Partially Paid (Active Installments)"
+                            : "Quote Calculated (Pending Payment)"}
+                        </span>
+                      </div>
+                      <h4 className="font-bold text-slate-800 text-sm mt-1">
+                        Policy Renewal Payment & Installment Details
+                      </h4>
+                    </div>
+
+                    <div className="text-left sm:text-right">
+                      <span className="text-[10px] text-slate-400 block font-semibold uppercase tracking-wider">Total Policy Premium</span>
+                      <strong className="text-base font-black text-slate-900">
+                        LKR {selectedItem.renewalQuote.calculation?.totalRenewalAmount?.toLocaleString()}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Financial Summary 3-Box Bar */}
+                  <div className="grid grid-cols-3 gap-2 bg-white p-3 rounded-xl border border-slate-200/70 text-center">
+                    <div className="border-r border-slate-100 pr-1">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold block">Total Settled</span>
+                      <strong className="font-black text-emerald-600 text-xs">
+                        LKR {selectedItem.renewalQuote.installments
+                          ?.filter((i: any) => i.status === "Paid")
+                          .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
+                          .toLocaleString() || "0"}
+                      </strong>
+                    </div>
+                    <div className="border-r border-slate-100 pr-1">
+                      <span className="text-slate-400 text-[10px] uppercase font-bold block">Outstanding Balance</span>
+                      <strong className="font-black text-amber-700 text-xs">
+                        LKR {selectedItem.renewalQuote.installments
+                          ?.filter((i: any) => i.status === "Pending")
+                          .reduce((sum: number, i: any) => sum + (i.amount || 0), 0)
+                          .toLocaleString() || "0"}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 text-[10px] uppercase font-bold block">Installments Status</span>
+                      <strong className="font-bold text-blue-700 text-xs">
+                        {selectedItem.renewalQuote.installments?.filter((i: any) => i.status === "Paid").length || 0} of {selectedItem.renewalQuote.installments?.length || 0} Settled
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Itemized Installment Table */}
+                  {selectedItem.renewalQuote.installments && selectedItem.renewalQuote.installments.length > 0 && (
+                    <div className="space-y-2 pt-1">
+                      <h5 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
+                        <span>Installment Schedule & Transactions</span>
+                        <span className="text-slate-400 font-normal lowercase">{selectedItem.renewalQuote.selectedPlan}</span>
+                      </h5>
+
+                      <div className="space-y-1.5">
+                        {selectedItem.renewalQuote.installments.map((inst: any, idx: number) => {
+                          const isPaid = inst.status === "Paid";
+                          return (
+                            <div
+                              key={inst._id || idx}
+                              className={`p-2.5 rounded-xl border text-xs flex items-center justify-between transition-all ${
+                                isPaid ? "bg-emerald-50/70 border-emerald-200" : "bg-white border-slate-200/80"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <span
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                                    isPaid ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-600"
+                                  }`}
+                                >
+                                  {isPaid ? "✓" : inst.installmentNumber}
+                                </span>
+                                <div>
+                                  <h6 className="font-bold text-slate-800 text-xs leading-tight">
+                                    {inst.label || `Installment #${inst.installmentNumber}`}
+                                  </h6>
+                                  <p className="text-[10px] text-slate-500 mt-0.5">
+                                    {isPaid ? (
+                                      <span className="text-emerald-700 font-medium">
+                                        Paid on {new Date(inst.paidAt || Date.now()).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
+                                        {inst.stripeSessionId ? ` • Stripe: ${inst.stripeSessionId.slice(0, 18)}...` : " • Verified"}
+                                      </span>
+                                    ) : (
+                                      <span>Due: <strong className="text-slate-700">{new Date(inst.dueDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}</strong></span>
+                                    )}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="text-right flex items-center gap-2">
+                                <strong className="text-slate-800 text-xs">LKR {inst.amount.toLocaleString()}</strong>
+                                <span
+                                  className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                    isPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                                  }`}
+                                >
+                                  {isPaid ? "Paid" : "Pending"}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Calculation Basis Breakdown */}
+                  <div className="bg-white rounded-xl p-3 border border-slate-200/70 text-xs text-slate-600 space-y-1">
+                    <div className="flex justify-between">
+                      <span>Assessed Vehicle Valuation:</span>
+                      <span className="font-semibold text-slate-800">LKR {selectedItem.renewalQuote.calculation?.marketValuation?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Basic Premium Rate:</span>
+                      <span className="font-semibold text-slate-800">{selectedItem.renewalQuote.calculation?.basicPremiumRate}% (LKR {selectedItem.renewalQuote.calculation?.basicPremium?.toLocaleString()})</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-600">
+                      <span>No-Claim Bonus Discount ({selectedItem.renewalQuote.calculation?.noClaimBonusDiscount}%):</span>
+                      <span className="font-semibold">- LKR {selectedItem.renewalQuote.calculation?.discountAmount?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Admin Fees & Road Levies:</span>
+                      <span className="font-semibold text-slate-800">+ LKR {((selectedItem.renewalQuote.calculation?.adminFee || 0) + (selectedItem.renewalQuote.calculation?.govtTaxes || 0)).toLocaleString()}</span>
+                    </div>
+                    <div className="border-t border-slate-100 pt-1.5 flex justify-between font-bold text-slate-800">
+                      <span>Assessment Performed By:</span>
+                      <span>{selectedItem.renewalQuote.calculatedBy?.staffName || "Branch Staff"}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Calculation Toggle Button */}
               <button
@@ -795,6 +1014,13 @@ export default function OfficeStaffRenewalsPage() {
           </div>
         </div>
       )}
+      {/* Floating Action Chat Button */}
+      <button
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        aria-label="Chat support"
+      >
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+      </button>
     </div>
   );
 }
