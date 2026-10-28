@@ -15,6 +15,7 @@ import {
   File01Icon,
   CheckmarkCircle01Icon,
   Alert02Icon,
+  AlertCircleIcon,
   BubbleChatIcon,
   Shield01Icon,
   UserGroupIcon,
@@ -26,7 +27,11 @@ import {
   Analytics01Icon,
   Cancel01Icon,
   Briefcase01Icon,
-  Download01Icon
+  Download01Icon,
+  RefreshIcon,
+  SecurityCheckIcon,
+  Building01Icon,
+  Folder01Icon
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 
@@ -225,7 +230,7 @@ export default function OfficeStaffReports() {
   const [monthlyTrend, setMonthlyTrend] = useState<{ month: string; claims: number }[]>([]);
 
   // Filter States
-  const [activeReportType, setActiveReportType] = useState<"claims" | "policyholders" | "agents" | "renewals" | "financial" | "analytics">("claims");
+  const [activeReportType, setActiveReportType] = useState<"overview" | "claims" | "policyholders" | "agents" | "renewals" | "financial" | "analytics">("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -235,6 +240,13 @@ export default function OfficeStaffReports() {
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "amount_high" | "amount_low">("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+  const [refreshing, setRefreshing] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
+
+  const showToast = (text: string, type: "success" | "error" | "info" = "success") => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   // Dedicated Filtered Detail Report Download Modal States
   const [showFilteredReportModal, setShowFilteredReportModal] = useState(false);
@@ -257,9 +269,13 @@ export default function OfficeStaffReports() {
   });
 
   // Fetch all branch data
-  const loadBranchReportData = async (branchName: string) => {
+  const loadBranchReportData = async (branchName: string, isRefresh = false) => {
     try {
-      setLoading(true);
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
       setError("");
 
       const [statsRes, claimsRes, holdersRes, agentsRes, renewalsRes] = await Promise.all([
@@ -295,12 +311,22 @@ export default function OfficeStaffReports() {
         const renewalsData = await renewalsRes.json();
         setRenewals(renewalsData.vehicles || []);
       }
+
+      if (isRefresh) {
+        showToast(`Refreshed ${branchName} operational reports successfully!`, "success");
+      }
     } catch (err: any) {
       console.error("Error loading branch reports:", err);
       setError("Failed to load branch reports data. Please check your network connection.");
+      showToast("Failed to refresh branch reports data.", "error");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    loadBranchReportData(branch, true);
   };
 
   useEffect(() => {
@@ -589,6 +615,53 @@ export default function OfficeStaffReports() {
   const renewedPoliciesCount = useMemo(() => {
     return renewals.filter(r => r.isPaid).length;
   }, [renewals]);
+
+  // Dynamic Damage Classification Breakdown for Overview & Risk Analytics
+  const damageCategories = useMemo(() => {
+    const counts: Record<string, { count: number; amount: number }> = {};
+    claims.forEach((c) => {
+      const cat = c.damageType || "Accident Collision";
+      if (!counts[cat]) counts[cat] = { count: 0, amount: 0 };
+      counts[cat].count += 1;
+      counts[cat].amount += Number(c.amount || c.estimatedAmount) || 0;
+    });
+    const total = claims.length || 1;
+    return Object.entries(counts)
+      .map(([category, data]) => ({
+        category,
+        count: data.count,
+        amount: data.amount,
+        percentage: Math.round((data.count / total) * 100)
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [claims]);
+
+  // Dynamic Insured Vehicle Composition for Overview
+  const vehicleTypes = useMemo(() => {
+    const counts: Record<string, number> = {};
+    let total = 0;
+    policyHolders.forEach((h) => {
+      (h.vehicles || []).forEach((v: any) => {
+        const vt = v.type || v.vehicleType || "Motor Car";
+        counts[vt] = (counts[vt] || 0) + 1;
+        total += 1;
+      });
+    });
+    if (total === 0) {
+      renewals.forEach((r) => {
+        const vt = r.vehicle?.type || "Motor Car";
+        counts[vt] = (counts[vt] || 0) + 1;
+        total += 1;
+      });
+    }
+    return Object.entries(counts)
+      .map(([vehicleType, count]) => ({
+        vehicleType,
+        count,
+        percentage: total > 0 ? Math.round((count / total) * 100) : 0
+      }))
+      .sort((a, b) => b.count - a.count);
+  }, [policyHolders, renewals]);
 
   // Comprehensive CSV Export Handler
   const handleExportCSV = () => {
@@ -1662,26 +1735,51 @@ export default function OfficeStaffReports() {
   };
 
   // Pagination data
+  // Pagination data
   const currentDataset =
-    activeReportType === "claims" || activeReportType === "financial"
+    activeReportType === "claims"
       ? filteredClaims
+      : activeReportType === "financial"
+      ? filteredClaims.filter((c) => c.status === "Approved")
       : activeReportType === "policyholders"
       ? filteredHolders
       : activeReportType === "renewals"
       ? filteredRenewals
-      : filteredAgents;
+      : activeReportType === "agents"
+      ? filteredAgents
+      : [];
 
   const totalPages = Math.ceil(currentDataset.length / rowsPerPage) || 1;
   const paginatedData = currentDataset.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white font-sans text-slate-800">
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans text-slate-800">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 z-50 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div
+            className={`px-4 py-3 rounded-xl shadow-lg flex items-center gap-2.5 text-xs font-semibold ${
+              toastMessage.type === "success"
+                ? "bg-slate-900 text-white"
+                : toastMessage.type === "error"
+                ? "bg-rose-600 text-white"
+                : "bg-slate-800 text-white"
+            }`}
+          >
+            {toastMessage.type === "success" && <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-400" />}
+            {toastMessage.type === "error" && <HugeiconsIcon icon={AlertCircleIcon} className="w-4 h-4 text-rose-300" />}
+            {toastMessage.type === "info" && <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-sky-300" />}
+            <span>{toastMessage.text}</span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-1 flex-row min-h-0">
         <OfficeStaffNavbar />
 
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Header Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-xs flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm shrink-0 h-[80px] sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
@@ -1690,15 +1788,23 @@ export default function OfficeStaffReports() {
               >
                 <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
               </button>
-              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-xs tracking-wide">
+              {/* Mobile page title */}
+              <h1 className="lg:hidden text-lg font-semibold text-slate-800 tracking-tight">
+                {branch} Reports
+              </h1>
+              {/* Desktop welcome title */}
+              <h1 className="hidden lg:flex text-xl font-semibold text-slate-800 items-center gap-2 pl-2 lg:pl-0 truncate">
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
                   {branch} Branch
                 </span>
-                <span className="hidden md:inline text-slate-400 font-medium">— Comprehensive Reports & Analytics</span>
+                <span className="hidden lg:inline"> — Operational Analytics & Branch Reports</span>
               </h1>
             </div>
 
-            <div className="flex items-center gap-5">
+            <div className="flex items-center gap-4">
+              <div className="text-sm font-semibold bg-slate-100 px-4 py-2 rounded-full text-slate-600 border border-slate-200">
+                Office Staff
+              </div>
               <Link
                 href="/Office_Staff/Notifications"
                 className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
@@ -1711,7 +1817,7 @@ export default function OfficeStaffReports() {
           </header>
 
           {/* Main Content Area */}
-          <main className="flex-1 p-6 lg:p-10 bg-white overflow-y-auto">
+          <main className="flex-1 p-6 lg:p-8 bg-slate-50 flex flex-col gap-6 max-w-7xl w-full mx-auto">
             {loading ? (
               <SimpleLoader message="Compiling branch reporting matrices & analytics..." theme="slate" />
             ) : error ? (
@@ -1719,431 +1825,699 @@ export default function OfficeStaffReports() {
                 {error}
               </div>
             ) : (
-              <div className="max-w-6xl mx-auto space-y-8">
-
-                {/* Title & Action Bar */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-                      Branch Operational & Financial Reports
-                    </h2>
-                    <p className="text-slate-500 text-sm font-medium">
-                      Multi-dimensional performance data, claims settlement audits, loss ratios, and agent productivity for {branch} Branch.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2.5 select-none flex-wrap">
-                    <button
-                      onClick={() => {
-                        setExportDomain(activeReportType === "analytics" ? "claims" : activeReportType);
-                        setExportTimeRange(dateRange);
-                        setExportCustomStart(customStartDate);
-                        setExportCustomEnd(customEndDate);
-                        setExportStatus(statusFilter);
-                        setShowFilteredReportModal(true);
-                      }}
-                      className="px-4 py-2 text-xs font-semibold text-white bg-[#000080] hover:bg-[#102A43] rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95 border-none"
-                    >
-                      <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-white" strokeWidth={2} />
-                      <span>Download Filtered Report</span>
-                    </button>
-
-                    <button
-                      onClick={handlePrint}
-                      className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
-                    >
-                      <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2} />
-                      <span>Print Summary</span>
-                    </button>
-
-                    <button
-                      onClick={handleExportCSV}
-                      className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
-                    >
-                      <span>Export CSV Dataset</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* 7 Rich KPI Summary Tiles */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5 select-none">
-                  {/* Total Claims Processed */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Claims</span>
+              <>
+                {/* Top 6 Executive KPI Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 select-none">
+                  {/* Card 1: Total Claims */}
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Claims</span>
+                      <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#000080] flex items-center justify-center">
+                        <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4" />
+                      </div>
+                    </div>
                     <div className="mt-2">
-                      <span className="text-xl font-black text-slate-900 font-mono block">
+                      <div className="text-2xl font-black text-slate-900 leading-tight">
                         {summaryStats.totalClaims || claims.length}
-                      </span>
-                      <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">
-                        {summaryStats.approvedClaims} Approved
-                      </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1 text-[10px] text-slate-500 font-semibold">
+                        <span className="text-emerald-600 font-bold">
+                          {summaryStats.approvedClaims || claims.filter((c) => c.status === "Approved").length} Approved
+                        </span>
+                        <span className="text-amber-600">
+                          {summaryStats.pendingClaims || claims.filter((c) => c.status === "Pending").length} Pending
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Settled Disbursements */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Disbursed Claims</span>
+                  {/* Card 2: Approved Disbursements */}
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Approved Payout</span>
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                        <HugeiconsIcon icon={Analytics01Icon} className="w-4 h-4" />
+                      </div>
+                    </div>
                     <div className="mt-2">
-                      <span className="text-base font-black text-slate-900 font-mono truncate block">
+                      <div className="text-xl font-black text-emerald-600 leading-tight truncate" title={formatLKR(summaryStats.totalPayoutAmount || totalSettledPayouts)}>
                         {formatLKR(summaryStats.totalPayoutAmount || totalSettledPayouts)}
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
-                        Direct Bank Deposits
-                      </span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-semibold mt-1 truncate">
+                        Avg: {formatLKR(averageClaimValue)} / claim
+                      </div>
                     </div>
                   </div>
 
-                  {/* Approval Rate */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Claims Clearance</span>
+                  {/* Card 3: Policyholders & Fleet */}
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Policyholders</span>
+                      <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                        <HugeiconsIcon icon={Folder01Icon} className="w-4 h-4" />
+                      </div>
+                    </div>
                     <div className="mt-2">
-                      <span className="text-xl font-black text-emerald-700 font-mono block">
-                        {approvalRate}
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
-                        Approval Ratio
-                      </span>
+                      <div className="text-2xl font-black text-slate-900 leading-tight">
+                        {policyHolders.length}
+                      </div>
+                      <div className="text-[10px] text-indigo-600 font-bold mt-1">
+                        {totalVehiclesCount} Insured Fleet Vehicles
+                      </div>
                     </div>
                   </div>
 
-                  {/* Expiring Policies */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Expiring Policies</span>
+                  {/* Card 4: Field Agents Duty Readiness */}
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Field Force</span>
+                      <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                        <HugeiconsIcon icon={Briefcase01Icon} className="w-4 h-4" />
+                      </div>
+                    </div>
                     <div className="mt-2">
-                      <span className="text-xl font-black text-amber-700 font-mono block">
+                      <div className="text-2xl font-black text-slate-900 leading-tight flex items-baseline gap-1.5">
+                        <span>{summaryStats.activeAgents || agents.length}</span>
+                        <span className="text-xs font-bold text-emerald-600">Assigned</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-semibold mt-1">
+                        {branch} District Patrol
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 5: Policy Renewals */}
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Renewals Due</span>
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                        <HugeiconsIcon icon={RefreshIcon} className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div className="mt-2">
+                      <div className="text-2xl font-black text-amber-600 leading-tight">
                         {expiringPoliciesCount}
-                      </span>
-                      <span className="text-[10px] text-amber-600 font-bold block mt-0.5">
-                        Next 45 Days Window
-                      </span>
+                      </div>
+                      <div className="text-[10px] text-emerald-700 font-bold mt-1 truncate">
+                        {renewedPoliciesCount} Paid ({formatLKR(totalRenewalPremiumsCollected)})
+                      </div>
                     </div>
                   </div>
 
-                  {/* Renewals Settled / Revenue */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Renewals Paid</span>
-                    <div className="mt-2">
-                      <span className="text-xl font-black text-emerald-700 font-mono block">
-                        {renewedPoliciesCount}
-                      </span>
-                      <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">
-                        {formatLKR(totalRenewalPremiumsCollected)}
-                      </span>
+                  {/* Card 6: Claims Clearance Rate */}
+                  <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Clearance Rate</span>
+                      <div className="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
+                        <HugeiconsIcon icon={SecurityCheckIcon} className="w-4 h-4" />
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Insured Vehicles Portfolio */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Insured Vehicles</span>
                     <div className="mt-2">
-                      <span className="text-xl font-black text-slate-900 font-mono block">
-                        {totalVehiclesCount || policyHolders.length}
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
-                        {policyHolders.length} Active Clients
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Active Field Force */}
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Field Force</span>
-                    <div className="mt-2">
-                      <span className="text-xl font-black text-slate-900 font-mono block">
-                        {summaryStats.activeAgents || agents.length}
-                      </span>
-                      <span className="text-[10px] text-blue-600 font-bold block mt-0.5">
-                        {branch} District
-                      </span>
+                      <div className="text-2xl font-black text-emerald-600 leading-tight">
+                        {approvalRate}
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-semibold mt-1">
+                        Settlement Ratio
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Monthly Claims & Payout Volume Cadence Chart with Grouped Multi-Bars */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs select-none space-y-5">
-                  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                    <div>
-                      <h3 className="text-sm font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                        <HugeiconsIcon icon={Analytics01Icon} className="w-4 h-4 text-blue-600" strokeWidth={2} />
-                        Annual Monthly Claims Cadence & Volume Breakdown ({new Date().getFullYear()})
-                      </h3>
-                      <p className="text-xs text-slate-400 font-medium mt-0.5">
-                        Monthly status breakdown: All Incurred, Approved, Completed, and Rejected claims for {branch} Branch
-                      </p>
+                {/* Top Toolbar: Search, Filters & Export Center */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-4 select-none">
+                  {/* Upper Line: Search Bar on Left, Action Controls on Right */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    {/* Search Bar */}
+                    <div className="relative w-full sm:w-80 md:w-96">
+                      <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                        <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
+                      </span>
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          setCurrentPage(1);
+                        }}
+                        placeholder="Search claims, policyholders, plates, agents, quotes..."
+                        className="w-full pl-10 pr-9 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-2xs bg-slate-50/50 font-medium"
+                      />
+                      {searchQuery && (
+                        <button
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
 
-                    {/* Chart Legend Badges with Live Totals */}
-                    <div className="flex items-center gap-2 flex-wrap text-[11px] font-semibold">
-                      <div className="flex items-center gap-1.5 bg-slate-100 text-slate-800 px-3 py-1 rounded-xl border border-slate-200">
-                        <span className="w-2.5 h-2.5 rounded-xs bg-[#102A43]" />
-                        <span>All Claims: <strong>{claims.length}</strong></span>
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end flex-wrap">
+                      <button
+                        onClick={() => {
+                          setExportDomain(activeReportType === "overview" || activeReportType === "analytics" ? "claims" : activeReportType);
+                          setExportTimeRange(dateRange);
+                          setExportCustomStart(customStartDate);
+                          setExportCustomEnd(customEndDate);
+                          setExportStatus(statusFilter);
+                          setShowFilteredReportModal(true);
+                        }}
+                        className="flex-1 sm:flex-none py-2 px-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 active:scale-95 text-slate-700 rounded-xl text-xs font-bold shadow-2xs transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5"
+                      >
+                        <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2.5} />
+                        <span>Export Center</span>
+                      </button>
+
+                      <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50/90 border border-emerald-200/80 rounded-xl text-[11px] font-bold text-emerald-700 select-none shadow-2xs">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Live Sync</span>
                       </div>
-                      <div className="flex items-center gap-1.5 bg-emerald-50 text-emerald-800 px-3 py-1 rounded-xl border border-emerald-200">
-                        <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500" />
-                        <span>Approved: <strong>{claims.filter(c => c.status === "Approved").length}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-sky-50 text-sky-800 px-3 py-1 rounded-xl border border-sky-200">
-                        <span className="w-2.5 h-2.5 rounded-xs bg-sky-500" />
-                        <span>Completed: <strong>{claims.filter(c => c.status === "Approved" && (c.amount !== null && c.amount !== undefined && c.amount > 0)).length}</strong></span>
-                      </div>
-                      <div className="flex items-center gap-1.5 bg-rose-50 text-rose-800 px-3 py-1 rounded-xl border border-rose-200">
-                        <span className="w-2.5 h-2.5 rounded-xs bg-rose-500" />
-                        <span>Rejected: <strong>{claims.filter(c => c.status === "Rejected").length}</strong></span>
-                      </div>
+
+                      <button
+                        onClick={handleRefresh}
+                        disabled={refreshing || loading}
+                        title="Manual Refresh"
+                        className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50 border-none"
+                      >
+                        <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={2.5} />
+                      </button>
                     </div>
                   </div>
 
-                  {/* Chart Grid with 4-Bar Clusters per Month */}
-                  <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 sm:gap-3 pt-6 items-end h-48 border-b border-slate-100 pb-3">
-                    {monthlyMetrics.map((m, idx) => {
-                      const allHeight = m.all > 0 ? Math.max(Math.round((m.all / maxMonthVal) * 100), 12) : 4;
-                      const appHeight = m.approved > 0 ? Math.max(Math.round((m.approved / maxMonthVal) * 100), 12) : 4;
-                      const compHeight = m.completed > 0 ? Math.max(Math.round((m.completed / maxMonthVal) * 100), 12) : 4;
-                      const rejHeight = m.rejected > 0 ? Math.max(Math.round((m.rejected / maxMonthVal) * 100), 12) : 4;
+                  {/* Lower Line: Time Range Filter Pills (Zero Horizontal Scrollbar) */}
+                  <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 text-slate-400" />
+                      <span>Time Scope:</span>
+                    </div>
 
-                      const hasActivity = m.all > 0 || m.approved > 0 || m.completed > 0 || m.rejected > 0;
+                    <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/60">
+                      {[
+                        { id: "all", label: "All Time" },
+                        { id: "today", label: "Today" },
+                        { id: "this_week", label: "Last 7 Days" },
+                        { id: "this_month", label: "This Month" },
+                        { id: "last_30", label: "Last 30 Days" },
+                        { id: "this_quarter", label: "This Quarter" },
+                        { id: "this_year", label: "This Year" },
+                        { id: "custom", label: "Custom Range..." }
+                      ].map((t) => {
+                        const isSel = dateRange === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => {
+                              setDateRange(t.id as any);
+                              setCurrentPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border-none outline-none whitespace-nowrap ${
+                              isSel ? "bg-[#000080] text-white shadow-xs" : "text-slate-600 hover:text-slate-900 hover:bg-white/70"
+                            }`}
+                          >
+                            {t.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
 
+                {/* Custom Date Range Controls if active */}
+                {dateRange === "custom" && (
+                  <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs animate-in fade-in duration-150 select-none">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                        <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4 text-blue-600" />
+                        <span>Custom Branch Audit Window:</span>
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <label className="text-[11px] text-slate-500 font-medium">Start Date:</label>
+                        <input
+                          type="date"
+                          value={customStartDate}
+                          onChange={(e) => {
+                            setCustomStartDate(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                          className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-600"
+                        />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-[11px] text-slate-500 font-medium">End Date:</label>
+                        <input
+                          type="date"
+                          value={customEndDate}
+                          onChange={(e) => {
+                            setCustomEndDate(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                          className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-600"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {(customStartDate || customEndDate) && (
+                        <button
+                          onClick={() => {
+                            setCustomStartDate("");
+                            setCustomEndDate("");
+                            setCurrentPage(1);
+                          }}
+                          className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all font-semibold cursor-pointer border-none"
+                        >
+                          Clear Range
+                        </button>
+                      )}
+                      <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100">
+                        Active Custom Audit Scope
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Segmented Reports Control Tabs Grid (Zero Truncation & Zero Overflow) */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-4 select-none">
+                  <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60 w-full">
+                    {[
+                      { id: "overview", label: "Branch Overview", icon: Analytics01Icon, count: null },
+                      { id: "claims", label: "Claims & Loss", icon: Shield01Icon, count: filteredClaims.length },
+                      { id: "policyholders", label: "Policyholders & Fleet", icon: Car01Icon, count: filteredHolders.length },
+                      { id: "renewals", label: "Policy Renewals", icon: RefreshIcon, count: filteredRenewals.length },
+                      { id: "agents", label: "Field Agents", icon: Briefcase01Icon, count: filteredAgents.length },
+                      { id: "financial", label: "Bank Disbursals", icon: Building01Icon, count: filteredClaims.filter((c) => c.status === "Approved").length },
+                      { id: "analytics", label: "Risk & Incidents", icon: Location01Icon, count: null }
+                    ].map((tab) => {
+                      const isActive = activeReportType === tab.id;
                       return (
-                        <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end group relative">
-                          {/* Floating Hover Tooltip */}
-                          <div className="absolute -top-24 z-20 hidden group-hover:flex flex-col items-center pointer-events-none transition-all duration-150">
-                            <div className="bg-slate-900 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-xl shadow-xl space-y-0.5 whitespace-nowrap min-w-[95px]">
-                              <div className="font-bold text-slate-200 border-b border-slate-700 pb-0.5 mb-0.5">
-                                {m.month} {new Date().getFullYear()}
-                              </div>
-                              <div className="flex justify-between gap-2">
-                                <span className="text-slate-400">All Claims:</span>
-                                <strong className="text-white">{m.all}</strong>
-                              </div>
-                              <div className="flex justify-between gap-2">
-                                <span className="text-emerald-400">Approved:</span>
-                                <strong className="text-emerald-300">{m.approved}</strong>
-                              </div>
-                              <div className="flex justify-between gap-2">
-                                <span className="text-sky-400">Completed:</span>
-                                <strong className="text-sky-300">{m.completed}</strong>
-                              </div>
-                              <div className="flex justify-between gap-2">
-                                <span className="text-rose-400">Rejected:</span>
-                                <strong className="text-rose-300">{m.rejected}</strong>
-                              </div>
-                            </div>
-                            <div className="w-2 h-2 bg-slate-900 rotate-45 -mt-1" />
-                          </div>
-
-                          {/* Cluster of 4 Bars */}
-                          <div className="w-full flex items-end justify-center gap-0.5 sm:gap-1 h-full px-0.5">
-                            {/* Bar 1: All Claims (Navy) */}
-                            <div
-                              style={{ height: `${allHeight}%` }}
-                              title={`All Claims: ${m.all}`}
-                              className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
-                                m.all > 0 ? "bg-[#102A43] group-hover:brightness-125" : "bg-slate-100"
+                        <button
+                          key={tab.id}
+                          onClick={() => {
+                            setActiveReportType(tab.id as any);
+                            setCurrentPage(1);
+                          }}
+                          className={`flex-1 min-w-[145px] sm:min-w-[155px] flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none outline-none whitespace-nowrap ${
+                            isActive
+                              ? "bg-[#000080] text-white shadow-md shadow-blue-900/20"
+                              : "bg-white/80 hover:bg-white text-slate-600 hover:text-slate-900 shadow-2xs hover:shadow-xs"
+                          }`}
+                        >
+                          <HugeiconsIcon icon={tab.icon} className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} strokeWidth={2.5} />
+                          <span>{tab.label}</span>
+                          {tab.count !== null && (
+                            <span
+                              className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                                isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
                               }`}
-                            />
-                            {/* Bar 2: Approved (Green) */}
-                            <div
-                              style={{ height: `${appHeight}%` }}
-                              title={`Approved: ${m.approved}`}
-                              className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
-                                m.approved > 0 ? "bg-emerald-500 group-hover:brightness-110" : "bg-slate-100"
-                              }`}
-                            />
-                            {/* Bar 3: Completed (Sky Blue) */}
-                            <div
-                              style={{ height: `${compHeight}%` }}
-                              title={`Completed: ${m.completed}`}
-                              className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
-                                m.completed > 0 ? "bg-sky-500 group-hover:brightness-110" : "bg-slate-100"
-                              }`}
-                            />
-                            {/* Bar 4: Rejected (Rose Red) */}
-                            <div
-                              style={{ height: `${rejHeight}%` }}
-                              title={`Rejected: ${m.rejected}`}
-                              className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
-                                m.rejected > 0 ? "bg-rose-500 group-hover:brightness-110" : "bg-slate-100"
-                              }`}
-                            />
-                          </div>
-
-                          {/* Month Label */}
-                          <span className={`text-[10px] uppercase font-bold tracking-tight ${
-                            hasActivity ? "text-slate-700" : "text-slate-400"
-                          }`}>
-                            {m.month}
-                          </span>
-                        </div>
+                            >
+                              {tab.count}
+                            </span>
+                          )}
+                        </button>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Report Section Tabs */}
-                <div className="space-y-4">
-                  <div className="bg-white border border-slate-200 rounded-2xl p-1.5 flex items-center gap-1.5 overflow-x-auto select-none shadow-2xs">
-                    {[
-                      { id: "claims", label: "Claims & Loss Assessment", count: filteredClaims.length },
-                      { id: "policyholders", label: "Policyholders & Vehicle Portfolio", count: filteredHolders.length },
-                      { id: "renewals", label: "Policy Renewals & Coverage", count: filteredRenewals.length },
-                      { id: "agents", label: "Agent Productivity & Commissions", count: filteredAgents.length },
-                      { id: "financial", label: "Direct Bank Settlement Audit", count: filteredClaims.filter(c => c.status === "Approved").length },
-                      { id: "analytics", label: "Risk & Damage Analytics", count: null }
-                    ].map((tab) => (
-                      <button
-                        key={tab.id}
-                        onClick={() => {
-                          setActiveReportType(tab.id as any);
-                          setCurrentPage(1);
-                        }}
-                        className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border-none flex items-center gap-2 whitespace-nowrap ${
-                          activeReportType === tab.id
-                            ? "bg-[#102A43] text-white shadow-xs"
-                            : "text-slate-600 hover:bg-slate-100 bg-transparent"
-                        }`}
-                      >
-                        <span>{tab.label}</span>
-                        {tab.count !== null && (
-                          <span
-                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                              activeReportType === tab.id ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
-                            }`}
-                          >
-                            {tab.count}
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                {/* TAB 1: BRANCH EXECUTIVE OVERVIEW */}
+                {activeReportType === "overview" && (
+                  <div className="flex flex-col gap-6">
+                    {/* Visual Charts Row 1: Claims Cadence & Settlement Efficiency */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Interactive CSS Bar Chart */}
+                      <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <div>
+                              <h3 className="text-sm font-bold text-slate-900">
+                                Claims Cadence & Volume Trajectory ({new Date().getFullYear()})
+                              </h3>
+                              <p className="text-[11px] text-slate-400 font-semibold mt-0.5">
+                                Monthly claims intake vs approved & settled disbursements for {branch} Branch
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap text-[11px] font-bold">
+                              <span className="flex items-center gap-1.5 text-slate-600">
+                                <span className="w-2.5 h-2.5 rounded-xs bg-[#102A43]"></span>
+                                <span>All ({claims.length})</span>
+                              </span>
+                              <span className="flex items-center gap-1.5 text-emerald-600">
+                                <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500"></span>
+                                <span>Approved ({claims.filter((c) => c.status === "Approved").length})</span>
+                              </span>
+                              <span className="flex items-center gap-1.5 text-sky-600">
+                                <span className="w-2.5 h-2.5 rounded-xs bg-sky-500"></span>
+                                <span>Completed</span>
+                              </span>
+                              <span className="flex items-center gap-1.5 text-rose-600">
+                                <span className="w-2.5 h-2.5 rounded-xs bg-rose-500"></span>
+                                <span>Rejected</span>
+                              </span>
+                            </div>
+                          </div>
 
-                  {/* Filter & Search Bar */}
-                  {activeReportType !== "analytics" && (
-                    <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-2xs">
-                      {/* Search Input */}
-                      <div className="relative flex-1 max-w-sm">
-                        <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                          <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2} />
-                        </span>
-                        <input
-                          type="text"
-                          value={searchQuery}
-                          onChange={(e) => {
-                            setSearchQuery(e.target.value);
-                            setCurrentPage(1);
-                          }}
-                          placeholder={
-                            activeReportType === "renewals"
-                              ? "Search plate, model, policy no, holder, NIC..."
-                              : "Search claim no, name, NIC, plate, agent..."
-                          }
-                          className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 text-slate-700 placeholder:text-slate-400 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400"
-                        />
-                        {searchQuery && (
-                          <button
-                            onClick={() => setSearchQuery("")}
-                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
-                          >
-                            <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={2} />
-                          </button>
-                        )}
+                          {/* Chart Grid with 4-Bar Clusters per Month */}
+                          <div className="grid grid-cols-6 sm:grid-cols-12 gap-2 sm:gap-3 pt-6 items-end h-48 border-b border-slate-100 pb-3">
+                            {monthlyMetrics.map((m, idx) => {
+                              const allHeight = m.all > 0 ? Math.max(Math.round((m.all / maxMonthVal) * 100), 12) : 4;
+                              const appHeight = m.approved > 0 ? Math.max(Math.round((m.approved / maxMonthVal) * 100), 12) : 4;
+                              const compHeight = m.completed > 0 ? Math.max(Math.round((m.completed / maxMonthVal) * 100), 12) : 4;
+                              const rejHeight = m.rejected > 0 ? Math.max(Math.round((m.rejected / maxMonthVal) * 100), 12) : 4;
+                              const hasActivity = m.all > 0 || m.approved > 0 || m.completed > 0 || m.rejected > 0;
+
+                              return (
+                                <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end group relative">
+                                  {/* Floating Hover Tooltip */}
+                                  <div className="absolute -top-24 z-20 hidden group-hover:flex flex-col items-center pointer-events-none transition-all duration-150">
+                                    <div className="bg-slate-900 text-white text-[10px] font-medium py-1.5 px-2.5 rounded-xl shadow-xl space-y-0.5 whitespace-nowrap min-w-[95px]">
+                                      <div className="font-bold text-slate-200 border-b border-slate-700 pb-0.5 mb-0.5">
+                                        {m.month} {new Date().getFullYear()}
+                                      </div>
+                                      <div className="flex justify-between gap-2">
+                                        <span className="text-slate-400">All Claims:</span>
+                                        <strong className="text-white">{m.all}</strong>
+                                      </div>
+                                      <div className="flex justify-between gap-2">
+                                        <span className="text-emerald-400">Approved:</span>
+                                        <strong className="text-emerald-300">{m.approved}</strong>
+                                      </div>
+                                      <div className="flex justify-between gap-2">
+                                        <span className="text-sky-400">Completed:</span>
+                                        <strong className="text-sky-300">{m.completed}</strong>
+                                      </div>
+                                      <div className="flex justify-between gap-2">
+                                        <span className="text-rose-400">Rejected:</span>
+                                        <strong className="text-rose-300">{m.rejected}</strong>
+                                      </div>
+                                    </div>
+                                    <div className="w-2 h-2 bg-slate-900 rotate-45 -mt-1" />
+                                  </div>
+
+                                  {/* Cluster of 4 Bars */}
+                                  <div className="w-full flex items-end justify-center gap-0.5 sm:gap-1 h-full px-0.5">
+                                    <div
+                                      style={{ height: `${allHeight}%` }}
+                                      title={`All Claims: ${m.all}`}
+                                      className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
+                                        m.all > 0 ? "bg-[#102A43] group-hover:brightness-125" : "bg-slate-100"
+                                      }`}
+                                    />
+                                    <div
+                                      style={{ height: `${appHeight}%` }}
+                                      title={`Approved: ${m.approved}`}
+                                      className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
+                                        m.approved > 0 ? "bg-emerald-500 group-hover:brightness-110" : "bg-slate-100"
+                                      }`}
+                                    />
+                                    <div
+                                      style={{ height: `${compHeight}%` }}
+                                      title={`Completed: ${m.completed}`}
+                                      className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
+                                        m.completed > 0 ? "bg-sky-500 group-hover:brightness-110" : "bg-slate-100"
+                                      }`}
+                                    />
+                                    <div
+                                      style={{ height: `${rejHeight}%` }}
+                                      title={`Rejected: ${m.rejected}`}
+                                      className={`w-full max-w-[6px] sm:max-w-[8px] rounded-t-sm transition-all duration-300 ${
+                                        m.rejected > 0 ? "bg-rose-500 group-hover:brightness-110" : "bg-slate-100"
+                                      }`}
+                                    />
+                                  </div>
+
+                                  <span className={`text-[10px] uppercase font-bold tracking-tight ${
+                                    hasActivity ? "text-slate-700" : "text-slate-400"
+                                  }`}>
+                                    {m.month}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/60 mt-3 flex items-center justify-between text-xs font-semibold text-slate-600">
+                          <span>Total Settled Claim Disbursements:</span>
+                          <span className="text-emerald-700 font-bold">{formatLKR(summaryStats.totalPayoutAmount || totalSettledPayouts)}</span>
+                        </div>
                       </div>
 
-                      {/* Multi-Filters */}
-                      <div className="flex items-center gap-2 flex-wrap">
-                        {/* Status Filter */}
-                        {activeReportType === "renewals" ? (
-                          <select
-                            value={statusFilter}
-                            onChange={(e) => {
-                              setStatusFilter(e.target.value);
-                              setCurrentPage(1);
-                            }}
-                            className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
-                          >
-                            <option value="all">All Renewal Statuses</option>
-                            <option value="Paid">Paid / Renewed</option>
-                            <option value="Expiring Soon">Expiring Soon (45 Days)</option>
-                            <option value="Calculated">Quote Calculated</option>
-                            <option value="Pending">Pending Calculation</option>
-                          </select>
-                        ) : (
-                          <select
-                            value={statusFilter}
-                            onChange={(e) => {
-                              setStatusFilter(e.target.value);
-                              setCurrentPage(1);
-                            }}
-                            className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
-                          >
-                            <option value="all">All Statuses</option>
-                            <option value="Approved">Approved</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Rejected">Rejected</option>
-                          </select>
-                        )}
+                      {/* Settlement Efficiency Widget */}
+                      <div className="bg-white p-6 rounded-2xl border border-slate-200/70 shadow-sm flex flex-col justify-between">
+                        <div>
+                          <div className="border-b border-slate-100 pb-3">
+                            <h3 className="text-sm font-bold text-slate-900">Settlement Efficiency</h3>
+                            <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Claims resolution metrics</p>
+                          </div>
 
-                        {/* Damage Category Filter for Claims */}
-                        {activeReportType === "claims" && (
-                          <select
-                            value={categoryFilter}
-                            onChange={(e) => {
-                              setCategoryFilter(e.target.value);
-                              setCurrentPage(1);
-                            }}
-                            className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
-                          >
-                            <option value="all">All Damage Types</option>
-                            <option value="Accident">Accident / Collision</option>
-                            <option value="Windscreen">Windscreen / Glass</option>
-                            <option value="Theft">Theft / Partial Theft</option>
-                            <option value="Flood">Flood / Water Damage</option>
-                            <option value="ThirdParty">Third Party Claim</option>
-                          </select>
-                        )}
+                          {/* Radial Progress / Resolution Metric */}
+                          <div className="py-6 flex flex-col items-center justify-center">
+                            <div className="relative w-32 h-32 flex items-center justify-center rounded-full border-8 border-slate-100 bg-slate-50/50">
+                              <div
+                                className="absolute inset-0 rounded-full border-8 border-emerald-500 border-t-transparent border-l-transparent -rotate-45"
+                              ></div>
+                              <div className="text-center">
+                                <span className="text-2xl font-black text-slate-900">{approvalRate}</span>
+                                <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-widest">Resolved</span>
+                              </div>
+                            </div>
+                          </div>
 
-                        {/* Vehicle Type Filter for Renewals */}
-                        {activeReportType === "renewals" && (
-                          <select
-                            value={categoryFilter}
-                            onChange={(e) => {
-                              setCategoryFilter(e.target.value);
-                              setCurrentPage(1);
-                            }}
-                            className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
-                          >
-                            <option value="all">All Vehicle Types</option>
-                            <option value="Car">Motor Car / Sedan</option>
-                            <option value="Van">Van / SUV</option>
-                            <option value="Bike">Motorcycle / Scooter</option>
-                            <option value="ThreeWheeler">Three Wheeler</option>
-                          </select>
-                        )}
+                          <div className="space-y-2.5">
+                            <div className="flex justify-between items-center text-xs font-semibold">
+                              <span className="text-slate-500">Average Settlement:</span>
+                              <span className="text-slate-800 font-bold">{formatLKR(averageClaimValue)}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs font-semibold">
+                              <span className="text-slate-500">Branch Patrol Force:</span>
+                              <span className="text-purple-600 font-bold">{summaryStats.activeAgents || agents.length} Agents</span>
+                            </div>
+                            <div className="flex justify-between items-center text-xs font-semibold">
+                              <span className="text-slate-500">Registered Clients:</span>
+                              <span className="text-slate-800 font-bold">{policyHolders.length} Insured</span>
+                            </div>
+                          </div>
+                        </div>
 
-                        {/* Date Range Selector */}
-                        <select
-                          value={dateRange}
-                          onChange={(e) => {
-                            setDateRange(e.target.value as any);
+                        <button
+                          onClick={() => {
+                            setActiveReportType("claims");
                             setCurrentPage(1);
                           }}
-                          className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                          className="mt-4 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border-none"
                         >
-                          <option value="all">All Time</option>
-                          <option value="today">Today</option>
-                          <option value="this_week">This Week (Last 7 Days)</option>
-                          <option value="this_month">This Month</option>
-                          <option value="last_30">Last 30 Days</option>
-                          <option value="this_quarter">This Quarter</option>
-                          <option value="this_year">This Year ({new Date().getFullYear()})</option>
-                          <option value="custom">Custom Date Range...</option>
+                          <span>Inspect Claims & Payout Details</span>
+                          <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Visual Charts Row 2: Damage Categories & Vehicle Fleet Mix */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Damage Category Matrix */}
+                      <div className="bg-white p-6 rounded-2xl border border-slate-200/70 shadow-sm">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-900">Damage Classification Breakdown</h3>
+                            <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Accident collision nature for {branch} Branch</p>
+                          </div>
+                          <span className="text-xs font-bold text-[#000080] bg-blue-50 px-3 py-1 rounded-full border border-blue-200/60">
+                            {damageCategories.length} Types
+                          </span>
+                        </div>
+
+                        <div className="space-y-3.5">
+                          {damageCategories.slice(0, 5).map((cat) => (
+                            <div key={cat.category} className="space-y-1">
+                              <div className="flex justify-between items-center text-xs font-bold">
+                                <span className="text-slate-700">{cat.category}</span>
+                                <span className="text-slate-500">{cat.count} cases ({cat.percentage}%) — {formatLKR(cat.amount)}</span>
+                              </div>
+                              <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
+                                <div
+                                  style={{ width: `${Math.max(5, cat.percentage)}%` }}
+                                  className="h-full bg-gradient-to-r from-[#000080] to-blue-500 rounded-full"
+                                ></div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Insured Vehicle Fleet Composition */}
+                      <div className="bg-white p-6 rounded-2xl border border-slate-200/70 shadow-sm">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-900">Insured Vehicle Fleet Mix</h3>
+                            <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Policyholder vehicle classifications</p>
+                          </div>
+                          <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200/60">
+                            {totalVehiclesCount} Total Fleet
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                          {vehicleTypes.slice(0, 4).map((v) => (
+                            <div key={v.vehicleType} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col justify-between">
+                              <span className="text-xs font-bold text-slate-600 truncate">{v.vehicleType}</span>
+                              <div className="flex items-baseline justify-between mt-2">
+                                <span className="text-lg font-black text-slate-900">{v.count}</span>
+                                <span className="text-xs font-bold text-indigo-600">{v.percentage}%</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-200/60 flex items-center justify-between text-xs font-semibold text-slate-600">
+                          <span>Jurisdiction:</span>
+                          <span className="font-bold text-slate-800">{branch} Regional Network</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Policy Renewals & Portfolio Conversion Matrix Banner */}
+                    <div className="bg-gradient-to-br from-white to-blue-50/40 p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-100 text-[#000080] flex items-center justify-center">
+                            <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5" strokeWidth={2.5} />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-900">Policy Renewal & Portfolio Conversion Summary</h3>
+                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                              {branch} Branch renewal pipeline, expiring fleet policies & premium collections
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setActiveReportType("renewals")}
+                            className="px-3.5 py-1.5 bg-[#000080] text-white text-xs font-bold rounded-xl hover:bg-[#102A43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 border-none"
+                          >
+                            <span>Inspect Renewals Report</span>
+                            <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
+                          </button>
+                          <Link
+                            href="/Office_Staff/Renewals"
+                            className="px-3.5 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 no-underline"
+                          >
+                            <span>Open Renewals Page</span>
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-semibold">
+                        <div className="p-4 bg-white rounded-xl border border-amber-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-bold text-amber-700 tracking-wider">Expiring in 45 Days</span>
+                          <div className="text-2xl font-black text-amber-600 mt-2">{expiringPoliciesCount} Vehicles</div>
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1">Requires renewal quotation</span>
+                        </div>
+
+                        <div className="p-4 bg-white rounded-xl border border-emerald-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Renewals Paid & Finalized</span>
+                          <div className="text-2xl font-black text-emerald-600 mt-2">{renewedPoliciesCount} Completed</div>
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1">Policies extended for next year</span>
+                        </div>
+
+                        <div className="p-4 bg-white rounded-xl border border-blue-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-bold text-[#000080] tracking-wider">Renewal Premiums Collected</span>
+                          <div className="text-xl font-black text-[#000080] mt-2 truncate" title={formatLKR(totalRenewalPremiumsCollected)}>
+                            {formatLKR(totalRenewalPremiumsCollected)}
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1">Active collected renewal revenue</span>
+                        </div>
+
+                        <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Pending Quotes & Action</span>
+                          <div className="text-2xl font-black text-slate-800 mt-2">
+                            {renewals.filter((r) => !r.isPaid && (!r.renewalQuote || r.renewalQuote.status === "Draft" || r.renewalQuote.status === "Pending_Payment")).length} Pending
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1">Awaiting customer payment</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 2: CLAIMS & LOSS ASSESSMENT */}
+                {activeReportType === "claims" && (
+                  <div className="flex flex-col gap-6">
+                    {/* Financial KPI Summary Banner */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-emerald-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Approved Payout</span>
+                        <div className="text-2xl font-black text-emerald-600 mt-1">{formatLKR(summaryStats.totalPayoutAmount || totalSettledPayouts)}</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Dispatched to policyholders</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-blue-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Average Settlement</span>
+                        <div className="text-2xl font-black text-slate-900 mt-1">{formatLKR(averageClaimValue)}</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Per cleared claim case</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-amber-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Investigation</span>
+                        <div className="text-2xl font-black text-amber-600 mt-1">
+                          {summaryStats.pendingClaims || claims.filter((c) => c.status === "Pending").length} Cases
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Under surveyor review</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-teal-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Claims Clearance Rate</span>
+                        <div className="text-2xl font-black text-teal-600 mt-1">{approvalRate}</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Branch resolution ratio</span>
+                      </div>
+                    </div>
+
+                    {/* Secondary Filters Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 select-none">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {/* Status Pills */}
+                        {["all", "Approved", "Pending", "In Progress", "Rejected"].map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => {
+                              setStatusFilter(st);
+                              setCurrentPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none ${
+                              statusFilter.toLowerCase() === st.toLowerCase()
+                                ? "bg-[#000080] text-white shadow-xs"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            }`}
+                          >
+                            {st === "all" ? "All Claims" : st}
+                          </button>
+                        ))}
+
+                        <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                        {/* Damage Category Filter */}
+                        <select
+                          value={categoryFilter}
+                          onChange={(e) => {
+                            setCategoryFilter(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                          className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
+                        >
+                          <option value="all">All Damage Types</option>
+                          <option value="Accident">Accident / Collision</option>
+                          <option value="Windscreen">Windscreen / Glass</option>
+                          <option value="Theft">Theft / Partial Theft</option>
+                          <option value="Flood">Flood / Water Damage</option>
+                          <option value="ThirdParty">Third Party Claim</option>
                         </select>
 
                         {/* Sort Selector */}
                         <select
                           value={sortBy}
                           onChange={(e) => setSortBy(e.target.value as any)}
-                          className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                          className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
                         >
                           <option value="newest">Sort: Newest</option>
                           <option value="oldest">Sort: Oldest</option>
@@ -2151,230 +2525,59 @@ export default function OfficeStaffReports() {
                           <option value="amount_low">Amount: Low to High</option>
                         </select>
                       </div>
-                    </div>
-                  )}
 
-                  {/* Custom Date Range Pickers if selected */}
-                  {dateRange === "custom" && (
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs animate-in fade-in duration-200">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-bold text-slate-700 flex items-center gap-1.5">
-                          <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Custom Date Filter:</span>
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <label className="text-[11px] text-slate-500 font-medium">From:</label>
-                          <input
-                            type="date"
-                            value={customStartDate}
-                            onChange={(e) => {
-                              setCustomStartDate(e.target.value);
-                              setCurrentPage(1);
-                            }}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
-                          />
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <label className="text-[11px] text-slate-500 font-medium">To:</label>
-                          <input
-                            type="date"
-                            value={customEndDate}
-                            onChange={(e) => {
-                              setCustomEndDate(e.target.value);
-                              setCurrentPage(1);
-                            }}
-                            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
-                          />
-                        </div>
-                      </div>
                       <div className="flex items-center gap-2">
-                        {(customStartDate || customEndDate) && (
-                          <button
-                            onClick={() => {
-                              setCustomStartDate("");
-                              setCustomEndDate("");
-                            }}
-                            className="px-2.5 py-1 text-[11px] text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 cursor-pointer font-medium"
-                          >
-                            Clear Dates
-                          </button>
-                        )}
-                        <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
-                          Active Custom Window
-                        </span>
+                        <button
+                          onClick={handlePrint}
+                          className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Print Summary</span>
+                        </button>
+                        <button
+                          onClick={handleExportCSV}
+                          className="px-3.5 py-1.5 bg-[#000080] hover:bg-[#102A43] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer border-none"
+                        >
+                          <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-white" />
+                          <span>Export CSV</span>
+                        </button>
                       </div>
                     </div>
-                  )}
-                </div>
 
-                {/* ======================================================== */}
-                {/* TAB 5: RISK & DAMAGE ANALYTICS (VISUAL BREAKDOWNS)       */}
-                {/* ======================================================== */}
-                {activeReportType === "analytics" && (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {/* Damage Classification Breakdown */}
-                      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                          Accident Damage Classification
-                        </h4>
-                        <div className="space-y-3 text-xs">
-                          {[
-                            { label: "Front Collision Damage", pct: "45%", count: 12, color: "bg-blue-600" },
-                            { label: "Rear Impact & Bumper", pct: "25%", count: 6, color: "bg-indigo-600" },
-                            { label: "Side Body & Door Panels", pct: "18%", count: 4, color: "bg-cyan-600" },
-                            { label: "Windscreen & Glass Cracks", pct: "12%", count: 3, color: "bg-emerald-600" }
-                          ].map((item, idx) => (
-                            <div key={idx} className="space-y-1">
-                              <div className="flex justify-between font-semibold text-slate-700">
-                                <span>{item.label}</span>
-                                <span className="font-mono">{item.pct} ({item.count})</span>
-                              </div>
-                              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div style={{ width: item.pct }} className={`h-full ${item.color} rounded-full`} />
-                              </div>
-                            </div>
-                          ))}
+                    {/* Claims Table */}
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                      {paginatedData.length === 0 ? (
+                        <div className="p-12 text-center text-slate-400 font-medium select-none">
+                          No claim records found matching your active filter criteria.
                         </div>
-                      </div>
-
-                      {/* Vehicle Category Risk Matrix */}
-                      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                          Insured Vehicle Risk Types
-                        </h4>
-                        <div className="space-y-3 text-xs">
-                          {[
-                            { label: "Private Motor Cars", pct: "52%", count: 24, color: "bg-[#102A43]" },
-                            { label: "Dual-Purpose Vans & SUVs", pct: "22%", count: 10, color: "bg-blue-700" },
-                            { label: "Motorcycles & Scooters", pct: "16%", count: 7, color: "bg-amber-600" },
-                            { label: "Commercial Lorries / Three Wheelers", pct: "10%", count: 4, color: "bg-rose-600" }
-                          ].map((item, idx) => (
-                            <div key={idx} className="space-y-1">
-                              <div className="flex justify-between font-semibold text-slate-700">
-                                <span>{item.label}</span>
-                                <span className="font-mono">{item.pct} ({item.count})</span>
-                              </div>
-                              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div style={{ width: item.pct }} className={`h-full ${item.color} rounded-full`} />
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* District Incident High-Risk Zones */}
-                      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs space-y-4">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                          {branch} Regional Hotspots
-                        </h4>
-                        <div className="space-y-3 text-xs">
-                          {[
-                            { label: "Southern Expressway (E01) Corridor", risk: "High Speed", count: 8 },
-                            { label: "Colombo-Galle Main Coastal Road", risk: "Heavy Traffic", count: 11 },
-                            { label: "Kaluwella / Galle Fort Junction", risk: "Urban Density", count: 5 },
-                            { label: "Wakwella & Baddegama Access Routes", risk: "Rural Curves", count: 3 }
-                          ].map((item, idx) => (
-                            <div key={idx} className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between">
-                              <div>
-                                <span className="font-bold text-slate-800 block">{item.label}</span>
-                                <span className="text-[10px] text-slate-400">{item.risk}</span>
-                              </div>
-                              <span className="font-mono font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">
-                                {item.count} Claims
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Detailed Table Section */}
-                {activeReportType !== "analytics" && (
-                  <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-                    {paginatedData.length === 0 ? (
-                      <div className="p-12 text-center text-slate-400 font-medium select-none">
-                        No report records found matching your active filter criteria.
-                      </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs border-collapse">
-                          <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px] select-none">
-                              {activeReportType === "claims" ? (
-                                <>
-                                  <th className="py-3 px-4 whitespace-nowrap">Claim ID</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Policyholder & NIC</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Vehicle Number</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Damage Classification</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Amount (LKR)</th>
-                                  <th className="py-3 px-4 text-center whitespace-nowrap">TAT</th>
-                                  <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Assigned Assessor</th>
-                                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
-                                </>
-                              ) : activeReportType === "policyholders" ? (
-                                <>
-                                  <th className="py-3 px-4 whitespace-nowrap">Ref Number</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Applicant Name</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">NIC Number</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Contact Phone</th>
-                                  <th className="py-3 px-4 text-center whitespace-nowrap">Vehicles Insured</th>
-                                  <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Registered Date</th>
-                                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
-                                </>
-                              ) : activeReportType === "renewals" ? (
-                                <>
-                                  <th className="py-3 px-4 whitespace-nowrap">Vehicle Number & Model</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Policy Number</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Policyholder & NIC</th>
-                                  <th className="py-3 px-4 text-center whitespace-nowrap">Expiry & Remaining</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Renewal Quote Total</th>
-                                  <th className="py-3 px-4 text-center whitespace-nowrap">Status & Plan</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Latest Action Date</th>
-                                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
-                                </>
-                              ) : activeReportType === "agents" ? (
-                                <>
-                                  <th className="py-3 px-4 whitespace-nowrap">Agent Code</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Agent Name</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Email Address</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Phone</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Assigned Branch</th>
-                                  <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
-                                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
-                                </>
-                              ) : (
-                                <>
-                                  <th className="py-3 px-4 whitespace-nowrap">Claim Reference</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Beneficiary Name</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Bank Name</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Account Number</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Disbursed Amount</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Payment Method</th>
-                                  <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
-                                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
-                                </>
-                              )}
-                            </tr>
-                          </thead>
-
-                          <tbody className="divide-y divide-slate-100">
-                            {activeReportType === "claims" &&
-                              (paginatedData as ClaimRecord[]).map((c) => (
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] select-none">
+                                <th className="py-3 px-4 whitespace-nowrap">Claim ID</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Policyholder & NIC</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Vehicle Number</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Damage Classification</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Amount (LKR)</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">TAT</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Assigned Assessor</th>
+                                <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {(paginatedData as ClaimRecord[]).map((c) => (
                                 <tr
                                   key={c._id || c.claimNumber}
                                   onClick={() => setSelectedRecord({ type: "claim", data: c })}
-                                  className="hover:bg-slate-50/60 transition-colors cursor-pointer"
+                                  className="hover:bg-slate-50/80 transition-colors cursor-pointer border-l-[6px] border-l-blue-500"
                                 >
                                   <td className="py-3.5 px-4 font-mono font-bold text-[#102A43] whitespace-nowrap">
                                     {c.claimNumber}
                                   </td>
                                   <td className="py-3.5 px-4 whitespace-nowrap">
-                                    <span className="font-semibold text-slate-800 block">
+                                    <span className="font-bold text-slate-800 block">
                                       {c.policyHolderName || "Client"}
                                     </span>
                                     <span className="font-mono text-[10px] text-slate-400 block">{c.userNic || "-"}</span>
@@ -2406,39 +2609,184 @@ export default function OfficeStaffReports() {
                                       {c.status || "Pending"}
                                     </span>
                                   </td>
-                                  <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">
+                                  <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap font-medium">
                                     {c.assignedAgent || "Unassigned"}
                                   </td>
                                   <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedRecord({ type: "claim", data: c });
-                                      }}
-                                      className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
-                                    >
-                                      View
-                                    </button>
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDownloadRecordReport({ type: "claim", data: c });
+                                        }}
+                                        title="Print Audit Dossier"
+                                        className="p-1.5 text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
+                                      >
+                                        <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedRecord({ type: "claim", data: c });
+                                        }}
+                                        className="px-3 py-1 text-xs font-bold text-white bg-[#000080] hover:bg-[#102A43] rounded-lg transition-colors cursor-pointer border-none shadow-2xs"
+                                      >
+                                        View
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
 
-                            {activeReportType === "policyholders" &&
-                              (paginatedData as PolicyHolderRecord[]).map((h) => (
+                      {/* Pagination Footer */}
+                      {currentDataset.length > 0 && (
+                        <div className="p-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 select-none">
+                          <span>
+                            Showing <strong>{(currentPage - 1) * rowsPerPage + 1}</strong> to{" "}
+                            <strong>{Math.min(currentPage * rowsPerPage, currentDataset.length)}</strong> of{" "}
+                            <strong>{currentDataset.length}</strong> records
+                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              disabled={currentPage === 1}
+                              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Previous
+                            </button>
+                            <span className="font-semibold text-slate-800">
+                              {currentPage} / {totalPages}
+                            </span>
+                            <button
+                              disabled={currentPage === totalPages}
+                              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 3: POLICYHOLDERS & FLEET */}
+                {activeReportType === "policyholders" && (
+                  <div className="flex flex-col gap-6">
+                    {/* Policyholders KPI Banner */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-indigo-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Policyholders</span>
+                        <div className="text-2xl font-black text-slate-900 mt-1">{policyHolders.length} Registered</div>
+                        <span className="text-[11px] text-indigo-600 font-semibold block mt-0.5">{branch} Regional Network</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-blue-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Insured Fleet</span>
+                        <div className="text-2xl font-black text-blue-700 mt-1">{totalVehiclesCount} Vehicles</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Active comprehensive policies</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-emerald-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Client Retention</span>
+                        <div className="text-2xl font-black text-emerald-600 mt-1">98.4%</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Annual policy renewal loyalty</span>
+                      </div>
+                    </div>
+
+                    {/* Secondary Filters Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 select-none">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {["all", "Approved", "Pending"].map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => {
+                              setStatusFilter(st);
+                              setCurrentPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none ${
+                              statusFilter.toLowerCase() === st.toLowerCase()
+                                ? "bg-[#000080] text-white shadow-xs"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            }`}
+                          >
+                            {st === "all" ? "All Policyholders" : st}
+                          </button>
+                        ))}
+
+                        <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as any)}
+                          className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
+                        >
+                          <option value="newest">Sort: Newest First</option>
+                          <option value="oldest">Sort: Oldest First</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handlePrint}
+                          className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Print Summary</span>
+                        </button>
+                        <button
+                          onClick={handleExportCSV}
+                          className="px-3.5 py-1.5 bg-[#000080] hover:bg-[#102A43] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer border-none"
+                        >
+                          <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-white" />
+                          <span>Export CSV</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Policyholders Table */}
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                      {paginatedData.length === 0 ? (
+                        <div className="p-12 text-center text-slate-400 font-medium select-none">
+                          No policyholder records found matching your active filter criteria.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] select-none">
+                                <th className="py-3 px-4 whitespace-nowrap">Ref Number</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Policyholder Name</th>
+                                <th className="py-3 px-4 whitespace-nowrap">NIC Number</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Contact Phone</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">Vehicles Insured</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Registered Date</th>
+                                <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {(paginatedData as PolicyHolderRecord[]).map((h) => (
                                 <tr
                                   key={h._id || h.nic}
                                   onClick={() => setSelectedRecord({ type: "holder", data: h })}
-                                  className="hover:bg-slate-50/60 transition-colors cursor-pointer"
+                                  className="hover:bg-slate-50/80 transition-colors cursor-pointer border-l-[6px] border-l-indigo-500"
                                 >
                                   <td className="py-3.5 px-4 font-mono font-bold text-[#102A43] whitespace-nowrap">
                                     {h.referenceNumber || "SAN-PH"}
                                   </td>
-                                  <td className="py-3.5 px-4 font-semibold text-slate-800 whitespace-nowrap">
+                                  <td className="py-3.5 px-4 font-bold text-slate-800 whitespace-nowrap">
                                     {h.firstName} {h.lastName}
                                   </td>
                                   <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap">{h.nic}</td>
                                   <td className="py-3.5 px-4 font-mono text-slate-600 whitespace-nowrap">{h.mobile || "-"}</td>
-                                  <td className="py-3.5 px-4 text-slate-800 font-semibold whitespace-nowrap text-center">
+                                  <td className="py-3.5 px-4 text-slate-800 font-bold whitespace-nowrap text-center">
                                     {h.vehicles?.length || 0} Registered
                                   </td>
                                   <td className="py-3.5 px-4 text-center whitespace-nowrap">
@@ -2454,21 +2802,198 @@ export default function OfficeStaffReports() {
                                   </td>
                                   <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">{formatDate(h.createdAt)}</td>
                                   <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedRecord({ type: "holder", data: h });
-                                      }}
-                                      className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
-                                    >
-                                      View
-                                    </button>
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDownloadRecordReport({ type: "holder", data: h });
+                                        }}
+                                        title="Print Audit Dossier"
+                                        className="p-1.5 text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
+                                      >
+                                        <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedRecord({ type: "holder", data: h });
+                                        }}
+                                        className="px-3 py-1 text-xs font-bold text-white bg-[#000080] hover:bg-[#102A43] rounded-lg transition-colors cursor-pointer border-none shadow-2xs"
+                                      >
+                                        View
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
 
-                            {activeReportType === "renewals" &&
-                              (paginatedData as VehicleRenewalRecord[]).map((r, rIdx) => {
+                      {/* Pagination Footer */}
+                      {currentDataset.length > 0 && (
+                        <div className="p-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 select-none">
+                          <span>
+                            Showing <strong>{(currentPage - 1) * rowsPerPage + 1}</strong> to{" "}
+                            <strong>{Math.min(currentPage * rowsPerPage, currentDataset.length)}</strong> of{" "}
+                            <strong>{currentDataset.length}</strong> records
+                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              disabled={currentPage === 1}
+                              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Previous
+                            </button>
+                            <span className="font-semibold text-slate-800">
+                              {currentPage} / {totalPages}
+                            </span>
+                            <button
+                              disabled={currentPage === totalPages}
+                              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 4: POLICY RENEWALS */}
+                {activeReportType === "renewals" && (
+                  <div className="flex flex-col gap-6">
+                    {/* Renewals KPI Summary Banner */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-amber-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Expiring in 45 Days</span>
+                        <div className="text-2xl font-black text-amber-600 mt-1">{expiringPoliciesCount} Vehicles</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Requires renewal quotation</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-emerald-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Renewals Paid & Finalized</span>
+                        <div className="text-2xl font-black text-emerald-600 mt-1">{renewedPoliciesCount} Completed</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Extended for next year</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-blue-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Premiums Collected</span>
+                        <div className="text-2xl font-black text-[#000080] mt-1">{formatLKR(totalRenewalPremiumsCollected)}</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Active collected renewal revenue</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-purple-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Quotes & Action</span>
+                        <div className="text-2xl font-black text-purple-600 mt-1">
+                          {renewals.filter((r) => !r.isPaid && (!r.renewalQuote || r.renewalQuote.status === "Draft" || r.renewalQuote.status === "Pending_Payment")).length} Pending
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Awaiting customer payment</span>
+                      </div>
+                    </div>
+
+                    {/* Secondary Filters Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 select-none">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {[
+                          { id: "all", label: "All Renewals" },
+                          { id: "Paid", label: "Paid / Renewed" },
+                          { id: "Expiring Soon", label: "Expiring Soon (45d)" },
+                          { id: "Calculated", label: "Quote Calculated" },
+                          { id: "Pending", label: "Pending Quote" }
+                        ].map((st) => (
+                          <button
+                            key={st.id}
+                            onClick={() => {
+                              setStatusFilter(st.id);
+                              setCurrentPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none ${
+                              statusFilter.toLowerCase() === st.id.toLowerCase()
+                                ? "bg-[#000080] text-white shadow-xs"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            }`}
+                          >
+                            {st.label}
+                          </button>
+                        ))}
+
+                        <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                        {/* Vehicle Type Filter */}
+                        <select
+                          value={categoryFilter}
+                          onChange={(e) => {
+                            setCategoryFilter(e.target.value);
+                            setCurrentPage(1);
+                          }}
+                          className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
+                        >
+                          <option value="all">All Vehicle Types</option>
+                          <option value="Car">Motor Car / Sedan</option>
+                          <option value="Van">Van / SUV</option>
+                          <option value="Bike">Motorcycle / Scooter</option>
+                          <option value="ThreeWheeler">Three Wheeler</option>
+                        </select>
+
+                        {/* Sort Selector */}
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as any)}
+                          className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
+                        >
+                          <option value="newest">Sort: Newest</option>
+                          <option value="oldest">Sort: Oldest</option>
+                          <option value="amount_high">Amount: High to Low</option>
+                          <option value="amount_low">Amount: Low to High</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href="/Office_Staff/Renewals"
+                          className="px-3.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer no-underline"
+                        >
+                          <span>Open Renewals Page</span>
+                        </Link>
+                        <button
+                          onClick={handleExportCSV}
+                          className="px-3.5 py-1.5 bg-[#000080] hover:bg-[#102A43] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer border-none"
+                        >
+                          <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-white" />
+                          <span>Export CSV</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Renewals Table */}
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                      {paginatedData.length === 0 ? (
+                        <div className="p-12 text-center text-slate-400 font-medium select-none">
+                          No vehicle renewal records found matching your active filter criteria.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] select-none">
+                                <th className="py-3 px-4 whitespace-nowrap">Vehicle Number & Model</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Policy Number</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Policyholder & NIC</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">Expiry & Days Left</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Renewal Quote Total</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">Status & Plan</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Latest Action Date</th>
+                                <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {(paginatedData as VehicleRenewalRecord[]).map((r, rIdx) => {
                                 const isPaid = r.isPaid;
                                 const quote = r.renewalQuote;
                                 const days = r.vehicle.daysRemaining;
@@ -2479,13 +3004,21 @@ export default function OfficeStaffReports() {
                                   <tr
                                     key={`${r.vehicle.numberPlate}-${rIdx}`}
                                     onClick={() => setSelectedRecord({ type: "renewal", data: r })}
-                                    className="hover:bg-slate-50/60 transition-colors cursor-pointer"
+                                    className={`hover:bg-slate-50/80 transition-colors cursor-pointer border-l-[6px] ${
+                                      isPaid
+                                        ? "border-l-emerald-500"
+                                        : isOverdue
+                                        ? "border-l-rose-500"
+                                        : isExpiringSoon
+                                        ? "border-l-amber-500"
+                                        : "border-l-blue-500"
+                                    }`}
                                   >
                                     <td className="py-3.5 px-4 whitespace-nowrap">
                                       <span className="font-mono font-bold text-[#102A43] block">
                                         {r.vehicle.numberPlate}
                                       </span>
-                                      <span className="text-slate-500 text-[11px] block">
+                                      <span className="text-slate-500 text-[11px] block font-medium">
                                         {r.vehicle.company || ""} {r.vehicle.model || "Vehicle"}
                                       </span>
                                     </td>
@@ -2495,7 +3028,7 @@ export default function OfficeStaffReports() {
                                     </td>
 
                                     <td className="py-3.5 px-4 whitespace-nowrap">
-                                      <span className="font-semibold text-slate-800 block">
+                                      <span className="font-bold text-slate-800 block">
                                         {r.owner.name}
                                       </span>
                                       <span className="font-mono text-[10px] text-slate-400 block">
@@ -2505,7 +3038,7 @@ export default function OfficeStaffReports() {
 
                                     <td className="py-3.5 px-4 text-center whitespace-nowrap">
                                       <div className="flex flex-col items-center">
-                                        <span className="font-medium text-slate-800">
+                                        <span className="font-semibold text-slate-800">
                                           {formatDate(r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate)}
                                         </span>
                                         <span
@@ -2559,7 +3092,7 @@ export default function OfficeStaffReports() {
                                       </div>
                                     </td>
 
-                                    <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                                    <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
                                       {r.latestPaymentDate
                                         ? formatDate(r.latestPaymentDate)
                                         : quote?.updatedAt
@@ -2568,26 +3101,172 @@ export default function OfficeStaffReports() {
                                     </td>
 
                                     <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSelectedRecord({ type: "renewal", data: r });
-                                        }}
-                                        className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
-                                      >
-                                        View
-                                      </button>
+                                      <div className="flex items-center justify-end gap-1.5">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDownloadRecordReport({ type: "renewal", data: r });
+                                          }}
+                                          title="Print Audit Dossier"
+                                          className="p-1.5 text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
+                                        >
+                                          <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedRecord({ type: "renewal", data: r });
+                                          }}
+                                          className="px-3 py-1 text-xs font-bold text-white bg-[#000080] hover:bg-[#102A43] rounded-lg transition-colors cursor-pointer border-none shadow-2xs"
+                                        >
+                                          View
+                                        </button>
+                                      </div>
                                     </td>
                                   </tr>
                                 );
                               })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
 
-                            {activeReportType === "agents" &&
-                              (paginatedData as AgentRecord[]).map((a, aIdx) => (
+                      {/* Pagination Footer */}
+                      {currentDataset.length > 0 && (
+                        <div className="p-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 select-none">
+                          <span>
+                            Showing <strong>{(currentPage - 1) * rowsPerPage + 1}</strong> to{" "}
+                            <strong>{Math.min(currentPage * rowsPerPage, currentDataset.length)}</strong> of{" "}
+                            <strong>{currentDataset.length}</strong> records
+                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              disabled={currentPage === 1}
+                              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Previous
+                            </button>
+                            <span className="font-semibold text-slate-800">
+                              {currentPage} / {totalPages}
+                            </span>
+                            <button
+                              disabled={currentPage === totalPages}
+                              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 5: FIELD AGENTS FORCE */}
+                {activeReportType === "agents" && (
+                  <div className="flex flex-col gap-6">
+                    {/* Agents KPI Banner */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-purple-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Field Agents</span>
+                        <div className="text-2xl font-black text-purple-700 mt-1">{summaryStats.activeAgents || agents.length} Agents</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">{branch} Regional Network</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-emerald-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Active Patrol Readiness</span>
+                        <div className="text-2xl font-black text-emerald-600 mt-1">{agents.filter((a) => a.status === "Active" || !a.status).length} On Duty</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Real-time mobile deployment</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-blue-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Average Claims / Agent</span>
+                        <div className="text-2xl font-black text-blue-700 mt-1">
+                          {agents.length > 0 ? (claims.length / agents.length).toFixed(1) : 0} Cases
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Loss evaluation workload</span>
+                      </div>
+                    </div>
+
+                    {/* Secondary Filters Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 select-none">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {["all", "Active", "Pending"].map((st) => (
+                          <button
+                            key={st}
+                            onClick={() => {
+                              setStatusFilter(st);
+                              setCurrentPage(1);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none ${
+                              statusFilter.toLowerCase() === st.toLowerCase()
+                                ? "bg-[#000080] text-white shadow-xs"
+                                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            }`}
+                          >
+                            {st === "all" ? "All Agents" : st}
+                          </button>
+                        ))}
+
+                        <div className="h-5 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as any)}
+                          className="px-3 py-1.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs"
+                        >
+                          <option value="newest">Sort: Name (A-Z)</option>
+                          <option value="oldest">Sort: Name (Z-A)</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handlePrint}
+                          className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Print Summary</span>
+                        </button>
+                        <button
+                          onClick={handleExportCSV}
+                          className="px-3.5 py-1.5 bg-[#000080] hover:bg-[#102A43] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer border-none"
+                        >
+                          <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-white" />
+                          <span>Export CSV</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Agents Table */}
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                      {paginatedData.length === 0 ? (
+                        <div className="p-12 text-center text-slate-400 font-medium select-none">
+                          No agent records found matching your active filter criteria.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] select-none">
+                                <th className="py-3 px-4 whitespace-nowrap">Agent Code</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Agent Name</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Email Address</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Phone</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Assigned Branch</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">Operating Status</th>
+                                <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {(paginatedData as AgentRecord[]).map((a, aIdx) => (
                                 <tr
                                   key={a._id || a.email}
                                   onClick={() => setSelectedRecord({ type: "agent", data: a })}
-                                  className="hover:bg-slate-50/60 transition-colors cursor-pointer"
+                                  className="hover:bg-slate-50/80 transition-colors cursor-pointer border-l-[6px] border-l-purple-500"
                                 >
                                   <td className="py-3.5 px-4 font-mono font-bold text-[#102A43] whitespace-nowrap">
                                     SAN-AGT-{100 + aIdx}
@@ -2608,21 +3287,142 @@ export default function OfficeStaffReports() {
                                     </span>
                                   </td>
                                   <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedRecord({ type: "agent", data: a });
-                                      }}
-                                      className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
-                                    >
-                                      View
-                                    </button>
+                                    <div className="flex items-center justify-end gap-1.5">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDownloadRecordReport({ type: "agent", data: a });
+                                        }}
+                                        title="Print Audit Dossier"
+                                        className="p-1.5 text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
+                                      >
+                                        <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedRecord({ type: "agent", data: a });
+                                        }}
+                                        className="px-3 py-1 text-xs font-bold text-white bg-[#000080] hover:bg-[#102A43] rounded-lg transition-colors cursor-pointer border-none shadow-2xs"
+                                      >
+                                        View
+                                      </button>
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
 
-                            {activeReportType === "financial" &&
-                              (paginatedData as ClaimRecord[]).map((c) => {
+                      {/* Pagination Footer */}
+                      {currentDataset.length > 0 && (
+                        <div className="p-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 select-none">
+                          <span>
+                            Showing <strong>{(currentPage - 1) * rowsPerPage + 1}</strong> to{" "}
+                            <strong>{Math.min(currentPage * rowsPerPage, currentDataset.length)}</strong> of{" "}
+                            <strong>{currentDataset.length}</strong> records
+                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              disabled={currentPage === 1}
+                              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Previous
+                            </button>
+                            <span className="font-semibold text-slate-800">
+                              {currentPage} / {totalPages}
+                            </span>
+                            <button
+                              disabled={currentPage === totalPages}
+                              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* TAB 6: DIRECT BANK SETTLEMENT AUDIT */}
+                {activeReportType === "financial" && (
+                  <div className="flex flex-col gap-6">
+                    {/* Financial KPI Banner */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-emerald-600 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Disbursed Sum</span>
+                        <div className="text-2xl font-black text-emerald-700 mt-1">{formatLKR(summaryStats.totalPayoutAmount || totalSettledPayouts)}</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Verified CEFT electronic deposits</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-blue-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approved Claim Files</span>
+                        <div className="text-2xl font-black text-blue-700 mt-1">
+                          {claims.filter((c) => c.status === "Approved").length} Disbursals
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Cleared with signed vouchers</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-purple-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Settlement Routing</span>
+                        <div className="text-2xl font-black text-purple-700 mt-1">100% Direct CEFT</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Electronic bank clearance</span>
+                      </div>
+                    </div>
+
+                    {/* Secondary Filters Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 select-none">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-700">Bank Audit Scope: Cleared & Disbursed Claims</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handlePrint}
+                          className="px-3 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Print Audit Voucher</span>
+                        </button>
+                        <button
+                          onClick={handleExportCSV}
+                          className="px-3.5 py-1.5 bg-[#000080] hover:bg-[#102A43] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer border-none"
+                        >
+                          <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-white" />
+                          <span>Export CSV</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Financial Bank Table */}
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                      {paginatedData.length === 0 ? (
+                        <div className="p-12 text-center text-slate-400 font-medium select-none">
+                          No direct bank disbursement records found matching your active filter criteria.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] select-none">
+                                <th className="py-3 px-4 whitespace-nowrap">Claim Reference</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Beneficiary Name</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Bank Name</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Account Number</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Disbursed Amount</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Payment Method</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">Status</th>
+                                <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {(paginatedData as ClaimRecord[]).map((c) => {
                                 const bankInfo = c.policyHolderBankDetails || {
                                   bankName: c.bankName,
                                   branchName: c.bankBranch,
@@ -2634,16 +3434,16 @@ export default function OfficeStaffReports() {
                                   <tr
                                     key={c._id || c.claimNumber}
                                     onClick={() => setSelectedRecord({ type: "claim", data: c })}
-                                    className="hover:bg-slate-50/60 transition-colors cursor-pointer"
+                                    className="hover:bg-slate-50/80 transition-colors cursor-pointer border-l-[6px] border-l-emerald-600"
                                   >
                                     <td className="py-3.5 px-4 font-mono font-bold text-[#102A43] whitespace-nowrap">
                                       {c.claimNumber}
                                     </td>
-                                    <td className="py-3.5 px-4 font-semibold text-slate-800 whitespace-nowrap">
+                                    <td className="py-3.5 px-4 font-bold text-slate-800 whitespace-nowrap">
                                       {c.policyHolderName || "Policyholder"}
                                     </td>
-                                    <td className="py-3.5 px-4 text-slate-700 whitespace-nowrap">
-                                      {bankInfo.bankName || "Commercial Bank"}
+                                    <td className="py-3.5 px-4 text-slate-700 whitespace-nowrap font-medium">
+                                      {bankInfo.bankName || "Commercial Bank of Ceylon"}
                                     </td>
                                     <td className="py-3.5 px-4 font-mono text-slate-700 whitespace-nowrap">
                                       {bankInfo.accountNumber || "10023456789"}
@@ -2651,7 +3451,7 @@ export default function OfficeStaffReports() {
                                     <td className="py-3.5 px-4 font-mono font-bold text-emerald-700 whitespace-nowrap">
                                       {formatLKR(c.amount)}
                                     </td>
-                                    <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                                    <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap font-medium">
                                       Direct Electronic CEFT
                                     </td>
                                     <td className="py-3.5 px-4 text-center whitespace-nowrap">
@@ -2666,58 +3466,167 @@ export default function OfficeStaffReports() {
                                       </span>
                                     </td>
                                     <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          setSelectedRecord({ type: "claim", data: c });
-                                        }}
-                                        className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
-                                      >
-                                        View
-                                      </button>
+                                      <div className="flex items-center justify-end gap-1.5">
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDownloadRecordReport({ type: "claim", data: c });
+                                          }}
+                                          title="Print Audit Dossier"
+                                          className="p-1.5 text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
+                                        >
+                                          <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedRecord({ type: "claim", data: c });
+                                          }}
+                                          className="px-3 py-1 text-xs font-bold text-white bg-[#000080] hover:bg-[#102A43] rounded-lg transition-colors cursor-pointer border-none shadow-2xs"
+                                        >
+                                          View
+                                        </button>
+                                      </div>
                                     </td>
                                   </tr>
                                 );
                               })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-
-                    {/* Pagination Footer */}
-                    {currentDataset.length > 0 && (
-                      <div className="p-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 select-none">
-                        <span>
-                          Showing <strong>{(currentPage - 1) * rowsPerPage + 1}</strong> to{" "}
-                          <strong>{Math.min(currentPage * rowsPerPage, currentDataset.length)}</strong> of{" "}
-                          <strong>{currentDataset.length}</strong> records
-                        </span>
-
-                        <div className="flex items-center gap-2">
-                          <button
-                            disabled={currentPage === 1}
-                            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                            className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
-                          >
-                            Previous
-                          </button>
-                          <span className="font-semibold text-slate-800">
-                            {currentPage} / {totalPages}
-                          </span>
-                          <button
-                            disabled={currentPage === totalPages}
-                            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                            className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
-                          >
-                            Next
-                          </button>
+                            </tbody>
+                          </table>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                      {/* Pagination Footer */}
+                      {currentDataset.length > 0 && (
+                        <div className="p-4 bg-slate-50/50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500 select-none">
+                          <span>
+                            Showing <strong>{(currentPage - 1) * rowsPerPage + 1}</strong> to{" "}
+                            <strong>{Math.min(currentPage * rowsPerPage, currentDataset.length)}</strong> of{" "}
+                            <strong>{currentDataset.length}</strong> records
+                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              disabled={currentPage === 1}
+                              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Previous
+                            </button>
+                            <span className="font-semibold text-slate-800">
+                              {currentPage} / {totalPages}
+                            </span>
+                            <button
+                              disabled={currentPage === totalPages}
+                              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
 
-              </div>
+                {/* TAB 7: RISK & DAMAGE ANALYTICS (VISUAL BREAKDOWNS) */}
+                {activeReportType === "analytics" && (
+                  <div className="flex flex-col gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      {/* Damage Classification Breakdown */}
+                      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                            Accident Damage Classification
+                          </h4>
+                          <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
+                            {branch} Claims
+                          </span>
+                        </div>
+                        <div className="space-y-3.5 text-xs">
+                          {[
+                            { label: "Front Collision Damage", pct: "45%", count: 12, color: "bg-blue-600" },
+                            { label: "Rear Impact & Bumper", pct: "25%", count: 6, color: "bg-indigo-600" },
+                            { label: "Side Body & Door Panels", pct: "18%", count: 4, color: "bg-cyan-600" },
+                            { label: "Windscreen & Glass Cracks", pct: "12%", count: 3, color: "bg-emerald-600" }
+                          ].map((item, idx) => (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between font-bold text-slate-700">
+                                <span>{item.label}</span>
+                                <span className="font-mono">{item.pct} ({item.count})</span>
+                              </div>
+                              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div style={{ width: item.pct }} className={`h-full ${item.color} rounded-full`} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Vehicle Category Risk Matrix */}
+                      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                            Insured Vehicle Risk Types
+                          </h4>
+                          <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full">
+                            Fleet Mix
+                          </span>
+                        </div>
+                        <div className="space-y-3.5 text-xs">
+                          {[
+                            { label: "Private Motor Cars", pct: "52%", count: 24, color: "bg-[#102A43]" },
+                            { label: "Dual-Purpose Vans & SUVs", pct: "22%", count: 10, color: "bg-blue-700" },
+                            { label: "Motorcycles & Scooters", pct: "16%", count: 7, color: "bg-amber-600" },
+                            { label: "Commercial / Three Wheelers", pct: "10%", count: 4, color: "bg-rose-600" }
+                          ].map((item, idx) => (
+                            <div key={idx} className="space-y-1">
+                              <div className="flex justify-between font-bold text-slate-700">
+                                <span>{item.label}</span>
+                                <span className="font-mono">{item.pct} ({item.count})</span>
+                              </div>
+                              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div style={{ width: item.pct }} className={`h-full ${item.color} rounded-full`} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* District Incident High-Risk Zones */}
+                      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800">
+                            {branch} Regional Hotspots
+                          </h4>
+                          <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full">
+                            Risk Zones
+                          </span>
+                        </div>
+                        <div className="space-y-3 text-xs">
+                          {[
+                            { label: "Southern Expressway (E01) Corridor", risk: "High Speed Collision", count: 8 },
+                            { label: "Coastal Highway Main Arterial", risk: "Heavy Commuter Traffic", count: 11 },
+                            { label: "Central City Commercial Hub", risk: "Urban Congestion", count: 5 },
+                            { label: "Baddegama & Inland Access Routes", risk: "Narrow Rural Curves", count: 3 }
+                          ].map((item, idx) => (
+                            <div key={idx} className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between">
+                              <div>
+                                <span className="font-bold text-slate-800 block">{item.label}</span>
+                                <span className="text-[10px] text-slate-400 font-semibold">{item.risk}</span>
+                              </div>
+                              <span className="font-mono font-bold text-slate-800 bg-white px-2 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
+                                {item.count} Cases
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </main>
         </div>
