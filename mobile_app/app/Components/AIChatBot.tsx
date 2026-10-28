@@ -159,6 +159,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     profilePhoto: "",
   });
   const [supportConversationId, setSupportConversationId] = useState<string | null>(null);
+  const [userConversations, setUserConversations] = useState<any[]>([]);
   const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
   const [selectedPhoto, setSelectedPhoto] = useState<{ uri: string; base64?: string; name: string; type: string } | null>(null);
 
@@ -267,17 +268,16 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     const syncMessages = async () => {
       try {
         let convId = supportConversationId;
-        if (!convId) {
-          const res = await fetch(
-            `${API_BASE_URL}/api/claim-chat/conversations?userId=${encodeURIComponent(currentUserSession.userId)}&userType=${currentUserSession.userType}`
-          );
-          if (res.ok) {
-            const d = await res.json();
-            const found = (d.conversations || [])[0];
-            if (found?._id) {
-              convId = found._id;
-              if (isSubscribed) setSupportConversationId(found._id);
-            }
+        const res = await fetch(
+          `${API_BASE_URL}/api/claim-chat/conversations?userId=${encodeURIComponent(currentUserSession.userId)}&userType=${currentUserSession.userType}`
+        );
+        if (res.ok) {
+          const d = await res.json();
+          const list = d.conversations || [];
+          if (isSubscribed) setUserConversations(list);
+          if (!convId && list.length > 0) {
+            convId = list[0]._id;
+            if (isSubscribed) setSupportConversationId(list[0]._id);
           }
         }
 
@@ -665,6 +665,9 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     }
   };
 
+  const activeConv = userConversations.find((c) => c._id === supportConversationId) || userConversations[0];
+  const activeRecipient = activeConv?.otherParticipant;
+
   return (
     <>
       {/* ─── Floating Action Buttons: Support Chat & AI Chat ─── */}
@@ -924,14 +927,22 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
               style={styles.popupHeader}
             >
               <View style={styles.headerLeft}>
-                <View style={[styles.headerAvatar, { backgroundColor: "rgba(255, 255, 255, 0.2)", borderColor: "rgba(255, 255, 255, 0.4)" }]}>
-                  <Ionicons name="chatbubble-ellipses" size={18} color="#ffffff" />
-                </View>
-                <View>
-                  <View style={styles.headerTitleRow}>
-                    <Text style={styles.headerTitle}>Sanasa Support Helpdesk</Text>
+                {activeRecipient?.profilePhoto ? (
+                  <Image source={{ uri: activeRecipient.profilePhoto }} style={styles.headerPhotoAvatar} />
+                ) : (
+                  <View style={[styles.headerAvatar, { backgroundColor: "rgba(255, 255, 255, 0.2)", borderColor: "rgba(255, 255, 255, 0.4)" }]}>
+                    <Ionicons name="chatbubble-ellipses" size={18} color="#ffffff" />
                   </View>
-                  <Text style={styles.headerSubtitle}>Live Customer Care & Emergency Assist</Text>
+                )}
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <View style={styles.headerTitleRow}>
+                    <Text style={styles.headerTitle} numberOfLines={1}>
+                      {activeRecipient?.name || "Sanasa Support Helpdesk"}
+                    </Text>
+                  </View>
+                  <Text style={styles.headerSubtitle} numberOfLines={1}>
+                    {activeRecipient?.role || activeRecipient?.userType || "Support Officer"}{activeConv?.claimNumber && activeConv.claimNumber !== "DIRECT-SUPPORT" ? ` • ${activeConv.claimNumber}` : " • Live"}
+                  </Text>
                 </View>
               </View>
               <TouchableOpacity
@@ -942,6 +953,40 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                 <Ionicons name="close" size={20} color="#ffffff" />
               </TouchableOpacity>
             </LinearGradient>
+
+            {/* Conversation Switcher Pills if user has multiple conversations */}
+            {userConversations.length > 1 && (
+              <View style={styles.convPillBar}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 12, gap: 8 }}>
+                  {userConversations.map((c) => {
+                    const isSelected = c._id === (supportConversationId || userConversations[0]?._id);
+                    const label = c.otherParticipant?.name || c.claimNumber || "Support";
+                    return (
+                      <TouchableOpacity
+                        key={c._id}
+                        onPress={() => {
+                          setSupportConversationId(c._id);
+                          setSupportMessages([]);
+                        }}
+                        style={[
+                          styles.convPill,
+                          isSelected && styles.convPillActive
+                        ]}
+                      >
+                        <Text style={[styles.convPillText, isSelected && styles.convPillTextActive]} numberOfLines={1}>
+                          {c.claimNumber && c.claimNumber !== "DIRECT-SUPPORT" ? `${c.claimNumber}: ` : ""}{label}
+                        </Text>
+                        {c.unreadCount > 0 && (
+                          <View style={styles.convPillUnread}>
+                            <Text style={styles.convPillUnreadText}>{c.unreadCount}</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
 
             {/* Quick Contact Buttons Row */}
             <View style={{ flexDirection: "row", gap: 8, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: "#f8fafc", borderBottomWidth: 1, borderBottomColor: "#f1f5f9" }}>
@@ -1553,5 +1598,56 @@ const styles = StyleSheet.create({
     height: 130,
     borderRadius: 10,
     backgroundColor: "#f1f5f9",
+  },
+  headerPhotoAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    marginRight: 10,
+    borderWidth: 1.5,
+    borderColor: "#ffffff",
+  },
+  convPillBar: {
+    backgroundColor: "#f1f5f9",
+    paddingVertical: 7,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e2e8f0",
+  },
+  convPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    gap: 6,
+  },
+  convPillActive: {
+    backgroundColor: "#0284c7",
+    borderColor: "#0284c7",
+  },
+  convPillText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#334155",
+  },
+  convPillTextActive: {
+    color: "#ffffff",
+  },
+  convPillUnread: {
+    backgroundColor: "#ef4444",
+    borderRadius: 8,
+    minWidth: 15,
+    height: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  convPillUnreadText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "800",
   },
 });
