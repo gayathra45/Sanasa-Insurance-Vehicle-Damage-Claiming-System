@@ -389,7 +389,7 @@ export default function OfficeStaffPolicyHolders() {
       setCustomPopup({
         show: true,
         title: "Validation Error",
-        message: "Please enter the vehicle number plate.",
+        message: "Please enter the vehicle number.",
         type: "error"
       });
       return;
@@ -557,7 +557,7 @@ export default function OfficeStaffPolicyHolders() {
       setCustomPopup({
         show: true,
         title: "Validation Error",
-        message: "Number plate, make, and model are required.",
+        message: "Vehicle number, make, and model are required.",
         type: "error"
       });
       return;
@@ -1000,7 +1000,7 @@ export default function OfficeStaffPolicyHolders() {
                     <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,1.2fr)] gap-4 px-5 py-3 text-slate-400 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
                       <div className="flex flex-col select-none min-w-0">Applicant Name</div>
                       <div className="flex flex-col select-none min-w-0">NIC Number</div>
-                      <div className="flex flex-col select-none min-w-0">Vehicle Plate</div>
+                      <div className="flex flex-col select-none min-w-0">Vehicle Number</div>
                       <div className="flex flex-col select-none min-w-0">Vehicle Type</div>
                       <div className="flex flex-col select-none min-w-0">Policy Number</div>
                       <div className="flex flex-col select-none min-w-0">Date</div>
@@ -1048,7 +1048,7 @@ export default function OfficeStaffPolicyHolders() {
 
                           {/* Col 3: Vehicle Plate */}
                           <div className="flex flex-col min-w-0 select-none">
-                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Vehicle Plate</span>
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block md:hidden">Vehicle Number</span>
                             <span className="text-slate-800 font-semibold text-xs font-mono">
                               {primaryVehicle ? formatPlate(primaryVehicle.numberPlate) : "-"}
                             </span>
@@ -2021,7 +2021,7 @@ export default function OfficeStaffPolicyHolders() {
                 {/* Vehicle Plate */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Number Plate <span className="text-red-500">*</span>
+                    Vehicle Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -2219,7 +2219,7 @@ export default function OfficeStaffPolicyHolders() {
                 {/* Vehicle Plate */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Number Plate <span className="text-red-500">*</span>
+                    Vehicle Number <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"

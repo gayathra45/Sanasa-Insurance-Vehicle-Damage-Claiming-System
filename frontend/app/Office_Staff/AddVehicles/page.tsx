@@ -150,7 +150,7 @@ export default function AddVehiclesPage() {
 
     const cleanPlate = addNumberPlate.replace(/[\s-]/g, "");
     if (cleanPlate.length < 5 || cleanPlate.length > 10 || !/^[A-Za-z0-9]+$/.test(cleanPlate)) {
-      setAddError("Number Plate must be an alphanumeric mix between 5 and 10 characters.");
+      setAddError("Vehicle Number must be an alphanumeric mix between 5 and 10 characters.");
       setAddSubmitting(false);
       return;
     }
@@ -728,7 +728,7 @@ export default function AddVehiclesPage() {
                         <table className="min-w-full divide-y divide-slate-200 select-none text-left">
                           <thead className="bg-slate-50">
                             <tr>
-                              <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Plate Number</th>
+                              <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Vehicle Number</th>
                               <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Type</th>
                               <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Make & Model</th>
                               <th className="px-5 py-3 text-slate-400 font-medium text-[11px] uppercase">Policy No</th>
@@ -943,9 +943,9 @@ export default function AddVehiclesPage() {
                     </select>
                   </div>
 
-                  {/* Number Plate */}
+                  {/* Vehicle Number */}
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Number Plate *</label>
+                    <label className="text-slate-500 font-medium text-xs uppercase tracking-wider">Vehicle Number *</label>
                     <input
                       type="text"
                       placeholder="e.g. WP-CAB-1234"

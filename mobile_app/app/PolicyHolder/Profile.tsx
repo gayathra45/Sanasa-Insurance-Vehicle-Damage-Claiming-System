@@ -472,7 +472,7 @@ export default function PolicyHolderProfilePage() {
       setCustomPopup({
         show: true,
         title: "Validation Error",
-        message: "Vehicle number plate and model are required.",
+        message: "Vehicle number and model are required.",
         type: "error"
       });
       return;
@@ -1204,7 +1204,7 @@ export default function PolicyHolderProfilePage() {
 
             <ScrollView style={{ maxHeight: 400 }} showsVerticalScrollIndicator={false}>
               <View style={styles.formGroup}>
-                <Text style={styles.inputLabel}>Number Plate *</Text>
+                <Text style={styles.inputLabel}>Vehicle Number *</Text>
                 <TextInput
                   value={vehicleForm.numberPlate}
                   onChangeText={(val) => setVehicleForm({ ...vehicleForm, numberPlate: val })}

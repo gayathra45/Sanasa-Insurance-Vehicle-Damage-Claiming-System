@@ -184,7 +184,7 @@ export default function PolicyHolderHome() {
         `POLICY CERTIFICATE / COVER NOTE\n`,
         `========================================\n`,
         `Policy Number: ${vehicle.policyNumber}\n`,
-        `Vehicle Number Plate: ${formatNumberPlate(vehicle.numberPlate)}\n`,
+        `Vehicle Number: ${formatNumberPlate(vehicle.numberPlate)}\n`,
         `Vehicle Type: ${vehicle.vehicleType}\n`,
         `Make & Model: ${vehicle.company} ${vehicle.model} (${vehicle.year})\n`,
         `Engine Number: ${vehicle.engineNumber}\n`,
@@ -866,7 +866,7 @@ export default function PolicyHolderHome() {
               {/* 2-Column Specs Layout */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-normal text-slate-700 mb-8 px-2">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Number Plate</span>
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Vehicle Number</span>
                   <span className="font-semibold text-slate-800 text-base">{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">

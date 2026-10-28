@@ -922,7 +922,7 @@ ${inspectionReportText.trim()}
             <Text style={{ fontSize: 12, fontWeight: "800", color: "#0f172a" }}>{selectedClaim.damageType}</Text>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>PLATE NUMBER</Text>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>VEHICLE NUMBER</Text>
             <Text style={{ fontSize: 12, fontWeight: "800", color: "#0f172a" }}>{formatNumberPlate(selectedClaim.vehiclePlate)}</Text>
           </View>
         </View>

@@ -600,7 +600,7 @@ export async function sendRenewalQuoteCalculatedEmails({ user, vehicle, renewal,
 
         <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 540px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
           <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
-            <td style="padding: 12px 16px; font-weight: 600; width: 40%; color: #4a5568;">Vehicle Number Plate:</td>
+            <td style="padding: 12px 16px; font-weight: 600; width: 40%; color: #4a5568;">Vehicle Number:</td>
             <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehicle.numberPlate}</td>
           </tr>
           <tr style="border-bottom: 1px solid #edf2f7;">
@@ -685,7 +685,7 @@ export async function sendRenewalQuoteCalculatedEmails({ user, vehicle, renewal,
             <td style="padding: 12px 16px; color: #1a202c;">${user.nic} | ${user.mobile}</td>
           </tr>
           <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
-            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle & Plate:</td>
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle Number:</td>
             <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehicle.numberPlate} (${vehicle.company} ${vehicle.model})</td>
           </tr>
           <tr style="border-bottom: 1px solid #edf2f7;">
@@ -743,7 +743,7 @@ export async function sendRenewalPaymentSuccessEmails({ user, vehiclePlate, rene
             <td style="padding: 12px 16px; color: #059669; font-weight: 800;">VERIFIED & PAID</td>
           </tr>
           <tr style="border-bottom: 1px solid #edf2f7;">
-            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle Plate:</td>
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle Number:</td>
             <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehiclePlate}</td>
           </tr>
           <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
@@ -815,7 +815,7 @@ export async function sendRenewalPaymentSuccessEmails({ user, vehiclePlate, rene
             <td style="padding: 12px 16px; color: #1a202c;">${user?.nic || renewal.nic} | ${user?.mobile || renewal.contactNumber}</td>
           </tr>
           <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
-            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle Plate:</td>
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle Number:</td>
             <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehiclePlate}</td>
           </tr>
           <tr style="border-bottom: 1px solid #edf2f7;">

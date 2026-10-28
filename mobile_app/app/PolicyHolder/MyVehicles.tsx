@@ -456,7 +456,7 @@ export default function MyVehicles() {
 
     const cleanPlate = newNumberPlate.replace(/[\s-]/g, "");
     if (cleanPlate.length < 5 || cleanPlate.length > 10 || !/^[A-Za-z0-9]+$/.test(cleanPlate)) {
-      setValidationError("Number Plate must be between 5 and 10 alphanumeric characters.");
+      setValidationError("Vehicle Number must be between 5 and 10 alphanumeric characters.");
       return;
     }
 
@@ -955,7 +955,7 @@ export default function MyVehicles() {
                 <View style={styles.specsGridBox}>
                   <View style={styles.specGridRow}>
                     <View style={styles.specGridCol}>
-                      <Text style={styles.specGridLabel}>NUMBER PLATE</Text>
+                      <Text style={styles.specGridLabel}>VEHICLE NUMBER</Text>
                       <Text style={styles.specGridVal}>{formatPlate(selectedVehicleForModal.numberPlate)}</Text>
                     </View>
                     <View style={styles.specGridCol}>
@@ -1696,7 +1696,7 @@ export default function MyVehicles() {
                 keyboardShouldPersistTaps="handled"
               >
                 <View style={styles.formItem}>
-                  <Text style={styles.formLabel}>Number Plate *</Text>
+                  <Text style={styles.formLabel}>Vehicle Number *</Text>
                   <TextInput
                     style={styles.modalInput}
                     placeholder="e.g. WP-CBH-3202"

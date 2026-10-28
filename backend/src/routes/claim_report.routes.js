@@ -467,7 +467,7 @@ router.get("/:claimNumber/report", async (req, res) => {
       <tr>
         <td class="lbl">Policyholder Full Name</td>
         <td class="val val-strong">${policyholderName}</td>
-        <td class="lbl">Vehicle Number Plate</td>
+        <td class="lbl">Vehicle Number</td>
         <td class="val val-code">${claim.vehiclePlate || "N/A"}</td>
       </tr>
       <tr>

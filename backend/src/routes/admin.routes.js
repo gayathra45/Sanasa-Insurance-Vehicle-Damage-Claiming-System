@@ -1923,7 +1923,7 @@ router.post("/policyholders/:id/vehicles", async (req, res) => {
     const { numberPlate, vehicleType, company, model, year, engineNumber, chassisNumber, policyNumber, status } = req.body;
 
     if (!numberPlate || !company || !model || !year) {
-      return res.status(400).json({ error: "Number plate, company, model, and year are required." });
+      return res.status(400).json({ error: "Vehicle number, company, model, and year are required." });
     }
 
     const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };

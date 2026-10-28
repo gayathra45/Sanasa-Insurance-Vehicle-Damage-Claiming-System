@@ -190,7 +190,7 @@ function getSmartInsuranceFallback(message = "", userRole = "policy_holder") {
   const q = message.toLowerCase().trim();
 
   if (q.includes("claim") || q.includes("accident") || q.includes("crash") || q.includes("hit")) {
-    return `🚗 **Sanasa Vehicle Accident Claim Steps:**\n\n1. **Ensure Safety**: Turn on hazard lights and ensure all passengers are safe.\n2. **Call 24/7 Hotline**: Immediately dial **011-2303300** or **011-2303301** to report the incident.\n3. **Take Photos**: Capture clear photos of vehicle damage, number plates, and the accident scene.\n4. **Submit Claim**: In this app, tap **"New Claim"** to lodge your report online.\n5. **Inspection & Estimate**: A Sanasa agent will inspect the vehicle, and you will upload the repair garage estimate.\n6. **Fast Settlement**: Once approved, funds are transferred directly to your bank account.`;
+    return `🚗 **Sanasa Vehicle Accident Claim Steps:**\n\n1. **Ensure Safety**: Turn on hazard lights and ensure all passengers are safe.\n2. **Call 24/7 Hotline**: Immediately dial **011-2303300** or **011-2303301** to report the incident.\n3. **Take Photos**: Capture clear photos of vehicle damage, vehicle numbers, and the accident scene.\n4. **Submit Claim**: In this app, tap **"New Claim"** to lodge your report online.\n5. **Inspection & Estimate**: A Sanasa agent will inspect the vehicle, and you will upload the repair garage estimate.\n6. **Fast Settlement**: Once approved, funds are transferred directly to your bank account.`;
   }
 
   if (q.includes("document") || q.includes("doc") || q.includes("paper") || q.includes("need")) {

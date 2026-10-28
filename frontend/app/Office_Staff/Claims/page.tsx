@@ -3707,7 +3707,7 @@ function OfficeStaffClaimsPageContent() {
                     <strong className="text-slate-900">{selectedClaim.policyHolderName || "N/A"}</strong>
                   </div>
                   <div className="flex justify-between items-center text-slate-600">
-                    <span>Vehicle Plate:</span>
+                    <span>Vehicle Number:</span>
                     <strong className="text-slate-900">{selectedClaim.vehiclePlate || "N/A"}</strong>
                   </div>
                   <div className="flex justify-between items-center text-slate-600">
@@ -4732,7 +4732,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 mb-2 text-xs font-semibold text-slate-600 space-y-2 select-none">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                 <div>
-                  <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block">Vehicle Plate</span>
+                  <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block">Vehicle Number</span>
                   <span className="text-slate-800 font-semibold">{formatPlate(showAssignModal.vehiclePlate)}</span>
                 </div>
                 <div>

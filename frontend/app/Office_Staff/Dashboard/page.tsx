@@ -655,7 +655,7 @@ export default function OfficeStaffDashboard() {
 
               <div className="space-y-3">
                 <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Vehicle Plate</span>
+                  <span className="text-slate-400 font-medium">Vehicle Number</span>
                   <span className="text-slate-800 font-semibold">{selectedClaim.vehiclePlate}</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-50 pb-2">

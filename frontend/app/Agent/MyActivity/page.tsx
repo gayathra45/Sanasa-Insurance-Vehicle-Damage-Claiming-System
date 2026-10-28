@@ -2702,7 +2702,7 @@ export default function AgentActivityPage() {
               </div>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">3</span>
-                <span className="leading-relaxed">Tap on your newly accepted claim plate number.</span>
+                <span className="leading-relaxed">Tap on your newly accepted claim vehicle number.</span>
               </div>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">4</span>

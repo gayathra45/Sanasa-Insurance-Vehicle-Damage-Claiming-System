@@ -567,7 +567,7 @@ export default function RegistrationsPage() {
                       <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,1.0fr)_minmax(0,1.4fr)_minmax(0,1.2fr)_minmax(0,2.2fr)] gap-4 px-5 py-3 text-slate-400 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
                         <div>Applicant Name</div>
                         <div>NIC Number</div>
-                        <div>Vehicle Plate</div>
+                        <div>Vehicle Number</div>
                         <div>Vehicle Type</div>
                         <div>Policy Number</div>
                         <div>Date</div>
@@ -614,7 +614,7 @@ export default function RegistrationsPage() {
                           </div>
 
                           <div className="flex flex-col min-w-0 select-none">
-                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 md:hidden">Vehicle Plate</span>
+                            <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 md:hidden">Vehicle Number</span>
                             <span className="text-slate-800 font-semibold text-xs">
                               {reg.vehicles && reg.vehicles.length > 0 ? formatPlate(reg.vehicles[0].numberPlate) : "-"}
                             </span>

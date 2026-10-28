@@ -593,7 +593,7 @@ export default function OfficeStaffRenewalsPage() {
                           Vehicle & Model
                         </th>
                         <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                          Number Plate
+                          Vehicle Number
                         </th>
                         <th className="px-5 py-3.5 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
                           Policy Number
@@ -753,7 +753,7 @@ export default function OfficeStaffRenewalsPage() {
                     {selectedItem.vehicle.company} {selectedItem.vehicle.model}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Plate: <strong className="text-slate-800">{selectedItem.vehicle.numberPlate}</strong> | Policy:{" "}
+                    Vehicle Number: <strong className="text-slate-800">{selectedItem.vehicle.numberPlate}</strong> | Policy:{" "}
                     {selectedItem.vehicle.policyNumber}
                   </p>
                 </div>

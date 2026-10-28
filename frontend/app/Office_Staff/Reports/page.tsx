@@ -571,7 +571,7 @@ export default function OfficeStaffReports() {
     const branchName = branch || "Galle";
 
     if (activeReportType === "claims" || activeReportType === "financial") {
-      csvContent += "Claim Number,Policy Holder,NIC,Vehicle Plate,Damage Type,Claim Amount (LKR),Status,Assigned Agent,Bank Name,Bank Account,Turnaround (Days),Date Filed\n";
+      csvContent += "Claim Number,Policy Holder,NIC,Vehicle Number,Damage Type,Claim Amount (LKR),Status,Assigned Agent,Bank Name,Bank Account,Turnaround (Days),Date Filed\n";
       filteredClaims.forEach((c) => {
         const bankInfo = c.policyHolderBankDetails || { bankName: c.bankName, accountNumber: c.bankAccount };
         const row = [
@@ -591,7 +591,7 @@ export default function OfficeStaffReports() {
         csvContent += row.join(",") + "\n";
       });
     } else if (activeReportType === "policyholders") {
-      csvContent += "Reference No,Full Name,NIC,Mobile,Email,City,Vehicles Count,Primary Vehicle Plate,Primary Policy No,Status,Registered Date\n";
+      csvContent += "Reference No,Full Name,NIC,Mobile,Email,City,Vehicles Count,Primary Vehicle Number,Primary Policy No,Status,Registered Date\n";
       filteredHolders.forEach((h) => {
         const primaryVeh = h.vehicles && h.vehicles.length > 0 ? h.vehicles[0] : null;
         const row = [
@@ -610,7 +610,7 @@ export default function OfficeStaffReports() {
         csvContent += row.join(",") + "\n";
       });
     } else if (activeReportType === "renewals") {
-      csvContent += "Plate Number,Vehicle Model,Type,Policy Number,Policyholder Name,NIC,Mobile,Email,Policy Expiry Date,Days Remaining,Renewal Status,Quote Total (LKR),Payment Plan,Installments Paid,Latest Payment Date\n";
+      csvContent += "Vehicle Number,Vehicle Model,Type,Policy Number,Policyholder Name,NIC,Mobile,Email,Policy Expiry Date,Days Remaining,Renewal Status,Quote Total (LKR),Payment Plan,Installments Paid,Latest Payment Date\n";
       filteredRenewals.forEach((r) => {
         const quote = r.renewalQuote;
         const paidInstCount = quote?.installments?.filter(i => i.status === "Paid").length || 0;
@@ -909,7 +909,7 @@ export default function OfficeStaffReports() {
           <table>
             <thead>
               <tr>
-                <th>Plate Number</th>
+                <th>Vehicle Number</th>
                 <th>Policy Number</th>
                 <th>Vehicle Type</th>
                 <th>Make / Model</th>
@@ -1845,7 +1845,7 @@ export default function OfficeStaffReports() {
                                 <>
                                   <th className="py-3 px-4 whitespace-nowrap">Claim ID</th>
                                   <th className="py-3 px-4 whitespace-nowrap">Policyholder & NIC</th>
-                                  <th className="py-3 px-4 whitespace-nowrap">Vehicle Plate</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">Vehicle Number</th>
                                   <th className="py-3 px-4 whitespace-nowrap">Damage Classification</th>
                                   <th className="py-3 px-4 whitespace-nowrap">Amount (LKR)</th>
                                   <th className="py-3 px-4 text-center whitespace-nowrap">TAT</th>
@@ -1866,7 +1866,7 @@ export default function OfficeStaffReports() {
                                 </>
                               ) : activeReportType === "renewals" ? (
                                 <>
-                                  <th className="py-3 px-4 whitespace-nowrap">Vehicle Plate & Model</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">Vehicle Number & Model</th>
                                   <th className="py-3 px-4 whitespace-nowrap">Policy Number</th>
                                   <th className="py-3 px-4 whitespace-nowrap">Policyholder & NIC</th>
                                   <th className="py-3 px-4 text-center whitespace-nowrap">Expiry & Remaining</th>
@@ -2369,7 +2369,7 @@ export default function OfficeStaffReports() {
                   {modalTab === "vehicle" && (
                     <div className="space-y-3 divide-y divide-slate-100">
                       <div className="pt-1 flex justify-between">
-                        <span className="text-slate-400">Vehicle Number Plate:</span>
+                        <span className="text-slate-400">Vehicle Number:</span>
                         <strong className="font-mono text-slate-900 font-bold">{selectedRecord.data.vehicleNumber || "-"}</strong>
                       </div>
                       <div className="pt-2 flex justify-between">

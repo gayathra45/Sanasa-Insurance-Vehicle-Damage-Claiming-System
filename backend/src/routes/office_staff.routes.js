@@ -440,7 +440,7 @@ router.post("/policy-holders/:nic/vehicles", async (req, res) => {
     }
 
     if (!numberPlate || !vehicleType || !company || !model) {
-      return res.status(400).json({ error: "Vehicle plate number, type, make (company), and model are required." });
+      return res.status(400).json({ error: "Vehicle number, type, make (company), and model are required." });
     }
 
     const cleanNic = nic.trim();

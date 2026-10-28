@@ -254,7 +254,7 @@ const translations = {
     otherCount: "Number of other vehicles involved",
     selectCountPlaceholder: "Select number of vehicles",
     otherVehicleHeader: "Other Vehicle",
-    plateNum: "Vehicle Plate Number *",
+    plateNum: "Vehicle Number *",
     insuranceCompany: "Insurance Company *",
     policyNum: "Policy Number *",
     driverName: "Driver Full Name *",

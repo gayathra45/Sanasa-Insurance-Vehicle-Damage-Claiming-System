@@ -461,7 +461,7 @@ export default function AdminClaimsPage() {
       "Claim Number",
       "Policyholder Name",
       "NIC",
-      "Vehicle Plate",
+      "Vehicle Number",
       "Damage Type",
       "Branch",
       "Assigned Agent",
@@ -972,7 +972,7 @@ export default function AdminClaimsPage() {
 
                     {/* Col 2: Vehicle & Location */}
                     <div className="flex flex-col min-w-0 select-none">
-                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Vehicle Plate</span>
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Vehicle Number</span>
                       <span className="text-slate-700 font-semibold text-xs font-mono">{claim.vehiclePlate}</span>
                       <span className="text-[10px] text-slate-500 font-semibold truncate">{claim.location || "On Road"}</span>
                     </div>
@@ -1191,7 +1191,7 @@ export default function AdminClaimsPage() {
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/70 space-y-1.5">
                       <span className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">Vehicle & Bank</span>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Plate Number:</span>
+                        <span className="text-slate-400">Vehicle Number:</span>
                         <span className="font-mono font-bold text-slate-800">{viewingClaim.vehiclePlate}</span>
                       </div>
                       <div className="flex justify-between">

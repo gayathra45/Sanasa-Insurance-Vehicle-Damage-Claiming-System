@@ -218,7 +218,7 @@ export default function MyVehicles() {
 
     const cleanPlate = newNumberPlate.replace(/[\s-]/g, "");
     if (cleanPlate.length < 5 || cleanPlate.length > 10 || !/^[A-Za-z0-9]+$/.test(cleanPlate)) {
-      setValidationError("Number Plate must be an alphanumeric mix between 5 and 10 characters.");
+      setValidationError("Vehicle Number must be an alphanumeric mix between 5 and 10 characters.");
       return;
     }
 
@@ -600,7 +600,7 @@ export default function MyVehicles() {
         ``,
         `VEHICLE SPECIFICATIONS`,
         `--------------------------------------------------------------------------------`,
-        `Vehicle Plate  : ${formatNumberPlate(vehicle.numberPlate)}`,
+        `Vehicle Number : ${formatNumberPlate(vehicle.numberPlate)}`,
         `Vehicle Type   : ${vehicle.vehicleType}`,
         `Make & Model   : ${vehicle.company} ${vehicle.model} (${vehicle.year})`,
         `Engine Number  : ${vehicle.engineNumber}`,
@@ -1029,7 +1029,7 @@ export default function MyVehicles() {
               {/* 2-Column Specs Layout */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-normal text-slate-700 mb-8 px-2">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Number Plate</span>
+                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Vehicle Number</span>
                   <span className="font-semibold text-slate-800 text-base">{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
@@ -1899,10 +1899,10 @@ export default function MyVehicles() {
                 )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-                  {/* Number Plate */}
+                  {/* Vehicle Number */}
                   <div className="flex flex-col gap-1">
                     <label className="text-slate-800 text-[13.5px] font-medium block mb-1">
-                      Number Plate <span className="text-red-500 font-medium ml-0.5">*</span>
+                      Vehicle Number <span className="text-red-500 font-medium ml-0.5">*</span>
                     </label>
                     <input
                       type="text"

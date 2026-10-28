@@ -91,7 +91,7 @@ router.post("/", async (req, res) => {
       }
       const cleanPlate = v.numberPlate.replace(/[\s-]/g, "");
       if (cleanPlate.length < 5 || cleanPlate.length > 10 || !/^[A-Za-z0-9]+$/.test(cleanPlate)) {
-        return res.status(400).json({ error: `Vehicle #${i + 1} Number Plate must be an alphanumeric mix between 5 and 10 characters.` });
+        return res.status(400).json({ error: `Vehicle #${i + 1} Vehicle Number must be an alphanumeric mix between 5 and 10 characters.` });
       }
       if (!/^\d{4}$/.test(v.year)) {
         return res.status(400).json({ error: `Invalid year for Vehicle #${i + 1}. Must be a 4-digit number.` });
