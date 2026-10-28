@@ -47,6 +47,7 @@ interface RecipientItem {
   email: string;
   role: string;
   branch: string;
+  profilePhoto?: string;
   badgeColor?: string;
 }
 
@@ -55,6 +56,7 @@ interface BranchItem {
   name: string;
   branch: string;
   email: string;
+  profilePhoto?: string;
   role: string;
 }
 
@@ -64,6 +66,7 @@ interface AgentItem {
   email: string;
   branch: string;
   agentId?: string;
+  profilePhoto?: string;
   role: string;
 }
 
@@ -78,6 +81,7 @@ interface RecentAgentChat {
     email: string;
     role: string;
     branch?: string;
+    profilePhoto?: string;
   };
   lastMessage?: {
     text: string;
@@ -96,6 +100,7 @@ interface MessageItem {
   senderType: string;
   senderName: string;
   senderRole?: string;
+  senderPhoto?: string;
   text: string;
   attachments?: MessageAttachment[];
   readBy?: { userId: string; readAt: string }[];
@@ -115,6 +120,7 @@ interface RecentConversationItem {
     email: string;
     role?: string;
     branch?: string;
+    profilePhoto?: string;
   };
   lastMessage?: {
     text: string;
@@ -134,6 +140,7 @@ interface AdminItem {
   mobile?: string;
   status: string;
   branch: string;
+  profilePhoto?: string;
   role: string;
 }
 
@@ -146,6 +153,58 @@ interface PendingAttachment {
 }
 
 type MainCategory = "recent" | "claims" | "branches" | "agents" | "admin";
+
+export const getAvatarUrl = (rawUrl?: string | null) => {
+  if (!rawUrl) return "";
+  if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://") || rawUrl.startsWith("data:")) return rawUrl;
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") || "http://localhost:5000";
+  return `${baseUrl}${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+};
+
+export const getInitials = (name?: string) => {
+  if (!name) return "S";
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+};
+
+function UserAvatar({
+  photo,
+  name,
+  className = "w-10 h-10 rounded-2xl text-xs",
+  fallbackBg = "bg-slate-100 text-slate-700",
+  alt = "User Avatar"
+}: {
+  photo?: string | null;
+  name?: string;
+  className?: string;
+  fallbackBg?: string;
+  alt?: string;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const url = getAvatarUrl(photo);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [photo]);
+
+  if (url && !imgError) {
+    return (
+      <img
+        src={url}
+        alt={alt || name || "Avatar"}
+        onError={() => setImgError(true)}
+        className={`${className} object-cover shrink-0 select-none`}
+      />
+    );
+  }
+
+  return (
+    <div className={`${className} ${fallbackBg} flex items-center justify-center font-bold shrink-0 select-none`}>
+      {getInitials(name)}
+    </div>
+  );
+}
 
 export default function ClaimChatModal() {
   const {
@@ -654,6 +713,7 @@ export default function ClaimChatModal() {
           senderName: currentSession.name,
           senderEmail: currentSession.email,
           senderRole: currentSession.userType,
+          senderPhoto: currentSession.profilePhoto || "",
           text: textToSend,
           attachments: attachmentsToSend.map((att) => ({
             name: att.name,
@@ -799,7 +859,8 @@ export default function ClaimChatModal() {
         name: conv.otherParticipant.name,
         email: conv.otherParticipant.email,
         role: conv.otherParticipant.role || conv.otherParticipant.userType,
-        branch: conv.otherParticipant.branch || ""
+        branch: conv.otherParticipant.branch || "",
+        profilePhoto: conv.otherParticipant.profilePhoto || ""
       });
     }
 
@@ -953,7 +1014,8 @@ export default function ClaimChatModal() {
       name: branch.name,
       email: branch.email,
       role: "Branch Officer",
-      branch: branch.branch
+      branch: branch.branch,
+      profilePhoto: branch.profilePhoto || ""
     });
     setMobileView("chat");
   };
@@ -975,7 +1037,8 @@ export default function ClaimChatModal() {
       name: item.agent.name,
       email: item.agent.email,
       role: item.agent.role || "Field Agent",
-      branch: item.agent.branch || ""
+      branch: item.agent.branch || "",
+      profilePhoto: item.agent.profilePhoto || ""
     });
 
     setMobileView("chat");
@@ -998,7 +1061,8 @@ export default function ClaimChatModal() {
       name: agent.name,
       email: agent.email,
       role: "Field Agent",
-      branch: agent.branch
+      branch: agent.branch,
+      profilePhoto: agent.profilePhoto || ""
     });
     setMobileView("chat");
   };
@@ -1033,17 +1097,11 @@ export default function ClaimChatModal() {
       name: admin.name,
       email: admin.email,
       role: admin.role || "Claims Administrator",
-      branch: admin.branch || "Head Office"
+      branch: admin.branch || "Head Office",
+      profilePhoto: admin.profilePhoto || ""
     });
 
     setMobileView("chat");
-  };
-
-  const getInitials = (name?: string) => {
-    if (!name) return "S";
-    const parts = name.trim().split(" ");
-    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-    return name.slice(0, 2).toUpperCase();
   };
 
   if (!isChatOpen) return null;
@@ -1212,10 +1270,15 @@ export default function ClaimChatModal() {
           {/* Bottom User Avatar Indicator */}
           <div className="flex flex-col items-center gap-2">
             <div
-              className="w-10 h-10 rounded-2xl bg-slate-800 text-slate-200 font-bold text-xs flex items-center justify-center border border-slate-700/80 shadow-xs"
+              className="w-10 h-10 rounded-2xl border border-slate-700/80 shadow-xs overflow-hidden"
               title={`${currentSession.name} (${currentSession.userType})`}
             >
-              {getInitials(currentSession.name)}
+              <UserAvatar
+                photo={currentSession.profilePhoto}
+                name={currentSession.name}
+                className="w-full h-full"
+                fallbackBg="bg-slate-800 text-slate-200 text-xs font-bold"
+              />
             </div>
           </div>
         </div>
@@ -1330,18 +1393,21 @@ export default function ClaimChatModal() {
                           : "bg-white text-slate-800 border-slate-200/70 hover:bg-slate-100/60 shadow-2xs"
                       }`}
                     >
-                      {/* Avatar with Initials */}
+                      {/* Avatar with Photo or Fallback Initials */}
                       <div className="relative shrink-0">
-                        <div
-                          className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs ${
-                            isSelected
-                              ? "bg-white/15 text-white"
-                              : hasUnread
-                              ? "bg-[#0f172a] text-white shadow-xs"
-                              : "bg-slate-100 text-slate-700"
-                          }`}
-                        >
-                          {getInitials(otherName)}
+                        <div className="w-10 h-10 rounded-2xl overflow-hidden flex items-center justify-center">
+                          <UserAvatar
+                            photo={conv.otherParticipant?.profilePhoto}
+                            name={otherName}
+                            className="w-full h-full"
+                            fallbackBg={
+                              isSelected
+                                ? "bg-white/15 text-white text-xs font-bold"
+                                : hasUnread
+                                ? "bg-[#0f172a] text-white text-xs font-bold shadow-xs"
+                                : "bg-slate-100 text-slate-700 text-xs font-bold"
+                            }
+                          />
                         </div>
                         {/* Red Dot Highlight on avatar if unread */}
                         {hasUnread && (
@@ -1525,11 +1591,20 @@ export default function ClaimChatModal() {
                       }`}
                     >
                       <div
-                        className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                        className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 overflow-hidden ${
                           isSelected ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700"
                         }`}
                       >
-                        <HugeiconsIcon icon={Building01Icon} className="w-5 h-5" strokeWidth={2} />
+                        {b.profilePhoto ? (
+                          <UserAvatar
+                            photo={b.profilePhoto}
+                            name={b.name}
+                            className="w-full h-full"
+                            fallbackBg={isSelected ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700"}
+                          />
+                        ) : (
+                          <HugeiconsIcon icon={Building01Icon} className="w-5 h-5" strokeWidth={2} />
+                        )}
                       </div>
 
                       <div className="min-w-0 flex-1">
@@ -1600,12 +1675,13 @@ export default function ClaimChatModal() {
                             : "bg-white text-slate-800 border-slate-200/70 hover:bg-slate-100/60 shadow-2xs"
                         }`}
                       >
-                        <div
-                          className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs shrink-0 ${
-                            isSelected ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700"
-                          }`}
-                        >
-                          {getInitials(item.agent.name)}
+                        <div className="w-10 h-10 rounded-2xl shrink-0 overflow-hidden flex items-center justify-center">
+                          <UserAvatar
+                            photo={item.agent.profilePhoto}
+                            name={item.agent.name}
+                            className="w-full h-full"
+                            fallbackBg={isSelected ? "bg-white/15 text-white text-xs font-bold" : "bg-slate-100 text-slate-700 text-xs font-bold"}
+                          />
                         </div>
 
                         <div className="min-w-0 flex-1">
@@ -1675,12 +1751,13 @@ export default function ClaimChatModal() {
                             : "bg-white text-slate-800 border-slate-200/70 hover:bg-slate-100/60 shadow-2xs"
                         }`}
                       >
-                        <div
-                          className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs shrink-0 ${
-                            isSelected ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700"
-                          }`}
-                        >
-                          {getInitials(a.name)}
+                        <div className="w-10 h-10 rounded-2xl shrink-0 overflow-hidden flex items-center justify-center">
+                          <UserAvatar
+                            photo={a.profilePhoto}
+                            name={a.name}
+                            className="w-full h-full"
+                            fallbackBg={isSelected ? "bg-white/15 text-white text-xs font-bold" : "bg-slate-100 text-slate-700 text-xs font-bold"}
+                          />
                         </div>
 
                         <div className="min-w-0 flex-1">
@@ -1739,13 +1816,14 @@ export default function ClaimChatModal() {
                           : "bg-white text-slate-800 border-slate-200/70 hover:bg-slate-100/60 shadow-2xs"
                       }`}
                     >
-                      <div
-                        className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold text-xs shrink-0 ${
-                          isSelected ? "bg-white/15 text-white" : "bg-purple-50 text-purple-700"
-                        }`}
-                      >
-                        {getInitials(adm.name)}
-                      </div>
+                        <div className="w-10 h-10 rounded-2xl shrink-0 overflow-hidden flex items-center justify-center">
+                          <UserAvatar
+                            photo={adm.profilePhoto}
+                            name={adm.name}
+                            className="w-full h-full"
+                            fallbackBg={isSelected ? "bg-white/15 text-white text-xs font-bold" : "bg-purple-50 text-purple-700 text-xs font-bold"}
+                          />
+                        </div>
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-1">
@@ -1792,14 +1870,14 @@ export default function ClaimChatModal() {
             3. RIGHT PANEL: CHAT CANVAS & STAKEHOLDER SWITCHER
             ══════════════════════════════════════════════════════════════ */}
         <div
-          className={`flex-1 flex flex-col bg-white min-w-0 ${
+          className={`flex-1 flex flex-col bg-[#f8fafc] min-w-0 ${
             mobileView === "list" ? "hidden sm:flex" : "flex"
           }`}
         >
           {!conversation && !activeRecipient ? (
-            <div className="flex-1 flex flex-col h-full bg-slate-50/30">
+            <div className="flex-1 flex flex-col h-full bg-[#f8fafc]">
               {/* Header with Close Button */}
-              <div className="bg-white border-b border-slate-100 px-5 py-3.5 flex items-center justify-end shadow-2xs shrink-0">
+              <div className="bg-white border-b border-slate-200/80 px-5 py-3.5 flex items-center justify-end shadow-2xs shrink-0">
                 <button
                   onClick={closeChat}
                   className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
@@ -1811,14 +1889,14 @@ export default function ClaimChatModal() {
 
               {/* Placeholder Body */}
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center select-none">
-                <div className="w-16 h-16 rounded-3xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 shadow-sm border border-blue-100">
+                <div className="w-16 h-16 rounded-3xl bg-slate-100 text-slate-700 flex items-center justify-center mb-4 shadow-sm border border-slate-200/80">
                   <HugeiconsIcon icon={BubbleChatIcon} className="w-8 h-8" strokeWidth={2} />
                 </div>
                 <h3 className="text-base font-bold text-slate-800 mb-1.5">Sanasa Claim Communication Desk</h3>
                 <p className="text-xs text-slate-500 max-w-sm leading-relaxed mb-6">
                   Select a recent conversation from the left to view messages, or select any Claim, Regional Branch, or Field Agent to start chatting.
                 </p>
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50/70 border border-blue-200/50 text-[11px] font-medium text-blue-700">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[11px] font-medium text-slate-700">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   Real-Time Messaging Ready
                 </div>
@@ -1827,7 +1905,7 @@ export default function ClaimChatModal() {
           ) : (
             <>
               {/* Header */}
-              <div className="bg-white border-b border-slate-100 px-5 py-3.5 flex items-center justify-between shadow-2xs shrink-0">
+              <div className="bg-white border-b border-slate-200/80 px-5 py-3.5 flex items-center justify-between shadow-2xs shrink-0 backdrop-blur-xs">
             <div className="flex items-center gap-3 min-w-0">
               {/* Mobile Back Button */}
               <button
@@ -1839,8 +1917,13 @@ export default function ClaimChatModal() {
               </button>
 
               {/* Recipient Avatar */}
-              <div className="w-10 h-10 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20">
-                {getInitials(activeRecipient?.name)}
+              <div className="w-10 h-10 rounded-2xl shrink-0 shadow-xs overflow-hidden flex items-center justify-center">
+                <UserAvatar
+                  photo={activeRecipient?.profilePhoto}
+                  name={activeRecipient?.name}
+                  className="w-full h-full"
+                  fallbackBg="bg-[#0f172a] text-white text-xs font-bold"
+                />
               </div>
 
               <div className="min-w-0">
@@ -1849,7 +1932,7 @@ export default function ClaimChatModal() {
                     {activeRecipient?.name || "Select Participant"}
                   </h3>
                   {activeRecipient?.role && (
-                    <span className="text-[10px] font-semibold bg-blue-50 text-blue-700 px-2.5 py-0.5 rounded-full border border-blue-200/60 shrink-0">
+                    <span className="text-[10px] font-semibold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200/90 shrink-0">
                       {activeRecipient.role}
                     </span>
                   )}
@@ -1859,11 +1942,11 @@ export default function ClaimChatModal() {
                   {activeCategory === "claims" && activeClaim?.claimNumber?.startsWith("CLM") ? (
                     <>Claim: <strong className="text-slate-600">{activeClaim.claimNumber}</strong></>
                   ) : activeCategory === "branches" || activeRecipient?.userType === "OfficeStaff" ? (
-                    <span className="text-blue-600 font-medium">Branch Office Communication</span>
+                    <span className="text-slate-700 font-semibold">Branch Office Communication</span>
                   ) : activeCategory === "admin" || activeRecipient?.userType === "Admin" ? (
-                    <span className="text-purple-600 font-medium">Head Office Administration</span>
+                    <span className="text-purple-700 font-semibold">Head Office Administration</span>
                   ) : activeCategory === "agents" || activeRecipient?.userType === "Agent" ? (
-                    <span className="text-emerald-600 font-medium">Field Agent Inspection</span>
+                    <span className="text-emerald-700 font-semibold">Field Agent Inspection</span>
                   ) : activeClaim?.claimNumber && activeClaim.claimNumber.startsWith("CLM") ? (
                     <>Claim: <strong className="text-slate-600">{activeClaim.claimNumber}</strong></>
                   ) : (
@@ -1904,7 +1987,7 @@ export default function ClaimChatModal() {
 
           {/* Stakeholder Switcher (Pill Tabs - ONLY shown for Claim Messages in Claims category) */}
           {activeCategory === "claims" && activeClaim?.claimNumber?.startsWith("CLM") && recipients.length > 0 && (
-            <div className="bg-slate-50/60 border-b border-slate-100 px-5 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
+            <div className="bg-slate-100/70 border-b border-slate-200/80 px-5 py-2 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
                 <HugeiconsIcon icon={UserGroupIcon} className="w-3.5 h-3.5 text-slate-400" />
                 Stakeholders:
@@ -1918,8 +2001,8 @@ export default function ClaimChatModal() {
                       onClick={() => setActiveRecipient(r)}
                       className={`text-xs px-3.5 py-1 rounded-full font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
-                          ? "bg-blue-600 text-white shadow-xs"
-                          : "bg-white border border-slate-200/80 text-slate-600 hover:bg-slate-100"
+                          ? "bg-[#0f172a] text-white shadow-xs"
+                          : "bg-white border border-slate-200/80 text-slate-700 hover:bg-slate-50"
                       }`}
                     >
                       <span>{r.name}</span>
@@ -1937,10 +2020,10 @@ export default function ClaimChatModal() {
             </div>
           )}
 
-          {/* Message Stream Canvas */}
-          <div className="flex-1 overflow-y-auto no-scrollbar p-5 sm:p-6 space-y-3.5 bg-slate-50/30">
+          {/* Message Stream Canvas (Low-light simple design) */}
+          <div className="flex-1 overflow-y-auto no-scrollbar p-5 sm:p-6 space-y-3.5 bg-[#f1f5f9]">
             <div className="flex items-center justify-center my-1">
-              <span className="bg-slate-100 text-slate-500 text-[10px] font-semibold px-3 py-1 rounded-full">
+              <span className="bg-white border border-slate-200/90 text-slate-600 text-[10px] font-semibold px-3.5 py-1 rounded-full shadow-2xs">
                 {activeCategory === "claims"
                   ? "Official Claim Communication"
                   : activeCategory === "branches"
@@ -1955,12 +2038,12 @@ export default function ClaimChatModal() {
 
             {loadingMessages ? (
               <div className="h-full flex flex-col items-center justify-center gap-2 text-slate-400">
-                <HugeiconsIcon icon={Loading03Icon} className="w-7 h-7 animate-spin text-blue-600" />
+                <HugeiconsIcon icon={Loading03Icon} className="w-7 h-7 animate-spin text-slate-700" />
                 <p className="text-xs">Loading secure message history...</p>
               </div>
             ) : messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400">
-                <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mb-3 shadow-xs">
+                <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200/90 text-slate-700 flex items-center justify-center mb-3 shadow-xs">
                   <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7" />
                 </div>
                 <h4 className="font-bold text-slate-800 text-sm">No messages yet</h4>
@@ -2002,14 +2085,19 @@ export default function ClaimChatModal() {
                     className={`flex items-end gap-2 ${isMe ? "justify-end" : "justify-start"}`}
                   >
                     {!isMe && (
-                      <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 font-bold text-[10px] flex items-center justify-center shrink-0 mb-1">
-                        {getInitials(msg.senderName)}
+                      <div className="w-7 h-7 rounded-full shrink-0 mb-1 border border-slate-300/60 overflow-hidden flex items-center justify-center">
+                        <UserAvatar
+                          photo={msg.senderPhoto}
+                          name={msg.senderName}
+                          className="w-full h-full"
+                          fallbackBg="bg-slate-200 text-slate-700 text-[10px] font-bold"
+                        />
                       </div>
                     )}
 
                     <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[80%] sm:max-w-[70%]`}>
                       {!isMe && (
-                        <span className="text-[10px] font-semibold text-slate-500 ml-1 mb-0.5">
+                        <span className="text-[10px] font-semibold text-slate-600 ml-1 mb-0.5">
                           {msg.senderName}
                         </span>
                       )}
@@ -2017,8 +2105,8 @@ export default function ClaimChatModal() {
                       <div
                         className={`rounded-2xl px-4 py-2.5 text-xs sm:text-sm leading-relaxed ${
                           isMe
-                            ? "bg-blue-600 text-white rounded-tr-xs shadow-xs"
-                            : "bg-slate-100 text-slate-800 rounded-tl-xs"
+                            ? "bg-[#1e293b] text-slate-50 rounded-tr-xs shadow-xs"
+                            : "bg-white border border-slate-200/90 text-slate-800 rounded-tl-xs shadow-2xs"
                         }`}
                       >
                         {/* Attachments (Photos & Documents) */}
@@ -2062,13 +2150,13 @@ export default function ClaimChatModal() {
                                   download={att.name}
                                   className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all no-underline ${
                                     isMe
-                                      ? "bg-white/15 border-white/25 text-white hover:bg-white/25"
-                                      : "bg-white border-slate-200/80 text-slate-800 hover:bg-slate-50 shadow-2xs"
+                                      ? "bg-white/10 border-white/15 text-white hover:bg-white/20"
+                                      : "bg-slate-50 border-slate-200/80 text-slate-800 hover:bg-slate-100 shadow-2xs"
                                   }`}
                                 >
                                   <div
                                     className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                                      isMe ? "bg-white/20 text-white" : "bg-blue-50 text-blue-600"
+                                      isMe ? "bg-white/15 text-white" : "bg-slate-100 text-slate-700"
                                     }`}
                                   >
                                     <HugeiconsIcon icon={File01Icon} className="w-4.5 h-4.5" strokeWidth={2} />
@@ -2079,7 +2167,7 @@ export default function ClaimChatModal() {
                                     </p>
                                     <p
                                       className={`text-[10px] mt-0.5 ${
-                                        isMe ? "text-blue-100" : "text-slate-400"
+                                        isMe ? "text-slate-300" : "text-slate-400"
                                       }`}
                                     >
                                       {formatFileSize(att.size)} • Document
@@ -2087,7 +2175,7 @@ export default function ClaimChatModal() {
                                   </div>
                                   <div
                                     className={`p-1.5 rounded-lg shrink-0 ${
-                                      isMe ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                                      isMe ? "bg-white/15 text-white" : "bg-slate-200/80 text-slate-700"
                                     }`}
                                     title="Download Document"
                                   >
@@ -2103,7 +2191,7 @@ export default function ClaimChatModal() {
                         
                         <div
                           className={`flex items-center justify-end gap-1 text-[10px] mt-1 ${
-                            isMe ? "text-blue-100" : "text-slate-400"
+                            isMe ? "text-slate-400" : "text-slate-400"
                           }`}
                         >
                           <span>
@@ -2117,13 +2205,13 @@ export default function ClaimChatModal() {
                               {isReadByRecipient ? (
                                 <HugeiconsIcon
                                   icon={TickDouble02Icon}
-                                  className="w-3.5 h-3.5 text-blue-200 inline"
+                                  className="w-3.5 h-3.5 text-emerald-400 inline"
                                   strokeWidth={2.5}
                                 />
                               ) : (
                                 <HugeiconsIcon
                                   icon={Tick02Icon}
-                                  className="w-3.5 h-3.5 text-blue-200 inline"
+                                  className="w-3.5 h-3.5 text-slate-400 inline"
                                   strokeWidth={2}
                                 />
                               )}
@@ -2141,7 +2229,7 @@ export default function ClaimChatModal() {
 
           {/* Quick Replies */}
           {(!inputText || inputText.trim().length === 0) && pendingAttachments.length === 0 && (
-            <div className="px-5 py-1.5 bg-white border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
+            <div className="px-5 py-2 bg-white border-t border-slate-200/70 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
                 Quick:
               </span>
@@ -2150,7 +2238,7 @@ export default function ClaimChatModal() {
                   key={idx}
                   type="button"
                   onClick={() => handleSendMessage(undefined, text)}
-                  className="text-[11px] bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 border border-slate-200/70 hover:border-blue-200 px-3 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer"
+                  className="text-[11px] bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 hover:border-slate-300 px-3 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer shadow-2xs"
                 >
                   {text}
                 </button>
@@ -2160,8 +2248,8 @@ export default function ClaimChatModal() {
 
           {/* Pending Attachments Preview Tray */}
           {pendingAttachments.length > 0 && (
-            <div className="px-4 py-2.5 bg-slate-50 border-t border-slate-200/80 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+            <div className="px-4 py-2.5 bg-slate-100/90 border-t border-slate-200/90 flex items-center gap-2 overflow-x-auto no-scrollbar shrink-0">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider shrink-0">
                 Attachments ({pendingAttachments.length}):
               </span>
               {pendingAttachments.map((att, idx) => {
@@ -2178,7 +2266,7 @@ export default function ClaimChatModal() {
                         className="w-8 h-8 rounded-lg object-cover border border-slate-100 shrink-0"
                       />
                     ) : (
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
                         <HugeiconsIcon icon={File01Icon} className="w-4 h-4" />
                       </div>
                     )}
@@ -2191,7 +2279,7 @@ export default function ClaimChatModal() {
                     <button
                       type="button"
                       onClick={() => removePendingAttachment(idx)}
-                      className="w-5 h-5 rounded-full bg-slate-100 hover:bg-red-50 text-slate-400 hover:text-red-500 flex items-center justify-center transition-colors cursor-pointer ml-1"
+                      className="w-5 h-5 rounded-full bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 flex items-center justify-center transition-colors cursor-pointer ml-1"
                       title="Remove attachment"
                     >
                       <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" strokeWidth={2.5} />
@@ -2203,10 +2291,10 @@ export default function ClaimChatModal() {
           )}
 
           {/* Input Bar */}
-          <div className="p-3 sm:p-4 bg-white border-t border-slate-100 shrink-0">
+          <div className="p-3 sm:p-4 bg-white border-t border-slate-200/80 shrink-0">
             <form
               onSubmit={(e) => handleSendMessage(e)}
-              className="bg-slate-50 border border-slate-200 rounded-full p-1.5 pl-3 flex items-center gap-2 focus-within:bg-white focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all shadow-inner"
+              className="bg-slate-50 border border-slate-200 rounded-full p-1.5 pl-3 flex items-center gap-2 focus-within:bg-white focus-within:ring-2 focus-within:ring-slate-400/20 focus-within:border-slate-400 transition-all shadow-inner"
             >
               {/* Hidden File Input for photos and documents */}
               <input
@@ -2223,7 +2311,7 @@ export default function ClaimChatModal() {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!activeRecipient || sending}
-                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-blue-600 hover:bg-slate-200/60 rounded-full transition-colors cursor-pointer disabled:opacity-30 shrink-0"
+                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-200/60 rounded-full transition-colors cursor-pointer disabled:opacity-30 shrink-0"
                 title="Attach photos or documents (PDF, DOC, Images)"
               >
                 <HugeiconsIcon icon={Attachment01Icon} className="w-4.5 h-4.5" strokeWidth={2} />
@@ -2247,7 +2335,7 @@ export default function ClaimChatModal() {
               <button
                 type="submit"
                 disabled={(!inputText.trim() && pendingAttachments.length === 0) || !activeRecipient || sending}
-                className="w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700 disabled:opacity-30 disabled:hover:bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 active:scale-95 transition-all cursor-pointer border-none shrink-0"
+                className="w-9 h-9 rounded-full bg-[#0f172a] hover:bg-[#1e293b] disabled:opacity-30 disabled:hover:bg-[#0f172a] text-white flex items-center justify-center shadow-xs active:scale-95 transition-all cursor-pointer border-none shrink-0"
                 title="Send message"
               >
                 {sending ? (

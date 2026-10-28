@@ -18,6 +18,7 @@ const conversationSchema = new mongoose.Schema(
         email: { type: String, required: true },
         role: { type: String, default: "" },
         branch: { type: String, default: "" },
+        profilePhoto: { type: String, default: "" },
         lastReadAt: { type: Date, default: Date.now }
       }
     ],

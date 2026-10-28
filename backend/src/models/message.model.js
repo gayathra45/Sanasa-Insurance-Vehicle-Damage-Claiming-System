@@ -18,6 +18,7 @@ const messageSchema = new mongoose.Schema(
     senderName: { type: String, required: true },
     senderEmail: { type: String, default: "" },
     senderRole: { type: String, default: "" },
+    senderPhoto: { type: String, default: "" },
     
     // Direct recipient or target details (for direct messages or primary recipient)
     recipientId: { type: String, default: "" },

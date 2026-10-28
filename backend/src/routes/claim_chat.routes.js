@@ -143,17 +143,17 @@ router.get("/claims", async (req, res) => {
 router.get("/directory", async (req, res) => {
   try {
     const staffDocs = await OfficeStaff.find()
-      .select("branch email")
+      .select("branch email profilePhoto")
       .sort({ branch: 1 })
       .lean();
 
     const agentDocs = await Agent.find()
-      .select("name email branch agentId")
+      .select("name email branch agentId profilePhoto")
       .sort({ name: 1 })
       .lean();
 
     const adminDocs = await Admin.find()
-      .select("name email mobile status")
+      .select("name email mobile status profilePhoto")
       .sort({ name: 1 })
       .lean();
 
@@ -164,6 +164,7 @@ router.get("/directory", async (req, res) => {
         name: b.branch?.includes("Branch") ? b.branch : `${b.branch} Branch`,
         branch: b.branch,
         email: b.email,
+        profilePhoto: b.profilePhoto || "",
         role: "Branch Officer"
       })),
       agents: agentDocs.map((a) => ({
@@ -172,6 +173,7 @@ router.get("/directory", async (req, res) => {
         email: a.email,
         branch: a.branch,
         agentId: a.agentId,
+        profilePhoto: a.profilePhoto || "",
         role: "Field Agent"
       })),
       admins: adminDocs.map((adm) => ({
@@ -181,6 +183,7 @@ router.get("/directory", async (req, res) => {
         mobile: adm.mobile || "",
         status: adm.status || "Approved",
         branch: "Head Office",
+        profilePhoto: adm.profilePhoto || "",
         role: "Claims Administrator"
       }))
     });
@@ -206,7 +209,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
 
     // 1. Fetch Policyholder
     const policyholder = await User.findOne({ nic: claim.userNic })
-      .select("firstName lastName nic email mobile branch")
+      .select("firstName lastName nic email mobile branch profilePhoto")
       .lean();
 
     // 2. Fetch Assigned Agent (if any)
@@ -220,7 +223,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           { _id: mongoose.isValidObjectId(claim.assignedAgent) ? claim.assignedAgent : null }
         ]
       })
-        .select("agentId name email phone branch")
+        .select("agentId name email phone branch profilePhoto")
         .lean();
     }
 
@@ -234,20 +237,20 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           { branch: claim.branch }
         ]
       })
-        .select("name email mobile branch managerName managerEmail")
+        .select("name email mobile branch managerName managerEmail profilePhoto")
         .lean();
     }
 
     // Fallback: If no staff found for this specific branch, find any active branch office staff
     if (!branchStaff) {
       branchStaff = await OfficeStaff.findOne()
-        .select("name email mobile branch managerName managerEmail")
+        .select("name email mobile branch managerName managerEmail profilePhoto")
         .lean();
     }
 
     // 4. Fetch Primary Admin
     const admin = await Admin.findOne({ status: "Approved" })
-      .select("name email mobile")
+      .select("name email mobile profilePhoto")
       .lean();
 
     const eligibleRecipients = [];
@@ -263,6 +266,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: agent.email,
           role: "Assigned Agent",
           branch: agent.branch || claim.branch,
+          profilePhoto: agent.profilePhoto || "",
           badgeColor: "bg-emerald-100 text-emerald-800"
         });
       }
@@ -274,6 +278,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: branchStaff.email,
           role: "Branch Officer",
           branch: branchStaff.branch,
+          profilePhoto: branchStaff.profilePhoto || "",
           badgeColor: "bg-blue-100 text-blue-800"
         });
       }
@@ -287,6 +292,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: policyholder.email,
           role: "Policyholder",
           branch: policyholder.branch || claim.branch,
+          profilePhoto: policyholder.profilePhoto || "",
           badgeColor: "bg-indigo-100 text-indigo-800"
         });
       }
@@ -298,6 +304,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: branchStaff.email,
           role: "Branch Officer",
           branch: branchStaff.branch,
+          profilePhoto: branchStaff.profilePhoto || "",
           badgeColor: "bg-blue-100 text-blue-800"
         });
       }
@@ -311,6 +318,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: policyholder.email,
           role: "Policyholder",
           branch: policyholder.branch || claim.branch,
+          profilePhoto: policyholder.profilePhoto || "",
           badgeColor: "bg-indigo-100 text-indigo-800"
         });
       }
@@ -322,6 +330,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: agent.email,
           role: "Assigned Agent",
           branch: agent.branch || claim.branch,
+          profilePhoto: agent.profilePhoto || "",
           badgeColor: "bg-emerald-100 text-emerald-800"
         });
       }
@@ -333,6 +342,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: admin.email,
           role: "Administrator",
           branch: "Head Office",
+          profilePhoto: admin.profilePhoto || "",
           badgeColor: "bg-purple-100 text-purple-800"
         });
       }
@@ -346,6 +356,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: policyholder.email,
           role: "Policyholder",
           branch: policyholder.branch || claim.branch,
+          profilePhoto: policyholder.profilePhoto || "",
           badgeColor: "bg-indigo-100 text-indigo-800"
         });
       }
@@ -357,6 +368,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: agent.email,
           role: "Assigned Agent",
           branch: agent.branch || claim.branch,
+          profilePhoto: agent.profilePhoto || "",
           badgeColor: "bg-emerald-100 text-emerald-800"
         });
       }
@@ -368,6 +380,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: branchStaff.email,
           role: "Branch Officer",
           branch: branchStaff.branch,
+          profilePhoto: branchStaff.profilePhoto || "",
           badgeColor: "bg-blue-100 text-blue-800"
         });
       }
@@ -383,6 +396,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: admin.email,
           role: "Administrator",
           branch: "Head Office",
+          profilePhoto: admin.profilePhoto || "",
           badgeColor: "bg-purple-100 text-purple-800"
         });
       }
@@ -394,6 +408,7 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           email: branchStaff.email,
           role: "Branch Officer",
           branch: branchStaff.branch,
+          profilePhoto: branchStaff.profilePhoto || "",
           badgeColor: "bg-blue-100 text-blue-800"
         });
       }
@@ -447,9 +462,32 @@ router.get("/conversations", async (req, res) => {
         });
 
         // Determine the other participant name for direct chat
-        const otherParticipant = (conv.participants || []).find(
+        let otherParticipant = (conv.participants || []).find(
           (p) => String(p.userId) !== String(userId)
         );
+
+        if (otherParticipant) {
+          otherParticipant = { ...otherParticipant };
+          if (!otherParticipant.profilePhoto && otherParticipant.userId) {
+            try {
+              if (otherParticipant.userType === "PolicyHolder") {
+                const u = await User.findOne({ $or: [{ nic: otherParticipant.userId }, { email: otherParticipant.email }] }).select("profilePhoto").lean();
+                if (u?.profilePhoto) otherParticipant.profilePhoto = u.profilePhoto;
+              } else if (otherParticipant.userType === "Agent") {
+                const a = await Agent.findOne({ $or: [{ agentId: otherParticipant.userId }, { email: otherParticipant.email }, { _id: mongoose.isValidObjectId(otherParticipant.userId) ? otherParticipant.userId : null }] }).select("profilePhoto").lean();
+                if (a?.profilePhoto) otherParticipant.profilePhoto = a.profilePhoto;
+              } else if (otherParticipant.userType === "OfficeStaff") {
+                const s = await OfficeStaff.findOne({ $or: [{ branch: otherParticipant.userId }, { email: otherParticipant.email }] }).select("profilePhoto").lean();
+                if (s?.profilePhoto) otherParticipant.profilePhoto = s.profilePhoto;
+              } else if (otherParticipant.userType === "Admin") {
+                const adm = await Admin.findOne({ $or: [{ _id: mongoose.isValidObjectId(otherParticipant.userId) ? otherParticipant.userId : null }, { email: otherParticipant.email }] }).select("profilePhoto").lean();
+                if (adm?.profilePhoto) otherParticipant.profilePhoto = adm.profilePhoto;
+              }
+            } catch (err) {
+              // Ignore lookup error, fallback smoothly
+            }
+          }
+        }
 
         return {
           ...conv,
@@ -520,6 +558,7 @@ router.post("/conversations", async (req, res) => {
               email: sender.email || "",
               role: sender.role || sender.userType,
               branch: sender.branch || claim?.branch || "Head Office",
+              profilePhoto: sender.profilePhoto || "",
               lastReadAt: new Date()
             },
             {
@@ -529,6 +568,7 @@ router.post("/conversations", async (req, res) => {
               email: recipient.email || "",
               role: recipient.role || recipient.userType,
               branch: recipient.branch || claim?.branch || "Head Office",
+              profilePhoto: recipient.profilePhoto || "",
               lastReadAt: new Date(0)
             }
           ],
@@ -558,6 +598,7 @@ router.post("/conversations", async (req, res) => {
               email: sender.email || "",
               role: sender.role || sender.userType,
               branch: sender.branch || claim.branch,
+              profilePhoto: sender.profilePhoto || "",
               lastReadAt: new Date()
             }
           ],
@@ -618,6 +659,7 @@ router.post("/conversations/:conversationId/messages", async (req, res) => {
       senderName,
       senderEmail,
       senderRole,
+      senderPhoto,
       text,
       attachments = [],
       idempotencyKey
@@ -682,6 +724,7 @@ router.post("/conversations/:conversationId/messages", async (req, res) => {
       senderName,
       senderEmail: senderEmail || "",
       senderRole: senderRole || senderType,
+      senderPhoto: senderPhoto || "",
       recipientId: primaryRecipient ? String(primaryRecipient.userId) : "",
       recipientType: primaryRecipient?.userType || "",
       recipientName: primaryRecipient?.name || "",

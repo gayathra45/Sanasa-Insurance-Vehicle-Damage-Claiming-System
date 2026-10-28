@@ -8,6 +8,7 @@ export interface CurrentUserSession {
   name: string;
   email: string;
   branch: string;
+  profilePhoto?: string;
 }
 
 /**
@@ -27,7 +28,8 @@ export function getActiveUserSession(): CurrentUserSession | null {
           userType: "PolicyHolder",
           name: `${u.firstName || ""} ${u.lastName || ""}`.trim() || u.name || "Policyholder",
           email: u.email || "",
-          branch: u.branch || "Galle"
+          branch: u.branch || "Galle",
+          profilePhoto: u.profilePhoto || ""
         };
       }
     }
@@ -42,7 +44,8 @@ export function getActiveUserSession(): CurrentUserSession | null {
           userType: "OfficeStaff",
           name: s.name || `${s.branch || "Branch"} Office`,
           email: s.email || "",
-          branch: s.branch || "Galle"
+          branch: s.branch || "Galle",
+          profilePhoto: s.profilePhoto || ""
         };
       }
     }
@@ -57,7 +60,8 @@ export function getActiveUserSession(): CurrentUserSession | null {
           userType: "Agent",
           name: a.name || "Agent",
           email: a.email || "",
-          branch: a.branch || ""
+          branch: a.branch || "",
+          profilePhoto: a.profilePhoto || ""
         };
       }
     }
@@ -72,7 +76,8 @@ export function getActiveUserSession(): CurrentUserSession | null {
           userType: "Admin",
           name: adm.name || "Administrator",
           email: adm.email || "",
-          branch: "Head Office"
+          branch: "Head Office",
+          profilePhoto: adm.profilePhoto || ""
         };
       }
     }
