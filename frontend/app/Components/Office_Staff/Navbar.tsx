@@ -77,7 +77,13 @@ export default function OfficeStaffNavbar() {
 
   const { chatUnreadCount, notificationUnreadCount, openChat } = useChatNotification();
 
-  const menuItems = [
+  interface MenuItem {
+    name: string;
+    href: string;
+    isChatAction?: boolean;
+  }
+
+  const menuItems: MenuItem[] = [
     { name: "Home", href: "/Office_Staff/Dashboard" },
     { name: "Claims", href: "/Office_Staff/Claims" },
     { name: "Registrations", href: "/Office_Staff/Registrations" },
@@ -85,7 +91,6 @@ export default function OfficeStaffNavbar() {
     { name: "Policy Renewals", href: "/Office_Staff/Renewals" },
     { name: "Agents", href: "/Office_Staff/Agents" },
     { name: "Reports", href: "/Office_Staff/Reports" },
-    { name: "Claim Chat", href: "#claim-chat", isChatAction: true },
     { name: "Notifications", href: "/Office_Staff/Notifications" },
     { name: "Contact", href: "/Office_Staff/Contact" },
   ];

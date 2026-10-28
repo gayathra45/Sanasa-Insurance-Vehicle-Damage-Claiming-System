@@ -34,7 +34,13 @@ export default function AdminNavbar() {
     return () => window.removeEventListener("open-admin-mobile-menu", handleOpen);
   }, []);
 
-  const menuItems = [
+  interface MenuItem {
+    name: string;
+    href: string;
+    isChatAction?: boolean;
+  }
+
+  const menuItems: MenuItem[] = [
     { name: "Dashboard", href: "/Admin/Dashboard" },
     { name: "Staff", href: "/Admin/Staff" },
     { name: "Policy Holders", href: "/Admin/PolicyHolders" },
@@ -43,7 +49,6 @@ export default function AdminNavbar() {
     { name: "Claims", href: "/Admin/Claims" },
     { name: "Reports", href: "/Admin/Analytics" },
     { name: "Agents", href: "/Admin/Agents" },
-    { name: "Claim Chat", href: "#claim-chat", isChatAction: true },
     { name: "Notifications", href: "/Admin/Notifications" },
     { name: "Contact", href: "/Admin/Contact" },
   ];
