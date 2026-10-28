@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config({ override: true });
+dotenv.config({ override: true }); // Reloads updated .env with new TextBee API key
 import dns from "dns";
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
