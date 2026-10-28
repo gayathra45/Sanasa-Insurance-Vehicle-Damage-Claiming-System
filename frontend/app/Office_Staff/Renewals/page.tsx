@@ -127,6 +127,7 @@ export default function OfficeStaffRenewalsPage() {
   const [allowInstallments, setAllowInstallments] = useState(true);
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
   const [calcSuccessMsg, setCalcSuccessMsg] = useState("");
+  const [calcErrMsg, setCalcErrMsg] = useState("");
   const [customExpiryDate, setCustomExpiryDate] = useState<string>("");
   const [isSendingReminder, setIsSendingReminder] = useState(false);
   const [reminderStatus, setReminderStatus] = useState("");
