@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 import Claim from "../models/claim.model.js";
 import User from "../models/user.model.js";
+import Agent from "../models/agent.model.js";
 
 dotenv.config();
 
@@ -31,7 +32,7 @@ KNOWLEDGE BASE & EXPERTISE:
 3. Claim Process & Accident Reporting:
    - Step 1: Ensure passenger safety, turn on hazard lights, do not move the vehicle unless instructed or causing severe road hazard.
    - Step 2: Call the 24/7 Sanasa Accident Hotline immediately: 011-2303300 or 011-2303301.
-   - Step 3: Take clear photos of all vehicles involved, accident damage (front, rear, side), surroundings, and license plates.
+   - Step 3: Take clear photos of all vehicles involved, accident damage (front, rear, side), surroundings, and vehicle numbers.
    - Step 4: Open the Sanasa Mobile App and submit an accident claim under "New Claim".
    - Step 5: A Sanasa on-site assessor / agent will be dispatched or inspect the vehicle physically.
    - Step 6: Upload the official repair garage estimate quotation document.
@@ -48,8 +49,22 @@ KNOWLEDGE BASE & EXPERTISE:
    - Agents can perform on-site physical inspections using the Sanasa Agent Mobile App.
    - Checklist includes: Odometer reading, fuel level, component damage breakdown, photo uploads, and physical remarks.
 
-CRITICAL BOUNDARY & GUARDRAILS (STRICTLY ENFORCED):
+6. Branch Operations & Admin Staff Capabilities:
+   - Branch Staff (office_staff) and Admin users can ask about:
+     * Policyholders (Full name, NIC, mobile phone, email, registered branch, residential address/city, registration status, vehicles registered, and document upload checklist).
+     * Registered Vehicles (Vehicle number, make, model, year, vehicle type, insurance policy number, renewal date, and vehicle status).
+     * Claims (Claim number, policyholder name, vehicle number, damage category, incident details, location, status, branch, assigned agent, and assessed amounts).
+     * Documents (Verification and upload status of NIC Front/Back, Vehicle Registration CR, Revenue License, accident damage photos, driving license, garage repair quotation, and inspection report).
+     * Field Agents (Agent ID, name, branch, phone, email, status, availability, and active assigned claims workload).
+
+CRITICAL BOUNDARY & STRICT DATA PRIVACY GUARDRAILS:
 - You must ONLY answer questions directly related to Sanasa General Insurance, vehicle & motor insurance in Sri Lanka, motor policies, claims, coverage, premiums, renewals, accident reporting, and roadside assistance.
+- STRICT PRIVACY AND NON-SENSITIVE POLICY (ZERO TOLERANCE):
+  * Confidential credentials such as user passwords, password hashes, authentication tokens, security OTPs, reset session tokens, and unmasked bank account numbers are STRICTLY PROTECTED.
+  * You must NEVER disclose, display, or guess sensitive credentials under any circumstance.
+  * Any bank account numbers must ALWAYS be masked to only the last 4 digits (e.g. ••••1234).
+  * If a user or staff member requests passwords, security tokens, or complete bank account numbers, you must decline firmly:
+    "Confidential credentials such as passwords, authentication tokens, security OTPs, and full bank account numbers are strictly protected by Sanasa Security Policy and cannot be retrieved or displayed."
 - If a user asks about ANYTHING ELSE (e.g. general knowledge, life insurance, medical/health advice, coding, math, recipes, cooking, weather, politics, jokes, non-vehicle topics, or competitor insurance companies):
   You must POLITELY AND STRICTLY DECLINE. Respond:
   "I am the Sanasa Vehicle Insurance AI Assistant. I can only assist you with Sanasa General Insurance motor and vehicle insurance policies, claims, coverages, accident procedures, and roadside assistance in Sri Lanka. How can I assist you with your vehicle insurance today?"
@@ -68,6 +83,181 @@ function formatPlate(plate = "") {
 function formatCurrency(amt) {
   if (amt === null || amt === undefined || amt === "" || isNaN(Number(amt))) return "Under Assessment";
   return `Rs. ${Number(amt).toLocaleString("en-LK", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/**
+ * Mask bank account numbers to last 4 digits for privacy
+ */
+function maskBankAccount(acc) {
+  if (!acc || typeof acc !== "string") return "Not registered";
+  const trimmed = acc.trim();
+  if (trimmed.length <= 4) return "••••" + trimmed;
+  return "••••" + trimmed.slice(-4);
+}
+
+/**
+ * Check if a query attempts to extract sensitive credentials
+ */
+function isAskingSensitiveData(query = "") {
+  const q = query.toLowerCase();
+  return (
+    q.includes("password") ||
+    q.includes("passwd") ||
+    q.includes("passwordhash") ||
+    q.includes("secret") ||
+    q.includes("otp") ||
+    q.includes("pin") ||
+    q.includes("resettoken") ||
+    q.includes("session token") ||
+    (q.includes("bank account") && (q.includes("full") || q.includes("complete") || q.includes("number")))
+  );
+}
+
+/**
+ * Format document status checklist for policyholder / vehicle
+ */
+function formatDocumentStatus(docs = {}) {
+  const status = [];
+  status.push(`• **NIC (Front)**: ${docs?.nicFront ? "✅ Uploaded" : "❌ Not Uploaded"}`);
+  status.push(`• **NIC (Back)**: ${docs?.nicBack ? "✅ Uploaded" : "❌ Not Uploaded"}`);
+  status.push(`• **Vehicle Registration Certificate (CR)**: ${docs?.vehicleReg ? "✅ Uploaded" : "❌ Not Uploaded"}`);
+  status.push(`• **Revenue License**: ${docs?.revenueLicense ? "✅ Uploaded" : "❌ Not Uploaded"}`);
+  return status.join("\n");
+}
+
+/**
+ * Format document status checklist for a claim
+ */
+function formatClaimDocumentsStatus(claim = {}) {
+  const status = [];
+  const frontPhotos = claim.accidentPhotos?.front?.length || 0;
+  const rearPhotos = claim.accidentPhotos?.rear?.length || 0;
+  const sidePhotos = claim.accidentPhotos?.side?.length || 0;
+  const totalAccidentPhotos = frontPhotos + rearPhotos + sidePhotos;
+
+  status.push(`• **Accident Photos**: ${totalAccidentPhotos > 0 ? `✅ ${totalAccidentPhotos} photo(s) on file (Front: ${frontPhotos}, Rear: ${rearPhotos}, Side: ${sidePhotos})` : "❌ None uploaded"}`);
+
+  const licenseFront = claim.drivingLicense?.front?.length || 0;
+  const licenseRear = claim.drivingLicense?.rear?.length || 0;
+  status.push(`• **Driver's License Photos**: ${licenseFront + licenseRear > 0 ? `✅ Uploaded (Front & Rear)` : "❌ Pending upload"}`);
+
+  status.push(`• **On-Site Physical Inspection**: ${claim.inspectionSubmitted ? "✅ Filed by Agent" + (claim.inspectionApproved ? " (Approved by Branch)" : "") : "⏳ Pending Inspection"}`);
+
+  const hasEstimate = (claim.additionalDocuments || []).some(d => /estimate|quotation/i.test(d.name)) || (claim.requestedDocuments || []).length > 0;
+  status.push(`• **Garage Repair Estimate Quotation**: ${hasEstimate ? "✅ Uploaded" : "⏳ Pending / Under Review"}`);
+
+  status.push(`• **Payment Settlement Voucher**: ${claim.paymentReceipt ? "✅ Voucher Issued" : (claim.status === "Approved" ? "⏳ Awaiting Branch Payment Transfer" : "Not yet generated")}`);
+
+  return status.join("\n");
+}
+
+/**
+ * Format public & operational policyholder details for Staff and Admin
+ */
+function formatPolicyholderForStaff(user, claimsCount = 0) {
+  let response = `👤 **Policyholder Details (Public/Operational Record):**\n\n`;
+  response += `• **Full Name**: **${user.firstName} ${user.lastName}**\n`;
+  response += `• **NIC Number**: \`${user.nic}\`\n`;
+  response += `• **Mobile Phone**: ${user.mobile || "N/A"}\n`;
+  response += `• **Email Address**: ${user.email || "N/A"}\n`;
+  response += `• **Registered Branch**: ${user.branch || "Galle"} Branch\n`;
+  response += `• **Residential Address**: ${user.address ? `${user.address}, ${user.city || ""}` : "On record"}\n`;
+  response += `• **Account Status**: **${user.status || "Active"}**\n`;
+  response += `• **Reference Number**: \`${user.referenceNumber || "SAN-PH"}\`\n`;
+  if (user.createdAt) {
+    response += `• **Registered Date**: ${new Date(user.createdAt).toLocaleDateString()}\n`;
+  }
+
+  const vCount = Array.isArray(user.vehicles) ? user.vehicles.length : 0;
+  response += `\n🚗 **Insured Vehicles (${vCount}):**\n`;
+  if (vCount > 0) {
+    user.vehicles.forEach((v, i) => {
+      const expiry = v.policyExpiryDate ? `(Expires: ${new Date(v.policyExpiryDate).toLocaleDateString()})` : "";
+      response += `   ${i + 1}. **${formatPlate(v.numberPlate)}** — ${v.company || ""} ${v.model || ""} [${v.vehicleType || "Vehicle"}] | Policy: \`${v.policyNumber || "N/A"}\` | Status: **${v.status || "Active"}** ${expiry}\n`;
+    });
+  } else {
+    response += `   *No vehicles registered on file.*\n`;
+  }
+
+  response += `\n📄 **Document Verification Status:**\n`;
+  response += formatDocumentStatus(user.documents);
+
+  if (user.bankDetails && user.bankDetails.bankName) {
+    response += `\n\n🏦 **Settlement Bank (Masked):**\n`;
+    response += `• **Bank**: ${user.bankDetails.bankName} (${user.bankDetails.branchName || "Branch"})\n`;
+    response += `• **Account Number**: \`${maskBankAccount(user.bankDetails.accountNumber)}\`\n`;
+    response += `• **Account Holder**: ${user.bankDetails.accountHolderName || `${user.firstName} ${user.lastName}`}\n`;
+  }
+
+  response += `\n\n📊 **Registered Claims on Record**: **${claimsCount}** claim(s)`;
+  return response;
+}
+
+/**
+ * Format field agent profile & workload for Staff and Admin
+ */
+function formatAgentForStaff(agent, assignedClaims = []) {
+  let response = `👷 **Sanasa Field Agent Profile: ${agent.name}**\n\n`;
+  response += `• **Agent ID**: \`${agent.agentId}\`\n`;
+  response += `• **Full Name**: **${agent.name}**\n`;
+  response += `• **Assigned Branch**: ${agent.branch} Branch\n`;
+  response += `• **Contact Phone**: 📞 ${agent.phone || "N/A"}\n`;
+  response += `• **Email Address**: ✉️ ${agent.email}\n`;
+  response += `• **Operating Area**: ${agent.city || agent.area || "Branch Jurisdiction"}${agent.district ? `, ${agent.district}` : ""}\n`;
+  response += `• **Operational Status**: **${agent.status || "active"}** | **Availability**: ${agent.availability === "Active" ? "🟢 Active & Available" : "⚪ Offline"}\n\n`;
+
+  response += `📋 **Assigned Claims Workload (${assignedClaims.length}):**\n`;
+  if (assignedClaims.length > 0) {
+    assignedClaims.forEach((c, idx) => {
+      const statusEmoji = c.status === "Approved" ? "🟢" : c.status === "Rejected" ? "🔴" : "🔵";
+      response += `   ${idx + 1}. **${c.claimNumber}** — Vehicle: **${formatPlate(c.vehiclePlate)}** | Status: ${statusEmoji} **${c.status}** (Step ${c.currentStep || 1}/5) | Location: ${c.location || "N/A"}\n`;
+    });
+  } else {
+    response += `   *No active claims currently assigned to this agent.*\n`;
+  }
+
+  return response;
+}
+
+/**
+ * Format vehicle specification & owner details for Staff and Admin
+ */
+function formatVehicleDetailsForStaff(vehicle, owner, claims = []) {
+  let response = `🚗 **Vehicle Details: ${formatPlate(vehicle.numberPlate)}**\n\n`;
+  response += `• **Vehicle Number**: **${formatPlate(vehicle.numberPlate)}**\n`;
+  response += `• **Make & Model**: **${vehicle.company} ${vehicle.model}** (${vehicle.year || "N/A"})\n`;
+  response += `• **Vehicle Type**: ${vehicle.vehicleType}\n`;
+  response += `• **Engine Number**: \`${vehicle.engineNumber || "On file"}\`\n`;
+  response += `• **Chassis Number**: \`${vehicle.chassisNumber || "On file"}\`\n`;
+  response += `• **Insurance Policy No**: \`${vehicle.policyNumber}\`\n`;
+  response += `• **Policy Status**: **${vehicle.status || "Active"}**\n`;
+  if (vehicle.policyExpiryDate) {
+    response += `• **Policy Expiry Date**: ${new Date(vehicle.policyExpiryDate).toLocaleDateString()}\n`;
+  }
+  response += `• **Renewal Cycle**: ${vehicle.renewalCycle || "Annual (Jan 01 - Dec 31)"}\n\n`;
+
+  if (owner) {
+    response += `👤 **Registered Owner / Policyholder:**\n`;
+    response += `• **Name**: **${owner.firstName} ${owner.lastName}**\n`;
+    response += `• **NIC Number**: \`${owner.nic}\` | 📞 Phone: ${owner.mobile || "N/A"} | ✉️ Email: ${owner.email || "N/A"}\n`;
+    response += `• **Registered Branch**: ${owner.branch || "Galle"} Branch\n\n`;
+
+    response += `📄 **Registered Vehicle Documents Status:**\n`;
+    response += `• **Registration Certificate (CR)**: ${owner.documents?.vehicleReg ? "✅ Uploaded" : "❌ Not Uploaded"}\n`;
+    response += `• **Revenue License**: ${owner.documents?.revenueLicense ? "✅ Uploaded" : "❌ Not Uploaded"}\n\n`;
+  }
+
+  response += `📋 **Claim History for this Vehicle (${claims.length}):**\n`;
+  if (claims.length > 0) {
+    claims.forEach((c, idx) => {
+      const statusEmoji = c.status === "Approved" ? "🟢" : c.status === "Rejected" ? "🔴" : "🔵";
+      response += `   ${idx + 1}. **${c.claimNumber}** | ${statusEmoji} **${c.status}** | ${c.incidentDate || "N/A"} | Damage: ${c.damageType} | Amount: ${formatCurrency(c.amount)}\n`;
+    });
+  } else {
+    response += `   *No claims recorded for this vehicle.*\n`;
+  }
+
+  return response;
 }
 
 /**
@@ -92,8 +282,7 @@ function formatUserDetails(user, claimsCount = 0) {
 
   response += `• **Claims Filed**: **${claimsCount}** claim(s) on file\n`;
   if (user.bankDetails && user.bankDetails.bankName) {
-    const acc = user.bankDetails.accountNumber ? `••••${user.bankDetails.accountNumber.slice(-4)}` : "Registered";
-    response += `• **Settlement Bank**: ${user.bankDetails.bankName} (${acc})\n`;
+    response += `• **Settlement Bank**: ${user.bankDetails.bankName} (${maskBankAccount(user.bankDetails.accountNumber)})\n`;
   }
 
   response += `\n💡 *Ask me "What are my claims?" to see full claim details, or type any Claim ID (e.g. \`CLM-0000-0014\`)!*`;
@@ -117,6 +306,7 @@ function formatClaimDetails(claim) {
   let response = `📋 **Sanasa Claim Report: ${claim.claimNumber}**\n\n`;
   response += `• **Status**: ${statusEmoji} **${claim.status || "Pending"}** (${stepText})\n`;
   response += `• **Registered Vehicle**: **${formatPlate(claim.vehiclePlate)}**\n`;
+  response += `• **Policyholder NIC**: \`${claim.userNic || "N/A"}\`\n`;
   response += `• **Damage Category**: ${claim.damageType || "General Collision"}\n`;
   response += `• **Incident Date**: ${claim.incidentDate || "N/A"}${claim.incidentTime ? ` at ${claim.incidentTime}` : ""}\n`;
   response += `• **Incident Location**: ${claim.location || "Recorded on file"}\n`;
@@ -124,18 +314,15 @@ function formatClaimDetails(claim) {
   response += `• **Branch / Assigned Officer**: ${claim.assignedAgent ? claim.assignedAgent : "Branch Officer"} (${claim.branch || "Galle"} Branch)\n`;
 
   if (claim.description) {
-    const desc = claim.description.length > 130 ? claim.description.substring(0, 130) + "..." : claim.description;
+    const desc = claim.description.length > 150 ? claim.description.substring(0, 150) + "..." : claim.description;
     response += `• **Accident Particulars**: ${desc}\n`;
   }
 
-  if (claim.inspectionSubmitted) {
-    response += `• **Inspection**: Physical assessment report filed by field officer.\n`;
-  }
+  response += `\n📄 **Document & Verification Checklist:**\n`;
+  response += formatClaimDocumentsStatus(claim);
 
-  if (claim.paymentReceipt) {
-    response += `• **Payment Settlement**: 💳 Settlement voucher issued.\n`;
-  } else if (claim.status === "Approved") {
-    response += `• **Payment Settlement**: Pending direct bank transfer into policyholder account.\n`;
+  if (claim.bankAccount) {
+    response += `\n💳 **Settlement Bank**: ${claim.bankName || "Registered Bank"} (${maskBankAccount(claim.bankAccount)})\n`;
   }
 
   response += `\n📄 **Official PDF Dossier**: You can download or print the full official report with Sanasa seal at [Download Official PDF Dossier](/api/claims/${claim.claimNumber}/report).\n\n`;
@@ -225,7 +412,7 @@ function getSmartInsuranceFallback(message = "", userRole = "policy_holder") {
 
 /**
  * POST /api/chat/message
- * Payload: { message: string, history: Array<{ role: "user" | "model", text: string }>, userRole?: string, userNic?: string, userEmail?: string, userName?: string }
+ * Payload: { message: string, history: Array<{ role: "user" | "model", text: string }>, userRole?: string, userNic?: string, userEmail?: string, userName?: string, branch?: string, userBranch?: string }
  */
 router.post("/message", async (req, res) => {
   try {
@@ -235,7 +422,9 @@ router.post("/message", async (req, res) => {
       userRole = "policy_holder",
       userNic = "",
       userEmail = "",
-      userName = ""
+      userName = "",
+      branch = "",
+      userBranch = ""
     } = req.body;
 
     if (!message || typeof message !== "string" || message.trim() === "") {
@@ -245,8 +434,18 @@ router.post("/message", async (req, res) => {
     const cleanMsg = message.trim();
     const lowerMsg = cleanMsg.toLowerCase();
     const isGuest = userRole === "guest" || userRole === "public" || !userRole;
+    const isStaffOrAdmin = userRole === "office_staff" || userRole === "admin";
+    const staffBranch = (branch || userBranch || "").trim();
 
-    // ── PRIVACY GUARDRAILS FOR PUBLIC GUEST (HOMEPAGE) ───────────────────────
+    // ── 0. STRICT PRIVACY GUARDRAIL (SENSITIVE DATA PROTECTION) ──────────────
+    if (isAskingSensitiveData(cleanMsg)) {
+      return res.json({
+        reply: `🔒 **Security & Data Privacy Protection Notice**\n\nConfidential credentials—including user passwords, password hashes, authentication tokens, security OTPs, reset session tokens, and unmasked bank account numbers—are **strictly protected by Sanasa Security Policies**.\n\nAI agents are strictly prohibited from retrieving, displaying, or processing sensitive credentials. You can safely look up public policyholder records, vehicle specifications, claim statuses, assigned agents, and document verification checklists.`,
+        source: "sensitive_data_protection_guardrail"
+      });
+    }
+
+    // ── 0.1 PRIVACY GUARDRAILS FOR PUBLIC GUEST (HOMEPAGE) ───────────────────
     if (isGuest) {
       const asksPersonal =
         lowerMsg.includes("my claim") ||
@@ -280,18 +479,17 @@ router.post("/message", async (req, res) => {
 
     if (claimMatch && claimMatch[1] && !isGuest) {
       const rawClaimId = claimMatch[1].trim();
-      // Normalize e.g. "CLM 0000 0014" -> "CLM-0000-0014"
       const normalizedRegex = new RegExp("^" + rawClaimId.replace(/[\s-]/g, "[- ]?"), "i");
       matchedClaim = await Claim.findOne({ claimNumber: normalizedRegex });
 
-      // If user directly asked for this claim or just entered the Claim ID:
       const isSimpleClaimQuery =
-        cleanMsg.length < 40 ||
+        cleanMsg.length < 50 ||
         lowerMsg.includes("status") ||
         lowerMsg.includes("detail") ||
         lowerMsg.includes("claim") ||
         lowerMsg.includes("what is") ||
-        lowerMsg.includes("show");
+        lowerMsg.includes("show") ||
+        lowerMsg.includes("document");
 
       if (matchedClaim) {
         const activeNic = (userNic || "").trim().toUpperCase();
@@ -308,13 +506,194 @@ router.post("/message", async (req, res) => {
         }
       } else if (!matchedClaim && (lowerMsg.startsWith("clm") || lowerMsg.includes("status of clm"))) {
         return res.json({
-          reply: `🔍 I searched the Sanasa Claims Registry for **${rawClaimId.toUpperCase()}**, but could not find any active claim matching that ID.\n\nPlease double check the claim number (format: \`CLM-XXXX-XXXX\`) or provide your **NIC number** so I can find all claims registered to your account.`,
+          reply: `🔍 I searched the Sanasa Claims Registry for **${rawClaimId.toUpperCase()}**, but could not find any active claim matching that ID.\n\nPlease double check the claim number (format: \`CLM-XXXX-XXXX\`).`,
           source: "database_claim_not_found"
         });
       }
     }
 
-    // ── 2. Check for User asking "What are my claims?" ────────────────────────
+    // ── 2. BRANCH & ADMIN: Agent Inquiries & Workload ────────────────────────
+    const agentIdMatch = cleanMsg.match(/\b(AGT[-\s]?\d{3,5})\b/i);
+    const asksAboutAgent =
+      isStaffOrAdmin &&
+      (agentIdMatch ||
+        lowerMsg.includes("agent") ||
+        lowerMsg.includes("assessor") ||
+        lowerMsg.includes("inspectors") ||
+        lowerMsg.includes("field officer"));
+
+    if (asksAboutAgent) {
+      if (agentIdMatch) {
+        const rawAgentId = agentIdMatch[1].replace(/[\s-]/g, "").toUpperCase();
+        const normAgentId = new RegExp("^" + rawAgentId.slice(0, 3) + "[- ]?" + rawAgentId.slice(3), "i");
+        const agentDoc = await Agent.findOne({ agentId: normAgentId });
+        if (agentDoc) {
+          const assignedClaims = await Claim.find({ assignedAgent: new RegExp(agentDoc.name, "i") }).sort({ _id: -1 }).limit(10);
+          const reply = formatAgentForStaff(agentDoc, assignedClaims);
+          return res.json({ reply, source: "database_agent_lookup" });
+        }
+      }
+
+      // Check for agent name search or agent listing
+      if (lowerMsg.includes("list") || lowerMsg.includes("all agent") || lowerMsg.includes("show agent") || lowerMsg.includes("branch agent")) {
+        const filter = (userRole === "office_staff" && staffBranch) ? { branch: new RegExp(`^${staffBranch}$`, "i") } : {};
+        const agents = await Agent.find(filter).limit(10);
+        if (agents && agents.length > 0) {
+          let reply = `👷 **Sanasa Field Agents Roster (${agents.length} agent(s)${staffBranch ? ` in ${staffBranch} Branch` : ""}):**\n\n`;
+          agents.forEach((a, idx) => {
+            reply += `${idx + 1}. **${a.name}** (\`${a.agentId}\`)\n`;
+            reply += `   • **Branch**: ${a.branch} | **Status**: **${a.status || "active"}** (${a.availability === "Active" ? "🟢 Active" : "⚪ Offline"})\n`;
+            reply += `   • **Contact**: 📞 ${a.phone || "N/A"} | ✉️ ${a.email}\n`;
+            reply += `   • **Area**: ${a.city || a.area || "Branch Jurisdiction"}\n\n`;
+          });
+          reply += `💡 *Type any Agent ID (e.g. \`${agents[0].agentId}\`) to view assigned claim workloads!*`;
+          return res.json({ reply, source: "database_agent_list" });
+        }
+      }
+
+      // Try searching agent by name if words after "agent" exist
+      const words = cleanMsg.split(/\s+/);
+      const agentIdx = words.findIndex(w => /agent/i.test(w));
+      if (agentIdx !== -1 && words[agentIdx + 1] && words[agentIdx + 1].length > 2) {
+        const candidateName = words[agentIdx + 1].replace(/[^a-zA-Z]/g, "");
+        const agentDoc = await Agent.findOne({ name: new RegExp(candidateName, "i") });
+        if (agentDoc) {
+          const assignedClaims = await Claim.find({ assignedAgent: new RegExp(agentDoc.name, "i") }).sort({ _id: -1 }).limit(10);
+          const reply = formatAgentForStaff(agentDoc, assignedClaims);
+          return res.json({ reply, source: "database_agent_name_lookup" });
+        }
+      }
+    }
+
+    // ── 3. BRANCH & ADMIN: Vehicle Number Query ──────────────────────────────
+    const plateMatch = cleanMsg.match(/\b([A-Z]{2,3}[-\s]?\d{4}|\d{2,3}[-\s]?\d{4})\b/i);
+    const asksAboutVehicle = isStaffOrAdmin && (plateMatch || lowerMsg.includes("vehicle") || lowerMsg.includes("car") || lowerMsg.includes("bike") || lowerMsg.includes("lorry"));
+
+    if (asksAboutVehicle && plateMatch) {
+      const rawPlate = plateMatch[1].replace(/[\s-]/g, "").toUpperCase();
+      const prefix = rawPlate.slice(0, -4);
+      const digits = rawPlate.slice(-4);
+      const flexiblePlateRegex = new RegExp(`${prefix}[-\\s]?${digits}`, "i");
+
+      // Search user holding this vehicle
+      const userDoc = await User.findOne({
+        "vehicles.numberPlate": { $regex: flexiblePlateRegex }
+      });
+
+      const vehicleClaims = await Claim.find({
+        vehiclePlate: { $regex: flexiblePlateRegex }
+      }).sort({ _id: -1 }).limit(10);
+
+      if (userDoc) {
+        const cleanMatchedPlate = rawPlate.toLowerCase();
+        const matchedVeh = userDoc.vehicles.find(
+          v => v.numberPlate.replace(/[\s-]/g, "").toLowerCase() === cleanMatchedPlate
+        ) || userDoc.vehicles[0];
+
+        const reply = formatVehicleDetailsForStaff(matchedVeh, userDoc, vehicleClaims);
+        return res.json({ reply, source: "database_vehicle_lookup" });
+      } else if (vehicleClaims && vehicleClaims.length > 0) {
+        const reply = formatClaimDetails(vehicleClaims[0]);
+        return res.json({ reply, source: "database_vehicle_claim_lookup" });
+      } else if (cleanMsg.length < 30 || lowerMsg.includes("search") || lowerMsg.includes("find")) {
+        return res.json({
+          reply: `🔍 No registered vehicle or claim record found for Vehicle Number **${formatPlate(rawPlate)}** in our database.`,
+          source: "database_vehicle_not_found"
+        });
+      }
+    }
+
+    // ── 4. BRANCH & ADMIN: Policyholder Public Details & Documents ───────────
+    const nicMatch = cleanMsg.match(/\b(\d{9}[vVxX]|\d{12})\b/);
+    const asksPolicyholder =
+      isStaffOrAdmin &&
+      (nicMatch ||
+        lowerMsg.includes("policyholder") ||
+        lowerMsg.includes("policy holder") ||
+        lowerMsg.includes("customer") ||
+        lowerMsg.includes("user details") ||
+        lowerMsg.includes("find user") ||
+        lowerMsg.includes("who is"));
+
+    if (asksPolicyholder) {
+      if (nicMatch) {
+        const cleanNic = nicMatch[1].toUpperCase();
+        const userDoc = await User.findOne({ nic: cleanNic });
+        if (userDoc) {
+          const claimsCount = await Claim.countDocuments({ userNic: cleanNic });
+          const reply = formatPolicyholderForStaff(userDoc, claimsCount);
+          return res.json({ reply, source: "database_staff_policyholder_nic_lookup" });
+        } else {
+          return res.json({
+            reply: `🔍 No policyholder record found for NIC **${cleanNic}** in the Sanasa registry.`,
+            source: "database_staff_policyholder_not_found"
+          });
+        }
+      }
+
+      // Check for Policyholder listing
+      if (lowerMsg.includes("list") || lowerMsg.includes("all policyholder") || lowerMsg.includes("show policyholder") || lowerMsg.includes("all customer")) {
+        const filter = (userRole === "office_staff" && staffBranch) ? { branch: new RegExp(`^${staffBranch}$`, "i") } : {};
+        const users = await User.find(filter).limit(8);
+        if (users && users.length > 0) {
+          let reply = `👥 **Registered Policyholders (${users.length}${staffBranch ? ` in ${staffBranch} Branch` : ""}):**\n\n`;
+          users.forEach((u, idx) => {
+            const vCount = Array.isArray(u.vehicles) ? u.vehicles.length : 0;
+            reply += `${idx + 1}. **${u.firstName} ${u.lastName}** — NIC: \`${u.nic}\`\n`;
+            reply += `   • **Branch**: ${u.branch || "Galle"} | **Contact**: 📞 ${u.mobile || "N/A"} | ✉️ ${u.email || "N/A"}\n`;
+            reply += `   • **Vehicles**: **${vCount}** vehicle(s) registered | **Status**: **${u.status || "Active"}**\n\n`;
+          });
+          reply += `💡 *Type any NIC (e.g. \`${users[0].nic}\`) to view complete public details, vehicles, and document checklist!*`;
+          return res.json({ reply, source: "database_staff_policyholder_list" });
+        }
+      }
+
+      // Check for Name / Email lookup
+      const searchWords = cleanMsg.replace(/policyholder|policy holder|customer|find|user|details|who is/gi, "").trim();
+      if (searchWords.length >= 3) {
+        const userDoc = await User.findOne({
+          $or: [
+            { firstName: new RegExp(searchWords, "i") },
+            { lastName: new RegExp(searchWords, "i") },
+            { email: new RegExp(searchWords, "i") }
+          ]
+        });
+        if (userDoc) {
+          const claimsCount = await Claim.countDocuments({ userNic: userDoc.nic });
+          const reply = formatPolicyholderForStaff(userDoc, claimsCount);
+          return res.json({ reply, source: "database_staff_policyholder_name_lookup" });
+        }
+      }
+    }
+
+    // ── 5. BRANCH & ADMIN: Claims Listing / Status ────────────────────────────
+    if (isStaffOrAdmin && (lowerMsg.includes("pending claim") || lowerMsg.includes("active claim") || lowerMsg.includes("list claim") || lowerMsg.includes("show claim") || lowerMsg.includes("branch claim"))) {
+      const filter = {};
+      if (userRole === "office_staff" && staffBranch) {
+        filter.branch = new RegExp(`^${staffBranch}$`, "i");
+      }
+      if (lowerMsg.includes("pending")) {
+        filter.status = "Pending";
+      } else if (lowerMsg.includes("approved")) {
+        filter.status = "Approved";
+      }
+
+      const claims = await Claim.find(filter).sort({ _id: -1 }).limit(10);
+      if (claims && claims.length > 0) {
+        let reply = `📋 **Registered Claims Overview (${claims.length} claim(s)${staffBranch ? ` in ${staffBranch} Branch` : ""}):**\n\n`;
+        claims.forEach((c, idx) => {
+          const statusEmoji = c.status === "Approved" ? "🟢" : c.status === "Rejected" ? "🔴" : "🔵";
+          reply += `${idx + 1}. **${c.claimNumber}** — Vehicle: **${formatPlate(c.vehiclePlate)}**\n`;
+          reply += `   • **Status**: ${statusEmoji} **${c.status}** (Step ${c.currentStep || 1}/5) | **Priority**: ${c.priority || "Normal"}\n`;
+          reply += `   • **Policyholder NIC**: \`${c.userNic}\` | **Assigned Officer**: ${c.assignedAgent || "Unassigned"}\n`;
+          reply += `   • **Assessment**: ${formatCurrency(c.amount)} | **Damage**: ${c.damageType}\n\n`;
+        });
+        reply += `💡 *Type any Claim ID (e.g. \`${claims[0].claimNumber}\`) to view its full report dossier and document verification checklist!*`;
+        return res.json({ reply, source: "database_staff_claims_list" });
+      }
+    }
+
+    // ── 6. POLICYHOLDER: Check for "What are my claims?" ──────────────────────
     const isAskingMyClaims =
       lowerMsg.includes("my claim") ||
       lowerMsg.includes("my claims") ||
@@ -327,11 +706,9 @@ router.post("/message", async (req, res) => {
       lowerMsg.includes("where is my claim") ||
       (lowerMsg.includes("claims") && (lowerMsg.includes("my") || lowerMsg.includes("i have") || lowerMsg.includes("for me")));
 
-    // Extract potential NIC from text if not passed in session
-    const nicMatch = cleanMsg.match(/\b(\d{9}[vVxX]|\d{12})\b/);
     const activeNic = (!isGuest && userRole === "policy_holder") ? (userNic || (nicMatch ? nicMatch[1] : "")).trim().toUpperCase() : "";
 
-    if (isAskingMyClaims && !isGuest) {
+    if (isAskingMyClaims && !isGuest && userRole === "policy_holder") {
       if (activeNic) {
         const userClaims = await Claim.find({ userNic: activeNic }).sort({ _id: -1 }).limit(10);
         if (userClaims && userClaims.length > 0) {
@@ -345,13 +722,13 @@ router.post("/message", async (req, res) => {
         }
       } else {
         return res.json({
-          reply: `To view your registered claims and current claim status, please provide your **National Identity Card (NIC) number** (e.g. \`200012345678\` or \`951234567V\`) or type your **Claim Reference ID** (e.g. \`CLM-0000-0014\`).`,
+          reply: `To view your registered claims and current claim status, please provide your **National Identity Card (NIC) number** (e.g. \`200012345678\`) or type your **Claim Reference ID** (e.g. \`CLM-0000-0014\`).`,
           source: "nic_prompt"
         });
       }
     }
 
-    // ── 3. Check for User asking "What are my vehicles?" / "My policies" ──────
+    // ── 7. POLICYHOLDER: Check for "What are my vehicles?" / "My policies" ───
     const isAskingVehicles =
       lowerMsg.includes("my vehicle") ||
       lowerMsg.includes("my vehicles") ||
@@ -360,7 +737,7 @@ router.post("/message", async (req, res) => {
       lowerMsg.includes("registered vehicle") ||
       lowerMsg.includes("my polic");
 
-    if (isAskingVehicles && !isGuest) {
+    if (isAskingVehicles && !isGuest && userRole === "policy_holder") {
       if (activeNic) {
         const userDoc = await User.findOne({ nic: activeNic });
         if (userDoc && Array.isArray(userDoc.vehicles) && userDoc.vehicles.length > 0) {
@@ -380,7 +757,7 @@ router.post("/message", async (req, res) => {
       }
     }
 
-    // ── 4. Check for User Profile & Account Details ("User Details", "My Profile")
+    // ── 8. POLICYHOLDER: Check for Profile & Account Details ───────────────────
     const isAskingUserDetails =
       lowerMsg.includes("my detail") ||
       lowerMsg.includes("user detail") ||
@@ -390,7 +767,7 @@ router.post("/message", async (req, res) => {
       lowerMsg.includes("my info") ||
       lowerMsg.includes("about me");
 
-    if (isAskingUserDetails && !isGuest) {
+    if (isAskingUserDetails && !isGuest && userRole === "policy_holder") {
       if (activeNic) {
         const userDoc = await User.findOne({ nic: activeNic });
         if (userDoc) {
@@ -406,9 +783,10 @@ router.post("/message", async (req, res) => {
       }
     }
 
-    // ── 5. Check if user typed an NIC directly (e.g. in response to a prompt) ──
+    // ── 9. POLICYHOLDER: Direct NIC Verification ──────────────────────────────
     const isDirectNic =
       nicMatch &&
+      !isStaffOrAdmin &&
       (cleanMsg.length < 25 || lowerMsg.startsWith("nic") || lowerMsg.includes("my nic"));
 
     if (isDirectNic && activeNic && !isGuest) {
@@ -438,26 +816,14 @@ router.post("/message", async (req, res) => {
       }
     }
 
-    // ── 6. Check for Vehicle Plate Query (staff/agents only) ───────────────────
-    const plateMatch = cleanMsg.match(/\b([A-Z]{2,3}[-\s]?\d{4})\b/i);
-    if (plateMatch && !isGuest && (userRole === "agent" || userRole === "office_staff" || userRole === "admin")) {
-      const rawPlate = plateMatch[1].replace(/[\s-]/g, "");
-      const plateRegex = new RegExp(rawPlate.slice(0, -4) + "[- ]?" + rawPlate.slice(-4), "i");
-      const plateClaim = await Claim.findOne({ vehiclePlate: plateRegex }).sort({ _id: -1 });
-      if (plateClaim) {
-        const reply = formatClaimDetails(plateClaim);
-        return res.json({ reply, source: "database_plate_claim_lookup", claimNumber: plateClaim.claimNumber });
-      }
-    }
-
-    // ── 4. Fallback Knowledge Engine (if Gemini is unavailable) ───────────────
+    // ── 10. Fallback Knowledge Engine (if Gemini is unavailable) ──────────────
     if (!genAI) {
       console.warn("Gemini API key not configured for chatbot, using built-in Sanasa knowledge engine.");
       const reply = getSmartInsuranceFallback(cleanMsg, userRole);
       return res.json({ reply, source: "knowledge_engine" });
     }
 
-    // ── 5. Build Real-Time Context for Gemini Prompt ──────────────────────────
+    // ── 11. Build Real-Time Context for Gemini Prompt ─────────────────────────
     let dynamicContext = "";
     if (isGuest) {
       dynamicContext += `\n[ROLE: PUBLIC HOMEPAGE GUEST ASSISTANT]:\n` +
@@ -468,10 +834,36 @@ router.post("/message", async (req, res) => {
       dynamicContext += `\n[ROLE: FIELD AGENT ASSISTANT - ${userName || "Agent"}]:\n` +
         `You are assisting a Sanasa field insurance agent.\n` +
         `- Provide guidance on on-site vehicle inspections, mandatory photo angles, assessing damage severity, checking repair garage quotations, and submitting physical inspection reports.\n`;
-    } else if (userRole === "office_staff") {
-      dynamicContext += `\n[ROLE: OFFICE OPERATIONS ASSISTANT - ${userName || "Staff"}]:\n` +
-        `You are assisting a Sanasa office staff claim officer.\n` +
-        `- Provide guidance on claim evaluation, cross-checking garage estimates with AI damage analysis, fraud red flags, approving inspections, and issuing settlement payment vouchers.\n`;
+    } else if (isStaffOrAdmin) {
+      dynamicContext += `\n[ROLE: ${userRole === "admin" ? "ADMINISTRATOR" : "BRANCH STAFF"} OPERATIONS ASSISTANT - ${userName || "Staff"}]:\n` +
+        `Branch Jurisdiction: ${staffBranch || "All Branches"}\n` +
+        `- You are authorized to provide operational details for policyholders, vehicles, claims, field agents, and document upload statuses.\n` +
+        `- STRICT SENSITIVE DATA RULE: Never disclose passwords, password hashes, security OTPs, authentication tokens, or unmasked bank account numbers. Bank account numbers must always be masked to the last 4 digits (••••XXXX).\n`;
+
+      // If query involves a specific user/vehicle/claim, inject sanitized context
+      try {
+        if (nicMatch) {
+          const userDoc = await User.findOne({ nic: nicMatch[1].toUpperCase() });
+          if (userDoc) {
+            dynamicContext += `\n[POLICYHOLDER RECORD FOR NIC ${userDoc.nic}]:\n`;
+            dynamicContext += `Name: ${userDoc.firstName} ${userDoc.lastName} | Phone: ${userDoc.mobile} | Email: ${userDoc.email} | Branch: ${userDoc.branch}\n`;
+            dynamicContext += `Status: ${userDoc.status} | Vehicles Count: ${userDoc.vehicles?.length || 0}\n`;
+            dynamicContext += `Documents: NIC Front: ${userDoc.documents?.nicFront ? "Yes" : "No"}, NIC Back: ${userDoc.documents?.nicBack ? "Yes" : "No"}, CR: ${userDoc.documents?.vehicleReg ? "Yes" : "No"}, Revenue License: ${userDoc.documents?.revenueLicense ? "Yes" : "No"}\n`;
+          }
+        }
+        if (plateMatch) {
+          const rawPlate = plateMatch[1].replace(/[\s-]/g, "").toUpperCase();
+          const userWithVeh = await User.findOne({ "vehicles.numberPlate": new RegExp(rawPlate, "i") });
+          if (userWithVeh) {
+            const v = userWithVeh.vehicles.find(x => x.numberPlate.replace(/[\s-]/g, "").toUpperCase() === rawPlate) || userWithVeh.vehicles[0];
+            dynamicContext += `\n[VEHICLE RECORD FOR ${v.numberPlate}]:\n`;
+            dynamicContext += `Make/Model: ${v.company} ${v.model} (${v.year}) | Type: ${v.vehicleType} | Policy: ${v.policyNumber} | Status: ${v.status}\n`;
+            dynamicContext += `Owner: ${userWithVeh.firstName} ${userWithVeh.lastName} (NIC: ${userWithVeh.nic}, Phone: ${userWithVeh.mobile})\n`;
+          }
+        }
+      } catch (e) {
+        console.warn("Staff context fetch error:", e.message);
+      }
     } else if (userRole === "policy_holder" && activeNic) {
       try {
         const userClaims = await Claim.find({ userNic: activeNic }).sort({ _id: -1 }).limit(5);
@@ -487,7 +879,7 @@ router.post("/message", async (req, res) => {
         if (userClaims && userClaims.length > 0) {
           dynamicContext += `User Registered Claims (${userClaims.length}):\n`;
           userClaims.forEach(c => {
-            dynamicContext += `- Claim ${c.claimNumber}: Plate ${c.vehiclePlate}, Status: ${c.status}, Step: ${c.currentStep}/5, Amount: ${c.amount ? `Rs. ${c.amount}` : "Under review"}, Date: ${c.incidentDate}\n`;
+            dynamicContext += `- Claim ${c.claimNumber}: Vehicle Number ${c.vehiclePlate}, Status: ${c.status}, Step: ${c.currentStep}/5, Amount: ${c.amount ? `Rs. ${c.amount}` : "Under review"}, Date: ${c.incidentDate}\n`;
           });
         } else {
           dynamicContext += `User has 0 claims on file.\n`;
@@ -501,7 +893,7 @@ router.post("/message", async (req, res) => {
       dynamicContext += `\n[SPECIFIC CLAIM LOOKUP RECORD FOR ${matchedClaim.claimNumber}]:\n`;
       dynamicContext += `Claim Number: ${matchedClaim.claimNumber}\n`;
       dynamicContext += `Status: ${matchedClaim.status} (Step ${matchedClaim.currentStep || 1} of 5)\n`;
-      dynamicContext += `Plate: ${matchedClaim.vehiclePlate}\n`;
+      dynamicContext += `Vehicle Number: ${matchedClaim.vehiclePlate}\n`;
       dynamicContext += `Amount: ${matchedClaim.amount ? `Rs. ${matchedClaim.amount}` : "Under review"}\n`;
       dynamicContext += `Incident Date: ${matchedClaim.incidentDate} ${matchedClaim.incidentTime || ""}\n`;
       dynamicContext += `Location: ${matchedClaim.location || ""}\n`;

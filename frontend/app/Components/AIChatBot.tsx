@@ -120,41 +120,46 @@ const PROMPTS_BY_ROLE: Record<UserRole, QuickPrompt[]> = {
   ],
   office_staff: [
     {
-      label: "📋 Claim Approval Protocol",
-      text: "What are the approval criteria and steps for motor claim settlement?",
+      label: "👤 Policyholder Lookup",
+      text: "Show policyholder details, registered vehicles, and document status for NIC",
       colorClass: "bg-sky-50/90 hover:bg-sky-100 text-sky-700 border-sky-200",
     },
     {
-      label: "⚖️ Garage vs AI Assessment",
-      text: "How do I evaluate garage estimates against AI damage assessments?",
+      label: "🚗 Vehicle & Policy Search",
+      text: "Search vehicle details, insurance policy number, and registration documents",
       colorClass: "bg-emerald-50/90 hover:bg-emerald-100 text-emerald-700 border-emerald-200",
     },
     {
-      label: "🔍 Fraud Detection Flags",
-      text: "What are the key fraud indicators in vehicle accident claims?",
-      colorClass: "bg-rose-50/90 hover:bg-rose-100 text-rose-700 border-rose-200",
+      label: "📋 Claims & Document Checklist",
+      text: "Show active branch claims, assigned agents, and uploaded document checklist",
+      colorClass: "bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border-indigo-200",
     },
     {
-      label: "💳 Settlement Payment Protocol",
-      text: "What are the rules and required vouchers for settling claims to bank accounts?",
+      label: "👷 Field Agent Workloads",
+      text: "List branch field agents and their currently assigned claim workloads",
       colorClass: "bg-amber-50/90 hover:bg-amber-100 text-amber-700 border-amber-200",
     },
   ],
   admin: [
     {
-      label: "📊 System Operations",
-      text: "Give an overview of claims processing workflows and system health.",
+      label: "👥 Policyholders & Vehicles",
+      text: "Look up policyholder public records, registered vehicles, and document verification status",
       colorClass: "bg-sky-50/90 hover:bg-sky-100 text-sky-700 border-sky-200",
     },
     {
-      label: "👥 Staff & Agent Governance",
-      text: "What are the guidelines for managing staff and agent role permissions?",
+      label: "📋 System Claims & Estimates",
+      text: "Show recent motor claims, damage categories, and agent inspection reports",
       colorClass: "bg-emerald-50/90 hover:bg-emerald-100 text-emerald-700 border-emerald-200",
     },
     {
-      label: "🛡️ Audit & Security Rules",
-      text: "What audit logging and security compliance standards are enforced?",
+      label: "👷 Agent Roster & Workload",
+      text: "List active agents across branches and their claim inspection status",
       colorClass: "bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border-indigo-200",
+    },
+    {
+      label: "🔒 Sensitive Data Rules",
+      text: "What customer sensitive data is protected and excluded from AI agent inquiries?",
+      colorClass: "bg-rose-50/90 hover:bg-rose-100 text-rose-700 border-rose-200",
     },
   ],
 };
@@ -200,7 +205,7 @@ const getInitialWelcome = (role: UserRole, name?: string): ChatMessage[] => {
       {
         id: "welcome-staff",
         sender: "ai",
-        text: `Hello${name ? ` **${name}**` : ""}! I am the **Sanasa Staff Operations Assistant**.\n\nI can assist you with:\n• Claim evaluation & approval protocols\n• Comparing garage estimates with AI assessments\n• Photo damage cross-checks\n• Settlement payout voucher requirements\n\nWhat would you like to review today?`,
+        text: `Hello${name ? ` **${name}**` : ""}! I am the **Sanasa Branch Operations Assistant**.\n\nI can assist you with:\n• **Policyholders**: Look up public records, contact info, and document status by NIC or name\n• **Vehicles**: Check vehicle specifications, policy numbers, and renewal dates\n• **Claims**: View claim dossiers, assigned field agents, and damage details\n• **Documents**: Check upload status of NIC, Vehicle Registration (CR), Revenue License, & estimates\n• **Field Agents**: View active agents in your branch and their assigned claim workloads\n\n*(Note: Sensitive credentials such as passwords and full bank account numbers are strictly protected)*\n\nWhat would you like to review or look up today?`,
         timestamp: time,
       },
     ];
@@ -210,7 +215,7 @@ const getInitialWelcome = (role: UserRole, name?: string): ChatMessage[] => {
     {
       id: "welcome-admin",
       sender: "ai",
-      text: "Hello Administrator! I am the **Sanasa Admin Operations Assistant**.\n\nI can assist you with system operational metrics, staff governance, policy auditing, and security protocols.\n\nHow can I help you today?",
+      text: "Hello Administrator! I am the **Sanasa Admin Operations Assistant**.\n\nI can assist you with:\n• **Policyholder Inquiries**: Public profiles, registered vehicles, and verification documents\n• **Vehicle Records**: Specifications, insurance policy numbers, and renewal statuses\n• **System Claims**: Claim dossiers, damage types, assessed amounts, and assigned officers\n• **Field Agents**: Nationwide agent roster, availability, and active claim workloads\n• **Document Auditing**: Verification status of registration certificates, licenses, and inspection reports\n\n*(Note: Security credentials such as passwords and unmasked bank accounts are strictly protected)*\n\nHow can I help you today?",
       timestamp: time,
     },
   ];
@@ -224,10 +229,11 @@ export default function WebAIChatBot() {
 
   // Role and authenticated user context state
   const [currentRole, setCurrentRole] = useState<UserRole>("guest");
-  const [userInfo, setUserInfo] = useState<{ name: string; nic: string; email: string }>({
+  const [userInfo, setUserInfo] = useState<{ name: string; nic: string; email: string; branch: string }>({
     name: "",
     nic: "",
     email: "",
+    branch: "",
   });
 
   // Independent chat history per role to ensure 100% privacy and separation
@@ -257,7 +263,7 @@ export default function WebAIChatBot() {
         }
       } catch {}
       setCurrentRole("policy_holder");
-      setUserInfo({ name: uName, nic: uNic, email: uEmail });
+      setUserInfo({ name: uName, nic: uNic, email: uEmail, branch: "" });
       setThreads((prev) => ({
         ...prev,
         policy_holder: prev.policy_holder.length > 0 ? prev.policy_holder : getInitialWelcome("policy_holder", uName),
@@ -266,6 +272,7 @@ export default function WebAIChatBot() {
       let aName = "Agent";
       let aNic = "";
       let aEmail = "";
+      let aBranch = "";
       try {
         const aStr = sessionStorage.getItem("logged_in_agent");
         if (aStr) {
@@ -273,10 +280,11 @@ export default function WebAIChatBot() {
           aName = a.name || "Agent";
           aNic = a.nic || "";
           aEmail = a.email || "";
+          aBranch = a.branch || "";
         }
       } catch {}
       setCurrentRole("agent");
-      setUserInfo({ name: aName, nic: aNic, email: aEmail });
+      setUserInfo({ name: aName, nic: aNic, email: aEmail, branch: aBranch });
       setThreads((prev) => ({
         ...prev,
         agent: prev.agent.length > 0 ? prev.agent : getInitialWelcome("agent", aName),
@@ -285,6 +293,7 @@ export default function WebAIChatBot() {
       let sName = "Staff Officer";
       let sNic = "";
       let sEmail = "";
+      let sBranch = "";
       try {
         const sStr = sessionStorage.getItem("logged_in_staff");
         if (sStr) {
@@ -292,21 +301,22 @@ export default function WebAIChatBot() {
           sName = s.name || "Staff Officer";
           sNic = s.nic || "";
           sEmail = s.email || "";
+          sBranch = s.branch || "";
         }
       } catch {}
       setCurrentRole("office_staff");
-      setUserInfo({ name: sName, nic: sNic, email: sEmail });
+      setUserInfo({ name: sName, nic: sNic, email: sEmail, branch: sBranch });
       setThreads((prev) => ({
         ...prev,
         office_staff: prev.office_staff.length > 0 ? prev.office_staff : getInitialWelcome("office_staff", sName),
       }));
     } else if (pathname?.includes("/Admin/")) {
       setCurrentRole("admin");
-      setUserInfo({ name: "Administrator", nic: "", email: "" });
+      setUserInfo({ name: "Administrator", nic: "", email: "", branch: "" });
     } else {
       // Home page, About, Services, etc. (Public / Guest)
       setCurrentRole("guest");
-      setUserInfo({ name: "", nic: "", email: "" });
+      setUserInfo({ name: "", nic: "", email: "", branch: "" });
     }
   }, [pathname]);
 
@@ -383,6 +393,7 @@ export default function WebAIChatBot() {
           userNic: userInfo.nic,
           userEmail: userInfo.email,
           userName: userInfo.name,
+          branch: userInfo.branch,
         }),
       });
 
