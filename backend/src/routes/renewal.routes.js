@@ -43,14 +43,13 @@ function getVehicleExpiryDate(vehicle, userCreatedAt) {
 router.get("/branch-expiring-vehicles", async (req, res) => {
   try {
     const { branch, all, filter } = req.query;
-    if (!branch) {
-      return res.status(400).json({ error: "Branch is required." });
-    }
 
     const query = {
-      branch: { $regex: new RegExp(`^${branch.trim()}$`, "i") },
       status: "Approved"
     };
+    if (branch && branch !== "All") {
+      query.branch = { $regex: new RegExp(`^${branch.trim()}$`, "i") };
+    }
 
     const users = await User.find(query).lean();
     const now = new Date();

@@ -17,7 +17,8 @@ import {
   ArrowRight01Icon,
   Cancel01Icon,
   SecurityCheckIcon,
-  Notification01Icon
+  Notification01Icon,
+  RefreshIcon
 } from "@hugeicons/core-free-icons";
 
 export default function AdminNavbar() {
@@ -34,9 +35,10 @@ export default function AdminNavbar() {
     { name: "Dashboard", href: "/Admin/Dashboard" },
     { name: "Staff", href: "/Admin/Staff" },
     { name: "Policy Holders", href: "/Admin/PolicyHolders" },
+    { name: "Renewals", href: "/Admin/Renewals" },
     { name: "Admins", href: "/Admin/Admins" },
     { name: "Claims", href: "/Admin/Claims" },
-    { name: "Analytics & Reports", href: "/Admin/Analytics" },
+    { name: "Reports", href: "/Admin/Analytics" },
     { name: "Agents", href: "/Admin/Agents" },
     { name: "Notifications", href: "/Admin/Notifications" },
     { name: "Contact", href: "/Admin/Contact" },
@@ -52,6 +54,9 @@ export default function AdminNavbar() {
         return <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "policy holders":
         return <HugeiconsIcon icon={Folder01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "renewals":
+      case "policy renewals":
+        return <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "agents":
         return <HugeiconsIcon icon={Briefcase01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "admins":
@@ -92,7 +97,7 @@ export default function AdminNavbar() {
           {menuItems.map((item) => {
             // Check if active (matches exact path or prefix path)
             const isActive = pathname === item.href || (item.href !== "/Admin/Dashboard" && pathname?.startsWith(item.href));
-            const hasChevron = ["policy holders", "agents", "staff", "admins", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+            const hasChevron = ["policy holders", "renewals", "policy renewals", "agents", "staff", "admins", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
 
             return (
               <Link
