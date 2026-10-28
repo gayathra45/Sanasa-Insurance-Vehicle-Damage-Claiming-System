@@ -21,7 +21,9 @@ import {
   Tick01Icon,
   Money01Icon,
   BubbleChatIcon,
-  ViewIcon
+  ViewIcon,
+  Car01Icon,
+  Clock01Icon
 } from "@hugeicons/core-free-icons";
 
 interface VehicleOwner {
@@ -302,6 +304,12 @@ export default function OfficeStaffRenewalsPage() {
     return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   };
 
+  // Computed summary statistics
+  const expiringSoonCount = vehicles.filter((v) => v.vehicle.isExpiringWithin1AndHalfMonths && !v.isPaid).length;
+  const paidCount = vehicles.filter((v) => v.isPaid || (v.renewalQuote && (v.renewalQuote.status === "Partially_Paid" || v.renewalQuote.status === "Fully_Paid"))).length;
+  const pendingQuotesCount = vehicles.filter((v) => v.vehicle.isExpiringWithin1AndHalfMonths && !v.renewalQuote && !v.isPaid).length;
+  const totalVehiclesCount = vehicles.length;
+
   return (
     <div className="flex h-screen bg-[#F0F4F8] font-sans antialiased text-slate-800 overflow-hidden">
       {/* Office Staff Navbar */}
@@ -335,19 +343,137 @@ export default function OfficeStaffRenewalsPage() {
         <main className="flex-1 overflow-y-auto p-6 sm:p-8">
           <div className="max-w-7xl mx-auto space-y-6">
             
-            {/* Page Header Card */}
-            <div className="bg-gradient-to-r from-[#102A43] to-[#204060] rounded-2xl p-6 text-white shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-black tracking-tight">Vehicle Policy Coverage Renewals</h2>
-                <p className="text-blue-100 text-sm mt-1">
-                  Inspect upcoming policy expirations (next 1.5 months), calculate renewal licenses, and setup installment options for policyholders.
+            {/* Summary Statistics Display Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 select-none">
+              {/* Card 1: Expiring in 1.5 Months */}
+              <div
+                onClick={() => setFilterMode("expiring_soon")}
+                className={`group bg-white rounded-2xl p-5 border transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 relative overflow-hidden ${
+                  filterMode === "expiring_soon"
+                    ? "border-amber-400 ring-2 ring-amber-400/20 bg-amber-50/20"
+                    : "border-slate-200/80 hover:border-amber-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Expiring in 1.5 Months
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/60 group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                    {loading ? "..." : expiringSoonCount}
+                  </span>
+                  <span className="text-xs font-semibold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded-full">
+                    Next 45 Days
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-2 font-medium">
+                  {expiringSoonCount > 0 ? `${expiringSoonCount} policies due soon` : "No upcoming expiries"}
+                </p>
+                {filterMode === "expiring_soon" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-amber-500" />
+                )}
+              </div>
+
+              {/* Card 2: Already Paid / Renewed */}
+              <div
+                onClick={() => setFilterMode("paid")}
+                className={`group bg-white rounded-2xl p-5 border transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 relative overflow-hidden ${
+                  filterMode === "paid"
+                    ? "border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/20"
+                    : "border-slate-200/80 hover:border-emerald-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Paid / Renewed
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200/60 group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                    {loading ? "..." : paidCount}
+                  </span>
+                  <span className="text-xs font-semibold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-full">
+                    Active
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-2 font-medium">
+                  Coverage actively extended
+                </p>
+                {filterMode === "paid" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-emerald-500" />
+                )}
+              </div>
+
+              {/* Card 3: Pending Calculations / Quotes */}
+              <div
+                onClick={() => setFilterMode("expiring_soon")}
+                className={`group bg-white rounded-2xl p-5 border transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 relative overflow-hidden ${
+                  filterMode === "expiring_soon" && pendingQuotesCount > 0
+                    ? "border-blue-400 ring-2 ring-blue-400/20"
+                    : "border-slate-200/80 hover:border-blue-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Quotes Pending
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-200/60 group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={File01Icon} className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                    {loading ? "..." : pendingQuotesCount}
+                  </span>
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                    pendingQuotesCount > 0 ? "text-blue-700 bg-blue-100/70" : "text-slate-600 bg-slate-100"
+                  }`}>
+                    {pendingQuotesCount > 0 ? "Needs Quote" : "Up to Date"}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-2 font-medium">
+                  Awaiting staff valuation setup
                 </p>
               </div>
-              <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10">
-                <HugeiconsIcon icon={Calendar01Icon} className="w-5 h-5 text-blue-300" />
-                <span className="text-xs font-medium text-blue-100">
-                  Target Range: <strong className="text-white">Next 45 Days (1.5 Months)</strong>
-                </span>
+
+              {/* Card 4: Total Branch Fleet */}
+              <div
+                onClick={() => setFilterMode("all")}
+                className={`group bg-white rounded-2xl p-5 border transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-0.5 relative overflow-hidden ${
+                  filterMode === "all"
+                    ? "border-sky-500 ring-2 ring-sky-500/20 bg-sky-50/20"
+                    : "border-slate-200/80 hover:border-sky-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Total Branch Fleet
+                  </span>
+                  <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200 group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={Car01Icon} className="w-4 h-4" />
+                  </div>
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-2xl sm:text-3xl font-black text-slate-900 font-mono">
+                    {loading ? "..." : totalVehiclesCount}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
+                    {branch}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-2 font-medium">
+                  All monitored registered vehicles
+                </p>
+                {filterMode === "all" && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#102A43]" />
+                )}
               </div>
             </div>
 
