@@ -26,6 +26,7 @@ const translations = {
   en: {
     home: "Home",
     myClaims: "My Claims",
+    myVehicles: "My Vehicles",
     documents: "Documents",
     contact: "Contact",
     newClaim: "New Claim",
@@ -41,6 +42,7 @@ const translations = {
   },
   si: {
     home: "මුල් පිටුව",
+    myVehicles: "මගේ වාහන",
     myClaims: "මගේ හිමිකම්",
     documents: "ලේඛන",
     contact: "සම්බන්ධ වන්න",
@@ -57,6 +59,7 @@ const translations = {
   },
   ta: {
     home: "முகப்பு",
+    myVehicles: "எனது வாகனங்கள்",
     myClaims: "என் கோரிக்கைகள்",
     documents: "ஆவணங்கள்",
     contact: "தொடர்பு கொள்ள",
@@ -266,6 +269,7 @@ export default function PolicyHolderNavbar() {
 
   const navLinks = [
     { href: "/Policy_Holder/Home", label: t.home },
+    { href: "/Policy_Holder/MyVehicles", label: t.myVehicles },
     { href: "/Policy_Holder/My_claims", label: t.myClaims },
     { href: "/Policy_Holder/Documents", label: t.documents },
     { href: "/Policy_Holder/Contact", label: t.contact }
@@ -366,7 +370,7 @@ export default function PolicyHolderNavbar() {
           </div>
 
           {/* Desktop Navigation Links — Matching Homepage Style */}
-          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-7 text-base" : "gap-5 text-sm md:text-[15px]"}`}>
+          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-4 lg:gap-7 text-sm lg:text-base" : "gap-3.5 lg:gap-5 text-xs md:text-sm lg:text-[15px]"}`}>
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
