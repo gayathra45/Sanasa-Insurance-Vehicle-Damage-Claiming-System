@@ -42,8 +42,8 @@ const translations = {
   },
   si: {
     home: "මුල් පිටුව",
-    myVehicles: "මගේ වාහන",
     myClaims: "මගේ හිමිකම්",
+    myVehicles: "මගේ වාහන",
     documents: "ලේඛන",
     contact: "සම්බන්ධ වන්න",
     newClaim: "නව හිමිකම්",
@@ -59,8 +59,8 @@ const translations = {
   },
   ta: {
     home: "முகப்பு",
-    myVehicles: "எனது வாகனங்கள்",
     myClaims: "என் கோரிக்கைகள்",
+    myVehicles: "எனது வாகனங்கள்",
     documents: "ஆவணங்கள்",
     contact: "தொடர்பு கொள்ள",
     newClaim: "புதிய கோரிக்கை",
@@ -269,8 +269,8 @@ export default function PolicyHolderNavbar() {
 
   const navLinks = [
     { href: "/Policy_Holder/Home", label: t.home },
-    { href: "/Policy_Holder/MyVehicles", label: t.myVehicles },
     { href: "/Policy_Holder/My_claims", label: t.myClaims },
+    { href: "/Policy_Holder/MyVehicles", label: t.myVehicles },
     { href: "/Policy_Holder/Documents", label: t.documents },
     { href: "/Policy_Holder/Contact", label: t.contact }
   ];
