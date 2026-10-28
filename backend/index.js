@@ -22,6 +22,7 @@ import renewalRouter from "./src/routes/renewal.routes.js";
 import http from "http";
 import claimChatRouter from "./src/routes/claim_chat.routes.js";
 import notificationsRouter from "./src/routes/notifications.routes.js";
+import smsRouter from "./src/routes/sms.routes.js";
 import { initSocketServer } from "./src/utils/socket.js";
 
 
@@ -60,6 +61,7 @@ app.use("/api/claims", claimReportRouter);
 app.use("/api/renewals", renewalRouter);
 app.use("/api/claim-chat", claimChatRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/sms", smsRouter);
 
 
 

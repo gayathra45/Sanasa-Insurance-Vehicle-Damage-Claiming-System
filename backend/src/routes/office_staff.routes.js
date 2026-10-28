@@ -22,6 +22,18 @@ import {
   compareGarageEstimateWithPhotosAndAI 
 } from "../utils/aiAnalyzer.js";
 import { decodeSriLankanNIC, calculateNameMatch, resolveDRPRecord } from "../utils/nicVerifier.js";
+import {
+  notifyClaimAssigned,
+  notifyAgentNewClaimAssigned,
+  notifyClaimStatusChanged,
+  notifyDocumentsRequested,
+  notifyInspectionUpdate,
+  notifyClaimApproved,
+  notifyClaimRejected,
+  notifyAgentClaimDecision,
+  notifyPaymentSettled,
+  notifyAgentSettlementChanged
+} from "../services/smsNotificationService.js";
 
 const router = express.Router();
 
@@ -989,6 +1001,9 @@ router.patch("/claims/:claimNumber", async (req, res) => {
       return res.status(404).json({ error: "Claim not found." });
     }
 
+    const previousAgent = claim.assignedAgent || "";
+    const previousStatus = claim.status || "";
+
     if (status !== undefined) claim.status = status;
     if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
     if (currentStep !== undefined) {
@@ -1028,6 +1043,23 @@ router.patch("/claims/:claimNumber", async (req, res) => {
     }
 
     await claim.save();
+
+    // Trigger non-blocking SMS notifications for relevant business events
+    try {
+      if (assignedAgent !== undefined && claim.assignedAgent && claim.assignedAgent !== previousAgent) {
+        notifyClaimAssigned(claim);
+        notifyAgentNewClaimAssigned(claim);
+      } else if (status !== undefined && status !== previousStatus) {
+        notifyClaimStatusChanged(claim, status);
+      }
+
+      if (documentsRequested && requestedDocuments && Array.isArray(requestedDocuments) && requestedDocuments.length > 0) {
+        notifyDocumentsRequested(claim, requestedDocuments);
+      }
+    } catch (smsErr) {
+      console.warn("SMS notification dispatch warning in office-staff claim update:", smsErr.message);
+    }
+
     res.json({ message: "Claim updated successfully", claim });
   } catch (err) {
     console.error("Update claim error:", err);
@@ -1278,6 +1310,13 @@ router.post("/claims/:claimNumber/approve-inspection", async (req, res) => {
       console.warn("Failed to send inspection approval email:", mailErr.message);
     }
 
+    // Trigger SMS notification
+    try {
+      notifyInspectionUpdate(claim, "approved");
+    } catch (smsErr) {
+      console.warn("Inspection approval SMS warning:", smsErr.message);
+    }
+
     res.json({
       message: "Physical inspection report approved. Garage Estimate Report requested from policy holder.",
       claim
@@ -1387,6 +1426,19 @@ router.post("/claims/:claimNumber/decision", async (req, res) => {
       }
     }
 
+    // Trigger non-blocking SMS notifications for Policyholder and Agent
+    try {
+      if (action === "Approve") {
+        notifyClaimApproved(claim, claim.approvedAmount, user);
+        notifyAgentClaimDecision(claim, "Approved", claim.approvedAmount);
+      } else {
+        notifyClaimRejected(claim, claim.rejectionReason, user);
+        notifyAgentClaimDecision(claim, "Rejected");
+      }
+    } catch (smsErr) {
+      console.warn("Claim decision SMS dispatch warning:", smsErr.message);
+    }
+
     res.json({ message: `Claim successfully ${action.toLowerCase()}d.`, claim });
   } catch (err) {
     console.error("Claim decision error:", err);
@@ -1468,6 +1520,14 @@ router.post("/claims/:claimNumber/settle-payment", async (req, res) => {
       } catch (e) {
         console.warn("Could not dispatch payment email:", e.message);
       }
+    }
+
+    // Trigger non-blocking SMS notifications for Policyholder and Agent
+    try {
+      notifyPaymentSettled(claim, finalAmount, user);
+      notifyAgentSettlementChanged(claim, finalAmount);
+    } catch (smsErr) {
+      console.warn("Payment settlement SMS warning:", smsErr.message);
     }
 
     res.json({

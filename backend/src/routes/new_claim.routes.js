@@ -11,6 +11,7 @@ import PhotoHash from "../models/photoHash.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { getNearestBranch } from "../utils/branch.js";
 import { sendEmail, getBaseTemplate, formatSriLankaDateTime } from "../utils/email.js";
+import { notifyClaimSubmitted } from "../services/smsNotificationService.js";
 import { analyzeAccidentDamage } from "../utils/aiAnalyzer.js";
 import {
   extractBase64Buffer,
@@ -483,6 +484,13 @@ router.post("/new-claim", async (req, res) => {
       ]);
     } catch (emailErr) {
       console.error("⚠️ Failed to send claim submission emails:", emailErr.message);
+    }
+
+    // Trigger non-blocking SMS notification to Policyholder
+    try {
+      notifyClaimSubmitted(newClaim, user);
+    } catch (smsErr) {
+      console.warn("SMS notification dispatch warning:", smsErr.message);
     }
 
     res.status(201).json({

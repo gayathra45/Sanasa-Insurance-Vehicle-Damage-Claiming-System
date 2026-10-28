@@ -8,6 +8,7 @@ import { logAgentActivity } from "../utils/activity.js";
 import AgentActivity from "../models/agent_activity.model.js";
 import { sendAgentActivityEmail } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
+import { notifyInspectionUpdate, notifyClaimStatusChanged } from "../services/smsNotificationService.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
@@ -193,6 +194,19 @@ router.post("/claims/:id/status", async (req, res) => {
       } catch (mailErr) {
         console.warn("Failed to send agent activity email, continuing:", mailErr.message);
       }
+    }
+
+    // Trigger non-blocking SMS notifications for Policyholder
+    try {
+      if (acceptClaim) {
+        notifyInspectionUpdate(claim, "scheduled");
+      } else if (inspectionSubmitted) {
+        notifyInspectionUpdate(claim, "completed");
+      } else if (status !== undefined) {
+        notifyClaimStatusChanged(claim, status);
+      }
+    } catch (smsErr) {
+      console.warn("Agent action SMS notification warning:", smsErr.message);
     }
 
     res.json({ message: "Claim status updated successfully", claim });

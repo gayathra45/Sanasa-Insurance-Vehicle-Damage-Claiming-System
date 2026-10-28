@@ -8,6 +8,7 @@ import { uploadToCloudinary } from "../utils/upload.js";
 import { logAgentActivity } from "../utils/activity.js";
 import { sendAgentActivityEmail, sendEmail } from "../utils/email.js";
 import { compareGarageEstimateWithPhotosAndAI } from "../utils/aiAnalyzer.js";
+import { notifyDocumentsVerified, notifyAgentDocumentsUploaded } from "../services/smsNotificationService.js";
 
 const router = express.Router();
 
@@ -205,6 +206,14 @@ router.post("/upload-garage-estimate/:claimNumber", async (req, res) => {
     claim.markModified("garageEstimateComparison");
     claim.updatedAt = new Date();
     await claim.save();
+
+    // Trigger non-blocking SMS notifications for Policyholder and Agent
+    try {
+      notifyDocumentsVerified(claim, "Garage Estimate Report");
+      notifyAgentDocumentsUploaded(claim, "Garage Estimate Report");
+    } catch (smsErr) {
+      console.warn("Garage estimate upload SMS warning:", smsErr.message);
+    }
 
     res.json({
       message: "Garage Estimate Report uploaded and cross-checked successfully!",
@@ -406,6 +415,17 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
       }
       
       await sendAgentActivityEmail(claim.assignedAgent, activityText, claim, customMsg);
+    }
+
+    // Trigger non-blocking SMS notifications for Policyholder and Agent
+    try {
+      if (uploadedDocuments && Array.isArray(uploadedDocuments) && uploadedDocuments.length > 0) {
+        const docSummary = uploadedDocuments.map(d => d.documentName).join(", ");
+        notifyDocumentsVerified(claim, docSummary);
+        notifyAgentDocumentsUploaded(claim, docSummary);
+      }
+    } catch (smsErr) {
+      console.warn("Document upload SMS warning:", smsErr.message);
     }
 
     res.json({ message: "Claim updated successfully", claim });
