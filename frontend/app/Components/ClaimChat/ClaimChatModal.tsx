@@ -154,6 +154,8 @@ interface PendingAttachment {
 
 type MainCategory = "recent" | "claims" | "branches" | "agents" | "admin";
 
+const CHAT_WALLPAPER_SVG = `data:image/svg+xml,%3Csvg width='220' height='220' viewBox='0 0 220 220' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cg opacity='0.25' stroke='%23475569' stroke-width='1.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 26c0-5 4-9 9-9h20c5 0 9 4 9 9v10c0 5-4 9-9 9H29l-7 6V26z'/%3E%3Ccircle cx='32' cy='31' r='1' fill='%23475569'/%3E%3Ccircle cx='41' cy='31' r='1' fill='%23475569'/%3E%3Ccircle cx='50' cy='31' r='1' fill='%23475569'/%3E%3Cpath d='M145 18l15 5v12c0 10-8 18-15 21-7-3-15-11-15-21V23l15-5z'/%3E%3Cpath d='M141 36l3 3 6-7'/%3E%3Cpath d='M74 98l4-10c1-3 4-5 7-5h18c3 0 6 2 7 5l4 10H74zm-3 0h44c2 0 3 2 3 4v5c0 1-1 2-2 2h-2m-40 0h-2c-1 0-2-1-2-2v-5c0-2 1-4 3-4z'/%3E%3Ccircle cx='80' cy='109' r='3'/%3E%3Ccircle cx='112' cy='109' r='3'/%3E%3Cpath d='M168 112c0-10 8-18 18-18s18 8 18 18h-36zm18-18v-4m0 22v11c0 3-3 5-6 5'/%3E%3Cpath d='M28 140h16l8 8v24c0 2-2 4-4 4H28c-2 0-4-2-4-4v-28c0-2 2-4 4-4z'/%3E%3Cpath d='M44 140v8h8m-22 6h12m-12 6h12m-12 6h8'/%3E%3Crect x='120' y='164' width='18' height='14' rx='3'/%3E%3Cpath d='M124 164v-5c0-3 2-5 5-5s5 2 5 5v5'/%3E%3Ccircle cx='129' cy='171' r='1.5' fill='%23475569'/%3E%3Ccircle cx='80' cy='192' r='8'/%3E%3Cpath d='M77 192l2 2 5-5'/%3E%3Cpath d='M192 188c-3-4-9-3-11 1-3 5 1 11 11 16 10-5 14-11 11-16-2-4-8-5-11-1z'/%3E%3Ccircle cx='105' cy='40' r='1.5' fill='%23475569'/%3E%3Ccircle cx='155' cy='140' r='1.5' fill='%23475569'/%3E%3Ccircle cx='200' cy='55' r='1.5' fill='%23475569'/%3E%3Ccircle cx='40' cy='105' r='1.5' fill='%23475569'/%3E%3Cpath d='M135 95h4m-2-2v4'/%3E%3Cpath d='M20 70h4m-2-2v4'/%3E%3C/g%3E%3C/svg%3E`;
+
 export const getAvatarUrl = (rawUrl?: string | null) => {
   if (!rawUrl) return "";
   if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://") || rawUrl.startsWith("data:")) return rawUrl;
@@ -2020,10 +2022,22 @@ export default function ClaimChatModal() {
             </div>
           )}
 
-          {/* Message Stream Canvas (Low-light simple design) */}
-          <div className="flex-1 overflow-y-auto no-scrollbar p-5 sm:p-6 space-y-3.5 bg-[#f1f5f9]">
-            <div className="flex items-center justify-center my-1">
-              <span className="bg-white border border-slate-200/90 text-slate-600 text-[10px] font-semibold px-3.5 py-1 rounded-full shadow-2xs">
+          {/* Message Stream Canvas with Simple Clean Wallpaper */}
+          <div className="flex-1 relative flex flex-col overflow-hidden bg-gradient-to-b from-[#f8fafc] via-[#f1f5f9] to-[#edf2f7]">
+            {/* Simple Low-Light Chat Wallpaper Pattern Layer */}
+            <div
+              className="absolute inset-0 pointer-events-none opacity-40 select-none"
+              style={{
+                backgroundImage: `url("${CHAT_WALLPAPER_SVG}")`,
+                backgroundSize: "220px 220px",
+                backgroundRepeat: "repeat"
+              }}
+            />
+
+            {/* Scrollable Message Stream */}
+            <div className="relative flex-1 overflow-y-auto no-scrollbar p-5 sm:p-6 space-y-3.5">
+              <div className="flex items-center justify-center my-1">
+                <span className="bg-white/95 backdrop-blur-xs border border-slate-200/90 text-slate-600 text-[10px] font-semibold px-3.5 py-1 rounded-full shadow-2xs">
                 {activeCategory === "claims"
                   ? "Official Claim Communication"
                   : activeCategory === "branches"
@@ -2225,6 +2239,7 @@ export default function ClaimChatModal() {
               })
             )}
             <div ref={messagesEndRef} />
+            </div>
           </div>
 
           {/* Quick Replies */}

@@ -27,8 +27,10 @@ export default function FloatingClaimChatButton() {
       <div className="relative group flex items-center justify-center">
         {/* Tooltip on hover */}
         <div className="absolute right-full mr-3 px-3 py-1.5 rounded-xl bg-[#0a192f] text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none shadow-xl border border-sky-400/20 flex items-center gap-2">
-          <span className="text-[#00ddff] font-bold">Claim Chat (Real-Time)</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span className="text-[#00ddff] font-bold">Claim Chat</span>
+          {chatUnreadCount > 0 && (
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          )}
         </div>
 
         {/* Floating circular chat button */}
@@ -41,13 +43,11 @@ export default function FloatingClaimChatButton() {
         >
           <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
 
-          {/* Unread numeric red badge or live pulse */}
-          {chatUnreadCount > 0 ? (
+          {/* Red unread dot / badge - ONLY displayed after receiving unread messages */}
+          {chatUnreadCount > 0 && (
             <span className="absolute -top-1.5 -right-1.5 min-w-[22px] h-[22px] px-1 bg-red-600 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white shadow-md animate-in zoom-in-75">
               {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
             </span>
-          ) : (
-            <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-white animate-pulse" />
           )}
         </button>
       </div>
