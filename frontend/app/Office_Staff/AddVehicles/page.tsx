@@ -575,10 +575,10 @@ export default function AddVehiclesPage() {
                               key={idx}
                               className="bg-white border border-slate-200 rounded-[30px] p-6 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1 text-slate-800"
                             >
-                              {/* Decorative faint background accent similar to policy holder dashboard */}
-                              <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[100px] pointer-events-none group-hover:bg-amber-50/50 transition-colors" />
+                              {/* Decorative faint background accent safely positioned behind content */}
+                              <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-amber-50/60 via-amber-50/20 to-transparent rounded-bl-[100px] pointer-events-none z-0 group-hover:from-amber-100/60 transition-colors" />
 
-                              <div>
+                              <div className="relative z-10">
                                 {/* Header Row: Icon + Plate Number & Year */}
                                 <div className="flex items-center justify-between mb-5 select-none">
                                   <div className="flex items-center gap-4">
@@ -657,7 +657,7 @@ export default function AddVehiclesPage() {
                               </div>
 
                               {/* Action Buttons Row */}
-                              <div className="flex items-center gap-2 border-t border-slate-100 pt-4 mt-5 select-none shrink-0 w-full justify-between">
+                              <div className="flex items-center gap-2 border-t border-slate-100 pt-4 mt-5 select-none shrink-0 w-full justify-between relative z-10">
                                 <button
                                   onClick={() => setSelectedUserForModal(item.user)}
                                   className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-600 hover:text-slate-800 font-semibold text-[11px] px-4 py-3 rounded-full transition-all active:scale-95 shadow-sm hover:scale-[1.01]"

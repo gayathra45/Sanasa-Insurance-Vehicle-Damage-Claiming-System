@@ -789,10 +789,10 @@ export default function MyVehicles() {
                   key={vehicle.numberPlate}
                   className="bg-white border border-slate-200 rounded-[30px] p-7 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1"
                 >
-                  {/* Decorative faint background accent */}
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-slate-50 rounded-bl-[100px] pointer-events-none group-hover:bg-cyan-50/50 transition-colors" />
+                  {/* Decorative faint background accent positioned safely behind content */}
+                  <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-cyan-50/70 via-sky-50/30 to-transparent rounded-bl-[100px] pointer-events-none z-0 group-hover:from-cyan-100/60 transition-colors duration-300" />
 
-                  <div>
+                  <div className="relative z-10">
                     {/* Header Row: Icon + Plate Number & Status */}
                     <div className="flex items-center justify-between mb-5">
                       <div className="flex items-center gap-4">
@@ -808,12 +808,12 @@ export default function MyVehicles() {
                         </div>
                       </div>
 
-                      {/* Category & Year Pill */}
+                      {/* Category & Year Pill - Always clearly visible above background */}
                       <div className="flex flex-col items-end gap-1.5 self-start">
-                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getVehicleTheme(vehicle.vehicleType).badge} select-none`}>
+                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getVehicleTheme(vehicle.vehicleType).badge} select-none shadow-xs`}>
                           {vehicle.vehicleType}
                         </span>
-                        <span className="text-slate-400 font-medium text-[11px] bg-slate-100/80 border border-slate-200/60 rounded-full px-2.5 py-0.5 select-none">
+                        <span className="text-slate-500 font-medium text-[11px] bg-slate-100 border border-slate-200/70 rounded-full px-2.5 py-0.5 select-none shadow-xs">
                           {vehicle.year}
                         </span>
                       </div>
@@ -837,7 +837,7 @@ export default function MyVehicles() {
                   </div>
 
                   {/* View Details CTA Button */}
-                  <div className="mt-6 pt-4.5 border-t border-slate-100 flex-shrink-0">
+                  <div className="mt-6 pt-4.5 border-t border-slate-100 flex-shrink-0 relative z-10">
                     <button
                       onClick={() => setSelectedVehicleForModal(vehicle)}
                       className="w-full bg-[#00ddff] hover:bg-[#00c8e6] text-black font-semibold text-xs md:text-sm py-3 rounded-full text-center transition-all flex items-center justify-center gap-2 cursor-pointer border-none shadow-sm hover:scale-[1.02] active:scale-[0.98] outline-none"
