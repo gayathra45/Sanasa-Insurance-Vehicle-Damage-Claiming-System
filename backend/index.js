@@ -19,6 +19,10 @@ import translateRouter from "./src/routes/translate.routes.js";
 import chatRouter from "./src/routes/chat.routes.js";
 import claimReportRouter from "./src/routes/claim_report.routes.js";
 import renewalRouter from "./src/routes/renewal.routes.js";
+import http from "http";
+import claimChatRouter from "./src/routes/claim_chat.routes.js";
+import notificationsRouter from "./src/routes/notifications.routes.js";
+import { initSocketServer } from "./src/utils/socket.js";
 
 
 
@@ -54,6 +58,8 @@ app.use("/api/translate", translateRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/claims", claimReportRouter);
 app.use("/api/renewals", renewalRouter);
+app.use("/api/claim-chat", claimChatRouter);
+app.use("/api/notifications", notificationsRouter);
 
 
 
@@ -74,11 +80,14 @@ const startServer = async () => {
       console.warn("Photo hash indexing error:", err.message);
     });
 
-    const server = app.listen(PORT, "0.0.0.0", () => {
-      console.log(`🚀 Server running on port ${PORT}`);
+    const httpServer = http.createServer(app);
+    initSocketServer(httpServer);
+
+    httpServer.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server with Socket.IO running on port ${PORT}`);
     });
 
-    server.on("error", (err) => {
+    httpServer.on("error", (err) => {
       console.error("❌ Server listen error:", err.message);
     });
   } catch (error) {

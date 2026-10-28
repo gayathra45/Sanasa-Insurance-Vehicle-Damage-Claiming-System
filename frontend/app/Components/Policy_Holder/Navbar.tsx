@@ -17,10 +17,12 @@ import {
   Menu01Icon,
   Search01Icon,
   Location01Icon,
-  Cancel01Icon
+  Cancel01Icon,
+  BubbleChatIcon
 } from "@hugeicons/core-free-icons";
 import { API_URL } from "@/app/config";
 import AccessibilityWidget from "@/app/Components/Homepage/AccessibilityWidget";
+import { useChatNotification } from "@/app/context/ChatNotificationContext";
 
 const translations = {
   en: {
@@ -92,6 +94,7 @@ const branches = [
 export default function PolicyHolderNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { chatUnreadCount, notificationUnreadCount, openChat } = useChatNotification();
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -401,16 +404,36 @@ export default function PolicyHolderNavbar() {
             </Link>
           </div>
 
-          {/* Right Action Icons (Notifications, Profile & Mobile Hamburger) */}
+          {/* Right Action Icons (Claim Chat, Notifications, Profile & Mobile Hamburger) */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Live Claim Chat Message Icon */}
+            <button
+              onClick={() => openChat()}
+              className="relative p-2 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 cursor-pointer flex items-center justify-center focus:outline-none"
+              aria-label={chatUnreadCount > 0 ? `Unread messages (${chatUnreadCount})` : "Claim Chat"}
+              title="Claim Communication Desk"
+            >
+              <HugeiconsIcon icon={BubbleChatIcon} className="w-6 h-6" strokeWidth={1.8} />
+              {chatUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-75">
+                  {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                </span>
+              )}
+            </button>
+
             {/* Notifications Bell */}
             <Link
               href="/Policy_Holder/Notifications"
               className="relative p-2 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 no-underline flex items-center justify-center"
-              aria-label="Notifications"
+              aria-label={notificationUnreadCount > 0 ? `Notifications (${notificationUnreadCount})` : "Notifications"}
+              title="In-App Notifications"
             >
               <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6" strokeWidth={1.8} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white" />
+              {notificationUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-75">
+                  {notificationUnreadCount > 9 ? "9+" : notificationUnreadCount}
+                </span>
+              )}
             </Link>
 
             {/* Profile Dropdown */}

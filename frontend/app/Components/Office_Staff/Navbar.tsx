@@ -18,9 +18,11 @@ import {
   Notification01Icon,
   Building01Icon,
   Cancel01Icon,
-  RefreshIcon
+  RefreshIcon,
+  BubbleChatIcon
 } from "@hugeicons/core-free-icons";
 import { API_URL } from "@/app/config";
+import { useChatNotification } from "@/app/context/ChatNotificationContext";
 
 export default function OfficeStaffNavbar() {
   const pathname = usePathname();
@@ -73,6 +75,8 @@ export default function OfficeStaffNavbar() {
     };
   }, []);
 
+  const { chatUnreadCount, notificationUnreadCount, openChat } = useChatNotification();
+
   const menuItems = [
     { name: "Home", href: "/Office_Staff/Dashboard" },
     { name: "Claims", href: "/Office_Staff/Claims" },
@@ -81,6 +85,7 @@ export default function OfficeStaffNavbar() {
     { name: "Policy Renewals", href: "/Office_Staff/Renewals" },
     { name: "Agents", href: "/Office_Staff/Agents" },
     { name: "Reports", href: "/Office_Staff/Reports" },
+    { name: "Claim Chat", href: "#claim-chat", isChatAction: true },
     { name: "Notifications", href: "/Office_Staff/Notifications" },
     { name: "Contact", href: "/Office_Staff/Contact" },
   ];
@@ -109,6 +114,8 @@ export default function OfficeStaffNavbar() {
       case "reports":
       case "analytics & reports":
         return <HugeiconsIcon icon={Analytics01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "claim chat":
+        return <HugeiconsIcon icon={BubbleChatIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "notifications":
         return <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "contact":
@@ -138,9 +145,47 @@ export default function OfficeStaffNavbar() {
         {/* Menu Navigation Links */}
         <nav className="flex-1 mt-6 flex flex-col overflow-y-auto">
           {menuItems.map((item) => {
-            // Check if active (matches exact path or prefix path)
-            const isActive = pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href));
+            const isChat = item.isChatAction;
+            const isActive = !isChat && (pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href)));
             const hasChevron = ["policy holders", "policy renewals", "renewals", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+
+            const badgeCount =
+              item.name === "Claim Chat"
+                ? chatUnreadCount
+                : item.name === "Notifications"
+                ? notificationUnreadCount
+                : 0;
+
+            const content = (
+              <>
+                {getIcon(item.name)}
+                <span>{item.name}</span>
+                {badgeCount > 0 && (
+                  <span className="ml-auto px-2 py-0.5 bg-red-600 text-white text-[11px] font-bold rounded-full border border-white/20 shadow-xs">
+                    {badgeCount > 9 ? "9+" : badgeCount}
+                  </span>
+                )}
+                {hasChevron && badgeCount === 0 && (
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity"
+                    strokeWidth={2.5}
+                  />
+                )}
+              </>
+            );
+
+            if (isChat) {
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => openChat()}
+                  className="mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group text-slate-100 hover:bg-white/10 hover:text-white cursor-pointer border-none bg-transparent w-[calc(100%-32px)] text-left focus:outline-none"
+                >
+                  {content}
+                </button>
+              );
+            }
 
             return (
               <Link
@@ -152,15 +197,7 @@ export default function OfficeStaffNavbar() {
                     : "text-slate-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                {getIcon(item.name)}
-                <span>{item.name}</span>
-                {hasChevron && (
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity"
-                    strokeWidth={2.5}
-                  />
-                )}
+                {content}
               </Link>
             );
           })}
@@ -202,8 +239,51 @@ export default function OfficeStaffNavbar() {
             {/* Menu Links */}
             <nav className="flex-1 flex flex-col gap-1 overflow-y-auto">
               {menuItems.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href));
+                const isChat = item.isChatAction;
+                const isActive = !isChat && (pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href)));
                 const hasChevron = ["policy holders", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+
+                const badgeCount =
+                  item.name === "Claim Chat"
+                    ? chatUnreadCount
+                    : item.name === "Notifications"
+                    ? notificationUnreadCount
+                    : 0;
+
+                const content = (
+                  <>
+                    {isActive && <div className="absolute left-1 w-2 h-5 bg-[#00ddff] rounded-full" />}
+                    {getIcon(item.name)}
+                    <span>{item.name}</span>
+                    {badgeCount > 0 && (
+                      <span className="ml-auto px-2 py-0.5 bg-red-600 text-white text-[11px] font-bold rounded-full border border-white/20 shadow-xs">
+                        {badgeCount > 9 ? "9+" : badgeCount}
+                      </span>
+                    )}
+                    {hasChevron && badgeCount === 0 && (
+                      <HugeiconsIcon
+                        icon={ArrowRight01Icon}
+                        className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity"
+                        strokeWidth={2.5}
+                      />
+                    )}
+                  </>
+                );
+
+                if (isChat) {
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => {
+                        setIsMobileOpen(false);
+                        openChat();
+                      }}
+                      className="px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl relative text-slate-100 hover:bg-white/10 hover:text-white cursor-pointer border-none bg-transparent w-full text-left focus:outline-none"
+                    >
+                      {content}
+                    </button>
+                  );
+                }
 
                 return (
                   <Link
@@ -216,16 +296,7 @@ export default function OfficeStaffNavbar() {
                         : "text-slate-100 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    {isActive && <div className="absolute left-1 w-2 h-5 bg-[#00ddff] rounded-full" />}
-                    {getIcon(item.name)}
-                    <span>{item.name}</span>
-                    {hasChevron && (
-                      <HugeiconsIcon
-                        icon={ArrowRight01Icon}
-                        className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity"
-                        strokeWidth={2.5}
-                      />
-                    )}
+                    {content}
                   </Link>
                 );
               })}

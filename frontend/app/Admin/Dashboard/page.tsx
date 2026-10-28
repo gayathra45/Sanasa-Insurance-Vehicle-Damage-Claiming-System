@@ -5,6 +5,7 @@ import { API_URL } from "@/app/config";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import Link from "next/link";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import HeaderNotificationBell from "@/app/Components/HeaderNotificationBell";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
@@ -281,10 +282,8 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
-              <Link href="/Admin/Notifications" className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center">
-                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
-              </Link>
-              {/* User Avatar Icon */}
+              <HeaderNotificationBell href="/Admin/Notifications" />
+              {/* User Avatar Icon & Live Claim Chat Button */}
               <UserAvatarDropdown userType="admin" />
             </div>
           </header>

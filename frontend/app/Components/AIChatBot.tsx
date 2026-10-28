@@ -340,8 +340,8 @@ export default function WebAIChatBot() {
     pathname?.toLowerCase().startsWith("/login")
   );
 
-  // Aligned perfectly with existing right-8 position; stacked above with clean 12px gap
-  const bottomPositionClass = hasExistingBottomChat ? "bottom-[112px] right-8" : "bottom-8 right-8";
+  // Aligned cleanly above the floating claim chat button (bottom-8 right-8)
+  const bottomPositionClass = "bottom-[108px] right-8";
 
   const scrollToBottom = () => {
     setTimeout(() => {

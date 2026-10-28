@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Afacad } from "next/font/google";
 import "./globals.css";
 import WebAIChatBot from "./Components/AIChatBot";
+import { ChatNotificationProvider } from "./context/ChatNotificationContext";
+import ClaimChatModal from "./Components/ClaimChat/ClaimChatModal";
+import FloatingClaimChatButton from "./Components/ClaimChat/FloatingClaimChatButton";
 
 const afacad = Afacad({
   variable: "--font-afacad",
@@ -27,8 +30,12 @@ export default function RootLayout({
         className={`${afacad.variable} antialiased`}
         suppressHydrationWarning
       >
-        {children}
-        <WebAIChatBot />
+        <ChatNotificationProvider>
+          {children}
+          <ClaimChatModal />
+          <FloatingClaimChatButton />
+          <WebAIChatBot />
+        </ChatNotificationProvider>
       </body>
     </html>
   );

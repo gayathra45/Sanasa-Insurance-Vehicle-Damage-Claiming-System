@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { UserCircleIcon, Logout01Icon } from "@hugeicons/core-free-icons";
+import { UserCircleIcon, Logout01Icon, BubbleChatIcon } from "@hugeicons/core-free-icons";
+import { useChatNotification } from "@/app/context/ChatNotificationContext";
 
 interface UserAvatarDropdownProps {
   userType: "admin" | "office_staff";
@@ -11,6 +12,7 @@ interface UserAvatarDropdownProps {
 
 export default function UserAvatarDropdown({ userType }: UserAvatarDropdownProps) {
   const router = useRouter();
+  const { chatUnreadCount, openChat } = useChatNotification();
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<{ name?: string; email?: string; branch?: string } | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
@@ -43,15 +45,32 @@ export default function UserAvatarDropdown({ userType }: UserAvatarDropdownProps
   };
 
   return (
-    <div className="relative" ref={profileMenuRef}>
+    <div className="flex items-center gap-3">
+      {/* Live Claim Chat Message Icon */}
       <button
-        onClick={() => setProfileMenuOpen((prev) => !prev)}
-        className="relative p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center text-slate-500 hover:text-slate-800"
-        aria-label="User Profile"
-        aria-expanded={profileMenuOpen}
+        onClick={() => openChat()}
+        className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
+        aria-label={chatUnreadCount > 0 ? `Unread messages (${chatUnreadCount})` : "Claim Chat"}
+        title="Claim Communication Desk"
       >
-        <HugeiconsIcon icon={UserCircleIcon} className="w-8 h-8" strokeWidth={1.8} />
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-6 h-6" strokeWidth={2} />
+        {chatUnreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-75">
+            {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+          </span>
+        )}
       </button>
+
+      {/* Avatar Dropdown */}
+      <div className="relative" ref={profileMenuRef}>
+        <button
+          onClick={() => setProfileMenuOpen((prev) => !prev)}
+          className="relative p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center text-slate-500 hover:text-slate-800"
+          aria-label="User Profile"
+          aria-expanded={profileMenuOpen}
+        >
+          <HugeiconsIcon icon={UserCircleIcon} className="w-8 h-8" strokeWidth={1.8} />
+        </button>
 
       {/* Dropdown Menu */}
       {profileMenuOpen && (
@@ -119,6 +138,7 @@ export default function UserAvatarDropdown({ userType }: UserAvatarDropdownProps
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }

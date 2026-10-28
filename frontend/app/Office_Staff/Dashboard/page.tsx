@@ -5,6 +5,7 @@ import Link from "next/link";
 import { API_URL } from "@/app/config";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import HeaderNotificationBell from "@/app/Components/HeaderNotificationBell";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
@@ -299,10 +300,8 @@ export default function OfficeStaffDashboard() {
             
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
-              <Link href="/Office_Staff/Notifications" className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center">
-                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
-              </Link>
-              {/* User Avatar Icon */}
+              <HeaderNotificationBell href="/Office_Staff/Notifications" />
+              {/* User Avatar Icon & Live Claim Chat Button */}
               <UserAvatarDropdown userType="office_staff" />
             </div>
           </header>
