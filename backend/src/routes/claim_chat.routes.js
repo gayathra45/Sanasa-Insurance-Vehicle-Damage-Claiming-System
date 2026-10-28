@@ -678,6 +678,23 @@ router.post("/conversations/:conversationId/messages", async (req, res) => {
       conversationId
     });
 
+    // Notify all participants' personal rooms so their recent chat list updates immediately
+    for (const participant of conversation.participants || []) {
+      emitToUser(participant.userType, String(participant.userId), "conversation:updated", {
+        conversationId,
+        claimNumber: conversation.claimNumber,
+        vehiclePlate: conversation.vehiclePlate,
+        lastMessage: {
+          text: plainMessage.text,
+          senderId: plainMessage.senderId,
+          senderName: plainMessage.senderName,
+          senderType: plainMessage.senderType,
+          sentAt: plainMessage.createdAt
+        },
+        updatedAt: plainMessage.createdAt
+      });
+    }
+
     // 5. For each recipient: update unread counts, trigger in-app notification, queue email
     for (const recipient of otherParticipants) {
       const recId = String(recipient.userId);
