@@ -24,7 +24,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import LanguageModal from "../Components/PolicyHolder/LanguageModal";
-import AIChatBot from "../Components/AIChatBot";
+import AIChatBot, { openMobileSupportChat } from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 import { translateTextMobile } from "../../utils/translator";
 
@@ -578,7 +578,7 @@ export default function PolicyHolderDashboard() {
   };
 
   const handleQuickAction = (route: string) => {
-    if (route === "support") { showSupportAlert(); return; }
+    if (route === "support") { openMobileSupportChat(); return; }
     router.push(route as any);
   };
 
@@ -917,7 +917,7 @@ export default function PolicyHolderDashboard() {
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{lang === "en" ? "Contact Support" : lang === "si" ? "සහාය සේවාව අමතන්න" : "ஆதரவைத் தொடர்பு கொள்ளவும்"}</Text>
             </View>
-            <TouchableOpacity style={styles.supportCard} onPress={showSupportAlert} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.supportCard} onPress={openMobileSupportChat} activeOpacity={0.8}>
               <View style={styles.supportContent}>
                 <Ionicons name="headset-outline" size={24} color="#0f172a" />
                 <View style={{ marginLeft: 12 }}>

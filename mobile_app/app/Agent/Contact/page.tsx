@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import AgentNavbar from "../../Components/Agent/page";
-import AIChatBot from "../../Components/AIChatBot";
+import AIChatBot, { openMobileSupportChat } from "../../Components/AIChatBot";
 
 export default function AgentContact() {
   const [customAlert, setCustomAlert] = useState<{
@@ -115,7 +115,7 @@ export default function AgentContact() {
           {/* Card 3: Live Chat */}
           <TouchableOpacity
             style={styles.channelCard}
-            onPress={handleChatPress}
+            onPress={openMobileSupportChat}
             activeOpacity={0.7}
           >
             <View style={styles.channelLeft}>

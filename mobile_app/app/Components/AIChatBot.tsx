@@ -14,18 +14,36 @@ import {
   Dimensions,
   TouchableWithoutFeedback,
   Linking,
+  Image,
+  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import * as ImagePicker from "expo-image-picker";
 import { API_BASE_URL } from "../_config";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
+
+type TriggerCallback = () => void;
+let supportTriggerCallbacks: TriggerCallback[] = [];
+let aiTriggerCallbacks: TriggerCallback[] = [];
+
+export const openMobileSupportChat = () => {
+  supportTriggerCallbacks.forEach((cb) => cb());
+};
+
+export const openMobileAIChat = () => {
+  aiTriggerCallbacks.forEach((cb) => cb());
+};
 
 interface ChatMessage {
   id: string;
   sender: "user" | "ai";
   text: string;
+  senderName?: string;
+  senderPhoto?: string;
+  attachments?: { name: string; url: string; fileType: string; size?: number }[];
   timestamp: string;
 }
 
@@ -125,6 +143,25 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
   const [supportInputText, setSupportInputText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSupportSending, setIsSupportSending] = useState(false);
+  const [currentUserSession, setCurrentUserSession] = useState<{
+    userId: string;
+    userType: string;
+    name: string;
+    email: string;
+    branch: string;
+    profilePhoto?: string;
+  }>({
+    userId: "",
+    userType: userRole === "agent" ? "Agent" : "PolicyHolder",
+    name: "",
+    email: "",
+    branch: "",
+    profilePhoto: "",
+  });
+  const [supportConversationId, setSupportConversationId] = useState<string | null>(null);
+  const [unreadChatCount, setUnreadChatCount] = useState<number>(0);
+  const [selectedPhoto, setSelectedPhoto] = useState<{ uri: string; base64?: string; name: string; type: string } | null>(null);
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome-1",
@@ -147,6 +184,146 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
   const scrollViewRef = useRef<ScrollView>(null);
   const supportScrollRef = useRef<ScrollView>(null);
   const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  // Register trigger listener on mount
+  useEffect(() => {
+    const triggerSupport = () => setSupportModalVisible(true);
+    const triggerAI = () => {
+      setModalVisible(true);
+      scrollToBottom();
+    };
+    supportTriggerCallbacks.push(triggerSupport);
+    aiTriggerCallbacks.push(triggerAI);
+    return () => {
+      supportTriggerCallbacks = supportTriggerCallbacks.filter((cb) => cb !== triggerSupport);
+      aiTriggerCallbacks = aiTriggerCallbacks.filter((cb) => cb !== triggerAI);
+    };
+  }, []);
+
+  // Fetch active user session
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const userStr = await AsyncStorage.getItem("logged_in_user");
+        const agentStr = await AsyncStorage.getItem("logged_in_agent");
+        if (userRole === "agent" && agentStr) {
+          const a = JSON.parse(agentStr);
+          setCurrentUserSession({
+            userId: String(a.agentId || a._id || a.id || "AGENT"),
+            userType: "Agent",
+            name: a.name || "Field Agent",
+            email: a.email || "",
+            branch: a.branch || "Head Office",
+            profilePhoto: a.profilePhoto || "",
+          });
+        } else if (userStr) {
+          const u = JSON.parse(userStr);
+          setCurrentUserSession({
+            userId: String(u.nic || u._id || "PH-USER"),
+            userType: "PolicyHolder",
+            name: `${u.firstName || ""} ${u.lastName || ""}`.trim() || "Policyholder",
+            email: u.email || "",
+            branch: u.branch || "Head Office",
+            profilePhoto: u.profilePhoto || "",
+          });
+        }
+      } catch (err) {
+        console.warn("Error fetching chat session:", err);
+      }
+    };
+    fetchSession();
+  }, [userRole]);
+
+  // Periodic unread count check
+  useEffect(() => {
+    if (!currentUserSession.userId) return;
+    let isSubscribed = true;
+    const checkUnread = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/api/claim-chat/unread-counts?userId=${encodeURIComponent(currentUserSession.userId)}&userType=${currentUserSession.userType}`
+        );
+        if (res.ok) {
+          const d = await res.json();
+          if (isSubscribed && typeof d.chatUnreadCount === "number") {
+            setUnreadChatCount(d.chatUnreadCount);
+          }
+        }
+      } catch {}
+    };
+    checkUnread();
+    const interval = setInterval(checkUnread, 8000);
+    return () => {
+      isSubscribed = false;
+      clearInterval(interval);
+    };
+  }, [currentUserSession.userId, currentUserSession.userType]);
+
+  // Load and poll support conversation while modal is open
+  useEffect(() => {
+    if (!supportModalVisible || !currentUserSession.userId) return;
+    let isSubscribed = true;
+
+    const syncMessages = async () => {
+      try {
+        let convId = supportConversationId;
+        if (!convId) {
+          const res = await fetch(
+            `${API_BASE_URL}/api/claim-chat/conversations?userId=${encodeURIComponent(currentUserSession.userId)}&userType=${currentUserSession.userType}`
+          );
+          if (res.ok) {
+            const d = await res.json();
+            const found = (d.conversations || [])[0];
+            if (found?._id) {
+              convId = found._id;
+              if (isSubscribed) setSupportConversationId(found._id);
+            }
+          }
+        }
+
+        if (convId) {
+          const msgRes = await fetch(`${API_BASE_URL}/api/claim-chat/conversations/${convId}/messages`);
+          if (msgRes.ok) {
+            const data = await msgRes.json();
+            const serverMsgs: any[] = data.messages || [];
+            if (isSubscribed && serverMsgs.length > 0) {
+              const formatted: ChatMessage[] = serverMsgs.map((m) => ({
+                id: m._id,
+                sender: String(m.senderId) === String(currentUserSession.userId) ? "user" : "ai",
+                text: m.text || "",
+                senderName: m.senderName,
+                senderPhoto: m.senderPhoto,
+                attachments: m.attachments,
+                timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              }));
+              setSupportMessages(formatted);
+            }
+          }
+
+          fetch(`${API_BASE_URL}/api/claim-chat/conversations/${convId}/read`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: currentUserSession.userId,
+              userType: currentUserSession.userType
+            })
+          }).then(() => {
+            if (isSubscribed) setUnreadChatCount(0);
+          }).catch(() => {});
+        }
+      } catch (err) {
+        console.warn("syncMessages error:", err);
+      }
+    };
+
+    syncMessages();
+    const pollInterval = setInterval(syncMessages, 3500);
+
+    return () => {
+      isSubscribed = false;
+      clearInterval(pollInterval);
+    };
+  }, [supportModalVisible, currentUserSession.userId, supportConversationId]);
 
   // Pulse animation for online indicator
   useEffect(() => {
@@ -331,33 +508,161 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     });
   };
 
+  const handlePickPhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Please allow photo library access to attach pictures to your claim chat.");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.7,
+        base64: true,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setSelectedPhoto({
+          uri: asset.uri,
+          base64: asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : undefined,
+          name: asset.fileName || `claim_photo_${Date.now()}.jpg`,
+          type: "image/jpeg",
+        });
+      }
+    } catch (err) {
+      console.warn("handlePickPhoto error:", err);
+    }
+  };
+
   const handleSupportSend = async () => {
     const text = supportInputText.trim();
-    if (!text || isSupportSending) return;
+    if ((!text && !selectedPhoto) || isSupportSending) return;
 
-    const userMsg: ChatMessage = {
-      id: `supp-user-${Date.now()}`,
+    setIsSupportSending(true);
+    const photoToUpload = selectedPhoto;
+    setSelectedPhoto(null);
+    setSupportInputText("");
+
+    const tempId = `temp-${Date.now()}`;
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
       sender: "user",
-      text,
+      text: text,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      attachments: photoToUpload ? [{ name: photoToUpload.name, url: photoToUpload.uri, fileType: "image/jpeg" }] : undefined,
     };
 
-    setSupportMessages((prev) => [...prev, userMsg]);
-    setSupportInputText("");
-    setIsSupportSending(true);
+    setSupportMessages((prev) => [...prev, optimisticMsg]);
     setTimeout(() => supportScrollRef.current?.scrollToEnd({ animated: true }), 100);
 
-    setTimeout(() => {
-      const replyMsg: ChatMessage = {
-        id: `supp-rep-${Date.now()}`,
-        sender: "ai",
-        text: "Thank you for reaching Sanasa Support! A customer service officer has received your message and will review your file immediately. For urgent roadside assistance, call our 24/7 hotline at 1301 or 011 280 9200.",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      };
-      setSupportMessages((prev) => [...prev, replyMsg]);
+    try {
+      let convId = supportConversationId;
+
+      if (!convId) {
+        const listRes = await fetch(
+          `${API_BASE_URL}/api/claim-chat/conversations?userId=${encodeURIComponent(currentUserSession.userId)}&userType=${currentUserSession.userType}`
+        );
+        if (listRes.ok) {
+          const d = await listRes.json();
+          if (d.conversations && d.conversations.length > 0) {
+            convId = d.conversations[0]._id;
+            setSupportConversationId(convId);
+          }
+        }
+
+        if (!convId) {
+          const createRes = await fetch(`${API_BASE_URL}/api/claim-chat/conversations`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              claimNumber: "DIRECT-SUPPORT",
+              sender: {
+                userId: currentUserSession.userId || "MOBILE_USER",
+                userType: currentUserSession.userType,
+                name: currentUserSession.name || "Customer",
+                email: currentUserSession.email || "",
+                branch: currentUserSession.branch || "Head Office",
+                profilePhoto: currentUserSession.profilePhoto || "",
+              },
+              recipient: {
+                userId: currentUserSession.branch ? currentUserSession.branch : "Head Office",
+                userType: "OfficeStaff",
+                name: currentUserSession.branch ? `${currentUserSession.branch} Branch Office` : "Customer Support Desk",
+                email: "support@sanasa.lk",
+                role: "Support Officer",
+                branch: currentUserSession.branch || "Head Office",
+              },
+              type: "direct",
+            }),
+          });
+          if (createRes.ok) {
+            const created = await createRes.json();
+            if (created?.conversation?._id) {
+              convId = created.conversation._id;
+              setSupportConversationId(convId);
+            }
+          }
+        }
+      }
+
+      if (convId) {
+        const payload: any = {
+          senderId: currentUserSession.userId || "MOBILE_USER",
+          senderType: currentUserSession.userType,
+          senderName: currentUserSession.name || "Mobile User",
+          senderEmail: currentUserSession.email || "",
+          senderRole: currentUserSession.userType === "Agent" ? "Assigned Agent" : "Policyholder",
+          senderPhoto: currentUserSession.profilePhoto || "",
+          text: text,
+        };
+
+        if (photoToUpload?.base64) {
+          payload.attachments = [
+            {
+              data: photoToUpload.base64,
+              name: photoToUpload.name,
+              fileType: photoToUpload.type,
+            },
+          ];
+        }
+
+        const sendRes = await fetch(`${API_BASE_URL}/api/claim-chat/conversations/${convId}/messages`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        if (sendRes.ok) {
+          const sendData = await sendRes.json();
+          if (sendData.message) {
+            setSupportMessages((prev) =>
+              prev.map((m) =>
+                m.id === tempId
+                  ? {
+                      id: sendData.message._id,
+                      sender: "user",
+                      text: sendData.message.text || "",
+                      senderName: sendData.message.senderName,
+                      senderPhoto: sendData.message.senderPhoto,
+                      attachments: sendData.message.attachments,
+                      timestamp: new Date(sendData.message.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }),
+                    }
+                  : m
+              )
+            );
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Support send error:", err);
+    } finally {
       setIsSupportSending(false);
-      setTimeout(() => supportScrollRef.current?.scrollToEnd({ animated: true }), 100);
-    }, 1000);
+      setTimeout(() => supportScrollRef.current?.scrollToEnd({ animated: true }), 150);
+    }
   };
 
   return (
@@ -372,6 +677,13 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
         >
           <View style={styles.supportFabCircle}>
             <Ionicons name="chatbubble-ellipses" size={24} color="#ffffff" />
+            {unreadChatCount > 0 && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadBadgeText}>
+                  {unreadChatCount > 9 ? "9+" : unreadChatCount}
+                </Text>
+              </View>
+            )}
           </View>
         </TouchableOpacity>
 
@@ -669,9 +981,13 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                       ]}
                     >
                       {!isUser && (
-                        <View style={[styles.aiBubbleAvatar, { backgroundColor: "#00ddff" }]}>
-                          <Ionicons name="headset" size={13} color="#ffffff" />
-                        </View>
+                        msg.senderPhoto ? (
+                          <Image source={{ uri: msg.senderPhoto }} style={styles.senderPhotoAvatar} />
+                        ) : (
+                          <View style={[styles.aiBubbleAvatar, { backgroundColor: "#0284c7" }]}>
+                            <Ionicons name="headset" size={13} color="#ffffff" />
+                          </View>
+                        )
                       )}
                       <View
                         style={[
@@ -679,7 +995,24 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                           isUser ? styles.userBubble : [styles.aiBubble, { borderColor: "#bae6fd" }],
                         ]}
                       >
-                        {renderFormattedText(msg.text, isUser)}
+                        {!isUser && msg.senderName && (
+                          <Text style={styles.senderNameLabel}>{msg.senderName}</Text>
+                        )}
+                        {msg.attachments && msg.attachments.length > 0 && (
+                          <View style={styles.attachmentWrapper}>
+                            {msg.attachments.map((att, aIdx) => (
+                              att.url ? (
+                                <Image
+                                  key={aIdx}
+                                  source={{ uri: att.url }}
+                                  style={styles.attachmentImage}
+                                  resizeMode="cover"
+                                />
+                              ) : null
+                            ))}
+                          </View>
+                        )}
+                        {!!msg.text && renderFormattedText(msg.text, isUser)}
                         <Text
                           style={[
                             styles.timestampText,
@@ -695,23 +1028,45 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
 
                 {isSupportSending && (
                   <View style={[styles.messageRow, styles.aiMessageRow]}>
-                    <View style={[styles.aiBubbleAvatar, { backgroundColor: "#00ddff" }]}>
+                    <View style={[styles.aiBubbleAvatar, { backgroundColor: "#0284c7" }]}>
                       <ActivityIndicator size="small" color="#ffffff" />
                     </View>
                     <View style={[styles.messageBubble, styles.aiBubble, styles.typingBubble]}>
-                      <Text style={styles.typingText}>Support agent typing...</Text>
+                      <Text style={styles.typingText}>Sending message...</Text>
                     </View>
                   </View>
                 )}
               </ScrollView>
             </View>
 
+            {/* Selected Photo Preview Bar */}
+            {selectedPhoto && (
+              <View style={styles.photoPreviewBar}>
+                <Image source={{ uri: selectedPhoto.uri }} style={styles.photoThumb} />
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                  <Text style={styles.photoThumbName} numberOfLines={1}>{selectedPhoto.name}</Text>
+                  <Text style={styles.photoThumbSub}>Attached photo ready to send</Text>
+                </View>
+                <TouchableOpacity onPress={() => setSelectedPhoto(null)} style={styles.removePhotoBtn}>
+                  <Ionicons name="close-circle" size={20} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+            )}
+
             {/* Input Bar */}
             <View style={styles.inputContainer}>
               <View style={styles.inputWrap}>
+                <TouchableOpacity
+                  style={styles.attachButton}
+                  onPress={handlePickPhoto}
+                  disabled={isSupportSending}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="camera-outline" size={20} color="#0284c7" />
+                </TouchableOpacity>
                 <TextInput
                   style={styles.textInput}
-                  placeholder="Type message to Sanasa Support..."
+                  placeholder="Message claim desk or officer..."
                   placeholderTextColor="#94a3b8"
                   value={supportInputText}
                   onChangeText={setSupportInputText}
@@ -722,18 +1077,22 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
                 <TouchableOpacity
                   style={[
                     styles.sendButton,
-                    { backgroundColor: "#00ddff" },
-                    (!supportInputText.trim() || isSupportSending) && styles.sendButtonDisabled,
+                    { backgroundColor: "#0284c7" },
+                    (!supportInputText.trim() && !selectedPhoto || isSupportSending) && styles.sendButtonDisabled,
                   ]}
                   onPress={handleSupportSend}
-                  disabled={!supportInputText.trim() || isSupportSending}
+                  disabled={(!supportInputText.trim() && !selectedPhoto) || isSupportSending}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="paper-plane" size={16} color="#ffffff" />
+                  {isSupportSending ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Ionicons name="paper-plane" size={16} color="#ffffff" />
+                  )}
                 </TouchableOpacity>
               </View>
               <Text style={styles.disclaimerText}>
-                Sanasa General Insurance • <Text style={[styles.disclaimerAccent, { color: "#00ddff" }]}>Live Helpdesk Support</Text>
+                Sanasa General Insurance • <Text style={[styles.disclaimerAccent, { color: "#0284c7" }]}>Live Claims & Support Chat</Text>
               </Text>
             </View>
           </KeyboardAvoidingView>
@@ -1120,5 +1479,79 @@ const styles = StyleSheet.create({
   disclaimerAccent: {
     color: "#0284c7",
     fontWeight: "700",
+  },
+  unreadBadge: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    backgroundColor: "#ef4444",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: "#ffffff",
+  },
+  unreadBadgeText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "800",
+  },
+  attachButton: {
+    padding: 6,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  photoPreviewBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: "#f1f5f9",
+    borderTopWidth: 1,
+    borderTopColor: "#e2e8f0",
+  },
+  photoThumb: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: "#cbd5e1",
+  },
+  photoThumbName: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#0f172a",
+  },
+  photoThumbSub: {
+    fontSize: 10,
+    color: "#64748b",
+  },
+  removePhotoBtn: {
+    padding: 4,
+  },
+  senderPhotoAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    marginRight: 6,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  senderNameLabel: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: "#0284c7",
+    marginBottom: 4,
+  },
+  attachmentWrapper: {
+    marginBottom: 6,
+  },
+  attachmentImage: {
+    width: 180,
+    height: 130,
+    borderRadius: 10,
+    backgroundColor: "#f1f5f9",
   },
 });

@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
-import AIChatBot from "../Components/AIChatBot";
+import AIChatBot, { openMobileSupportChat } from "../Components/AIChatBot";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../_config";
 
@@ -199,7 +199,7 @@ export default function PolicyHolderContact() {
           {/* Card 3: Live Chat */}
           <TouchableOpacity
             style={styles.channelCard}
-            onPress={handleChatPress}
+            onPress={openMobileSupportChat}
             activeOpacity={0.7}
           >
             <View style={styles.channelLeft}>
