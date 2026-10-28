@@ -136,6 +136,46 @@ router.get("/claims", async (req, res) => {
 });
 
 /**
+ * GET /api/claim-chat/directory
+ * Returns branches and agents directory for direct communication
+ */
+router.get("/directory", async (req, res) => {
+  try {
+    const staffDocs = await OfficeStaff.find()
+      .select("branch email")
+      .sort({ branch: 1 })
+      .lean();
+
+    const agentDocs = await Agent.find()
+      .select("name email branch agentId")
+      .sort({ name: 1 })
+      .lean();
+
+    return res.json({
+      success: true,
+      branches: staffDocs.map((b) => ({
+        id: b.branch || String(b._id),
+        name: b.branch?.includes("Branch") ? b.branch : `${b.branch} Branch`,
+        branch: b.branch,
+        email: b.email,
+        role: "Branch Officer"
+      })),
+      agents: agentDocs.map((a) => ({
+        id: a.agentId || a.email || String(a._id),
+        name: a.name,
+        email: a.email,
+        branch: a.branch,
+        agentId: a.agentId,
+        role: "Field Agent"
+      }))
+    });
+  } catch (err) {
+    console.error("GET /api/claim-chat/directory error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+/**
  * GET /api/claim-chat/claims/:claimNumber/recipients
  * Returns eligible dynamic recipients for a claim based on user role and permissions
  */

@@ -35,4 +35,13 @@ main {
   scrollbar-gutter: stable;
 }
 
+/* Hide scrollbar utility for clean modern messenger UI */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 
