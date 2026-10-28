@@ -1170,78 +1170,88 @@ export default function AdminAnalyticsReportsPage() {
             </div>
 
             {/* Top Toolbar: Search, Filters & Export Center */}
-            <div className="flex flex-col lg:flex-row justify-between items-center gap-4 bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm select-none">
-              {/* Search Bar */}
-              <div className="relative w-full lg:w-[320px]">
-                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
-                </span>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search analytics by branch, agent, keyword..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-sm bg-slate-50/50 font-medium"
-                />
-                {searchQuery && (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                  >
-                    <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Time Range Filter Pills */}
-              <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl border border-slate-200/60 overflow-x-auto max-w-full">
-                {[
-                  { id: "all", label: "All Time" },
-                  { id: "today", label: "Today" },
-                  { id: "7days", label: "Last 7 Days" },
-                  { id: "30days", label: "Last 30 Days" },
-                  { id: "90days", label: "Last Quarter" },
-                  { id: "thisyear", label: "This Year" },
-                  { id: "custom", label: "Custom Range..." }
-                ].map((t) => {
-                  const isSel = timeRange === t.id;
-                  return (
+            <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-4 select-none">
+              {/* Upper Line: Search Bar on Left, Action Controls on Right */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                {/* Search Bar */}
+                <div className="relative w-full sm:w-80 md:w-96">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" strokeWidth={2.5} />
+                  </span>
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search analytics by branch, agent, keyword..."
+                    className="w-full pl-10 pr-9 py-2 rounded-xl border border-slate-200 text-xs text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-transparent transition-all shadow-2xs bg-slate-50/50 font-medium"
+                  />
+                  {searchQuery && (
                     <button
-                      key={t.id}
-                      onClick={() => setTimeRange(t.id as any)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border-none outline-none whitespace-nowrap ${
-                        isSel ? "bg-[#000080] text-white shadow-xs" : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-                      }`}
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
                     >
-                      {t.label}
+                      <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
                     </button>
-                  );
-                })}
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto justify-end">
-                <button
-                  onClick={() => setShowExportModal(true)}
-                  className="flex-1 lg:flex-none py-2.5 px-5 bg-white hover:bg-slate-50 border border-slate-200 hover:scale-105 active:scale-95 text-slate-700 rounded-xl text-xs font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5 relative"
-                >
-                  <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2.5} />
-                  <span>Export Center</span>
-                </button>
-
-                <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-[11px] font-bold text-emerald-700 select-none shadow-2xs">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span>Live Sync</span>
+                  )}
                 </div>
 
-                <button
-                  onClick={() => fetchAnalytics(true)}
-                  disabled={refreshing || loading}
-                  title="Manual Refresh"
-                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
-                >
-                  <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={2.5} />
-                </button>
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => setShowExportModal(true)}
+                    className="flex-1 sm:flex-none py-2 px-4 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 active:scale-95 text-slate-700 rounded-xl text-xs font-bold shadow-2xs transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2.5} />
+                    <span>Export Center</span>
+                  </button>
+
+                  <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50/90 border border-emerald-200/80 rounded-xl text-[11px] font-bold text-emerald-700 select-none shadow-2xs">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Live Sync</span>
+                  </div>
+
+                  <button
+                    onClick={() => fetchAnalytics(true)}
+                    disabled={refreshing || loading}
+                    title="Manual Refresh"
+                    className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50 border-none"
+                  >
+                    <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} strokeWidth={2.5} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Lower Line: Time Range Filter Pills (Zero Horizontal Scrollbar) */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-slate-100">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Time Scope:</span>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-100/90 rounded-xl border border-slate-200/60">
+                  {[
+                    { id: "all", label: "All Time" },
+                    { id: "today", label: "Today" },
+                    { id: "7days", label: "Last 7 Days" },
+                    { id: "30days", label: "Last 30 Days" },
+                    { id: "90days", label: "Last Quarter" },
+                    { id: "thisyear", label: "This Year" },
+                    { id: "custom", label: "Custom Range..." }
+                  ].map((t) => {
+                    const isSel = timeRange === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        onClick={() => setTimeRange(t.id as any)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer border-none outline-none whitespace-nowrap ${
+                          isSel ? "bg-[#000080] text-white shadow-xs" : "text-slate-600 hover:text-slate-900 hover:bg-white/70"
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
@@ -1292,9 +1302,9 @@ export default function AdminAnalyticsReportsPage() {
               </div>
             )}
 
-            {/* Segmented Reports Control Tabs Grid (Zero Scrollbar) */}
+            {/* Segmented Reports Control Tabs Grid (Zero Truncation & Zero Overflow) */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-4 select-none">
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60 w-full">
+              <div className="flex flex-wrap gap-2 p-1.5 bg-slate-100/90 rounded-2xl border border-slate-200/60 w-full">
                 {[
                   { id: "overview", label: "Executive Overview", icon: Analytics01Icon },
                   { id: "financial", label: "Claims & Payouts", icon: Shield01Icon },
@@ -1309,14 +1319,14 @@ export default function AdminAnalyticsReportsPage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as any)}
-                      className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none outline-none ${
+                      className={`flex-1 min-w-[145px] sm:min-w-[155px] flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-none outline-none whitespace-nowrap ${
                         isActive
                           ? "bg-[#000080] text-white shadow-md shadow-blue-900/20"
-                          : "bg-white/70 hover:bg-white text-slate-600 hover:text-slate-900 shadow-2xs hover:shadow-xs"
+                          : "bg-white/80 hover:bg-white text-slate-600 hover:text-slate-900 shadow-2xs hover:shadow-xs"
                       }`}
                     >
-                      <HugeiconsIcon icon={tab.icon} className={`w-4 h-4 ${isActive ? "text-white" : "text-slate-500"}`} strokeWidth={2.5} />
-                      <span className="truncate">{tab.label}</span>
+                      <HugeiconsIcon icon={tab.icon} className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} strokeWidth={2.5} />
+                      <span>{tab.label}</span>
                     </button>
                   );
                 })}

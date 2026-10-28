@@ -1,34 +1,26 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import SimpleLoader from "@/app/Components/SimpleLoader";
-import { getVehicleIconContainer, getVehicleIconSvg } from "@/app/Components/VehicleIcon";
+import { getVehicleIconSvg } from "@/app/Components/VehicleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
   Search01Icon,
-  Calendar01Icon,
   CheckmarkCircle01Icon,
   Alert02Icon,
-  ArrowDown01Icon,
-  ArrowUp01Icon,
-  File01Icon,
-  Loading03Icon,
-  Tick01Icon,
-  Money01Icon,
-  BubbleChatIcon,
-  ViewIcon,
-  Car01Icon,
-  Clock01Icon,
-  Mail01Icon,
   Download01Icon,
   Building01Icon,
   Cancel01Icon,
-  RefreshIcon
+  RefreshIcon,
+  Car01Icon,
+  Clock01Icon,
+  Mail01Icon,
+  ViewIcon,
+  SquareLock02Icon
 } from "@hugeicons/core-free-icons";
 
 interface VehicleOwner {
@@ -93,8 +85,6 @@ interface RenewalQuote {
     dueDate: string;
     status: string;
     paidAt?: string;
-    stripeSessionId?: string;
-    stripePaymentIntentId?: string;
   }>;
   calculatedBy?: {
     staffId?: string;
@@ -142,9 +132,7 @@ const SRI_LANKA_BRANCHES = [
 ];
 
 export default function AdminRenewalsPage() {
-  const router = useRouter();
   const [selectedBranch, setSelectedBranch] = useState("All");
-  const [adminInfo, setAdminInfo] = useState<{ id?: string; name?: string; email?: string } | null>(null);
   const [vehicles, setVehicles] = useState<VehicleRenewalItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -152,68 +140,22 @@ export default function AdminRenewalsPage() {
   const [filterMode, setFilterMode] = useState<"expiring_soon" | "paid" | "all">("expiring_soon");
   const [vehicleTypeFilter, setVehicleTypeFilter] = useState("all");
 
-  // Detail & Calculation Modal State
+  // Inspection Modal State (Read-Only for Admin)
   const [selectedItem, setSelectedItem] = useState<VehicleRenewalItem | null>(null);
-  const [showCalculationDropdown, setShowCalculationDropdown] = useState(false);
-  const [marketValuation, setMarketValuation] = useState<number>(4500000);
-  const [premiumRate, setPremiumRate] = useState<number>(1.2);
-  const [ncbDiscount, setNcbDiscount] = useState<number>(10);
-  const [adminFee, setAdminFee] = useState<number>(1500);
-  const [govtTaxes, setGovtTaxes] = useState<number>(0);
-  const [allowInstallments, setAllowInstallments] = useState<boolean>(true);
-  const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
-  const [calcSuccessMsg, setCalcSuccessMsg] = useState("");
-  const [calcErrMsg, setCalcErrMsg] = useState("");
-  const [customExpiryDate, setCustomExpiryDate] = useState<string>("");
   const [isSendingReminder, setIsSendingReminder] = useState(false);
-  const [reminderStatus, setReminderStatus] = useState("");
+  const [reminderStatus, setReminderStatus] = useState<{ [plate: string]: string }>({});
 
-  // Check Admin session
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedAdmin = sessionStorage.getItem("logged_in_admin") || localStorage.getItem("admin_user");
-      if (savedAdmin) {
-        try {
-          const parsed = JSON.parse(savedAdmin);
-          setAdminInfo({
-            id: parsed._id || parsed.id || "admin",
-            name: `${parsed.firstName || ""} ${parsed.lastName || ""}`.trim() || parsed.name || "Head Office Admin",
-            email: parsed.email
-          });
-        } catch (e) {
-          // silent fallback
-        }
-      }
-    }
-  }, []);
-
-  // Send Renewal Reminder Email
-  const handleSendReminder = async (vehiclePlate: string) => {
-    setIsSendingReminder(true);
-    setReminderStatus("");
-    try {
-      const res = await fetch(`${API_URL}/renewals/send-reminder`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vehiclePlate })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to send reminder.");
-      setReminderStatus("✅ Renewal reminder sent to policyholder & branch office!");
-      setTimeout(() => setReminderStatus(""), 4500);
-    } catch (e: any) {
-      setReminderStatus(`❌ ${e.message || "Could not send email."}`);
-      setTimeout(() => setReminderStatus(""), 4500);
-    } finally {
-      setIsSendingReminder(false);
-    }
+  // Format currency
+  const formatLKR = (amount?: number) => {
+    if (amount === undefined || amount === null || isNaN(amount)) return "Rs. 0";
+    return `Rs. ${Number(amount).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
   };
 
-  // Computed live calculation values
-  const computedBasic = Math.round((Number(marketValuation) * Number(premiumRate)) / 100);
-  const computedDiscount = Math.round((computedBasic * Number(ncbDiscount)) / 100);
-  const computedNet = Math.max(0, computedBasic - computedDiscount);
-  const computedTotal = Math.round(computedNet + Number(govtTaxes) + Number(adminFee));
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return "N/A";
+    const d = new Date(dateStr);
+    return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  };
 
   // Load Vehicles for Selected Branch (or all branches if "All")
   const loadVehicles = useCallback(async (branchName: string) => {
@@ -237,153 +179,101 @@ export default function AdminRenewalsPage() {
     loadVehicles(selectedBranch);
   }, [selectedBranch, loadVehicles]);
 
-  // Open modal and prefill defaults
-  const handleOpenDetails = (item: VehicleRenewalItem) => {
-    setSelectedItem(item);
-    setShowCalculationDropdown(false);
-    setCalcSuccessMsg("");
-    setCalcErrMsg("");
-
-    const initialExp = item.vehicle.calculatedExpiryDate
-      ? new Date(item.vehicle.calculatedExpiryDate).toISOString().split("T")[0]
-      : "";
-    setCustomExpiryDate(initialExp);
-
-    if (item.renewalQuote?.calculation) {
-      const c = item.renewalQuote.calculation;
-      setMarketValuation(c.marketValuation || 4500000);
-      setPremiumRate(c.basicPremiumRate || 1.2);
-      setNcbDiscount(c.noClaimBonusDiscount || 10);
-      setAdminFee(c.adminFee || 1500);
-      setGovtTaxes(c.govtTaxes || 0);
-    } else {
-      setMarketValuation(4500000);
-      setPremiumRate(1.2);
-      setNcbDiscount(10);
-      setAdminFee(1500);
-      setGovtTaxes(0);
-    }
-  };
-
-  // Submit Renewal Calculation
-  const handleConfirmCalculation = async () => {
-    if (!selectedItem) return;
-    setIsSubmittingQuote(true);
-    setCalcSuccessMsg("");
-    setCalcErrMsg("");
-
+  // Send Renewal Reminder Email
+  const handleSendReminder = async (vehiclePlate: string) => {
+    setIsSendingReminder(true);
+    setReminderStatus((prev) => ({ ...prev, [vehiclePlate]: "Sending..." }));
     try {
-      const res = await fetch(`${API_URL}/renewals/calculate-quote`, {
+      const res = await fetch(`${API_URL}/renewals/send-reminder`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nic: selectedItem.owner.nic,
-          vehiclePlate: selectedItem.vehicle.numberPlate,
-          marketValuation,
-          basicPremiumRate: premiumRate,
-          basicPremium: computedBasic,
-          noClaimBonusDiscount: ncbDiscount,
-          adminFee,
-          govtTaxes,
-          allowInstallments,
-          customExpiryDate: customExpiryDate || undefined,
-          staffId: adminInfo?.id || "admin",
-          staffName: adminInfo?.name || "System Admin"
-        })
+        body: JSON.stringify({ vehiclePlate })
       });
-
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save calculation.");
-
-      setCalcSuccessMsg("Renewal quote activated! Official notification emails dispatched.");
-
-      const updatedQuote = data.renewal;
-      setSelectedItem((prev) => (prev ? { ...prev, renewalQuote: updatedQuote } : null));
-
-      setVehicles((prev) =>
-        prev.map((v) =>
-          v.vehicle.numberPlate === selectedItem.vehicle.numberPlate
-            ? { ...v, renewalQuote: updatedQuote }
-            : v
-        )
-      );
-    } catch (err: any) {
-      setCalcErrMsg(err.message || "Failed to save calculation.");
+      if (!res.ok) throw new Error(data.error || "Failed to send reminder.");
+      setReminderStatus((prev) => ({ ...prev, [vehiclePlate]: "Reminder Sent!" }));
+      setTimeout(() => {
+        setReminderStatus((prev) => {
+          const next = { ...prev };
+          delete next[vehiclePlate];
+          return next;
+        });
+      }, 3500);
+    } catch (e: any) {
+      setReminderStatus((prev) => ({ ...prev, [vehiclePlate]: e.message || "Failed" }));
+      setTimeout(() => {
+        setReminderStatus((prev) => {
+          const next = { ...prev };
+          delete next[vehiclePlate];
+          return next;
+        });
+      }, 3500);
     } finally {
-      setIsSubmittingQuote(false);
+      setIsSendingReminder(false);
     }
-  };
-
-  // Format currency
-  const formatLKR = (amount?: number) => {
-    if (amount === undefined || amount === null || isNaN(amount)) return "Rs. 0";
-    return `Rs. ${Number(amount).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-  };
-
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "N/A";
-    const d = new Date(dateStr);
-    return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
   };
 
   // Filtered and Sorted List
-  const filteredVehicles = vehicles
-    .filter((v) => {
-      // Vehicle type filter
-      if (vehicleTypeFilter !== "all") {
-        const vType = (v.vehicle.vehicleType || "").toLowerCase();
-        if (vehicleTypeFilter === "Car" && !vType.includes("car") && !vType.includes("sedan")) return false;
-        if (vehicleTypeFilter === "Van" && !vType.includes("van") && !vType.includes("suv")) return false;
-        if (vehicleTypeFilter === "Bike" && !vType.includes("motorcycle") && !vType.includes("bike") && !vType.includes("scooter")) return false;
-        if (vehicleTypeFilter === "ThreeWheeler" && !vType.includes("three") && !vType.includes("wheeler") && !vType.includes("tuk")) return false;
-      }
+  const filteredVehicles = useMemo(() => {
+    return vehicles
+      .filter((v) => {
+        // Vehicle type filter
+        if (vehicleTypeFilter !== "all") {
+          const vType = (v.vehicle.vehicleType || "").toLowerCase();
+          if (vehicleTypeFilter === "Car" && !vType.includes("car") && !vType.includes("sedan")) return false;
+          if (vehicleTypeFilter === "Van" && !vType.includes("van") && !vType.includes("suv")) return false;
+          if (vehicleTypeFilter === "Bike" && !vType.includes("motorcycle") && !vType.includes("bike") && !vType.includes("scooter")) return false;
+          if (vehicleTypeFilter === "ThreeWheeler" && !vType.includes("three") && !vType.includes("wheeler") && !vType.includes("tuk")) return false;
+        }
 
-      // Search Query
-      const q = searchQuery.toLowerCase().trim();
-      if (q) {
-        const matches =
-          v.vehicle.numberPlate?.toLowerCase().includes(q) ||
-          v.vehicle.model?.toLowerCase().includes(q) ||
-          v.vehicle.company?.toLowerCase().includes(q) ||
-          v.vehicle.policyNumber?.toLowerCase().includes(q) ||
-          v.owner.name?.toLowerCase().includes(q) ||
-          v.owner.nic?.toLowerCase().includes(q) ||
-          v.owner.branch?.toLowerCase().includes(q);
-        if (!matches) return false;
-      }
+        // Search Query
+        const q = searchQuery.toLowerCase().trim();
+        if (q) {
+          const matches =
+            v.vehicle.numberPlate?.toLowerCase().includes(q) ||
+            v.vehicle.model?.toLowerCase().includes(q) ||
+            v.vehicle.company?.toLowerCase().includes(q) ||
+            v.vehicle.policyNumber?.toLowerCase().includes(q) ||
+            v.owner.name?.toLowerCase().includes(q) ||
+            v.owner.nic?.toLowerCase().includes(q) ||
+            v.owner.branch?.toLowerCase().includes(q);
+          if (!matches) return false;
+        }
 
-      if (filterMode === "expiring_soon") {
-        return v.vehicle.isExpiringWithin1AndHalfMonths && !v.isPaid;
-      }
-      if (filterMode === "paid") {
-        return (
-          v.isPaid ||
-          (v.renewalQuote &&
-            (v.renewalQuote.status === "Partially_Paid" || v.renewalQuote.status === "Fully_Paid"))
-        );
-      }
-      return true;
-    })
-    .sort((a, b) => {
-      if (filterMode === "paid") {
-        const timeA = a.latestPaymentDate ? new Date(a.latestPaymentDate).getTime() : 0;
-        const timeB = b.latestPaymentDate ? new Date(b.latestPaymentDate).getTime() : 0;
-        return timeB - timeA;
-      }
-      return a.vehicle.daysRemaining - b.vehicle.daysRemaining;
-    });
+        if (filterMode === "expiring_soon") {
+          return v.vehicle.isExpiringWithin1AndHalfMonths && !v.isPaid;
+        }
+        if (filterMode === "paid") {
+          return (
+            v.isPaid ||
+            (v.renewalQuote &&
+              (v.renewalQuote.status === "Partially_Paid" || v.renewalQuote.status === "Fully_Paid"))
+          );
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (filterMode === "paid") {
+          const timeA = a.latestPaymentDate ? new Date(a.latestPaymentDate).getTime() : 0;
+          const timeB = b.latestPaymentDate ? new Date(b.latestPaymentDate).getTime() : 0;
+          return timeB - timeA;
+        }
+        return a.vehicle.daysRemaining - b.vehicle.daysRemaining;
+      });
+  }, [vehicles, vehicleTypeFilter, searchQuery, filterMode]);
 
   // Computed summary statistics
   const expiringSoonCount = vehicles.filter((v) => v.vehicle.isExpiringWithin1AndHalfMonths && !v.isPaid).length;
   const paidCount = vehicles.filter((v) => v.isPaid || (v.renewalQuote && (v.renewalQuote.status === "Partially_Paid" || v.renewalQuote.status === "Fully_Paid"))).length;
-  const pendingQuotesCount = vehicles.filter((v) => v.vehicle.isExpiringWithin1AndHalfMonths && !v.renewalQuote && !v.isPaid).length;
+  const pendingQuotesCount = vehicles.filter((v) => !v.isPaid && (!v.renewalQuote || v.renewalQuote.status === "Draft")).length;
   const totalVehiclesCount = vehicles.length;
   const totalRevenueCollected = vehicles.reduce((sum, v) => {
-    if (v.isPaid && v.renewalQuote?.calculation?.finalAnnualTotal) {
-      return sum + v.renewalQuote.calculation.finalAnnualTotal;
+    const quoteVal = v.renewalQuote?.calculation?.finalAnnualTotal || v.renewalQuote?.calculation?.totalRenewalAmount;
+    if (v.isPaid && quoteVal) {
+      return sum + quoteVal;
     }
     if (v.renewalQuote?.installments) {
-      const paidSum = v.renewalQuote.installments.filter(i => i.status === "Paid").reduce((acc, i) => acc + (i.amount || 0), 0);
+      const paidSum = v.renewalQuote.installments.filter((i) => i.status === "Paid").reduce((acc, i) => acc + (i.amount || 0), 0);
       if (paidSum > 0) return sum + paidSum;
     }
     return sum;
@@ -459,7 +349,7 @@ export default function AdminRenewalsPage() {
                   className="px-3.5 py-2 rounded-xl border border-slate-300 text-xs font-bold text-[#102A43] bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer"
                 >
                   <option value="All">All 26 Regional Branches (National Network)</option>
-                  {SRI_LANKA_BRANCHES.filter(b => b !== "All").map((b) => (
+                  {SRI_LANKA_BRANCHES.filter((b) => b !== "All").map((b) => (
                     <option key={b} value={b}>{b} Branch</option>
                   ))}
                 </select>
@@ -487,7 +377,7 @@ export default function AdminRenewalsPage() {
 
             {/* Summary Statistics 5 Display Tiles */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 select-none">
-              {/* Card 1: Expiring in 1.5 Months */}
+              {/* Card 1: Expiring in 45 Days */}
               <div
                 onClick={() => setFilterMode("expiring_soon")}
                 className={`group bg-white rounded-2xl p-4 border transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md relative overflow-hidden ${
@@ -542,100 +432,107 @@ export default function AdminRenewalsPage() {
               </div>
 
               {/* Card 3: Total Renewal Premiums Collected */}
-              <div
-                className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs relative overflow-hidden"
-              >
+              <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs relative overflow-hidden">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     Collected Revenue
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#000080] flex items-center justify-center border border-blue-200">
-                    <HugeiconsIcon icon={Money01Icon} className="w-3.5 h-3.5" />
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-200">
+                    <span className="text-xs font-black">Rs</span>
                   </div>
                 </div>
                 <div className="mt-2.5">
-                  <span className="text-xl font-black text-slate-900 font-mono block truncate" title={formatLKR(totalRevenueCollected)}>
-                    {formatLKR(totalRevenueCollected)}
+                  <span className="text-lg font-black text-[#000080] font-mono block truncate" title={formatLKR(totalRevenueCollected)}>
+                    {loading ? "..." : formatLKR(totalRevenueCollected)}
                   </span>
-                  <span className="text-[10px] text-blue-600 font-bold block mt-0.5">
-                    Renewal Premiums
+                  <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">
+                    Total Collected
                   </span>
                 </div>
               </div>
 
-              {/* Card 4: Pending Quotes */}
-              <div
-                onClick={() => setFilterMode("expiring_soon")}
-                className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs cursor-pointer hover:border-blue-300"
-              >
+              {/* Card 4: Pending Branch Setup */}
+              <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs relative overflow-hidden">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     Pending Quotes
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center border border-indigo-200">
-                    <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center border border-slate-200">
+                    <HugeiconsIcon icon={SquareLock02Icon} className="w-3.5 h-3.5" />
                   </div>
                 </div>
                 <div className="mt-2.5">
-                  <span className="text-2xl font-black text-slate-900 font-mono block">
+                  <span className="text-2xl font-black text-slate-700 font-mono block">
                     {loading ? "..." : pendingQuotesCount}
                   </span>
-                  <span className="text-[10px] text-indigo-600 font-bold block mt-0.5">
-                    Awaiting Calculation
+                  <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">
+                    Branch Setup Needed
                   </span>
                 </div>
               </div>
 
-              {/* Card 5: Total Insured Fleet */}
+              {/* Card 5: Fleet Count */}
               <div
                 onClick={() => setFilterMode("all")}
                 className={`group bg-white rounded-2xl p-4 border transition-all duration-200 cursor-pointer shadow-xs hover:shadow-md relative overflow-hidden ${
                   filterMode === "all"
-                    ? "border-sky-500 ring-2 ring-sky-500/20 bg-sky-50/20"
-                    : "border-slate-200/80 hover:border-sky-300"
+                    ? "border-blue-600 ring-2 ring-blue-600/20 bg-blue-50/20"
+                    : "border-slate-200/80 hover:border-blue-300"
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     Monitored Fleet
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center border border-slate-200">
+                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-[#000080] flex items-center justify-center border border-blue-200">
                     <HugeiconsIcon icon={Car01Icon} className="w-3.5 h-3.5" />
                   </div>
                 </div>
                 <div className="mt-2.5">
-                  <span className="text-2xl font-black text-slate-900 font-mono block">
+                  <span className="text-2xl font-black text-[#102A43] font-mono block">
                     {loading ? "..." : totalVehiclesCount}
                   </span>
-                  <span className="text-[10px] text-slate-500 font-bold block mt-0.5">
-                    Total Monitored
+                  <span className="text-[10px] text-slate-500 font-semibold block mt-0.5">
+                    Active Portfolios
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Filter & Search Bar */}
-            <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/80 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-              <div className="relative flex-1 max-w-md">
-                <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            {/* Toolbar: Search & Filter Tabs */}
+            <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-center justify-between gap-4 select-none">
+              {/* Search input */}
+              <div className="relative w-full md:w-96">
+                <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" />
+                </span>
                 <input
                   type="text"
-                  placeholder="Search by vehicle number, owner, NIC, model, branch..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 focus:bg-white transition-all text-slate-800 font-medium"
+                  placeholder="Search by vehicle plate, owner, NIC, model, branch..."
+                  className="w-full pl-10 pr-9 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-600 bg-slate-50/50"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600"
+                  >
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+                  </button>
+                )}
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Vehicle Type Filter */}
+              {/* Filters */}
+              <div className="flex items-center gap-3 w-full md:w-auto justify-end flex-wrap">
+                {/* Vehicle Type Dropdown */}
                 <select
                   value={vehicleTypeFilter}
                   onChange={(e) => setVehicleTypeFilter(e.target.value)}
-                  className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none"
+                  className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer"
                 >
                   <option value="all">All Vehicle Types</option>
-                  <option value="Car">Motor Car / Sedan</option>
+                  <option value="Car">Car / Sedan</option>
                   <option value="Van">Van / SUV</option>
                   <option value="Bike">Motorcycle</option>
                   <option value="ThreeWheeler">Three Wheeler</option>
@@ -677,7 +574,7 @@ export default function AdminRenewalsPage() {
               </div>
             </div>
 
-            {/* Content List / Vehicle Cards */}
+            {/* Policyholder-Style Grid / Table Section */}
             {loading ? (
               <div className="py-20 flex flex-col items-center justify-center">
                 <SimpleLoader message="Compiling national renewal matrices..." theme="slate" />
@@ -697,150 +594,156 @@ export default function AdminRenewalsPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="flex flex-col gap-3">
+                {/* Table Header (Matching Policyholders Page Grid Header) */}
+                <div className="hidden md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1.6fr)_minmax(0,1.3fr)_minmax(0,1.4fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                  <div>Vehicle & Details</div>
+                  <div>Policyholder & Contact</div>
+                  <div>Branch Office</div>
+                  <div>Expiry & Timeline</div>
+                  <div>Branch Renewal Fee</div>
+                  <div className="text-center">Payment Status</div>
+                  <div className="text-right">Actions</div>
+                </div>
+
+                {/* Table Rows (Card rows with blue left accent border matching Policyholders / Staff pages) */}
                 {filteredVehicles.map((item, idx) => {
                   const v = item.vehicle;
                   const o = item.owner;
                   const q = item.renewalQuote;
                   const isExpSoon = v.isExpiringWithin1AndHalfMonths && !item.isPaid;
                   const isPaid = item.isPaid || (q && (q.status === "Partially_Paid" || q.status === "Fully_Paid"));
-
                   const totalAnnual = q?.calculation?.finalAnnualTotal || q?.calculation?.totalRenewalAmount;
-                  const paidInstCount = q?.installments?.filter((i) => i.status === "Paid").length || 0;
-                  const totalInstCount = q?.installments?.length || 0;
+                  const reminderMsg = reminderStatus[v.numberPlate];
 
                   return (
                     <div
-                      key={idx}
-                      className="bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between group hover:border-slate-300"
+                      key={`${v.numberPlate}-${idx}`}
+                      className="bg-white border-l-[6px] border-l-blue-500 bg-gradient-to-r from-blue-50/10 via-transparent to-transparent border border-slate-200 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.8fr)_minmax(0,1.8fr)_minmax(0,1.3fr)_minmax(0,1.4fr)_minmax(0,1.6fr)_minmax(0,1.3fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-all duration-200 shadow-sm hover:shadow-md relative overflow-hidden group"
                     >
-                      <div>
-                        {/* Card Header: Vehicle Icon + Plate + Days Badge */}
-                        <div className="flex items-start justify-between gap-3 mb-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-700 shadow-2xs group-hover:scale-105 transition-transform">
-                              <span className="w-6 h-6 flex items-center justify-center">
-                                {getVehicleIconSvg(v.vehicleType, "w-6 h-6 text-slate-700")}
-                              </span>
-                            </div>
-                            <div>
-                              <h3 className="text-base font-black text-slate-900 tracking-tight font-mono">
-                                {v.numberPlate}
-                              </h3>
-                              <p className="text-xs text-slate-500 font-semibold truncate max-w-[170px]">
-                                {v.company} {v.model} &bull; {v.year || "2024"}
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* Expiry Badge */}
-                          <div className="text-right">
-                            {isPaid ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                Active
-                              </span>
-                            ) : isExpSoon ? (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-full border border-amber-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
-                                {v.daysRemaining} Days
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
-                                {v.daysRemaining > 0 ? `${v.daysRemaining} Days` : "Expired"}
-                              </span>
-                            )}
-                          </div>
+                      {/* Col 1: Vehicle & Details */}
+                      <div className="flex items-center gap-3 min-w-0 select-none">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                          <span className="w-5 h-5 flex items-center justify-center">
+                            {getVehicleIconSvg(v.vehicleType, "w-5 h-5 text-slate-700")}
+                          </span>
                         </div>
+                        <div className="min-w-0">
+                          <h3 className="font-bold text-sm text-slate-900 font-mono tracking-tight whitespace-nowrap truncate">
+                            {v.numberPlate}
+                          </h3>
+                          <span className="text-[11px] text-slate-500 font-medium block truncate mt-0.5">
+                            {v.company} {v.model} &bull; {v.year || "2024"}
+                          </span>
+                        </div>
+                      </div>
 
-                        {/* Owner & Policy Info */}
-                        <div className="bg-slate-50 rounded-2xl p-3.5 space-y-2 mb-4 text-xs border border-slate-100">
-                          <div className="flex justify-between items-center">
-                            <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Policyholder</span>
-                            <span className="font-bold text-slate-800 truncate max-w-[160px]">{o.name}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">NIC / Mobile</span>
-                            <span className="font-mono text-slate-600">{o.nic} &bull; {o.mobile}</span>
-                          </div>
-                          <div className="flex justify-between items-center">
-                            <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Branch Office</span>
-                            <span className="font-bold text-[#000080] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-                              {o.branch} Branch
+                      {/* Col 2: Policyholder & Contact */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Policyholder</span>
+                        <h4 className="font-semibold text-xs text-slate-800 truncate">{o.name || "Policyholder"}</h4>
+                        <span className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
+                          NIC: {o.nic} {o.mobile ? `• ${o.mobile}` : ""}
+                        </span>
+                      </div>
+
+                      {/* Col 3: Branch Office */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Branch Office</span>
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-[#000080] border border-slate-200 w-fit truncate">
+                          {o.branch || "Galle"} Branch
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-medium mt-1 truncate">
+                          {o.city || "Sri Lanka"}
+                        </span>
+                      </div>
+
+                      {/* Col 4: Expiry & Timeline */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Expiry Timeline</span>
+                        <span className="text-slate-700 font-semibold text-xs">{formatDate(v.calculatedExpiryDate)}</span>
+                        <div className="mt-1">
+                          {isPaid ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              Active Coverage
                             </span>
-                          </div>
-                          <div className="flex justify-between items-center pt-1 border-t border-slate-200/60">
-                            <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Expiry Date</span>
-                            <span className="font-semibold text-slate-700">{formatDate(v.calculatedExpiryDate)}</span>
-                          </div>
-                        </div>
-
-                        {/* Quote Status & Calculated Price */}
-                        <div className="mb-4">
-                          {q && totalAnnual ? (
-                            <div className="bg-emerald-50/60 border border-emerald-200/80 rounded-2xl p-3 flex items-center justify-between">
-                              <div>
-                                <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">
-                                  {isPaid ? "Renewed Coverage Total" : "Calculated Renewal Quote"}
-                                </span>
-                                <span className="text-base font-black text-emerald-900 font-mono block">
-                                  {formatLKR(totalAnnual)}
-                                </span>
-                              </div>
-                              <div className="text-right">
-                                <span className="text-[11px] font-bold text-slate-600 block">
-                                  {q.paymentPlanType || "Annual Plan"}
-                                </span>
-                                {totalInstCount > 0 && (
-                                  <span className="text-[10px] text-slate-500 font-medium block">
-                                    {paidInstCount}/{totalInstCount} Paid
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                          ) : isExpSoon ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping" />
+                              {v.daysRemaining} Days Left
+                            </span>
                           ) : (
-                            <div className="bg-amber-50/60 border border-amber-200/80 rounded-2xl p-3 flex items-center justify-between">
-                              <div>
-                                <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wider block">
-                                  Valuation Needed
-                                </span>
-                                <span className="text-xs text-amber-700 font-semibold block mt-0.5">
-                                  Pending quote setup
-                                </span>
-                              </div>
-                              <span className="text-xs font-bold text-amber-600 bg-amber-100/70 px-2.5 py-1 rounded-full">
-                                Pending
-                              </span>
-                            </div>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                              {v.daysRemaining > 0 ? `${v.daysRemaining} Days Left` : `Expired (${Math.abs(v.daysRemaining)}d)`}
+                            </span>
                           )}
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
-                      <div className="space-y-2 pt-2 border-t border-slate-100">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => handleOpenDetails(item)}
-                            className="flex-1 py-2 px-3 bg-[#000080] hover:bg-[#102A43] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer border-none active:scale-95"
-                          >
-                            <HugeiconsIcon icon={Money01Icon} className="w-3.5 h-3.5" />
-                            <span>{q ? "Review Quote & Plan" : "Calculate Quote"}</span>
-                          </button>
-
-                          <button
-                            onClick={() => handleSendReminder(v.numberPlate)}
-                            disabled={isSendingReminder}
-                            className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer border-none flex items-center justify-center"
-                            title="Send Notification Email to Client & Branch"
-                          >
-                            <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4" />
-                          </button>
-                        </div>
-
-                        {reminderStatus && (
-                          <div className="text-[11px] text-center font-bold text-blue-700 bg-blue-50 py-1 rounded-lg">
-                            {reminderStatus}
+                      {/* Col 5: Branch Renewal Fee */}
+                      <div className="flex flex-col min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Renewal Fee</span>
+                        {totalAnnual ? (
+                          <div>
+                            <span className="text-sm font-black font-mono text-slate-900 block">
+                              {formatLKR(totalAnnual)}
+                            </span>
+                            <span className="text-[10px] text-emerald-700 font-bold block mt-0.5">
+                              {q?.status ? q.status.replace("_", " ") : "Calculated Quote"}
+                            </span>
                           </div>
+                        ) : (
+                          <div>
+                            <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
+                              <HugeiconsIcon icon={SquareLock02Icon} className="w-3.5 h-3.5" />
+                              <span>Valuation Needed</span>
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                              Branch access only
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Col 6: Payment Status */}
+                      <div className="flex flex-col md:items-center min-w-0 select-none">
+                        <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Payment</span>
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border text-center ${
+                            isPaid
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200"
+                          }`}
+                        >
+                          {isPaid ? "Paid & Active" : "Payment Pending"}
+                        </span>
+                      </div>
+
+                      {/* Col 7: Actions */}
+                      <div className="flex items-center justify-end gap-2 min-w-0">
+                        <button
+                          onClick={() => setSelectedItem(item)}
+                          className="py-1.5 px-3 bg-[#000080] hover:bg-[#102A43] text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer border-none active:scale-95"
+                          title="Inspect Vehicle & Quote Details"
+                        >
+                          <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+                          <span>Inspect</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleSendReminder(v.numberPlate)}
+                          disabled={isSendingReminder}
+                          className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-all cursor-pointer border-none flex items-center justify-center active:scale-95 disabled:opacity-50"
+                          title="Send Renewal Notification Email"
+                        >
+                          <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4 text-slate-600" />
+                        </button>
+
+                        {reminderMsg && (
+                          <span className="absolute right-4 bottom-1 text-[10px] font-bold text-emerald-600 bg-white px-2 py-0.5 rounded shadow-xs border border-emerald-200">
+                            {reminderMsg}
+                          </span>
                         )}
                       </div>
                     </div>
@@ -852,7 +755,7 @@ export default function AdminRenewalsPage() {
         </main>
       </div>
 
-      {/* Quote Calculation & Detail Modal */}
+      {/* READ-ONLY INSPECTION & AUDIT MODAL (ADMIN CANNOT CALCULATE RENEWAL FEES) */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
@@ -860,11 +763,11 @@ export default function AdminRenewalsPage() {
             <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-blue-100 text-[#000080] flex items-center justify-center shadow-xs">
-                  <HugeiconsIcon icon={Money01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                  <HugeiconsIcon icon={ViewIcon} className="w-5 h-5" strokeWidth={2.5} />
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Policy Renewal Valuation & Quote Setup
+                    Policy Renewal & Vehicle Inspection Details
                   </h3>
                   <p className="text-xs text-slate-500 font-medium">
                     Vehicle: {selectedItem.vehicle.numberPlate} &bull; {selectedItem.owner.branch} Branch
@@ -880,18 +783,31 @@ export default function AdminRenewalsPage() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 overflow-y-auto space-y-6 text-xs">
+            <div className="p-6 overflow-y-auto space-y-5 text-xs">
+              {/* Notice: Branch Only Calculation Access */}
+              <div className="bg-blue-50/70 border border-blue-200 rounded-2xl p-4 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-[#000080] flex items-center justify-center shrink-0 mt-0.5">
+                  <HugeiconsIcon icon={SquareLock02Icon} className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-blue-900">Branch Office Authority Notice</h4>
+                  <p className="text-[11px] text-blue-800 leading-relaxed mt-0.5">
+                    Policy renewal fee calculations, market valuations, and payment plans are calculated and configured exclusively by the regional branch office (<strong>{selectedItem.owner.branch} Branch</strong>). System administrators maintain comprehensive executive read-only audit access.
+                  </p>
+                </div>
+              </div>
+
               {/* Vehicle & Owner Header Card */}
               <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Owner</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Owner Name</span>
                   <span className="font-bold text-slate-800 block text-xs mt-0.5">{selectedItem.owner.name}</span>
-                  <span className="text-[11px] text-slate-500">{selectedItem.owner.nic}</span>
+                  <span className="text-[11px] text-slate-500">NIC: {selectedItem.owner.nic}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Vehicle</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Vehicle Spec</span>
                   <span className="font-bold text-slate-800 block text-xs mt-0.5">{selectedItem.vehicle.company} {selectedItem.vehicle.model}</span>
-                  <span className="font-mono text-[11px] text-slate-500">{selectedItem.vehicle.numberPlate}</span>
+                  <span className="font-mono text-[11px] text-slate-500">{selectedItem.vehicle.numberPlate} ({selectedItem.vehicle.year || "2024"})</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Branch & Expiry</span>
@@ -900,141 +816,122 @@ export default function AdminRenewalsPage() {
                 </div>
               </div>
 
-              {/* Status Alerts */}
-              {calcSuccessMsg && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl font-medium flex items-center gap-2">
-                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600" />
-                  <span>{calcSuccessMsg}</span>
-                </div>
-              )}
-              {calcErrMsg && (
-                <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-xl font-medium flex items-center gap-2">
-                  <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-red-600" />
-                  <span>{calcErrMsg}</span>
-                </div>
-              )}
-
-              {/* Calculation Form Fields */}
-              <div className="space-y-4">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                  Valuation & Premium Variables
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Extended Vehicle Technical Specifications */}
+              <div className="bg-white rounded-2xl p-4 border border-slate-200 space-y-2.5">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Vehicle Identification Data</h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                   <div>
-                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                      Current Market Valuation (LKR)
-                    </label>
-                    <input
-                      type="number"
-                      value={marketValuation}
-                      onChange={(e) => setMarketValuation(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-blue-600"
-                    />
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Policy Number</span>
+                    <span className="font-mono font-bold text-slate-800">{selectedItem.vehicle.policyNumber || "N/A"}</span>
                   </div>
-
                   <div>
-                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                      Basic Premium Rate (%)
-                    </label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={premiumRate}
-                      onChange={(e) => setPremiumRate(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-blue-600"
-                    />
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Engine Number</span>
+                    <span className="font-mono text-slate-700">{selectedItem.vehicle.engineNumber || "N/A"}</span>
                   </div>
-
                   <div>
-                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                      No-Claim Bonus (NCB) Discount (%)
-                    </label>
-                    <input
-                      type="number"
-                      value={ncbDiscount}
-                      onChange={(e) => setNcbDiscount(Number(e.target.value))}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-blue-600"
-                    />
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Chassis Number</span>
+                    <span className="font-mono text-slate-700">{selectedItem.vehicle.chassisNumber || "N/A"}</span>
                   </div>
-
                   <div>
-                    <label className="text-[11px] font-bold text-slate-600 block mb-1">
-                      Custom Extended Expiry Date
-                    </label>
-                    <input
-                      type="date"
-                      value={customExpiryDate}
-                      onChange={(e) => setCustomExpiryDate(e.target.value)}
-                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:outline-none focus:ring-1 focus:ring-blue-600"
-                    />
+                    <span className="text-slate-400 block text-[10px] uppercase font-bold">Vehicle Class</span>
+                    <span className="text-slate-800 font-semibold">{selectedItem.vehicle.vehicleType || "Motor Vehicle"}</span>
                   </div>
-                </div>
-
-                {/* Live Computed Breakdown */}
-                <div className="bg-slate-900 text-white rounded-2xl p-4 space-y-2.5">
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span>Basic Premium:</span>
-                    <span className="font-mono">{formatLKR(computedBasic)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span>NCB Discount ({ncbDiscount}%):</span>
-                    <span className="font-mono text-emerald-400">- {formatLKR(computedDiscount)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span>Net Basic Premium:</span>
-                    <span className="font-mono">{formatLKR(computedNet)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-slate-300">
-                    <span>Admin Fees & Taxes:</span>
-                    <span className="font-mono">{formatLKR(adminFee + govtTaxes)}</span>
-                  </div>
-                  <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-sm font-black">
-                    <span className="text-white">Final Annual Total:</span>
-                    <span className="text-emerald-400 font-mono text-base">{formatLKR(computedTotal)}</span>
-                  </div>
-                </div>
-
-                {/* Installments Options */}
-                <div className="pt-2">
-                  <label className="flex items-center gap-2 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={allowInstallments}
-                      onChange={(e) => setAllowInstallments(e.target.checked)}
-                      className="w-4 h-4 rounded text-blue-600"
-                    />
-                    <span className="text-xs font-bold text-slate-800">
-                      Offer Flexible Installment Plans (Quarterly, Half-Yearly, Monthly)
-                    </span>
-                  </label>
                 </div>
               </div>
 
-              {/* Installment Tracker if already exists */}
-              {selectedItem.renewalQuote?.installments && selectedItem.renewalQuote.installments.length > 0 && (
-                <div className="space-y-3 pt-4 border-t border-slate-200">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-                    Active Payment Installments Audit
-                  </h4>
-                  <div className="space-y-2">
-                    {selectedItem.renewalQuote.installments.map((inst, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                        <div>
-                          <span className="font-bold text-slate-800 block">{inst.label}</span>
-                          <span className="text-[11px] text-slate-400">Due: {formatDate(inst.dueDate)}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="font-black font-mono text-slate-900 block">{formatLKR(inst.amount)}</span>
-                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
-                            inst.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                          }`}>
-                            {inst.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+              {/* Branch Calculation & Valuation Breakdown */}
+              {selectedItem.renewalQuote?.calculation ? (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Branch Valuation & Fee Breakdown
+                    </h4>
+                    <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      Status: {selectedItem.renewalQuote.status.replace("_", " ")}
+                    </span>
                   </div>
+
+                  <div className="bg-slate-900 text-white rounded-2xl p-5 space-y-3">
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Market Valuation:</span>
+                      <span className="font-mono font-bold text-white">
+                        {formatLKR(selectedItem.renewalQuote.calculation.marketValuation)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Basic Premium ({selectedItem.renewalQuote.calculation.basicPremiumRate || 1.2}%):</span>
+                      <span className="font-mono text-white">
+                        {formatLKR(selectedItem.renewalQuote.calculation.basicPremium)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>No-Claim Bonus (NCB) Discount ({selectedItem.renewalQuote.calculation.noClaimBonusDiscount || 10}%):</span>
+                      <span className="font-mono text-emerald-400">
+                        - {formatLKR(selectedItem.renewalQuote.calculation.discountAmount)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Net Basic Premium:</span>
+                      <span className="font-mono text-white">
+                        {formatLKR(selectedItem.renewalQuote.calculation.netPremium)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-300">
+                      <span>Admin Fee & Government Taxes:</span>
+                      <span className="font-mono text-white">
+                        {formatLKR((selectedItem.renewalQuote.calculation.adminFee || 0) + (selectedItem.renewalQuote.calculation.govtTaxes || 0))}
+                      </span>
+                    </div>
+                    <div className="pt-3 border-t border-slate-800 flex justify-between items-center text-sm font-black">
+                      <span className="text-white">Annual Renewal Total:</span>
+                      <span className="text-emerald-400 font-mono text-lg">
+                        {formatLKR(selectedItem.renewalQuote.calculation.finalAnnualTotal || selectedItem.renewalQuote.calculation.totalRenewalAmount)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Calculated By Attribution */}
+                  {selectedItem.renewalQuote.calculatedBy && (
+                    <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 flex justify-between items-center">
+                      <span>Valuation Officer: <strong>{selectedItem.renewalQuote.calculatedBy.staffName || "Branch Officer"}</strong></span>
+                      <span className="text-slate-400">Staff ID: {selectedItem.renewalQuote.calculatedBy.staffId || "Branch Staff"}</span>
+                    </div>
+                  )}
+
+                  {/* Installments Table */}
+                  {selectedItem.renewalQuote.installments && selectedItem.renewalQuote.installments.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">Payment Schedule Installments</h4>
+                      <div className="space-y-1.5">
+                        {selectedItem.renewalQuote.installments.map((inst, i) => (
+                          <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                            <div>
+                              <span className="font-bold text-slate-800 block">{inst.label}</span>
+                              <span className="text-[11px] text-slate-400">Due Date: {formatDate(inst.dueDate)}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="font-black font-mono text-slate-900 block">{formatLKR(inst.amount)}</span>
+                              <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                                inst.status === "Paid" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                              }`}>
+                                {inst.status}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-8 text-center space-y-2">
+                  <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-600 mx-auto flex items-center justify-center">
+                    <HugeiconsIcon icon={SquareLock02Icon} className="w-6 h-6" />
+                  </div>
+                  <h4 className="text-sm font-bold text-slate-800">Branch Fee Valuation Not Yet Calculated</h4>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    The regional branch office (<strong>{selectedItem.owner.branch} Branch</strong>) has not yet generated a renewal quote for this vehicle. Only branch officers have calculation permissions.
+                  </p>
                 </div>
               )}
             </div>
@@ -1045,37 +942,17 @@ export default function AdminRenewalsPage() {
                 onClick={() => setSelectedItem(null)}
                 className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-all cursor-pointer"
               >
-                Close
+                Close Inspection
               </button>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => handleSendReminder(selectedItem.vehicle.numberPlate)}
-                  disabled={isSendingReminder}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border-none"
-                >
-                  <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4 text-slate-600" />
-                  <span>Send Notification Email</span>
-                </button>
-
-                <button
-                  onClick={handleConfirmCalculation}
-                  disabled={isSubmittingQuote}
-                  className="px-5 py-2 bg-[#000080] hover:bg-[#102A43] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border-none shadow-xs disabled:opacity-50"
-                >
-                  {isSubmittingQuote ? (
-                    <>
-                      <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin text-white" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4 text-white" />
-                      <span>Save & Activate Quote</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <button
+                onClick={() => handleSendReminder(selectedItem.vehicle.numberPlate)}
+                disabled={isSendingReminder}
+                className="px-5 py-2 bg-[#000080] hover:bg-[#102A43] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all cursor-pointer border-none shadow-xs active:scale-95 disabled:opacity-50"
+              >
+                <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4 text-white" />
+                <span>Send Reminder Email</span>
+              </button>
             </div>
           </div>
         </div>
