@@ -104,6 +104,60 @@ interface AgentRecord {
   totalPremiumGenerated?: number;
 }
 
+interface VehicleRenewalRecord {
+  owner: {
+    id?: string;
+    name: string;
+    nic: string;
+    mobile?: string;
+    email?: string;
+    address?: string;
+    city?: string;
+    branch?: string;
+    referenceNumber?: string;
+  };
+  vehicle: {
+    _id?: string;
+    numberPlate: string;
+    type?: string;
+    company?: string;
+    model?: string;
+    yearOfManufacture?: string;
+    policyNumber?: string;
+    policyExpiryDate?: string;
+    calculatedExpiryDate?: string;
+    daysRemaining: number;
+    isExpiringWithin1AndHalfMonths?: boolean;
+    status?: string;
+  };
+  renewalQuote?: {
+    _id?: string;
+    quoteNumber?: string;
+    status?: string;
+    selectedPlan?: string;
+    paymentPlanType?: string;
+    calculation?: {
+      basePremium?: number;
+      ncDiscountAmount?: number;
+      taxesAndLevies?: number;
+      finalAnnualTotal?: number;
+    };
+    installments?: Array<{
+      installmentIndex: number;
+      amount: number;
+      dueDate: string;
+      status: "Pending" | "Paid" | "Overdue";
+      paidAt?: string;
+      paymentReference?: string;
+    }>;
+    paymentReference?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  } | null;
+  isPaid: boolean;
+  latestPaymentDate?: string | null;
+}
+
 export default function OfficeStaffReports() {
   const [branch, setBranch] = useState("Galle");
   const [loading, setLoading] = useState(true);
@@ -113,6 +167,7 @@ export default function OfficeStaffReports() {
   const [claims, setClaims] = useState<ClaimRecord[]>([]);
   const [policyHolders, setPolicyHolders] = useState<PolicyHolderRecord[]>([]);
   const [agents, setAgents] = useState<AgentRecord[]>([]);
+  const [renewals, setRenewals] = useState<VehicleRenewalRecord[]>([]);
   const [summaryStats, setSummaryStats] = useState({
     totalClaims: 0,
     approvedClaims: 0,
@@ -125,7 +180,7 @@ export default function OfficeStaffReports() {
   const [monthlyTrend, setMonthlyTrend] = useState<{ month: string; claims: number }[]>([]);
 
   // Filter States
-  const [activeReportType, setActiveReportType] = useState<"claims" | "policyholders" | "agents" | "financial" | "analytics">("claims");
+  const [activeReportType, setActiveReportType] = useState<"claims" | "policyholders" | "agents" | "renewals" | "financial" | "analytics">("claims");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -154,11 +209,12 @@ export default function OfficeStaffReports() {
       setLoading(true);
       setError("");
 
-      const [statsRes, claimsRes, holdersRes, agentsRes] = await Promise.all([
+      const [statsRes, claimsRes, holdersRes, agentsRes, renewalsRes] = await Promise.all([
         fetch(`${API_URL}/office-staff/stats?branch=${encodeURIComponent(branchName)}`),
         fetch(`${API_URL}/office-staff/claims?branch=${encodeURIComponent(branchName)}`),
         fetch(`${API_URL}/office-staff/policy-holders?branch=${encodeURIComponent(branchName)}`),
-        fetch(`${API_URL}/office-staff/agents?branch=${encodeURIComponent(branchName)}`)
+        fetch(`${API_URL}/office-staff/agents?branch=${encodeURIComponent(branchName)}`),
+        fetch(`${API_URL}/renewals/branch-expiring-vehicles?branch=${encodeURIComponent(branchName)}&all=true`)
       ]);
 
       if (statsRes.ok) {
@@ -180,6 +236,11 @@ export default function OfficeStaffReports() {
       if (agentsRes.ok) {
         const agentsData = await agentsRes.json();
         setAgents(agentsData.agents || []);
+      }
+
+      if (renewalsRes.ok) {
+        const renewalsData = await renewalsRes.json();
+        setRenewals(renewalsData.vehicles || []);
       }
     } catch (err: any) {
       console.error("Error loading branch reports:", err);
@@ -375,7 +436,92 @@ export default function OfficeStaffReports() {
     });
   }, [agents, statusFilter, searchQuery]);
 
-  // Dynamic Portfolio Calculations
+  // Filtered Vehicle Renewals
+  const filteredRenewals = useMemo(() => {
+    return renewals.filter((r) => {
+      // Status Filter
+      if (statusFilter !== "all") {
+        if (statusFilter === "Paid" && !r.isPaid) return false;
+        if (statusFilter === "Pending" && (r.isPaid || (r.renewalQuote && r.renewalQuote.status !== "Pending_Payment" && r.renewalQuote.status !== "Draft"))) return false;
+        if (statusFilter === "Calculated" && (!r.renewalQuote || r.renewalQuote.status !== "Calculated")) return false;
+        if (statusFilter === "Expiring Soon" && !(r.vehicle.daysRemaining >= 0 && r.vehicle.daysRemaining <= 45)) return false;
+      }
+
+      // Category / Vehicle Type Filter
+      if (categoryFilter !== "all") {
+        const vType = (r.vehicle.type || "").toLowerCase();
+        if (categoryFilter === "Car" && !vType.includes("car") && !vType.includes("sedan")) return false;
+        if (categoryFilter === "Van" && !vType.includes("van") && !vType.includes("suv")) return false;
+        if (categoryFilter === "Bike" && !vType.includes("motorcycle") && !vType.includes("bike") && !vType.includes("scooter")) return false;
+        if (categoryFilter === "ThreeWheeler" && !vType.includes("three") && !vType.includes("wheeler") && !vType.includes("tuk")) return false;
+      }
+
+      // Date Range Filter (based on latest payment date or policy expiry date)
+      if (dateRange !== "all") {
+        const targetDateStr = r.latestPaymentDate || r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate;
+        if (targetDateStr) {
+          const date = new Date(targetDateStr);
+          const now = new Date();
+          if (dateRange === "this_month") {
+            if (date.getMonth() !== now.getMonth() || date.getFullYear() !== now.getFullYear()) return false;
+          } else if (dateRange === "last_30") {
+            const diffDays = Math.abs((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
+            if (diffDays > 30) return false;
+          } else if (dateRange === "this_quarter") {
+            const currentQuarter = Math.floor(now.getMonth() / 3);
+            const itemQuarter = Math.floor(date.getMonth() / 3);
+            if (currentQuarter !== itemQuarter || date.getFullYear() !== now.getFullYear()) return false;
+          } else if (dateRange === "this_year") {
+            if (date.getFullYear() !== now.getFullYear()) return false;
+          } else if (dateRange === "custom" && customStartDate && customEndDate) {
+            const start = new Date(customStartDate);
+            const end = new Date(customEndDate);
+            end.setHours(23, 59, 59, 999);
+            if (date < start || date > end) return false;
+          }
+        }
+      }
+
+      // Search Query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesPlate = r.vehicle.numberPlate?.toLowerCase().includes(q);
+        const matchesPolicy = r.vehicle.policyNumber?.toLowerCase().includes(q);
+        const matchesModel = `${r.vehicle.company || ""} ${r.vehicle.model || ""}`.toLowerCase().includes(q);
+        const matchesOwner = r.owner.name?.toLowerCase().includes(q);
+        const matchesNic = r.owner.nic?.toLowerCase().includes(q);
+        const matchesMobile = r.owner.mobile?.includes(q);
+        const matchesQuoteNo = r.renewalQuote?.quoteNumber?.toLowerCase().includes(q);
+        return matchesPlate || matchesPolicy || matchesModel || matchesOwner || matchesNic || matchesMobile || matchesQuoteNo;
+      }
+
+      return true;
+    }).sort((a, b) => {
+      if (sortBy === "newest") {
+        const timeA = a.latestPaymentDate ? new Date(a.latestPaymentDate).getTime() : new Date(a.vehicle.calculatedExpiryDate || 0).getTime();
+        const timeB = b.latestPaymentDate ? new Date(b.latestPaymentDate).getTime() : new Date(b.vehicle.calculatedExpiryDate || 0).getTime();
+        return timeB - timeA;
+      }
+      if (sortBy === "oldest") {
+        const timeA = new Date(a.vehicle.calculatedExpiryDate || 0).getTime();
+        const timeB = new Date(b.vehicle.calculatedExpiryDate || 0).getTime();
+        return timeA - timeB;
+      }
+      if (sortBy === "amount_high") {
+        const valA = a.renewalQuote?.calculation?.finalAnnualTotal || 0;
+        const valB = b.renewalQuote?.calculation?.finalAnnualTotal || 0;
+        return valB - valA;
+      }
+      if (sortBy === "amount_low") {
+        const valA = a.renewalQuote?.calculation?.finalAnnualTotal || 0;
+        const valB = b.renewalQuote?.calculation?.finalAnnualTotal || 0;
+        return valA - valB;
+      }
+      return 0;
+    });
+  }, [renewals, statusFilter, categoryFilter, dateRange, customStartDate, customEndDate, searchQuery, sortBy]);
+
+  // Dynamic Portfolio & Renewal Calculations
   const totalVehiclesCount = useMemo(() => {
     return policyHolders.reduce((acc, h) => acc + (h.vehicles?.length || 0), 0);
   }, [policyHolders]);
@@ -395,6 +541,29 @@ export default function OfficeStaffReports() {
     const approved = claims.filter(c => c.status === "Approved").length;
     return `${Math.round((approved / claims.length) * 100)}%`;
   }, [claims]);
+
+  const totalRenewalPremiumsCollected = useMemo(() => {
+    return renewals.reduce((acc, r) => {
+      if (r.isPaid && r.renewalQuote?.calculation?.finalAnnualTotal) {
+        return acc + r.renewalQuote.calculation.finalAnnualTotal;
+      }
+      if (r.renewalQuote?.installments) {
+        const paidSum = r.renewalQuote.installments
+          .filter(i => i.status === "Paid")
+          .reduce((sum, i) => sum + (i.amount || 0), 0);
+        if (paidSum > 0) return acc + paidSum;
+      }
+      return acc;
+    }, 0);
+  }, [renewals]);
+
+  const expiringPoliciesCount = useMemo(() => {
+    return renewals.filter(r => r.vehicle.daysRemaining >= 0 && r.vehicle.daysRemaining <= 45).length;
+  }, [renewals]);
+
+  const renewedPoliciesCount = useMemo(() => {
+    return renewals.filter(r => r.isPaid).length;
+  }, [renewals]);
 
   // Comprehensive CSV Export Handler
   const handleExportCSV = () => {
@@ -440,6 +609,31 @@ export default function OfficeStaffReports() {
         ];
         csvContent += row.join(",") + "\n";
       });
+    } else if (activeReportType === "renewals") {
+      csvContent += "Plate Number,Vehicle Model,Type,Policy Number,Policyholder Name,NIC,Mobile,Email,Policy Expiry Date,Days Remaining,Renewal Status,Quote Total (LKR),Payment Plan,Installments Paid,Latest Payment Date\n";
+      filteredRenewals.forEach((r) => {
+        const quote = r.renewalQuote;
+        const paidInstCount = quote?.installments?.filter(i => i.status === "Paid").length || 0;
+        const totalInstCount = quote?.installments?.length || 0;
+        const row = [
+          `"${r.vehicle.numberPlate}"`,
+          `"${r.vehicle.company || ""} ${r.vehicle.model || ""}"`,
+          `"${r.vehicle.type || "-"}"`,
+          `"${r.vehicle.policyNumber || "-"}"`,
+          `"${r.owner.name}"`,
+          `"${r.owner.nic}"`,
+          `"${r.owner.mobile || "-"}"`,
+          `"${r.owner.email || "-"}"`,
+          `"${formatDate(r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate)}"`,
+          `"${r.vehicle.daysRemaining}"`,
+          `"${r.isPaid ? "Paid" : quote ? quote.status : "Pending Quote"}"`,
+          `"${quote?.calculation?.finalAnnualTotal || 0}"`,
+          `"${quote?.paymentPlanType || (quote?.selectedPlan ? "Annual" : "-")}"`,
+          `"${totalInstCount > 0 ? `${paidInstCount}/${totalInstCount}` : r.isPaid ? "Full" : "0"}"`,
+          `"${r.latestPaymentDate ? new Date(r.latestPaymentDate).toLocaleDateString("en-GB") : "-"}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
     } else {
       csvContent += "Agent Code,Agent Name,Email,Phone,Assigned Branch,Status\n";
       filteredAgents.forEach((a, idx) => {
@@ -472,7 +666,7 @@ export default function OfficeStaffReports() {
   };
 
   // Handler for downloading single record case file report
-  const handleDownloadRecordReport = (record: { type: "claim" | "holder" | "agent"; data: any }) => {
+  const handleDownloadRecordReport = (record: { type: "claim" | "holder" | "agent" | "renewal"; data: any }) => {
     const branchName = branch || "Galle";
     const reportDate = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -751,6 +945,207 @@ export default function OfficeStaffReports() {
         </body>
         </html>
       `;
+    } else if (record.type === "renewal") {
+      const r = record.data as VehicleRenewalRecord;
+      const quote = r.renewalQuote;
+      const isPaid = r.isPaid;
+      docTitle = `Sanasa_Renewal_Audit_Report_${r.vehicle.numberPlate}`;
+
+      contentHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${r.vehicle.numberPlate} - Policy Renewal & Coverage Audit Report</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 40px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #102A43; padding-bottom: 20px; margin-bottom: 24px; }
+            .company { font-size: 22px; font-weight: 800; color: #102A43; text-transform: uppercase; letter-spacing: 0.5px; }
+            .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
+            .meta { text-align: right; font-size: 12px; color: #64748b; line-height: 1.5; }
+            .badge { display: inline-block; padding: 4px 12px; border-radius: 9999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+            .badge-paid { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+            .badge-pending { background: #fef3c7; color: #b45309; border: 1px solid #fde68a; }
+            .badge-calculated { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+            .badge-expired { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+            .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #102A43; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-top: 24px; margin-bottom: 12px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+            th { text-align: left; padding: 8px 12px; background: #f8fafc; color: #64748b; font-weight: 600; font-size: 11px; text-transform: uppercase; border: 1px solid #e2e8f0; }
+            td { padding: 10px 12px; border: 1px solid #e2e8f0; color: #334155; }
+            .label { font-weight: 600; color: #475569; width: 35%; background: #f8fafc; }
+            .val { font-weight: 500; color: #0f172a; }
+            .highlight { font-weight: 700; color: #0f172a; font-family: monospace; }
+            .amount { font-size: 16px; font-weight: 800; color: #15803d; font-family: monospace; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+            .signature-box { margin-top: 40px; display: flex; justify-content: space-between; }
+            .signature-line { width: 180px; border-top: 1px dashed #94a3b8; text-align: center; padding-top: 6px; font-size: 11px; color: #64748b; }
+            @media print {
+              body { padding: 20px; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="company">Sanasa General Insurance Co. LTD</div>
+              <div class="subtitle">Policy Renewal & Coverage Audit Division • ${branchName} Regional Hub</div>
+            </div>
+            <div class="meta">
+              <div><strong>Plate Ref:</strong> ${r.vehicle.numberPlate}</div>
+              <div><strong>Policy No:</strong> ${r.vehicle.policyNumber || "SAN-POL"}</div>
+              <div><strong>Date Generated:</strong> ${reportDate} ${reportTime}</div>
+              <div style="margin-top: 6px;">
+                <span class="badge ${
+                  isPaid ? "badge-paid" : quote?.status === "Calculated" ? "badge-calculated" : r.vehicle.daysRemaining < 0 ? "badge-expired" : "badge-pending"
+                }">${isPaid ? "Renewed & Paid" : quote?.status || "Pending Calculation"}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">1. Policyholder & Customer Information</div>
+          <table>
+            <tr>
+              <td class="label">Customer Full Name</td>
+              <td class="val"><strong>${r.owner.name}</strong></td>
+            </tr>
+            <tr>
+              <td class="label">National Identity Card (NIC)</td>
+              <td class="val highlight">${r.owner.nic}</td>
+            </tr>
+            <tr>
+              <td class="label">Contact Mobile / Phone</td>
+              <td class="val">${r.owner.mobile || "-"}</td>
+            </tr>
+            <tr>
+              <td class="label">Email Address</td>
+              <td class="val">${r.owner.email || "-"}</td>
+            </tr>
+            <tr>
+              <td class="label">Regional Branch</td>
+              <td class="val">${r.owner.branch || branchName} Branch</td>
+            </tr>
+          </table>
+
+          <div class="section-title">2. Insured Vehicle & Policy Coverage Details</div>
+          <table>
+            <tr>
+              <td class="label">Vehicle Registration Number</td>
+              <td class="val highlight">${r.vehicle.numberPlate}</td>
+            </tr>
+            <tr>
+              <td class="label">Vehicle Make & Model</td>
+              <td class="val">${r.vehicle.company || ""} ${r.vehicle.model || "Vehicle"} ${r.vehicle.yearOfManufacture ? `(${r.vehicle.yearOfManufacture})` : ""}</td>
+            </tr>
+            <tr>
+              <td class="label">Vehicle Classification</td>
+              <td class="val">${r.vehicle.type || "Comprehensive Private Motor"}</td>
+            </tr>
+            <tr>
+              <td class="label">Policy Number</td>
+              <td class="val highlight">${r.vehicle.policyNumber || "SAN-POL-AUTO"}</td>
+            </tr>
+            <tr>
+              <td class="label">Current Policy Expiry Date</td>
+              <td class="val"><strong>${formatDate(r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate)}</strong> (${r.vehicle.daysRemaining >= 0 ? `${r.vehicle.daysRemaining} days remaining` : `${Math.abs(r.vehicle.daysRemaining)} days overdue`})</td>
+            </tr>
+          </table>
+
+          <div class="section-title">3. Renewal Quotation Breakdown</div>
+          <table>
+            <tr>
+              <td class="label">Renewal Quote Number</td>
+              <td class="val highlight">${quote?.quoteNumber || "QUOTE-PENDING"}</td>
+            </tr>
+            <tr>
+              <td class="label">Selected Coverage Plan</td>
+              <td class="val"><strong>${quote?.selectedPlan || "Comprehensive Standard"}</strong></td>
+            </tr>
+            <tr>
+              <td class="label">Base Annual Premium</td>
+              <td class="val">${formatLKR(quote?.calculation?.basePremium)}</td>
+            </tr>
+            <tr>
+              <td class="label">No Claim Bonus (NCB) Discount</td>
+              <td class="val font-semibold text-emerald-700">-${formatLKR(quote?.calculation?.ncDiscountAmount)}</td>
+            </tr>
+            <tr>
+              <td class="label">Taxes & Regulatory Levies</td>
+              <td class="val">${formatLKR(quote?.calculation?.taxesAndLevies)}</td>
+            </tr>
+            <tr>
+              <td class="label">Final Total Renewal Premium</td>
+              <td class="val amount">${formatLKR(quote?.calculation?.finalAnnualTotal)}</td>
+            </tr>
+          </table>
+
+          <div class="section-title">4. Payment & Installment Audit</div>
+          <table>
+            <tr>
+              <td class="label">Payment Status</td>
+              <td class="val"><strong>${isPaid ? "Payment Verified (Active)" : "Pending Payment"}</strong></td>
+            </tr>
+            <tr>
+              <td class="label">Payment Plan Selected</td>
+              <td class="val">${quote?.paymentPlanType || (isPaid ? "Full Annual Payment" : "Annual")}</td>
+            </tr>
+            <tr>
+              <td class="label">Payment Reference</td>
+              <td class="val highlight">${quote?.paymentReference || (isPaid ? "VERIFIED-DIRECT" : "-")}</td>
+            </tr>
+            <tr>
+              <td class="label">Latest Transaction / Payment Date</td>
+              <td class="val">${r.latestPaymentDate ? formatSriLankaDateTime(r.latestPaymentDate) : "-"}</td>
+            </tr>
+          </table>
+
+          ${quote?.installments && quote.installments.length > 0 ? `
+            <div style="margin-top: 12px;">
+              <strong style="font-size: 11px; text-transform: uppercase; color: #475569;">Installment Schedule Breakdown:</strong>
+              <table style="margin-top: 6px;">
+                <thead>
+                  <tr>
+                    <th>Installment</th>
+                    <th>Due Date</th>
+                    <th>Amount (LKR)</th>
+                    <th>Status</th>
+                    <th>Settlement Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${quote.installments.map(inst => `
+                    <tr>
+                      <td class="highlight">Installment #${inst.installmentIndex}</td>
+                      <td>${formatDate(inst.dueDate)}</td>
+                      <td class="highlight">${formatLKR(inst.amount)}</td>
+                      <td><span class="badge ${inst.status === "Paid" ? "badge-paid" : "badge-pending"}">${inst.status}</span></td>
+                      <td>${inst.paidAt ? formatSriLankaDateTime(inst.paidAt) : "-"}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            </div>
+          ` : ""}
+
+          <div class="signature-box">
+            <div class="signature-line">
+              Prepared by: Renewal Officer
+            </div>
+            <div class="signature-line">
+              Branch Underwriting Head
+            </div>
+            <div class="signature-line">
+              Official Branch Seal
+            </div>
+          </div>
+
+          <div class="footer">
+            <div>Confidential • Sanasa General Insurance Company Limited • ${branchName} Regional Hub</div>
+            <div>Official Policy Renewal Audit Record</div>
+          </div>
+        </body>
+        </html>
+      `;
     } else {
       const a = record.data;
       docTitle = `Sanasa_Agent_Report_${a.name ? a.name.replace(/\s+/g, "_") : "Agent"}`;
@@ -839,7 +1234,11 @@ export default function OfficeStaffReports() {
     setPopup({
       show: true,
       title: "Case Report Downloaded",
-      message: `The official audit report for ${record.data.claimNumber || record.data.name || record.data.nic} has been downloaded and prepared for printing/PDF export.`,
+      message: `The official audit report for ${
+        record.type === "renewal"
+          ? record.data.vehicle.numberPlate
+          : record.data.claimNumber || record.data.name || record.data.nic
+      } has been downloaded and prepared for printing/PDF export.`,
       type: "success"
     });
   };
@@ -855,6 +1254,8 @@ export default function OfficeStaffReports() {
       ? filteredClaims
       : activeReportType === "policyholders"
       ? filteredHolders
+      : activeReportType === "renewals"
+      ? filteredRenewals
       : filteredAgents;
 
   const totalPages = Math.ceil(currentDataset.length / rowsPerPage) || 1;
@@ -936,8 +1337,8 @@ export default function OfficeStaffReports() {
                   </div>
                 </div>
 
-                {/* 6 Rich KPI Summary Tiles */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 select-none">
+                {/* 7 Rich KPI Summary Tiles */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5 select-none">
                   {/* Total Claims Processed */}
                   <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Total Claims</span>
@@ -953,7 +1354,7 @@ export default function OfficeStaffReports() {
 
                   {/* Settled Disbursements */}
                   <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Disbursed Payouts</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Disbursed Claims</span>
                     <div className="mt-2">
                       <span className="text-base font-black text-slate-900 font-mono truncate block">
                         {formatLKR(summaryStats.totalPayoutAmount || totalSettledPayouts)}
@@ -966,26 +1367,39 @@ export default function OfficeStaffReports() {
 
                   {/* Approval Rate */}
                   <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Settlement Rate</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Claims Clearance</span>
                     <div className="mt-2">
                       <span className="text-xl font-black text-emerald-700 font-mono block">
                         {approvalRate}
                       </span>
                       <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
-                        Claims Clearance
+                        Approval Ratio
                       </span>
                     </div>
                   </div>
 
-                  {/* Average Claim Value */}
+                  {/* Expiring Policies */}
                   <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Avg Claim Payout</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Expiring Policies</span>
                     <div className="mt-2">
-                      <span className="text-base font-black text-slate-900 font-mono truncate block">
-                        {formatLKR(averageClaimValue)}
+                      <span className="text-xl font-black text-amber-700 font-mono block">
+                        {expiringPoliciesCount}
                       </span>
-                      <span className="text-[10px] text-slate-500 font-medium block mt-0.5">
-                        Per Settled Claim
+                      <span className="text-[10px] text-amber-600 font-bold block mt-0.5">
+                        Next 45 Days Window
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Renewals Settled / Revenue */}
+                  <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Renewals Paid</span>
+                    <div className="mt-2">
+                      <span className="text-xl font-black text-emerald-700 font-mono block">
+                        {renewedPoliciesCount}
+                      </span>
+                      <span className="text-[10px] text-emerald-600 font-bold block mt-0.5">
+                        {formatLKR(totalRenewalPremiumsCollected)}
                       </span>
                     </div>
                   </div>
@@ -1143,6 +1557,7 @@ export default function OfficeStaffReports() {
                     {[
                       { id: "claims", label: "Claims & Loss Assessment", count: filteredClaims.length },
                       { id: "policyholders", label: "Policyholders & Vehicle Portfolio", count: filteredHolders.length },
+                      { id: "renewals", label: "Policy Renewals & Coverage", count: filteredRenewals.length },
                       { id: "agents", label: "Agent Productivity & Commissions", count: filteredAgents.length },
                       { id: "financial", label: "Direct Bank Settlement Audit", count: filteredClaims.filter(c => c.status === "Approved").length },
                       { id: "analytics", label: "Risk & Damage Analytics", count: null }
@@ -1188,7 +1603,11 @@ export default function OfficeStaffReports() {
                             setSearchQuery(e.target.value);
                             setCurrentPage(1);
                           }}
-                          placeholder="Search claim no, name, NIC, plate, agent..."
+                          placeholder={
+                            activeReportType === "renewals"
+                              ? "Search plate, model, policy no, holder, NIC..."
+                              : "Search claim no, name, NIC, plate, agent..."
+                          }
                           className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 text-slate-700 placeholder:text-slate-400 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-slate-400"
                         />
                         {searchQuery && (
@@ -1204,22 +1623,39 @@ export default function OfficeStaffReports() {
                       {/* Multi-Filters */}
                       <div className="flex items-center gap-2 flex-wrap">
                         {/* Status Filter */}
-                        <select
-                          value={statusFilter}
-                          onChange={(e) => {
-                            setStatusFilter(e.target.value);
-                            setCurrentPage(1);
-                          }}
-                          className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
-                        >
-                          <option value="all">All Statuses</option>
-                          <option value="Approved">Approved</option>
-                          <option value="Pending">Pending</option>
-                          <option value="In Progress">In Progress</option>
-                          <option value="Rejected">Rejected</option>
-                        </select>
+                        {activeReportType === "renewals" ? (
+                          <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                              setStatusFilter(e.target.value);
+                              setCurrentPage(1);
+                            }}
+                            className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                          >
+                            <option value="all">All Renewal Statuses</option>
+                            <option value="Paid">Paid / Renewed</option>
+                            <option value="Expiring Soon">Expiring Soon (45 Days)</option>
+                            <option value="Calculated">Quote Calculated</option>
+                            <option value="Pending">Pending Calculation</option>
+                          </select>
+                        ) : (
+                          <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                              setStatusFilter(e.target.value);
+                              setCurrentPage(1);
+                            }}
+                            className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                          >
+                            <option value="all">All Statuses</option>
+                            <option value="Approved">Approved</option>
+                            <option value="Pending">Pending</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Rejected">Rejected</option>
+                          </select>
+                        )}
 
-                        {/* Damage Category Filter */}
+                        {/* Damage Category Filter for Claims */}
                         {activeReportType === "claims" && (
                           <select
                             value={categoryFilter}
@@ -1235,6 +1671,24 @@ export default function OfficeStaffReports() {
                             <option value="Theft">Theft / Partial Theft</option>
                             <option value="Flood">Flood / Water Damage</option>
                             <option value="ThirdParty">Third Party Claim</option>
+                          </select>
+                        )}
+
+                        {/* Vehicle Type Filter for Renewals */}
+                        {activeReportType === "renewals" && (
+                          <select
+                            value={categoryFilter}
+                            onChange={(e) => {
+                              setCategoryFilter(e.target.value);
+                              setCurrentPage(1);
+                            }}
+                            className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                          >
+                            <option value="all">All Vehicle Types</option>
+                            <option value="Car">Motor Car / Sedan</option>
+                            <option value="Van">Van / SUV</option>
+                            <option value="Bike">Motorcycle / Scooter</option>
+                            <option value="ThreeWheeler">Three Wheeler</option>
                           </select>
                         )}
 
@@ -1410,6 +1864,17 @@ export default function OfficeStaffReports() {
                                   <th className="py-3 px-4 whitespace-nowrap">Registered Date</th>
                                   <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
                                 </>
+                              ) : activeReportType === "renewals" ? (
+                                <>
+                                  <th className="py-3 px-4 whitespace-nowrap">Vehicle Plate & Model</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">Policy Number</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">Policyholder & NIC</th>
+                                  <th className="py-3 px-4 text-center whitespace-nowrap">Expiry & Remaining</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">Renewal Quote Total</th>
+                                  <th className="py-3 px-4 text-center whitespace-nowrap">Status & Plan</th>
+                                  <th className="py-3 px-4 whitespace-nowrap">Latest Action Date</th>
+                                  <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
+                                </>
                               ) : activeReportType === "agents" ? (
                                 <>
                                   <th className="py-3 px-4 whitespace-nowrap">Agent Code</th>
@@ -1539,6 +2004,121 @@ export default function OfficeStaffReports() {
                                   </td>
                                 </tr>
                               ))}
+
+                            {activeReportType === "renewals" &&
+                              (paginatedData as VehicleRenewalRecord[]).map((r, rIdx) => {
+                                const isPaid = r.isPaid;
+                                const quote = r.renewalQuote;
+                                const days = r.vehicle.daysRemaining;
+                                const isExpiringSoon = days >= 0 && days <= 45;
+                                const isOverdue = days < 0;
+
+                                return (
+                                  <tr
+                                    key={`${r.vehicle.numberPlate}-${rIdx}`}
+                                    onClick={() => setSelectedRecord({ type: "renewal", data: r })}
+                                    className="hover:bg-slate-50/60 transition-colors cursor-pointer"
+                                  >
+                                    <td className="py-3.5 px-4 whitespace-nowrap">
+                                      <span className="font-mono font-bold text-[#102A43] block">
+                                        {r.vehicle.numberPlate}
+                                      </span>
+                                      <span className="text-slate-500 text-[11px] block">
+                                        {r.vehicle.company || ""} {r.vehicle.model || "Vehicle"}
+                                      </span>
+                                    </td>
+
+                                    <td className="py-3.5 px-4 font-mono font-semibold text-slate-700 whitespace-nowrap">
+                                      {r.vehicle.policyNumber || "SAN-POL-AUTO"}
+                                    </td>
+
+                                    <td className="py-3.5 px-4 whitespace-nowrap">
+                                      <span className="font-semibold text-slate-800 block">
+                                        {r.owner.name}
+                                      </span>
+                                      <span className="font-mono text-[10px] text-slate-400 block">
+                                        {r.owner.nic}
+                                      </span>
+                                    </td>
+
+                                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                      <div className="flex flex-col items-center">
+                                        <span className="font-medium text-slate-800">
+                                          {formatDate(r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate)}
+                                        </span>
+                                        <span
+                                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5 ${
+                                            isPaid
+                                              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                              : isOverdue
+                                              ? "bg-rose-100 text-rose-700 font-bold"
+                                              : isExpiringSoon
+                                              ? "bg-amber-100 text-amber-800 font-bold"
+                                              : "bg-slate-100 text-slate-600"
+                                          }`}
+                                        >
+                                          {isPaid
+                                            ? "Active / Renewed"
+                                            : isOverdue
+                                            ? `${Math.abs(days)}d Overdue`
+                                            : `${days}d Remaining`}
+                                        </span>
+                                      </div>
+                                    </td>
+
+                                    <td className="py-3.5 px-4 font-mono font-bold text-slate-900 whitespace-nowrap">
+                                      {quote?.calculation?.finalAnnualTotal ? (
+                                        formatLKR(quote.calculation.finalAnnualTotal)
+                                      ) : (
+                                        <span className="text-slate-400 font-normal italic">Quote Pending</span>
+                                      )}
+                                    </td>
+
+                                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                      <div className="flex flex-col items-center gap-1">
+                                        <span
+                                          className={`inline-flex items-center justify-center text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border whitespace-nowrap min-w-[95px] text-center ${
+                                            isPaid
+                                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                              : quote?.status === "Calculated"
+                                              ? "bg-blue-50 text-blue-700 border-blue-200"
+                                              : quote?.status === "Pending_Payment"
+                                              ? "bg-purple-50 text-purple-700 border-purple-200"
+                                              : "bg-amber-50 text-amber-700 border-amber-200"
+                                          }`}
+                                        >
+                                          {isPaid ? "Paid / Renewed" : quote?.status ? quote.status.replace("_", " ") : "Pending Quote"}
+                                        </span>
+                                        {quote?.paymentPlanType && (
+                                          <span className="text-[10px] text-slate-500 font-medium">
+                                            Plan: {quote.paymentPlanType}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </td>
+
+                                    <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
+                                      {r.latestPaymentDate
+                                        ? formatDate(r.latestPaymentDate)
+                                        : quote?.updatedAt
+                                        ? formatDate(quote.updatedAt)
+                                        : formatDate(r.vehicle.calculatedExpiryDate)}
+                                    </td>
+
+                                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedRecord({ type: "renewal", data: r });
+                                        }}
+                                        className="px-2.5 py-1 text-[11px] font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer border-none"
+                                      >
+                                        View
+                                      </button>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
 
                             {activeReportType === "agents" &&
                               (paginatedData as AgentRecord[]).map((a, aIdx) => (
@@ -1696,10 +2276,15 @@ export default function OfficeStaffReports() {
                       ? `Claim File: ${selectedRecord.data.claimNumber}`
                       : selectedRecord.type === "holder"
                       ? `Policyholder Profile: ${selectedRecord.data.firstName} ${selectedRecord.data.lastName}`
+                      : selectedRecord.type === "renewal"
+                      ? `Policy Renewal: ${selectedRecord.data.vehicle.numberPlate}`
                       : `Agent Profile: ${selectedRecord.data.name}`}
                   </h3>
                   <p className="text-xs text-slate-400 font-medium">
-                    Branch Case Audit • Ref: {selectedRecord.data.claimNumber || selectedRecord.data.referenceNumber || selectedRecord.data.nic}
+                    Branch Case Audit • Ref:{" "}
+                    {selectedRecord.type === "renewal"
+                      ? `${selectedRecord.data.vehicle.numberPlate} (${selectedRecord.data.vehicle.policyNumber || "SAN-POL"})`
+                      : selectedRecord.data.claimNumber || selectedRecord.data.referenceNumber || selectedRecord.data.nic}
                   </p>
                 </div>
               </div>
@@ -1908,6 +2493,199 @@ export default function OfficeStaffReports() {
                     <strong className="text-emerald-700">{selectedRecord.data.status || "Active"}</strong>
                   </div>
                 </div>
+              )}
+
+              {selectedRecord.type === "renewal" && (
+                (() => {
+                  const r = selectedRecord.data as VehicleRenewalRecord;
+                  const quote = r.renewalQuote;
+                  const isPaid = r.isPaid;
+                  const days = r.vehicle.daysRemaining;
+
+                  return (
+                    <div className="space-y-4">
+                      {/* Status Banner */}
+                      <div
+                        className={`p-3.5 rounded-2xl border flex items-center justify-between ${
+                          isPaid
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                            : days < 0
+                            ? "bg-rose-50 border-rose-200 text-rose-900"
+                            : days <= 45
+                            ? "bg-amber-50 border-amber-200 text-amber-900"
+                            : "bg-slate-50 border-slate-200 text-slate-800"
+                        }`}
+                      >
+                        <div>
+                          <span className="font-bold text-xs uppercase tracking-wide block">
+                            {isPaid ? "Policy Renewed & Verified" : days < 0 ? "Policy Expired" : "Renewal Due"}
+                          </span>
+                          <span className="text-[11px] opacity-80 block">
+                            {isPaid
+                              ? `Settled via ${quote?.paymentPlanType || "Direct Transfer"}`
+                              : days < 0
+                              ? `${Math.abs(days)} days overdue for renewal`
+                              : `${days} days remaining until policy expiration`}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
+                            isPaid
+                              ? "bg-emerald-600 text-white"
+                              : days < 0
+                              ? "bg-rose-600 text-white"
+                              : "bg-amber-600 text-white"
+                          }`}
+                        >
+                          {isPaid ? "Active" : days < 0 ? "Expired" : "Pending"}
+                        </span>
+                      </div>
+
+                      {/* Section 1: Policyholder Details */}
+                      <div>
+                        <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] mb-2 border-b border-slate-100 pb-1">
+                          1. Policyholder & Customer Information
+                        </h4>
+                        <div className="space-y-2 divide-y divide-slate-100 text-xs">
+                          <div className="flex justify-between pt-1">
+                            <span className="text-slate-400">Policyholder Name:</span>
+                            <strong className="text-slate-900">{r.owner.name}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">NIC Number:</span>
+                            <strong className="font-mono text-slate-900">{r.owner.nic}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Phone Number:</span>
+                            <strong className="text-slate-800">{r.owner.mobile || "-"}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Email Address:</span>
+                            <strong className="text-slate-800">{r.owner.email || "-"}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Branch Office:</span>
+                            <strong className="text-slate-800">{r.owner.branch || branch} Branch</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section 2: Vehicle & Policy Details */}
+                      <div>
+                        <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] mb-2 border-b border-slate-100 pb-1">
+                          2. Vehicle & Policy Details
+                        </h4>
+                        <div className="space-y-2 divide-y divide-slate-100 text-xs">
+                          <div className="flex justify-between pt-1">
+                            <span className="text-slate-400">Registration Number:</span>
+                            <strong className="font-mono text-slate-900 font-bold">{r.vehicle.numberPlate}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Vehicle Make / Model:</span>
+                            <strong className="text-slate-800">
+                              {r.vehicle.company || ""} {r.vehicle.model || "Vehicle"}{" "}
+                              {r.vehicle.yearOfManufacture ? `(${r.vehicle.yearOfManufacture})` : ""}
+                            </strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Vehicle Classification:</span>
+                            <strong className="text-slate-800">{r.vehicle.type || "Comprehensive Motor"}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Policy Reference:</span>
+                            <strong className="font-mono text-slate-900">{r.vehicle.policyNumber || "SAN-POL-AUTO"}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Policy Expiration Date:</span>
+                            <strong className="text-slate-900">
+                              {formatDate(r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate)}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section 3: Renewal Quotation */}
+                      <div>
+                        <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] mb-2 border-b border-slate-100 pb-1">
+                          3. Renewal Quotation Breakdown
+                        </h4>
+                        <div className="space-y-2 divide-y divide-slate-100 text-xs">
+                          <div className="flex justify-between pt-1">
+                            <span className="text-slate-400">Quote Reference:</span>
+                            <strong className="font-mono text-slate-900">{quote?.quoteNumber || "Quote Pending"}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Selected Coverage:</span>
+                            <strong className="text-slate-800">{quote?.selectedPlan || "Comprehensive"}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Base Premium:</span>
+                            <strong className="font-mono text-slate-800">{formatLKR(quote?.calculation?.basePremium)}</strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">NCB Discount:</span>
+                            <strong className="font-mono text-emerald-700">
+                              -{formatLKR(quote?.calculation?.ncDiscountAmount)}
+                            </strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Government Levies & Taxes:</span>
+                            <strong className="font-mono text-slate-800">
+                              {formatLKR(quote?.calculation?.taxesAndLevies)}
+                            </strong>
+                          </div>
+                          <div className="flex justify-between pt-2">
+                            <span className="text-slate-400">Final Annual Total:</span>
+                            <strong className="font-mono text-emerald-700 font-bold text-sm">
+                              {formatLKR(quote?.calculation?.finalAnnualTotal)}
+                            </strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Section 4: Installments & Payment */}
+                      {quote?.installments && quote.installments.length > 0 && (
+                        <div>
+                          <h4 className="font-bold text-slate-800 uppercase tracking-wider text-[10px] mb-2 border-b border-slate-100 pb-1">
+                            4. Installment Payment Schedule
+                          </h4>
+                          <div className="space-y-1.5">
+                            {quote.installments.map((inst) => (
+                              <div
+                                key={inst.installmentIndex}
+                                className="flex items-center justify-between p-2.5 rounded-xl border border-slate-100 bg-slate-50 text-xs"
+                              >
+                                <div>
+                                  <span className="font-bold text-slate-800 block">
+                                    Installment #{inst.installmentIndex}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 block">
+                                    Due: {formatDate(inst.dueDate)}{" "}
+                                    {inst.paidAt ? `• Paid ${formatDate(inst.paidAt)}` : ""}
+                                  </span>
+                                </div>
+                                <div className="text-right">
+                                  <span className="font-mono font-bold text-slate-900 block">
+                                    {formatLKR(inst.amount)}
+                                  </span>
+                                  <span
+                                    className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full inline-block mt-0.5 ${
+                                      inst.status === "Paid"
+                                        ? "bg-emerald-100 text-emerald-800"
+                                        : "bg-amber-100 text-amber-800"
+                                    }`}
+                                  >
+                                    {inst.status}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
               )}
             </div>
 
