@@ -2850,12 +2850,17 @@ router.post("/agents/:id/reset-password", async (req, res) => {
 // GET comprehensive executive analytics & system overview: /api/admin/comprehensive-analytics
 router.get("/comprehensive-analytics", async (req, res) => {
   try {
-    const { branch, timeRange, province, search } = req.query;
+    const { branch, timeRange, province, search, startDate, endDate } = req.query;
 
     // Build date filter
     const now = new Date();
     let dateMatch = {};
-    if (timeRange === "today") {
+    if (startDate && endDate) {
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      e.setHours(23, 59, 59, 999);
+      dateMatch = { createdAt: { $gte: s, $lte: e } };
+    } else if (timeRange === "today") {
       const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
       dateMatch = { createdAt: { $gte: startOfDay } };
     } else if (timeRange === "7days") {
@@ -3122,7 +3127,23 @@ router.get("/comprehensive-analytics", async (req, res) => {
       vehicleTypes: vehicleTypesArray,
       provinceDistribution: provinceArray,
       agentPerformance: agentPerformanceList,
-      recentLogins
+      recentLogins,
+      claims: claims.map(c => ({
+        _id: c._id,
+        claimNumber: c.claimNumber,
+        policyHolderName: c.policyHolderName,
+        userNic: c.userNic,
+        vehicleNumber: c.vehicleNumber,
+        damageType: c.damageType,
+        amount: c.amount,
+        status: c.status,
+        branch: c.branch,
+        assignedAgent: c.assignedAgent,
+        bankName: c.bankName,
+        bankAccount: c.bankAccount,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt
+      }))
     });
   } catch (err) {
     console.error("Comprehensive analytics API error:", err);

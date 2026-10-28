@@ -30,7 +30,8 @@ import {
   Call02Icon,
   Mail01Icon,
   ArrowRight01Icon,
-  SquareLock02Icon
+  SquareLock02Icon,
+  File01Icon
 } from "@hugeicons/core-free-icons";
 
 // ==========================================
@@ -183,6 +184,47 @@ const SRI_LANKA_PROVINCES = [
   "Sabaragamuwa Province"
 ];
 
+// Time Range Matching Helper for Admin Reports
+const matchesAdminDate = (
+  dateStr?: string | null,
+  range: "all" | "today" | "7days" | "30days" | "90days" | "thisyear" | "custom" = "all",
+  start?: string,
+  end?: string
+) => {
+  if (!dateStr || range === "all") return true;
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return true;
+  const now = new Date();
+
+  if (range === "today") {
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return date >= startOfDay;
+  }
+  if (range === "7days") {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return date >= d;
+  }
+  if (range === "30days") {
+    const diffDays = Math.abs((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
+    return diffDays <= 30;
+  }
+  if (range === "90days") {
+    const diffDays = Math.abs((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
+    return diffDays <= 90;
+  }
+  if (range === "thisyear") {
+    return date.getFullYear() === now.getFullYear();
+  }
+  if (range === "custom" && start && end) {
+    const s = new Date(start);
+    const e = new Date(end);
+    e.setHours(23, 59, 59, 999);
+    return date >= s && date <= e;
+  }
+  return true;
+};
+
 export default function AdminAnalyticsReportsPage() {
   // Navigation tabs
   const [activeTab, setActiveTab] = useState<
@@ -222,13 +264,16 @@ export default function AdminAnalyticsReportsPage() {
   const [provinceDistribution, setProvinceDistribution] = useState<ProvinceStat[]>([]);
   const [agentPerformance, setAgentPerformance] = useState<AgentStat[]>([]);
   const [recentLogins, setRecentLogins] = useState<LoginActivityRecord[]>([]);
+  const [claimsList, setClaimsList] = useState<any[]>([]);
 
   // Loading & sync
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   // Filters
-  const [timeRange, setTimeRange] = useState<"all" | "today" | "7days" | "30days" | "90days" | "thisyear">("all");
+  const [timeRange, setTimeRange] = useState<"all" | "today" | "7days" | "30days" | "90days" | "thisyear" | "custom">("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [selectedBranch, setSelectedBranch] = useState("All");
   const [selectedProvince, setSelectedProvince] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -237,6 +282,14 @@ export default function AdminAnalyticsReportsPage() {
   const [viewingBranch, setViewingBranch] = useState<BranchMatrixItem | null>(null);
   const [inspectActivity, setInspectActivity] = useState<LoginActivityRecord | null>(null);
   const [showExportModal, setShowExportModal] = useState(false);
+
+  // Export Center Filter & Configuration States
+  const [exportScope, setExportScope] = useState<"claims" | "branches" | "agents" | "summary">("claims");
+  const [exportTimeRange, setExportTimeRange] = useState<"all" | "today" | "7days" | "30days" | "90days" | "thisyear" | "custom">("all");
+  const [exportCustomStart, setExportCustomStart] = useState("");
+  const [exportCustomEnd, setExportCustomEnd] = useState("");
+  const [exportBranch, setExportBranch] = useState("All");
+  const [exportStatus, setExportStatus] = useState("all");
 
   // Toast
   const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
@@ -263,7 +316,12 @@ export default function AdminAnalyticsReportsPage() {
       const params = new URLSearchParams();
       if (selectedBranch && selectedBranch !== "All") params.append("branch", selectedBranch);
       if (selectedProvince && selectedProvince !== "All") params.append("province", selectedProvince);
-      if (timeRange && timeRange !== "all") params.append("timeRange", timeRange);
+      if (timeRange === "custom" && customStartDate && customEndDate) {
+        params.append("startDate", customStartDate);
+        params.append("endDate", customEndDate);
+      } else if (timeRange && timeRange !== "all") {
+        params.append("timeRange", timeRange);
+      }
       if (searchQuery.trim()) params.append("search", searchQuery.trim());
 
       const res = await fetch(`${API_URL}/admin/comprehensive-analytics?${params.toString()}`);
@@ -279,6 +337,7 @@ export default function AdminAnalyticsReportsPage() {
       if (Array.isArray(data.provinceDistribution)) setProvinceDistribution(data.provinceDistribution);
       if (Array.isArray(data.agentPerformance)) setAgentPerformance(data.agentPerformance);
       if (Array.isArray(data.recentLogins)) setRecentLogins(data.recentLogins);
+      if (Array.isArray(data.claims)) setClaimsList(data.claims);
 
       if (isRefresh) showToast("Executive reports refreshed.", "success");
     } catch (err: any) {
@@ -290,7 +349,7 @@ export default function AdminAnalyticsReportsPage() {
       if (!isSilent) setLoading(false);
       if (isRefresh) setRefreshing(false);
     }
-  }, [selectedBranch, selectedProvince, timeRange, searchQuery]);
+  }, [selectedBranch, selectedProvince, timeRange, customStartDate, customEndDate, searchQuery]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -427,6 +486,298 @@ export default function AdminAnalyticsReportsPage() {
       csv += `"${a.agentId}","${a.name}","${a.email}","${a.phone}","${a.branch}","${a.availability}","${a.status}",${a.assignedClaimsCount},${a.completedClaimsCount},${a.evaluatedLossLKR},"${a.lastSeenAt ? formatSriLankaDateTime(a.lastSeenAt) : 'N/A'}"\r\n`;
     });
     downloadCSV(csv, `Sanasa_Agent_Performance_Roster_${Date.now()}.csv`);
+  };
+
+  // Memoized Filtered Dataset for Executive Export Center
+  const exportFilteredData = useMemo(() => {
+    const range = exportTimeRange;
+    const start = exportCustomStart;
+    const end = exportCustomEnd;
+    const br = exportBranch;
+    const st = exportStatus;
+
+    if (exportScope === "claims") {
+      const list = claimsList.filter((c) => {
+        if (br !== "All" && c.branch && c.branch.toLowerCase().trim() !== br.toLowerCase().trim()) return false;
+        if (st !== "all" && c.status?.toLowerCase() !== st.toLowerCase()) return false;
+        return matchesAdminDate(c.createdAt, range, start, end);
+      });
+      const totalAmount = list.reduce((acc, c) => acc + (Number(c.amount) || 0), 0);
+      return { list, count: list.length, totalAmount };
+    } else if (exportScope === "branches") {
+      const list = branchMatrix.filter((b) => {
+        if (br !== "All" && b.branch.toLowerCase().trim() !== br.toLowerCase().trim()) return false;
+        return true;
+      });
+      const totalClaims = list.reduce((acc, b) => acc + (b.totalClaims || 0), 0);
+      const totalPayout = list.reduce((acc, b) => acc + (b.totalPayoutLKR || 0), 0);
+      return { list, count: list.length, totalClaims, totalAmount: totalPayout };
+    } else if (exportScope === "agents") {
+      const list = agentPerformance.filter((a) => {
+        if (br !== "All" && a.branch && a.branch.toLowerCase().trim() !== br.toLowerCase().trim()) return false;
+        if (st !== "all" && a.availability?.toLowerCase() !== st.toLowerCase()) return false;
+        return true;
+      });
+      const totalLoss = list.reduce((acc, a) => acc + (a.evaluatedLossLKR || 0), 0);
+      return { list, count: list.length, totalAmount: totalLoss };
+    } else {
+      // Summary
+      return {
+        list: [],
+        count: summary.totalClaims,
+        totalAmount: summary.totalApprovedPayout
+      };
+    }
+  }, [claimsList, branchMatrix, agentPerformance, summary, exportScope, exportTimeRange, exportCustomStart, exportCustomEnd, exportBranch, exportStatus]);
+
+  // Handler to download targeted filtered CSV for Admin
+  const handleDownloadFilteredAdminCSV = () => {
+    const rangeLabel = exportTimeRange === "custom" && exportCustomStart && exportCustomEnd
+      ? `${exportCustomStart}_to_${exportCustomEnd}`
+      : exportTimeRange;
+    const branchLabel = exportBranch === "All" ? "National_Network" : `${exportBranch}_Branch`;
+
+    if (exportScope === "claims") {
+      let csv = "Claim Number,Policyholder Name,NIC,Vehicle Number,Damage Type,Claim Amount (LKR),Status,Branch,Assigned Agent,Bank Name,Date Filed\r\n";
+      exportFilteredData.list.forEach((c: any) => {
+        csv += `"${c.claimNumber}","${c.policyHolderName || 'Policyholder'}","${c.userNic || '-'}","${c.vehicleNumber || '-'}","${c.damageType || 'Accident'}",${c.amount || 0},"${c.status || 'Pending'}","${c.branch || 'Head Office'}","${c.assignedAgent || 'Unassigned'}","${c.bankName || '-'}","${c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB') : '-'}"\r\n`;
+      });
+      downloadCSV(csv, `Sanasa_Admin_Claims_Audit_${branchLabel}_${rangeLabel}_${Date.now()}.csv`);
+    } else if (exportScope === "branches") {
+      let csv = "Branch Name,District,Province,Staff Members,Assigned Agents,Active Duty,Policyholders,Claims Total,Approved,Pending,In Progress,Rejected,Payout Sum (LKR),Avg Payout (LKR),Resolution Rate\r\n";
+      exportFilteredData.list.forEach((b: any) => {
+        csv += `"${b.branch}","${b.district}","${b.province}",${b.staffCount},${b.agentCount},${b.activeAgentCount},${b.policyholdersCount},${b.totalClaims},${b.approvedClaims},${b.pendingClaims},${b.inProgressClaims},${b.rejectedClaims},${b.totalPayoutLKR},${b.avgPayoutLKR},${b.resolutionRate}%\r\n`;
+      });
+      downloadCSV(csv, `Sanasa_Admin_Branch_Matrix_${branchLabel}_${Date.now()}.csv`);
+    } else if (exportScope === "agents") {
+      let csv = "Agent ID,Full Name,Email,Phone,Branch,Duty Availability,Account Status,Assigned Cases,Completed Evaluations,Evaluated Loss (LKR)\r\n";
+      exportFilteredData.list.forEach((a: any) => {
+        csv += `"${a.agentId}","${a.name}","${a.email}","${a.phone}","${a.branch}","${a.availability}","${a.status}",${a.assignedClaimsCount},${a.completedClaimsCount},${a.evaluatedLossLKR}\r\n`;
+      });
+      downloadCSV(csv, `Sanasa_Admin_Agent_Roster_${branchLabel}_${Date.now()}.csv`);
+    } else {
+      handleExportExecutiveSummary();
+    }
+  };
+
+  // Handler to print official executive dossier for Admin
+  const handlePrintFilteredAdminDossier = () => {
+    const reportDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+    const reportTime = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const rangeText = exportTimeRange === "custom" && exportCustomStart && exportCustomEnd
+      ? `Custom Window: ${exportCustomStart} to ${exportCustomEnd}`
+      : `Preset Window: ${exportTimeRange.replace("_", " ").toUpperCase()}`;
+    const branchText = exportBranch === "All" ? "All Regional Branches (National Network)" : `${exportBranch} Regional Branch`;
+
+    let rowsHtml = "";
+    if (exportScope === "claims") {
+      rowsHtml = `
+        <thead>
+          <tr>
+            <th>Claim No</th>
+            <th>Policyholder</th>
+            <th>Vehicle No</th>
+            <th>Damage Type</th>
+            <th>Amount (LKR)</th>
+            <th>Status</th>
+            <th>Branch</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${exportFilteredData.list.map((c: any) => `
+            <tr>
+              <td style="font-family: monospace; font-weight: bold;">${c.claimNumber}</td>
+              <td>${c.policyHolderName || "Client"}<br/><small style="color: #64748b;">${c.userNic || "-"}</small></td>
+              <td style="font-family: monospace;">${c.vehicleNumber || "-"}</td>
+              <td>${c.damageType || "Accident"}</td>
+              <td style="font-weight: 700; text-align: right;">${formatLKR(c.amount || 0)}</td>
+              <td><span class="badge badge-${c.status?.toLowerCase().replace(" ", "") || "pending"}">${c.status || "Pending"}</span></td>
+              <td>${c.branch || "Head Office"}</td>
+              <td>${c.createdAt ? new Date(c.createdAt).toLocaleDateString("en-GB") : "-"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+    } else if (exportScope === "branches") {
+      rowsHtml = `
+        <thead>
+          <tr>
+            <th>Branch Name</th>
+            <th>Province & District</th>
+            <th>Total Claims</th>
+            <th>Approved</th>
+            <th>Pending</th>
+            <th>Total Payout (LKR)</th>
+            <th>Resolution Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${exportFilteredData.list.map((b: any) => `
+            <tr>
+              <td style="font-weight: bold;">${b.branch} Branch</td>
+              <td>${b.province}<br/><small style="color: #64748b;">${b.district} District</small></td>
+              <td style="font-weight: bold; text-align: center;">${b.totalClaims}</td>
+              <td style="color: #15803d; font-weight: bold; text-align: center;">${b.approvedClaims}</td>
+              <td style="color: #b45309; text-align: center;">${b.pendingClaims}</td>
+              <td style="font-weight: 700; text-align: right;">${formatLKR(b.totalPayoutLKR)}</td>
+              <td style="font-weight: 800; text-align: center;">${b.resolutionRate}%</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+    } else if (exportScope === "agents") {
+      rowsHtml = `
+        <thead>
+          <tr>
+            <th>Agent ID</th>
+            <th>Name</th>
+            <th>Branch</th>
+            <th>Duty Availability</th>
+            <th>Assigned Claims</th>
+            <th>Completed</th>
+            <th>Evaluated Loss (LKR)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${exportFilteredData.list.map((a: any) => `
+            <tr>
+              <td style="font-family: monospace; font-weight: bold;">${a.agentId}</td>
+              <td>${a.name}<br/><small style="color: #64748b;">${a.email}</small></td>
+              <td>${a.branch} Branch</td>
+              <td><span class="badge ${a.availability === 'Active' ? 'badge-approved' : 'badge-pending'}">${a.availability}</span></td>
+              <td style="text-align: center; font-weight: bold;">${a.assignedClaimsCount}</td>
+              <td style="text-align: center; color: #15803d; font-weight: bold;">${a.completedClaimsCount}</td>
+              <td style="font-weight: 700; text-align: right;">${formatLKR(a.evaluatedLossLKR)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+    } else {
+      rowsHtml = `
+        <thead>
+          <tr>
+            <th>Executive KPI Metric</th>
+            <th>System Value / Metric Measurement</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Total Registered Claims</td><td style="font-weight: bold; font-family: monospace;">${summary.totalClaims}</td></tr>
+          <tr><td>Approved & Cleared Claims</td><td style="font-weight: bold; color: #15803d; font-family: monospace;">${summary.approvedClaims}</td></tr>
+          <tr><td>Pending Investigation</td><td style="font-weight: bold; color: #b45309; font-family: monospace;">${summary.pendingClaims}</td></tr>
+          <tr><td>In Progress (Field Inspected)</td><td style="font-weight: bold; color: #1d4ed8; font-family: monospace;">${summary.inProgressClaims}</td></tr>
+          <tr><td>Claims Resolution Rate</td><td style="font-weight: 800; color: #15803d; font-family: monospace;">${summary.approvalRate}%</td></tr>
+          <tr><td>Total Approved Payouts (LKR)</td><td style="font-weight: 800; color: #15803d; font-family: monospace;">${formatLKR(summary.totalApprovedPayout)}</td></tr>
+          <tr><td>Total Estimated Loss Exposure (LKR)</td><td style="font-weight: 800; font-family: monospace;">${formatLKR(summary.totalEstimatedLoss)}</td></tr>
+          <tr><td>Total Insured Policyholders</td><td style="font-weight: bold; font-family: monospace;">${summary.totalPolicyholders}</td></tr>
+          <tr><td>Total Registered Vehicles</td><td style="font-weight: bold; font-family: monospace;">${summary.totalVehicles}</td></tr>
+          <tr><td>Field Inspection Force</td><td style="font-weight: bold; font-family: monospace;">${summary.totalAgents} Agents (${summary.activeAgents} Online)</td></tr>
+          <tr><td>Regional Branch Network</td><td style="font-weight: bold; font-family: monospace;">${summary.totalBranches} Branches (${summary.totalStaffMembers} Staff)</td></tr>
+        </tbody>
+      `;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Sanasa General Insurance - Executive ${exportScope.toUpperCase()} Audit Report</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; padding: 36px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000080; padding-bottom: 18px; margin-bottom: 20px; }
+          .company { font-size: 22px; font-weight: 900; color: #000080; text-transform: uppercase; letter-spacing: 0.5px; }
+          .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 600; }
+          .meta { text-align: right; font-size: 11px; color: #64748b; line-height: 1.5; }
+          .filter-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 11px; }
+          .filter-card .item-label { color: #64748b; text-transform: uppercase; font-weight: 700; font-size: 10px; margin-bottom: 3px; }
+          .filter-card .item-val { font-weight: 800; color: #0f172a; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 24px; }
+          th { text-align: left; padding: 9px 12px; background: #f1f5f9; color: #334155; font-weight: 700; font-size: 10px; text-transform: uppercase; border: 1px solid #cbd5e1; }
+          td { padding: 9px 12px; border: 1px solid #e2e8f0; color: #1e293b; }
+          .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+          .badge-approved { background: #dcfce7; color: #15803d; }
+          .badge-pending { background: #fef3c7; color: #b45309; }
+          .badge-rejected { background: #fee2e2; color: #b91c1c; }
+          .badge-inprogress { background: #dbeafe; color: #1d4ed8; }
+          .footer-signs { margin-top: 44px; padding-top: 20px; border-top: 1px solid #cbd5e1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; font-size: 11px; color: #64748b; }
+          .sign-col { text-align: center; }
+          .sign-line { border-top: 1px dashed #94a3b8; margin-top: 48px; padding-top: 6px; font-weight: 600; }
+          @media print {
+            body { padding: 16px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="company">Sanasa General Insurance Company PLC</div>
+            <div class="subtitle">Head Office Executive Administration &bull; Official System Audit Dossier</div>
+          </div>
+          <div class="meta">
+            <div><strong>Dossier ID:</strong> SAN-EXEC-${Date.now().toString().slice(-6)}</div>
+            <div><strong>Generated:</strong> ${reportDate} &bull; ${reportTime}</div>
+            <div><strong>Auditor:</strong> Head Office System Administrator</div>
+          </div>
+        </div>
+
+        <div class="filter-card">
+          <div>
+            <div class="item-label">Executive Scope</div>
+            <div class="item-val">${exportScope.toUpperCase()}</div>
+          </div>
+          <div>
+            <div class="item-label">Branch Jurisdiction</div>
+            <div class="item-val">${branchText}</div>
+          </div>
+          <div>
+            <div class="item-label">Applied Date Range</div>
+            <div class="item-val">${rangeText}</div>
+          </div>
+          <div>
+            <div class="item-label">Target Dataset Volume</div>
+            <div class="item-val">${exportFilteredData.count} (${exportFilteredData.totalAmount ? formatLKR(exportFilteredData.totalAmount) : "Audited Records"})</div>
+          </div>
+        </div>
+
+        <table>
+          ${rowsHtml}
+        </table>
+
+        <div class="footer-signs">
+          <div class="sign-col">
+            <div class="sign-line">Chief Actuary & Financial Controller</div>
+            <div>Sanasa General Insurance</div>
+          </div>
+          <div class="sign-col">
+            <div class="sign-line">Head of National Claims & Operations</div>
+            <div>Sanasa General Insurance</div>
+          </div>
+          <div class="sign-col">
+            <div class="sign-line">Managing Director / CEO Sign-off</div>
+            <div>Corporate Seal Affixed</div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    const printWin = window.open("", "_blank");
+    if (printWin) {
+      printWin.document.open();
+      printWin.document.write(htmlContent);
+      printWin.document.close();
+    }
+    setShowExportModal(false);
   };
 
   // Find max monthly submitted count for bar normalization
@@ -634,7 +985,8 @@ export default function AdminAnalyticsReportsPage() {
                   { id: "7days", label: "Last 7 Days" },
                   { id: "30days", label: "Last 30 Days" },
                   { id: "90days", label: "Last Quarter" },
-                  { id: "thisyear", label: "This Year" }
+                  { id: "thisyear", label: "This Year" },
+                  { id: "custom", label: "Custom Range..." }
                 ].map((t) => {
                   const isSel = timeRange === t.id;
                   return (
@@ -676,6 +1028,53 @@ export default function AdminAnalyticsReportsPage() {
                 </button>
               </div>
             </div>
+
+            {/* Custom Date Range Controls if active */}
+            {timeRange === "custom" && (
+              <div className="bg-white border border-slate-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 text-xs shadow-xs animate-in fade-in duration-150 select-none">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                    <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4 text-blue-600" />
+                    <span>Custom System Audit Window:</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] text-slate-500 font-medium">Start Date:</label>
+                    <input
+                      type="date"
+                      value={customStartDate}
+                      onChange={(e) => setCustomStartDate(e.target.value)}
+                      className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] text-slate-500 font-medium">End Date:</label>
+                    <input
+                      type="date"
+                      value={customEndDate}
+                      onChange={(e) => setCustomEndDate(e.target.value)}
+                      className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-800 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-blue-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {(customStartDate || customEndDate) && (
+                    <button
+                      onClick={() => {
+                        setCustomStartDate("");
+                        setCustomEndDate("");
+                      }}
+                      className="px-3 py-1.5 text-xs text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all font-semibold cursor-pointer border-none"
+                    >
+                      Clear Range
+                    </button>
+                  )}
+                  <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100">
+                    Active Custom Audit Scope
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Segmented Reports Control Tabs Grid (Zero Scrollbar) */}
             <div className="bg-white p-5 rounded-2xl border border-slate-200/60 shadow-sm flex flex-col gap-4 select-none">
@@ -1313,70 +1712,225 @@ export default function AdminAnalyticsReportsPage() {
 
       {/* MODAL 1: EXPORT REPORT CENTER */}
       {showExportModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl border border-slate-200 flex flex-col gap-5 animate-in fade-in zoom-in duration-150">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#000080] flex items-center justify-center">
-                  <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-100 text-[#000080] flex items-center justify-center shadow-xs">
+                  <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-slate-900">Executive Report Export Center</h3>
-                  <p className="text-xs text-slate-400 font-semibold">Download complete system reports in CSV format</p>
+                  <h3 className="text-base font-bold text-slate-900">Executive Audit & Filtered Report Center</h3>
+                  <p className="text-xs text-slate-500 font-medium">Generate custom datasets and printable dossiers with specific time ranges and filters</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowExportModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+                className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
               >
-                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2} />
               </button>
             </div>
 
-            <div className="flex flex-col gap-3">
-              {/* Option 1: Executive Summary */}
-              <button
-                onClick={handleExportExecutiveSummary}
-                className="p-4 rounded-2xl border border-slate-200 hover:border-[#000080] bg-slate-50/50 hover:bg-blue-50/20 text-left transition-all flex items-center justify-between group cursor-pointer"
-              >
-                <div>
-                  <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#000080]">Executive KPI & Financial Summary</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Claims volume, payout sums, loss ratio, fleet & user totals</p>
+            {/* Modal Scrollable Body */}
+            <div className="p-6 overflow-y-auto space-y-6 text-xs">
+              {/* Step 1: Reporting Domain */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
+                  1. Executive Reporting Scope
+                </label>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {[
+                    { id: "claims", label: "Claims & Loss Matrix", desc: "Granular claim files, damage types & disbursements" },
+                    { id: "branches", label: "Regional Branch Matrix", desc: "26-branch performance, staff & loss resolution" },
+                    { id: "agents", label: "Field Agent Operations", desc: "Agent duty readiness, inspected claims & volume" },
+                    { id: "summary", label: "Executive KPI Summary", desc: "Complete system financial, portfolio & security audit" }
+                  ].map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setExportScope(s.id as any)}
+                      className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${
+                        exportScope === s.id
+                          ? "border-[#000080] bg-blue-50/40 text-[#000080] shadow-xs"
+                          : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                      }`}
+                    >
+                      <span className="font-bold text-xs block">{s.label}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">{s.desc}</span>
+                    </button>
+                  ))}
                 </div>
-                <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-400 group-hover:text-[#000080]" />
-              </button>
+              </div>
 
-              {/* Option 2: Branch Performance Matrix */}
-              <button
-                onClick={handleExportBranchMatrix}
-                className="p-4 rounded-2xl border border-slate-200 hover:border-[#000080] bg-slate-50/50 hover:bg-blue-50/20 text-left transition-all flex items-center justify-between group cursor-pointer"
-              >
+              {/* Step 2: Branch Jurisdiction */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#000080]">Regional Branch Network Matrix</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">26-branch performance, staff density, claims & resolution rates</p>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
+                    2. Regional Branch Scope
+                  </label>
+                  <select
+                    value={exportBranch}
+                    onChange={(e) => setExportBranch(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  >
+                    <option value="All">All Branches (National Network)</option>
+                    {SRI_LANKA_BRANCHES.filter(b => b !== "All").map((b) => (
+                      <option key={b} value={b}>{b} Branch</option>
+                    ))}
+                  </select>
                 </div>
-                <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-400 group-hover:text-[#000080]" />
-              </button>
 
-              {/* Option 3: Agent Performance Roster */}
-              <button
-                onClick={handleExportAgentRoster}
-                className="p-4 rounded-2xl border border-slate-200 hover:border-[#000080] bg-slate-50/50 hover:bg-blue-50/20 text-left transition-all flex items-center justify-between group cursor-pointer"
-              >
+                {/* Step 3: Status Filter */}
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 group-hover:text-[#000080]">Field Agent Roster & Inspection Log</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Agent availability, completed evaluations, and assigned case loads</p>
+                  <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
+                    3. Case / Duty Status Filter
+                  </label>
+                  {exportScope === "claims" ? (
+                    <select
+                      value={exportStatus}
+                      onChange={(e) => setExportStatus(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    >
+                      <option value="all">All Claim Statuses</option>
+                      <option value="Approved">Approved / Cleared Payout</option>
+                      <option value="Pending">Pending Audit</option>
+                      <option value="In Progress">In Progress (Field Inspected)</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  ) : exportScope === "agents" ? (
+                    <select
+                      value={exportStatus}
+                      onChange={(e) => setExportStatus(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                    >
+                      <option value="all">All Duty Statuses</option>
+                      <option value="Active">Active Duty</option>
+                      <option value="Offline">Offline / Off Duty</option>
+                    </select>
+                  ) : (
+                    <div className="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-400 text-xs font-medium">
+                      Applies to all entries in this matrix
+                    </div>
+                  )}
                 </div>
-                <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-slate-400 group-hover:text-[#000080]" />
-              </button>
+              </div>
+
+              {/* Step 4: Time Range Filter */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
+                  4. Time Range Window
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {[
+                    { id: "all", label: "All Time" },
+                    { id: "today", label: "Today" },
+                    { id: "7days", label: "Last 7 Days" },
+                    { id: "30days", label: "Last 30 Days" },
+                    { id: "90days", label: "Last Quarter" },
+                    { id: "thisyear", label: "This Year" },
+                    { id: "custom", label: "Custom Range..." }
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setExportTimeRange(t.id as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                        exportTimeRange === t.id
+                          ? "bg-[#102A43] text-white border-[#102A43] shadow-xs"
+                          : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Date Pickers */}
+                {exportTimeRange === "custom" && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center gap-4 animate-in fade-in duration-150">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-600 text-xs">Start Date:</span>
+                      <input
+                        type="date"
+                        value={exportCustomStart}
+                        onChange={(e) => setExportCustomStart(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-600 text-xs">End Date:</span>
+                      <input
+                        type="date"
+                        value={exportCustomEnd}
+                        onChange={(e) => setExportCustomEnd(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Live Preview Impact Card */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    Filtered Preview Impact
+                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-lg font-black text-slate-900 font-mono">
+                      {exportFilteredData.count} Records Match
+                    </span>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Scope: {exportScope.toUpperCase()}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-medium block mt-0.5">
+                    Branch: {exportBranch === "All" ? "National Network" : `${exportBranch} Branch`} &bull; Window: {exportTimeRange.replace("_", " ").toUpperCase()}
+                  </span>
+                </div>
+
+                {exportFilteredData.totalAmount !== undefined && exportFilteredData.totalAmount > 0 && (
+                  <div className="text-left sm:text-right">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                      Valuation / Financial Sum
+                    </span>
+                    <span className="text-base font-black text-slate-900 font-mono block mt-1">
+                      {formatLKR(exportFilteredData.totalAmount)}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <button
-              onClick={() => setShowExportModal(false)}
-              className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
-            >
-              Close
-            </button>
+            {/* Modal Footer Actions */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                Close
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrintFilteredAdminDossier}
+                  className="px-4 py-2 text-xs font-semibold text-slate-800 bg-white border border-slate-300 hover:bg-slate-100 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
+                >
+                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2} />
+                  <span>Print Audit Dossier</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadFilteredAdminCSV}
+                  className="px-5 py-2 text-xs font-semibold text-white bg-[#000080] hover:bg-[#102A43] rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95 border-none"
+                >
+                  <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-white" strokeWidth={2} />
+                  <span>Download Filtered CSV</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

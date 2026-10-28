@@ -158,6 +158,51 @@ interface VehicleRenewalRecord {
   latestPaymentDate?: string | null;
 }
 
+// Time Range Matching Helper Function
+const matchesDateRange = (
+  dateStr?: string | null,
+  range: "all" | "today" | "this_week" | "this_month" | "last_30" | "this_quarter" | "this_year" | "custom" = "all",
+  customStart?: string,
+  customEnd?: string
+) => {
+  if (!dateStr || range === "all") return true;
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return true;
+  const now = new Date();
+
+  if (range === "today") {
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return date >= startOfDay;
+  }
+  if (range === "this_week") {
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    return date >= d;
+  }
+  if (range === "this_month") {
+    return date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear();
+  }
+  if (range === "last_30") {
+    const diffDays = Math.abs((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
+    return diffDays <= 30;
+  }
+  if (range === "this_quarter") {
+    const currentQuarter = Math.floor(now.getMonth() / 3);
+    const dateQuarter = Math.floor(date.getMonth() / 3);
+    return currentQuarter === dateQuarter && date.getFullYear() === now.getFullYear();
+  }
+  if (range === "this_year") {
+    return date.getFullYear() === now.getFullYear();
+  }
+  if (range === "custom" && customStart && customEnd) {
+    const start = new Date(customStart);
+    const end = new Date(customEnd);
+    end.setHours(23, 59, 59, 999);
+    return date >= start && date <= end;
+  }
+  return true;
+};
+
 export default function OfficeStaffReports() {
   const [branch, setBranch] = useState("Galle");
   const [loading, setLoading] = useState(true);
@@ -184,12 +229,20 @@ export default function OfficeStaffReports() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [dateRange, setDateRange] = useState<"all" | "this_month" | "last_30" | "this_quarter" | "this_year" | "custom">("all");
+  const [dateRange, setDateRange] = useState<"all" | "today" | "this_week" | "this_month" | "last_30" | "this_quarter" | "this_year" | "custom">("all");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [sortBy, setSortBy] = useState<"newest" | "oldest" | "amount_high" | "amount_low">("newest");
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 10;
+
+  // Dedicated Filtered Detail Report Download Modal States
+  const [showFilteredReportModal, setShowFilteredReportModal] = useState(false);
+  const [exportDomain, setExportDomain] = useState<"claims" | "policyholders" | "renewals" | "agents" | "financial">("claims");
+  const [exportTimeRange, setExportTimeRange] = useState<"all" | "today" | "this_week" | "this_month" | "last_30" | "this_quarter" | "this_year" | "custom">("all");
+  const [exportCustomStart, setExportCustomStart] = useState("");
+  const [exportCustomEnd, setExportCustomEnd] = useState("");
+  const [exportStatus, setExportStatus] = useState("all");
 
   // Selected Detail Modal & Active Tab in Modal
   const [selectedRecord, setSelectedRecord] = useState<any | null>(null);
@@ -351,26 +404,8 @@ export default function OfficeStaffReports() {
       }
 
       // Date Range Filter
-      if (c.createdAt) {
-        const date = new Date(c.createdAt);
-        const now = new Date();
-        if (dateRange === "this_month") {
-          if (date.getMonth() !== now.getMonth() || date.getFullYear() !== now.getFullYear()) return false;
-        } else if (dateRange === "last_30") {
-          const diffDays = (now.getTime() - date.getTime()) / (1000 * 3600 * 24);
-          if (diffDays > 30) return false;
-        } else if (dateRange === "this_quarter") {
-          const currentQuarter = Math.floor(now.getMonth() / 3);
-          const claimQuarter = Math.floor(date.getMonth() / 3);
-          if (currentQuarter !== claimQuarter || date.getFullYear() !== now.getFullYear()) return false;
-        } else if (dateRange === "this_year") {
-          if (date.getFullYear() !== now.getFullYear()) return false;
-        } else if (dateRange === "custom" && customStartDate && customEndDate) {
-          const start = new Date(customStartDate);
-          const end = new Date(customEndDate);
-          end.setHours(23, 59, 59, 999);
-          if (date < start || date > end) return false;
-        }
+      if (c.createdAt && !matchesDateRange(c.createdAt, dateRange, customStartDate, customEndDate)) {
+        return false;
       }
 
       // Search Query
@@ -402,6 +437,11 @@ export default function OfficeStaffReports() {
         return false;
       }
 
+      // Date Range Filter
+      if (h.createdAt && !matchesDateRange(h.createdAt, dateRange, customStartDate, customEndDate)) {
+        return false;
+      }
+
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesNic = h.nic?.toLowerCase().includes(q);
@@ -415,12 +455,17 @@ export default function OfficeStaffReports() {
 
       return true;
     }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }, [policyHolders, statusFilter, searchQuery]);
+  }, [policyHolders, statusFilter, dateRange, customStartDate, customEndDate, searchQuery]);
 
   // Filtered Agents
   const filteredAgents = useMemo(() => {
     return agents.filter((a) => {
       if (statusFilter !== "all" && a.status?.toLowerCase() !== statusFilter.toLowerCase()) {
+        return false;
+      }
+
+      // Date Range Filter
+      if (a.createdAt && !matchesDateRange(a.createdAt, dateRange, customStartDate, customEndDate)) {
         return false;
       }
 
@@ -434,7 +479,7 @@ export default function OfficeStaffReports() {
 
       return true;
     });
-  }, [agents, statusFilter, searchQuery]);
+  }, [agents, statusFilter, dateRange, customStartDate, customEndDate, searchQuery]);
 
   // Filtered Vehicle Renewals
   const filteredRenewals = useMemo(() => {
@@ -457,29 +502,9 @@ export default function OfficeStaffReports() {
       }
 
       // Date Range Filter (based on latest payment date or policy expiry date)
-      if (dateRange !== "all") {
-        const targetDateStr = r.latestPaymentDate || r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate;
-        if (targetDateStr) {
-          const date = new Date(targetDateStr);
-          const now = new Date();
-          if (dateRange === "this_month") {
-            if (date.getMonth() !== now.getMonth() || date.getFullYear() !== now.getFullYear()) return false;
-          } else if (dateRange === "last_30") {
-            const diffDays = Math.abs((now.getTime() - date.getTime()) / (1000 * 3600 * 24));
-            if (diffDays > 30) return false;
-          } else if (dateRange === "this_quarter") {
-            const currentQuarter = Math.floor(now.getMonth() / 3);
-            const itemQuarter = Math.floor(date.getMonth() / 3);
-            if (currentQuarter !== itemQuarter || date.getFullYear() !== now.getFullYear()) return false;
-          } else if (dateRange === "this_year") {
-            if (date.getFullYear() !== now.getFullYear()) return false;
-          } else if (dateRange === "custom" && customStartDate && customEndDate) {
-            const start = new Date(customStartDate);
-            const end = new Date(customEndDate);
-            end.setHours(23, 59, 59, 999);
-            if (date < start || date > end) return false;
-          }
-        }
+      const targetDateStr = r.latestPaymentDate || r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate;
+      if (targetDateStr && !matchesDateRange(targetDateStr, dateRange, customStartDate, customEndDate)) {
+        return false;
       }
 
       // Search Query
@@ -663,6 +688,394 @@ export default function OfficeStaffReports() {
       message: `The complete ${activeReportType} dataset for ${branchName} Branch has been downloaded as a structured CSV spreadsheet.`,
       type: "success"
     });
+  };
+
+  // Memoized records for the Filtered Report Modal
+  const modalFilteredData = useMemo(() => {
+    const range = exportTimeRange;
+    const start = exportCustomStart;
+    const end = exportCustomEnd;
+    const status = exportStatus;
+
+    if (exportDomain === "claims" || exportDomain === "financial") {
+      const list = claims.filter((c) => {
+        if (status !== "all" && c.status.toLowerCase() !== status.toLowerCase()) return false;
+        if (exportDomain === "financial" && c.status !== "Approved") return false;
+        return matchesDateRange(c.createdAt, range, start, end);
+      });
+      const totalSum = list.reduce((acc, c) => acc + (c.amount || 0), 0);
+      return { list, count: list.length, totalSum };
+    } else if (exportDomain === "policyholders") {
+      const list = policyHolders.filter((h) => {
+        if (status !== "all" && h.status?.toLowerCase() !== status.toLowerCase()) return false;
+        return matchesDateRange(h.createdAt, range, start, end);
+      });
+      const vehiclesCount = list.reduce((acc, h) => acc + (h.vehicles?.length || 0), 0);
+      return { list, count: list.length, totalSum: vehiclesCount };
+    } else if (exportDomain === "renewals") {
+      const list = renewals.filter((r) => {
+        if (status !== "all") {
+          if (status === "Paid" && !r.isPaid) return false;
+          if (status === "Pending" && (r.isPaid || (r.renewalQuote && r.renewalQuote.status !== "Pending_Payment" && r.renewalQuote.status !== "Draft"))) return false;
+          if (status === "Calculated" && (!r.renewalQuote || r.renewalQuote.status !== "Calculated")) return false;
+          if (status === "Expiring Soon" && !(r.vehicle.daysRemaining >= 0 && r.vehicle.daysRemaining <= 45)) return false;
+        }
+        const targetDate = r.latestPaymentDate || r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate;
+        return matchesDateRange(targetDate, range, start, end);
+      });
+      const totalPremiums = list.reduce((acc, r) => {
+        if (r.isPaid && r.renewalQuote?.calculation?.finalAnnualTotal) return acc + r.renewalQuote.calculation.finalAnnualTotal;
+        return acc;
+      }, 0);
+      return { list, count: list.length, totalSum: totalPremiums };
+    } else {
+      const list = agents.filter((a) => {
+        if (status !== "all" && a.status?.toLowerCase() !== status.toLowerCase()) return false;
+        return matchesDateRange(a.createdAt, range, start, end);
+      });
+      return { list, count: list.length, totalSum: list.length };
+    }
+  }, [claims, policyHolders, renewals, agents, exportDomain, exportTimeRange, exportCustomStart, exportCustomEnd, exportStatus]);
+
+  // Download filtered CSV from the modal
+  const handleDownloadFilteredCSVModal = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    const branchName = branch || "Galle";
+    const rangeLabel = exportTimeRange === "custom" && exportCustomStart && exportCustomEnd
+      ? `${exportCustomStart}_to_${exportCustomEnd}`
+      : exportTimeRange;
+
+    if (exportDomain === "claims") {
+      csvContent += "Claim Number,Policyholder Name,NIC,Vehicle Number,Damage Type,Claim Amount (LKR),Status,Assigned Agent,Incident Date,Turnaround (Days)\n";
+      modalFilteredData.list.forEach((c: any) => {
+        const row = [
+          `"${c.claimNumber}"`,
+          `"${c.policyHolderName || "Client"}"`,
+          `"${c.userNic || "-"}"`,
+          `"${c.vehicleNumber || "-"}"`,
+          `"${c.damageType || "Accident"}"`,
+          `"${c.amount || 0}"`,
+          `"${c.status || "Pending"}"`,
+          `"${c.assignedAgent || "Unassigned"}"`,
+          `"${c.createdAt ? new Date(c.createdAt).toLocaleDateString("en-GB") : "-"}"`,
+          `"${calculateTAT(c.createdAt, c.updatedAt)}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+    } else if (exportDomain === "financial") {
+      csvContent += "Claim Number,Policyholder,NIC,Vehicle Number,Settled Payout (LKR),Status,Bank Name,Branch Name,Account Number,Account Holder,Settlement Date\n";
+      modalFilteredData.list.forEach((c: any) => {
+        const b = c.policyHolderBankDetails || { bankName: c.bankName, branchName: c.bankBranch, accountNumber: c.bankAccount, accountHolderName: c.accountHolderName };
+        const row = [
+          `"${c.claimNumber}"`,
+          `"${c.policyHolderName || "Client"}"`,
+          `"${c.userNic || "-"}"`,
+          `"${c.vehicleNumber || "-"}"`,
+          `"${c.amount || 0}"`,
+          `"Approved - Settled"`,
+          `"${b.bankName || "-"}"`,
+          `"${b.branchName || "-"}"`,
+          `"${b.accountNumber || "-"}"`,
+          `"${b.accountHolderName || c.policyHolderName || "-"}"`,
+          `"${c.updatedAt ? new Date(c.updatedAt).toLocaleDateString("en-GB") : (c.createdAt ? new Date(c.createdAt).toLocaleDateString("en-GB") : "-")}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+    } else if (exportDomain === "policyholders") {
+      csvContent += "Reference No,Full Name,NIC,Mobile,Email,City,Vehicles Insured,Primary Vehicle Number,Status,Registered Date\n";
+      modalFilteredData.list.forEach((h: any) => {
+        const primaryVeh = h.vehicles && h.vehicles.length > 0 ? h.vehicles[0] : null;
+        const row = [
+          `"${h.referenceNumber || "SAN-PH"}"`,
+          `"${h.firstName} ${h.lastName}"`,
+          `"${h.nic}"`,
+          `"${h.mobile || "-"}"`,
+          `"${h.email || "-"}"`,
+          `"${h.city || "-"}"`,
+          `"${h.vehicles?.length || 0}"`,
+          `"${primaryVeh ? primaryVeh.numberPlate : "-"}"`,
+          `"${h.status || "Approved"}"`,
+          `"${h.createdAt ? new Date(h.createdAt).toLocaleDateString("en-GB") : "-"}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+    } else if (exportDomain === "renewals") {
+      csvContent += "Vehicle Number,Model,Type,Policy Number,Owner Name,NIC,Mobile,Policy Expiry Date,Days Remaining,Renewal Status,Quote Total (LKR),Payment Plan,Installments Paid\n";
+      modalFilteredData.list.forEach((r: any) => {
+        const quote = r.renewalQuote;
+        const paidInstCount = quote?.installments?.filter((i: any) => i.status === "Paid").length || 0;
+        const totalInstCount = quote?.installments?.length || 0;
+        const row = [
+          `"${r.vehicle.numberPlate}"`,
+          `"${r.vehicle.company || ""} ${r.vehicle.model || ""}"`,
+          `"${r.vehicle.type || "-"}"`,
+          `"${r.vehicle.policyNumber || "-"}"`,
+          `"${r.owner.name}"`,
+          `"${r.owner.nic}"`,
+          `"${r.owner.mobile || "-"}"`,
+          `"${formatDate(r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate)}"`,
+          `"${r.vehicle.daysRemaining}"`,
+          `"${r.isPaid ? "Paid" : quote ? quote.status : "Pending Quote"}"`,
+          `"${quote?.calculation?.finalAnnualTotal || 0}"`,
+          `"${quote?.paymentPlanType || (quote?.selectedPlan ? "Annual" : "-")}"`,
+          `"${totalInstCount > 0 ? `${paidInstCount}/${totalInstCount}` : r.isPaid ? "Full" : "0"}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+    } else {
+      csvContent += "Agent Code,Full Name,Email,Phone,Branch,Status,Joined Date\n";
+      modalFilteredData.list.forEach((a: any, idx: number) => {
+        const row = [
+          `"SAN-AGT-${100 + idx}"`,
+          `"${a.name}"`,
+          `"${a.email}"`,
+          `"${a.phone}"`,
+          `"${a.branch} Branch"`,
+          `"${a.status || "Active"}"`,
+          `"${a.createdAt ? new Date(a.createdAt).toLocaleDateString("en-GB") : "-"}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Sanasa_${branchName}_Filtered_${exportDomain}_${rangeLabel}_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setShowFilteredReportModal(false);
+    setPopup({
+      show: true,
+      title: "Filtered Report Exported",
+      message: `Exported ${modalFilteredData.count} filtered records for ${branchName} Branch (${exportDomain.toUpperCase()} - ${exportTimeRange}).`,
+      type: "success"
+    });
+  };
+
+  // Printable Filtered Dossier from the modal
+  const handlePrintFilteredDossierModal = () => {
+    const branchName = branch || "Galle";
+    const reportDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+    const reportTime = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const rangeText = exportTimeRange === "custom" && exportCustomStart && exportCustomEnd
+      ? `Custom Window: ${exportCustomStart} to ${exportCustomEnd}`
+      : `Preset Window: ${exportTimeRange.replace("_", " ").toUpperCase()}`;
+
+    let rowsHtml = "";
+    if (exportDomain === "claims" || exportDomain === "financial") {
+      rowsHtml = `
+        <thead>
+          <tr>
+            <th>Claim No</th>
+            <th>Policyholder</th>
+            <th>Vehicle No</th>
+            <th>Damage Type</th>
+            <th>Amount (LKR)</th>
+            <th>Status</th>
+            <th>Agent</th>
+            <th>Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${modalFilteredData.list.map((c: any) => `
+            <tr>
+              <td style="font-family: monospace; font-weight: bold;">${c.claimNumber}</td>
+              <td>${c.policyHolderName || "Client"}<br/><small style="color: #64748b;">${c.userNic || "-"}</small></td>
+              <td style="font-family: monospace;">${c.vehicleNumber || "-"}</td>
+              <td>${c.damageType || "Accident"}</td>
+              <td style="font-weight: 700; text-align: right;">${formatLKR(c.amount || 0)}</td>
+              <td><span class="badge badge-${c.status?.toLowerCase().replace(" ", "") || "pending"}">${c.status || "Pending"}</span></td>
+              <td>${c.assignedAgent || "Unassigned"}</td>
+              <td>${c.createdAt ? new Date(c.createdAt).toLocaleDateString("en-GB") : "-"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+    } else if (exportDomain === "renewals") {
+      rowsHtml = `
+        <thead>
+          <tr>
+            <th>Vehicle No</th>
+            <th>Model & Type</th>
+            <th>Policyholder</th>
+            <th>Policy Expiry</th>
+            <th>Days Left</th>
+            <th>Status</th>
+            <th>Quote (LKR)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${modalFilteredData.list.map((r: any) => `
+            <tr>
+              <td style="font-family: monospace; font-weight: bold;">${r.vehicle.numberPlate}</td>
+              <td>${r.vehicle.company || ""} ${r.vehicle.model || ""}<br/><small style="color: #64748b;">${r.vehicle.type || "-"}</small></td>
+              <td>${r.owner.name}<br/><small style="color: #64748b;">${r.owner.nic}</small></td>
+              <td>${formatDate(r.vehicle.calculatedExpiryDate || r.vehicle.policyExpiryDate)}</td>
+              <td style="font-weight: bold; color: ${r.vehicle.daysRemaining <= 10 ? '#b91c1c' : '#b45309'};">${r.vehicle.daysRemaining} days</td>
+              <td><span class="badge ${r.isPaid ? 'badge-approved' : 'badge-pending'}">${r.isPaid ? 'Paid' : 'Pending'}</span></td>
+              <td style="font-weight: 700; text-align: right;">${formatLKR(r.renewalQuote?.calculation?.finalAnnualTotal || 0)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+    } else if (exportDomain === "policyholders") {
+      rowsHtml = `
+        <thead>
+          <tr>
+            <th>Reference No</th>
+            <th>Full Name</th>
+            <th>NIC</th>
+            <th>Mobile</th>
+            <th>City</th>
+            <th>Vehicles Insured</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${modalFilteredData.list.map((h: any) => `
+            <tr>
+              <td style="font-family: monospace; font-weight: bold;">${h.referenceNumber || "SAN-PH"}</td>
+              <td>${h.firstName} ${h.lastName}</td>
+              <td style="font-family: monospace;">${h.nic}</td>
+              <td>${h.mobile || "-"}</td>
+              <td>${h.city || "-"}</td>
+              <td style="font-weight: bold; text-align: center;">${h.vehicles?.length || 0}</td>
+              <td><span class="badge badge-approved">${h.status || "Approved"}</span></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+    } else {
+      rowsHtml = `
+        <thead>
+          <tr>
+            <th>Agent Code</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Branch</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${modalFilteredData.list.map((a: any, idx: number) => `
+            <tr>
+              <td style="font-family: monospace; font-weight: bold;">SAN-AGT-${100 + idx}</td>
+              <td>${a.name}</td>
+              <td>${a.email}</td>
+              <td>${a.phone}</td>
+              <td>${a.branch} Branch</td>
+              <td><span class="badge badge-approved">${a.status || "Active"}</span></td>
+            </tr>
+          `).join("")}
+        </tbody>
+      `;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>Sanasa Insurance - Filtered ${exportDomain.toUpperCase()} Audit Dossier</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #0f172a; margin: 0; padding: 36px; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #102A43; padding-bottom: 18px; margin-bottom: 20px; }
+          .company { font-size: 20px; font-weight: 800; color: #102A43; text-transform: uppercase; letter-spacing: 0.5px; }
+          .subtitle { font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 500; }
+          .meta { text-align: right; font-size: 11px; color: #64748b; line-height: 1.5; }
+          .filter-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 11px; }
+          .filter-card .item-label { color: #64748b; text-transform: uppercase; font-weight: 700; font-size: 10px; margin-bottom: 3px; }
+          .filter-card .item-val { font-weight: 800; color: #0f172a; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 24px; }
+          th { text-align: left; padding: 8px 10px; background: #f1f5f9; color: #475569; font-weight: 700; font-size: 10px; text-transform: uppercase; border: 1px solid #cbd5e1; }
+          td { padding: 8px 10px; border: 1px solid #e2e8f0; color: #1e293b; }
+          .badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+          .badge-approved { background: #dcfce7; color: #15803d; }
+          .badge-pending { background: #fef3c7; color: #b45309; }
+          .badge-rejected { background: #fee2e2; color: #b91c1c; }
+          .badge-inprogress { background: #dbeafe; color: #1d4ed8; }
+          .footer-signs { margin-top: 36px; padding-top: 20px; border-top: 1px solid #cbd5e1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; font-size: 11px; color: #64748b; }
+          .sign-col { text-align: center; }
+          .sign-line { border-top: 1px dashed #94a3b8; margin-top: 40px; padding-top: 6px; font-weight: 600; }
+          @media print {
+            body { padding: 16px; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="company">Sanasa General Insurance Company PLC</div>
+            <div class="subtitle">${branchName} Regional Branch Office &bull; Official Detailed Audit Dossier</div>
+          </div>
+          <div class="meta">
+            <div><strong>Report ID:</strong> SAN-RPT-${Date.now().toString().slice(-6)}</div>
+            <div><strong>Generated:</strong> ${reportDate} &bull; ${reportTime}</div>
+            <div><strong>Branch:</strong> ${branchName}</div>
+          </div>
+        </div>
+
+        <div class="filter-card">
+          <div>
+            <div class="item-label">Module / Domain</div>
+            <div class="item-val">${exportDomain.toUpperCase()}</div>
+          </div>
+          <div>
+            <div class="item-label">Time Window</div>
+            <div class="item-val">${rangeText}</div>
+          </div>
+          <div>
+            <div class="item-label">Status Filter</div>
+            <div class="item-val">${exportStatus === "all" ? "ALL STATUSES" : exportStatus.toUpperCase()}</div>
+          </div>
+          <div>
+            <div class="item-label">Matched Records</div>
+            <div class="item-val">${modalFilteredData.count} (${modalFilteredData.totalSum ? formatLKR(modalFilteredData.totalSum) : "Dataset"})</div>
+          </div>
+        </div>
+
+        <table>
+          ${rowsHtml}
+        </table>
+
+        <div class="footer-signs">
+          <div class="sign-col">
+            <div class="sign-line">Prepared By: Branch Claims Officer</div>
+            <div>Date: ${reportDate}</div>
+          </div>
+          <div class="sign-col">
+            <div class="sign-line">Verified By: Operations Manager</div>
+            <div>Branch: ${branchName}</div>
+          </div>
+          <div class="sign-col">
+            <div class="sign-line">Authorized Signatory & Official Seal</div>
+            <div>Sanasa General Insurance</div>
+          </div>
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    const printWin = window.open("", "_blank");
+    if (printWin) {
+      printWin.document.open();
+      printWin.document.write(htmlContent);
+      printWin.document.close();
+    }
+    setShowFilteredReportModal(false);
   };
 
   // Handler for downloading single record case file report
@@ -1319,7 +1732,22 @@ export default function OfficeStaffReports() {
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2.5 select-none">
+                  <div className="flex items-center gap-2.5 select-none flex-wrap">
+                    <button
+                      onClick={() => {
+                        setExportDomain(activeReportType === "analytics" ? "claims" : activeReportType);
+                        setExportTimeRange(dateRange);
+                        setExportCustomStart(customStartDate);
+                        setExportCustomEnd(customEndDate);
+                        setExportStatus(statusFilter);
+                        setShowFilteredReportModal(true);
+                      }}
+                      className="px-4 py-2 text-xs font-semibold text-white bg-[#000080] hover:bg-[#102A43] rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95 border-none"
+                    >
+                      <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-white" strokeWidth={2} />
+                      <span>Download Filtered Report</span>
+                    </button>
+
                     <button
                       onClick={handlePrint}
                       className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
@@ -1330,7 +1758,7 @@ export default function OfficeStaffReports() {
 
                     <button
                       onClick={handleExportCSV}
-                      className="px-4 py-2 text-xs font-semibold text-white bg-[#102A43] hover:bg-[#000080] rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95 border-none"
+                      className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95"
                     >
                       <span>Export CSV Dataset</span>
                     </button>
@@ -1699,14 +2127,16 @@ export default function OfficeStaffReports() {
                             setDateRange(e.target.value as any);
                             setCurrentPage(1);
                           }}
-                          className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                          className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
                         >
                           <option value="all">All Time</option>
+                          <option value="today">Today</option>
+                          <option value="this_week">This Week (Last 7 Days)</option>
                           <option value="this_month">This Month</option>
                           <option value="last_30">Last 30 Days</option>
                           <option value="this_quarter">This Quarter</option>
                           <option value="this_year">This Year ({new Date().getFullYear()})</option>
-                          <option value="custom">Custom Date Range</option>
+                          <option value="custom">Custom Date Range...</option>
                         </select>
 
                         {/* Sort Selector */}
@@ -1726,21 +2156,53 @@ export default function OfficeStaffReports() {
 
                   {/* Custom Date Range Pickers if selected */}
                   {dateRange === "custom" && (
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex items-center gap-4 text-xs">
-                      <span className="font-semibold text-slate-600">From Date:</span>
-                      <input
-                        type="date"
-                        value={customStartDate}
-                        onChange={(e) => setCustomStartDate(e.target.value)}
-                        className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700"
-                      />
-                      <span className="font-semibold text-slate-600">To Date:</span>
-                      <input
-                        type="date"
-                        value={customEndDate}
-                        onChange={(e) => setCustomEndDate(e.target.value)}
-                        className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700"
-                      />
+                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs animate-in fade-in duration-200">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="font-bold text-slate-700 flex items-center gap-1.5">
+                          <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 text-blue-600" />
+                          <span>Custom Date Filter:</span>
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] text-slate-500 font-medium">From:</label>
+                          <input
+                            type="date"
+                            value={customStartDate}
+                            onChange={(e) => {
+                              setCustomStartDate(e.target.value);
+                              setCurrentPage(1);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] text-slate-500 font-medium">To:</label>
+                          <input
+                            type="date"
+                            value={customEndDate}
+                            onChange={(e) => {
+                              setCustomEndDate(e.target.value);
+                              setCurrentPage(1);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-800 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {(customStartDate || customEndDate) && (
+                          <button
+                            onClick={() => {
+                              setCustomStartDate("");
+                              setCustomEndDate("");
+                            }}
+                            className="px-2.5 py-1 text-[11px] text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-100 rounded-lg border border-slate-200 cursor-pointer font-medium"
+                          >
+                            Clear Dates
+                          </button>
+                        )}
+                        <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100">
+                          Active Custom Window
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -2706,6 +3168,229 @@ export default function OfficeStaffReports() {
                   className="px-5 py-2 bg-[#102A43] hover:bg-[#000080] text-white font-semibold text-xs rounded-xl transition-all cursor-pointer border-none shadow-xs active:scale-95"
                 >
                   Close File
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Filtered Details Report Generator Modal */}
+      {showFilteredReportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-100 text-[#000080] flex items-center justify-center shadow-xs">
+                  <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Filtered Detail Report Generator
+                  </h3>
+                  <p className="text-xs text-slate-500 font-medium">
+                    Filter by time range and category to export detailed datasets for {branch} Branch
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowFilteredReportModal(false)}
+                className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2} />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="p-6 overflow-y-auto space-y-6 text-xs">
+              {/* Step 1: Module / Scope Selection */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
+                  1. Select Target Reporting Module
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {[
+                    { id: "claims", label: "Claims & Losses", desc: "Claims, damage & payouts" },
+                    { id: "policyholders", label: "Policyholders", desc: "Active clients & vehicles" },
+                    { id: "renewals", label: "Vehicle Renewals", desc: "Policy expiry & plans" },
+                    { id: "agents", label: "Field Agents", desc: "Agent duty & performance" },
+                    { id: "financial", label: "Disbursement Audit", desc: "Approved bank payouts" }
+                  ].map((m) => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setExportDomain(m.id as any)}
+                      className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                        exportDomain === m.id
+                          ? "border-[#000080] bg-blue-50/40 text-[#000080] shadow-xs"
+                          : "border-slate-200 bg-white hover:border-slate-300 text-slate-700"
+                      }`}
+                    >
+                      <span className="font-bold text-xs block">{m.label}</span>
+                      <span className="text-[10px] text-slate-500 block mt-0.5">{m.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Step 2: Time Range Filter */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
+                  2. Choose Date / Time Range
+                </label>
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {[
+                    { id: "all", label: "All Time" },
+                    { id: "today", label: "Today" },
+                    { id: "this_week", label: "This Week (7D)" },
+                    { id: "this_month", label: "This Month" },
+                    { id: "last_30", label: "Last 30 Days" },
+                    { id: "this_quarter", label: "This Quarter" },
+                    { id: "this_year", label: "This Year" },
+                    { id: "custom", label: "Custom Range..." }
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setExportTimeRange(t.id as any)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
+                        exportTimeRange === t.id
+                          ? "bg-[#102A43] text-white border-[#102A43] shadow-xs"
+                          : "bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200"
+                      }`}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Custom Date Inputs */}
+                {exportTimeRange === "custom" && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-wrap items-center gap-4 animate-in fade-in duration-150">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-600 text-xs">Start Date:</span>
+                      <input
+                        type="date"
+                        value={exportCustomStart}
+                        onChange={(e) => setExportCustomStart(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-slate-600 text-xs">End Date:</span>
+                      <input
+                        type="date"
+                        value={exportCustomEnd}
+                        onChange={(e) => setExportCustomEnd(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Step 3: Status Filter */}
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-wider text-slate-600 block mb-2">
+                  3. Filter by Status
+                </label>
+                {exportDomain === "renewals" ? (
+                  <select
+                    value={exportStatus}
+                    onChange={(e) => setExportStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  >
+                    <option value="all">All Renewal Statuses</option>
+                    <option value="Paid">Paid / Renewed</option>
+                    <option value="Expiring Soon">Expiring Soon (45 Days Window)</option>
+                    <option value="Calculated">Quote Calculated</option>
+                    <option value="Pending">Pending Calculation</option>
+                  </select>
+                ) : exportDomain === "claims" || exportDomain === "financial" ? (
+                  <select
+                    value={exportStatus}
+                    onChange={(e) => setExportStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  >
+                    <option value="all">All Claim Statuses</option>
+                    <option value="Approved">Approved / Cleared</option>
+                    <option value="Pending">Pending Investigation</option>
+                    <option value="In Progress">In Progress (Agent Assigned)</option>
+                    <option value="Rejected">Rejected</option>
+                  </select>
+                ) : (
+                  <select
+                    value={exportStatus}
+                    onChange={(e) => setExportStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="Active">Active</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Pending">Pending</option>
+                  </select>
+                )}
+              </div>
+
+              {/* Live Preview Summary Card */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                    Filtered Preview Impact
+                  </span>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-lg font-black text-slate-900 font-mono">
+                      {modalFilteredData.count} Records Found
+                    </span>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      Matching Filter
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 font-medium block mt-0.5">
+                    Scope: {exportDomain.toUpperCase()} &bull; Window: {exportTimeRange.replace("_", " ").toUpperCase()}
+                  </span>
+                </div>
+
+                {modalFilteredData.totalSum !== undefined && modalFilteredData.totalSum > 0 && (
+                  <div className="text-left sm:text-right">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                      Total Valuation / Volume
+                    </span>
+                    <span className="text-base font-black text-slate-900 font-mono block mt-1">
+                      {formatLKR(modalFilteredData.totalSum)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer Actions */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+              <button
+                onClick={() => setShowFilteredReportModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white border border-slate-300 rounded-xl hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrintFilteredDossierModal}
+                  disabled={modalFilteredData.count === 0}
+                  className="px-4 py-2 text-xs font-semibold text-slate-800 bg-white border border-slate-300 hover:bg-slate-100 rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-slate-600" strokeWidth={2} />
+                  <span>Print Audit Dossier</span>
+                </button>
+
+                <button
+                  onClick={handleDownloadFilteredCSVModal}
+                  disabled={modalFilteredData.count === 0}
+                  className="px-5 py-2 text-xs font-semibold text-white bg-[#000080] hover:bg-[#102A43] rounded-xl transition-all cursor-pointer shadow-xs flex items-center gap-1.5 active:scale-95 border-none disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-white" strokeWidth={2} />
+                  <span>Download Filtered CSV</span>
                 </button>
               </div>
             </div>
