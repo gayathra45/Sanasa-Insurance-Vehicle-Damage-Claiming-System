@@ -23,7 +23,8 @@ import {
   BubbleChatIcon,
   ViewIcon,
   Car01Icon,
-  Clock01Icon
+  Clock01Icon,
+  Mail01Icon
 } from "@hugeicons/core-free-icons";
 
 interface VehicleOwner {
@@ -126,8 +127,30 @@ export default function OfficeStaffRenewalsPage() {
   const [allowInstallments, setAllowInstallments] = useState(true);
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
   const [calcSuccessMsg, setCalcSuccessMsg] = useState("");
-  const [calcErrMsg, setCalcErrMsg] = useState("");
   const [customExpiryDate, setCustomExpiryDate] = useState<string>("");
+  const [isSendingReminder, setIsSendingReminder] = useState(false);
+  const [reminderStatus, setReminderStatus] = useState("");
+
+  const handleSendReminder = async (vehiclePlate: string) => {
+    setIsSendingReminder(true);
+    setReminderStatus("");
+    try {
+      const res = await fetch(`${API_URL}/renewals/send-reminder`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehiclePlate })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send reminder.");
+      setReminderStatus("✅ Renewal email notification sent to policyholder & branch!");
+      setTimeout(() => setReminderStatus(""), 4500);
+    } catch (e: any) {
+      setReminderStatus(`❌ ${e.message || "Could not send email."}`);
+      setTimeout(() => setReminderStatus(""), 4500);
+    } finally {
+      setIsSendingReminder(false);
+    }
+  };
 
   // Computed live calculation values
   const computedBasic = Math.round((Number(marketValuation) * Number(premiumRate)) / 100);
@@ -240,7 +263,7 @@ export default function OfficeStaffRenewalsPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save calculation.");
 
-      setCalcSuccessMsg("Renewal cost & installment options calculated and saved successfully!");
+      setCalcSuccessMsg("Renewal cost & installment options saved successfully! Official emails sent to policyholder and branch.");
 
       // Update in-memory item
       const updatedQuote = data.renewal;
@@ -959,6 +982,27 @@ export default function OfficeStaffRenewalsPage() {
                       <span>{selectedItem.renewalQuote.calculatedBy?.staffName || "Branch Staff"}</span>
                     </div>
                   </div>
+
+                  {/* Automated Email Dispatch Status & Resend Button */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 border-t border-slate-100 select-none">
+                    <span className="text-xs text-slate-500 font-medium flex items-center gap-1.5">
+                      <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4 text-slate-400" />
+                      <span>Email linked to: <strong className="text-slate-700">{selectedItem.owner.email || "Policyholder"}</strong> & <strong>{branch} Branch</strong></span>
+                    </span>
+                    <button
+                      onClick={() => handleSendReminder(selectedItem.vehicle.numberPlate)}
+                      disabled={isSendingReminder}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs cursor-pointer border border-slate-200 transition-all disabled:opacity-50"
+                    >
+                      <HugeiconsIcon icon={Mail01Icon} className="w-3.5 h-3.5 text-blue-600" />
+                      <span>{isSendingReminder ? "Sending..." : "Resend Email Notice"}</span>
+                    </button>
+                  </div>
+                  {reminderStatus && (
+                    <div className="text-xs font-semibold px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 animate-in fade-in">
+                      {reminderStatus}
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -575,4 +575,275 @@ export async function sendBranchProfileUpdateStatusEmail(branchEmail, branchName
   }
 }
 
+/**
+ * Send Policy Renewal Quote Emails to both Policy Holder and Branch Staff
+ */
+export async function sendRenewalQuoteCalculatedEmails({ user, vehicle, renewal, staffName = "Branch Staff", branch = "Galle" }) {
+  try {
+    const formattedTime = formatSriLankaDateTime(new Date());
+    const totalAmount = renewal.calculation?.totalRenewalAmount || 0;
+    const valuation = renewal.calculation?.marketValuation || 0;
+    const ncb = renewal.calculation?.noClaimBonusDiscount || 0;
+    const expiryStr = formatSriLankaDate(renewal.currentExpiryDate);
+    const newExpiryStr = formatSriLankaDate(renewal.newExpiryDate);
+
+    // 1. Send to Policy Holder if email exists
+    if (user && user.email) {
+      const subject = `[Sanasa Insurance] Vehicle Policy Renewal Quote Ready - ${vehicle.numberPlate}`;
+      const policyHolderHtml = `
+        <h2 style="color: #0f2d4a; margin-top: 0;">Vehicle Policy Renewal Quote Ready</h2>
+        <p>Dear <strong>${user.firstName} ${user.lastName}</strong>,</p>
+        <p>
+          A comprehensive license and policy coverage renewal quote has been prepared for your registered vehicle 
+          by our <strong>${branch} Branch</strong> team.
+        </p>
+
+        <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 540px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; width: 40%; color: #4a5568;">Vehicle Number Plate:</td>
+            <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehicle.numberPlate}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Make & Model:</td>
+            <td style="padding: 12px 16px; color: #1a202c; font-weight: 600;">${vehicle.company} ${vehicle.model} (${vehicle.year || ""})</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Policy Number:</td>
+            <td style="padding: 12px 16px; color: #1a202c; font-family: monospace;">${vehicle.policyNumber || "N/A"}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Current Expiration:</td>
+            <td style="padding: 12px 16px; color: #dc2626; font-weight: 600;">${expiryStr}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Extended Validity Period:</td>
+            <td style="padding: 12px 16px; color: #059669; font-weight: 600;">Until ${newExpiryStr}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Market Valuation:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">LKR ${Number(valuation).toLocaleString()}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">No-Claim Bonus (NCB):</td>
+            <td style="padding: 12px 16px; color: #059669; font-weight: 600;">${ncb}% Discount Applied</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #eff6ff;">
+            <td style="padding: 12px 16px; font-weight: 700; color: #1e3a8a;">Total Renewal Amount:</td>
+            <td style="padding: 12px 16px; color: #1e3a8a; font-weight: 800; font-size: 16px;">
+              LKR ${Number(totalAmount).toLocaleString()}
+            </td>
+          </tr>
+        </table>
+
+        <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 14px; border-radius: 6px; font-size: 14px; color: #065f46; margin: 20px 0;">
+          <strong>Flexible Payment Options Available:</strong>
+          <ul style="margin: 8px 0 0; padding-left: 20px;">
+            <li><strong>Full 1-Year Payment:</strong> LKR ${Number(totalAmount).toLocaleString()}</li>
+            <li><strong>Semi-Annual (2 Installments):</strong> 50% upfront + 50% at 6 months</li>
+            <li><strong>Quarterly (4 Installments):</strong> 4 equal payments every 3 months</li>
+          </ul>
+        </div>
+
+        <p style="margin-top: 20px; font-size: 14px; color: #4a5568;">
+          Please log in to your <strong>Sanasa Mobile App</strong> or <strong>Web Portal</strong> under <em>My Vehicles</em> to review details, select your preferred plan, and instantly renew your license coverage with secure online payment.
+        </p>
+      `;
+
+      const htmlBody = getBaseTemplate(subject, policyHolderHtml, `Sanasa General Insurance • ${branch} Branch`);
+      await sendEmail(user.email.trim().toLowerCase(), subject, htmlBody);
+      console.log(`✅ Renewal quote notification sent to Policyholder: ${user.email}`);
+    }
+
+    // 2. Send to Branch Staff
+    let branchEmail = "";
+    try {
+      const OfficeStaff = mongoose.model("OfficeStaff");
+      const branchStaff = await OfficeStaff.findOne({
+        branch: { $regex: new RegExp(`^${(branch || user.branch || "").trim()}$`, "i") }
+      });
+      branchEmail = branchStaff?.email || branchStaff?.managerEmail || "";
+    } catch (e) {
+      console.warn("Could not find branch staff email:", e);
+    }
+
+    if (branchEmail) {
+      const branchSubject = `[Branch Record] Policy Renewal Quote Generated — ${vehicle.numberPlate} (${branch} Branch)`;
+      const branchHtml = `
+        <h2 style="color: #0f2d4a; margin-top: 0;">Policy Renewal Quote Recorded</h2>
+        <p>Dear <strong>${branch} Branch Team</strong>,</p>
+        <p>
+          A new vehicle policy renewal quote has been calculated and dispatched to the policyholder:
+        </p>
+
+        <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 540px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; width: 40%; color: #4a5568;">Policy Holder Name:</td>
+            <td style="padding: 12px 16px; color: #1a202c; font-weight: 700;">${user.firstName} ${user.lastName}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">NIC / Mobile:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">${user.nic} | ${user.mobile}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle & Plate:</td>
+            <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehicle.numberPlate} (${vehicle.company} ${vehicle.model})</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Policy Number:</td>
+            <td style="padding: 12px 16px; color: #1a202c; font-family: monospace;">${vehicle.policyNumber || "N/A"}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Total Renewal Amount:</td>
+            <td style="padding: 12px 16px; color: #0284c7; font-weight: 800;">LKR ${Number(totalAmount).toLocaleString()}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Calculated By:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">${staffName}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Processed At:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">${formattedTime} (Sri Lanka Time)</td>
+          </tr>
+        </table>
+      `;
+
+      const branchBody = getBaseTemplate(branchSubject, branchHtml, `Sanasa General Insurance • ${branch} Branch Operations`);
+      await sendEmail(branchEmail.trim().toLowerCase(), branchSubject, branchBody);
+      console.log(`✅ Renewal quote record email sent to Branch: ${branchEmail}`);
+    }
+  } catch (error) {
+    console.error("❌ Error sending renewal quote emails:", error);
+  }
+}
+
+/**
+ * Send Policy Renewal Payment Confirmation Emails to both Policy Holder and Branch Staff
+ */
+export async function sendRenewalPaymentSuccessEmails({ user, vehiclePlate, renewal, installmentPaid = 1, amountPaid, branch = "Galle" }) {
+  try {
+    const formattedTime = formatSriLankaDateTime(new Date());
+    const totalRenewal = renewal.calculation?.totalRenewalAmount || amountPaid;
+    const planType = renewal.selectedPlan || "Comprehensive Annual Policy";
+    const newExpiry = formatSriLankaDate(renewal.newExpiryDate);
+
+    // 1. Send to Policyholder
+    if (user && user.email) {
+      const subject = `[Sanasa Insurance] Payment Received & Coverage Extended - ${vehiclePlate}`;
+      const policyHolderHtml = `
+        <h2 style="color: #059669; margin-top: 0;">Policy Renewal Payment Confirmed</h2>
+        <p>Dear <strong>${user.firstName} ${user.lastName}</strong>,</p>
+        <p>
+          Thank you for renewing your vehicle insurance policy with Sanasa General Insurance. 
+          Your payment has been successfully processed and verified.
+        </p>
+
+        <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 540px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #ecfdf5;">
+            <td style="padding: 12px 16px; font-weight: 700; width: 40%; color: #065f46;">Payment Status:</td>
+            <td style="padding: 12px 16px; color: #059669; font-weight: 800;">VERIFIED & PAID</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle Plate:</td>
+            <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehiclePlate}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Selected Plan:</td>
+            <td style="padding: 12px 16px; color: #1a202c; font-weight: 600;">${planType}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Installment Paid:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">Installment #${installmentPaid}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #eff6ff;">
+            <td style="padding: 12px 16px; font-weight: 700; color: #1e3a8a;">Amount Paid:</td>
+            <td style="padding: 12px 16px; color: #1e3a8a; font-weight: 800; font-size: 16px;">
+              LKR ${Number(amountPaid).toLocaleString()}
+            </td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">New Coverage Expiry:</td>
+            <td style="padding: 12px 16px; color: #059669; font-weight: 700;">${newExpiry}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Servicing Branch:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">${branch} Branch</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Payment Timestamp:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">${formattedTime}</td>
+          </tr>
+        </table>
+
+        <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 14px; border-radius: 6px; font-size: 14px; color: #065f46; margin: 20px 0;">
+          ✅ <strong>Official Digital Cover Note:</strong> You can download or print your official stamped Cover Note certificate anytime directly from your Policyholder portal or mobile app under <em>My Vehicles</em>.
+        </div>
+      `;
+
+      const htmlBody = getBaseTemplate(subject, policyHolderHtml, `Sanasa General Insurance • ${branch} Branch`);
+      await sendEmail(user.email.trim().toLowerCase(), subject, htmlBody);
+      console.log(`✅ Renewal payment confirmation email sent to Policyholder: ${user.email}`);
+    }
+
+    // 2. Send to Branch Staff
+    let branchEmail = "";
+    try {
+      const OfficeStaff = mongoose.model("OfficeStaff");
+      const branchStaff = await OfficeStaff.findOne({
+        branch: { $regex: new RegExp(`^${(branch || user?.branch || renewal.branch || "").trim()}$`, "i") }
+      });
+      branchEmail = branchStaff?.email || branchStaff?.managerEmail || "";
+    } catch (e) {
+      console.warn("Could not find branch staff email:", e);
+    }
+
+    if (branchEmail) {
+      const branchSubject = `[Payment Received] Vehicle Policy Renewal — ${vehiclePlate} (${branch} Branch)`;
+      const branchHtml = `
+        <h2 style="color: #059669; margin-top: 0;">Policy Renewal Payment Received</h2>
+        <p>Dear <strong>${branch} Branch Staff</strong>,</p>
+        <p>
+          Online renewal payment has been successfully completed for vehicle <strong>${vehiclePlate}</strong>:
+        </p>
+
+        <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 540px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; width: 40%; color: #4a5568;">Policyholder:</td>
+            <td style="padding: 12px 16px; color: #1a202c; font-weight: 700;">${user ? `${user.firstName} ${user.lastName}` : renewal.ownerName}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">NIC / Phone:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">${user?.nic || renewal.nic} | ${user?.mobile || renewal.contactNumber}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle Plate:</td>
+            <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehiclePlate}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Amount Paid:</td>
+            <td style="padding: 12px 16px; color: #059669; font-weight: 800;">LKR ${Number(amountPaid).toLocaleString()}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Plan Type:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">${planType} (Installment #${installmentPaid})</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">New Expiry Date:</td>
+            <td style="padding: 12px 16px; color: #059669; font-weight: 700;">${newExpiry}</td>
+          </tr>
+          <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+            <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Payment Received At:</td>
+            <td style="padding: 12px 16px; color: #1a202c;">${formattedTime}</td>
+          </tr>
+        </table>
+      `;
+
+      const branchBody = getBaseTemplate(branchSubject, branchHtml, `Sanasa General Insurance • ${branch} Branch Collections`);
+      await sendEmail(branchEmail.trim().toLowerCase(), branchSubject, branchBody);
+      console.log(`✅ Renewal payment notification sent to Branch: ${branchEmail}`);
+    }
+  } catch (error) {
+    console.error("❌ Error sending renewal payment emails:", error);
+  }
+}
+
 

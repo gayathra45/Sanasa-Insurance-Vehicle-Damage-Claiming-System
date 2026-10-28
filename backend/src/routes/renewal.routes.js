@@ -2,6 +2,13 @@ import express from "express";
 import Stripe from "stripe";
 import PolicyRenewal from "../models/renewal.model.js";
 import User from "../models/user.model.js";
+import {
+  sendRenewalQuoteCalculatedEmails,
+  sendRenewalPaymentSuccessEmails,
+  sendEmail,
+  getBaseTemplate,
+  formatSriLankaDate
+} from "../utils/email.js";
 
 const router = express.Router();
 
@@ -284,6 +291,15 @@ router.post("/calculate-quote", async (req, res) => {
     vehicle.policyExpiryDate = currentExpiry;
     await user.save();
 
+    // Send notification emails to Policyholder and Branch asynchronously
+    sendRenewalQuoteCalculatedEmails({
+      user,
+      vehicle,
+      renewal,
+      staffName,
+      branch: user.branch || renewal.branch || "Galle"
+    }).catch((err) => console.error("Error sending renewal quote emails:", err));
+
     res.json({ success: true, message: "Renewal quote calculated successfully.", renewal });
   } catch (error) {
     console.error("Error calculating renewal quote:", error);
@@ -504,15 +520,31 @@ router.post("/verify-session", async (req, res) => {
         await renewal.save();
 
         // Extend vehicle policy date on User record
-        await User.updateOne(
+        const updatedUser = await User.findOneAndUpdate(
           { "vehicles.numberPlate": vehiclePlate },
           {
             $set: {
               "vehicles.$.policyExpiryDate": renewal.newExpiryDate,
               "vehicles.$.renewalCycle": `Annual (${new Date(renewal.newExpiryDate).getFullYear()})`
             }
-          }
+          },
+          { new: true }
         );
+
+        // Determine amount paid
+        const amountPaid = renewal.selectedPlan === "One-Time"
+          ? (renewal.calculation?.totalRenewalAmount || 0)
+          : (renewal.installments?.find((i) => i.installmentNumber === Number(installmentNumber))?.amount || 0);
+
+        // Send confirmation emails asynchronously to Policyholder and Branch
+        sendRenewalPaymentSuccessEmails({
+          user: updatedUser,
+          vehiclePlate,
+          renewal,
+          installmentPaid: Number(installmentNumber) || 1,
+          amountPaid,
+          branch: updatedUser?.branch || renewal.branch || "Galle"
+        }).catch((err) => console.error("Error sending renewal payment emails:", err));
 
         return res.json({
           success: true,
@@ -560,6 +592,71 @@ router.get("/active-installment/:numberPlate", async (req, res) => {
   } catch (error) {
     console.error("Error fetching active installment:", error);
     res.status(500).json({ error: error.message || "Failed to fetch installment info." });
+  }
+});
+
+/**
+ * 8. POST /api/renewals/send-reminder
+ * Dispatches renewal reminder emails to policyholder and branch for upcoming expiration
+ */
+router.post("/send-reminder", async (req, res) => {
+  try {
+    const { vehiclePlate } = req.body;
+    if (!vehiclePlate) {
+      return res.status(400).json({ error: "Vehicle plate is required." });
+    }
+
+    const cleanPlate = vehiclePlate.trim();
+    const user = await User.findOne({
+      "vehicles.numberPlate": { $regex: new RegExp(`^${cleanPlate}$`, "i") }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "Vehicle not found." });
+    }
+
+    const vehicle = user.vehicles.find(
+      (v) => v.numberPlate?.toLowerCase().trim() === cleanPlate.toLowerCase()
+    );
+
+    const renewal = await PolicyRenewal.findOne({
+      vehiclePlate: { $regex: new RegExp(`^${cleanPlate}$`, "i") }
+    }).sort({ createdAt: -1 });
+
+    if (renewal && renewal.status === "Calculated") {
+      await sendRenewalQuoteCalculatedEmails({
+        user,
+        vehicle,
+        renewal,
+        staffName: renewal.calculatedBy?.staffName || "Branch Staff",
+        branch: user.branch || renewal.branch || "Galle"
+      });
+      return res.json({ success: true, message: `Renewal reminder email sent to ${user.email} and branch.` });
+    }
+
+    // If quote not calculated yet, send an expiration notice
+    const expiryDate = getVehicleExpiryDate(vehicle, user.createdAt);
+    const now = new Date();
+    const daysRemaining = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (user.email) {
+      const subject = `[Action Required] Vehicle Policy Renewal Approaching — ${vehicle.numberPlate}`;
+      const html = `
+        <h2 style="color: #0f2d4a; margin-top: 0;">Vehicle Policy Coverage Expiring Soon</h2>
+        <p>Dear <strong>${user.firstName} ${user.lastName}</strong>,</p>
+        <p>
+          This is an official renewal reminder that your vehicle policy coverage for <strong>${vehicle.numberPlate}</strong> 
+          (${vehicle.company} ${vehicle.model}) is expiring in <strong>${daysRemaining > 0 ? `${daysRemaining} days` : "soon"}</strong> (${formatSriLankaDate(expiryDate)}).
+        </p>
+        <p>Please contact your <strong>${user.branch || "Galle"} Branch</strong> or log in to the Sanasa App to review and renew your license coverage.</p>
+      `;
+      await sendEmail(user.email, subject, getBaseTemplate(subject, html, `Sanasa General Insurance • ${user.branch || "Galle"} Branch`));
+    }
+
+    res.json({ success: true, message: "Reminder email sent successfully." });
+  } catch (error) {
+    console.error("Error sending renewal reminder:", error);
+    res.status(500).json({ error: error.message || "Failed to send renewal reminder." });
   }
 });
 

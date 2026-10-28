@@ -175,6 +175,8 @@ export default function MyVehicles() {
     totalCount?: number;
     renewal: any | null;
   } | null>(null);
+  const [renewalMap, setRenewalMap] = useState<Record<string, any>>({});
+  const [installmentMap, setInstallmentMap] = useState<Record<string, any>>({});
   const [loadingRenewal, setLoadingRenewal] = useState(false);
   const [renewalWizardOpen, setRenewalWizardOpen] = useState(false);
   const [renewalStep, setRenewalStep] = useState<1 | 2 | 3>(1);
@@ -345,15 +347,47 @@ export default function MyVehicles() {
       if (quoteRes.ok) {
         const qData = await quoteRes.json();
         setRenewalInfo(qData);
+        setRenewalMap((prev) => ({ ...prev, [targetPlate]: qData }));
       }
       if (instRes.ok) {
         const iData = await instRes.json();
         setActiveInstallmentInfo(iData);
+        setInstallmentMap((prev) => ({ ...prev, [targetPlate]: iData }));
       }
     } catch (e) {
       console.error("Error fetching renewal details:", e);
     }
   };
+
+  // Reusable function to fetch renewal status for all vehicles
+  const fetchSingleRenewal = async (plateToFetch: string) => {
+    if (!plateToFetch) return;
+    try {
+      const plate = encodeURIComponent(plateToFetch);
+      const [quoteRes, instRes] = await Promise.all([
+        fetch(`${API_URL}/renewals/vehicle-quote/${plate}`, { cache: "no-store" }),
+        fetch(`${API_URL}/renewals/active-installment/${plate}`, { cache: "no-store" })
+      ]);
+      if (quoteRes.ok) {
+        const qData = await quoteRes.json();
+        setRenewalMap((prev) => ({ ...prev, [plateToFetch]: qData }));
+      }
+      if (instRes.ok) {
+        const iData = await instRes.json();
+        setInstallmentMap((prev) => ({ ...prev, [plateToFetch]: iData }));
+      }
+    } catch (e) {
+      // Quiet background fetch
+    }
+  };
+
+  useEffect(() => {
+    if (vehicles.length > 0) {
+      vehicles.forEach((v) => {
+        fetchSingleRenewal(v.numberPlate);
+      });
+    }
+  }, [vehicles]);
 
   // Real-time polling for vehicles list
   useEffect(() => {
@@ -803,10 +837,30 @@ export default function MyVehicles() {
             )}
 
             {filteredVehicles.map((vehicle) => {
+              const qInfo = renewalMap[vehicle.numberPlate];
+              const iInfo = installmentMap[vehicle.numberPlate];
+              const isQuoteReady = qInfo?.hasCalculatedQuote && qInfo?.renewalQuote?.status === "Calculated";
+              const isInstallmentDue = iInfo?.hasActivePlan && iInfo?.nextInstallment && !iInfo?.isFullyPaid;
+              const isRenewed = qInfo?.isRenewed || iInfo?.isFullyPaid;
+
+              // Check renewal date reaching (within 45 days)
+              const expDateStr = qInfo?.expiryDate || vehicle.policyExpiryDate;
+              let daysRemaining = qInfo?.daysRemaining;
+              if (daysRemaining == null && expDateStr) {
+                const expTime = new Date(expDateStr).getTime();
+                if (!isNaN(expTime)) {
+                  daysRemaining = Math.ceil((expTime - Date.now()) / (1000 * 60 * 60 * 24));
+                }
+              }
+              const isRenewalReaching = !isRenewed && (qInfo?.isWithin30Days || (daysRemaining !== null && daysRemaining !== undefined && daysRemaining <= 45));
+              const hasAlert = isQuoteReady || isInstallmentDue || isRenewalReaching;
+
               return (
                 <div
                   key={vehicle.numberPlate}
-                  className="bg-white border border-slate-200 rounded-[30px] p-7 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1"
+                  className={`bg-white border rounded-[30px] p-7 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1 ${
+                    hasAlert ? "border-rose-300 ring-2 ring-rose-500/10 shadow-rose-100/50" : "border-slate-200"
+                  }`}
                 >
                   {/* Decorative faint background accent positioned safely behind content */}
                   <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-cyan-50/70 via-sky-50/30 to-transparent rounded-bl-[100px] pointer-events-none z-0 group-hover:from-cyan-100/60 transition-colors duration-300" />
@@ -815,11 +869,43 @@ export default function MyVehicles() {
                     {/* Header Row: Icon + Plate Number & Status */}
                     <div className="flex items-center justify-between mb-5">
                       <div className="flex items-center gap-4">
-                        {getVehicleIconContainer(vehicle.vehicleType)}
+                        <div className="relative">
+                          {getVehicleIconContainer(vehicle.vehicleType)}
+                          {/* Highlight Red Dot Icon for renewal reaching or new update */}
+                          {hasAlert && (
+                            <span
+                              className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 z-20 pointer-events-none"
+                              title={
+                                isQuoteReady
+                                  ? "Renewal quote calculated - ready to renew"
+                                  : isInstallmentDue
+                                  ? "Upcoming installment payment due"
+                                  : "Renewal date reaching - coverage expiring soon"
+                              }
+                            >
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-600 border-2 border-white shadow-xs"></span>
+                            </span>
+                          )}
+                        </div>
                         <div>
-                          <h3 className="text-slate-800 font-bold text-lg md:text-xl tracking-tight leading-none">
-                            {formatNumberPlate(vehicle.numberPlate)}
-                          </h3>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-slate-800 font-bold text-lg md:text-xl tracking-tight leading-none">
+                              {formatNumberPlate(vehicle.numberPlate)}
+                            </h3>
+                            {hasAlert && (
+                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 shadow-2xs select-none">
+                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                                {isQuoteReady
+                                  ? "Quote Ready"
+                                  : isInstallmentDue
+                                  ? "Payment Due"
+                                  : isRenewalReaching
+                                  ? (daysRemaining !== null && daysRemaining !== undefined ? `Expires ${daysRemaining}d` : "Renewal Due")
+                                  : "Update"}
+                              </span>
+                            )}
+                          </div>
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 bg-emerald-50/70 border border-emerald-100 rounded-full px-3 py-1 mt-1.5 select-none">
                             <span className="w-2 h-2 rounded-full bg-emerald-500" />
                             <span>{t.activeCoverage}</span>

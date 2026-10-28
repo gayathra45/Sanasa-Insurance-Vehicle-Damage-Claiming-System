@@ -675,30 +675,56 @@ export default function MyVehicles() {
               const qInfo = renewalMap[v.numberPlate];
               const iInfo = installmentMap[v.numberPlate];
               const isQuoteReady = qInfo?.hasCalculatedQuote && qInfo?.renewalQuote?.status === "Calculated";
-              const isInstallmentDue = iInfo?.hasActivePlan && iInfo?.nextInstallment;
+              const isInstallmentDue = iInfo?.hasActivePlan && iInfo?.nextInstallment && !iInfo?.isFullyPaid;
               const isRenewed = qInfo?.isRenewed || iInfo?.isFullyPaid;
 
+              // Check renewal date reaching (within 45 days)
+              const expDateStr = qInfo?.expiryDate || v.policyExpiryDate;
+              let daysRemaining = qInfo?.daysRemaining;
+              if (daysRemaining == null && expDateStr) {
+                const expTime = new Date(expDateStr).getTime();
+                if (!isNaN(expTime)) {
+                  daysRemaining = Math.ceil((expTime - Date.now()) / (1000 * 60 * 60 * 24));
+                }
+              }
+              const isRenewalReaching = !isRenewed && (qInfo?.isWithin30Days || (daysRemaining !== null && daysRemaining !== undefined && daysRemaining <= 45));
+              const hasAlert = isQuoteReady || isInstallmentDue || isRenewalReaching;
+
               return (
-                <View key={idx} style={styles.vehicleCard}>
+                <View
+                  key={idx}
+                  style={[
+                    styles.vehicleCard,
+                    hasAlert && { borderColor: "#fecaca", shadowColor: "#ef4444", shadowOpacity: 0.08 }
+                  ]}
+                >
                   {/* Header Row */}
                   <View style={styles.cardHeader}>
-                    <View
-                      style={[
-                        styles.iconBox,
-                        {
-                          backgroundColor: getVehicleTheme(v.vehicleType).bg,
-                          borderColor: getVehicleTheme(v.vehicleType).border,
-                        },
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={getVehicleTheme(v.vehicleType).icon as any}
-                        size={28}
-                        color={getVehicleTheme(v.vehicleType).color}
-                      />
+                    <View style={{ position: "relative" }}>
+                      <View
+                        style={[
+                          styles.iconBox,
+                          {
+                            backgroundColor: getVehicleTheme(v.vehicleType).bg,
+                            borderColor: getVehicleTheme(v.vehicleType).border,
+                          },
+                        ]}
+                      >
+                        <MaterialCommunityIcons
+                          name={getVehicleTheme(v.vehicleType).icon as any}
+                          size={28}
+                          color={getVehicleTheme(v.vehicleType).color}
+                        />
+                      </View>
+                      {/* Highlight Red Dot Icon for renewal reaching or new update */}
+                      {hasAlert && <View style={styles.redDotHighlight} />}
                     </View>
+
                     <View style={{ flex: 1, marginLeft: 12 }}>
-                      <Text style={styles.plateText}>{formatPlate(v.numberPlate)}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Text style={styles.plateText}>{formatPlate(v.numberPlate)}</Text>
+                        {hasAlert && <View style={styles.plateRedDot} />}
+                      </View>
                       <Text style={styles.companyModelText}>
                         {[v.company, v.model].filter(Boolean).join(" ")} ({v.year})
                       </Text>
@@ -706,14 +732,21 @@ export default function MyVehicles() {
 
                     {/* Real-time Status Badge */}
                     {isQuoteReady ? (
-                      <View style={[styles.statusBadge, { backgroundColor: "#ecfdf5", borderColor: "#a7f3d0" }]}>
-                        <View style={[styles.dot, { backgroundColor: "#10b981" }]} />
-                        <Text style={[styles.badgeLabel, { color: "#047857" }]}>Quote Ready</Text>
+                      <View style={[styles.statusBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+                        <View style={[styles.dot, { backgroundColor: "#ef4444" }]} />
+                        <Text style={[styles.badgeLabel, { color: "#dc2626" }]}>Quote Ready</Text>
                       </View>
                     ) : isInstallmentDue ? (
                       <View style={[styles.statusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
                         <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
                         <Text style={[styles.badgeLabel, { color: "#b45309" }]}>Due Installment</Text>
+                      </View>
+                    ) : isRenewalReaching ? (
+                      <View style={[styles.statusBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+                        <View style={[styles.dot, { backgroundColor: "#ef4444" }]} />
+                        <Text style={[styles.badgeLabel, { color: "#dc2626" }]}>
+                          {daysRemaining !== null && daysRemaining !== undefined ? `Expires ${daysRemaining}d` : "Renewal Due"}
+                        </Text>
                       </View>
                     ) : isRenewed ? (
                       <View style={[styles.statusBadge, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
@@ -1964,6 +1997,29 @@ const styles: any = StyleSheet.create({
     backgroundColor: "#f0f9ff",
     alignItems: "center",
     justifyContent: "center",
+  },
+  redDotHighlight: {
+    position: "absolute",
+    top: -3,
+    right: -3,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#ef4444",
+    borderWidth: 2,
+    borderColor: "#ffffff",
+    shadowColor: "#ef4444",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.6,
+    shadowRadius: 3,
+    elevation: 4,
+    zIndex: 10,
+  },
+  plateRedDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: "#ef4444",
   },
   plateText: { fontSize: 16, fontWeight: "800", color: "#0f172a", letterSpacing: 0.3 },
   companyModelText: { fontSize: 12, color: "#64748b", fontWeight: "600", marginTop: 2 },
