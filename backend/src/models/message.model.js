@@ -25,12 +25,13 @@ const messageSchema = new mongoose.Schema(
     recipientName: { type: String, default: "" },
     recipientEmail: { type: String, default: "" },
 
-    text: { type: String, required: true },
+    text: { type: String, default: "" },
     attachments: [
       {
         name: { type: String, default: "" },
         url: { type: String, default: "" },
-        fileType: { type: String, default: "" }
+        fileType: { type: String, default: "" },
+        size: { type: Number, default: 0 }
       }
     ],
     readBy: [

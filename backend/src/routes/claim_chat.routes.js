@@ -16,6 +16,7 @@ import {
   emitNotificationUnreadCount
 } from "../utils/socket.js";
 import { queueChatEmailNotification } from "../utils/chatEmailService.js";
+import { uploadToCloudinary } from "../utils/upload.js";
 
 const router = express.Router();
 
@@ -151,6 +152,11 @@ router.get("/directory", async (req, res) => {
       .sort({ name: 1 })
       .lean();
 
+    const adminDocs = await Admin.find()
+      .select("name email mobile status")
+      .sort({ name: 1 })
+      .lean();
+
     return res.json({
       success: true,
       branches: staffDocs.map((b) => ({
@@ -167,6 +173,15 @@ router.get("/directory", async (req, res) => {
         branch: a.branch,
         agentId: a.agentId,
         role: "Field Agent"
+      })),
+      admins: adminDocs.map((adm) => ({
+        id: String(adm._id),
+        name: adm.name || "Head Office Admin",
+        email: adm.email,
+        mobile: adm.mobile || "",
+        status: adm.status || "Approved",
+        branch: "Head Office",
+        role: "Claims Administrator"
       }))
     });
   } catch (err) {
@@ -463,17 +478,27 @@ router.post("/conversations", async (req, res) => {
       return res.status(400).json({ success: false, message: "Missing required conversation fields" });
     }
 
-    const claim = await Claim.findOne({ claimNumber }).lean();
-    if (!claim) {
-      return res.status(404).json({ success: false, message: "Claim not found" });
+    const isDirectNonClaim =
+      String(claimNumber).startsWith("BRANCH-") ||
+      String(claimNumber).startsWith("ADMIN-") ||
+      String(claimNumber).startsWith("AGENT-") ||
+      String(claimNumber).startsWith("DIRECT");
+
+    let claim = null;
+    if (!isDirectNonClaim) {
+      claim = await Claim.findOne({ claimNumber }).lean();
     }
+
+    const resolvedClaimNumber = claim ? claim.claimNumber : claimNumber;
+    const resolvedClaimId = claim ? claim._id : null;
+    const resolvedVehiclePlate = claim ? (claim.vehiclePlate || "") : "";
 
     let conversation = null;
 
     if (type === "direct") {
-      // Find existing direct conversation between sender and recipient for this claim
+      // Find existing direct conversation between sender and recipient
       conversation = await Conversation.findOne({
-        claimNumber,
+        claimNumber: resolvedClaimNumber,
         type: "direct",
         $and: [
           { "participants.userId": String(sender.userId) },
@@ -483,9 +508,9 @@ router.post("/conversations", async (req, res) => {
 
       if (!conversation) {
         conversation = await Conversation.create({
-          claimId: claim._id,
-          claimNumber,
-          vehiclePlate: claim.vehiclePlate || "",
+          claimId: resolvedClaimId,
+          claimNumber: resolvedClaimNumber,
+          vehiclePlate: resolvedVehiclePlate,
           type: "direct",
           participants: [
             {
@@ -494,7 +519,7 @@ router.post("/conversations", async (req, res) => {
               name: sender.name,
               email: sender.email || "",
               role: sender.role || sender.userType,
-              branch: sender.branch || claim.branch,
+              branch: sender.branch || claim?.branch || "Head Office",
               lastReadAt: new Date()
             },
             {
@@ -503,7 +528,7 @@ router.post("/conversations", async (req, res) => {
               name: recipient.name,
               email: recipient.email || "",
               role: recipient.role || recipient.userType,
-              branch: recipient.branch || claim.branch,
+              branch: recipient.branch || claim?.branch || "Head Office",
               lastReadAt: new Date(0)
             }
           ],
@@ -598,8 +623,29 @@ router.post("/conversations/:conversationId/messages", async (req, res) => {
       idempotencyKey
     } = req.body;
 
-    if (!senderId || !senderType || !text || !text.trim()) {
-      return res.status(400).json({ success: false, message: "Missing required message parameters" });
+    const trimmedText = (text || "").trim();
+    const hasAttachments = Array.isArray(attachments) && attachments.length > 0;
+
+    if (!senderId || !senderType || (!trimmedText && !hasAttachments)) {
+      return res.status(400).json({ success: false, message: "Message must contain text or an attachment" });
+    }
+
+    // Process attachments with Cloudinary if any base64 data strings are present
+    const processedAttachments = [];
+    if (hasAttachments) {
+      for (const att of attachments) {
+        let finalUrl = att.url || "";
+        if (att.url && (att.url.startsWith("data:") || att.data)) {
+          const fileToUpload = att.data || att.url;
+          finalUrl = await uploadToCloudinary(fileToUpload, "chat_attachments");
+        }
+        processedAttachments.push({
+          name: att.name || (att.fileType?.startsWith("image/") ? "photo.jpg" : "document.pdf"),
+          url: finalUrl,
+          fileType: att.fileType || "application/octet-stream",
+          size: Number(att.size) || 0
+        });
+      }
     }
 
     // Check idempotency if key provided
@@ -640,8 +686,8 @@ router.post("/conversations/:conversationId/messages", async (req, res) => {
       recipientType: primaryRecipient?.userType || "",
       recipientName: primaryRecipient?.name || "",
       recipientEmail: primaryRecipient?.email || "",
-      text: text.trim(),
-      attachments,
+      text: trimmedText,
+      attachments: processedAttachments,
       readBy: [
         {
           userId: String(senderId),
@@ -652,9 +698,15 @@ router.post("/conversations/:conversationId/messages", async (req, res) => {
       idempotencyKey: idempotencyKey || null
     });
 
+    const previewText = trimmedText || (
+      processedAttachments.length > 0
+        ? (processedAttachments[0].fileType?.startsWith("image/") ? "📷 Photo" : `📎 ${processedAttachments[0].name || "Document"}`)
+        : "Sent a message"
+    );
+
     // 3. Update Conversation Last Message & timestamp
     conversation.lastMessage = {
-      text: text.trim(),
+      text: previewText,
       senderId: String(senderId),
       senderType,
       senderName,
