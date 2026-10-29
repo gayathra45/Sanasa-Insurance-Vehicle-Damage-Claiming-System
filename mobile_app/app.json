@@ -74,8 +74,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "332d35ae-616b-432a-8020-28be22ec02f8"
+        "projectId": "a275c633-00b8-4e52-994c-0428181ade37"
       }
-    }
+    },
+    "owner": "gayathra45"
   }
 }

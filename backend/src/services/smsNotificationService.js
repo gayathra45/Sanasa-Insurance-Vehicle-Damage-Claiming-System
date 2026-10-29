@@ -27,6 +27,7 @@ async function resolveClaimParties(claimOrClaimNumber) {
 }
 
 // ==========================================
+// ==========================================
 // POLICYHOLDER NOTIFICATIONS
 // ==========================================
 
@@ -39,7 +40,11 @@ export async function notifyClaimSubmitted(claimData, userData = null) {
     const resolvedUser = userData || user;
     if (!claim || !resolvedUser?.mobile) return;
 
-    const message = `Sanasa Insurance: Claim #${claim.claimNumber} successfully submitted for ${claim.vehiclePlate || "your vehicle"}. Your claim is pending initial branch review. Track progress in the Sanasa app.`;
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [Vehicle: ${claim.vehiclePlate}]` : "";
+    const branchName = claim.branch ? `${claim.branch} Branch` : "Branch Office";
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}Your insurance claim has been lodged successfully.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Status: Initial Review Pending\n• Routed Unit: ${branchName}\n\nOur claims department is reviewing your submission. Track live progress on the customer portal.\n24/7 Hotline: 0725 575 575 | www.sanasainsurance.lk`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -66,9 +71,12 @@ export async function notifyClaimAssigned(claimData, agentData = null, userData 
     const resolvedAgent = agentData || agent;
     if (!claim || !resolvedUser?.mobile) return;
 
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const agentName = resolvedAgent?.name || claim.assignedAgent || "Authorized Field Assessor";
     const agentContact = resolvedAgent?.phone ? ` (${resolvedAgent.phone})` : "";
-    const agentName = resolvedAgent?.name || claim.assignedAgent || "an insurance agent";
-    const message = `Sanasa Insurance: Claim #${claim.claimNumber} assigned to Agent ${agentName}${agentContact}. The agent will contact you to coordinate vehicle inspection.`;
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}An authorized field assessor has been assigned to your claim.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Assigned Assessor: ${agentName}${agentContact}\n• Next Step: Damage Inspection\n\nThe assessor will contact you shortly to schedule the physical damage inspection.\n24/7 Hotline: 0725 575 575`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -94,7 +102,10 @@ export async function notifyClaimStatusChanged(claimData, newStatus, userData = 
     const resolvedUser = userData || user;
     if (!claim || !resolvedUser?.mobile) return;
 
-    const message = `Sanasa Insurance: Status of Claim #${claim.claimNumber} updated to: ${newStatus}. Please log in to your Sanasa portal for details.`;
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}There is an update on your claim file.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Current Status: ${newStatus.toUpperCase()}\n• Updated: ${new Date().toLocaleDateString("en-LK")}\n\nPlease sign in to your Sanasa portal for complete details and case history.\n24/7 Hotline: 0725 575 575`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -120,11 +131,13 @@ export async function notifyDocumentsRequested(claimData, requestedDocs = [], us
     const resolvedUser = userData || user;
     if (!claim || !resolvedUser?.mobile) return;
 
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
     const docList = Array.isArray(requestedDocs) && requestedDocs.length > 0
-      ? requestedDocs.slice(0, 2).join(", ")
-      : "documents";
+      ? requestedDocs.join(", ")
+      : "Supporting Accident / Garage Documents";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
 
-    const message = `Sanasa Insurance: Action required for Claim #${claim.claimNumber}. Please upload required documentation (${docList}) via your customer portal to continue processing.`;
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}Action required for your insurance claim.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Required Items: ${docList}\n\nPlease upload these documents via your customer portal to enable our assessors to finalize processing.\n24/7 Hotline: 0725 575 575`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -150,7 +163,10 @@ export async function notifyDocumentsVerified(claimData, docName = "Document", u
     const resolvedUser = userData || user;
     if (!claim || !resolvedUser?.mobile) return;
 
-    const message = `Sanasa Insurance: ${docName} received and verified for Claim #${claim.claimNumber}. Our technical team is reviewing your file.`;
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}Document verification confirmed.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Verified Item: ${docName}\n• File Status: Verified & Under Technical Appraisal\n\nOur claims assessment board is proceeding with your file evaluation.\n24/7 Hotline: 0725 575 575`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -176,14 +192,20 @@ export async function notifyInspectionUpdate(claimData, updateType = "completed"
     const resolvedUser = userData || user;
     if (!claim || !resolvedUser?.mobile) return;
 
-    let message = "";
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+    const agentName = agent?.name || claim.assignedAgent || "Authorized Field Assessor";
+
+    let updateBody = "";
     if (updateType === "scheduled") {
-      message = `Sanasa Insurance: Vehicle inspection scheduled for Claim #${claim.claimNumber}${details ? ` on ${details}` : ""}. Agent: ${agent?.name || claim.assignedAgent || "Inspector"}.`;
+      updateBody = `• Physical Inspection: SCHEDULED\n• Session: ${details || "As agreed with assessor"}\n• Assigned Assessor: ${agentName}`;
     } else if (updateType === "rescheduled") {
-      message = `Sanasa Insurance: Vehicle inspection rescheduled for Claim #${claim.claimNumber}${details ? ` to ${details}` : ""}.`;
+      updateBody = `• Physical Inspection: RESCHEDULED\n• Revised Session: ${details || "Updated appointment"}\n• Assigned Assessor: ${agentName}`;
     } else {
-      message = `Sanasa Insurance: Physical vehicle inspection for Claim #${claim.claimNumber} has been completed and submitted for branch evaluation.`;
+      updateBody = `• Physical Inspection: COMPLETED\n• Status: Damage assessment report submitted to branch underwriting board for valuation.`;
     }
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}Vehicle inspection update regarding your claim.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n${updateBody}\n\nFor inquiries, please call our 24/7 Hotline: 0725 575 575`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -209,9 +231,14 @@ export async function notifyClaimApproved(claimData, amount = null, userData = n
     const resolvedUser = userData || user;
     if (!claim || !resolvedUser?.mobile) return;
 
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
     const approvedAmt = amount || claim.approvedAmount || claim.amount;
-    const amtStr = approvedAmt ? ` for LKR ${Number(approvedAmt).toLocaleString()}` : "";
-    const message = `Sanasa Insurance: Congratulations! Claim #${claim.claimNumber} has been APPROVED${amtStr}. Settlement payout is being prepared for your registered account.`;
+    const amtStr = approvedAmt
+      ? `• Approved Settlement: LKR ${Number(approvedAmt).toLocaleString("en-LK", { minimumFractionDigits: 2 })}\n`
+      : "";
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}We are pleased to inform you that your claim has been APPROVED.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n${amtStr}• Status: Approved & Queued for Disbursement\n\nPayout processing is underway for direct credit to your registered account.\n24/7 Hotline: 0725 575 575 | www.sanasainsurance.lk`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -237,8 +264,12 @@ export async function notifyClaimRejected(claimData, reason = "", userData = nul
     const resolvedUser = userData || user;
     if (!claim || !resolvedUser?.mobile) return;
 
-    const reasonSnippet = reason ? ` Reason: ${reason}.` : "";
-    const message = `Sanasa Insurance: Notice regarding Claim #${claim.claimNumber}. Following review, the claim could not be approved.${reasonSnippet} Please contact your branch for questions.`;
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+    const reasonSnippet = reason ? `• Reason: ${reason}\n` : "";
+    const branchName = claim.branch ? `${claim.branch} Branch` : "Branch Administration";
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}Official notice regarding your insurance claim.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Decision: Claim Not Approved\n${reasonSnippet}• Reviewing Unit: ${branchName}\n\nFor questions or appeal procedures, please contact your branch or our customer care desk at 0725 575 575.`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -264,8 +295,11 @@ export async function notifyPaymentSettled(claimData, amount = null, userData = 
     const resolvedUser = userData || user;
     if (!claim || !resolvedUser?.mobile) return;
 
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
     const finalAmt = amount || claim.amount || claim.approvedAmount || 0;
-    const message = `Sanasa Insurance: Payment settlement of LKR ${Number(finalAmt).toLocaleString()} for Claim #${claim.claimNumber} has been completed. Official payment slip is available in your portal.`;
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}Settlement payment notification.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Amount Disbursed: LKR ${Number(finalAmt).toLocaleString("en-LK", { minimumFractionDigits: 2 })}\n• Status: Settled & Concluded\n\nYour official settlement voucher is now ready to download on your customer portal.\n24/7 Hotline: 0725 575 575`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -291,7 +325,10 @@ export async function notifyClaimClosed(claimData, userData = null) {
     const resolvedUser = userData || user;
     if (!claim || !resolvedUser?.mobile) return;
 
-    const message = `Sanasa Insurance: Claim #${claim.claimNumber} has been completed and closed. Thank you for placing your trust in Sanasa General Insurance.`;
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}Your claim file has been finalized and closed.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• File Status: Officially Closed\n\nThank you for placing your trust in Sanasa General Insurance. Drive safe!\n24/7 Hotline: 0725 575 575 | www.sanasainsurance.lk`;
 
     sendSmsSafe({
       phone: resolvedUser.mobile,
@@ -320,7 +357,10 @@ export async function notifyAppointmentReminder(claimData, appointmentText = "",
     const phone = targetType === "Agent" ? (agent?.phone || agent?.mobile) : user?.mobile;
     if (!phone) return;
 
-    const message = `Sanasa Insurance Reminder: Upcoming appointment for Claim #${claim.claimNumber}: ${appointmentText}. Please ensure punctuality.`;
+    const recipientName = targetRecipient?.firstName ? `Dear ${targetRecipient.firstName}, ` : targetRecipient?.name ? `Dear ${targetRecipient.name}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}Reminder for upcoming appointment.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Session Details: ${appointmentText}\n\nPlease ensure punctuality or notify us in advance if rescheduling is required.\n24/7 Hotline: 0725 575 575`;
 
     sendSmsSafe({
       phone,
@@ -351,11 +391,12 @@ export async function notifyAgentNewClaimAssigned(claimData, agentData = null) {
     const agentPhone = targetAgent?.phone || targetAgent?.mobile;
     if (!claim || !agentPhone) return;
 
-    const plate = claim.vehiclePlate || "vehicle";
+    const plate = claim.vehiclePlate || "N/A";
     const userPhone = user?.mobile ? ` (${user.mobile})` : "";
-    const clientName = user?.firstName ? `${user.firstName}${userPhone}` : "Policyholder";
+    const clientName = user?.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() + userPhone : "Policyholder";
+    const branchName = claim.branch ? `${claim.branch} Branch` : "Branch Office";
 
-    const message = `Sanasa Agent Alert: New Claim #${claim.claimNumber} assigned to you [${plate}]. Client: ${clientName}. Please review in your agent app to schedule inspection.`;
+    const message = `[SANASA AGENT DISPATCH]\nNew claim assignment received.\n\n• Claim No: #${claim.claimNumber}\n• Vehicle: ${plate}\n• Policyholder: ${clientName}\n• Branch: ${branchName}\n\nPlease access the Sanasa Agent Mobile App to review accident files and coordinate client inspection.`;
 
     sendSmsSafe({
       phone: agentPhone,
@@ -382,7 +423,9 @@ export async function notifyAgentDocumentsUploaded(claimData, docName = "Documen
     const agentPhone = targetAgent?.phone || targetAgent?.mobile;
     if (!claim || !agentPhone) return;
 
-    const message = `Sanasa Agent Alert: Client uploaded ${docName} for Claim #${claim.claimNumber}. Please review updated claim files in the agent portal.`;
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA AGENT ALERT]\nPolicyholder has uploaded new documentation.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Item Uploaded: ${docName}\n\nPlease review updated evidence in your Agent Portal prior to inspection submission.`;
 
     sendSmsSafe({
       phone: agentPhone,
@@ -409,8 +452,10 @@ export async function notifyAgentClaimDecision(claimData, decision = "Approved",
     const agentPhone = targetAgent?.phone || targetAgent?.mobile;
     if (!claim || !agentPhone) return;
 
-    const amtStr = amount ? ` (LKR ${Number(amount).toLocaleString()})` : "";
-    const message = `Sanasa Agent Alert: Claim #${claim.claimNumber} decision finalized as ${decision.toUpperCase()}${amtStr} by branch office.`;
+    const amtStr = amount ? ` (LKR ${Number(amount).toLocaleString("en-LK", { minimumFractionDigits: 2 })})` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA AGENT ALERT]\nBranch decision finalized.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Decision: ${decision.toUpperCase()}${amtStr}\n• Status: Technical review concluded by branch administration.`;
 
     sendSmsSafe({
       phone: agentPhone,
@@ -438,7 +483,9 @@ export async function notifyAgentSettlementChanged(claimData, amount = null, age
     if (!claim || !agentPhone) return;
 
     const finalAmt = amount || claim.amount || 0;
-    const message = `Sanasa Agent Alert: Payout of LKR ${Number(finalAmt).toLocaleString()} settled for Claim #${claim.claimNumber}. Case closed.`;
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA AGENT ALERT]\nSettlement completed.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Disbursed Amount: LKR ${Number(finalAmt).toLocaleString("en-LK", { minimumFractionDigits: 2 })}\n• File Status: Closed & Concluded`;
 
     sendSmsSafe({
       phone: agentPhone,

@@ -191,6 +191,22 @@ export default function MyVehicles() {
   const [tpSubmitting, setTpSubmitting] = useState(false);
   const [tpError, setTpError] = useState<string | null>(null);
 
+  // Termination modal states
+  const [terminateModalOpen, setTerminateModalOpen] = useState(false);
+  const [terminateTargetReq, setTerminateTargetReq] = useState<any | null>(null);
+  const [terminateReason, setTerminateReason] = useState("Driver resigned / employment ended");
+  const [customTerminateReason, setCustomTerminateReason] = useState("");
+  const [terminating, setTerminating] = useState(false);
+  const [terminateErrMsg, setTerminateErrMsg] = useState<string | null>(null);
+
+  const handleOpenTerminateModal = (req: any) => {
+    setTerminateTargetReq(req);
+    setTerminateReason("Driver resigned / employment ended");
+    setCustomTerminateReason("");
+    setTerminateErrMsg(null);
+    setTerminateModalOpen(true);
+  };
+
   // Fetch Third-Party Requests for Policyholder
   const fetchThirdPartyRequests = useCallback(async (nic: string, silent = false) => {
     if (!nic) return;
@@ -202,7 +218,7 @@ export default function MyVehicles() {
         if (data.success && Array.isArray(data.registrations)) {
           setThirdPartyRequests(data.registrations);
 
-          // Build vehiclePlate -> driverName map for approved requests
+          // Build vehiclePlate -> driverName map for approved requests (excluding terminated)
           const map: Record<string, string> = {};
           data.registrations.forEach((req: any) => {
             if (req.status === "Approved" && req.selectedVehicles) {
@@ -222,6 +238,50 @@ export default function MyVehicles() {
       if (!silent) setLoadingThirdParty(false);
     }
   }, []);
+
+  const handleSubmitTermination = async () => {
+    if (!terminateTargetReq) return;
+    const finalReason =
+      terminateReason === "Other reason"
+        ? customTerminateReason.trim()
+        : terminateReason.trim() || customTerminateReason.trim() || "Policyholder requested driver authorization termination";
+
+    if (!finalReason) {
+      setTerminateErrMsg("Please provide or select a reason for termination.");
+      return;
+    }
+
+    setTerminating(true);
+    setTerminateErrMsg(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/third-party/request-termination/${terminateTargetReq._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          policyHolderNic: userInfo?.nic || terminateTargetReq.policyHolderNic,
+          reason: finalReason
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit termination request.");
+      }
+      showCustomAlert(
+        "Request Sent",
+        "Your driver termination request has been submitted to your branch office for review and approval.",
+        "success"
+      );
+      setTerminateModalOpen(false);
+      setTerminateTargetReq(null);
+      if (userInfo?.nic) {
+        fetchThirdPartyRequests(userInfo.nic, true);
+      }
+    } catch (err: any) {
+      setTerminateErrMsg(err.message || "Failed to submit termination request.");
+    } finally {
+      setTerminating(false);
+    }
+  };
 
   const handleOpenThirdPartyForPlate = (plate?: string) => {
     setTpError(null);
@@ -1283,6 +1343,16 @@ export default function MyVehicles() {
                           <MaterialCommunityIcons name="check-circle" size={13} color="#16a34a" />
                           <Text style={[styles.tpStatusText, { color: "#16a34a" }]}>Approved</Text>
                         </View>
+                      ) : req.status === "Pending Termination Approval" ? (
+                        <View style={[styles.tpStatusPill, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+                          <View style={[styles.dot, { backgroundColor: "#ef4444" }]} />
+                          <Text style={[styles.tpStatusText, { color: "#dc2626" }]}>Termination Requested</Text>
+                        </View>
+                      ) : req.status === "Terminated" ? (
+                        <View style={[styles.tpStatusPill, { backgroundColor: "#f1f5f9", borderColor: "#cbd5e1" }]}>
+                          <MaterialCommunityIcons name="cancel" size={13} color="#64748b" />
+                          <Text style={[styles.tpStatusText, { color: "#475569" }]}>Terminated</Text>
+                        </View>
                       ) : req.status === "Pending Branch Approval" ? (
                         <View style={[styles.tpStatusPill, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
                           <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
@@ -1342,6 +1412,30 @@ export default function MyVehicles() {
                       </View>
                     )}
 
+                    {/* Pending Termination Notice */}
+                    {req.status === "Pending Termination Approval" && (
+                      <View style={[styles.tpRejectionBox, { backgroundColor: "#fff1f2", borderColor: "#fecdd3" }]}>
+                        <Text style={[styles.tpRejectionTitle, { color: "#be123c" }]}>
+                          Termination Request Pending Branch Approval
+                        </Text>
+                        <Text style={[styles.tpRejectionText, { color: "#e11d48" }]}>
+                          Reason: {req.terminationRequest?.reason || "Policyholder termination request"}
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* Terminated Notice */}
+                    {req.status === "Terminated" && (
+                      <View style={[styles.tpRejectionBox, { backgroundColor: "#f8fafc", borderColor: "#e2e8f0" }]}>
+                        <Text style={[styles.tpRejectionTitle, { color: "#475569" }]}>
+                          Driver Authorization Terminated
+                        </Text>
+                        <Text style={[styles.tpRejectionText, { color: "#64748b" }]}>
+                          App & web access have been officially revoked by branch.
+                        </Text>
+                      </View>
+                    )}
+
                     {/* Footer: Fee Status & Actions */}
                     <View style={styles.tpCardFooter}>
                       <View style={styles.tpPaymentStatusRow}>
@@ -1377,8 +1471,30 @@ export default function MyVehicles() {
                       )}
 
                       {req.status === "Approved" && (
-                        <View style={styles.tpDigitalPassBadge}>
-                          <Text style={styles.tpDigitalPassText}>Digital Pass Ready</Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                          <View style={styles.tpDigitalPassBadge}>
+                            <Text style={styles.tpDigitalPassText}>Pass Active</Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.tpTerminateBtn}
+                            onPress={() => handleOpenTerminateModal(req)}
+                            activeOpacity={0.8}
+                          >
+                            <MaterialCommunityIcons name="account-remove-outline" size={13} color="#dc2626" />
+                            <Text style={styles.tpTerminateBtnText}>Terminate</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+
+                      {req.status === "Pending Termination Approval" && (
+                        <View style={[styles.tpDigitalPassBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+                          <Text style={[styles.tpDigitalPassText, { color: "#dc2626" }]}>Termination Under Review</Text>
+                        </View>
+                      )}
+
+                      {req.status === "Terminated" && (
+                        <View style={[styles.tpDigitalPassBadge, { backgroundColor: "#f1f5f9", borderColor: "#e2e8f0" }]}>
+                          <Text style={[styles.tpDigitalPassText, { color: "#64748b" }]}>Access Revoked</Text>
                         </View>
                       )}
                     </View>
@@ -1615,6 +1731,223 @@ export default function MyVehicles() {
                     <>
                       <MaterialCommunityIcons name="credit-card-check" size={18} color="#ffffff" />
                       <Text style={styles.tpSubmitPayBtnText}>Pay LKR 300 & Submit</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── TERMINATE THIRD-PARTY DRIVER MODAL ── */}
+      <Modal
+        visible={terminateModalOpen}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => {
+          if (!terminating) setTerminateModalOpen(false);
+        }}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.modalBackdrop}
+        >
+          <View style={styles.modalOverlayLarge}>
+            {/* Header */}
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}>
+                <View
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 10,
+                    backgroundColor: "#fee2e2",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <MaterialCommunityIcons name="account-remove" size={22} color="#dc2626" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.modalTitleLarge}>Terminate Driver Authorization</Text>
+                  <Text style={styles.modalSubPlate}>Branch sign-off required to revoke access</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                onPress={() => !terminating && setTerminateModalOpen(false)}
+                style={styles.modalCloseIconBtn}
+                disabled={terminating}
+              >
+                <Ionicons name="close" size={22} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              style={{ maxHeight: 520 }}
+              contentContainerStyle={{ padding: 18, gap: 14 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              {/* Driver info card */}
+              {terminateTargetReq && (
+                <View
+                  style={{
+                    backgroundColor: "#f8fafc",
+                    borderWidth: 1,
+                    borderColor: "#e2e8f0",
+                    borderRadius: 14,
+                    padding: 12,
+                    gap: 6,
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: "800", color: "#0f172a" }}>
+                    {terminateTargetReq.driverName}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: "#64748b", fontWeight: "600" }}>
+                    NIC: {terminateTargetReq.driverNic} • Mobile: {terminateTargetReq.driverPhone}
+                  </Text>
+                  <Text style={{ fontSize: 11, color: "#334155" }}>
+                    Assigned Vehicles:{" "}
+                    {(terminateTargetReq.selectedVehicles || []).map((v: any) => v.vehicleNumber).join(", ") ||
+                      "N/A"}
+                  </Text>
+                </View>
+              )}
+
+              {/* Notice */}
+              <View
+                style={{
+                  backgroundColor: "#fff7ed",
+                  borderWidth: 1,
+                  borderColor: "#fed7aa",
+                  borderRadius: 12,
+                  padding: 12,
+                  flexDirection: "row",
+                  gap: 10,
+                }}
+              >
+                <MaterialCommunityIcons name="shield-alert-outline" size={20} color="#ea580c" />
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Text style={{ fontSize: 12, fontWeight: "800", color: "#9a3412" }}>
+                    Official Branch Sign-Off Required
+                  </Text>
+                  <Text style={{ fontSize: 11, color: "#c2410c", lineHeight: 16 }}>
+                    Submitting this request alerts your Sanasa Insurance branch. Once branch staff reviews and approves it, this driver's digital pass, web portal, and mobile access will be immediately terminated.
+                  </Text>
+                </View>
+              </View>
+
+              {/* Reason Selector */}
+              <View style={{ gap: 8 }}>
+                <Text style={{ fontSize: 12, fontWeight: "800", color: "#334155" }}>
+                  Reason for Termination <Text style={{ color: "#ef4444" }}>*</Text>
+                </Text>
+                {[
+                  "Driver resigned / employment ended",
+                  "Unauthorized vehicle usage or violation",
+                  "Misconduct or reckless driving incident",
+                  "Vehicle sold or policy changes",
+                  "Other reason",
+                ].map((reasonOption) => {
+                  const isSelected = terminateReason === reasonOption;
+                  return (
+                    <TouchableOpacity
+                      key={reasonOption}
+                      style={[
+                        styles.tpReasonChip,
+                        isSelected && styles.tpReasonChipActive,
+                      ]}
+                      onPress={() => setTerminateReason(reasonOption)}
+                      activeOpacity={0.7}
+                    >
+                      <MaterialCommunityIcons
+                        name={isSelected ? "radiobox-marked" : "radiobox-blank"}
+                        size={18}
+                        color={isSelected ? "#dc2626" : "#94a3b8"}
+                      />
+                      <Text
+                        style={[
+                          styles.tpReasonChipText,
+                          isSelected && styles.tpReasonChipTextActive,
+                        ]}
+                      >
+                        {reasonOption}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Custom reason input if "Other reason" */}
+              {terminateReason === "Other reason" && (
+                <View style={{ gap: 6 }}>
+                  <Text style={{ fontSize: 11, fontWeight: "700", color: "#475569" }}>
+                    Provide specific details for branch review:
+                  </Text>
+                  <TextInput
+                    style={styles.tpCustomReasonInput}
+                    placeholder="Describe the reason for removing this driver..."
+                    placeholderTextColor="#94a3b8"
+                    value={customTerminateReason}
+                    onChangeText={setCustomTerminateReason}
+                    multiline
+                    numberOfLines={3}
+                  />
+                </View>
+              )}
+
+              {/* Error message */}
+              {terminateErrMsg && (
+                <View
+                  style={{
+                    backgroundColor: "#fef2f2",
+                    borderWidth: 1,
+                    borderColor: "#fecaca",
+                    borderRadius: 10,
+                    padding: 10,
+                  }}
+                >
+                  <Text style={{ fontSize: 11, color: "#dc2626", fontWeight: "600" }}>
+                    {terminateErrMsg}
+                  </Text>
+                </View>
+              )}
+
+              {/* Action Buttons */}
+              <View style={{ flexDirection: "row", gap: 10, marginTop: 8, paddingBottom: 10 }}>
+                <TouchableOpacity
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 14,
+                    borderWidth: 1,
+                    borderColor: "#cbd5e1",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: "#ffffff",
+                  }}
+                  onPress={() => setTerminateModalOpen(false)}
+                  disabled={terminating}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: "700", color: "#475569" }}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.tpTerminateSubmitBtn,
+                    terminating && { opacity: 0.6 },
+                  ]}
+                  onPress={handleSubmitTermination}
+                  disabled={terminating}
+                  activeOpacity={0.85}
+                >
+                  {terminating ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <>
+                      <MaterialCommunityIcons name="account-remove" size={18} color="#ffffff" />
+                      <Text style={styles.tpTerminateSubmitBtnText}>Submit Termination</Text>
                     </>
                   )}
                 </TouchableOpacity>
@@ -4349,6 +4682,78 @@ const styles: any = StyleSheet.create({
     elevation: 2,
   },
   tpSubmitPayBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  tpTerminateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    backgroundColor: "#fef2f2",
+  },
+  tpTerminateBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#dc2626",
+  },
+  tpReasonChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    backgroundColor: "#ffffff",
+  },
+  tpReasonChipActive: {
+    borderColor: "#dc2626",
+    backgroundColor: "#fef2f2",
+  },
+  tpReasonChipText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#334155",
+    flex: 1,
+  },
+  tpReasonChipTextActive: {
+    color: "#dc2626",
+    fontWeight: "700",
+  },
+  tpCustomReasonInput: {
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 12,
+    padding: 10,
+    fontSize: 12,
+    color: "#0f172a",
+    backgroundColor: "#ffffff",
+    minHeight: 70,
+    textAlignVertical: "top",
+  },
+  tpTerminateSubmitBtn: {
+    flex: 1.4,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: "#dc2626",
+    shadowColor: "#dc2626",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tpTerminateSubmitBtnText: {
     color: "#ffffff",
     fontSize: 13,
     fontWeight: "800",

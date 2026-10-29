@@ -7,7 +7,9 @@ import Claim from "../models/claim.model.js";
 import User from "../models/user.model.js";
 import Agent from "../models/agent.model.js";
 import OfficeStaff from "../models/office_staff.model.js";
+import crypto from "crypto";
 import Admin from "../models/admin.model.js";
+import ThirdPartyRegistration from "../models/third_party_registration.model.js";
 import {
   emitToConversation,
   emitToUser,
@@ -113,6 +115,47 @@ router.get("/claims", async (req, res) => {
     } else if (userType === "Admin") {
       // Admins can access all claims
       filter = {};
+    } else if (userType === "ThirdParty") {
+      const cleanUid = String(userId).trim();
+      const tokenHash = crypto.createHash("sha256").update(cleanUid).digest("hex");
+      const tpReg = await ThirdPartyRegistration.findOne({
+        $or: [
+          { "driverDetails.nicNumber": cleanUid },
+          { requestReference: cleanUid },
+          { "secureAccess.tokenHash": tokenHash },
+          { _id: mongoose.isValidObjectId(cleanUid) ? cleanUid : null }
+        ]
+      }).lean();
+
+      const authorizedPlates = tpReg ? (tpReg.selectedVehicles || []).map((v) => v.numberPlate) : [];
+
+      let tpClaims = await Claim.find({
+        $or: [
+          ...(tpReg ? [{ "submittedByDriver.registrationId": tpReg._id }] : []),
+          { "submittedByDriver.driverNic": tpReg?.driverDetails?.nicNumber || cleanUid },
+          ...(authorizedPlates.length > 0 ? [{ vehiclePlate: { $in: authorizedPlates } }] : [])
+        ]
+      })
+        .select("claimNumber vehiclePlate incidentDate status branch assignedAgent userNic")
+        .sort({ createdAt: -1 })
+        .lean();
+
+      // If no claims exist yet, provide their authorized reference as a valid communication channel
+      if (tpClaims.length === 0 && tpReg) {
+        tpClaims = [
+          {
+            claimNumber: tpReg.requestReference,
+            vehiclePlate: authorizedPlates[0] || "Authorized Vehicle",
+            incidentDate: tpReg.branchReview?.reviewedAt || tpReg.createdAt,
+            status: "Authorized Driver",
+            branch: tpReg.branch,
+            assignedAgent: "",
+            userNic: tpReg.policyHolderNic
+          }
+        ];
+      }
+
+      return res.json({ success: true, claims: tpClaims });
     }
 
     let claims = await Claim.find(filter)
@@ -202,9 +245,31 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
     const { claimNumber } = req.params;
     const { userId, userType } = req.query;
 
-    const claim = await Claim.findOne({ claimNumber }).lean();
+    let claim = await Claim.findOne({ claimNumber }).lean();
+    let tpRegDoc = null;
+
     if (!claim) {
-      return res.status(404).json({ success: false, message: "Claim not found" });
+      tpRegDoc = await ThirdPartyRegistration.findOne({
+        $or: [
+          { requestReference: claimNumber },
+          { _id: mongoose.isValidObjectId(claimNumber) ? claimNumber : null }
+        ]
+      }).lean();
+
+      if (tpRegDoc) {
+        claim = {
+          claimNumber: tpRegDoc.requestReference || tpRegDoc._id.toString(),
+          vehiclePlate: (tpRegDoc.selectedVehicles || []).map((v) => v.numberPlate).join(", "),
+          status: "Authorized Driver",
+          branch: tpRegDoc.branch,
+          userNic: tpRegDoc.policyHolderNic,
+          assignedAgent: ""
+        };
+      }
+    }
+
+    if (!claim) {
+      return res.status(404).json({ success: false, message: "Claim or reference not found" });
     }
 
     // 1. Fetch Policyholder
@@ -384,6 +449,85 @@ router.get("/claims/:claimNumber/recipients", async (req, res) => {
           badgeColor: "bg-blue-100 text-blue-800"
         });
       }
+    } else if (userType === "ThirdParty") {
+      // Third-Party Driver can chat with:
+      // 1. Policyholder (Vehicle Owner)
+      // 2. Assigned Agent (or Branch Agent)
+      // 3. Branch Office Staff
+      if (policyholder) {
+        eligibleRecipients.push({
+          userId: policyholder.nic,
+          userType: "PolicyHolder",
+          name: `${policyholder.firstName} ${policyholder.lastName}`,
+          email: policyholder.email,
+          role: "Vehicle Owner (Policyholder)",
+          branch: policyholder.branch || claim.branch,
+          profilePhoto: policyholder.profilePhoto || "",
+          badgeColor: "bg-indigo-100 text-indigo-800"
+        });
+      }
+      if (agent) {
+        eligibleRecipients.push({
+          userId: agent.agentId || String(agent._id),
+          userType: "Agent",
+          name: agent.name,
+          email: agent.email,
+          role: "Assigned Claims Agent",
+          branch: agent.branch || claim.branch,
+          profilePhoto: agent.profilePhoto || "",
+          badgeColor: "bg-emerald-100 text-emerald-800"
+        });
+      }
+      if (branchStaff) {
+        eligibleRecipients.push({
+          userId: branchStaff.branch || String(branchStaff._id),
+          userType: "OfficeStaff",
+          name: `${branchStaff.branch} Branch Office`,
+          email: branchStaff.email,
+          role: "Branch Officer",
+          branch: branchStaff.branch,
+          profilePhoto: branchStaff.profilePhoto || "",
+          badgeColor: "bg-blue-100 text-blue-800"
+        });
+      }
+    }
+
+    // Check if there is an authorized Third-Party Driver for this claim or vehicle
+    if (userType !== "ThirdParty") {
+      let tpDriver = null;
+      if (claim?.submittedByDriver?.isThirdParty && claim.submittedByDriver.driverName) {
+        tpDriver = {
+          userId: claim.submittedByDriver.driverNic || String(claim.submittedByDriver.registrationId || claim.submittedByDriver.driverName),
+          userType: "ThirdParty",
+          name: `${claim.submittedByDriver.driverName} (Authorized Driver)`,
+          email: claim.submittedByDriver.driverPhone || "",
+          role: "Authorized Driver",
+          branch: claim.branch,
+          profilePhoto: "",
+          badgeColor: "bg-amber-100 text-amber-800"
+        };
+      } else if (claim?.vehiclePlate) {
+        const plates = claim.vehiclePlate.split(",").map((p) => p.trim());
+        const tpDoc = await ThirdPartyRegistration.findOne({
+          "selectedVehicles.numberPlate": { $in: plates },
+          status: "Approved"
+        }).lean();
+        if (tpDoc) {
+          tpDriver = {
+            userId: tpDoc.driverDetails?.nicNumber || String(tpDoc._id),
+            userType: "ThirdParty",
+            name: `${tpDoc.driverDetails?.fullName || "Authorized Driver"} (Driver)`,
+            email: tpDoc.driverDetails?.phoneNumber || "",
+            role: "Authorized Driver",
+            branch: tpDoc.branch,
+            profilePhoto: "",
+            badgeColor: "bg-amber-100 text-amber-800"
+          };
+        }
+      }
+      if (tpDriver && !eligibleRecipients.some((r) => String(r.userId) === String(tpDriver.userId))) {
+        eligibleRecipients.push(tpDriver);
+      }
     }
 
     // If no specific match, ensure at least one fallback recipient is available so communication is never blocked
@@ -520,6 +664,8 @@ router.post("/conversations", async (req, res) => {
       String(claimNumber).startsWith("BRANCH-") ||
       String(claimNumber).startsWith("ADMIN-") ||
       String(claimNumber).startsWith("AGENT-") ||
+      String(claimNumber).startsWith("TPR-") ||
+      String(claimNumber).startsWith("SANASA-") ||
       String(claimNumber).startsWith("DIRECT");
 
     let claim = null;

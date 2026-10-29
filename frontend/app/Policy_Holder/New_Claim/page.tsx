@@ -1082,27 +1082,27 @@ export default function FileNewClaim() {
       <PolicyHolderNavbar />
 
       {/* Styled curved header matching the mockup exactly */}
-      <div className="max-w-4xl w-full mx-auto px-6 md:px-12 mt-8 relative">
+      <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 md:px-12 mt-6 sm:mt-8 relative">
         {/* Absolute positioned background banner spanning to left edge of screen */}
-        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-4 sm:right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           {/* Mockup dark slate overlay */}
           <div className="absolute inset-0 bg-slate-900/35" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
         </div>
 
         {/* Text content aligned automatically with the page container */}
-        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+        <header className="relative z-10 h-[180px] sm:h-[210px] flex flex-col justify-center pl-2 sm:pl-4 md:pl-8 select-none">
+          <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             File New Claim
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-2.5 sm:mt-3.5 tracking-wide opacity-95">
             Report an accident or damage incident
           </p>
         </header>
       </div>
 
       {/* Main Content Form */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 md:px-12 py-10">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 md:px-12 py-8 sm:py-10">
         <form onSubmit={handleNext} className="flex flex-col gap-10">
           
           {/* Section 1: Vehicle & Incident */}
@@ -1667,10 +1667,10 @@ export default function FileNewClaim() {
 
             {/* Full-screen web Map Modal */}
             {showMapModal && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all duration-300">
-                <div className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-slate-100">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-3 sm:p-4 transition-all duration-300">
+                <div className="bg-white rounded-2xl sm:rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col h-[88vh] sm:h-[85vh] border border-slate-100">
                   {/* Header */}
-                  <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                  <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-100 flex justify-between items-center bg-white">
                     <h3 className="text-base font-semibold text-[#0d2a3a]">Select Location on Map</h3>
                     <button
                       type="button"
@@ -1802,7 +1802,7 @@ export default function FileNewClaim() {
                   </div>
 
                   {/* Footer */}
-                  <div className="px-6 py-4 border-t border-slate-100 flex justify-end items-center bg-white">
+                  <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-t border-slate-100 flex justify-end items-center bg-white">
                     <button
                       type="button"
                       onClick={() => {
@@ -1810,7 +1810,7 @@ export default function FileNewClaim() {
                         setModalInitialCoords(null);
                         setShowMapModal(false);
                       }}
-                      className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm px-8 py-3.5 rounded-full shadow-[0_4px_12px_rgba(0,0,128,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
+                      className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-xs sm:text-sm px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-[0_4px_12px_rgba(0,0,128,0.25)] hover:shadow-[0_4px_16px_rgba(2,132,199,0.3)] transition-all duration-200 cursor-pointer border-none hover:scale-[1.02] active:scale-[0.98]"
                     >
                       Confirm Location
                     </button>
@@ -1821,16 +1821,16 @@ export default function FileNewClaim() {
           </section>
 
           {/* Action Button Row */}
-          <div className="flex flex-row justify-between items-center mt-4 mb-10">
+          <div className="flex flex-row justify-between items-center gap-3 mt-4 mb-10">
             <Link
               href="/Policy_Holder/Home"
-              className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center justify-center"
+              className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-xs sm:text-base px-6 sm:px-10 py-3 sm:py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center justify-center"
             >
               Cancel
             </Link>
             <button
               type="submit"
-              className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(0,0,128,0.25)] border-none cursor-pointer flex items-center justify-center"
+              className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-xs sm:text-base px-8 sm:px-12 py-3 sm:py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(0,0,128,0.25)] border-none cursor-pointer flex items-center justify-center"
             >
               Next
             </button>

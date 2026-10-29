@@ -430,11 +430,118 @@ router.get("/my-requests", async (req, res) => {
 
     return res.json({
       success: true,
-      requests
+      requests,
+      registrations: requests
     });
   } catch (err) {
     console.error("GET my-requests error:", err);
     return res.status(500).json({ error: "Failed to fetch request history." });
+  }
+});
+
+/**
+ * GET /api/third-party/my-registrations
+ * Alias for mobile app compatibility
+ */
+router.get("/my-registrations", async (req, res) => {
+  try {
+    const { nic } = req.query;
+    if (!nic) {
+      return res.status(400).json({ error: "Policyholder NIC is required." });
+    }
+
+    const cleanNic = nic.trim().toUpperCase();
+    const requests = await ThirdPartyRegistration.find({ policyHolderNic: cleanNic })
+      .select("-secureAccess.tokenHash -secureAccess.rawToken -branchReview.internalNotes")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json({
+      success: true,
+      requests,
+      registrations: requests
+    });
+  } catch (err) {
+    console.error("GET my-registrations error:", err);
+    return res.status(500).json({ error: "Failed to fetch registrations." });
+  }
+});
+
+/**
+ * POST /api/third-party/request-termination/:requestId
+ * Policyholder requests branch termination/revocation of an active third-party driver
+ */
+router.post("/request-termination/:requestId", async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { policyHolderNic, reason } = req.body;
+
+    if (!policyHolderNic) {
+      return res.status(400).json({ error: "Policyholder NIC is required." });
+    }
+
+    const cleanNic = policyHolderNic.trim().toUpperCase();
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Driver authorization record not found." });
+    }
+
+    if (request.policyHolderNic.trim().toUpperCase() !== cleanNic) {
+      return res.status(403).json({ error: "Unauthorized: You do not own this authorization record." });
+    }
+
+    if (request.status === "Terminated") {
+      return res.status(400).json({ error: "This driver authorization is already terminated." });
+    }
+
+    if (request.status === "Pending Termination Approval") {
+      return res.status(400).json({ error: "A termination request is already awaiting branch review." });
+    }
+
+    if (request.status !== "Approved") {
+      return res.status(400).json({
+        error: `Cannot request termination for driver with status: ${request.status}. Only currently approved drivers can be terminated.`
+      });
+    }
+
+    const termReason = (reason || "").trim() || "Policyholder requested driver authorization termination";
+
+    request.status = "Pending Termination Approval";
+    request.terminationRequest = {
+      requestedBy: cleanNic,
+      requestedAt: new Date(),
+      reason: termReason,
+      status: "Pending Branch Approval",
+      reviewedBy: "",
+      reviewedByStaffId: "",
+      reviewedAt: null,
+      branchNotes: "",
+      rejectionReason: ""
+    };
+
+    await request.save();
+
+    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+
+    // Send confirmation SMS to policyholder
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nYour request to terminate driver authorization for ${request.driverDetails?.fullName || "driver"} on vehicle(s) ${plates} has been submitted.\n• Status: Sent to ${request.branch} Branch for approval\n• Reason: ${termReason}\n\nOnce approved by the branch, the driver's access will be revoked.\nHotline: 0725 575 575`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_termination_requested"
+      }).catch((e) => console.warn("Termination request SMS error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      message: "Termination request submitted successfully. It has been routed to your branch for review.",
+      request
+    });
+  } catch (err) {
+    console.error("POST /request-termination error:", err);
+    return res.status(500).json({ error: "Failed to submit driver termination request." });
   }
 });
 
@@ -551,6 +658,141 @@ router.get("/branch/request/:requestId", async (req, res) => {
     return res.status(500).json({ error: "Failed to fetch request details." });
   }
 });
+
+/**
+ * GET /api/third-party/branch/driver-activities/:requestId
+ * Fetch all activities of a third-party driver:
+ * - Claims submitted by the driver (with applicant user name, dates, status)
+ * - Supporting documents uploaded by the driver
+ * - Live chat messages sent by the driver
+ * - Access and session history
+ */
+router.get("/branch/driver-activities/:requestId", async (req, res) => {
+  try {
+    const staff = await verifyStaffBranch(req, res);
+    if (!staff) return;
+
+    const { requestId } = req.params;
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Registration request not found." });
+    }
+
+    // Strict Branch Isolation check
+    const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    if (baseStaffBranch !== baseReqBranch) {
+      return res.status(403).json({
+        error: "Forbidden: You are not authorized to view activities from another branch."
+      });
+    }
+
+    const driverName = request.driverDetails?.fullName || "";
+    const driverNic = request.driverDetails?.nicNumber || "";
+    const driverPhone = request.driverDetails?.phoneNumber || "";
+
+    // 1. Claims submitted by this third party driver
+    const queryConditions = [
+      { "submittedByDriver.registrationId": request._id }
+    ];
+    if (driverNic) {
+      queryConditions.push({ "submittedByDriver.driverNic": driverNic });
+    }
+    if (driverName) {
+      queryConditions.push({ "submittedByDriver.driverName": driverName });
+      queryConditions.push({ description: new RegExp(driverName, "i") });
+    }
+
+    const claims = await Claim.find({ $or: queryConditions })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // 2. Documents uploaded by this driver
+    const uploadedDocs = [];
+    claims.forEach((c) => {
+      (c.additionalDocuments || []).forEach((doc) => {
+        if (
+          doc.uploadedBy &&
+          (doc.uploadedBy.includes(driverName) || doc.uploadedBy.toLowerCase().includes("driver") || doc.uploadedBy.toLowerCase().includes("third-party"))
+        ) {
+          uploadedDocs.push({
+            claimNumber: c.claimNumber,
+            vehiclePlate: c.vehiclePlate,
+            docName: doc.name,
+            url: doc.url,
+            uploadedAt: doc.uploadedAt,
+            uploadedBy: doc.uploadedBy
+          });
+        }
+      });
+    });
+
+    // 3. Messages sent by this driver
+    const sentMessages = [];
+    claims.forEach((c) => {
+      (c.messages || []).forEach((m) => {
+        if (
+          m.sender &&
+          (m.sender === driverName || m.sender.includes(driverName) || m.sender.toLowerCase().includes("third-party"))
+        ) {
+          sentMessages.push({
+            claimNumber: c.claimNumber,
+            vehiclePlate: c.vehiclePlate,
+            sender: m.sender,
+            message: m.message,
+            sentAt: m.sentAt
+          });
+        }
+      });
+    });
+
+    // 4. Access Logs
+    const accessLogs = request.accessLogs || [];
+
+    return res.json({
+      success: true,
+      driverDetails: {
+        driverName,
+        driverNic,
+        driverPhone,
+        policyHolderName: request.policyHolderName,
+        policyHolderNic: request.policyHolderNic,
+        branch: request.branch,
+        requestReference: request.requestReference,
+        status: request.status
+      },
+      activities: {
+        totalClaimsApplied: claims.length,
+        claims: claims.map((c) => ({
+          claimNumber: c.claimNumber,
+          vehiclePlate: c.vehiclePlate,
+          incidentDate: c.incidentDate,
+          incidentTime: c.incidentTime,
+          damageType: c.damageType,
+          status: c.status,
+          amount: c.amount,
+          approvedAmount: c.approvedAmount,
+          location: c.location,
+          assignedAgent: c.assignedAgent,
+          createdAt: c.createdAt,
+          submittedByDriver: c.submittedByDriver || {
+            isThirdParty: true,
+            driverName,
+            driverNic,
+            driverPhone
+          }
+        })),
+        uploadedDocs,
+        sentMessages,
+        accessLogs
+      }
+    });
+  } catch (err) {
+    console.error("GET driver activities error:", err);
+    return res.status(500).json({ error: "Failed to fetch driver activities." });
+  }
+});
+
 
 /**
  * GET /api/third-party/documents/:requestId/:docType
@@ -683,7 +925,7 @@ router.post("/branch/approve/:requestId", async (req, res) => {
     if (request.driverDetails?.phoneNumber) {
       sendSms({
         phone: request.driverDetails.phoneNumber,
-        message: `Sanasa Insurance: You have been approved as an authorized driver for vehicle(s) ${plates} by ${request.policyHolderName}. Access your Digital Driver Pass here: ${accessUrl}`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.driverDetails.fullName},\n\nAuthorization Approved: You have been officially registered as an authorized third-party driver for vehicle(s) ${plates} by policyholder ${request.policyHolderName}.\n\n• Approved Unit: ${request.branch} Branch\n• Digital Driver Pass: ${accessUrl}\n\nPlease present this digital pass during vehicle operation.\n24/7 Hotline: 0725 575 575`,
         recipientType: "ThirdPartyDriver",
         recipientName: request.driverDetails.fullName,
         eventType: "third_party_driver_approved"
@@ -694,7 +936,7 @@ router.post("/branch/approve/:requestId", async (req, res) => {
     if (request.policyHolderPhone) {
       sendSms({
         phone: request.policyHolderPhone,
-        message: `Sanasa Insurance: Your Third-Party Driver authorization for ${request.driverDetails.fullName} on vehicle(s) ${plates} has been APPROVED by ${request.branch} Branch. Digital pass has been issued.`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nYour driver authorization request has been APPROVED.\n\n• Authorized Driver: ${request.driverDetails.fullName}\n• Vehicle(s): ${plates}\n• Approving Unit: ${request.branch} Branch\n• Security Pass: Digital NFC/QR pass issued to driver\n\nManage driver authorizations anytime on your customer portal.\nHotline: 0725 575 575`,
         recipientType: "PolicyHolder",
         recipientName: request.policyHolderName,
         eventType: "third_party_owner_approved"
@@ -773,7 +1015,7 @@ router.post("/branch/reject/:requestId", async (req, res) => {
     if (request.driverDetails?.phoneNumber) {
       sendSms({
         phone: request.driverDetails.phoneNumber,
-        message: `Sanasa Insurance: Your third-party driver request for vehicle(s) ${plates} was not approved by the branch. Reason: ${reasonText}`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.driverDetails.fullName},\n\nNotice regarding your driver authorization request for vehicle(s) ${plates}:\nFollowing branch review, the request was not approved.\n• Reason: ${reasonText}\n• Reviewing Unit: ${request.branch} Branch\n\nFor details, please call our 24/7 Helpline: 0725 575 575`,
         recipientType: "ThirdPartyDriver",
         recipientName: request.driverDetails.fullName,
         eventType: "third_party_driver_rejected"
@@ -784,7 +1026,7 @@ router.post("/branch/reject/:requestId", async (req, res) => {
     if (request.policyHolderPhone) {
       sendSms({
         phone: request.policyHolderPhone,
-        message: `Sanasa Insurance: Driver authorization for ${request.driverDetails.fullName} on vehicle(s) ${plates} was not approved. Reason: ${reasonText}`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nYour driver authorization request for ${request.driverDetails.fullName} on vehicle(s) ${plates} could not be approved by ${request.branch} Branch.\n• Reason: ${reasonText}\n\nPlease check your customer portal for further details or contact 0725 575 575.`,
         recipientType: "PolicyHolder",
         recipientName: request.policyHolderName,
         eventType: "third_party_owner_rejected"
@@ -848,6 +1090,152 @@ router.post("/branch/revoke-token/:requestId", async (req, res) => {
 });
 
 /**
+ * POST /api/third-party/branch/approve-termination/:requestId
+ * Branch reviews and officially approves Policyholder's driver termination request.
+ * Permanently terminates the third-party user and revokes web & mobile app access.
+ */
+router.post("/branch/approve-termination/:requestId", async (req, res) => {
+  try {
+    const staff = await verifyStaffBranch(req, res);
+    if (!staff) return;
+
+    const { requestId } = req.params;
+    const { notes } = req.body || {};
+
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Registration request not found." });
+    }
+
+    // Branch Isolation
+    const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    if (baseStaffBranch !== baseReqBranch) {
+      return res.status(403).json({ error: "Forbidden: Branch mismatch." });
+    }
+
+    if (request.status === "Terminated") {
+      return res.status(400).json({ error: "This driver authorization is already terminated." });
+    }
+
+    // 1. Mark status as Terminated and revoke access
+    request.status = "Terminated";
+    request.secureAccess = request.secureAccess || {};
+    request.secureAccess.isRevoked = true;
+    request.secureAccess.revokedAt = new Date();
+    request.secureAccess.revokedBy = `${staff.name || "Branch Staff"} (${staff.branch || "Branch"})`;
+
+    // 2. Update terminationRequest audit details
+    request.terminationRequest = request.terminationRequest || {};
+    request.terminationRequest.status = "Approved";
+    request.terminationRequest.reviewedBy = staff.name || "Branch Staff";
+    request.terminationRequest.reviewedByStaffId = String(staff._id);
+    request.terminationRequest.reviewedAt = new Date();
+    request.terminationRequest.branchNotes = (notes || "").trim();
+
+    await request.save();
+
+    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+    const driverName = request.driverDetails?.fullName || "Driver";
+
+    // 3. SMS to Policyholder (Owner) confirming branch termination
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nNotice: Your request to terminate driver authorization for ${driverName} on vehicle(s) ${plates} has been APPROVED by ${request.branch} Branch.\n• Decision: Officially Terminated\n• Web & App Access: Permanently Revoked\n\nThank you for keeping your vehicle driver registry up to date.\n24/7 Hotline: 0725 575 575`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_termination_approved"
+      }).catch((e) => console.warn("Policyholder termination approved SMS error:", e.message));
+    }
+
+    // 4. SMS to Third-Party Driver notifying that access has ended
+    if (request.driverDetails?.phoneNumber) {
+      sendSms({
+        phone: request.driverDetails.phoneNumber,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${driverName},\n\nNotice: Your driver authorization pass for vehicle(s) ${plates} has been TERMINATED by Sanasa General Insurance upon vehicle owner request.\n• Status: Terminated & Inactive\n• Permissions: Web portal and mobile app access revoked.\n\nFor questions, please contact ${request.branch} Branch or call 0725 575 575.`,
+        recipientType: "ThirdPartyDriver",
+        recipientName: driverName,
+        eventType: "third_party_driver_terminated"
+      }).catch((e) => console.warn("Driver termination notification SMS error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      message: `Driver authorization for ${driverName} has been officially terminated. Web and mobile app access are now permanently blocked.`,
+      request
+    });
+  } catch (err) {
+    console.error("POST /branch/approve-termination error:", err);
+    return res.status(500).json({ error: "Failed to approve driver termination." });
+  }
+});
+
+/**
+ * POST /api/third-party/branch/reject-termination/:requestId
+ * Branch rejects Policyholder's driver termination request, keeping driver active.
+ */
+router.post("/branch/reject-termination/:requestId", async (req, res) => {
+  try {
+    const staff = await verifyStaffBranch(req, res);
+    if (!staff) return;
+
+    const { requestId } = req.params;
+    const { reason } = req.body || {};
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ error: "A clear reason for rejecting the termination request is required." });
+    }
+
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Registration request not found." });
+    }
+
+    // Branch Isolation
+    const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    if (baseStaffBranch !== baseReqBranch) {
+      return res.status(403).json({ error: "Forbidden: Branch mismatch." });
+    }
+
+    // Revert status to Approved so driver remains authorized
+    request.status = "Approved";
+    request.terminationRequest = request.terminationRequest || {};
+    request.terminationRequest.status = "Rejected";
+    request.terminationRequest.reviewedBy = staff.name || "Branch Staff";
+    request.terminationRequest.reviewedByStaffId = String(staff._id);
+    request.terminationRequest.reviewedAt = new Date();
+    request.terminationRequest.rejectionReason = reason.trim();
+
+    await request.save();
+
+    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+    const driverName = request.driverDetails?.fullName || "Driver";
+
+    // Notify Policyholder of rejection
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nNotice: Your termination request for driver ${driverName} on vehicle(s) ${plates} was reviewed and not approved by ${request.branch} Branch.\n• Branch Reason: ${reason.trim()}\n• Current Driver Status: Active\n\nFor inquiries or further assistance, please call 0725 575 575.`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_termination_rejected"
+      }).catch((e) => console.warn("Termination reject SMS error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      message: "Driver termination request was rejected. The driver remains active.",
+      request
+    });
+  } catch (err) {
+    console.error("POST /branch/reject-termination error:", err);
+    return res.status(500).json({ error: "Failed to process termination rejection." });
+  }
+});
+
+/**
  * GET /api/third-party/driver-pass/:token
  * Public verified access to Digital Driver Authorization Pass
  * Notifies policyholder and driver of activity
@@ -898,7 +1286,7 @@ router.get("/driver-pass/:token", async (req, res) => {
     if (request.policyHolderPhone) {
       sendSms({
         phone: request.policyHolderPhone,
-        message: `Sanasa Alert: Authorized driver ${request.driverDetails.fullName} has accessed their Digital Driver Pass for vehicle(s) ${plates}.`,
+        message: `[SANASA SECURITY ALERT]\nDear ${request.policyHolderName},\n\nActivity Notice: Your authorized driver ${request.driverDetails.fullName} has accessed the Digital Driver Pass for vehicle(s) ${plates}.\n• Access Date: ${new Date().toLocaleDateString("en-LK")}\n• Verified by: Sanasa Digital Pass Gateway\n\nIf this was not authorized by you, please contact ${request.branch} Branch or call Hotline: 0725 575 575.`,
         recipientType: "PolicyHolder",
         recipientName: request.policyHolderName,
         eventType: "third_party_pass_accessed"
@@ -909,7 +1297,7 @@ router.get("/driver-pass/:token", async (req, res) => {
     if (request.driverDetails?.phoneNumber) {
       sendSms({
         phone: request.driverDetails.phoneNumber,
-        message: `Sanasa Insurance: Digital Driver Pass verification accessed for vehicle(s) ${plates}. Pass valid under Sanasa General Insurance policy.`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.driverDetails.fullName},\n\nDigital Driver Pass verification active for vehicle(s) ${plates}.\n• Authorizing Owner: ${request.policyHolderName}\n• Coverage: Underwritten by Sanasa General Insurance\n• Status: Valid & Active\n\n24/7 Hotline: 0725 575 575`,
         recipientType: "ThirdPartyDriver",
         recipientName: request.driverDetails.fullName,
         eventType: "third_party_driver_activity"
@@ -1024,15 +1412,15 @@ async function requireDriverSession(req, res, next) {
       return res.status(404).json({ error: "Driver authorization record not found." });
     }
 
-    if (request.status !== "Approved") {
+    if (request.status === "Terminated" || request.secureAccess?.isRevoked) {
       return res.status(403).json({
-        error: `Driver access is not active. Authorization status is: ${request.status}`
+        error: "This driver authorization has been officially terminated. Access to the web portal and mobile app is permanently revoked."
       });
     }
 
-    if (request.secureAccess?.isRevoked) {
+    if (request.status !== "Approved") {
       return res.status(403).json({
-        error: "This driver authorization has been revoked by the branch or policyholder."
+        error: `Driver access is not active. Authorization status is: ${request.status}`
       });
     }
 
@@ -1065,15 +1453,15 @@ router.post("/driver-session", async (req, res) => {
       return res.status(404).json({ error: "Invalid access link or token." });
     }
 
-    if (request.status !== "Approved") {
+    if (request.status === "Terminated" || request.secureAccess?.isRevoked) {
       return res.status(403).json({
-        error: `Authorization is not active. Current status: ${request.status}`
+        error: "This driver access authorization has been officially terminated. Access to the web and mobile application is permanently revoked."
       });
     }
 
-    if (request.secureAccess?.isRevoked) {
+    if (request.status !== "Approved") {
       return res.status(403).json({
-        error: "This driver access link has been revoked. Please contact your regional branch."
+        error: `Authorization is not active. Current status: ${request.status}`
       });
     }
 
@@ -1135,6 +1523,10 @@ router.get("/portal/me", requireDriverSession, async (req, res) => {
         driverAddress: request.driverDetails.residentialAddress,
         policyHolderName: request.policyHolderName,
         policyHolderNicMasked: maskNic(request.policyHolderNic),
+        policyHolderNicRaw: request.policyHolderNic,
+        policyHolderEmail: request.policyHolderEmail || "",
+        policyHolderPhone: request.policyHolderPhone || "",
+        driverNicRaw: request.driverDetails.nicNumber || request.requestReference,
         branch: request.branch,
         reference: request.requestReference,
         approvalDate: request.branchReview?.reviewedAt || request.updatedAt,
@@ -1238,6 +1630,137 @@ router.get("/portal/claims", requireDriverSession, async (req, res) => {
     return res.status(500).json({ error: "Failed to fetch claims." });
   }
 });
+
+/**
+ * GET /api/third-party/portal/notifications
+ * Comprehensive notifications feed for the authorized driver:
+ * - Authorization activation & digital pass ready
+ * - Claim status updates (in-progress, inspected, approved, settled, rejected)
+ * - Urgent document requests
+ * - Messages from staff / agent
+ */
+router.get("/portal/notifications", requireDriverSession, async (req, res) => {
+  try {
+    const request = req.thirdPartyRequest;
+    const authorizedPlates = (request.selectedVehicles || []).map((v) => v.numberPlate);
+
+    const notifs = [];
+
+    // 1. Authorization Active Notification
+    const approvalDate = request.branchReview?.reviewedAt || request.createdAt;
+    notifs.push({
+      id: `auth-${request._id}`,
+      type: "authorization",
+      category: "approved",
+      title: "Driver Authorization Active & Pass Issued",
+      message: `You are authorized by ${request.policyHolderName} to drive ${authorizedPlates.join(", ")}. Verified by ${request.branch} Branch.`,
+      subText: "Your secure digital pass is ready for road and police verification.",
+      createdAt: approvalDate,
+      actionType: "pass",
+      actionLabel: "View Digital Pass",
+      isUrgent: false
+    });
+
+    // 2. Fetch all claims matching driver or authorized plates
+    const claims = await Claim.find({
+      vehiclePlate: { $in: authorizedPlates },
+      $or: [
+        { "submittedByDriver.registrationId": request._id },
+        { "submittedByDriver.driverNic": request.driverDetails.nicNumber },
+        { description: new RegExp(request.driverDetails.fullName, "i") }
+      ]
+    }).sort({ createdAt: -1 });
+
+    for (const claim of claims) {
+      // 2a. Urgent Document Request
+      if (claim.documentsRequested) {
+        const docList = (claim.requestedDocuments || []).join(" & ") || "supporting claim documents";
+        notifs.push({
+          id: `notif-${claim.claimNumber}-docs`,
+          type: "document_request",
+          category: "urgent",
+          title: `Action Required: Documents Requested for ${claim.claimNumber}`,
+          message: `Branch office has requested ${docList} for vehicle ${claim.vehiclePlate}.`,
+          subText: "Please upload the requested documents promptly to avoid settlement delays.",
+          createdAt: claim.updatedAt || claim.createdAt,
+          claimNumber: claim.claimNumber,
+          actionType: "upload_doc",
+          actionLabel: "Upload Documents",
+          isUrgent: true
+        });
+      }
+
+      // 2b. Claim Status Updates
+      const st = (claim.status || "").toLowerCase();
+      let statusCat = "status";
+      let statusTitle = `Claim ${claim.claimNumber} Status: ${claim.status || "Pending"}`;
+      let statusDesc = `Your claim for ${claim.vehiclePlate} (${claim.damageType}) is currently in "${claim.status || "Pending"}" status.`;
+
+      if (st.includes("approved") || st.includes("settled")) {
+        statusCat = "approved";
+        statusTitle = `Claim ${claim.claimNumber} Approved!`;
+        statusDesc = `Your insurance claim for vehicle ${claim.vehiclePlate} has been approved by the insurance branch.`;
+      } else if (st.includes("reject")) {
+        statusCat = "urgent";
+        statusTitle = `Claim ${claim.claimNumber} Rejected`;
+        statusDesc = `Your claim for ${claim.vehiclePlate} was reviewed and rejected. Check claim messages for notes.`;
+      } else if (st.includes("inspection") || claim.inspectionReport) {
+        statusTitle = `Inspection Completed for ${claim.claimNumber}`;
+        statusDesc = `Field officer inspection assessment is completed for vehicle ${claim.vehiclePlate}.`;
+      }
+
+      notifs.push({
+        id: `notif-${claim.claimNumber}-status-${claim.status || "pending"}`,
+        type: "claim_status",
+        category: statusCat,
+        title: statusTitle,
+        message: statusDesc,
+        subText: `Incident Date: ${claim.incidentDate} • Branch: ${claim.branch || request.branch}`,
+        createdAt: claim.updatedAt || claim.createdAt,
+        claimNumber: claim.claimNumber,
+        actionType: "view_claim",
+        actionLabel: "View Claim",
+        isUrgent: statusCat === "urgent"
+      });
+
+      // 2c. Chat messages
+      if (claim.messages && claim.messages.length > 0) {
+        const staffOrAgentMsgs = claim.messages.filter(
+          (m) => m.sender && m.sender !== "System" && !m.sender.includes(request.driverDetails.fullName)
+        );
+        const lastMsg = staffOrAgentMsgs[staffOrAgentMsgs.length - 1];
+        if (lastMsg) {
+          notifs.push({
+            id: `notif-${claim.claimNumber}-msg-${new Date(lastMsg.sentAt).getTime()}`,
+            type: "chat_message",
+            category: "message",
+            title: `New Message from ${lastMsg.sender}`,
+            message: `Regarding Claim ${claim.claimNumber}: "${lastMsg.message.slice(0, 100)}${lastMsg.message.length > 100 ? "..." : ""}"`,
+            subText: "Tap to reply in Live Claims Chat.",
+            createdAt: lastMsg.sentAt,
+            claimNumber: claim.claimNumber,
+            actionType: "chat",
+            actionLabel: "Open Chat",
+            isUrgent: false
+          });
+        }
+      }
+    }
+
+    // Sort descending by date
+    notifs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return res.json({
+      success: true,
+      notifications: notifs,
+      unreadCount: notifs.length
+    });
+  } catch (err) {
+    console.error("GET /portal/notifications error:", err);
+    return res.status(500).json({ error: "Failed to fetch driver notifications." });
+  }
+});
+
 
 /**
  * GET /api/third-party/portal/claims/:claimNumber
@@ -1366,6 +1889,29 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
       uploadArray(drivingLicense?.rear, "claims/driving_license")
     ]);
 
+    // Upload other vehicles involved photos dynamically
+    let resolvedOtherVehicles = [];
+    if (otherVehicleDetails) {
+      if (Array.isArray(otherVehicleDetails)) {
+        resolvedOtherVehicles = await Promise.all(
+          otherVehicleDetails.map(async (vehicle) => {
+            const [licPhotos, vehPhotos] = await Promise.all([
+              uploadArray(vehicle.licensePhotos, "claims/driving_license"),
+              uploadArray(vehicle.vehiclePhotos, "claims/accident_photos")
+            ]);
+            return {
+              vehiclePlate: (vehicle.vehiclePlate || "").trim(),
+              insuranceCompany: (vehicle.insuranceCompany || "").trim(),
+              policyNumber: (vehicle.policyNumber || "").trim(),
+              driverName: (vehicle.driverName || "").trim(),
+              licensePhotos: licPhotos || [],
+              vehiclePhotos: vehPhotos || []
+            };
+          })
+        );
+      }
+    }
+
     // Optional AI damage analysis
     const allPhotos = [
       ...(accidentPhotos?.front || []),
@@ -1392,6 +1938,7 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
       damageType: damageType.trim(),
       description: description.trim(),
       location: location.trim(),
+      otherVehicleDetails: resolvedOtherVehicles,
       branch: assignedBranch,
       status: "Pending",
       currentStep: 1,
@@ -1443,7 +1990,7 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
     if (request.driverDetails?.phoneNumber) {
       sendSms({
         phone: request.driverDetails.phoneNumber,
-        message: `Sanasa Insurance: Your claim ${nextClaimNum} for vehicle ${targetPlate} has been lodged successfully and routed to ${assignedBranch} Branch for inspection.`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.driverDetails.fullName},\n\nYour insurance claim has been successfully lodged.\n• Claim No: #${nextClaimNum}\n• Vehicle: ${targetPlate}\n• Routing: ${assignedBranch} Branch\n• Status: Submitted & Pending Inspection\n\nOur branch assessor will review the claim documentation shortly.\n24/7 Hotline: 0725 575 575`,
         recipientType: "ThirdPartyDriver",
         recipientName: request.driverDetails.fullName,
         eventType: "third_party_claim_submitted"
@@ -1453,7 +2000,7 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
     if (request.policyHolderPhone) {
       sendSms({
         phone: request.policyHolderPhone,
-        message: `Sanasa Alert: Authorized driver ${request.driverDetails.fullName} has lodged claim ${nextClaimNum} for your vehicle ${targetPlate}.`,
+        message: `[SANASA CLAIM ALERT]\nDear ${request.policyHolderName},\n\nAn insurance claim has been submitted for your vehicle.\n• Lodged By: ${request.driverDetails.fullName} (Authorized Driver)\n• Claim No: #${nextClaimNum}\n• Vehicle: ${targetPlate}\n• Assigned Branch: ${assignedBranch} Branch\n\nPlease sign in to your Sanasa portal to view claim progress.\nHotline: 0725 575 575`,
         recipientType: "PolicyHolder",
         recipientName: request.policyHolderName,
         eventType: "third_party_claim_owner_alert"

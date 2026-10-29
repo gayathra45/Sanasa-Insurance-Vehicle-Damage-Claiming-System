@@ -60,7 +60,9 @@ router.post("/test", async (req, res) => {
       return res.status(400).json({ error: "Phone number is required." });
     }
 
-    const testMessage = message || "Sanasa Insurance: This is a verified test SMS from your TextBee SMS Gateway.";
+    const testMessage =
+      message ||
+      "[SANASA GENERAL INSURANCE]\nSystem Diagnostics: This is an official verified test SMS from your Sanasa Gateway. System is operational.\nHotline: 0725 575 575 | www.sanasainsurance.lk";
 
     const result = await sendSms({
       phone,

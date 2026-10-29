@@ -20,7 +20,8 @@ import {
   BubbleChatIcon,
   Cancel01Icon,
   LockIcon,
-  Loading03Icon
+  Loading03Icon,
+  UserCheck01Icon
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
@@ -233,6 +234,10 @@ export default function OfficeStaffDashboard() {
 
         const formattedClaims = latest5Claims.map((claim: any) => {
           const isUrgent = checkUrgent(claim);
+          const isThirdParty = !!(claim.submittedByDriver?.isThirdParty && claim.submittedByDriver?.driverName);
+          const applicantName = isThirdParty
+            ? claim.submittedByDriver.driverName
+            : (claim.policyHolderName || "Policy Holder");
           return {
             id: claim.claimNumber,
             urgency: isUrgent ? "Urgent" : "Normal",
@@ -241,6 +246,8 @@ export default function OfficeStaffDashboard() {
             type: claim.damageType,
             location: claim.location,
             time: formatSriLankaDateTime(claim.createdAt),
+            isThirdParty,
+            applicantName,
             rawClaim: claim,
           };
         });
@@ -537,10 +544,21 @@ export default function OfficeStaffDashboard() {
                                 </div>
 
                                 {/* Specifications Row */}
-                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-2 text-slate-600 text-xs font-semibold flex-1">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 text-slate-600 text-xs font-semibold flex-1">
                                   <div className="flex flex-col gap-0.5">
                                     <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold select-none">Vehicle No</span>
                                     <span className="text-slate-800">{claim.vehicleNo}</span>
+                                  </div>
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold select-none">Applicant</span>
+                                    {claim.isThirdParty ? (
+                                      <span className="text-indigo-700 font-bold flex items-center gap-1 truncate" title={`Authorized Driver: ${claim.applicantName}`}>
+                                        <HugeiconsIcon icon={UserCheck01Icon} className="w-3 h-3 text-indigo-600 flex-shrink-0" />
+                                        <span className="truncate">{claim.applicantName}</span>
+                                      </span>
+                                    ) : (
+                                      <span className="text-slate-800 truncate" title={`Policyholder: ${claim.applicantName}`}>{claim.applicantName}</span>
+                                    )}
                                   </div>
                                   <div className="flex flex-col gap-0.5">
                                     <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold select-none">Type</span>
@@ -653,6 +671,17 @@ export default function OfficeStaffDashboard() {
               <div className="border-t border-slate-100 my-3" />
 
               <div className="space-y-3">
+                <div className="flex justify-between border-b border-slate-50 pb-2">
+                  <span className="text-slate-400 font-medium">Claim Lodged By</span>
+                  {selectedClaim.submittedByDriver?.isThirdParty && selectedClaim.submittedByDriver?.driverName ? (
+                    <span className="text-indigo-700 font-bold flex items-center gap-1.5 text-right">
+                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600" />
+                      <span>{selectedClaim.submittedByDriver.driverName} <span className="text-[10px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded ml-1">Driver</span></span>
+                    </span>
+                  ) : (
+                    <span className="text-slate-800 font-semibold">{selectedClaim.policyHolderName || "Policyholder"}</span>
+                  )}
+                </div>
                 <div className="flex justify-between border-b border-slate-50 pb-2">
                   <span className="text-slate-400 font-medium">Vehicle Number</span>
                   <span className="text-slate-800 font-semibold">{selectedClaim.vehiclePlate}</span>

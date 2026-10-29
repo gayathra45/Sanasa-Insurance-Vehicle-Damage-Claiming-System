@@ -11,11 +11,11 @@ const conversationSchema = new mongoose.Schema(
         userId: { type: String, required: true },
         userType: {
           type: String,
-          enum: ["PolicyHolder", "Agent", "OfficeStaff", "Admin"],
+          enum: ["PolicyHolder", "Agent", "OfficeStaff", "Admin", "ThirdParty"],
           required: true
         },
         name: { type: String, required: true },
-        email: { type: String, required: true },
+        email: { type: String, default: "" },
         role: { type: String, default: "" },
         branch: { type: String, default: "" },
         profilePhoto: { type: String, default: "" },

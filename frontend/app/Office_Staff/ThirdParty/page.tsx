@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import HeaderNotificationBell from "@/app/Components/HeaderNotificationBell";
 import SimpleLoader from "@/app/Components/SimpleLoader";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -77,7 +78,13 @@ interface ThirdPartyRequest {
   selectedVehicles: Vehicle[];
   fee: number;
   currency: string;
-  status: "Pending Payment" | "Pending Branch Approval" | "Approved" | "Rejected";
+  status:
+    | "Pending Payment"
+    | "Pending Branch Approval"
+    | "Approved"
+    | "Rejected"
+    | "Pending Termination Approval"
+    | "Terminated";
   payment: PaymentInfo;
   secureAccess?: SecureAccess;
   branchReview?: {
@@ -85,6 +92,17 @@ interface ThirdPartyRequest {
     reviewedByStaffName?: string;
     reviewedAt?: string;
     notes?: string;
+    rejectionReason?: string;
+  };
+  terminationRequest?: {
+    requestedBy?: string;
+    requestedAt?: string;
+    reason?: string;
+    status?: "None" | "Pending Branch Approval" | "Approved" | "Rejected";
+    reviewedBy?: string;
+    reviewedByStaffId?: string;
+    reviewedAt?: string;
+    branchNotes?: string;
     rejectionReason?: string;
   };
   createdAt: string;
@@ -100,7 +118,15 @@ export default function OfficeStaffThirdPartyPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "Pending Branch Approval" | "Approved" | "Rejected" | "Pending Payment">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    | "all"
+    | "Pending Branch Approval"
+    | "Pending Termination Approval"
+    | "Approved"
+    | "Rejected"
+    | "Terminated"
+    | "Pending Payment"
+  >("all");
 
   // Selected request for details modal
   const [selectedReq, setSelectedReq] = useState<ThirdPartyRequest | null>(null);
@@ -113,6 +139,12 @@ export default function OfficeStaffThirdPartyPage() {
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRevokeModal, setShowRevokeModal] = useState(false);
   const [revocationReason, setRevocationReason] = useState("");
+
+  // Termination Modals
+  const [showApproveTerminationModal, setShowApproveTerminationModal] = useState(false);
+  const [terminationNotes, setTerminationNotes] = useState("");
+  const [showRejectTerminationModal, setShowRejectTerminationModal] = useState(false);
+  const [rejectTerminationReason, setRejectTerminationReason] = useState("");
 
   // Document preview enlarged
   const [previewDoc, setPreviewDoc] = useState<{ title: string; url: string } | null>(null);
@@ -195,8 +227,10 @@ export default function OfficeStaffThirdPartyPage() {
     return {
       total: requests.length,
       pending: requests.filter((r) => r.status === "Pending Branch Approval").length,
+      pendingTermination: requests.filter((r) => r.status === "Pending Termination Approval").length,
       approved: requests.filter((r) => r.status === "Approved").length,
       rejected: requests.filter((r) => r.status === "Rejected").length,
+      terminated: requests.filter((r) => r.status === "Terminated").length,
       unpaid: requests.filter((r) => r.status === "Pending Payment").length
     };
   }, [requests]);
@@ -331,6 +365,78 @@ export default function OfficeStaffThirdPartyPage() {
     }
   };
 
+  // Handle Approve Termination
+  const handleApproveTermination = async () => {
+    if (!selectedReq || !staffInfo?._id) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/third-party/branch/approve-termination/${selectedReq._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffInfo._id
+        },
+        body: JSON.stringify({ notes: terminationNotes.trim() })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to approve driver termination");
+      }
+
+      showToast(
+        `Driver authorization for ${selectedReq.driverDetails?.fullName || "driver"} has been terminated and access permanently revoked.`
+      );
+      setShowApproveTerminationModal(false);
+      setTerminationNotes("");
+      if (data.request) {
+        setSelectedReq(data.request);
+      }
+      loadRequests(staffInfo._id, branch, true);
+    } catch (err: any) {
+      showToast(err.message || "Failed to approve termination", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Handle Reject Termination
+  const handleRejectTermination = async () => {
+    if (!selectedReq || !staffInfo?._id) return;
+    if (!rejectTerminationReason.trim()) {
+      showToast("Please provide a reason for rejecting the termination request.", "error");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/third-party/branch/reject-termination/${selectedReq._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffInfo._id
+        },
+        body: JSON.stringify({ reason: rejectTerminationReason.trim() })
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to reject termination");
+      }
+
+      showToast("Termination request rejected. Driver remains active.");
+      setShowRejectTerminationModal(false);
+      setRejectTerminationReason("");
+      if (data.request) {
+        setSelectedReq(data.request);
+      }
+      loadRequests(staffInfo._id, branch, true);
+    } catch (err: any) {
+      showToast(err.message || "Failed to reject termination", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // Copy Access URL to Clipboard
   const handleCopyUrl = (url: string) => {
     if (!url) return;
@@ -349,11 +455,25 @@ export default function OfficeStaffThirdPartyPage() {
             Pending Approval
           </span>
         );
+      case "Pending Termination Approval":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+            Termination Requested
+          </span>
+        );
       case "Approved":
         return (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
             <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
             Approved
+          </span>
+        );
+      case "Terminated":
+        return (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
+            <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+            Terminated / Revoked
           </span>
         );
       case "Rejected":
@@ -381,33 +501,27 @@ export default function OfficeStaffThirdPartyPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Header */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-          <div className="flex items-center gap-4">
+        <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => {
                 if (typeof window !== "undefined") {
                   window.dispatchEvent(new CustomEvent("open-mobile-menu"));
                 }
               }}
-              className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+              className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
             >
-              <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" />
+              <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
             </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-[#102A43]">Third-Party Drivers</h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#102A43]/10 text-[#102A43]">
-                  <HugeiconsIcon icon={Building01Icon} className="w-3 h-3" />
-                  {branch || "Branch"}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Review driver registration requests, verify KYC documents, and issue secure digital NFC passes.
-              </p>
-            </div>
+            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+              <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
+                {branch || "Galle"} Branch
+              </span>
+              <span className="hidden md:inline text-slate-400 font-medium">— Third-Party Drivers</span>
+            </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => staffInfo?._id && loadRequests(staffInfo._id, branch)}
               disabled={refreshing}
@@ -420,6 +534,7 @@ export default function OfficeStaffThirdPartyPage() {
               />
               <span>Refresh</span>
             </button>
+            <HeaderNotificationBell href="/Office_Staff/Notifications" />
             <UserAvatarDropdown userType="office_staff" />
           </div>
         </header>
@@ -443,8 +558,14 @@ export default function OfficeStaffThirdPartyPage() {
 
         {/* Body Content */}
         <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
+          {/* Subtitle / Context Bar */}
+          <div className="-mt-1 mb-1">
+            <p className="text-xs text-slate-500 font-normal">
+              Review driver registration requests, verify KYC documents, and issue secure digital NFC passes.
+            </p>
+          </div>
           {/* Quick Metrics Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</span>
@@ -464,7 +585,31 @@ export default function OfficeStaffThirdPartyPage() {
                 </div>
               </div>
               <div className="text-2xl font-bold text-amber-800 mt-2">{stats.pending}</div>
-              <p className="text-xs text-amber-600 mt-1">Paid, awaiting branch approval</p>
+              <p className="text-xs text-amber-600 mt-1">Paid, awaiting approval</p>
+            </div>
+
+            <div
+              onClick={() => setStatusFilter("Pending Termination Approval")}
+              className={`bg-white p-5 rounded-xl border transition-all cursor-pointer shadow-sm ${
+                stats.pendingTermination > 0
+                  ? "border-rose-300 bg-gradient-to-br from-white to-rose-50/40 ring-2 ring-rose-400/20"
+                  : "border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">
+                  Terminations
+                </span>
+                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
+                  {stats.pendingTermination > 0 ? (
+                    <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping" />
+                  ) : (
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+                  )}
+                </div>
+              </div>
+              <div className="text-2xl font-bold text-rose-800 mt-2">{stats.pendingTermination}</div>
+              <p className="text-xs text-rose-600 mt-1">Policyholder termination requests</p>
             </div>
 
             <div className="bg-white p-5 rounded-xl border border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/30 shadow-sm">
@@ -478,15 +623,15 @@ export default function OfficeStaffThirdPartyPage() {
               <p className="text-xs text-emerald-600 mt-1">Active driver authorizations</p>
             </div>
 
-            <div className="bg-white p-5 rounded-xl border border-rose-200/80 bg-gradient-to-br from-white to-rose-50/30 shadow-sm">
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">Rejected</span>
-                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
-                  <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Terminated</span>
+                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+                  <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4" />
                 </div>
               </div>
-              <div className="text-2xl font-bold text-rose-800 mt-2">{stats.rejected}</div>
-              <p className="text-xs text-rose-600 mt-1">Declined applications</p>
+              <div className="text-2xl font-bold text-slate-800 mt-2">{stats.terminated}</div>
+              <p className="text-xs text-slate-500 mt-1">Revoked authorizations</p>
             </div>
           </div>
 
@@ -497,7 +642,14 @@ export default function OfficeStaffThirdPartyPage() {
               {[
                 { key: "all", label: "All" },
                 { key: "Pending Branch Approval", label: "Pending Approval", count: stats.pending },
+                {
+                  key: "Pending Termination Approval",
+                  label: "Termination Requests",
+                  count: stats.pendingTermination,
+                  alert: true
+                },
                 { key: "Approved", label: "Approved", count: stats.approved },
+                { key: "Terminated", label: "Terminated", count: stats.terminated },
                 { key: "Rejected", label: "Rejected" },
                 { key: "Pending Payment", label: "Unpaid" }
               ].map((tab) => (
@@ -507,6 +659,8 @@ export default function OfficeStaffThirdPartyPage() {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
                     statusFilter === tab.key
                       ? "bg-[#102A43] text-white shadow-sm"
+                      : tab.alert && tab.count && tab.count > 0
+                      ? "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200"
                       : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
@@ -516,6 +670,8 @@ export default function OfficeStaffThirdPartyPage() {
                       className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
                         statusFilter === tab.key
                           ? "bg-white/20 text-white"
+                          : tab.alert
+                          ? "bg-rose-600 text-white"
                           : "bg-amber-100 text-amber-800"
                       }`}
                     >
@@ -739,6 +895,72 @@ export default function OfficeStaffThirdPartyPage() {
                       This registration cannot be approved until the policyholder completes the Stripe fee payment.
                     </p>
                   </div>
+                </div>
+              )}
+
+              {/* Policyholder Termination Request Review Box */}
+              {selectedReq.status === "Pending Termination Approval" && (
+                <div className="p-4 rounded-xl bg-rose-50 border-2 border-rose-300 text-rose-950 space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center">
+                        <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4" />
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-rose-900">
+                        Driver Termination Requested by Policyholder
+                      </span>
+                    </div>
+                    <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-200 text-rose-800 animate-pulse">
+                      Awaiting Action
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-rose-800">
+                    The policyholder (<span className="font-semibold">{selectedReq.policyHolderName || selectedReq.policyHolderNic}</span>) has submitted a formal request to terminate and revoke this driver's authorization.
+                  </p>
+
+                  <div className="bg-white p-3 rounded-lg border border-rose-200 text-xs">
+                    <div className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      Policyholder Stated Reason:
+                    </div>
+                    <div className="text-slate-900 font-medium mt-1">
+                      {selectedReq.terminationRequest?.reason || "Policyholder requested driver termination."}
+                    </div>
+                    {selectedReq.terminationRequest?.requestedAt && (
+                      <div className="text-[10px] text-slate-400 mt-1.5">
+                        Submitted: {new Date(selectedReq.terminationRequest.requestedAt).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Terminated Audit Box */}
+              {selectedReq.status === "Terminated" && (
+                <div className="p-4 rounded-xl bg-slate-100 border border-slate-300 text-slate-800 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-slate-700 text-white flex items-center justify-center">
+                      <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+                    </div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                      Driver Authorization Officially Terminated
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600">
+                    This authorization is terminated. The driver's web and mobile app access are permanently blocked.
+                  </p>
+                  {selectedReq.terminationRequest?.reviewedAt && (
+                    <div className="text-[11px] text-slate-500">
+                      Approved by: {selectedReq.terminationRequest.reviewedBy || "Branch Staff"} on{" "}
+                      {new Date(selectedReq.terminationRequest.reviewedAt).toLocaleString()}
+                    </div>
+                  )}
+                  {selectedReq.terminationRequest?.branchNotes && (
+                    <div className="text-xs text-slate-700 bg-white p-2.5 rounded-lg border border-slate-200 mt-1">
+                      <span className="font-semibold text-slate-600">Branch Notes:</span>{" "}
+                      {selectedReq.terminationRequest.branchNotes}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1040,6 +1262,30 @@ export default function OfficeStaffThirdPartyPage() {
                   </>
                 )}
 
+                {selectedReq.status === "Pending Termination Approval" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setShowRejectTerminationModal(true)}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-300 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                    >
+                      <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                      <span>Reject Termination</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowApproveTerminationModal(true)}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                    >
+                      <HugeiconsIcon icon={Alert02Icon} className="w-3.5 h-3.5" />
+                      <span>Approve Termination & Revoke Access</span>
+                    </button>
+                  </>
+                )}
+
                 {selectedReq.status === "Approved" && selectedReq.secureAccess?.accessUrl && (
                   <button
                     type="button"
@@ -1161,6 +1407,122 @@ export default function OfficeStaffThirdPartyPage() {
                 className="flex-1 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
                 {actionLoading ? "Declining..." : "Confirm Rejection"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approve Termination Modal */}
+      {showApproveTerminationModal && selectedReq && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center mx-auto">
+              <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6" />
+            </div>
+
+            <div className="text-center">
+              <h3 className="text-base font-bold text-slate-900">Approve Driver Termination</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                You are approving the termination of driver{" "}
+                <span className="font-semibold text-slate-800">{selectedReq.driverDetails?.fullName}</span>.
+              </p>
+            </div>
+
+            <div className="p-3 bg-rose-50 rounded-lg border border-rose-200 text-xs text-rose-900 space-y-1">
+              <p className="font-semibold">Security Action:</p>
+              <ul className="list-disc list-inside text-[11px] space-y-0.5 text-rose-800">
+                <li>Digital driver pass will be permanently invalidated.</li>
+                <li>Driver web portal & mobile app logins will be blocked.</li>
+                <li>SMS notices will be dispatched to both policyholder & driver.</li>
+              </ul>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Branch Notes (Optional)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Confirmed with policyholder via phone"
+                value={terminationNotes}
+                onChange={(e) => setTerminationNotes(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowApproveTerminationModal(false);
+                  setTerminationNotes("");
+                }}
+                disabled={actionLoading}
+                className="flex-1 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveTermination}
+                disabled={actionLoading}
+                className="flex-1 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {actionLoading ? "Terminating..." : "Confirm Termination"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Termination Modal */}
+      {showRejectTerminationModal && selectedReq && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4 animate-in fade-in zoom-in-95">
+            <div className="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mx-auto">
+              <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" />
+            </div>
+
+            <div className="text-center">
+              <h3 className="text-base font-bold text-slate-900">Decline Termination Request</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                The driver will remain active and authorized on the policyholder's vehicle(s).
+              </p>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Reason for Declining <span className="text-rose-500">* (Mandatory)</span>
+              </label>
+              <textarea
+                rows={3}
+                placeholder="e.g. Policyholder verbal request to cancel termination, dispute resolution pending."
+                value={rejectTerminationReason}
+                onChange={(e) => setRejectTerminationReason(e.target.value)}
+                className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRejectTerminationModal(false);
+                  setRejectTerminationReason("");
+                }}
+                disabled={actionLoading}
+                className="flex-1 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRejectTermination}
+                disabled={actionLoading || !rejectTerminationReason.trim()}
+                className="flex-1 py-2 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-900 rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+              >
+                {actionLoading ? "Processing..." : "Decline Termination"}
               </button>
             </div>
           </div>

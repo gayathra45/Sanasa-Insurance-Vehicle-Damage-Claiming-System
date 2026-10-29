@@ -179,6 +179,13 @@ export default function AccessibilityWidget() {
     applyState(s);
   }, []);
 
+  // Listen for external open trigger
+  useEffect(() => {
+    const handleToggle = () => setOpen(prev => !prev);
+    window.addEventListener("open-accessibility", handleToggle);
+    return () => window.removeEventListener("open-accessibility", handleToggle);
+  }, []);
+
   // Apply & save on change
   useEffect(() => {
     applyState(state);
