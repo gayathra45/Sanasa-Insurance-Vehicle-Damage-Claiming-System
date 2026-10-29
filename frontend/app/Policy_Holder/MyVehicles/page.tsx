@@ -253,6 +253,22 @@ export default function MyVehicles() {
   const [tpReviewOpen, setTpReviewOpen] = useState(false);
   const [resumingPaymentId, setResumingPaymentId] = useState<string | null>(null);
 
+  // Termination Request States
+  const [terminateTargetReq, setTerminateTargetReq] = useState<any | null>(null);
+  const [terminateReason, setTerminateReason] = useState("Driver resigned / employment ended");
+  const [customTerminateReason, setCustomTerminateReason] = useState("");
+  const [terminating, setTerminating] = useState(false);
+  const [terminateSuccessMsg, setTerminateSuccessMsg] = useState("");
+  const [terminateErrMsg, setTerminateErrMsg] = useState("");
+
+  const handleOpenTerminateModal = (req: any) => {
+    setTerminateTargetReq(req);
+    setTerminateReason("Driver resigned / employment ended");
+    setCustomTerminateReason("");
+    setTerminateErrMsg("");
+    setTerminateSuccessMsg("");
+  };
+
   const tpNicFrontRef = useRef<HTMLInputElement>(null);
   const tpNicBackRef = useRef<HTMLInputElement>(null);
   const tpDlFrontRef = useRef<HTMLInputElement>(null);
@@ -262,18 +278,59 @@ export default function MyVehicles() {
   const vehicleDriverMap = useMemo(() => {
     const map: Record<string, { driverName: string; status: string; ref: string }> = {};
     thirdPartyRequests.forEach((req) => {
-      req.selectedVehicles?.forEach((v: any) => {
-        if (!map[v.numberPlate] || req.status === "Approved") {
-          map[v.numberPlate] = {
-            driverName: req.driverDetails?.fullName || "Assigned Driver",
-            status: req.status,
-            ref: req.requestReference
-          };
-        }
-      });
+      if (req.status !== "Terminated") {
+        req.selectedVehicles?.forEach((v: any) => {
+          if (!map[v.numberPlate] || req.status === "Approved") {
+            map[v.numberPlate] = {
+              driverName: req.driverDetails?.fullName || "Assigned Driver",
+              status: req.status,
+              ref: req.requestReference
+            };
+          }
+        });
+      }
     });
     return map;
   }, [thirdPartyRequests]);
+
+  const handleSubmitTermination = async () => {
+    if (!terminateTargetReq) return;
+    const finalReason =
+      terminateReason === "Other reason"
+        ? customTerminateReason.trim()
+        : terminateReason.trim() || customTerminateReason.trim() || "Policyholder requested driver authorization termination";
+
+    if (!finalReason) {
+      setTerminateErrMsg("Please specify a reason for terminating this driver.");
+      return;
+    }
+
+    setTerminating(true);
+    setTerminateErrMsg("");
+    try {
+      const userStr = sessionStorage.getItem("logged_in_user");
+      const nic = userStr ? JSON.parse(userStr)?.nic : null;
+      const res = await fetch(`${API_URL}/third-party/request-termination/${terminateTargetReq._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ policyHolderNic: nic, reason: finalReason })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to submit termination request.");
+      }
+      setTerminateSuccessMsg("Termination request sent to branch office for review and approval.");
+      if (nic) loadThirdPartyRequests(nic);
+      setTimeout(() => {
+        setTerminateTargetReq(null);
+        setTerminateSuccessMsg("");
+      }, 2000);
+    } catch (err: any) {
+      setTerminateErrMsg(err.message || "Failed to submit termination request.");
+    } finally {
+      setTerminating(false);
+    }
+  };
 
   const loadThirdPartyRequests = async (overrideNic?: string) => {
     if (typeof window === "undefined") return;
@@ -1561,6 +1618,16 @@ export default function MyVehicles() {
                         <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
                         Approved
                       </span>
+                    ) : req.status === "Pending Termination Approval" ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                        Termination Under Branch Review
+                      </span>
+                    ) : req.status === "Terminated" ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-300">
+                        <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                        Terminated / Revoked
+                      </span>
                     ) : req.status === "Pending Branch Approval" ? (
                       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
                         <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
@@ -1620,10 +1687,33 @@ export default function MyVehicles() {
                       <p className="mt-0.5 text-rose-700">{req.branchReview.rejectionReason}</p>
                     </div>
                   )}
+
+                  {/* Pending Termination Notice */}
+                  {req.status === "Pending Termination Approval" && (
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 space-y-1">
+                      <p className="font-semibold flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                        Termination request pending branch sign-off
+                      </p>
+                      <p className="text-rose-700 text-[11px]">
+                        Reason: {req.terminationRequest?.reason || "Policyholder termination request"}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Terminated Notice */}
+                  {req.status === "Terminated" && (
+                    <div className="p-3 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-600">
+                      <p className="font-semibold text-slate-700">Driver authorization terminated.</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">
+                        Access to the vehicle portal, NFC pass, and driver app has been permanently blocked.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Bottom Status & Actions Bar */}
-                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 text-xs flex-wrap">
                   <div>
                     {req.payment?.status === "Paid" ? (
                       <span className="font-semibold text-emerald-700 flex items-center gap-1">
@@ -1638,7 +1728,7 @@ export default function MyVehicles() {
                     )}
                   </div>
 
-                  <div>
+                  <div className="flex items-center gap-2">
                     {req.payment?.status !== "Paid" && req.status === "Pending Payment" && (
                       <button
                         onClick={() => handleResumeThirdPartyPayment(req._id)}
@@ -1651,8 +1741,31 @@ export default function MyVehicles() {
                     )}
 
                     {req.status === "Approved" && (
-                      <span className="text-emerald-700 font-semibold text-[11px] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
-                        Digital Pass Ready
+                      <>
+                        <span className="text-emerald-700 font-semibold text-[11px] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                          Digital Pass Ready
+                        </span>
+                        <button
+                          onClick={() => handleOpenTerminateModal(req)}
+                          className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                          title="Request driver authorization termination"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                          <span>Terminate Driver</span>
+                        </button>
+                      </>
+                    )}
+
+                    {req.status === "Pending Termination Approval" && (
+                      <span className="text-rose-700 font-semibold text-[11px] bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                        Awaiting Branch Approval
+                      </span>
+                    )}
+
+                    {req.status === "Terminated" && (
+                      <span className="text-slate-500 font-semibold text-[11px] bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
+                        Access Revoked
                       </span>
                     )}
                   </div>
@@ -3149,6 +3262,153 @@ export default function MyVehicles() {
               >
                 <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
                 <span>{submittingThirdParty ? "Connecting to Stripe..." : "Pay LKR 300 via Stripe"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Terminate Driver Modal */}
+      {terminateTargetReq && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-[28px] shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 my-8">
+            {/* Header */}
+            <div className="p-6 bg-gradient-to-r from-rose-600 to-rose-700 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">Terminate Driver Authorization</h3>
+                  <p className="text-xs text-rose-100">Send revocation request to your Sanasa Branch</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTerminateTargetReq(null)}
+                className="text-white/80 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              {/* Driver Summary Card */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center flex-shrink-0">
+                  <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="font-bold text-slate-800 text-sm">
+                    {terminateTargetReq.driverDetails?.fullName}
+                  </div>
+                  <div className="text-xs text-slate-500 font-mono mt-0.5">
+                    NIC: {terminateTargetReq.driverDetails?.nicNumber || "—"} • Tel:{" "}
+                    {terminateTargetReq.driverDetails?.phoneNumber}
+                  </div>
+                  <div className="text-[11px] text-slate-600 mt-1 flex flex-wrap gap-1">
+                    <span className="font-semibold text-slate-400">Covered:</span>
+                    {terminateTargetReq.selectedVehicles?.map((v: any) => (
+                      <span key={v.numberPlate} className="font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                        {v.numberPlate}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Security Notice */}
+              <div className="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-900 flex items-start gap-2.5">
+                <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Official Branch Sign-Off Required:</span>
+                  <p className="mt-0.5 text-amber-800 text-[11px] leading-relaxed">
+                    Once submitted, your request is forwarded to your branch office. Upon branch officer approval, this driver’s NFC digital pass, vehicle portal, and mobile app access will be permanently revoked.
+                  </p>
+                </div>
+              </div>
+
+              {/* Termination Reason Options */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block">
+                  Select Reason for Termination
+                </label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {[
+                    "Driver resigned / employment ended",
+                    "Vehicle sold or transferred",
+                    "Driver misconduct / policy breach",
+                    "Owner revocation / no longer permitted",
+                    "Temporary contract concluded",
+                    "Other reason"
+                  ].map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setTerminateReason(r)}
+                      className={`p-2.5 rounded-xl border text-left text-xs font-medium transition-all cursor-pointer ${
+                        terminateReason === r
+                          ? "bg-rose-50 border-rose-400 text-rose-900 font-bold shadow-xs"
+                          : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom reason input */}
+              {terminateReason === "Other reason" && (
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">
+                    Please Specify Reason <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={customTerminateReason}
+                    onChange={(e) => setCustomTerminateReason(e.target.value)}
+                    placeholder="Provide details about why this authorization is being terminated..."
+                    className="w-full p-3 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                  />
+                </div>
+              )}
+
+              {/* Error / Success Feedback */}
+              {terminateErrMsg && (
+                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700 flex items-center gap-2">
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 flex-shrink-0" />
+                  <span>{terminateErrMsg}</span>
+                </div>
+              )}
+              {terminateSuccessMsg && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-800 flex items-center gap-2">
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 flex-shrink-0" />
+                  <span>{terminateSuccessMsg}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setTerminateTargetReq(null)}
+                disabled={terminating}
+                className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer bg-white"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSubmitTermination}
+                disabled={terminating || !!terminateSuccessMsg}
+                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer border-none"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+                <span>{terminating ? "Submitting Request..." : "Submit Termination Request"}</span>
               </button>
             </div>
           </div>

@@ -430,11 +430,118 @@ router.get("/my-requests", async (req, res) => {
 
     return res.json({
       success: true,
-      requests
+      requests,
+      registrations: requests
     });
   } catch (err) {
     console.error("GET my-requests error:", err);
     return res.status(500).json({ error: "Failed to fetch request history." });
+  }
+});
+
+/**
+ * GET /api/third-party/my-registrations
+ * Alias for mobile app compatibility
+ */
+router.get("/my-registrations", async (req, res) => {
+  try {
+    const { nic } = req.query;
+    if (!nic) {
+      return res.status(400).json({ error: "Policyholder NIC is required." });
+    }
+
+    const cleanNic = nic.trim().toUpperCase();
+    const requests = await ThirdPartyRegistration.find({ policyHolderNic: cleanNic })
+      .select("-secureAccess.tokenHash -secureAccess.rawToken -branchReview.internalNotes")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    return res.json({
+      success: true,
+      requests,
+      registrations: requests
+    });
+  } catch (err) {
+    console.error("GET my-registrations error:", err);
+    return res.status(500).json({ error: "Failed to fetch registrations." });
+  }
+});
+
+/**
+ * POST /api/third-party/request-termination/:requestId
+ * Policyholder requests branch termination/revocation of an active third-party driver
+ */
+router.post("/request-termination/:requestId", async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { policyHolderNic, reason } = req.body;
+
+    if (!policyHolderNic) {
+      return res.status(400).json({ error: "Policyholder NIC is required." });
+    }
+
+    const cleanNic = policyHolderNic.trim().toUpperCase();
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Driver authorization record not found." });
+    }
+
+    if (request.policyHolderNic.trim().toUpperCase() !== cleanNic) {
+      return res.status(403).json({ error: "Unauthorized: You do not own this authorization record." });
+    }
+
+    if (request.status === "Terminated") {
+      return res.status(400).json({ error: "This driver authorization is already terminated." });
+    }
+
+    if (request.status === "Pending Termination Approval") {
+      return res.status(400).json({ error: "A termination request is already awaiting branch review." });
+    }
+
+    if (request.status !== "Approved") {
+      return res.status(400).json({
+        error: `Cannot request termination for driver with status: ${request.status}. Only currently approved drivers can be terminated.`
+      });
+    }
+
+    const termReason = (reason || "").trim() || "Policyholder requested driver authorization termination";
+
+    request.status = "Pending Termination Approval";
+    request.terminationRequest = {
+      requestedBy: cleanNic,
+      requestedAt: new Date(),
+      reason: termReason,
+      status: "Pending Branch Approval",
+      reviewedBy: "",
+      reviewedByStaffId: "",
+      reviewedAt: null,
+      branchNotes: "",
+      rejectionReason: ""
+    };
+
+    await request.save();
+
+    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+
+    // Send confirmation SMS to policyholder
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nYour request to terminate driver authorization for ${request.driverDetails?.fullName || "driver"} on vehicle(s) ${plates} has been submitted.\n• Status: Sent to ${request.branch} Branch for approval\n• Reason: ${termReason}\n\nOnce approved by the branch, the driver's access will be revoked.\nHotline: 0725 575 575`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_termination_requested"
+      }).catch((e) => console.warn("Termination request SMS error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      message: "Termination request submitted successfully. It has been routed to your branch for review.",
+      request
+    });
+  } catch (err) {
+    console.error("POST /request-termination error:", err);
+    return res.status(500).json({ error: "Failed to submit driver termination request." });
   }
 });
 
@@ -983,6 +1090,152 @@ router.post("/branch/revoke-token/:requestId", async (req, res) => {
 });
 
 /**
+ * POST /api/third-party/branch/approve-termination/:requestId
+ * Branch reviews and officially approves Policyholder's driver termination request.
+ * Permanently terminates the third-party user and revokes web & mobile app access.
+ */
+router.post("/branch/approve-termination/:requestId", async (req, res) => {
+  try {
+    const staff = await verifyStaffBranch(req, res);
+    if (!staff) return;
+
+    const { requestId } = req.params;
+    const { notes } = req.body || {};
+
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Registration request not found." });
+    }
+
+    // Branch Isolation
+    const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    if (baseStaffBranch !== baseReqBranch) {
+      return res.status(403).json({ error: "Forbidden: Branch mismatch." });
+    }
+
+    if (request.status === "Terminated") {
+      return res.status(400).json({ error: "This driver authorization is already terminated." });
+    }
+
+    // 1. Mark status as Terminated and revoke access
+    request.status = "Terminated";
+    request.secureAccess = request.secureAccess || {};
+    request.secureAccess.isRevoked = true;
+    request.secureAccess.revokedAt = new Date();
+    request.secureAccess.revokedBy = `${staff.name || "Branch Staff"} (${staff.branch || "Branch"})`;
+
+    // 2. Update terminationRequest audit details
+    request.terminationRequest = request.terminationRequest || {};
+    request.terminationRequest.status = "Approved";
+    request.terminationRequest.reviewedBy = staff.name || "Branch Staff";
+    request.terminationRequest.reviewedByStaffId = String(staff._id);
+    request.terminationRequest.reviewedAt = new Date();
+    request.terminationRequest.branchNotes = (notes || "").trim();
+
+    await request.save();
+
+    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+    const driverName = request.driverDetails?.fullName || "Driver";
+
+    // 3. SMS to Policyholder (Owner) confirming branch termination
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nNotice: Your request to terminate driver authorization for ${driverName} on vehicle(s) ${plates} has been APPROVED by ${request.branch} Branch.\n• Decision: Officially Terminated\n• Web & App Access: Permanently Revoked\n\nThank you for keeping your vehicle driver registry up to date.\n24/7 Hotline: 0725 575 575`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_termination_approved"
+      }).catch((e) => console.warn("Policyholder termination approved SMS error:", e.message));
+    }
+
+    // 4. SMS to Third-Party Driver notifying that access has ended
+    if (request.driverDetails?.phoneNumber) {
+      sendSms({
+        phone: request.driverDetails.phoneNumber,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${driverName},\n\nNotice: Your driver authorization pass for vehicle(s) ${plates} has been TERMINATED by Sanasa General Insurance upon vehicle owner request.\n• Status: Terminated & Inactive\n• Permissions: Web portal and mobile app access revoked.\n\nFor questions, please contact ${request.branch} Branch or call 0725 575 575.`,
+        recipientType: "ThirdPartyDriver",
+        recipientName: driverName,
+        eventType: "third_party_driver_terminated"
+      }).catch((e) => console.warn("Driver termination notification SMS error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      message: `Driver authorization for ${driverName} has been officially terminated. Web and mobile app access are now permanently blocked.`,
+      request
+    });
+  } catch (err) {
+    console.error("POST /branch/approve-termination error:", err);
+    return res.status(500).json({ error: "Failed to approve driver termination." });
+  }
+});
+
+/**
+ * POST /api/third-party/branch/reject-termination/:requestId
+ * Branch rejects Policyholder's driver termination request, keeping driver active.
+ */
+router.post("/branch/reject-termination/:requestId", async (req, res) => {
+  try {
+    const staff = await verifyStaffBranch(req, res);
+    if (!staff) return;
+
+    const { requestId } = req.params;
+    const { reason } = req.body || {};
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ error: "A clear reason for rejecting the termination request is required." });
+    }
+
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Registration request not found." });
+    }
+
+    // Branch Isolation
+    const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    if (baseStaffBranch !== baseReqBranch) {
+      return res.status(403).json({ error: "Forbidden: Branch mismatch." });
+    }
+
+    // Revert status to Approved so driver remains authorized
+    request.status = "Approved";
+    request.terminationRequest = request.terminationRequest || {};
+    request.terminationRequest.status = "Rejected";
+    request.terminationRequest.reviewedBy = staff.name || "Branch Staff";
+    request.terminationRequest.reviewedByStaffId = String(staff._id);
+    request.terminationRequest.reviewedAt = new Date();
+    request.terminationRequest.rejectionReason = reason.trim();
+
+    await request.save();
+
+    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+    const driverName = request.driverDetails?.fullName || "Driver";
+
+    // Notify Policyholder of rejection
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nNotice: Your termination request for driver ${driverName} on vehicle(s) ${plates} was reviewed and not approved by ${request.branch} Branch.\n• Branch Reason: ${reason.trim()}\n• Current Driver Status: Active\n\nFor inquiries or further assistance, please call 0725 575 575.`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_termination_rejected"
+      }).catch((e) => console.warn("Termination reject SMS error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      message: "Driver termination request was rejected. The driver remains active.",
+      request
+    });
+  } catch (err) {
+    console.error("POST /branch/reject-termination error:", err);
+    return res.status(500).json({ error: "Failed to process termination rejection." });
+  }
+});
+
+/**
  * GET /api/third-party/driver-pass/:token
  * Public verified access to Digital Driver Authorization Pass
  * Notifies policyholder and driver of activity
@@ -1159,15 +1412,15 @@ async function requireDriverSession(req, res, next) {
       return res.status(404).json({ error: "Driver authorization record not found." });
     }
 
-    if (request.status !== "Approved") {
+    if (request.status === "Terminated" || request.secureAccess?.isRevoked) {
       return res.status(403).json({
-        error: `Driver access is not active. Authorization status is: ${request.status}`
+        error: "This driver authorization has been officially terminated. Access to the web portal and mobile app is permanently revoked."
       });
     }
 
-    if (request.secureAccess?.isRevoked) {
+    if (request.status !== "Approved") {
       return res.status(403).json({
-        error: "This driver authorization has been revoked by the branch or policyholder."
+        error: `Driver access is not active. Authorization status is: ${request.status}`
       });
     }
 
@@ -1200,15 +1453,15 @@ router.post("/driver-session", async (req, res) => {
       return res.status(404).json({ error: "Invalid access link or token." });
     }
 
-    if (request.status !== "Approved") {
+    if (request.status === "Terminated" || request.secureAccess?.isRevoked) {
       return res.status(403).json({
-        error: `Authorization is not active. Current status: ${request.status}`
+        error: "This driver access authorization has been officially terminated. Access to the web and mobile application is permanently revoked."
       });
     }
 
-    if (request.secureAccess?.isRevoked) {
+    if (request.status !== "Approved") {
       return res.status(403).json({
-        error: "This driver access link has been revoked. Please contact your regional branch."
+        error: `Authorization is not active. Current status: ${request.status}`
       });
     }
 

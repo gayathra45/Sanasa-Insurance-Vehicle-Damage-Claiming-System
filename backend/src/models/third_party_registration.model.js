@@ -86,7 +86,9 @@ const thirdPartyRegistrationSchema = new mongoose.Schema(
         "Pending Branch Approval",
         "Approved",
         "Rejected",
-        "Cancelled"
+        "Cancelled",
+        "Pending Termination Approval",
+        "Terminated"
       ],
       default: "Pending Payment",
       index: true
@@ -126,6 +128,21 @@ const thirdPartyRegistrationSchema = new mongoose.Schema(
       reviewedAt: { type: Date, default: null },
       rejectionReason: { type: String, default: "" },
       internalNotes: { type: String, default: "" }
+    },
+    terminationRequest: {
+      requestedBy: { type: String, default: "" },
+      requestedAt: { type: Date, default: null },
+      reason: { type: String, default: "" },
+      status: {
+        type: String,
+        enum: ["None", "Pending Branch Approval", "Approved", "Rejected"],
+        default: "None"
+      },
+      reviewedBy: { type: String, default: "" },
+      reviewedByStaffId: { type: String, default: "" },
+      reviewedAt: { type: Date, default: null },
+      branchNotes: { type: String, default: "" },
+      rejectionReason: { type: String, default: "" }
     },
     secureAccess: {
       tokenHash: { type: String, default: "", index: true },
