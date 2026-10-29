@@ -1534,96 +1534,209 @@ export default function MyVehicles() {
 
       </main>
 
-      {/* Vehicle Detail Popup Modal */}
-      {selectedVehicleForModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-          <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[620px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative overflow-hidden">
-            
-            {/* Modal Header */}
-            <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-              <h2 className="text-[20px] md:text-[22px] font-bold text-[#0f2d3a] tracking-tight leading-none">
-                Vehicle Specifications
-              </h2>
-              <button
-                onClick={() => setSelectedVehicleForModal(null)}
-                className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer outline-none"
-              >
-                &times;
-              </button>
-            </div>
+      {/* Vehicle Detail Popup Modal - Enlarged & Redesigned */}
+      {selectedVehicleForModal && (() => {
+        const modalDriverInfo = vehicleDriverMap[selectedVehicleForModal.numberPlate];
 
-            {/* Modal Content */}
-            <div className="p-8 flex-1 overflow-y-auto">
+        return (
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+            <div className="bg-white border border-slate-200/90 rounded-[32px] w-full max-w-3xl max-h-[88vh] shadow-[0_24px_60px_rgba(15,42,67,0.18)] flex flex-col relative overflow-hidden">
               
-              {/* Profile Card Header inside modal */}
-              <div className="bg-slate-50 border border-slate-200/60 rounded-[22px] p-5 mb-6 flex items-center gap-4.5 shadow-sm select-none">
-                {getVehicleIconContainer(selectedVehicleForModal.vehicleType)}
-                <div>
-                  <h3 className="text-[#0f2d3a] font-bold text-xl leading-none tracking-tight">
-                    {selectedVehicleForModal.company} {selectedVehicleForModal.model}
-                  </h3>
-                  <p className="text-slate-400 font-medium text-xs mt-1.5">
-                    Year: {selectedVehicleForModal.year} | Type: {selectedVehicleForModal.vehicleType}
-                  </p>
+              {/* Modal Header */}
+              <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 bg-white flex-shrink-0">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight leading-none">
+                    Vehicle Specifications
+                  </h2>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg font-mono font-bold text-xs tracking-wider shadow-2xs select-all">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                    <span>{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
+                  </div>
                 </div>
-              </div>
-
-
-              {/* 2-Column Specs Layout */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-normal text-slate-700 mb-8 px-2">
-                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Vehicle Number</span>
-                  <span className="font-semibold text-slate-800 text-base">{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
-                </div>
-                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Policy Number</span>
-                  <span className="font-semibold text-slate-800 text-base tracking-wide">{selectedVehicleForModal.policyNumber || "N/A"}</span>
-                </div>
-                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Engine Number</span>
-                  <span className="font-normal text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.engineNumber || "N/A"}</span>
-                </div>
-                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Chassis Number</span>
-                  <span className="font-normal text-slate-800 font-mono text-[13px]">{selectedVehicleForModal.chassisNumber || "N/A"}</span>
-                </div>
-                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Insurance Coverage</span>
-                  <span className="font-semibold text-emerald-600 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
-                    Active Coverage
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Renewal Cycle</span>
-                  <span className="font-semibold text-slate-800">
-                    {renewalInfo?.expiryDate ? `Expires on ${new Date(renewalInfo.expiryDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}` : "Annual (Jan 01 - Dec 31)"}
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1 border-b border-slate-100 pb-2 sm:col-span-2">
-                  <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Insurance Plan Type</span>
-                  <span className="font-semibold text-slate-800">Comprehensive Vehicle Insurance Plan</span>
-                </div>
-              </div>
-
-              {/* Action Buttons in Modal */}
-              <div className="flex gap-4 border-t border-slate-100 pt-6">
-                <Link
-                  href={`/Policy_Holder/New_Claim?plate=${encodeURIComponent(selectedVehicleForModal.numberPlate)}`}
-                  onClick={() => setSelectedVehicleForModal(null)}
-                  className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold text-sm py-4 rounded-full text-center no-underline shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
-                >
-                  <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5" strokeWidth={2} />
-                  File a Claim
-                </Link>
                 <button
-                  onClick={() => handleOpenCoverNote(selectedVehicleForModal)}
-                  className="flex-1 bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-semibold text-sm py-4 rounded-full text-center cursor-pointer border-none shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
+                  onClick={() => setSelectedVehicleForModal(null)}
+                  className="w-9 h-9 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors text-2xl font-normal border-none bg-transparent cursor-pointer outline-none"
+                  aria-label="Close"
                 >
-                  <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" strokeWidth={2} />
-                  Cover Note
+                  &times;
                 </button>
               </div>
+
+              {/* Modal Content */}
+              <div className="p-8 flex-1 overflow-y-auto space-y-6">
+                
+                {/* Profile Hero Card inside modal */}
+                <div className="bg-gradient-to-r from-slate-50 via-sky-50/30 to-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs select-none">
+                  <div className="flex items-center gap-4">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center flex-shrink-0 text-slate-700">
+                      {getVehicleIconContainer(selectedVehicleForModal.vehicleType, "w-12 h-12 rounded-xl")}
+                    </div>
+                    <div>
+                      <h3 className="text-slate-900 font-bold text-xl leading-tight">
+                        {selectedVehicleForModal.company} {selectedVehicleForModal.model}
+                      </h3>
+                      <p className="text-slate-500 font-medium text-xs mt-1">
+                        Model Year: <strong className="text-slate-700">{selectedVehicleForModal.year}</strong> • Category: <strong className="text-slate-700">{selectedVehicleForModal.vehicleType}</strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:items-end gap-1.5">
+                    <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 rounded-full px-3 py-1 select-none w-fit">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>Active Coverage</span>
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-400">
+                      Policy #{selectedVehicleForModal.policyNumber || "N/A"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Third-Party Driver Status / Add Driver Inside Modal */}
+                {modalDriverInfo ? (
+                  <div className="bg-indigo-50/80 border border-indigo-200 rounded-2xl p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+                        <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-full inline-block">
+                            Authorized Driver
+                          </span>
+                          <span className="text-xs font-bold text-indigo-900">
+                            {modalDriverInfo.driverName}
+                          </span>
+                        </div>
+                        <p className="text-xs text-indigo-700/90 mt-0.5">
+                          Status: <strong className="text-indigo-950">{modalDriverInfo.status}</strong> • Pass Ref: <span className="font-mono">{modalDriverInfo.ref}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const plate = selectedVehicleForModal.numberPlate;
+                        setSelectedVehicleForModal(null);
+                        handleOpenThirdPartyForVehicle(plate);
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white text-indigo-700 hover:bg-indigo-100/70 border border-indigo-200 transition-colors cursor-pointer self-start sm:self-auto shadow-2xs"
+                    >
+                      <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+                      <span>Manage / Add Driver</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 border border-dashed border-indigo-200/90 rounded-2xl p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-center gap-3.5">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                        <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-xs sm:text-sm">
+                          Third-Party Driver Authorization
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Need someone else to drive? Authorize drivers under this policy for a flat fee of <strong>LKR 300</strong>.
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const plate = selectedVehicleForModal.numberPlate;
+                        setSelectedVehicleForModal(null);
+                        handleOpenThirdPartyForVehicle(plate);
+                      }}
+                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-all cursor-pointer border-none shadow-sm self-start sm:self-auto whitespace-nowrap"
+                    >
+                      <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+                      <span>+ Add Driver (LKR 300)</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Technical Specifications Grid */}
+                <div className="space-y-2">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Specifications & Policy Coverage
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs text-xs">
+                    <div className="border-b border-slate-100 pb-2.5 sm:border-b-0 sm:pb-0 sm:border-r sm:pr-4">
+                      <span className="text-slate-400 block text-[11px] font-medium">Vehicle Registration Plate</span>
+                      <span className="font-mono font-bold text-slate-800 text-sm mt-0.5 block">
+                        {formatNumberPlate(selectedVehicleForModal.numberPlate)}
+                      </span>
+                    </div>
+
+                    <div className="border-b border-slate-100 pb-2.5 sm:border-b-0 sm:pb-0">
+                      <span className="text-slate-400 block text-[11px] font-medium">Policy Number</span>
+                      <span className="font-mono font-bold text-slate-800 text-sm mt-0.5 block">
+                        {selectedVehicleForModal.policyNumber || "N/A"}
+                      </span>
+                    </div>
+
+                    <div className="border-b border-slate-100 pb-2.5 sm:border-b-0 sm:pb-0 sm:border-r sm:pr-4 pt-2">
+                      <span className="text-slate-400 block text-[11px] font-medium">Engine Number</span>
+                      <span className="font-mono text-slate-700 text-xs mt-0.5 block">
+                        {selectedVehicleForModal.engineNumber || "N/A"}
+                      </span>
+                    </div>
+
+                    <div className="border-b border-slate-100 pb-2.5 sm:border-b-0 sm:pb-0 pt-2">
+                      <span className="text-slate-400 block text-[11px] font-medium">Chassis Number</span>
+                      <span className="font-mono text-slate-700 text-xs mt-0.5 block">
+                        {selectedVehicleForModal.chassisNumber || "N/A"}
+                      </span>
+                    </div>
+
+                    <div className="border-b border-slate-100 pb-2.5 sm:border-b-0 sm:pb-0 sm:border-r sm:pr-4 pt-2">
+                      <span className="text-slate-400 block text-[11px] font-medium">Renewal Cycle / Expiry</span>
+                      <span className="font-semibold text-slate-800 text-xs mt-0.5 block">
+                        {renewalInfo?.expiryDate ? `Expires on ${new Date(renewalInfo.expiryDate).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}` : "Annual Policy"}
+                      </span>
+                    </div>
+
+                    <div className="pt-2">
+                      <span className="text-slate-400 block text-[11px] font-medium">Insurance Plan Type</span>
+                      <span className="font-semibold text-slate-800 text-xs mt-0.5 block">
+                        Comprehensive Vehicle Insurance Plan
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Primary Action Buttons in Modal */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      const plate = selectedVehicleForModal.numberPlate;
+                      setSelectedVehicleForModal(null);
+                      handleOpenThirdPartyForVehicle(plate);
+                    }}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs sm:text-sm py-3.5 px-4 rounded-xl text-center cursor-pointer border-none shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
+                  >
+                    <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" />
+                    <span>+ Add Driver</span>
+                  </button>
+
+                  <button
+                    onClick={() => handleOpenCoverNote(selectedVehicleForModal)}
+                    className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-semibold text-xs sm:text-sm py-3.5 px-4 rounded-xl text-center cursor-pointer border-none shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
+                  >
+                    <HugeiconsIcon icon={Download01Icon} className="w-4 h-4" />
+                    <span>Cover Note</span>
+                  </button>
+
+                  <Link
+                    href={`/Policy_Holder/New_Claim?plate=${encodeURIComponent(selectedVehicleForModal.numberPlate)}`}
+                    onClick={() => setSelectedVehicleForModal(null)}
+                    className="bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs sm:text-sm py-3.5 px-4 rounded-xl text-center no-underline shadow-sm hover:shadow transition-all flex items-center justify-center gap-2"
+                  >
+                    <HugeiconsIcon icon={AlertCircleIcon} className="w-4 h-4" />
+                    <span>File a Claim</span>
+                  </Link>
+                </div>
 
               {/* STEP 1: Unhidden Renew License Coverage Button - ONLY shows when quote is calculated and awaiting initial payment */}
               {renewalInfo?.hasCalculatedQuote &&
@@ -1838,7 +1951,7 @@ export default function MyVehicles() {
             <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex justify-end flex-shrink-0">
               <button
                 onClick={() => setSelectedVehicleForModal(null)}
-                className="bg-[#000080] hover:bg-[#000066] text-white font-semibold text-[14px] px-8 py-3 rounded-full transition-all border-none cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+                className="bg-[#102A43] hover:bg-[#163e63] text-white font-semibold text-xs sm:text-sm px-6 py-2.5 rounded-xl transition-all border-none cursor-pointer"
               >
                 Close
               </button>
@@ -1846,7 +1959,8 @@ export default function MyVehicles() {
 
           </div>
         </div>
-      )}
+      );
+    })()}
 
       {/* RENEWAL CHECKOUT WIZARD MODAL (Steps 1, 2, 3) */}
       {renewalWizardOpen && selectedVehicleForModal && renewalInfo?.renewalQuote && (
