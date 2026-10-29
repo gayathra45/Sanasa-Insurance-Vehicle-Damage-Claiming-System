@@ -1318,30 +1318,31 @@ export default function MyVehicles() {
 
                           <div>
                             {/* Card Header: Plate & Status Badges */}
-                            <div className="flex items-center justify-between gap-2 mb-4">
-                              {/* Authenticated Sri Lankan Style Plate Pill */}
-                              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#0b1727] text-white rounded-xl font-mono font-bold text-xs tracking-wider shadow-sm ring-1 ring-white/10 select-all">
-                                <span className="w-2 h-2 rounded-full bg-amber-400 ring-2 ring-amber-400/25 flex-shrink-0" />
+                            <div className="flex items-center justify-between gap-2 mb-3.5">
+                              {/* Clean Authentic Sri Lankan Style Number Plate */}
+                              <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 hover:bg-slate-100/90 text-slate-800 rounded-lg border border-slate-200/90 font-mono font-bold text-xs tracking-wider shadow-2xs select-all transition-colors">
+                                <span className="text-[10px] font-bold text-slate-400 font-sans tracking-tight">LK</span>
+                                <span className="w-px h-3 bg-slate-300" />
                                 <span>{formatNumberPlate(vehicle.numberPlate)}</span>
                               </div>
 
                               {/* Status Badges */}
                               <div className="flex items-center gap-1.5 flex-wrap justify-end">
-                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-0.5 select-none">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/70 rounded-full px-2.5 py-0.5 select-none">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                   <span>Active</span>
                                 </span>
 
                                 {isInstallmentDue && (
-                                  <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-amber-800 bg-amber-500/10 border border-amber-500/25 rounded-full px-2.5 py-0.5 select-none">
-                                    <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-amber-700" strokeWidth={2.2} />
+                                  <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-amber-800 bg-amber-50 border border-amber-200/70 rounded-full px-2.5 py-0.5 select-none">
+                                    <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-amber-600" strokeWidth={2.2} />
                                     <span>Due</span>
                                   </span>
                                 )}
 
                                 {isQuoteReady && (
-                                  <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-sky-800 bg-sky-500/10 border border-sky-500/25 rounded-full px-2.5 py-0.5 select-none">
-                                    <HugeiconsIcon icon={CreditCardIcon} className="w-3 h-3 text-sky-700" strokeWidth={2.2} />
+                                  <span className="inline-flex items-center gap-1 text-[10.5px] font-semibold text-sky-800 bg-sky-50 border border-sky-200/70 rounded-full px-2.5 py-0.5 select-none">
+                                    <HugeiconsIcon icon={CreditCardIcon} className="w-3 h-3 text-sky-600" strokeWidth={2.2} />
                                     <span>Quote</span>
                                   </span>
                                 )}
@@ -1350,7 +1351,9 @@ export default function MyVehicles() {
 
                             {/* Vehicle Profile: Icon + Make/Model */}
                             <div className="flex items-center gap-3.5 mb-4 select-none">
-                              {getVehicleIconContainer(vehicle.vehicleType, "w-13 h-13 rounded-2xl")}
+                              <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-center text-[#102A43] group-hover:border-[#102A43]/30 group-hover:bg-[#102A43]/5 transition-all duration-300 flex-shrink-0 shadow-2xs">
+                                {getVehicleIconSvg(vehicle.vehicleType, "w-6 h-6 text-[#102A43]")}
+                              </div>
                               <div className="min-w-0 flex-1">
                                 <span className="text-[10.5px] font-bold tracking-wider text-slate-400 uppercase block">
                                   {vehicle.vehicleType} • {vehicle.year}
@@ -1459,8 +1462,9 @@ export default function MyVehicles() {
                         >
                           {/* Left: Plate + Vehicle Info */}
                           <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-mono font-bold text-xs tracking-wider shadow-2xs select-all flex-shrink-0 self-start sm:self-auto">
-                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 hover:bg-slate-100/90 text-slate-800 rounded-lg border border-slate-200/90 font-mono font-bold text-xs tracking-wider shadow-2xs select-all flex-shrink-0 self-start sm:self-auto transition-colors">
+                              <span className="text-[10px] font-bold text-slate-400 font-sans tracking-tight">LK</span>
+                              <span className="w-px h-3 bg-slate-300" />
                               <span>{formatNumberPlate(vehicle.numberPlate)}</span>
                             </div>
 
@@ -1809,8 +1813,9 @@ export default function MyVehicles() {
                   <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 tracking-tight leading-none">
                     Vehicle Specifications
                   </h2>
-                  <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-slate-900 text-white rounded-lg font-mono font-bold text-xs tracking-wider shadow-2xs select-all">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <div className="inline-flex items-center gap-2 px-2.5 sm:px-3 py-1 bg-slate-50 text-slate-800 rounded-lg border border-slate-200/90 font-mono font-bold text-xs tracking-wider shadow-2xs select-all">
+                    <span className="text-[10px] font-bold text-slate-400 font-sans tracking-tight">LK</span>
+                    <span className="w-px h-3 bg-slate-300" />
                     <span>{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
                   </div>
                 </div>
@@ -1829,8 +1834,8 @@ export default function MyVehicles() {
                 {/* Profile Hero Card inside modal */}
                 <div className="bg-gradient-to-r from-slate-50 via-sky-50/30 to-slate-50 border border-slate-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs select-none">
                   <div className="flex items-center gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center flex-shrink-0 text-slate-700">
-                      {getVehicleIconContainer(selectedVehicleForModal.vehicleType, "w-12 h-12 rounded-xl")}
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center flex-shrink-0 text-[#102A43]">
+                      {getVehicleIconSvg(selectedVehicleForModal.vehicleType, "w-7 h-7 text-[#102A43]")}
                     </div>
                     <div>
                       <h3 className="text-slate-900 font-bold text-xl leading-tight">
