@@ -1244,6 +1244,137 @@ router.get("/portal/claims", requireDriverSession, async (req, res) => {
 });
 
 /**
+ * GET /api/third-party/portal/notifications
+ * Comprehensive notifications feed for the authorized driver:
+ * - Authorization activation & digital pass ready
+ * - Claim status updates (in-progress, inspected, approved, settled, rejected)
+ * - Urgent document requests
+ * - Messages from staff / agent
+ */
+router.get("/portal/notifications", requireDriverSession, async (req, res) => {
+  try {
+    const request = req.thirdPartyRequest;
+    const authorizedPlates = (request.selectedVehicles || []).map((v) => v.numberPlate);
+
+    const notifs = [];
+
+    // 1. Authorization Active Notification
+    const approvalDate = request.branchReview?.reviewedAt || request.createdAt;
+    notifs.push({
+      id: `auth-${request._id}`,
+      type: "authorization",
+      category: "approved",
+      title: "Driver Authorization Active & Pass Issued",
+      message: `You are authorized by ${request.policyHolderName} to drive ${authorizedPlates.join(", ")}. Verified by ${request.branch} Branch.`,
+      subText: "Your secure digital pass is ready for road and police verification.",
+      createdAt: approvalDate,
+      actionType: "pass",
+      actionLabel: "View Digital Pass",
+      isUrgent: false
+    });
+
+    // 2. Fetch all claims matching driver or authorized plates
+    const claims = await Claim.find({
+      vehiclePlate: { $in: authorizedPlates },
+      $or: [
+        { "submittedByDriver.registrationId": request._id },
+        { "submittedByDriver.driverNic": request.driverDetails.nicNumber },
+        { description: new RegExp(request.driverDetails.fullName, "i") }
+      ]
+    }).sort({ createdAt: -1 });
+
+    for (const claim of claims) {
+      // 2a. Urgent Document Request
+      if (claim.documentsRequested) {
+        const docList = (claim.requestedDocuments || []).join(" & ") || "supporting claim documents";
+        notifs.push({
+          id: `notif-${claim.claimNumber}-docs`,
+          type: "document_request",
+          category: "urgent",
+          title: `Action Required: Documents Requested for ${claim.claimNumber}`,
+          message: `Branch office has requested ${docList} for vehicle ${claim.vehiclePlate}.`,
+          subText: "Please upload the requested documents promptly to avoid settlement delays.",
+          createdAt: claim.updatedAt || claim.createdAt,
+          claimNumber: claim.claimNumber,
+          actionType: "upload_doc",
+          actionLabel: "Upload Documents",
+          isUrgent: true
+        });
+      }
+
+      // 2b. Claim Status Updates
+      const st = (claim.status || "").toLowerCase();
+      let statusCat = "status";
+      let statusTitle = `Claim ${claim.claimNumber} Status: ${claim.status || "Pending"}`;
+      let statusDesc = `Your claim for ${claim.vehiclePlate} (${claim.damageType}) is currently in "${claim.status || "Pending"}" status.`;
+
+      if (st.includes("approved") || st.includes("settled")) {
+        statusCat = "approved";
+        statusTitle = `Claim ${claim.claimNumber} Approved!`;
+        statusDesc = `Your insurance claim for vehicle ${claim.vehiclePlate} has been approved by the insurance branch.`;
+      } else if (st.includes("reject")) {
+        statusCat = "urgent";
+        statusTitle = `Claim ${claim.claimNumber} Rejected`;
+        statusDesc = `Your claim for ${claim.vehiclePlate} was reviewed and rejected. Check claim messages for notes.`;
+      } else if (st.includes("inspection") || claim.inspectionReport) {
+        statusTitle = `Inspection Completed for ${claim.claimNumber}`;
+        statusDesc = `Field officer inspection assessment is completed for vehicle ${claim.vehiclePlate}.`;
+      }
+
+      notifs.push({
+        id: `notif-${claim.claimNumber}-status-${claim.status || "pending"}`,
+        type: "claim_status",
+        category: statusCat,
+        title: statusTitle,
+        message: statusDesc,
+        subText: `Incident Date: ${claim.incidentDate} • Branch: ${claim.branch || request.branch}`,
+        createdAt: claim.updatedAt || claim.createdAt,
+        claimNumber: claim.claimNumber,
+        actionType: "view_claim",
+        actionLabel: "View Claim",
+        isUrgent: statusCat === "urgent"
+      });
+
+      // 2c. Chat messages
+      if (claim.messages && claim.messages.length > 0) {
+        const staffOrAgentMsgs = claim.messages.filter(
+          (m) => m.sender && m.sender !== "System" && !m.sender.includes(request.driverDetails.fullName)
+        );
+        const lastMsg = staffOrAgentMsgs[staffOrAgentMsgs.length - 1];
+        if (lastMsg) {
+          notifs.push({
+            id: `notif-${claim.claimNumber}-msg-${new Date(lastMsg.sentAt).getTime()}`,
+            type: "chat_message",
+            category: "message",
+            title: `New Message from ${lastMsg.sender}`,
+            message: `Regarding Claim ${claim.claimNumber}: "${lastMsg.message.slice(0, 100)}${lastMsg.message.length > 100 ? "..." : ""}"`,
+            subText: "Tap to reply in Live Claims Chat.",
+            createdAt: lastMsg.sentAt,
+            claimNumber: claim.claimNumber,
+            actionType: "chat",
+            actionLabel: "Open Chat",
+            isUrgent: false
+          });
+        }
+      }
+    }
+
+    // Sort descending by date
+    notifs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return res.json({
+      success: true,
+      notifications: notifs,
+      unreadCount: notifs.length
+    });
+  } catch (err) {
+    console.error("GET /portal/notifications error:", err);
+    return res.status(500).json({ error: "Failed to fetch driver notifications." });
+  }
+});
+
+
+/**
  * GET /api/third-party/portal/claims/:claimNumber
  * Returns specific authorized claim details for the driver
  */

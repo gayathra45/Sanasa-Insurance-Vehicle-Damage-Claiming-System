@@ -285,7 +285,21 @@ interface ClaimDetail extends ClaimRecord {
   }[];
 }
 
-type TabType = "home" | "vehicles" | "new_claim" | "my_claims" | "chat" | "documents" | "digital_pass";
+export interface DriverNotification {
+  id: string;
+  type: "authorization" | "claim_status" | "document_request" | "chat_message";
+  category: "approved" | "urgent" | "status" | "message";
+  title: string;
+  message: string;
+  subText?: string;
+  createdAt: string;
+  claimNumber?: string;
+  actionType: "pass" | "view_claim" | "upload_doc" | "chat";
+  actionLabel: string;
+  isUrgent: boolean;
+}
+
+type TabType = "home" | "notifications" | "vehicles" | "new_claim" | "my_claims" | "chat" | "documents" | "digital_pass";
 
 function formatPlate(plate: string): string {
   if (!plate) return "";
@@ -314,6 +328,12 @@ export default function ThirdPartyDriverPortalPage() {
   const [vehicles, setVehicles] = useState<AuthorizedVehicle[]>([]);
   const [claims, setClaims] = useState<ClaimRecord[]>([]);
   const [loadingClaims, setLoadingClaims] = useState(false);
+
+  // Notifications State
+  const [notifications, setNotifications] = useState<DriverNotification[]>([]);
+  const [readNotifIds, setReadNotifIds] = useState<string[]>([]);
+  const [notifFilter, setNotifFilter] = useState<"all" | "unread" | "urgent">("all");
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
 
   // Claim Details Modal
   const [selectedClaim, setSelectedClaim] = useState<ClaimDetail | null>(null);
@@ -427,9 +447,40 @@ export default function ThirdPartyDriverPortalPage() {
   }, [token]);
 
   // Load Driver Data
+  const fetchDriverNotifications = async (sToken?: string) => {
+    const activeToken = sToken || sessionToken;
+    if (!activeToken) return;
+    try {
+      setLoadingNotifs(true);
+      const res = await fetch(`${API_URL}/third-party/portal/notifications`, {
+        headers: { Authorization: `Bearer ${activeToken}` }
+      });
+      if (res.ok) {
+        const notifData = await res.json();
+        if (Array.isArray(notifData.notifications)) {
+          setNotifications(notifData.notifications);
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load driver notifications:", e);
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
   const loadInitialData = async (sToken: string) => {
     try {
-      const [meRes, vehRes, claimsRes] = await Promise.all([
+      // Load saved read notification IDs
+      if (typeof window !== "undefined" && token) {
+        try {
+          const savedRead = localStorage.getItem(`sanasa_tp_read_notifs_${token}`);
+          if (savedRead) {
+            setReadNotifIds(JSON.parse(savedRead));
+          }
+        } catch (_) {}
+      }
+
+      const [meRes, vehRes, claimsRes, notifRes] = await Promise.all([
         fetch(`${API_URL}/third-party/portal/me`, {
           headers: { Authorization: `Bearer ${sToken}` }
         }),
@@ -437,6 +488,9 @@ export default function ThirdPartyDriverPortalPage() {
           headers: { Authorization: `Bearer ${sToken}` }
         }),
         fetch(`${API_URL}/third-party/portal/claims`, {
+          headers: { Authorization: `Bearer ${sToken}` }
+        }),
+        fetch(`${API_URL}/third-party/portal/notifications`, {
           headers: { Authorization: `Bearer ${sToken}` }
         })
       ]);
@@ -456,10 +510,91 @@ export default function ThirdPartyDriverPortalPage() {
         const claimsData = await claimsRes.json();
         setClaims(claimsData.claims || []);
       }
+      if (notifRes.ok) {
+        const notifData = await notifRes.json();
+        if (Array.isArray(notifData.notifications)) {
+          setNotifications(notifData.notifications);
+        }
+      }
     } catch (e) {
       console.error("Failed to load initial driver data:", e);
     }
   };
+
+  // Periodic notifications & claims refresh
+  useEffect(() => {
+    if (!sessionToken) return;
+    const interval = setInterval(() => {
+      fetchDriverNotifications();
+    }, 12000);
+    return () => clearInterval(interval);
+  }, [sessionToken]);
+
+  const markAsRead = (id: string) => {
+    if (readNotifIds.includes(id)) return;
+    const updated = [...readNotifIds, id];
+    setReadNotifIds(updated);
+    if (typeof window !== "undefined" && token) {
+      try {
+        localStorage.setItem(`sanasa_tp_read_notifs_${token}`, JSON.stringify(updated));
+      } catch (_) {}
+    }
+  };
+
+  const markAllAsRead = () => {
+    const allIds = notifications.map((n) => n.id);
+    setReadNotifIds(allIds);
+    if (typeof window !== "undefined" && token) {
+      try {
+        localStorage.setItem(`sanasa_tp_read_notifs_${token}`, JSON.stringify(allIds));
+      } catch (_) {}
+    }
+    triggerToast("All notifications marked as read.");
+  };
+
+  const handleNotificationAction = (notif: DriverNotification) => {
+    if (notif.actionType === "pass") {
+      setActiveTab("digital_pass");
+    } else if (notif.actionType === "view_claim") {
+      if (notif.claimNumber) {
+        handleOpenClaimDetails(notif.claimNumber);
+      } else {
+        setActiveTab("my_claims");
+      }
+    } else if (notif.actionType === "upload_doc") {
+      if (notif.claimNumber) {
+        setUploadTargetClaim(notif.claimNumber);
+        setActiveTab("documents");
+      } else {
+        setActiveTab("documents");
+      }
+    } else if (notif.actionType === "chat") {
+      if (notif.claimNumber) {
+        handleOpenClaimDetails(notif.claimNumber);
+      } else {
+        setActiveTab("my_claims");
+      }
+    }
+  };
+
+  const unreadCount = useMemo(() => {
+    return notifications.filter((n) => !readNotifIds.includes(n.id)).length;
+  }, [notifications, readNotifIds]);
+
+  const urgentCount = useMemo(() => {
+    return notifications.filter((n) => n.isUrgent).length;
+  }, [notifications]);
+
+  const filteredNotifications = useMemo(() => {
+    if (notifFilter === "unread") {
+      return notifications.filter((n) => !readNotifIds.includes(n.id));
+    }
+    if (notifFilter === "urgent") {
+      return notifications.filter((n) => n.isUrgent);
+    }
+    return notifications;
+  }, [notifications, readNotifIds, notifFilter]);
+
 
   const refreshClaims = async () => {
     if (!sessionToken) return;
@@ -1166,6 +1301,7 @@ export default function ThirdPartyDriverPortalPage() {
 
   const navLinks = [
     { id: "home", label: "Home" },
+    { id: "notifications", label: "Notifications", count: unreadCount },
     { id: "my_claims", label: "My Claims" },
     { id: "vehicles", label: "My Vehicles" },
     { id: "chat", label: "Live Chat" },
@@ -1230,18 +1366,24 @@ export default function ThirdPartyDriverPortalPage() {
           </div>
 
           {/* Desktop Navigation Links — Exact Homepage/PolicyHolder Style */}
-          <div className="hidden md:flex items-center gap-4 lg:gap-7 text-sm lg:text-base">
+          <div className="hidden md:flex items-center gap-4 lg:gap-6 text-sm lg:text-base">
             {navLinks.map((link) => {
               const active = activeTab === link.id;
+              const hasBadge = !!link.count && link.count > 0;
               return (
                 <button
                   key={link.id}
                   onClick={() => setActiveTab(link.id as TabType)}
-                  className={`relative py-2 font-semibold whitespace-nowrap transition-colors duration-200 border-none bg-transparent cursor-pointer ${
+                  className={`relative py-2 font-semibold whitespace-nowrap transition-colors duration-200 border-none bg-transparent cursor-pointer flex items-center gap-1.5 ${
                     active ? "text-[#0d2a3a]" : "text-slate-600 hover:text-[#0284c7]"
                   }`}
                 >
                   <span>{link.label}</span>
+                  {hasBadge && (
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-500 text-white leading-none flex items-center justify-center animate-pulse shadow-xs">
+                      {link.count}
+                    </span>
+                  )}
                   {active && (
                     <span className="absolute bottom-0 left-0 w-full h-[3px] rounded-full bg-[#0d2a3a] transition-all duration-200" />
                   )}
@@ -1259,7 +1401,25 @@ export default function ThirdPartyDriverPortalPage() {
           </div>
 
           {/* Right Action Icons & Driver Profile */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Direct Notification Bell Quick Access */}
+            <button
+              onClick={() => setActiveTab("notifications")}
+              className={`relative p-2 rounded-xl transition-all border cursor-pointer ${
+                activeTab === "notifications"
+                  ? "bg-sky-50 border-sky-300 text-sky-700 shadow-xs"
+                  : "bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-600 hover:text-slate-900"
+              }`}
+              title="Driver Notifications"
+            >
+              <HugeiconsIcon icon={Notification01Icon} className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-rose-600 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-pulse shadow-sm">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 text-[#0d2a3a] flex items-center justify-center font-bold text-xs">
                 {profile?.driverName ? profile.driverName.charAt(0).toUpperCase() : "D"}
@@ -1291,11 +1451,16 @@ export default function ThirdPartyDriverPortalPage() {
             <button
               key={link.id}
               onClick={() => setActiveTab(link.id as TabType)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border-none ${
+              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap border-none flex items-center gap-1.5 ${
                 activeTab === link.id ? "bg-[#0d2a3a] text-white" : "bg-slate-100 text-slate-600"
               }`}
             >
-              {link.label}
+              <span>{link.label}</span>
+              {!!link.count && link.count > 0 && (
+                <span className="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-rose-500 text-white leading-none">
+                  {link.count}
+                </span>
+              )}
             </button>
           ))}
           <button
