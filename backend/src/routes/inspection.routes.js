@@ -64,9 +64,9 @@ ${report.agentNotes?.trim() || "Inspection completed on-site by assigned agent."
  * Helper to authenticate and verify access permissions for claim inspection
  */
 async function verifyClaimAccess(claim, req) {
-  const reqUserEmail = (req.headers["x-user-email"] || req.query.email || req.body.agentEmail || "").trim().toLowerCase();
-  const reqUserRole = (req.headers["x-user-role"] || req.query.role || req.body.role || "").trim();
-  const reqUserBranch = (req.headers["x-user-branch"] || req.query.branch || req.body.branch || "").trim();
+  const reqUserEmail = (req.headers["x-user-email"] || req.query.email || req.body?.agentEmail || "").trim().toLowerCase();
+  const reqUserRole = (req.headers["x-user-role"] || req.query.role || req.body?.role || "").trim();
+  const reqUserBranch = (req.headers["x-user-branch"] || req.query.branch || req.body?.branch || "").trim();
 
   // If Admin, full access
   if (reqUserRole === "Admin") return { authorized: true, role: "Admin", email: reqUserEmail };
@@ -215,7 +215,7 @@ router.get("/claim/:claimNumber", async (req, res) => {
     });
   } catch (err) {
     console.error("GET /api/inspection/claim error:", err);
-    res.status(500).json({ error: "Failed to fetch vehicle inspection report." });
+    res.status(500).json({ error: err.message || "Failed to fetch vehicle inspection report." });
   }
 });
 

@@ -1072,7 +1072,9 @@ ${inspectionReportText.trim()}
         <InteractiveDamageInspection
           claimNumber={selectedClaim.claimNumber}
           vehiclePlate={selectedClaim.vehiclePlate}
-          vehicleModel={selectedClaim.vehicleModel}
+          vehicleCategory={selectedClaim.vehicleType || selectedClaim.vehicleCategory || selectedClaim.vehicleModel}
+          vehicleModel={selectedClaim.vehicleModel || selectedClaim.vehicleType}
+          policyholderName={selectedClaim.userName || selectedClaim.policyholderName || ""}
           policyholderNic={selectedClaim.userNic}
           assignedAgent={agentEmail || selectedClaim.assignedAgent}
           branch={selectedClaim.branch}

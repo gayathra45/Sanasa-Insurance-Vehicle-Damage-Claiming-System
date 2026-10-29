@@ -14,7 +14,7 @@ import {
   Switch,
   Platform
 } from "react-native";
-import Svg, { Path, Rect, Circle, Polygon, G, Text as SvgText } from "react-native-svg";
+import Svg, { Path, Rect, Circle, Polygon, G, Line, Text as SvgText } from "react-native-svg";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
 import {
@@ -129,6 +129,7 @@ export default function InteractiveDamageInspection({
   const [showMarkerModal, setShowMarkerModal] = useState(false);
   const [editingMarker, setEditingMarker] = useState<DamageMarker | null>(null);
   const [isNewMarker, setIsNewMarker] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   // Category-specific checklist
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -156,7 +157,9 @@ export default function InteractiveDamageInspection({
 
   // Load existing report or initialize defaults
   useEffect(() => {
-    const spec = getDiagramForCategory(vehicleCategory);
+    let isMounted = true;
+    const initialCategory = vehicleCategory || vehicleModel || "Car";
+    const spec = getDiagramForCategory(initialCategory);
     setDiagramSpec(spec);
 
     if (initialReport) {
@@ -180,7 +183,61 @@ export default function InteractiveDamageInspection({
     } else {
       initDefaultChecklist(spec.category);
     }
-  }, [vehicleCategory, initialReport]);
+
+    // Always fetch latest claim & vehicle data from server to resolve true category
+    if (claimNumber) {
+      fetch(`${API_BASE_URL}/api/inspection/claim/${claimNumber}`, {
+        headers: {
+          "x-user-email": assignedAgent || "",
+          "x-user-role": "Agent",
+          "x-user-branch": branch || ""
+        }
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (!isMounted || !data) return;
+          const serverCategory =
+            data.vehicle?.category ||
+            data.report?.vehicleCategory ||
+            data.claim?.vehicleType ||
+            vehicleCategory ||
+            vehicleModel;
+
+          if (serverCategory) {
+            const resolvedSpec = getDiagramForCategory(serverCategory);
+            setDiagramSpec(resolvedSpec);
+
+            if (data.report?.checklist && data.report.checklist.length > 0) {
+              setChecklist(data.report.checklist);
+            } else if (!initialReport?.checklist?.length) {
+              initDefaultChecklist(resolvedSpec.category);
+            }
+          }
+
+          if (data.report) {
+            if (Array.isArray(data.report.damageMarkers) && data.report.damageMarkers.length > 0) {
+              setDamageMarkers(data.report.damageMarkers);
+            }
+            if (data.report.vehicleCondition) {
+              if (data.report.vehicleCondition.odometer) setOdometer(data.report.vehicleCondition.odometer);
+              if (data.report.vehicleCondition.fuelLevel) setFuelLevel(data.report.vehicleCondition.fuelLevel);
+              if (data.report.vehicleCondition.recommendedAction) setRecommendedAction(data.report.vehicleCondition.recommendedAction);
+              if (data.report.vehicleCondition.preExistingDamage) setPreExistingNotes(data.report.vehicleCondition.preExistingDamage);
+            }
+            if (data.report.agentNotes) {
+              setAgentGeneralNotes(data.report.agentNotes);
+            }
+          }
+        })
+        .catch((err) => {
+          console.warn("Could not prefetch claim inspection:", err);
+        });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [claimNumber, vehicleCategory, vehicleModel, initialReport]);
 
   const initDefaultChecklist = (cat: string) => {
     // Generate default checklist items for category
@@ -523,9 +580,14 @@ export default function InteractiveDamageInspection({
           <View style={{ flex: 1, marginLeft: 12 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
               <Text style={styles.claimNumberText}>{claimNumber}</Text>
-              <View style={styles.categoryPill}>
+              <TouchableOpacity
+                style={[styles.categoryPill, { flexDirection: "row", alignItems: "center", gap: 2 }]}
+                onPress={() => setShowCategoryPicker(true)}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.categoryPillText}>{diagramSpec.displayName}</Text>
-              </View>
+                <Ionicons name="chevron-down" size={12} color="#0369a1" />
+              </TouchableOpacity>
             </View>
             <Text style={styles.plateNumberText}>{vehiclePlate} {vehicleModel ? `• ${vehicleModel}` : ""}</Text>
             <Text style={styles.policyholderText}>Owner: {policyholderName} ({policyholderNic})</Text>
@@ -604,10 +666,12 @@ export default function InteractiveDamageInspection({
                     y={p.y}
                     width={p.width}
                     height={p.height}
-                    rx={p.width && p.width > 100 ? 6 : 2}
+                    rx={p.rx !== undefined ? p.rx : (p.width && p.width > 100 ? 6 : 2)}
+                    ry={p.ry}
                     fill={p.fill || "#f1f5f9"}
                     stroke={p.stroke || "#1e293b"}
                     strokeWidth={p.strokeWidth || 2}
+                    strokeDasharray={p.strokeDasharray}
                   />
                 );
               }
@@ -621,6 +685,20 @@ export default function InteractiveDamageInspection({
                     fill={p.fill || "#0f172a"}
                     stroke={p.stroke || "#64748b"}
                     strokeWidth={p.strokeWidth || 2}
+                  />
+                );
+              }
+              if (p.type === "line") {
+                return (
+                  <Line
+                    key={idx}
+                    x1={p.x1}
+                    y1={p.y1}
+                    x2={p.x2}
+                    y2={p.y2}
+                    stroke={p.stroke || "#1e293b"}
+                    strokeWidth={p.strokeWidth || 1.5}
+                    strokeDasharray={p.strokeDasharray}
                   />
                 );
               }
@@ -642,6 +720,7 @@ export default function InteractiveDamageInspection({
                   fill={p.fill || "#f1f5f9"}
                   stroke={p.stroke || "#1e293b"}
                   strokeWidth={p.strokeWidth || 2.5}
+                  strokeDasharray={p.strokeDasharray}
                 />
               );
             })}
@@ -1310,6 +1389,67 @@ export default function InteractiveDamageInspection({
               resizeMode="contain"
             />
           )}
+        </View>
+      </Modal>
+
+      {/* ═════════════════════════════════════════════════════════════════════ */}
+      {/* MODAL 5: CATEGORY PICKER SWITCHER                                     */}
+      {/* ═════════════════════════════════════════════════════════════════════ */}
+      <Modal visible={showCategoryPicker} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.bottomSheetContainer, { maxHeight: 480 }]}>
+            <View style={styles.bottomSheetHeader}>
+              <View>
+                <Text style={styles.bottomSheetTitle}>Select Vehicle Category</Text>
+                <Text style={styles.bottomSheetSubtitle}>Switch schematic blueprint diagram</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowCategoryPicker(false)} style={styles.modalCloseBtn}>
+                <Ionicons name="close" size={20} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ padding: 16 }} showsVerticalScrollIndicator={false}>
+              {[
+                { cat: "Car", name: "Sedan / Passenger Car", icon: "car" },
+                { cat: "Motorcycle", name: "Motorcycle / Scooter", icon: "motorbike" },
+                { cat: "Three-Wheeler", name: "Three-Wheeler / Tuk-Tuk", icon: "rickshaw" },
+                { cat: "SUV", name: "SUV / Crossover / 4x4", icon: "car-estate" },
+                { cat: "Van", name: "Passenger / Panel Van", icon: "van-passenger" },
+                { cat: "Lorry", name: "Commercial Lorry / Truck", icon: "truck" },
+                { cat: "Bus", name: "Commercial Coach / Bus", icon: "bus" },
+                { cat: "Tractor", name: "Agricultural Tractor", icon: "tractor" }
+              ].map((item) => {
+                const isSelected = diagramSpec.category === item.cat;
+                return (
+                  <TouchableOpacity
+                    key={item.cat}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      padding: 12,
+                      borderRadius: 12,
+                      marginBottom: 8,
+                      backgroundColor: isSelected ? "#e0f2fe" : "#f8fafc",
+                      borderWidth: 1,
+                      borderColor: isSelected ? "#0284c7" : "#e2e8f0"
+                    }}
+                    onPress={() => {
+                      const newSpec = getDiagramForCategory(item.cat);
+                      setDiagramSpec(newSpec);
+                      initDefaultChecklist(newSpec.category);
+                      setShowCategoryPicker(false);
+                    }}
+                  >
+                    <MaterialCommunityIcons name={item.icon as any} size={24} color={isSelected ? "#0284c7" : "#475569"} />
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                      <Text style={{ fontSize: 13, fontWeight: "700", color: isSelected ? "#0369a1" : "#1e293b" }}>{item.name}</Text>
+                      <Text style={{ fontSize: 11, color: "#64748b" }}>{item.cat}</Text>
+                    </View>
+                    {isSelected && <Ionicons name="checkmark-circle" size={20} color="#0284c7" />}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
         </View>
       </Modal>
     </ScrollView>

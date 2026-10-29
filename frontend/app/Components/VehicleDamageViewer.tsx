@@ -218,16 +218,73 @@ export default function VehicleDamageViewer({
               className="w-full h-full object-contain pointer-events-none select-none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              {currentViewSpec.paths.map((p, idx) => (
-                <path
-                  key={idx}
-                  d={p.d}
-                  fill={p.fill || "none"}
-                  stroke={p.stroke || "#334E68"}
-                  strokeWidth={p.strokeWidth || 2}
-                  strokeDasharray={p.strokeDasharray}
-                />
-              ))}
+              {currentViewSpec.paths.map((p, idx) => {
+                if (p.type === "rect") {
+                  return (
+                    <rect
+                      key={idx}
+                      x={p.x}
+                      y={p.y}
+                      width={p.width}
+                      height={p.height}
+                      rx={p.rx !== undefined ? p.rx : (p.width && p.width > 100 ? 6 : 2)}
+                      ry={p.ry}
+                      fill={p.fill || "#f1f5f9"}
+                      stroke={p.stroke || "#1e293b"}
+                      strokeWidth={p.strokeWidth || 2}
+                      strokeDasharray={p.strokeDasharray}
+                    />
+                  );
+                }
+                if (p.type === "circle") {
+                  return (
+                    <circle
+                      key={idx}
+                      cx={p.cx}
+                      cy={p.cy}
+                      r={p.r}
+                      fill={p.fill || "#0f172a"}
+                      stroke={p.stroke || "#64748b"}
+                      strokeWidth={p.strokeWidth || 2}
+                    />
+                  );
+                }
+                if (p.type === "line") {
+                  return (
+                    <line
+                      key={idx}
+                      x1={p.x1}
+                      y1={p.y1}
+                      x2={p.x2}
+                      y2={p.y2}
+                      stroke={p.stroke || "#1e293b"}
+                      strokeWidth={p.strokeWidth || 1.5}
+                      strokeDasharray={p.strokeDasharray}
+                    />
+                  );
+                }
+                if (p.type === "polygon") {
+                  return (
+                    <polygon
+                      key={idx}
+                      points={p.points}
+                      fill={p.fill || "#fef08a"}
+                      stroke={p.stroke || "#ca8a04"}
+                      strokeWidth={p.strokeWidth || 2}
+                    />
+                  );
+                }
+                return (
+                  <path
+                    key={idx}
+                    d={p.d}
+                    fill={p.fill || "none"}
+                    stroke={p.stroke || "#334E68"}
+                    strokeWidth={p.strokeWidth || 2}
+                    strokeDasharray={p.strokeDasharray}
+                  />
+                );
+              })}
             </svg>
 
             {/* Damage Markers Layer */}
