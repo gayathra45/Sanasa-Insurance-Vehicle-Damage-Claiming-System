@@ -352,23 +352,8 @@ export default function AgentNavbar() {
             </Link>
           </div>
 
-          {/* Right Action Icons (Claim Chat, Notifications, Profile & Mobile Hamburger) */}
+          {/* Right Action Icons (Notifications, Profile & Mobile Hamburger) */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Live Claim Chat Message Icon */}
-            <button
-              onClick={() => openChat()}
-              className="relative p-2 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 cursor-pointer flex items-center justify-center focus:outline-none"
-              aria-label={chatUnreadCount > 0 ? `Unread messages (${chatUnreadCount})` : "Claim Chat"}
-              title="Claim Communication Desk"
-            >
-              <HugeiconsIcon icon={BubbleChatIcon} className="w-6 h-6" strokeWidth={1.8} />
-              {chatUnreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-75">
-                  {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
-                </span>
-              )}
-            </button>
-
             {/* Notifications Bell */}
             <Link
               href="/Agent/Notifications"

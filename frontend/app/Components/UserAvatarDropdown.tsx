@@ -46,21 +46,6 @@ export default function UserAvatarDropdown({ userType }: UserAvatarDropdownProps
 
   return (
     <div className="flex items-center gap-3">
-      {/* Live Claim Chat Message Icon */}
-      <button
-        onClick={() => openChat()}
-        className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center"
-        aria-label={chatUnreadCount > 0 ? `Unread messages (${chatUnreadCount})` : "Claim Chat"}
-        title="Claim Communication Desk"
-      >
-        <HugeiconsIcon icon={BubbleChatIcon} className="w-6 h-6" strokeWidth={2} />
-        {chatUnreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-75">
-            {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
-          </span>
-        )}
-      </button>
-
       {/* Avatar Dropdown */}
       <div className="relative" ref={profileMenuRef}>
         <button
