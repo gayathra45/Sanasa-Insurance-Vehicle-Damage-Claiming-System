@@ -1370,6 +1370,29 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
       uploadArray(drivingLicense?.rear, "claims/driving_license")
     ]);
 
+    // Upload other vehicles involved photos dynamically
+    let resolvedOtherVehicles = [];
+    if (otherVehicleDetails) {
+      if (Array.isArray(otherVehicleDetails)) {
+        resolvedOtherVehicles = await Promise.all(
+          otherVehicleDetails.map(async (vehicle) => {
+            const [licPhotos, vehPhotos] = await Promise.all([
+              uploadArray(vehicle.licensePhotos, "claims/driving_license"),
+              uploadArray(vehicle.vehiclePhotos, "claims/accident_photos")
+            ]);
+            return {
+              vehiclePlate: (vehicle.vehiclePlate || "").trim(),
+              insuranceCompany: (vehicle.insuranceCompany || "").trim(),
+              policyNumber: (vehicle.policyNumber || "").trim(),
+              driverName: (vehicle.driverName || "").trim(),
+              licensePhotos: licPhotos || [],
+              vehiclePhotos: vehPhotos || []
+            };
+          })
+        );
+      }
+    }
+
     // Optional AI damage analysis
     const allPhotos = [
       ...(accidentPhotos?.front || []),
@@ -1396,6 +1419,7 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
       damageType: damageType.trim(),
       description: description.trim(),
       location: location.trim(),
+      otherVehicleDetails: resolvedOtherVehicles,
       branch: assignedBranch,
       status: "Pending",
       currentStep: 1,

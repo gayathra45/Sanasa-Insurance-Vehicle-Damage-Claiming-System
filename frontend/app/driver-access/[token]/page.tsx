@@ -32,10 +32,180 @@ import {
   Globe02Icon,
   ArrowDown01Icon,
   BubbleChatIcon,
-  SecurityCheckIcon
+  SecurityCheckIcon,
+  Location01Icon,
+  MapIcon,
+  Search01Icon,
+  Gps01Icon,
+  Calendar03Icon,
+  PlayIcon,
+  Tick01Icon,
+  Loading03Icon
 } from "@hugeicons/core-free-icons";
 import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
 import DriverClaimChat from "@/app/Components/ClaimChat/DriverClaimChat";
+import { compressImage } from "@/app/utils/imageCompressor";
+
+function cleanCountry(country?: string): string {
+  if (!country) return "Sri Lanka";
+  const c = country.toLowerCase();
+  if (c.includes("ශ්‍රී ලංකා") || c.includes("இலங்கை") || c.includes("lanka")) {
+    return "Sri Lanka";
+  }
+  return country;
+}
+
+function formatPhotonResult(f: any): any {
+  const props = f.properties || {};
+  const coords = f.geometry?.coordinates || [0, 0];
+  const parts = [];
+  if (props.name) parts.push(props.name);
+  if (props.housenumber && props.street) {
+    parts.push(`${props.housenumber} ${props.street}`);
+  } else if (props.street) {
+    parts.push(props.street);
+  } else if (props.housenumber) {
+    parts.push(props.housenumber);
+  }
+  if (props.locality) {
+    const loc = props.locality.split(";")[0].trim();
+    if (loc) parts.push(loc);
+  }
+  if (props.district) parts.push(props.district);
+  if (props.city) parts.push(props.city);
+  if (props.county) parts.push(props.county);
+  if (props.state) parts.push(props.state);
+  if (props.postcode) parts.push(props.postcode);
+  if (props.country) {
+    parts.push(cleanCountry(props.country));
+  } else {
+    parts.push("Sri Lanka");
+  }
+  const displayName = parts.filter((v, i, self) => self.indexOf(v) === i).join(", ");
+  return formatDisplayNameWithCategory({
+    display_name: displayName,
+    lat: coords[1].toString(),
+    lon: coords[0].toString(),
+    category_key: props.osm_key,
+    category_value: props.osm_value
+  });
+}
+
+function formatDisplayNameWithCategory(item: any): any {
+  if (!item || !item.display_name) return item;
+  const key = (item.category_key || "").toLowerCase();
+  const value = (item.category_value || "").toLowerCase();
+  const parts = item.display_name.split(",");
+  let firstName = parts[0]?.trim() || "";
+  const firstNameLower = firstName.toLowerCase();
+  let modified = false;
+
+  if (key === "railway" && value === "station") {
+    if (!firstNameLower.includes("station") && !firstNameLower.includes("railway")) {
+      firstName += " Railway Station";
+      modified = true;
+    }
+  } else if (key === "amenity" && value === "police") {
+    if (!firstNameLower.includes("police")) {
+      firstName += " Police Station";
+      modified = true;
+    }
+  } else if (key === "amenity" && (value === "bus_station" || value === "bus_stop")) {
+    if (!firstNameLower.includes("bus")) {
+      firstName += value === "bus_stop" ? " Bus Stop" : " Bus Station";
+      modified = true;
+    }
+  } else if (key === "amenity" && value === "hospital") {
+    if (!firstNameLower.includes("hospital")) {
+      firstName += " Hospital";
+      modified = true;
+    }
+  }
+  if (modified) {
+    parts[0] = firstName;
+    item.display_name = parts.join(", ");
+  }
+  return item;
+}
+
+function areCoordsClose(lat1: string, lon1: string, lat2: string, lon2: string): boolean {
+  const threshold = 0.0005; // approx 50m
+  return (
+    Math.abs(parseFloat(lat1) - parseFloat(lat2)) < threshold &&
+    Math.abs(parseFloat(lon1) - parseFloat(lon2)) < threshold
+  );
+}
+
+function areNamesSimilar(n1: string, n2: string): boolean {
+  const name1 = n1.split(",")[0].toLowerCase().trim();
+  const name2 = n2.split(",")[0].toLowerCase().trim();
+  if (name1 === name2) return true;
+  if (name1.includes(name2) || name2.includes(name1)) return true;
+  return false;
+}
+
+function getResultScore(item: any, queryWords: string[]): number {
+  const key = (item.category_key || "").toLowerCase();
+  const value = (item.category_value || "").toLowerCase();
+  const firstPart = item.display_name.split(",")[0].toLowerCase();
+  const restPart = item.display_name.split(",").slice(1).join(",").toLowerCase();
+
+  let score = 0;
+  for (const word of queryWords) {
+    if (firstPart.includes(word)) score += 25;
+    else if (restPart.includes(word)) score += 5;
+  }
+  if (queryWords.length > 0 && firstPart.includes(queryWords[0])) score += 30;
+  const queryStr = queryWords.join(" ");
+  if (firstPart === queryStr) score += 40;
+  if (queryWords.includes("railway") || queryWords.includes("train")) {
+    if (key === "railway") score += 30;
+  }
+  return score;
+}
+
+function getMinMaxDates() {
+  const today = new Date();
+  const lastWeek = new Date();
+  lastWeek.setDate(today.getDate() - 7);
+
+  const formatDateStr = (date: Date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  return {
+    max: formatDateStr(today),
+    min: formatDateStr(lastWeek)
+  };
+}
+
+function getVehicleEmoji(type?: string): string {
+  if (!type) return "🚗";
+  const t = type.toLowerCase().trim();
+  if (t.includes("suv")) return "🚙";
+  if (t.includes("cab") || t.includes("pickup")) return "🛻";
+  if (t.includes("van") || t.includes("minibus")) return "🚐";
+  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) return "🏍️";
+  if (t.includes("three") || t.includes("rickshaw") || t.includes("tuk")) return "🛺";
+  if (t.includes("lorry") || t.includes("truck")) return "🚛";
+  if (t.includes("bus")) return "🚌";
+  if (t.includes("tractor")) return "🚜";
+  return "🚗";
+}
+
+const DAMAGE_TYPES = [
+  "Front Bumper / Grille Damage",
+  "Rear Bumper Damage",
+  "Side Scratch / Dent (Left/Right)",
+  "Windshield / Glass Crack",
+  "Engine / Mechanical Failure",
+  "Suspension Damage",
+  "Total Loss / Rollover",
+  "Other Accident Damage"
+];
 
 interface AuthorizedVehicle {
   numberPlate: string;
@@ -149,21 +319,63 @@ export default function ThirdPartyDriverPortalPage() {
   const [selectedClaim, setSelectedClaim] = useState<ClaimDetail | null>(null);
   const [loadingClaimModal, setLoadingClaimModal] = useState(false);
 
-  // Claim Submission Form States
+  // Claim Submission Form States (Full PolicyHolder New_Claim Parity)
+  const [claimStep, setClaimStep] = useState<1 | 2>(1);
   const [claimPlate, setClaimPlate] = useState("");
   const [claimDate, setClaimDate] = useState("");
   const [claimTime, setClaimTime] = useState("");
-  const [claimLocation, setClaimLocation] = useState("");
-  const [claimDamageType, setClaimDamageType] = useState("Front Collision");
+  const [claimDamageType, setClaimDamageType] = useState("");
   const [claimDesc, setClaimDesc] = useState("");
-  const [photoFront, setPhotoFront] = useState("");
-  const [photoRear, setPhotoRear] = useState("");
-  const [photoSide, setPhotoSide] = useState("");
-  const [dlFront, setDlFront] = useState("");
-  const [dlBack, setDlBack] = useState("");
+  const [address, setAddress] = useState("Colombo, Sri Lanka");
+  const [isLocating, setIsLocating] = useState(false);
+  const [latitude, setLatitude] = useState(6.9271);
+  const [longitude, setLongitude] = useState(79.8612);
+  const [initialCoords, setInitialCoords] = useState({ latitude: 6.9271, longitude: 79.8612 });
+  const [modalInitialCoords, setModalInitialCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showResultsDropdown, setShowResultsDropdown] = useState(false);
+  const [isUserTyping, setIsUserTyping] = useState(false);
+
+  // Other Vehicles Involved State
+  const [otherVehiclesInvolved, setOtherVehiclesInvolved] = useState<"yes" | "no" | "">("");
+  const [otherVehiclesCount, setOtherVehiclesCount] = useState<number>(0);
+  const [otherVehicles, setOtherVehicles] = useState<{
+    vehiclePlate: string;
+    insuranceCompany: string;
+    policyNumber: string;
+    driverName: string;
+    licensePhotosPreviews: string[];
+    licensePhotosBase64: string[];
+    vehiclePhotosPreviews: string[];
+    vehiclePhotosBase64: string[];
+  }[]>([]);
+
+  // Step 2 Document Upload States
+  interface FileUploadState {
+    files: File[];
+    previews: string[];
+  }
+  const [accidentFront, setAccidentFront] = useState<FileUploadState>({ files: [], previews: [] });
+  const [accidentRear, setAccidentRear] = useState<FileUploadState>({ files: [], previews: [] });
+  const [accidentSide, setAccidentSide] = useState<FileUploadState>({ files: [], previews: [] });
+  const [licenseFront, setLicenseFront] = useState<FileUploadState>({ files: [], previews: [] });
+  const [licenseRear, setLicenseRear] = useState<FileUploadState>({ files: [], previews: [] });
+  const [duplicatesMap, setDuplicatesMap] = useState<Record<string, any>>({});
+  const [isCheckingDuplicates, setIsCheckingDuplicates] = useState(false);
+
   const [submittingClaim, setSubmittingClaim] = useState(false);
   const [claimFormError, setClaimFormError] = useState("");
   const [submittedClaimNumber, setSubmittedClaimNumber] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  const { min: minDate, max: maxDate } = getMinMaxDates();
+
+  const accidentFrontRef = React.useRef<HTMLInputElement>(null);
+  const accidentRearRef = React.useRef<HTMLInputElement>(null);
+  const accidentSideRef = React.useRef<HTMLInputElement>(null);
+  const licenseFrontRef = React.useRef<HTMLInputElement>(null);
+  const licenseRearRef = React.useRef<HTMLInputElement>(null);
 
   // Document Upload States
   const [uploadTargetClaim, setUploadTargetClaim] = useState("");
@@ -302,35 +514,478 @@ export default function ThirdPartyDriverPortalPage() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmitClaim = async (e: React.FormEvent) => {
+  // Message listener for location select from map iframe
+  useEffect(() => {
+    const handleMapMessage = (event: MessageEvent) => {
+      try {
+        const data = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (data.latitude && data.longitude) {
+          setLatitude(data.latitude);
+          setLongitude(data.longitude);
+          reverseGeocode(data.latitude, data.longitude);
+        }
+      } catch (err) {}
+    };
+
+    window.addEventListener("message", handleMapMessage);
+    return () => window.removeEventListener("message", handleMapMessage);
+  }, []);
+
+  // Autocomplete suggestions debouncer
+  useEffect(() => {
+    if (!isUserTyping || !address || address.trim() === "" || address === "Colombo, Sri Lanka") {
+      return;
+    }
+    const delayDebounceFn = setTimeout(() => {
+      geocodeAddressForSuggestions(address);
+    }, 250);
+    return () => clearTimeout(delayDebounceFn);
+  }, [address, isUserTyping]);
+
+  const reverseGeocode = async (lat: number, lon: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+        {
+          headers: {
+            "Accept-Language": "en",
+            "User-Agent": "SanasaInsuranceWebApp/1.0 (contact: support@sanasainsurance.lk)"
+          }
+        }
+      );
+      const data = await res.json();
+      if (data && data.display_name) {
+        setAddress(data.display_name);
+      } else {
+        setAddress(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+      }
+    } catch (geocodeError) {
+      setAddress(`${lat.toFixed(6)}, ${lon.toFixed(6)}`);
+    }
+  };
+
+  const geocodeAddressForSuggestions = async (addrStr: string) => {
+    if (!addrStr || addrStr.trim() === "") return;
+    const bbox = "78.5,5.5,82.5,10.5";
+    const headers = {
+      "User-Agent": "SanasaInsuranceWebApp/1.0 (contact: support@sanasainsurance.lk)"
+    };
+    const variations = [addrStr];
+    const qLower = addrStr.toLowerCase();
+    const queryWords = qLower.split(/\s+/).filter((w) => w.length > 0);
+    if ((qLower.includes("railway") || qLower.includes("train") || qLower.includes("police") || qLower.includes("bus")) && !qLower.includes("station") && !qLower.includes("stand")) {
+      variations.push(addrStr + " station");
+    }
+
+    try {
+      const fetchPromises = [];
+      for (const qVar of variations) {
+        const urlNominatim = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(qVar)}&limit=20&countrycodes=lk`;
+        const urlPhoton = `https://photon.komoot.io/api/?q=${encodeURIComponent(qVar)}&limit=20&bbox=${bbox}&lang=en`;
+        fetchPromises.push(
+          fetch(urlNominatim, { headers }).then((r) => r.json().catch(() => [])),
+          fetch(urlPhoton).then((r) => r.json().catch(() => ({ features: [] })))
+        );
+      }
+      const fetchResults = await Promise.all(fetchPromises);
+      let combined: any[] = [];
+      for (let i = 0; i < fetchResults.length; i++) {
+        const isPhotonResult = i % 2 === 1;
+        const data = fetchResults[i];
+        if (isPhotonResult) {
+          combined = [...combined, ...(data.features || []).map(formatPhotonResult)];
+        } else {
+          combined = [...combined, ...(data || []).map((r: any) => formatDisplayNameWithCategory({
+            display_name: r.display_name,
+            lat: r.lat,
+            lon: r.lon,
+            category_key: r.class,
+            category_value: r.type
+          }))];
+        }
+      }
+      combined.sort((a, b) => getResultScore(b, queryWords) - getResultScore(a, queryWords));
+      const deduplicated: any[] = [];
+      for (const item of combined) {
+        const exists = deduplicated.some((d) =>
+          (areCoordsClose(d.lat, d.lon, item.lat, item.lon) && areNamesSimilar(d.display_name, item.display_name)) ||
+          d.display_name.toLowerCase() === item.display_name.toLowerCase()
+        );
+        if (!exists) deduplicated.push(item);
+      }
+      if (deduplicated.length > 0) {
+        setSearchResults(deduplicated);
+        setShowResultsDropdown(true);
+      } else {
+        setSearchResults([]);
+        setShowResultsDropdown(false);
+      }
+    } catch (err) {
+      console.warn("Suggestions geocoding failed:", err);
+    }
+  };
+
+  const geocodeAddress = async (addrStr: string) => {
+    if (!addrStr || addrStr.trim() === "") return;
+    setIsUserTyping(false);
+    setShowResultsDropdown(false);
+    const bbox = "78.5,5.5,82.5,10.5";
+    const headers = {
+      "User-Agent": "SanasaInsuranceWebApp/1.0 (contact: support@sanasainsurance.lk)"
+    };
+    const variations = [addrStr];
+    const qLower = addrStr.toLowerCase();
+    const queryWords = qLower.split(/\s+/).filter((w) => w.length > 0);
+    if ((qLower.includes("railway") || qLower.includes("train") || qLower.includes("police") || qLower.includes("bus")) && !qLower.includes("station") && !qLower.includes("stand")) {
+      variations.push(addrStr + " station");
+    }
+
+    try {
+      const fetchPromises = [];
+      for (const qVar of variations) {
+        const urlNominatim = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(qVar)}&limit=20&countrycodes=lk`;
+        const urlPhoton = `https://photon.komoot.io/api/?q=${encodeURIComponent(qVar)}&limit=20&bbox=${bbox}&lang=en`;
+        fetchPromises.push(
+          fetch(urlNominatim, { headers }).then((r) => r.json().catch(() => [])),
+          fetch(urlPhoton).then((r) => r.json().catch(() => ({ features: [] })))
+        );
+      }
+      const fetchResults = await Promise.all(fetchPromises);
+      let combined: any[] = [];
+      for (let i = 0; i < fetchResults.length; i++) {
+        const isPhotonResult = i % 2 === 1;
+        const data = fetchResults[i];
+        if (isPhotonResult) {
+          combined = [...combined, ...(data.features || []).map(formatPhotonResult)];
+        } else {
+          combined = [...combined, ...(data || []).map((r: any) => formatDisplayNameWithCategory({
+            display_name: r.display_name,
+            lat: r.lat,
+            lon: r.lon,
+            category_key: r.class,
+            category_value: r.type
+          }))];
+        }
+      }
+      combined.sort((a, b) => getResultScore(b, queryWords) - getResultScore(a, queryWords));
+      const deduplicated: any[] = [];
+      for (const item of combined) {
+        const exists = deduplicated.some((d) =>
+          (areCoordsClose(d.lat, d.lon, item.lat, item.lon) && areNamesSimilar(d.display_name, item.display_name)) ||
+          d.display_name.toLowerCase() === item.display_name.toLowerCase()
+        );
+        if (!exists) deduplicated.push(item);
+      }
+
+      if (deduplicated.length > 0) {
+        setSearchResults(deduplicated);
+        setShowResultsDropdown(true);
+        const lat = parseFloat(deduplicated[0].lat);
+        const lon = parseFloat(deduplicated[0].lon);
+        setLatitude(lat);
+        setLongitude(lon);
+        setInitialCoords({ latitude: lat, longitude: lon });
+        setAddress(deduplicated[0].display_name);
+
+        const iframe = document.getElementById("map-iframe") as HTMLIFrameElement;
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+        }
+        const modalIframe = document.getElementById("modal-map-iframe") as HTMLIFrameElement;
+        if (modalIframe && modalIframe.contentWindow) {
+          modalIframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+        }
+      }
+    } catch (err) {
+      console.error("Geocoding address failed:", err);
+    }
+  };
+
+  const handleGPSLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      setAddress("123 Galle Road, Colombo, Sri Lanka");
+      return;
+    }
+    setIsLocating(true);
+
+    const getPosition = (options: PositionOptions): Promise<GeolocationPosition> => {
+      return new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, options);
+      });
+    };
+
+    const tryGetLocation = async () => {
+      try {
+        let position;
+        try {
+          position = await getPosition({ enableHighAccuracy: true, timeout: 5000 });
+        } catch (highAccError) {
+          position = await getPosition({ enableHighAccuracy: false, timeout: 10000 });
+        }
+        const { latitude: lat, longitude: lon } = position.coords;
+        setLatitude(lat);
+        setLongitude(lon);
+        setInitialCoords({ latitude: lat, longitude: lon });
+
+        const iframe = document.getElementById("map-iframe") as HTMLIFrameElement;
+        if (iframe && iframe.contentWindow) {
+          iframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+        }
+        const modalIframe = document.getElementById("modal-map-iframe") as HTMLIFrameElement;
+        if (modalIframe && modalIframe.contentWindow) {
+          modalIframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+        }
+        await reverseGeocode(lat, lon);
+      } catch (err: any) {
+        alert("Could not retrieve your location. Please check your browser permissions.");
+      } finally {
+        setIsLocating(false);
+      }
+    };
+
+    tryGetLocation();
+  };
+
+  const checkDuplicateFiles = async (files: File[], previews: string[], typeLabel: string) => {
+    if (files.length === 0) return;
+    setIsCheckingDuplicates(true);
+    try {
+      const photosPayload = await Promise.all(
+        files.map(async (file, i) => ({
+          id: previews[i],
+          type: typeLabel,
+          base64: await compressImage(file)
+        }))
+      );
+      const res = await fetch(`${API_URL}/policy-holder/check-duplicate-photos`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ photos: photosPayload })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.hasDuplicate && Array.isArray(data.duplicates)) {
+          const newDups: Record<string, any> = {};
+          data.duplicates.forEach((d: any) => {
+            if (d.id) newDups[d.id] = d;
+          });
+          setDuplicatesMap((prev) => ({ ...prev, ...newDups }));
+        }
+      }
+    } catch (err) {
+      console.warn("Duplicate check error:", err);
+    } finally {
+      setIsCheckingDuplicates(false);
+    }
+  };
+
+  const handleStep2FileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: React.Dispatch<React.SetStateAction<FileUploadState>>,
+    typeLabel: string,
+    isLicense: boolean = false
+  ) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    if (selectedFiles.length === 0) return;
+    const newPreviews = selectedFiles.map((file) => URL.createObjectURL(file));
+
+    setter((prev) => ({
+      files: [...prev.files, ...selectedFiles],
+      previews: [...prev.previews, ...newPreviews]
+    }));
+
+    if (!isLicense) {
+      await checkDuplicateFiles(selectedFiles, newPreviews, typeLabel);
+    }
+    e.target.value = "";
+  };
+
+  const handleStep2RemoveFile = (
+    setter: React.Dispatch<React.SetStateAction<FileUploadState>>,
+    index: number
+  ) => {
+    setter((prev) => {
+      const previews = [...prev.previews];
+      const removedPreview = previews[index];
+      URL.revokeObjectURL(removedPreview);
+      previews.splice(index, 1);
+      const files = [...prev.files];
+      files.splice(index, 1);
+
+      setDuplicatesMap((dMap) => {
+        const nextMap = { ...dMap };
+        delete nextMap[removedPreview];
+        return nextMap;
+      });
+
+      return { files, previews };
+    });
+  };
+
+  const handleCountChange = (count: number) => {
+    setOtherVehiclesCount(count);
+    setOtherVehicles((prev) => {
+      if (count > prev.length) {
+        const toAdd = count - prev.length;
+        const newItems = Array.from({ length: toAdd }, () => ({
+          vehiclePlate: "",
+          insuranceCompany: "",
+          policyNumber: "",
+          driverName: "",
+          licensePhotosPreviews: [],
+          licensePhotosBase64: [],
+          vehiclePhotosPreviews: [],
+          vehiclePhotosBase64: []
+        }));
+        return [...prev, ...newItems];
+      } else {
+        return prev.slice(0, count);
+      }
+    });
+  };
+
+  const updateOtherVehicleField = (index: number, field: string, val: string) => {
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: val };
+      return next;
+    });
+  };
+
+  const handleOtherVehiclePhotoUpload = async (
+    index: number,
+    fieldPrefix: "licensePhotos" | "vehiclePhotos",
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const base64s = await Promise.all(files.map((file) => compressImage(file)));
+    const previews = files.map((file) => URL.createObjectURL(file));
+
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      const prevPreviews = (next[index] as any)[`${fieldPrefix}Previews`] || [];
+      const prevBase64s = (next[index] as any)[`${fieldPrefix}Base64`] || [];
+
+      next[index] = {
+        ...next[index],
+        [`${fieldPrefix}Previews`]: [...prevPreviews, ...previews],
+        [`${fieldPrefix}Base64`]: [...prevBase64s, ...base64s]
+      };
+      return next;
+    });
+  };
+
+  const handleOtherVehiclePhotoRemove = (
+    index: number,
+    fieldPrefix: "licensePhotos" | "vehiclePhotos",
+    photoIdx: number
+  ) => {
+    setOtherVehicles((prev) => {
+      const next = [...prev];
+      const previews = [...((next[index] as any)[`${fieldPrefix}Previews`] || [])];
+      URL.revokeObjectURL(previews[photoIdx]);
+      previews.splice(photoIdx, 1);
+      const base64s = [...((next[index] as any)[`${fieldPrefix}Base64`] || [])];
+      base64s.splice(photoIdx, 1);
+
+      next[index] = {
+        ...next[index],
+        [`${fieldPrefix}Previews`]: previews,
+        [`${fieldPrefix}Base64`]: base64s
+      };
+      return next;
+    });
+  };
+
+  const handleStep1Next = (e: React.FormEvent) => {
     e.preventDefault();
     setClaimFormError("");
     if (!claimPlate) {
-      setClaimFormError("Please select an authorized vehicle.");
+      setClaimFormError("Please select an authorized operating vehicle.");
       return;
     }
-    if (!claimDate || !claimTime || !claimLocation.trim() || !claimDesc.trim()) {
-      setClaimFormError("Please fill out all incident details (date, time, location, and description).");
+    if (!claimDate) {
+      setClaimFormError("Please select the incident date.");
+      return;
+    }
+    if (!claimTime) {
+      setClaimFormError("Please specify the incident time.");
+      return;
+    }
+    if (!claimDamageType) {
+      setClaimFormError("Please select the damage category.");
+      return;
+    }
+    if (!claimDesc.trim()) {
+      setClaimFormError("Please provide an incident description.");
+      return;
+    }
+    if (!address.trim()) {
+      setClaimFormError("Please specify or search the incident location.");
+      return;
+    }
+    if (otherVehiclesInvolved === "yes") {
+      for (let i = 0; i < otherVehicles.length; i++) {
+        if (!otherVehicles[i].vehiclePlate.trim()) {
+          setClaimFormError(`Please enter the vehicle number for Other Vehicle #${i + 1}.`);
+          return;
+        }
+      }
+    }
+    setClaimStep(2);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleStep2Submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submittingClaim) return;
+    setClaimFormError("");
+
+    const dupKeys = Object.keys(duplicatesMap);
+    if (dupKeys.length > 0) {
+      setClaimFormError("One or more photos were flagged as duplicate. Please remove or replace flagged photos before submitting.");
       return;
     }
 
     setSubmittingClaim(true);
     try {
+      const convertFiles = (files: File[]) => Promise.all(files.map((f) => compressImage(f)));
+      const [frontB64, rearB64, sideB64, licFrontB64, licRearB64] = await Promise.all([
+        convertFiles(accidentFront.files),
+        convertFiles(accidentRear.files),
+        convertFiles(accidentSide.files),
+        convertFiles(licenseFront.files),
+        convertFiles(licenseRear.files)
+      ]);
+
       const payload = {
         vehiclePlate: claimPlate,
         incidentDate: claimDate,
         incidentTime: claimTime,
         damageType: claimDamageType,
         description: claimDesc,
-        location: claimLocation.trim(),
+        location: address,
+        otherVehicleDetails: otherVehiclesInvolved === "yes"
+          ? otherVehicles.map((v) => ({
+              vehiclePlate: v.vehiclePlate.trim(),
+              insuranceCompany: v.insuranceCompany.trim(),
+              policyNumber: v.policyNumber.trim(),
+              driverName: v.driverName.trim(),
+              licensePhotos: v.licensePhotosBase64,
+              vehiclePhotos: v.vehiclePhotosBase64
+            }))
+          : [],
         accidentPhotos: {
-          front: photoFront ? [photoFront] : [],
-          rear: photoRear ? [photoRear] : [],
-          side: photoSide ? [photoSide] : []
+          front: frontB64,
+          rear: rearB64,
+          side: sideB64
         },
         drivingLicense: {
-          front: dlFront ? [dlFront] : [],
-          rear: dlBack ? [dlBack] : []
+          front: licFrontB64,
+          rear: licRearB64
         }
       };
 
@@ -349,17 +1004,11 @@ export default function ThirdPartyDriverPortalPage() {
       }
 
       setSubmittedClaimNumber(data.claimNumber);
+      setShowSuccessModal(true);
       triggerToast(`Claim ${data.claimNumber} successfully lodged!`);
-      setClaimDesc("");
-      setClaimLocation("");
-      setPhotoFront("");
-      setPhotoRear("");
-      setPhotoSide("");
-      setDlFront("");
-      setDlBack("");
       refreshClaims();
     } catch (err: any) {
-      setClaimFormError(err.message || "An unexpected error occurred while lodging claim.");
+      setClaimFormError(err.message || "An unexpected error occurred while submitting claim.");
     } finally {
       setSubmittingClaim(false);
     }
@@ -963,220 +1612,1027 @@ export default function ThirdPartyDriverPortalPage() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 3: NEW CLAIM (Exact PolicyHolder New_Claim Form) */}
+        {/* TAB 3: NEW CLAIM (Exact PolicyHolder New_Claim Form & Step Flow) */}
         {/* ========================================================================= */}
         {activeTab === "new_claim" && (
-          <section className="max-w-3xl mx-auto space-y-6">
-            <div className="bg-white border border-slate-200/90 rounded-[28px] p-6 sm:p-10 shadow-sm">
-              <div className="pb-4 border-b border-slate-100 mb-6">
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-orange-50 text-orange-600 border border-orange-200 uppercase tracking-wider">
-                  Accident Claim Lodgment
-                </span>
-                <h2 className="text-2xl font-bold text-slate-900 mt-2">
-                  Lodge Vehicle Accident Claim
-                </h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Fill in incident details for your authorized vehicle. Claims are routed directly to regional branch officers.
-                </p>
+          <div className="w-full">
+            {/* Styled curved header matching Policyholder exactly */}
+            <div className="max-w-4xl w-full mx-auto px-4 sm:px-0 mb-8 relative">
+              <div className="relative h-[200px] md:h-[220px] rounded-3xl md:rounded-[40px] overflow-hidden shadow-lg bg-[url('/newclaim1.webp')] bg-cover bg-center">
+                <div className="absolute inset-0 bg-slate-900/35" />
+                <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/95 via-[#0d2a3a]/80 to-transparent" />
+                <header className="relative z-10 h-full flex flex-col justify-center px-8 md:px-14 select-none">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-semibold uppercase tracking-wider w-fit mb-3 border border-cyan-400/30">
+                    Third-Party Authorized Driver
+                  </div>
+                  <h1 className="text-white text-3xl md:text-[38px] font-bold tracking-tight leading-tight">
+                    File New Claim
+                  </h1>
+                  <p className="text-slate-200 text-xs md:text-sm font-normal mt-2 tracking-wide opacity-95">
+                    Report an accident or damage incident for your authorized vehicle
+                  </p>
+                </header>
               </div>
+            </div>
 
-              {submittedClaimNumber && (
-                <div className="mb-6 p-5 bg-emerald-50 border border-emerald-200 rounded-2xl text-center">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-2">
-                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-6 h-6" />
+            {/* Step Progress Pill Indicator */}
+            <div className="max-w-4xl mx-auto mb-8 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setClaimStep(1)}
+                className={`flex items-center gap-2.5 px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer border-none ${
+                  claimStep === 1
+                    ? "bg-[#0d2a3a] text-white shadow-md shadow-slate-900/20"
+                    : "bg-emerald-500 text-white"
+                }`}
+              >
+                <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center text-[10px]">
+                  {claimStep === 2 ? "✓" : "1"}
+                </span>
+                <span>1. Incident Details</span>
+              </button>
+
+              <div className="w-8 h-0.5 bg-slate-300" />
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (claimStep === 1) {
+                    if (claimPlate && claimDate && claimTime && claimDamageType && claimDesc && address) {
+                      setClaimStep(2);
+                    } else {
+                      setClaimFormError("Please complete Step 1 incident details before proceeding to document upload.");
+                    }
+                  }
+                }}
+                className={`flex items-center gap-2.5 px-6 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer border-none ${
+                  claimStep === 2
+                    ? "bg-[#0d2a3a] text-white shadow-md shadow-slate-900/20"
+                    : "bg-slate-200 text-slate-500"
+                }`}
+              >
+                <span className="w-5 h-5 rounded-full bg-slate-400/20 flex items-center justify-center text-[10px]">
+                  2
+                </span>
+                <span>2. Upload Documents & Photos</span>
+              </button>
+            </div>
+
+            {/* Error Banner */}
+            {claimFormError && (
+              <div className="max-w-4xl mx-auto mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-center gap-2.5 shadow-sm">
+                <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-rose-600 flex-shrink-0" />
+                <span className="font-medium">{claimFormError}</span>
+              </div>
+            )}
+
+            {/* STEP 1: Incident & Vehicle Details Form */}
+            {claimStep === 1 && (
+              <form onSubmit={handleStep1Next} className="max-w-4xl mx-auto flex flex-col gap-10 bg-white border border-slate-200/90 rounded-[32px] p-6 sm:p-10 shadow-sm">
+                
+                {/* Section 1: Vehicle & Incident */}
+                <section className="flex flex-col gap-6">
+                  <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 select-none">
+                    <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
+                    Vehicle & Incident
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Select Vehicle Dropdown */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-slate-700 text-sm font-medium mb-1">
+                        Select Vehicle <span className="text-red-500 ml-0.5">*</span>
+                      </label>
+                      <div className="relative">
+                        <select
+                          required
+                          value={claimPlate}
+                          onChange={(e) => setClaimPlate(e.target.value)}
+                          className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer text-sm"
+                        >
+                          <option value="" disabled>Select Authorized Vehicle</option>
+                          {vehicles.map((v) => (
+                            <option key={v.numberPlate} value={v.numberPlate}>
+                              {getVehicleEmoji(v.vehicleType)} {formatPlate(v.numberPlate)} - {v.company} {v.model} ({v.year || "Active"})
+                            </option>
+                          ))}
+                        </select>
+                        <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                          <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Incident Date */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-slate-700 text-sm font-medium mb-1">
+                        Incident Date <span className="text-red-500 ml-0.5">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          required
+                          min={minDate}
+                          max={maxDate}
+                          value={claimDate}
+                          onChange={(e) => setClaimDate(e.target.value)}
+                          onClick={(e) => {
+                            try {
+                              (e.currentTarget as any).showPicker?.();
+                            } catch (_) {}
+                          }}
+                          className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer text-sm"
+                        />
+                        <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                          <HugeiconsIcon icon={Calendar03Icon} className="w-5 h-5" strokeWidth={2.2} />
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Incident Time */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-slate-700 text-sm font-medium mb-1">
+                        Incident Time <span className="text-red-500 ml-0.5">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="time"
+                          required
+                          value={claimTime}
+                          onChange={(e) => setClaimTime(e.target.value)}
+                          onClick={(e) => {
+                            try {
+                              (e.currentTarget as any).showPicker?.();
+                            } catch (_) {}
+                          }}
+                          className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer text-sm"
+                        />
+                        <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                          <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" strokeWidth={2.2} />
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Damage Type Dropdown */}
+                    <div className="flex flex-col gap-2">
+                      <label className="text-slate-700 text-sm font-medium mb-1">
+                        Damage Category <span className="text-red-500 ml-0.5">*</span>
+                      </label>
+                      <div className="relative">
+                        <select
+                          required
+                          value={claimDamageType}
+                          onChange={(e) => setClaimDamageType(e.target.value)}
+                          className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer text-sm"
+                        >
+                          <option value="" disabled>Select Damage Type</option>
+                          {DAMAGE_TYPES.map((type) => (
+                            <option key={type} value={type}>
+                              {type}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                          <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <h4 className="font-bold text-emerald-900 text-sm">Claim Successfully Lodged</h4>
-                  <p className="text-xs text-slate-700 mt-1 font-mono font-bold">
-                    Claim Reference ID: {submittedClaimNumber}
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-2">
-                    Your claim has been assigned to {profile?.branch || "regional"} branch inspection queue.
-                  </p>
-                  <div className="mt-4 flex justify-center gap-3">
-                    <button
-                      onClick={() => setSubmittedClaimNumber(null)}
-                      className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer border-none"
-                    >
-                      Submit Another Claim
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("my_claims")}
-                      className="px-4 py-2 bg-[#0d2a3a] text-white rounded-xl text-xs font-bold cursor-pointer border-none shadow-sm"
-                    >
-                      View in My Claims
-                    </button>
-                  </div>
-                </div>
-              )}
 
-              {claimFormError && (
-                <div className="mb-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs flex items-center gap-2">
-                  <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-rose-600 flex-shrink-0" />
-                  <span>{claimFormError}</span>
-                </div>
-              )}
-
-              <form onSubmit={handleSubmitClaim} className="space-y-5 text-xs">
-                {/* 1. Vehicle Selection */}
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1.5">
-                    Authorized Operating Vehicle <span className="text-rose-500">*</span>
-                  </label>
-                  <select
-                    value={claimPlate}
-                    onChange={(e) => setClaimPlate(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
-                    required
-                  >
-                    {vehicles.map((v) => (
-                      <option key={v.numberPlate} value={v.numberPlate}>
-                        {formatPlate(v.numberPlate)} — {v.company} {v.model} ({v.vehicleType})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* 2. Date & Time */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-slate-700 font-bold mb-1.5">
-                      Incident Date <span className="text-rose-500">*</span>
+                  {/* Description Textarea */}
+                  <div className="flex flex-col gap-2 mt-2">
+                    <label className="text-slate-700 text-sm font-medium mb-1">
+                      Description <span className="text-red-500 ml-0.5">*</span>
                     </label>
-                    <input
-                      type="date"
-                      value={claimDate}
-                      onChange={(e) => setClaimDate(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
+                    <textarea
                       required
+                      rows={4}
+                      value={claimDesc}
+                      onChange={(e) => setClaimDesc(e.target.value)}
+                      placeholder="Describe what occurred, impact direction, damage extent, and road conditions..."
+                      className="w-full bg-[#e2e8f0]/80 text-slate-800 rounded-2xl p-4 border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all text-sm"
                     />
                   </div>
-                  <div>
-                    <label className="block text-slate-700 font-bold mb-1.5">
-                      Incident Time <span className="text-rose-500">*</span>
+                </section>
+
+                {/* Section 1B: Other Vehicles Involved (Optional) */}
+                <section className="flex flex-col gap-6 pt-4 border-t border-slate-100">
+                  <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 select-none">
+                    <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
+                    Other Vehicles Involved (Optional)
+                  </h2>
+
+                  <div className="flex flex-col gap-3">
+                    <label className="text-slate-700 text-sm font-medium">
+                      Were other vehicles involved in the accident? <span className="text-red-500 ml-0.5">*</span>
                     </label>
-                    <input
-                      type="time"
-                      value={claimTime}
-                      onChange={(e) => setClaimTime(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
-                      required
-                    />
+                    <div className="flex flex-row gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOtherVehiclesInvolved("yes");
+                          if (otherVehiclesCount === 0) handleCountChange(1);
+                        }}
+                        className={`flex-1 py-3.5 px-6 rounded-2xl font-semibold transition-all border-2 text-center cursor-pointer text-sm ${
+                          otherVehiclesInvolved === "yes"
+                            ? "bg-[#0d2a3a] text-white border-[#0d2a3a] shadow-md"
+                            : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOtherVehiclesInvolved("no");
+                          setOtherVehiclesCount(0);
+                          setOtherVehicles([]);
+                        }}
+                        className={`flex-1 py-3.5 px-6 rounded-2xl font-semibold transition-all border-2 text-center cursor-pointer text-sm ${
+                          otherVehiclesInvolved === "no"
+                            ? "bg-[#0d2a3a] text-white border-[#0d2a3a] shadow-md"
+                            : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        No
+                      </button>
+                    </div>
                   </div>
-                </div>
 
-                {/* 3. Location & Damage Type */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-slate-700 font-bold mb-1.5">
-                      Incident Location <span className="text-rose-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Galle Road, Kalutara or Matara"
-                      value={claimLocation}
-                      onChange={(e) => setClaimLocation(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-slate-700 font-bold mb-1.5">
-                      Damage Category <span className="text-rose-500">*</span>
-                    </label>
-                    <select
-                      value={claimDamageType}
-                      onChange={(e) => setClaimDamageType(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
-                    >
-                      <option value="Front Collision">Front Collision</option>
-                      <option value="Rear-End Impact">Rear-End Impact</option>
-                      <option value="Side Impact / T-Bone">Side Impact / T-Bone</option>
-                      <option value="Scratch & Body Dent">Scratch & Body Dent</option>
-                      <option value="Windshield / Glass Damage">Windshield / Glass Damage</option>
-                      <option value="Multiple Area Collision">Multiple Area Collision</option>
-                    </select>
-                  </div>
-                </div>
+                  {/* If YES: Show Vehicle Count select dropdown */}
+                  {otherVehiclesInvolved === "yes" && (
+                    <div className="flex flex-col gap-2 mt-2 transition-all">
+                      <label className="text-slate-700 text-sm font-medium mb-1">
+                        How many other vehicles were involved? <span className="text-red-500 ml-0.5">*</span>
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={otherVehiclesCount}
+                          onChange={(e) => handleCountChange(Number(e.target.value))}
+                          className="w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 text-slate-800 rounded-2xl py-4 px-4 pr-12 appearance-none border border-transparent focus:outline-none focus:bg-white focus:ring-2 focus:ring-[#00ddff] focus:border-transparent font-normal transition-all cursor-pointer text-sm"
+                        >
+                          <option value={1}>1 Vehicle</option>
+                          <option value={2}>2 Vehicles</option>
+                          <option value={3}>3 Vehicles</option>
+                          <option value={4}>4 Vehicles</option>
+                        </select>
+                        <span className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-slate-500">
+                          <HugeiconsIcon icon={ArrowDown01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
-                {/* 4. Description */}
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1.5">
-                    Incident Description <span className="text-rose-500">*</span>
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Describe how the accident occurred, road conditions, and any other parties involved..."
-                    value={claimDesc}
-                    onChange={(e) => setClaimDesc(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
-                    required
-                  />
-                </div>
+                  {/* Dynamic fields listing cards for each vehicle */}
+                  {otherVehiclesInvolved === "yes" &&
+                    otherVehicles.map((vehicle, index) => (
+                      <div key={index} className="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 shadow-sm flex flex-col gap-6">
+                        <h3 className="font-bold text-[#0d2a3a] text-base select-none">
+                          Other Vehicle #{index + 1} Details
+                        </h3>
 
-                {/* 5. Accident Damage Photos */}
-                <div className="pt-2 border-t border-slate-100">
-                  <h4 className="font-bold text-slate-800 text-xs mb-1">Damage Photographs</h4>
-                  <p className="text-[11px] text-slate-400 mb-3">Upload clear photographs of damage.</p>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {[
-                      { label: "Front Damage", state: photoFront, setter: setPhotoFront },
-                      { label: "Rear Damage", state: photoRear, setter: setPhotoRear },
-                      { label: "Side Damage", state: photoSide, setter: setPhotoSide }
-                    ].map((slot, i) => (
-                      <div key={i} className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center">
-                        <span className="text-[11px] text-slate-700 font-medium block mb-2">{slot.label}</span>
-                        {slot.state ? (
-                          <div className="relative mb-2">
-                            <img src={slot.state} alt={slot.label} className="w-full h-24 object-cover rounded-xl" />
-                            <button
-                              type="button"
-                              onClick={() => slot.setter("")}
-                              className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 text-[10px] cursor-pointer border-none"
-                            >
-                              &times;
-                            </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-slate-700 font-medium">
+                              Vehicle Number <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={vehicle.vehiclePlate}
+                              onChange={(e) => updateOtherVehicleField(index, "vehiclePlate", e.target.value)}
+                              placeholder="e.g. WP CAA-1234"
+                              className="w-full bg-white text-slate-800 rounded-2xl py-3.5 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff]"
+                            />
                           </div>
-                        ) : (
-                          <label className="block border-2 border-dashed border-slate-300 hover:border-slate-400 rounded-xl p-4 cursor-pointer bg-white">
-                            <HugeiconsIcon icon={Upload01Icon} className="w-5 h-5 text-slate-400 mx-auto mb-1" />
-                            <span className="text-[10px] text-slate-500 font-semibold">Upload Photo</span>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-slate-700 font-medium">Driver Name</label>
+                            <input
+                              type="text"
+                              value={vehicle.driverName}
+                              onChange={(e) => updateOtherVehicleField(index, "driverName", e.target.value)}
+                              placeholder="e.g. Sunil Perera"
+                              className="w-full bg-white text-slate-800 rounded-2xl py-3.5 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff]"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-slate-700 font-medium">Insurance Company</label>
+                            <input
+                              type="text"
+                              value={vehicle.insuranceCompany}
+                              onChange={(e) => updateOtherVehicleField(index, "insuranceCompany", e.target.value)}
+                              placeholder="e.g. Sri Lanka Insurance / Ceylinco"
+                              className="w-full bg-white text-slate-800 rounded-2xl py-3.5 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff]"
+                            />
+                          </div>
+
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-slate-700 font-medium">Policy Number</label>
+                            <input
+                              type="text"
+                              value={vehicle.policyNumber}
+                              onChange={(e) => updateOtherVehicleField(index, "policyNumber", e.target.value)}
+                              placeholder="e.g. POL-987654"
+                              className="w-full bg-white text-slate-800 rounded-2xl py-3.5 px-4 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#00ddff]"
+                            />
+                          </div>
+                        </div>
+
+                        {/* License Photos Upload for Other Vehicle */}
+                        <div className="flex flex-col gap-2">
+                          <label className="text-slate-700 text-xs font-semibold">Other Driver's License Photos</label>
+                          <div className="flex items-center gap-3">
                             <input
                               type="file"
+                              id={`other-license-${index}`}
+                              multiple
                               accept="image/*"
-                              onChange={(e) => handleImageFile(e, slot.setter)}
+                              onChange={(e) => handleOtherVehiclePhotoUpload(index, "licensePhotos", e)}
                               className="hidden"
                             />
-                          </label>
-                        )}
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById(`other-license-${index}`)?.click()}
+                              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer border-none flex items-center gap-1.5"
+                            >
+                              <HugeiconsIcon icon={Upload01Icon} className="w-4 h-4" />
+                              <span>Add License Photo</span>
+                            </button>
+                            <span className="text-[11px] text-slate-500 font-medium">
+                              {vehicle.licensePhotosPreviews.length} photo(s) selected
+                            </span>
+                          </div>
+
+                          {vehicle.licensePhotosPreviews.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {vehicle.licensePhotosPreviews.map((pUrl, pIdx) => (
+                                <div key={pIdx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200">
+                                  <img src={pUrl} alt="license preview" className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOtherVehiclePhotoRemove(index, "licensePhotos", pIdx)}
+                                    className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-0.5 text-[9px] cursor-pointer border-none"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Damage Photos Upload for Other Vehicle */}
+                        <div className="flex flex-col gap-2">
+                          <label className="text-slate-700 text-xs font-semibold">Other Vehicle Damage Photos</label>
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="file"
+                              id={`other-damage-${index}`}
+                              multiple
+                              accept="image/*"
+                              onChange={(e) => handleOtherVehiclePhotoUpload(index, "vehiclePhotos", e)}
+                              className="hidden"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById(`other-damage-${index}`)?.click()}
+                              className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer border-none flex items-center gap-1.5"
+                            >
+                              <HugeiconsIcon icon={Camera01Icon} className="w-4 h-4" />
+                              <span>Add Damage Photo</span>
+                            </button>
+                            <span className="text-[11px] text-slate-500 font-medium">
+                              {vehicle.vehiclePhotosPreviews.length} photo(s) selected
+                            </span>
+                          </div>
+
+                          {vehicle.vehiclePhotosPreviews.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {vehicle.vehiclePhotosPreviews.map((pUrl, pIdx) => (
+                                <div key={pIdx} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200">
+                                  <img src={pUrl} alt="damage preview" className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOtherVehiclePhotoRemove(index, "vehiclePhotos", pIdx)}
+                                    className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-0.5 text-[9px] cursor-pointer border-none"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
+                </section>
+
+                {/* Section 2: Incident Location */}
+                <section className="flex flex-col gap-6 pt-4 border-t border-slate-100">
+                  <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight flex items-center gap-2.5 select-none">
+                    <HugeiconsIcon icon={Location01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.2} />
+                    Incident Location
+                  </h2>
+
+                  <div className="flex flex-col gap-2 relative">
+                    <label className="text-slate-700 text-sm font-medium mb-1">
+                      Enter Address or Landmark <span className="text-red-500 ml-0.5">*</span>
+                    </label>
+                    <div className="relative w-full bg-[#e2e8f0]/80 hover:bg-[#e2e8f0]/95 focus-within:bg-white border border-transparent focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10 rounded-2xl pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md">
+                      <input
+                        type="text"
+                        required
+                        value={address}
+                        onChange={(e) => {
+                          setAddress(e.target.value);
+                          setIsUserTyping(true);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            geocodeAddress(address);
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setShowResultsDropdown(false), 250);
+                        }}
+                        placeholder="Enter address or landmark in Sri Lanka..."
+                        className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-normal border-none"
+                      />
+                      {address && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAddress("");
+                            setSearchResults([]);
+                            setShowResultsDropdown(false);
+                            setIsUserTyping(false);
+                          }}
+                          className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1 flex items-center justify-center"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => geocodeAddress(address)}
+                        className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-semibold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20 whitespace-nowrap"
+                      >
+                        Search
+                      </button>
+                    </div>
+
+                    {showResultsDropdown && !showMapModal && searchResults.length > 0 && (
+                      <div className="absolute top-[80px] left-0 right-0 z-50 bg-white border border-slate-200/80 rounded-2xl shadow-xl max-h-[300px] overflow-y-auto mt-1.5 p-2 flex flex-col gap-1">
+                        {searchResults.map((result, idx) => {
+                          const parts = result.display_name.split(",");
+                          const mainTitle = parts[0]?.trim() || "";
+                          const subTitle = parts.slice(1).join(",").trim() || "";
+                          return (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                const lat = parseFloat(result.lat);
+                                const lon = parseFloat(result.lon);
+                                setLatitude(lat);
+                                setLongitude(lon);
+                                setInitialCoords({ latitude: lat, longitude: lon });
+                                setAddress(result.display_name);
+                                setIsUserTyping(false);
+                                setShowResultsDropdown(false);
+
+                                const iframe = document.getElementById("map-iframe") as HTMLIFrameElement;
+                                if (iframe && iframe.contentWindow) {
+                                  iframe.contentWindow.postMessage(JSON.stringify({ latitude: lat, longitude: lon }), "*");
+                                }
+                              }}
+                              className="text-left w-full hover:bg-slate-50 p-3 rounded-xl transition-all border-none bg-transparent cursor-pointer flex items-start gap-3"
+                              title={result.display_name}
+                            >
+                              <div className="mt-0.5 bg-slate-100 text-slate-500 rounded-full p-2 flex items-center justify-center flex-shrink-0">
+                                <HugeiconsIcon icon={Location01Icon} className="w-4 h-4 text-slate-500" strokeWidth={2.5} />
+                              </div>
+                              <div className="flex flex-col min-w-0 flex-1">
+                                <span className="font-semibold text-slate-800 text-sm truncate">{mainTitle}</span>
+                                {subTitle && (
+                                  <span className="text-[11px] text-slate-500 truncate mt-0.5">{subTitle}</span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Map and GPS Retrieval */}
+                  <div className="flex flex-col md:flex-row gap-6 items-stretch">
+                    <div className="flex-1 h-[280px] bg-slate-100 rounded-3xl overflow-hidden relative border border-slate-200/80 shadow-sm">
+                      <iframe
+                        id="map-iframe"
+                        width="100%"
+                        height="100%"
+                        className="border-none"
+                        src={`/api/map?lat=${initialCoords.latitude}&lon=${initialCoords.longitude}`}
+                        allowFullScreen
+                      />
+                    </div>
+
+                    <div className="flex flex-row md:flex-col gap-4 justify-between items-stretch md:w-[200px]">
+                      {/* Use GPS Button */}
+                      <button
+                        type="button"
+                        onClick={handleGPSLocation}
+                        disabled={isLocating}
+                        className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] disabled:bg-[#0284c7]/50 text-white font-semibold text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
+                      >
+                        <HugeiconsIcon icon={Location01Icon} className={`w-8 h-8 text-white ${isLocating ? "animate-pulse" : ""}`} strokeWidth={2} />
+                        <span className="font-semibold block">
+                          {isLocating ? "Locating..." : "Use GPS"}
+                        </span>
+                      </button>
+
+                      {/* Select on Map Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setModalInitialCoords({ latitude, longitude });
+                          setShowMapModal(true);
+                        }}
+                        className="flex-1 bg-[#0284c7] hover:bg-[#0275a1] text-white font-semibold text-[14px] leading-tight px-4 rounded-[24px] shadow-[0_4px_12px_rgba(2,132,199,0.25)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-150 flex flex-col items-center justify-center gap-3 border-none cursor-pointer text-center h-[130px]"
+                      >
+                        <HugeiconsIcon icon={MapIcon} className="w-8 h-8 text-white" strokeWidth={2} />
+                        <span className="font-semibold block">
+                          Select on Map
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Step 1 Action Buttons */}
+                <div className="pt-6 border-t border-slate-100 flex items-center justify-between gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("home")}
+                    className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-semibold cursor-pointer border-none transition-all"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-8 py-3.5 bg-[#00ddff] hover:bg-[#00c8e6] text-[#0d2a3a] font-bold text-sm rounded-2xl shadow-md transition-all cursor-pointer flex items-center gap-2 border-none"
+                  >
+                    <span>Next: Upload Photos</span>
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-4 h-4" />
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STEP 2: Document & Photo Upload Form */}
+            {claimStep === 2 && (
+              <form onSubmit={handleStep2Submit} className="max-w-4xl mx-auto flex flex-col gap-8 bg-white border border-slate-200/90 rounded-[32px] p-6 sm:p-10 shadow-sm">
+                
+                {/* Incident Summary Card */}
+                <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 text-xs">
+                  <div>
+                    <span className="text-slate-400 block font-medium">Selected Vehicle</span>
+                    <span className="font-mono font-bold text-slate-800 text-sm mt-0.5 block">{claimPlate}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-medium">Date & Time</span>
+                    <span className="font-semibold text-slate-800 mt-0.5 block">{claimDate} at {claimTime}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block font-medium">Damage Category</span>
+                    <span className="font-semibold text-slate-800 mt-0.5 block">{claimDamageType}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setClaimStep(1)}
+                    className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-semibold cursor-pointer border-none text-xs"
+                  >
+                    Edit Details
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-xl md:text-2xl font-semibold text-[#0d2a3a] tracking-tight">
+                        Upload Claim Documents & Photos
+                      </h2>
+                      <p className="text-slate-500 text-xs mt-1">
+                        Please upload clear photographs of vehicle damage and driver's license. Multiple photos allowed per category.
+                      </p>
+                    </div>
+
+                    {isCheckingDuplicates && (
+                      <div className="flex items-center gap-2 text-xs font-semibold text-cyan-600 bg-cyan-50 px-3 py-1.5 rounded-full border border-cyan-200">
+                        <div className="w-3.5 h-3.5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
+                        <span>Verifying photos...</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 5 Upload Cards */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    
+                    {/* 1. Accident Front */}
+                    <div className="flex flex-col">
+                      <input
+                        type="file"
+                        ref={accidentFrontRef}
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => handleStep2FileChange(e, setAccidentFront, "Accident Front Angle")}
+                        className="hidden"
+                      />
+                      {accidentFront.files.length === 0 ? (
+                        <div
+                          onClick={() => accidentFrontRef.current?.click()}
+                          className="w-full h-[180px] bg-[#e2e8f0]/60 hover:bg-slate-200/70 border-2 border-dashed border-slate-300 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-150 active:scale-[0.98] select-none"
+                        >
+                          <HugeiconsIcon icon={Camera01Icon} className="w-10 h-10 text-slate-500 mb-2" strokeWidth={1.8} />
+                          <span className="text-slate-800 text-sm font-bold block leading-tight">Front Angle Photo</span>
+                          <span className="text-slate-500 text-[11px] mt-1 font-medium">Click to upload photo</span>
+                          <span className="text-slate-400 text-[9px] mt-1">JPG, PNG up to 10MB</span>
+                        </div>
+                      ) : (
+                        <div className="w-full h-[180px] bg-slate-50 border border-slate-300 rounded-3xl p-3 flex flex-col justify-between">
+                          <span className="text-xs font-bold text-slate-700">Front Angle ({accidentFront.files.length})</span>
+                          <div className="grid grid-cols-3 gap-2 overflow-y-auto max-h-[105px]">
+                            {accidentFront.previews.map((prev, idx) => {
+                              const isDup = !!duplicatesMap[prev];
+                              return (
+                                <div key={idx} className={`relative aspect-square rounded-xl overflow-hidden bg-slate-200 border ${isDup ? 'border-2 border-rose-500 ring-2 ring-rose-400/40' : 'border-slate-200'}`}>
+                                  <img src={prev} alt="preview" className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStep2RemoveFile(setAccidentFront, idx)}
+                                    className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 text-[9px] cursor-pointer border-none"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => accidentFrontRef.current?.click()}
+                            className="text-[10px] text-cyan-600 font-semibold hover:underline self-end cursor-pointer bg-transparent border-none"
+                          >
+                            + Add more
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 2. Accident Rear */}
+                    <div className="flex flex-col">
+                      <input
+                        type="file"
+                        ref={accidentRearRef}
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => handleStep2FileChange(e, setAccidentRear, "Accident Rear Angle")}
+                        className="hidden"
+                      />
+                      {accidentRear.files.length === 0 ? (
+                        <div
+                          onClick={() => accidentRearRef.current?.click()}
+                          className="w-full h-[180px] bg-[#e2e8f0]/60 hover:bg-slate-200/70 border-2 border-dashed border-slate-300 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-150 active:scale-[0.98] select-none"
+                        >
+                          <HugeiconsIcon icon={Camera01Icon} className="w-10 h-10 text-slate-500 mb-2" strokeWidth={1.8} />
+                          <span className="text-slate-800 text-sm font-bold block leading-tight">Rear Angle Photo</span>
+                          <span className="text-slate-500 text-[11px] mt-1 font-medium">Click to upload photo</span>
+                          <span className="text-slate-400 text-[9px] mt-1">JPG, PNG up to 10MB</span>
+                        </div>
+                      ) : (
+                        <div className="w-full h-[180px] bg-slate-50 border border-slate-300 rounded-3xl p-3 flex flex-col justify-between">
+                          <span className="text-xs font-bold text-slate-700">Rear Angle ({accidentRear.files.length})</span>
+                          <div className="grid grid-cols-3 gap-2 overflow-y-auto max-h-[105px]">
+                            {accidentRear.previews.map((prev, idx) => {
+                              const isDup = !!duplicatesMap[prev];
+                              return (
+                                <div key={idx} className={`relative aspect-square rounded-xl overflow-hidden bg-slate-200 border ${isDup ? 'border-2 border-rose-500 ring-2 ring-rose-400/40' : 'border-slate-200'}`}>
+                                  <img src={prev} alt="preview" className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStep2RemoveFile(setAccidentRear, idx)}
+                                    className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 text-[9px] cursor-pointer border-none"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => accidentRearRef.current?.click()}
+                            className="text-[10px] text-cyan-600 font-semibold hover:underline self-end cursor-pointer bg-transparent border-none"
+                          >
+                            + Add more
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 3. Accident Side */}
+                    <div className="flex flex-col">
+                      <input
+                        type="file"
+                        ref={accidentSideRef}
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => handleStep2FileChange(e, setAccidentSide, "Accident Side Angle")}
+                        className="hidden"
+                      />
+                      {accidentSide.files.length === 0 ? (
+                        <div
+                          onClick={() => accidentSideRef.current?.click()}
+                          className="w-full h-[180px] bg-[#e2e8f0]/60 hover:bg-slate-200/70 border-2 border-dashed border-slate-300 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-150 active:scale-[0.98] select-none"
+                        >
+                          <HugeiconsIcon icon={Camera01Icon} className="w-10 h-10 text-slate-500 mb-2" strokeWidth={1.8} />
+                          <span className="text-slate-800 text-sm font-bold block leading-tight">Side Angle Photo</span>
+                          <span className="text-slate-500 text-[11px] mt-1 font-medium">Click to upload photo</span>
+                          <span className="text-slate-400 text-[9px] mt-1">JPG, PNG up to 10MB</span>
+                        </div>
+                      ) : (
+                        <div className="w-full h-[180px] bg-slate-50 border border-slate-300 rounded-3xl p-3 flex flex-col justify-between">
+                          <span className="text-xs font-bold text-slate-700">Side Angle ({accidentSide.files.length})</span>
+                          <div className="grid grid-cols-3 gap-2 overflow-y-auto max-h-[105px]">
+                            {accidentSide.previews.map((prev, idx) => {
+                              const isDup = !!duplicatesMap[prev];
+                              return (
+                                <div key={idx} className={`relative aspect-square rounded-xl overflow-hidden bg-slate-200 border ${isDup ? 'border-2 border-rose-500 ring-2 ring-rose-400/40' : 'border-slate-200'}`}>
+                                  <img src={prev} alt="preview" className="w-full h-full object-cover" />
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStep2RemoveFile(setAccidentSide, idx)}
+                                    className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 text-[9px] cursor-pointer border-none"
+                                  >
+                                    &times;
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => accidentSideRef.current?.click()}
+                            className="text-[10px] text-cyan-600 font-semibold hover:underline self-end cursor-pointer bg-transparent border-none"
+                          >
+                            + Add more
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 4. Driver's License Front */}
+                    <div className="flex flex-col">
+                      <input
+                        type="file"
+                        ref={licenseFrontRef}
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => handleStep2FileChange(e, setLicenseFront, "Driver License Front", true)}
+                        className="hidden"
+                      />
+                      {licenseFront.files.length === 0 ? (
+                        <div
+                          onClick={() => licenseFrontRef.current?.click()}
+                          className="w-full h-[180px] bg-[#e2e8f0]/60 hover:bg-slate-200/70 border-2 border-dashed border-slate-300 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-150 active:scale-[0.98] select-none"
+                        >
+                          <HugeiconsIcon icon={File01Icon} className="w-10 h-10 text-slate-500 mb-2" strokeWidth={1.8} />
+                          <span className="text-slate-800 text-sm font-bold block leading-tight">Driver's License - Front</span>
+                          <span className="text-slate-500 text-[11px] mt-1 font-medium">Click to upload photo</span>
+                          <span className="text-slate-400 text-[9px] mt-1">Clear document image</span>
+                        </div>
+                      ) : (
+                        <div className="w-full h-[180px] bg-slate-50 border border-slate-300 rounded-3xl p-3 flex flex-col justify-between">
+                          <span className="text-xs font-bold text-slate-700">License Front ({licenseFront.files.length})</span>
+                          <div className="grid grid-cols-3 gap-2 overflow-y-auto max-h-[105px]">
+                            {licenseFront.previews.map((prev, idx) => (
+                              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-200">
+                                <img src={prev} alt="license front preview" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => handleStep2RemoveFile(setLicenseFront, idx)}
+                                  className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 text-[9px] cursor-pointer border-none"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => licenseFrontRef.current?.click()}
+                            className="text-[10px] text-cyan-600 font-semibold hover:underline self-end cursor-pointer bg-transparent border-none"
+                          >
+                            + Add more
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 5. Driver's License Rear */}
+                    <div className="flex flex-col">
+                      <input
+                        type="file"
+                        ref={licenseRearRef}
+                        multiple
+                        accept="image/*"
+                        onChange={(e) => handleStep2FileChange(e, setLicenseRear, "Driver License Rear", true)}
+                        className="hidden"
+                      />
+                      {licenseRear.files.length === 0 ? (
+                        <div
+                          onClick={() => licenseRearRef.current?.click()}
+                          className="w-full h-[180px] bg-[#e2e8f0]/60 hover:bg-slate-200/70 border-2 border-dashed border-slate-300 rounded-3xl flex flex-col items-center justify-center p-4 text-center cursor-pointer transition-all duration-150 active:scale-[0.98] select-none"
+                        >
+                          <HugeiconsIcon icon={File01Icon} className="w-10 h-10 text-slate-500 mb-2" strokeWidth={1.8} />
+                          <span className="text-slate-800 text-sm font-bold block leading-tight">Driver's License - Rear</span>
+                          <span className="text-slate-500 text-[11px] mt-1 font-medium">Click to upload photo</span>
+                          <span className="text-slate-400 text-[9px] mt-1">Clear document image</span>
+                        </div>
+                      ) : (
+                        <div className="w-full h-[180px] bg-slate-50 border border-slate-300 rounded-3xl p-3 flex flex-col justify-between">
+                          <span className="text-xs font-bold text-slate-700">License Rear ({licenseRear.files.length})</span>
+                          <div className="grid grid-cols-3 gap-2 overflow-y-auto max-h-[105px]">
+                            {licenseRear.previews.map((prev, idx) => (
+                              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-slate-200 border border-slate-200">
+                                <img src={prev} alt="license rear preview" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() => handleStep2RemoveFile(setLicenseRear, idx)}
+                                  className="absolute top-1 right-1 bg-rose-600 text-white rounded-full p-1 text-[9px] cursor-pointer border-none"
+                                >
+                                  &times;
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => licenseRearRef.current?.click()}
+                            className="text-[10px] text-cyan-600 font-semibold hover:underline self-end cursor-pointer bg-transparent border-none"
+                          >
+                            + Add more
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Submit Action */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                {/* Step 2 Action Buttons */}
+                <div className="pt-6 border-t border-slate-100 flex items-center justify-between gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setClaimStep(1)}
+                    className="px-6 py-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-semibold cursor-pointer border-none transition-all"
+                  >
+                    Back to Details
+                  </button>
+
                   <button
                     type="submit"
                     disabled={submittingClaim}
-                    className="w-full sm:w-auto px-10 py-3 bg-[#0d2a3a] hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2 border-none"
+                    className="px-10 py-3.5 bg-[#0d2a3a] hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-sm rounded-2xl shadow-md transition-all cursor-pointer flex items-center gap-2 border-none"
                   >
                     {submittingClaim ? (
                       <>
-                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                         <span>Submitting Claim...</span>
                       </>
                     ) : (
                       <>
-                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-white" />
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-white" />
                         <span>Submit Claim to Branch</span>
                       </>
                     )}
                   </button>
                 </div>
               </form>
-            </div>
-          </section>
+            )}
+
+            {/* Full-screen web Map Modal */}
+            {showMapModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 transition-all duration-300">
+                <div className="bg-white rounded-[32px] w-full max-w-3xl overflow-hidden shadow-2xl flex flex-col h-[85vh] border border-slate-100">
+                  <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <h3 className="text-base font-bold text-[#0d2a3a]">Select Location on Map</h3>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setModalInitialCoords(null);
+                        setShowMapModal(false);
+                      }}
+                      className="text-slate-400 hover:text-slate-700 text-xl font-medium cursor-pointer border-none bg-transparent transition-colors"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="flex-1 bg-slate-50 relative overflow-hidden">
+                    <iframe
+                      id="modal-map-iframe"
+                      width="100%"
+                      height="100%"
+                      className="border-none"
+                      src={`/api/map?lat=${modalInitialCoords?.latitude ?? latitude}&lon=${modalInitialCoords?.longitude ?? longitude}`}
+                      allowFullScreen
+                    />
+
+                    <div className="absolute top-4 left-4 right-4 z-20 max-w-md bg-white/95 backdrop-blur-md border border-slate-200/80 rounded-full pl-5 pr-1.5 py-2 shadow-lg flex items-center gap-2">
+                      <HugeiconsIcon icon={Search01Icon} className="w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="Search landmark..."
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            geocodeAddress((e.target as HTMLInputElement).value);
+                          }
+                        }}
+                        className="flex-1 bg-transparent border-none text-xs text-slate-800 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+                      <button
+                        type="button"
+                        onClick={() => setShowMapModal(false)}
+                        className="bg-[#0d2a3a] hover:bg-slate-800 text-white font-bold text-xs px-6 py-3 rounded-full shadow-lg border-none cursor-pointer flex items-center gap-2"
+                      >
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" />
+                        <span>Confirm This Location</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Success Popup Modal */}
+            {showSuccessModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+                <div className="bg-white rounded-[32px] w-full max-w-md p-8 text-center shadow-2xl border border-slate-100 flex flex-col items-center">
+                  <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4">
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-9 h-9" />
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">Claim Successfully Lodged</h3>
+                  <p className="text-xs text-slate-500 mt-2">
+                    Your accident claim has been recorded and submitted to the regional branch inspection team.
+                  </p>
+
+                  <div className="mt-5 p-4 bg-slate-50 border border-slate-200/80 rounded-2xl w-full">
+                    <span className="text-[11px] text-slate-400 block font-medium">Claim Reference ID</span>
+                    <span className="text-base font-mono font-bold text-slate-800 mt-0.5 block">{submittedClaimNumber}</span>
+                  </div>
+
+                  <div className="mt-6 flex flex-col sm:flex-row gap-3 w-full">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSuccessModal(false);
+                        setClaimStep(1);
+                        setClaimDesc("");
+                        setAccidentFront({ files: [], previews: [] });
+                        setAccidentRear({ files: [], previews: [] });
+                        setAccidentSide({ files: [], previews: [] });
+                        setLicenseFront({ files: [], previews: [] });
+                        setLicenseRear({ files: [], previews: [] });
+                        setDuplicatesMap({});
+                      }}
+                      className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-semibold cursor-pointer border-none transition-all"
+                    >
+                      Lodge Another Claim
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowSuccessModal(false);
+                        setActiveTab("my_claims");
+                      }}
+                      className="flex-1 py-3 bg-[#0d2a3a] hover:bg-slate-800 text-white rounded-2xl text-xs font-bold cursor-pointer border-none shadow-md transition-all"
+                    >
+                      View in My Claims
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* ========================================================================= */}
