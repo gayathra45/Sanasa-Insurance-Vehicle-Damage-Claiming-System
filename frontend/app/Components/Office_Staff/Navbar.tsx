@@ -19,7 +19,8 @@ import {
   Building01Icon,
   Cancel01Icon,
   RefreshIcon,
-  BubbleChatIcon
+  BubbleChatIcon,
+  Car01Icon
 } from "@hugeicons/core-free-icons";
 import { API_URL } from "@/app/config";
 import { useChatNotification } from "@/app/context/ChatNotificationContext";
@@ -87,6 +88,7 @@ export default function OfficeStaffNavbar() {
     { name: "Home", href: "/Office_Staff/Dashboard" },
     { name: "Claims", href: "/Office_Staff/Claims" },
     { name: "Registrations", href: "/Office_Staff/Registrations" },
+    { name: "Third-Party Drivers", href: "/Office_Staff/ThirdParty" },
     { name: "Policy Holders", href: "/Office_Staff/PolicyHolders" },
     { name: "Policy Renewals", href: "/Office_Staff/Renewals" },
     { name: "Agents", href: "/Office_Staff/Agents" },
@@ -107,6 +109,11 @@ export default function OfficeStaffNavbar() {
         return <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "registrations":
         return <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "third-party drivers":
+      case "third party drivers":
+      case "third-party":
+      case "third party":
+        return <HugeiconsIcon icon={Car01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "policy holders":
         return <HugeiconsIcon icon={Folder01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "policy renewals":

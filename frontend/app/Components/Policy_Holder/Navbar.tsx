@@ -30,6 +30,7 @@ const translations = {
     myClaims: "My Claims",
     myVehicles: "My Vehicles",
     documents: "Documents",
+    thirdParty: "Third-Party",
     contact: "Contact",
     newClaim: "New Claim",
     myProfile: "My Profile",
@@ -47,6 +48,7 @@ const translations = {
     myClaims: "මගේ හිමිකම්",
     myVehicles: "මගේ වාහන",
     documents: "ලේඛන",
+    thirdParty: "තෙවන පාර්ශ්ව",
     contact: "සම්බන්ධ වන්න",
     newClaim: "නව හිමිකම්",
     myProfile: "මගේ පැතිකඩ",
@@ -64,6 +66,7 @@ const translations = {
     myClaims: "என் கோரிக்கைகள்",
     myVehicles: "எனது வாகனங்கள்",
     documents: "ஆவணங்கள்",
+    thirdParty: "மூன்றாம் தரப்பு",
     contact: "தொடர்பு கொள்ள",
     newClaim: "புதிய கோரிக்கை",
     myProfile: "என் சுயவிவரம்",
@@ -274,6 +277,7 @@ export default function PolicyHolderNavbar() {
     { href: "/Policy_Holder/Home", label: t.home },
     { href: "/Policy_Holder/My_claims", label: t.myClaims },
     { href: "/Policy_Holder/MyVehicles", label: t.myVehicles },
+    { href: "/Policy_Holder/ThirdParty", label: t.thirdParty },
     { href: "/Policy_Holder/Documents", label: t.documents },
     { href: "/Policy_Holder/Contact", label: t.contact }
   ];
