@@ -85,6 +85,13 @@ const claimSchema = new mongoose.Schema({
   manualUpdateReason: { type: String, default: "" },
   manualUpdateAt: { type: Date, default: null },
   manualUpdateBy: { type: String, default: "" },
+  submittedByDriver: {
+    isThirdParty: { type: Boolean, default: false },
+    driverName: { type: String, default: "" },
+    driverNic: { type: String, default: "" },
+    driverPhone: { type: String, default: "" },
+    registrationId: { type: mongoose.Schema.Types.ObjectId, ref: "ThirdPartyRegistration", default: null }
+  },
   createdAt: { type: Date, default: Date.now },
   aiAnalysis: {
     isAnalyzed: { type: Boolean, default: false },

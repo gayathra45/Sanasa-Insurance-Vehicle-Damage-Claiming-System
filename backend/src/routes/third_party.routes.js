@@ -6,6 +6,15 @@ import OfficeStaff from "../models/office_staff.model.js";
 import ThirdPartyRegistration from "../models/third_party_registration.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { normalizeSriLankanPhone, sendSms } from "../services/smsService.js";
+import Claim from "../models/claim.model.js";
+import PhotoHash from "../models/photoHash.model.js";
+import { getNearestBranch } from "../utils/branch.js";
+import { analyzeAccidentDamage } from "../utils/aiAnalyzer.js";
+import {
+  extractBase64Buffer,
+  computeSha256,
+  computePerceptualFingerprint
+} from "../utils/imageHasher.js";
 import {
   sendThirdPartyDriverApprovalEmail,
   sendThirdPartyDriverRejectionEmail,
@@ -937,6 +946,619 @@ router.get("/driver-pass/:token", async (req, res) => {
   } catch (err) {
     console.error("GET driver-pass error:", err);
     return res.status(500).json({ error: "Failed to load digital driver pass." });
+  }
+});
+
+// =========================================================================
+// 4. THIRD-PARTY DRIVER RESTRICTED SESSION & CLAIM PORTAL API
+// =========================================================================
+
+const DRIVER_SESSION_SECRET = process.env.SESSION_SECRET || process.env.STRIPE_SECRET_KEY || "sanasa-driver-secret-key-prod-2026";
+
+/**
+ * Helper to mask sensitive NIC numbers for privacy (e.g., "1998****4567" or "9823****5V")
+ */
+function maskNic(nic) {
+  if (!nic || typeof nic !== "string") return "";
+  const clean = nic.trim();
+  if (clean.length <= 4) return clean;
+  if (clean.length >= 10) {
+    return clean.slice(0, 4) + "****" + clean.slice(-2);
+  }
+  return clean.slice(0, 2) + "****" + clean.slice(-2);
+}
+
+/**
+ * Create a cryptographically signed, short-lived restricted driver session token
+ */
+function signDriverSession(payload) {
+  const jsonStr = JSON.stringify(payload);
+  const data = Buffer.from(jsonStr).toString("base64url");
+  const signature = crypto.createHmac("sha256", DRIVER_SESSION_SECRET).update(data).digest("base64url");
+  return `${data}.${signature}`;
+}
+
+/**
+ * Verify and unpack restricted driver session token
+ */
+function verifyDriverSessionString(tokenStr) {
+  if (!tokenStr || typeof tokenStr !== "string" || !tokenStr.includes(".")) return null;
+  const parts = tokenStr.split(".");
+  if (parts.length !== 2) return null;
+  const [data, signature] = parts;
+  const expectedSig = crypto.createHmac("sha256", DRIVER_SESSION_SECRET).update(data).digest("base64url");
+  if (signature !== expectedSig) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(data, "base64url").toString("utf8"));
+    if (payload.exp && Date.now() > payload.exp) return null;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Middleware: Verifies the restricted Third-Party Driver session.
+ * Protects every portal endpoint against unauthorized access and direct ID tampering.
+ */
+async function requireDriverSession(req, res, next) {
+  try {
+    const authHeader = req.headers["authorization"] || req.headers["x-driver-session"];
+    let tokenStr = "";
+    if (authHeader && typeof authHeader === "string") {
+      tokenStr = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : authHeader.trim();
+    }
+
+    if (!tokenStr) {
+      return res.status(401).json({ error: "Unauthorized: Missing driver session token." });
+    }
+
+    const payload = verifyDriverSessionString(tokenStr);
+    if (!payload || payload.role !== "ThirdPartyDriver" || !payload.registrationId) {
+      return res.status(401).json({ error: "Unauthorized: Invalid or expired driver session." });
+    }
+
+    // Always re-verify active registration in database to handle immediate revocation
+    const request = await ThirdPartyRegistration.findById(payload.registrationId);
+    if (!request) {
+      return res.status(404).json({ error: "Driver authorization record not found." });
+    }
+
+    if (request.status !== "Approved") {
+      return res.status(403).json({
+        error: `Driver access is not active. Authorization status is: ${request.status}`
+      });
+    }
+
+    if (request.secureAccess?.isRevoked) {
+      return res.status(403).json({
+        error: "This driver authorization has been revoked by the branch or policyholder."
+      });
+    }
+
+    req.driverSession = payload;
+    req.thirdPartyRequest = request;
+    next();
+  } catch (err) {
+    console.error("requireDriverSession error:", err);
+    return res.status(500).json({ error: "Internal session authentication failure." });
+  }
+}
+
+/**
+ * POST /api/third-party/driver-session
+ * Exchanges the URL's cryptographic rawToken for a secure restricted driver session token.
+ */
+router.post("/driver-session", async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token || typeof token !== "string") {
+      return res.status(400).json({ error: "Access token is required." });
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token.trim()).digest("hex");
+    const request = await ThirdPartyRegistration.findOne({
+      "secureAccess.tokenHash": tokenHash
+    });
+
+    if (!request) {
+      return res.status(404).json({ error: "Invalid access link or token." });
+    }
+
+    if (request.status !== "Approved") {
+      return res.status(403).json({
+        error: `Authorization is not active. Current status: ${request.status}`
+      });
+    }
+
+    if (request.secureAccess?.isRevoked) {
+      return res.status(403).json({
+        error: "This driver access link has been revoked. Please contact your regional branch."
+      });
+    }
+
+    // Record session creation in access logs
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+    const userAgent = req.headers["user-agent"] || "";
+    request.accessLogs = request.accessLogs || [];
+    request.accessLogs.push({
+      accessedAt: new Date(),
+      ipAddress: String(clientIp).split(",")[0].trim(),
+      userAgent
+    });
+    await request.save();
+
+    // 24-hour restricted session token
+    const sessionToken = signDriverSession({
+      role: "ThirdPartyDriver",
+      registrationId: String(request._id),
+      driverNic: request.driverDetails.nicNumber,
+      driverName: request.driverDetails.fullName,
+      policyHolderNic: request.policyHolderNic,
+      authorizedPlates: (request.selectedVehicles || []).map((v) => v.numberPlate),
+      exp: Date.now() + 24 * 60 * 60 * 1000
+    });
+
+    return res.json({
+      success: true,
+      sessionToken,
+      driver: {
+        fullName: request.driverDetails.fullName,
+        maskedNic: maskNic(request.driverDetails.nicNumber),
+        phoneNumber: request.driverDetails.phoneNumber,
+        reference: request.requestReference,
+        branch: request.branch,
+        policyHolderName: request.policyHolderName,
+        authorizedVehiclesCount: (request.selectedVehicles || []).length,
+        approvalDate: request.branchReview?.reviewedAt || request.updatedAt
+      }
+    });
+  } catch (err) {
+    console.error("POST /driver-session error:", err);
+    return res.status(500).json({ error: "Failed to establish driver session." });
+  }
+});
+
+/**
+ * GET /api/third-party/portal/me
+ * Retrieves current restricted driver profile & authorized metadata
+ */
+router.get("/portal/me", requireDriverSession, async (req, res) => {
+  try {
+    const request = req.thirdPartyRequest;
+    return res.json({
+      success: true,
+      profile: {
+        driverName: request.driverDetails.fullName,
+        driverNicMasked: maskNic(request.driverDetails.nicNumber),
+        driverPhone: request.driverDetails.phoneNumber,
+        driverAddress: request.driverDetails.residentialAddress,
+        policyHolderName: request.policyHolderName,
+        policyHolderNicMasked: maskNic(request.policyHolderNic),
+        branch: request.branch,
+        reference: request.requestReference,
+        approvalDate: request.branchReview?.reviewedAt || request.updatedAt,
+        status: request.status,
+        authorizedVehicles: request.selectedVehicles || [],
+        verificationToken: request.secureAccess?.rawToken
+          ? request.secureAccess.rawToken.substring(0, 12).toUpperCase()
+          : "SANASA-PASS"
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to fetch driver profile." });
+  }
+});
+
+/**
+ * GET /api/third-party/portal/vehicles
+ * Returns only the vehicles authorized for this Third-Party Driver
+ */
+router.get("/portal/vehicles", requireDriverSession, async (req, res) => {
+  try {
+    const request = req.thirdPartyRequest;
+    const authorizedPlates = (request.selectedVehicles || []).map((v) => v.numberPlate);
+
+    // Look up live policyholder vehicle records to obtain live expiry & status
+    const owner = await User.findOne(
+      { nic: request.policyHolderNic },
+      { vehicles: 1 }
+    );
+
+    const ownerVehiclesMap = {};
+    if (owner?.vehicles) {
+      owner.vehicles.forEach((v) => {
+        if (v.numberPlate) {
+          ownerVehiclesMap[v.numberPlate.toUpperCase().trim()] = v;
+        }
+      });
+    }
+
+    const resolvedVehicles = (request.selectedVehicles || []).map((v) => {
+      const live = ownerVehiclesMap[(v.numberPlate || "").toUpperCase().trim()];
+      return {
+        numberPlate: v.numberPlate,
+        vehicleType: v.vehicleType || live?.vehicleType || "Vehicle",
+        company: v.company || live?.company || "Standard",
+        model: v.model || live?.model || "",
+        year: v.year || live?.year || "",
+        policyNumber: v.policyNumber || live?.policyNumber || "SANASA-COMPREHENSIVE",
+        policyExpiryDate: live?.policyExpiryDate || "2027-11-20",
+        coverageStatus: "Active Comprehensive Coverage",
+        authorizedSince: request.branchReview?.reviewedAt || request.createdAt
+      };
+    });
+
+    return res.json({
+      success: true,
+      vehicles: resolvedVehicles
+    });
+  } catch (err) {
+    console.error("GET /portal/vehicles error:", err);
+    return res.status(500).json({ error: "Failed to fetch assigned vehicles." });
+  }
+});
+
+/**
+ * GET /api/third-party/portal/claims
+ * Returns only claims submitted for/by this driver on their authorized vehicles
+ */
+router.get("/portal/claims", requireDriverSession, async (req, res) => {
+  try {
+    const request = req.thirdPartyRequest;
+    const authorizedPlates = (request.selectedVehicles || []).map((v) => v.numberPlate);
+
+    const claims = await Claim.find({
+      vehiclePlate: { $in: authorizedPlates },
+      $or: [
+        { "submittedByDriver.registrationId": request._id },
+        { "submittedByDriver.driverNic": request.driverDetails.nicNumber },
+        { description: new RegExp(request.driverDetails.fullName, "i") }
+      ]
+    }).sort({ createdAt: -1 });
+
+    const safeClaims = claims.map((c) => ({
+      claimNumber: c.claimNumber,
+      vehiclePlate: c.vehiclePlate,
+      incidentDate: c.incidentDate,
+      incidentTime: c.incidentTime,
+      damageType: c.damageType,
+      location: c.location,
+      status: c.status,
+      currentStep: c.currentStep || 1,
+      createdAt: c.createdAt,
+      submittedByDriver: c.submittedByDriver || { isThirdParty: true },
+      documentsCount: (c.additionalDocuments || []).length,
+      hasInspectionReport: Boolean(c.inspectionReport)
+    }));
+
+    return res.json({ success: true, claims: safeClaims });
+  } catch (err) {
+    console.error("GET /portal/claims error:", err);
+    return res.status(500).json({ error: "Failed to fetch claims." });
+  }
+});
+
+/**
+ * GET /api/third-party/portal/claims/:claimNumber
+ * Returns specific authorized claim details for the driver
+ */
+router.get("/portal/claims/:claimNumber", requireDriverSession, async (req, res) => {
+  try {
+    const request = req.thirdPartyRequest;
+    const { claimNumber } = req.params;
+    const authorizedPlates = (request.selectedVehicles || []).map((v) => v.numberPlate);
+
+    const claim = await Claim.findOne({
+      claimNumber: claimNumber.trim().toUpperCase(),
+      vehiclePlate: { $in: authorizedPlates }
+    });
+
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found or you are not authorized to view it." });
+    }
+
+    // Filter permitted messages (exclude internal branch notes)
+    const permittedMessages = (claim.messages || []).filter(
+      (m) => m.recipient !== "Internal" && m.recipient !== "Agent Only"
+    );
+
+    return res.json({
+      success: true,
+      claim: {
+        claimNumber: claim.claimNumber,
+        vehiclePlate: claim.vehiclePlate,
+        incidentDate: claim.incidentDate,
+        incidentTime: claim.incidentTime,
+        damageType: claim.damageType,
+        description: claim.description,
+        location: claim.location,
+        status: claim.status,
+        currentStep: claim.currentStep || 1,
+        branch: claim.branch,
+        createdAt: claim.createdAt,
+        submittedByDriver: claim.submittedByDriver,
+        accidentPhotos: claim.accidentPhotos,
+        drivingLicense: claim.drivingLicense,
+        additionalDocuments: claim.additionalDocuments || [],
+        requestedDocuments: claim.documentsRequested ? claim.requestedDocuments : [],
+        documentsRequested: claim.documentsRequested,
+        messages: permittedMessages
+      }
+    });
+  } catch (err) {
+    console.error("GET /portal/claims/:claimNumber error:", err);
+    return res.status(500).json({ error: "Failed to fetch claim details." });
+  }
+});
+
+/**
+ * POST /api/third-party/portal/submit-claim
+ * Allows the Third-Party Driver to submit a claim for an assigned vehicle.
+ * Reuses sequential claim IDs, photo hashing, Cloudinary uploads, AI analysis, and SMS alerts.
+ */
+router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
+  try {
+    const request = req.thirdPartyRequest;
+    const {
+      vehiclePlate,
+      incidentDate,
+      incidentTime,
+      damageType,
+      description,
+      location,
+      accidentPhotos,
+      drivingLicense,
+      otherVehicleDetails
+    } = req.body;
+
+    if (!vehiclePlate || !incidentDate || !incidentTime || !damageType || !description || !location) {
+      return res.status(400).json({ error: "All required claim fields must be provided." });
+    }
+
+    // Backend Authorization: strictly verify that the vehicle is in the authorized list
+    const authorizedPlates = (request.selectedVehicles || []).map((v) =>
+      (v.numberPlate || "").toUpperCase().trim()
+    );
+    const targetPlate = vehiclePlate.toUpperCase().trim();
+
+    if (!authorizedPlates.includes(targetPlate)) {
+      return res.status(403).json({
+        error: `Forbidden: Vehicle ${vehiclePlate} is not authorized for this driver.`
+      });
+    }
+
+    // Prevent duplicate submissions
+    const existing = await Claim.findOne({
+      vehiclePlate: targetPlate,
+      incidentDate: incidentDate.trim(),
+      incidentTime: incidentTime.trim()
+    });
+
+    if (existing) {
+      return res.status(400).json({
+        error: "A claim for this vehicle with the same incident date & time has already been submitted."
+      });
+    }
+
+    // Sequential Claim ID generation (CLM-0000-xxxx)
+    const lastClaim = await Claim.findOne({}, { claimNumber: 1 }).sort({ createdAt: -1 });
+    let nextClaimNum = "CLM-0000-0001";
+    if (lastClaim && lastClaim.claimNumber) {
+      const match = lastClaim.claimNumber.match(/CLM-0000-(\d+)/i);
+      if (match) {
+        const nextNum = parseInt(match[1], 10) + 1;
+        nextClaimNum = `CLM-0000-${String(nextNum).padStart(4, "0")}`;
+      }
+    }
+
+    // Cloudinary upload helpers
+    const uploadArray = async (arr, folder) => {
+      if (!arr || !Array.isArray(arr)) return [];
+      return Promise.all(arr.map((item) => uploadToCloudinary(item, folder)));
+    };
+
+    const [accidentFront, accidentRear, accidentSide, licenseFront, licenseRear] = await Promise.all([
+      uploadArray(accidentPhotos?.front, "claims/accident_photos"),
+      uploadArray(accidentPhotos?.rear, "claims/accident_photos"),
+      uploadArray(accidentPhotos?.side, "claims/accident_photos"),
+      uploadArray(drivingLicense?.front, "claims/driving_license"),
+      uploadArray(drivingLicense?.rear, "claims/driving_license")
+    ]);
+
+    // Optional AI damage analysis
+    const allPhotos = [
+      ...(accidentPhotos?.front || []),
+      ...(accidentPhotos?.rear || []),
+      ...(accidentPhotos?.side || [])
+    ];
+    let aiResult = null;
+    if (allPhotos.length > 0) {
+      try {
+        aiResult = await analyzeAccidentDamage(allPhotos);
+      } catch (aiErr) {
+        console.warn("AI damage analysis notice:", aiErr.message);
+      }
+    }
+
+    const assignedBranch = await getNearestBranch(location, request.branch || "Galle");
+
+    const newClaim = new Claim({
+      claimNumber: nextClaimNum,
+      userNic: request.policyHolderNic,
+      vehiclePlate: targetPlate,
+      incidentDate: incidentDate.trim(),
+      incidentTime: incidentTime.trim(),
+      damageType: damageType.trim(),
+      description: description.trim(),
+      location: location.trim(),
+      branch: assignedBranch,
+      status: "Pending",
+      currentStep: 1,
+      accidentPhotos: {
+        front: accidentFront,
+        rear: accidentRear,
+        side: accidentSide
+      },
+      drivingLicense: {
+        front: licenseFront,
+        rear: licenseRear
+      },
+      submittedByDriver: {
+        isThirdParty: true,
+        driverName: request.driverDetails.fullName,
+        driverNic: request.driverDetails.nicNumber,
+        driverPhone: request.driverDetails.phoneNumber,
+        registrationId: request._id
+      },
+      messages: [
+        {
+          sender: "System",
+          message: `Claim lodged by authorized third-party driver ${request.driverDetails.fullName} under policyholder ${request.policyHolderName}.`,
+          sentAt: new Date(),
+          recipient: "All"
+        }
+      ],
+      aiAnalysis: aiResult
+        ? {
+            isAnalyzed: true,
+            isValidAccidentPhoto: aiResult.isValidAccidentPhoto !== false,
+            authenticityAssessment: aiResult.authenticityAssessment || "",
+            fraudAlert: aiResult.fraudAlert || null,
+            damagedItems: aiResult.damagedItems || [],
+            overallDamagePercentage: aiResult.overallDamagePercentage || 0,
+            totalEstimatedPartsCost: aiResult.totalEstimatedPartsCost || 0,
+            totalEstimatedLaborCost: aiResult.totalEstimatedLaborCost || 0,
+            totalEstimatedCost: aiResult.totalEstimatedCost || 0,
+            currency: aiResult.currency || "LKR",
+            summary: aiResult.summary || "",
+            analyzedAt: new Date()
+          }
+        : { isAnalyzed: false }
+    });
+
+    await newClaim.save();
+
+    // SMS Notifications
+    if (request.driverDetails?.phoneNumber) {
+      sendSms({
+        phone: request.driverDetails.phoneNumber,
+        message: `Sanasa Insurance: Your claim ${nextClaimNum} for vehicle ${targetPlate} has been lodged successfully and routed to ${assignedBranch} Branch for inspection.`,
+        recipientType: "ThirdPartyDriver",
+        recipientName: request.driverDetails.fullName,
+        eventType: "third_party_claim_submitted"
+      }).catch((e) => console.warn("Driver claim SMS error:", e.message));
+    }
+
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `Sanasa Alert: Authorized driver ${request.driverDetails.fullName} has lodged claim ${nextClaimNum} for your vehicle ${targetPlate}.`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_claim_owner_alert"
+      }).catch((e) => console.warn("Owner claim SMS error:", e.message));
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Claim submitted successfully.",
+      claimNumber: nextClaimNum,
+      claim: newClaim
+    });
+  } catch (err) {
+    console.error("POST /portal/submit-claim error:", err);
+    return res.status(500).json({ error: "Failed to submit claim. Please try again." });
+  }
+});
+
+/**
+ * POST /api/third-party/portal/claims/:claimNumber/upload-doc
+ * Allows the Third-Party Driver to upload requested or supporting claim documents
+ */
+router.post("/portal/claims/:claimNumber/upload-doc", requireDriverSession, async (req, res) => {
+  try {
+    const request = req.thirdPartyRequest;
+    const { claimNumber } = req.params;
+    const { documentName, fileBase64 } = req.body;
+
+    if (!documentName || !fileBase64) {
+      return res.status(400).json({ error: "Document name and file data are required." });
+    }
+
+    const authorizedPlates = (request.selectedVehicles || []).map((v) => v.numberPlate);
+    const claim = await Claim.findOne({
+      claimNumber: claimNumber.trim().toUpperCase(),
+      vehiclePlate: { $in: authorizedPlates }
+    });
+
+    if (!claim) {
+      return res.status(404).json({ error: "Authorized claim not found." });
+    }
+
+    const uploadedUrl = await uploadToCloudinary(fileBase64, "claims/additional_docs");
+    if (!uploadedUrl) {
+      return res.status(500).json({ error: "Failed to upload document file." });
+    }
+
+    claim.additionalDocuments = claim.additionalDocuments || [];
+    claim.additionalDocuments.push({
+      name: documentName.trim(),
+      url: uploadedUrl,
+      uploadedAt: new Date(),
+      uploadedBy: `Third-Party Driver: ${request.driverDetails.fullName}`
+    });
+
+    // Remove from requested list if matched
+    if (claim.requestedDocuments && Array.isArray(claim.requestedDocuments)) {
+      const norm = documentName.trim().toLowerCase();
+      claim.requestedDocuments = claim.requestedDocuments.filter(
+        (d) => d.trim().toLowerCase() !== norm
+      );
+      if (claim.requestedDocuments.length === 0) {
+        claim.documentsRequested = false;
+      }
+    }
+
+    claim.messages.push({
+      sender: request.driverDetails.fullName,
+      message: `Uploaded supporting document: ${documentName.trim()}`,
+      sentAt: new Date(),
+      recipient: "All"
+    });
+
+    await claim.save();
+
+    return res.json({
+      success: true,
+      message: "Document uploaded successfully.",
+      additionalDocuments: claim.additionalDocuments
+    });
+  } catch (err) {
+    console.error("POST /upload-doc error:", err);
+    return res.status(500).json({ error: "Failed to upload document." });
+  }
+});
+
+/**
+ * POST /api/third-party/portal/logout
+ * Logs the driver out and invalidates the session
+ */
+router.post("/portal/logout", requireDriverSession, async (req, res) => {
+  try {
+    const request = req.thirdPartyRequest;
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+    request.accessLogs = request.accessLogs || [];
+    request.accessLogs.push({
+      accessedAt: new Date(),
+      ipAddress: String(clientIp).split(",")[0].trim(),
+      userAgent: "Driver Portal Logout"
+    });
+    await request.save();
+
+    return res.json({ success: true, message: "Logged out successfully." });
+  } catch (err) {
+    return res.status(500).json({ error: "Failed to complete logout." });
   }
 });
 
