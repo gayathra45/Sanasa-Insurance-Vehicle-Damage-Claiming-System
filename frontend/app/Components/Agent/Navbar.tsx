@@ -235,7 +235,7 @@ export default function AgentNavbar() {
         }`}
       >
         {/* Top Utility Bar (Vibrant Sky Blue background) */}
-        <div className="bg-[#0284c7] border-b border-sky-600/30 text-white py-1.5 px-6 md:px-16 flex items-center justify-between text-xs select-none w-full font-medium shadow-inner">
+        <div className="bg-[#0284c7] border-b border-sky-600/30 text-white py-1.5 px-4 sm:px-6 md:px-16 flex items-center justify-between text-xs select-none w-full font-medium shadow-inner">
           <div className="flex items-center gap-1.5">
             <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-sky-100" strokeWidth={2} />
             <span className="text-white">
@@ -305,7 +305,7 @@ export default function AgentNavbar() {
         </div>
 
         {/* Main Header Row */}
-        <div className="py-2.5 px-6 md:px-16 flex items-center justify-between w-full">
+        <div className="py-2.5 px-4 sm:px-6 md:px-16 flex items-center justify-between w-full">
           {/* Logo */}
           <div className="flex items-center">
             <Link href="/Agent/Dashboard">

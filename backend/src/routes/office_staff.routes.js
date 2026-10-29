@@ -177,8 +177,8 @@ router.get("/dashboard-stats", async (req, res) => {
       return 0;
     });
 
-    // 2. Fetch recent new claims for the branch
-    const newClaims = await Claim.find({ branch: branchCondition })
+    // 2. Fetch recent new claims for the branch and attach policyHolder profile
+    const rawNewClaims = await Claim.find({ branch: branchCondition })
       .sort({ createdAt: -1 })
       .limit(20)
       .lean()
@@ -186,6 +186,23 @@ router.get("/dashboard-stats", async (req, res) => {
         console.warn("Error finding new claims:", err.message);
         return [];
       });
+
+    const claimNics = rawNewClaims.map(c => c.userNic).filter(Boolean);
+    const claimUsers = await User.find(
+      { nic: { $in: claimNics } },
+      { nic: 1, firstName: 1, lastName: 1, mobile: 1 }
+    ).lean().catch(() => []);
+    const claimUserMap = new Map(claimUsers.map(u => [u.nic, u]));
+
+    const newClaims = rawNewClaims.map(c => {
+      const u = claimUserMap.get(c.userNic);
+      const fullName = u ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "";
+      return {
+        ...c,
+        policyHolderName: fullName,
+        policyHolderMobile: u?.mobile || ""
+      };
+    });
 
     // 3. Fetch recent new registrations for the branch
     const newRegistrations = await User.find({

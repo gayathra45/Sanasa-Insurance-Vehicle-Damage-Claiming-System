@@ -1003,39 +1003,39 @@ export default function MyVehicles() {
       </div>
 
       {/* Main Grid Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 relative z-20">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 py-8 sm:py-10 relative z-20">
         
         {/* Toast Notification */}
         {toastMessage && (
-          <div className="fixed top-20 right-8 z-50 bg-[#00ddff] text-black font-semibold px-6 py-5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black">
-            <HugeiconsIcon icon={RefreshIcon} className="w-6 h-6 animate-spin" strokeWidth={2.5} />
-            <span>{toastMessage}</span>
+          <div className="fixed top-20 right-4 sm:right-8 z-50 bg-[#00ddff] text-black font-semibold px-4 sm:px-6 py-4 sm:py-5 rounded-2xl shadow-xl animate-bounce flex items-center gap-3 border-2 border-black max-w-[90vw]">
+            <HugeiconsIcon icon={RefreshIcon} className="w-5 sm:w-6 h-5 sm:h-6 animate-spin flex-shrink-0" strokeWidth={2.5} />
+            <span className="text-xs sm:text-sm">{toastMessage}</span>
           </div>
         )}
 
         {/* Dynamic Stat Summary Section - Matching My Claims & Home Overview */}
-        <section className="-mt-14 grid grid-cols-1 sm:grid-cols-2 gap-6 mb-10 select-none">
+        <section className="-mt-10 sm:-mt-14 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-10 select-none">
           {/* Total Vehicles Card */}
-          <div className="bg-white border border-slate-200/80 rounded-[28px] p-6 shadow-sm flex items-center justify-between min-h-[120px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
-            <div className="flex items-center gap-5">
-              <div className="w-13 h-13 rounded-2xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600 flex-shrink-0 shadow-inner">
-                <HugeiconsIcon icon={Car01Icon} className="w-7 h-7" strokeWidth={1.8} />
+          <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-[28px] p-4 sm:p-6 shadow-sm flex items-center justify-between min-h-[110px] sm:min-h-[120px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
+            <div className="flex items-center gap-4 sm:gap-5">
+              <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600 flex-shrink-0 shadow-inner">
+                <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.8} />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-slate-800 leading-none">{vehicles.length}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-800 leading-none">{vehicles.length}</h3>
                 <p className="text-slate-400 font-semibold text-xs uppercase tracking-wider mt-1.5">{t.totalInsured}</p>
               </div>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200/60">
+            <span className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-cyan-50 text-cyan-700 border border-cyan-200/60 whitespace-nowrap">
               Registered
             </span>
           </div>
 
           {/* Active Policies Card */}
-          <div className="bg-white border border-slate-200/80 rounded-[28px] p-6 shadow-sm flex items-center justify-between min-h-[120px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
-            <div className="flex items-center gap-5">
-              <div className="w-13 h-13 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0 shadow-inner">
-                <HugeiconsIcon icon={SecurityCheckIcon} className="w-7 h-7" strokeWidth={1.8} />
+          <div className="bg-white border border-slate-200/80 rounded-2xl sm:rounded-[28px] p-4 sm:p-6 shadow-sm flex items-center justify-between min-h-[110px] sm:min-h-[120px] hover:shadow-md hover:border-slate-300 transition-all duration-200">
+            <div className="flex items-center gap-4 sm:gap-5">
+              <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0 shadow-inner">
+                <HugeiconsIcon icon={SecurityCheckIcon} className="w-6 h-6 sm:w-7 sm:h-7" strokeWidth={1.8} />
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-slate-800 leading-none">
@@ -1100,10 +1100,10 @@ export default function MyVehicles() {
         {activeMainTab === "vehicles" && (
           <>
             {/* Quick Driver Authorization Banner - Unified Design */}
-            <div className="bg-gradient-to-br from-[#102A43] via-[#163e63] to-indigo-900 rounded-[30px] p-6 sm:p-8 text-white shadow-md relative overflow-hidden mb-8">
+            <div className="bg-gradient-to-br from-[#102A43] via-[#163e63] to-indigo-900 rounded-2xl sm:rounded-[30px] p-5 sm:p-8 text-white shadow-md relative overflow-hidden mb-6 sm:mb-8">
               <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none" />
 
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
                 <div className="space-y-2 max-w-2xl">
                   <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-cyan-300 text-xs font-bold rounded-full border border-white/15">
                     <HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" />
@@ -1119,7 +1119,7 @@ export default function MyVehicles() {
 
                 <button
                   onClick={handleOpenThirdPartyNew}
-                  className="px-6 py-3.5 bg-cyan-400 hover:bg-cyan-300 text-slate-900 font-bold text-xs sm:text-sm rounded-2xl shadow-lg transition-all flex items-center gap-2 self-start md:self-auto cursor-pointer border-none flex-shrink-0"
+                  className="px-5 sm:px-6 py-3 sm:py-3.5 bg-cyan-400 hover:bg-cyan-300 text-slate-900 font-bold text-xs sm:text-sm rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 w-full sm:w-auto self-stretch sm:self-auto cursor-pointer border-none flex-shrink-0"
                 >
                   <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 text-slate-900" />
                   <span>+ Register New Driver</span>
@@ -1128,13 +1128,13 @@ export default function MyVehicles() {
             </div>
 
             {/* Filtering & Search Controls Panel */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-8 bg-white border border-slate-200/80 p-5 rounded-[26px] shadow-sm select-none">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5 mb-6 sm:mb-8 bg-white border border-slate-200/80 p-4 sm:p-5 rounded-2xl sm:rounded-[26px] shadow-sm select-none">
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
                     onClick={() => setActiveCategory(cat.id)}
-                    className={`px-5 py-2.5 rounded-full font-semibold text-[13px] md:text-sm tracking-wide transition-all outline-none border cursor-pointer select-none ${
+                    className={`px-4 sm:px-5 py-2 sm:py-2.5 rounded-full font-semibold text-xs sm:text-[13px] md:text-sm tracking-wide transition-all outline-none border cursor-pointer select-none ${
                       activeCategory === cat.id
                         ? "bg-[#000080] border-[#000080] text-white shadow-sm"
                         : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
@@ -1380,20 +1380,20 @@ export default function MyVehicles() {
                       return (
                         <div
                           key={vehicle.numberPlate}
-                          className="p-4 sm:px-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/70 transition-colors"
+                          className="p-4 sm:px-6 flex flex-col lg:flex-row lg:items-center justify-between gap-3 sm:gap-4 hover:bg-slate-50/70 transition-colors"
                         >
                           {/* Left: Plate + Vehicle Info */}
-                          <div className="flex items-center gap-4">
-                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-mono font-bold text-xs tracking-wider shadow-2xs select-all flex-shrink-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5 sm:gap-4">
+                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 text-white rounded-lg font-mono font-bold text-xs tracking-wider shadow-2xs select-all flex-shrink-0 self-start sm:self-auto">
                               <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                               <span>{formatNumberPlate(vehicle.numberPlate)}</span>
                             </div>
 
-                            <div>
-                              <h4 className="font-bold text-slate-900 text-sm">
+                            <div className="min-w-0">
+                              <h4 className="font-bold text-slate-900 text-sm truncate">
                                 {vehicle.company} {vehicle.model}
                               </h4>
-                              <p className="text-xs text-slate-400 flex items-center gap-2 mt-0.5">
+                              <p className="text-xs text-slate-400 flex flex-wrap items-center gap-1.5 sm:gap-2 mt-0.5">
                                 <span className="text-slate-600 font-medium">{vehicle.vehicleType}</span>
                                 <span>•</span>
                                 <span>{vehicle.year}</span>
@@ -1404,28 +1404,28 @@ export default function MyVehicles() {
                           </div>
 
                           {/* Middle: Expiry + Driver */}
-                          <div className="flex flex-wrap items-center gap-6 text-xs text-slate-600">
+                          <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-xs text-slate-600 py-1 sm:py-0">
                             <div>
-                              <span className="text-[10.5px] uppercase font-bold text-slate-400 block">Expiry</span>
-                              <span className="font-semibold text-slate-800">
+                              <span className="text-[10px] sm:text-[10.5px] uppercase font-bold text-slate-400 block">Expiry</span>
+                              <span className="font-semibold text-slate-800 text-xs">
                                 {expDateStr ? new Date(expDateStr).toLocaleDateString() : "Active"}
                               </span>
                             </div>
 
                             <div>
-                              <span className="text-[10.5px] uppercase font-bold text-slate-400 block">Driver</span>
+                              <span className="text-[10px] sm:text-[10.5px] uppercase font-bold text-slate-400 block">Driver</span>
                               {driverInfo?.status === "Approved" ? (
-                                <span className="font-semibold text-indigo-700 flex items-center gap-1">
+                                <span className="font-semibold text-indigo-700 flex items-center gap-1 text-xs">
                                   <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600" />
-                                  <span>{driverInfo.driverName}</span>
+                                  <span className="truncate max-w-[120px]">{driverInfo.driverName}</span>
                                 </span>
                               ) : (
-                                <span className="text-slate-400 italic">None</span>
+                                <span className="text-slate-400 italic text-xs">None</span>
                               )}
                             </div>
 
                             <div className="flex items-center gap-1.5">
-                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/70 rounded-full px-2.5 py-0.5">
+                              <span className="inline-flex items-center gap-1 text-[10.5px] sm:text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/70 rounded-full px-2.5 py-0.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                 <span>Active</span>
                               </span>
@@ -1440,10 +1440,10 @@ export default function MyVehicles() {
                           </div>
 
                           {/* Right: Actions */}
-                          <div className="flex items-center gap-2 self-end lg:self-auto">
+                          <div className="flex items-center gap-2 w-full lg:w-auto pt-2 border-t border-slate-100 lg:border-t-0 lg:pt-0">
                             <button
                               onClick={() => setSelectedVehicleForModal(vehicle)}
-                              className="bg-[#102A43] hover:bg-[#163e63] text-white font-semibold text-xs py-2 px-3.5 rounded-xl transition-all shadow-2xs border-none cursor-pointer flex items-center gap-1.5"
+                              className="flex-1 sm:flex-none justify-center bg-[#102A43] hover:bg-[#163e63] text-white font-semibold text-xs py-2 px-3.5 rounded-xl transition-all shadow-2xs border-none cursor-pointer flex items-center gap-1.5"
                             >
                               <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-white" />
                               <span>View Details</span>
@@ -1451,7 +1451,7 @@ export default function MyVehicles() {
 
                             <button
                               onClick={() => handleOpenThirdPartyForVehicle(vehicle.numberPlate)}
-                              className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-semibold text-xs py-2 px-3 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+                              className="flex-1 sm:flex-none justify-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-semibold text-xs py-2 px-3 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
                               title="Assign Driver"
                             >
                               <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5 text-indigo-600" />
@@ -1669,23 +1669,23 @@ export default function MyVehicles() {
         const modalDriverInfo = vehicleDriverMap[selectedVehicleForModal.numberPlate];
 
         return (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-white border border-slate-200/90 rounded-[32px] w-full max-w-3xl max-h-[88vh] shadow-[0_24px_60px_rgba(15,42,67,0.18)] flex flex-col relative overflow-hidden">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 transition-all duration-300">
+            <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-[32px] w-full max-w-3xl max-h-[92vh] sm:max-h-[88vh] shadow-[0_24px_60px_rgba(15,42,67,0.18)] flex flex-col relative overflow-hidden">
               
               {/* Modal Header */}
-              <div className="flex justify-between items-center px-8 py-5 border-b border-slate-100 bg-white flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight leading-none">
+              <div className="flex justify-between items-center px-4 sm:px-8 py-3.5 sm:py-5 border-b border-slate-100 bg-white flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 tracking-tight leading-none">
                     Vehicle Specifications
                   </h2>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg font-mono font-bold text-xs tracking-wider shadow-2xs select-all">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-slate-900 text-white rounded-lg font-mono font-bold text-xs tracking-wider shadow-2xs select-all">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                     <span>{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedVehicleForModal(null)}
-                  className="w-9 h-9 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors text-2xl font-normal border-none bg-transparent cursor-pointer outline-none"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors text-2xl font-normal border-none bg-transparent cursor-pointer outline-none flex-shrink-0"
                   aria-label="Close"
                 >
                   &times;
@@ -1693,10 +1693,10 @@ export default function MyVehicles() {
               </div>
 
               {/* Modal Content */}
-              <div className="p-8 flex-1 overflow-y-auto space-y-6">
+              <div className="p-4 sm:p-8 flex-1 overflow-y-auto space-y-4 sm:space-y-6">
                 
                 {/* Profile Hero Card inside modal */}
-                <div className="bg-gradient-to-r from-slate-50 via-sky-50/30 to-slate-50 border border-slate-200/80 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs select-none">
+                <div className="bg-gradient-to-r from-slate-50 via-sky-50/30 to-slate-50 border border-slate-200/80 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs select-none">
                   <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-2xs flex items-center justify-center flex-shrink-0 text-slate-700">
                       {getVehicleIconContainer(selectedVehicleForModal.vehicleType, "w-12 h-12 rounded-xl")}

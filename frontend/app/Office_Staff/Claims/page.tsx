@@ -28,7 +28,8 @@ import {
   Tick01Icon,
   BubbleChatIcon,
   Location01Icon,
-  Download01Icon
+  Download01Icon,
+  UserCheck01Icon
 } from "@hugeicons/core-free-icons";
 import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
 import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
@@ -102,6 +103,13 @@ interface Claim {
     branchName: string;
     accountNumber: string;
     accountHolderName: string;
+  };
+  submittedByDriver?: {
+    isThirdParty?: boolean;
+    driverName?: string;
+    driverNic?: string;
+    driverPhone?: string;
+    registrationId?: string;
   };
   policyHolderName?: string;
   policyHolderEmail?: string;
@@ -763,7 +771,7 @@ function OfficeStaffClaimsPageContent() {
   const [requestItems, setRequestItems] = useState<RequestDocItem[]>([
     { recipient: "User", docType: "NIC Front Page", customName: "", note: "" }
   ]);
-  const [contactRecipient, setContactRecipient] = useState<"Policy Holder" | "Agent">("Policy Holder");
+  const [contactRecipient, setContactRecipient] = useState<"Policy Holder" | "Agent" | "Authorized Driver">("Policy Holder");
 
   const handleAddRequestItem = () => {
     setRequestItems(prev => [
@@ -1159,7 +1167,9 @@ function OfficeStaffClaimsPageContent() {
       claim.claimNumber.toLowerCase().includes(query) ||
       claim.vehiclePlate.toLowerCase().includes(query) ||
       claim.userNic.toLowerCase().includes(query) ||
-      claim.damageType.toLowerCase().includes(query)
+      claim.damageType.toLowerCase().includes(query) ||
+      (claim.submittedByDriver?.driverName && claim.submittedByDriver.driverName.toLowerCase().includes(query)) ||
+      (claim.submittedByDriver?.driverNic && claim.submittedByDriver.driverNic.toLowerCase().includes(query))
     );
   });
 
@@ -1333,6 +1343,20 @@ function OfficeStaffClaimsPageContent() {
                             <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
                               Submitted: {formatSriLankaDateTime(claim.createdAt)}
                             </span>
+                            {/* Applicant / Lodged by Badge */}
+                            {claim.submittedByDriver?.isThirdParty && claim.submittedByDriver?.driverName ? (
+                              <span
+                                className="inline-flex items-center gap-1 text-[9.5px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200/80 rounded px-1.5 py-0.5 mt-1 w-fit shadow-2xs"
+                                title={`Lodged by Authorized Driver: ${claim.submittedByDriver.driverName} (NIC: ${claim.submittedByDriver.driverNic || "N/A"}) • Owner: ${getPolicyHolderName(claim.userNic) || claim.policyHolderName || claim.userNic}`}
+                              >
+                                <HugeiconsIcon icon={UserCheck01Icon} className="w-3 h-3 text-indigo-600 flex-shrink-0" />
+                                <span className="truncate max-w-[130px]">Driver: {claim.submittedByDriver.driverName}</span>
+                              </span>
+                            ) : (
+                              <span className="text-[9.5px] text-slate-500 font-medium truncate block mt-0.5" title={`Policyholder: ${getPolicyHolderName(claim.userNic) || claim.policyHolderName || claim.userNic}`}>
+                                Policyholder: {getPolicyHolderName(claim.userNic) || claim.policyHolderName || "Policy Holder"}
+                              </span>
+                            )}
                           </div>
 
                           {/* Vehicle Plate */}
@@ -3071,7 +3095,20 @@ function OfficeStaffClaimsPageContent() {
                 </div>
 
                 {/* Stakeholders details */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 select-none">
+                <div className={`grid grid-cols-1 ${selectedClaim.submittedByDriver?.isThirdParty && selectedClaim.submittedByDriver?.driverName ? "md:grid-cols-3" : "md:grid-cols-2"} gap-4 select-none`}>
+                  {selectedClaim.submittedByDriver?.isThirdParty && selectedClaim.submittedByDriver?.driverName && (
+                    <div className="bg-indigo-50/80 border border-indigo-200 rounded-xl p-4 space-y-1">
+                      <span className="text-[9px] text-indigo-700 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <HugeiconsIcon icon={UserCheck01Icon} className="w-3 h-3 text-indigo-600" />
+                        Authorized Driver (Applicant)
+                      </span>
+                      <h5 className="text-xs font-semibold text-slate-900">{selectedClaim.submittedByDriver.driverName}</h5>
+                      <div className="text-[11px] text-slate-600 font-semibold">
+                        <p>NIC: {selectedClaim.submittedByDriver.driverNic || "N/A"}</p>
+                        <p>Phone: {selectedClaim.submittedByDriver.driverPhone || "N/A"}</p>
+                      </div>
+                    </div>
+                  )}
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-1">
                     <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block">Policy Holder</span>
                     <h5 className="text-xs font-semibold text-slate-800">{getPolicyHolderName(selectedClaim.userNic)}</h5>
@@ -3112,6 +3149,20 @@ function OfficeStaffClaimsPageContent() {
                   >
                     Policy Holder Chat
                   </button>
+                  {selectedClaim.submittedByDriver?.isThirdParty && selectedClaim.submittedByDriver?.driverName && (
+                    <button
+                      type="button"
+                      onClick={() => setContactRecipient("Authorized Driver")}
+                      className={`flex-1 md:flex-none py-2 px-6 rounded-full text-xs font-semibold tracking-wide uppercase transition-all border cursor-pointer flex items-center justify-center gap-1.5 ${
+                        contactRecipient === "Authorized Driver"
+                          ? "bg-indigo-700 text-white border-transparent shadow-sm"
+                          : "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100"
+                      }`}
+                    >
+                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5" />
+                      Driver Chat ({selectedClaim.submittedByDriver.driverName.split(" ")[0]})
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => setContactRecipient("Agent")}
@@ -3130,7 +3181,9 @@ function OfficeStaffClaimsPageContent() {
                   {(() => {
                     const filteredMessages = selectedClaim.messages.filter((msg) => {
                       if (contactRecipient === "Policy Holder") {
-                        return msg.recipient === "Policy Holder" || !msg.recipient;
+                        return msg.recipient === "Policy Holder" || (!msg.recipient && !msg.sender?.includes(selectedClaim.submittedByDriver?.driverName || ""));
+                      } else if (contactRecipient === "Authorized Driver") {
+                        return msg.recipient === "ThirdParty" || msg.recipient === "Authorized Driver" || msg.sender?.includes(selectedClaim.submittedByDriver?.driverName || "");
                       } else {
                         return msg.recipient === "Agent";
                       }
@@ -3139,7 +3192,7 @@ function OfficeStaffClaimsPageContent() {
                     if (contactRecipient === "Agent" && !selectedClaim.assignedAgent) {
                       return (
                         <div className="text-center text-xs text-amber-600 italic py-6 font-semibold select-none">
-                          ΓÜá∩╕Å No agent has been assigned to this claim yet. Please assign an agent first.
+                          ⚠️ No agent has been assigned to this claim yet. Please assign an agent first.
                         </div>
                       );
                     }
@@ -3147,7 +3200,7 @@ function OfficeStaffClaimsPageContent() {
                     if (filteredMessages.length === 0) {
                       return (
                         <div className="text-center text-xs text-slate-400 italic py-2 font-semibold select-none">
-                          No message history recorded with {contactRecipient === "Policy Holder" ? "Policy Holder" : "Agent"}.
+                          No message history recorded with {contactRecipient}.
                         </div>
                       );
                     }
@@ -3890,6 +3943,61 @@ function OfficeStaffClaimsPageContent() {
                     <div>
                       Vehicle No : <span className="font-medium text-slate-600">{formatPlate(selectedClaim.vehiclePlate)}</span>
                     </div>
+
+                    {/* Applicant Information Block: Highlights Third-Party Driver if lodged by driver */}
+                    {selectedClaim.submittedByDriver?.isThirdParty && selectedClaim.submittedByDriver?.driverName ? (
+                      <div className="bg-indigo-50/80 border border-indigo-200 rounded-xl p-3.5 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 flex items-center gap-1.5">
+                            <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600" />
+                            Claim Lodged By (Authorized Third-Party Driver)
+                          </span>
+                          <span className="text-[9.5px] font-bold bg-indigo-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Third-Party Applicant
+                          </span>
+                        </div>
+                        <div className="flex items-baseline justify-between gap-2">
+                          <div>
+                            <span className="text-slate-400 text-xs block font-medium">Driver Full Name</span>
+                            <span className="text-base font-bold text-indigo-950">
+                              {selectedClaim.submittedByDriver.driverName}
+                            </span>
+                          </div>
+                          {selectedClaim.submittedByDriver.driverPhone && (
+                            <div className="text-right">
+                              <span className="text-slate-400 text-xs block font-medium">Driver Mobile</span>
+                              <span className="font-mono font-bold text-slate-800">
+                                {selectedClaim.submittedByDriver.driverPhone}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-indigo-100 text-slate-700 font-medium">
+                          <div>
+                            <span className="text-slate-400 text-[10.5px] block font-semibold uppercase">Driver NIC</span>
+                            <span className="font-mono font-semibold text-slate-800">
+                              {selectedClaim.submittedByDriver.driverNic || "N/A"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 text-[10.5px] block font-semibold uppercase">Registered Policyholder</span>
+                            <span className="font-semibold text-slate-800">
+                              {getPolicyHolderName(selectedClaim.userNic) || selectedClaim.policyHolderName || "Policy Holder"}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
+                          Claim Lodged By (Registered Policyholder)
+                        </span>
+                        <p className="font-bold text-slate-800">
+                          {getPolicyHolderName(selectedClaim.userNic) || selectedClaim.policyHolderName || "Policy Holder"}
+                        </p>
+                      </div>
+                    )}
+
                     <div>
                       Policy Holder Name - <span className="font-medium text-slate-600">{getPolicyHolderName(selectedClaim.userNic)}</span>
                     </div>

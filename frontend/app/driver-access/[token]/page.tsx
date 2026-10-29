@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -45,6 +45,7 @@ import {
 import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
 import DriverClaimChat from "@/app/Components/ClaimChat/DriverClaimChat";
 import { compressImage } from "@/app/utils/imageCompressor";
+import AccessibilityWidget from "@/app/Components/Homepage/AccessibilityWidget";
 
 function cleanCountry(country?: string): string {
   if (!country) return "Sri Lanka";
@@ -310,6 +311,213 @@ function formatPlate(plate: string): string {
   return cleaned.toUpperCase();
 }
 
+const driverAccessTranslations = {
+  en: {
+    hotline: "24H Customer Hotline: +94 112 003 000",
+    branch: "Branch",
+    callBranch: "Call Branch",
+    branches: "Branch Contacts",
+    branchDirectoryTitle: "Sanasa Regional Branch Contacts & Hotlines",
+    branchSearchPlaceholder: "Search city, branch name or district...",
+    branchNumber: "Direct Line",
+    accessibility: "Accessibility",
+    authorizedDriver: "AUTHORIZED DRIVER",
+    home: "Home",
+    notifications: "Notifications",
+    vehicles: "My Vehicles",
+    newClaim: "Apply Claim",
+    myClaims: "My Claims",
+    liveChat: "Live Support",
+    digitalPass: "Digital Pass",
+    documents: "Documents",
+    close: "Close",
+    selectThisBranch: "Set as Active Branch",
+    activeBranchBadge: "Designated Branch",
+    directLines: "Direct Lines",
+    address: "Address",
+    hours: "Hours",
+    quickCall: "Call Now",
+    callHotline: "24/7 Hotline"
+  },
+  si: {
+    hotline: "24 පැය පාරිභෝගික සේවය: +94 112 003 000",
+    branch: "ශාඛාව",
+    callBranch: "ශාඛාව අමතන්න",
+    branches: "ශාඛා අංක",
+    branchDirectoryTitle: "සනස රක්ෂණ ශාඛා දුරකථන නාමාවලිය",
+    branchSearchPlaceholder: "නගරය හෝ ශාඛාවේ නම සොයන්න...",
+    branchNumber: "සෘජු අංකය",
+    accessibility: "ප්‍රවේශ්‍යතාව",
+    authorizedDriver: "බලයලත් රියදුරු",
+    home: "මුල් පිටුව",
+    notifications: "දැනුම්දීම්",
+    vehicles: "මගේ වාහන",
+    newClaim: "අලුත් හිමිකම්",
+    myClaims: "මගේ හිමිකම්",
+    liveChat: "සජීවී සහාය",
+    digitalPass: "ඩිජිටල් බලපත්‍රය",
+    documents: "ලේඛන",
+    close: "වසන්න",
+    selectThisBranch: "ක්‍රියාකාරී ශාඛාව ලෙස තෝරන්න",
+    activeBranchBadge: "නියමිත ශාඛාව",
+    directLines: "සෘජු දුරකථන අංක",
+    address: "ලිපිනය",
+    hours: "වේලාවන්",
+    quickCall: "දැන් අමතන්න",
+    callHotline: "24/7 ක්ෂණික ඇමතුම්"
+  },
+  ta: {
+    hotline: "24 மணி நேர வாடிக்கையாளர் சேவை: +94 112 003 000",
+    branch: "கிளை",
+    callBranch: "கிளையை அழைக்க",
+    branches: "கிளை எண்கள்",
+    branchDirectoryTitle: "சனச கிளை தொலைபேசி அடைவு மற்றும் எண்கள்",
+    branchSearchPlaceholder: "நகரம் அல்லது கிளைப் பெயரைத் தேடுக...",
+    branchNumber: "நேரடி எண்",
+    accessibility: "அணுகல்தன்மை",
+    authorizedDriver: "அங்கீகரிக்கப்பட்ட ஓட்டுநர்",
+    home: "முகப்பு",
+    notifications: "அறிவிப்புகள்",
+    vehicles: "என் வாகனங்கள்",
+    newClaim: "புதிய கோரிக்கை",
+    myClaims: "என் கோரிக்கைகள்",
+    liveChat: "நேரடி உதவி",
+    digitalPass: "டிஜிட்டல் அனுமதி",
+    documents: "ஆவணங்கள்",
+    close: "மூடு",
+    selectThisBranch: "செயலில் உள்ள கிளையாக அமைக்கவும்",
+    activeBranchBadge: "நியமிக்கப்பட்ட கிளை",
+    directLines: "நேரடி எண்கள்",
+    address: "முகவரி",
+    hours: "நேரம்",
+    quickCall: "இப்போது அழைக்கவும்",
+    callHotline: "24/7 அவசர உதவி"
+  }
+};
+
+const SANASA_BRANCHES = [
+  {
+    id: "colombo",
+    name: { en: "Colombo Head Office", si: "කොළඹ ප්‍රධාන කාර්යාලය", ta: "கொழும்பு தலைமை அலுவலகம்" },
+    city: "Colombo",
+    phone: "+94 112 003 000",
+    directLines: ["+94 112 003 001", "+94 112 003 002"],
+    address: "No: 172, Elvitigala Mawatha, Colombo 08",
+    email: "colombo@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "galle",
+    name: { en: "Galle Branch", si: "ගාල්ල ශාඛාව", ta: "காலி கிளை" },
+    city: "Galle",
+    phone: "+94 912 245 800",
+    directLines: ["+94 912 245 801"],
+    address: "No: 48, Galle Road, Galle",
+    email: "galle@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "kandy",
+    name: { en: "Kandy Branch", si: "මහනුවර ශාඛාව", ta: "கண்டி கிளை" },
+    city: "Kandy",
+    phone: "+94 812 223 456",
+    directLines: ["+94 812 223 457"],
+    address: "William Gopallawa Mawatha, Kandy",
+    email: "kandy@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "matara",
+    name: { en: "Matara Branch", si: "මාතර ශාඛාව", ta: "மாத்தறை கிளை" },
+    city: "Matara",
+    phone: "+94 412 222 333",
+    directLines: ["+94 412 222 334"],
+    address: "Anagarika Dharmapala Mawatha, Matara",
+    email: "matara@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "kurunegala",
+    name: { en: "Kurunegala Branch", si: "කුරුණෑගල ශාඛාව", ta: "குருணாகல் கிளை" },
+    city: "Kurunegala",
+    phone: "+94 372 222 111",
+    directLines: ["+94 372 222 112"],
+    address: "Colombo Road, Kurunegala",
+    email: "kurunegala@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "jaffna",
+    name: { en: "Jaffna Branch", si: "යාපනය ශාඛාව", ta: "யாழ்ப்பாணம் கிளை" },
+    city: "Jaffna",
+    phone: "+94 212 222 789",
+    directLines: ["+94 212 222 790"],
+    address: "Hospital Road, Jaffna",
+    email: "jaffna@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "gampaha",
+    name: { en: "Gampaha Branch", si: "ගම්පහ ශාඛාව", ta: "கம்பஹா கிளை" },
+    city: "Gampaha",
+    phone: "+94 332 222 000",
+    directLines: ["+94 332 222 001"],
+    address: "Ja-Ela Road, Gampaha",
+    email: "gampaha@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "anuradhapura",
+    name: { en: "Anuradhapura Branch", si: "අනුරාධපුර ශාඛාව", ta: "அனுராதபுரம் கிளை" },
+    city: "Anuradhapura",
+    phone: "+94 252 222 555",
+    directLines: ["+94 252 222 556"],
+    address: "Maithripala Senanayake Mawatha, Anuradhapura",
+    email: "anuradhapura@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "kalutara",
+    name: { en: "Kalutara Branch", si: "කළුතර ශාඛාව", ta: "களுத்துறை கிளை" },
+    city: "Kalutara",
+    phone: "+94 342 222 777",
+    directLines: ["+94 342 222 778"],
+    address: "Galle Road, Kalutara",
+    email: "kalutara@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "badulla",
+    name: { en: "Badulla Branch", si: "බදුල්ල ශාඛාව", ta: "பதுளை கிளை" },
+    city: "Badulla",
+    phone: "+94 552 222 999",
+    directLines: ["+94 552 222 998"],
+    address: "Bandarawela Road, Badulla",
+    email: "badulla@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "ratnapura",
+    name: { en: "Ratnapura Branch", si: "රත්නපුර ශාඛාව", ta: "இரத்தினபுரி கிளை" },
+    city: "Ratnapura",
+    phone: "+94 452 222 444",
+    directLines: ["+94 452 222 445"],
+    address: "Main Street, Ratnapura",
+    email: "ratnapura@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  },
+  {
+    id: "negombo",
+    name: { en: "Negombo Branch", si: "මීගමුව ශාඛාව", ta: "நீர்கொழும்பு கிளை" },
+    city: "Negombo",
+    phone: "+94 312 222 888",
+    directLines: ["+94 312 222 889"],
+    address: "Greens Road, Negombo",
+    email: "negombo@sanasainsurance.lk",
+    hours: "8:30 AM - 5:00 PM (Mon - Fri)"
+  }
+];
+
 export default function ThirdPartyDriverPortalPage() {
   const params = useParams();
   const token = params?.token as string;
@@ -322,6 +530,40 @@ export default function ThirdPartyDriverPortalPage() {
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<TabType>("home");
+
+  // Language, Accessibility & Branch Hotline options
+  const [lang, setLang] = useState<"en" | "si" | "ta">("en");
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const langMenuRef = useRef<HTMLDivElement>(null);
+
+  const [branchModalOpen, setBranchModalOpen] = useState(false);
+  const [branchSearchQuery, setBranchSearchQuery] = useState("");
+  const [selectedBranchOverride, setSelectedBranchOverride] = useState<string>("");
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
+    if (savedLang && (savedLang === "en" || savedLang === "si" || savedLang === "ta")) {
+      setLang(savedLang);
+    }
+  }, []);
+
+  const changeLanguage = (newLang: "en" | "si" | "ta") => {
+    setLang(newLang);
+    localStorage.setItem("language", newLang);
+    window.dispatchEvent(new CustomEvent("language-changed", { detail: newLang }));
+    window.dispatchEvent(new Event("languageChange"));
+    setLangMenuOpen(false);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target as Node)) {
+        setLangMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Portal Data
   const [profile, setProfile] = useState<DriverProfile | null>(null);
@@ -1299,14 +1541,43 @@ export default function ThirdPartyDriverPortalPage() {
     );
   }
 
+  const t = driverAccessTranslations[lang] || driverAccessTranslations.en;
+
+  const currentBranchName = selectedBranchOverride || profile?.branch || "Galle";
+  const matchedBranch = useMemo(() => {
+    const cleanCurrent = currentBranchName.toLowerCase().replace(/\s+branch$/i, "").trim();
+    return (
+      SANASA_BRANCHES.find(
+        (b) =>
+          b.city.toLowerCase() === cleanCurrent ||
+          b.name.en.toLowerCase().includes(cleanCurrent) ||
+          cleanCurrent.includes(b.city.toLowerCase())
+      ) || SANASA_BRANCHES[1]
+    );
+  }, [currentBranchName]);
+
+  const filteredBranches = useMemo(() => {
+    const q = branchSearchQuery.toLowerCase().trim();
+    if (!q) return SANASA_BRANCHES;
+    return SANASA_BRANCHES.filter(
+      (b) =>
+        b.city.toLowerCase().includes(q) ||
+        b.name.en.toLowerCase().includes(q) ||
+        b.name.si.toLowerCase().includes(q) ||
+        b.name.ta.toLowerCase().includes(q) ||
+        b.phone.includes(q) ||
+        b.address.toLowerCase().includes(q)
+    );
+  }, [branchSearchQuery]);
+
   const navLinks = [
-    { id: "home", label: "Home" },
-    { id: "notifications", label: "Notifications", count: unreadCount },
-    { id: "my_claims", label: "My Claims" },
-    { id: "vehicles", label: "My Vehicles" },
-    { id: "chat", label: "Live Chat" },
-    { id: "documents", label: "Documents" },
-    { id: "digital_pass", label: "Digital Pass" },
+    { id: "home", label: t.home },
+    { id: "notifications", label: t.notifications, count: unreadCount },
+    { id: "my_claims", label: t.myClaims },
+    { id: "vehicles", label: t.vehicles },
+    { id: "chat", label: t.liveChat },
+    { id: "documents", label: t.documents },
+    { id: "digital_pass", label: t.digitalPass },
   ];
 
   return (
@@ -1325,23 +1596,103 @@ export default function ThirdPartyDriverPortalPage() {
       {/* ========================================================================= */}
       <nav className="sticky top-0 z-50 w-full bg-white shadow-[0_4px_20px_rgba(0,0,0,0.06)] border-b border-slate-100 transition-all duration-300">
         
-        {/* Top Emergency / Branch Header Row */}
-        <div className="bg-[#0B1E32] text-white text-xs py-2 px-6 md:px-16 flex justify-between items-center transition-all duration-300">
-          <div className="flex items-center gap-2">
-            <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-sky-200" strokeWidth={2} />
-            <span className="font-medium tracking-wide">24H Customer Hotline: +94 112 003 000</span>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 text-xs text-sky-100 font-medium">
-              <HugeiconsIcon icon={Building04Icon} className="w-3.5 h-3.5 text-sky-200" strokeWidth={2} />
-              <span>Branch: <strong>{profile?.branch || "Galle"}</strong></span>
+        {/* Top Emergency / Branch Header Row with Language, Branch Phone Selector & Accessibility */}
+        <div className="bg-[#0B1E32] text-white text-xs py-2 px-4 md:px-12 flex justify-between items-center transition-all duration-300 gap-3 flex-wrap shadow-inner">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-sky-200" strokeWidth={2} />
+              <span className="font-medium tracking-wide hidden sm:inline">{t.hotline}</span>
+              <a href="tel:+94112003000" className="font-semibold text-white sm:hidden hover:underline">+94 112 003 000</a>
             </div>
 
-            <span className="h-3 w-px bg-white/25" />
+            {/* Current Designated Branch Direct Contact */}
+            <div className="hidden lg:flex items-center gap-1.5 text-sky-200 font-medium pl-3 border-l border-white/20">
+              <HugeiconsIcon icon={Building04Icon} className="w-3.5 h-3.5 text-sky-300" strokeWidth={2} />
+              <span>{t.branch}: <strong className="text-white">{matchedBranch.name[lang] || matchedBranch.name.en}</strong></span>
+              <a
+                href={`tel:${matchedBranch.phone.replace(/\s+/g, "")}`}
+                className="text-emerald-300 hover:text-emerald-200 font-mono font-bold flex items-center gap-1 ml-1 hover:underline"
+                title={`Call ${matchedBranch.name.en} Direct Line`}
+              >
+                <span>({matchedBranch.phone})</span>
+              </a>
+            </div>
+          </div>
 
-            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#00ddff]/20 text-[#00ddff] border border-[#00ddff]/40">
-              AUTHORIZED DRIVER
+          <div className="flex items-center gap-3 ml-auto">
+            {/* Branch Number Selection Option Button */}
+            <button
+              type="button"
+              onClick={() => setBranchModalOpen(true)}
+              className="flex items-center gap-1.5 text-xs text-sky-100 hover:text-white transition-all border border-sky-400/40 bg-sky-900/40 hover:bg-sky-800/70 px-3 py-1 rounded-full cursor-pointer focus:outline-none shadow-2xs active:scale-95"
+              title="Open Sanasa Branch Contact Directory & Select Direct Phone Numbers"
+            >
+              <HugeiconsIcon icon={Building04Icon} className="w-3.5 h-3.5 text-sky-300" strokeWidth={2} />
+              <span className="font-semibold">{t.branches}</span>
+            </button>
+
+            {/* Accessibility Option Trigger */}
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event("open-accessibility"))}
+              className="flex items-center gap-1.5 text-xs text-amber-200 hover:text-white transition-all border border-amber-400/40 bg-amber-950/40 hover:bg-amber-900/70 px-3 py-1 rounded-full cursor-pointer focus:outline-none shadow-2xs active:scale-95"
+              title="Open Accessibility Controls (Text Zoom, High Contrast, Dyslexia Font, Reading Guide)"
+            >
+              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+              <span className="font-semibold">{t.accessibility}</span>
+            </button>
+
+            <span className="h-3.5 w-px bg-white/25 hidden sm:block" />
+
+            {/* Language Selector Dropdown */}
+            <div className="relative" ref={langMenuRef}>
+              <button
+                type="button"
+                onClick={() => setLangMenuOpen((prev) => !prev)}
+                className="flex items-center gap-1.5 text-white hover:text-sky-100 transition-colors border border-white/25 bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full cursor-pointer focus:outline-none text-xs font-semibold shadow-2xs active:scale-95"
+                title="Select Language (English, සිංහල, தமிழ்)"
+              >
+                <HugeiconsIcon icon={Globe02Icon} className="w-3.5 h-3.5 text-sky-200" strokeWidth={2} />
+                <span className="uppercase font-bold">{lang === "si" ? "සිං" : lang === "ta" ? "தமி" : "EN"}</span>
+                <HugeiconsIcon
+                  icon={ArrowDown01Icon}
+                  className={`w-3 h-3 text-sky-200 transition-transform duration-200 ${langMenuOpen ? 'rotate-180' : ''}`}
+                  strokeWidth={2.5}
+                />
+              </button>
+
+              {langMenuOpen && (
+                <div className="absolute right-0 mt-2 w-36 bg-white rounded-2xl shadow-[0_12px_35px_rgba(0,0,0,0.25)] border border-slate-100 py-1.5 z-50 text-slate-800 animate-in fade-in slide-in-from-top-2 duration-150">
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("en")}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "en" ? "text-cyan-600 bg-cyan-50/50" : ""}`}
+                  >
+                    <span>English</span>
+                    {lang === "en" && <span className="text-cyan-600 font-bold">✓</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("si")}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "si" ? "text-cyan-600 bg-cyan-50/50" : ""}`}
+                  >
+                    <span>සිංහල</span>
+                    {lang === "si" && <span className="text-cyan-600 font-bold">✓</span>}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => changeLanguage("ta")}
+                    className={`flex items-center justify-between w-full px-4 py-2 hover:bg-slate-50 hover:text-cyan-600 font-bold text-xs transition-colors cursor-pointer border-none bg-transparent ${lang === "ta" ? "text-cyan-600 bg-cyan-50/50" : ""}`}
+                  >
+                    <span>தமிழ்</span>
+                    {lang === "ta" && <span className="text-cyan-600 font-bold">✓</span>}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#00ddff]/20 text-[#00ddff] border border-[#00ddff]/40 hidden md:inline-block">
+              {t.authorizedDriver}
             </span>
           </div>
         </div>
@@ -3222,6 +3573,160 @@ export default function ThirdPartyDriverPortalPage() {
         <HugeiconsIcon icon={BubbleChatIcon} className="w-6 h-6" strokeWidth={2} />
         <span className="font-bold text-xs pr-1 hidden sm:inline">Live Chat</span>
       </button>
+
+      {/* Branch Number & Contact Directory Modal */}
+      {branchModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150 border border-slate-100">
+            {/* Modal Header */}
+            <div className="p-6 bg-gradient-to-r from-[#0B1E32] to-[#102A43] text-white flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-sky-300 border border-white/10">
+                  <HugeiconsIcon icon={Building04Icon} className="w-5 h-5" strokeWidth={2} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-white">{t.branchDirectoryTitle}</h3>
+                  <p className="text-xs text-sky-200/80 mt-0.5">
+                    Official Regional Branches & Direct Lines for Assistance
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setBranchModalOpen(false)}
+                className="p-2 text-white/70 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer border-none bg-transparent"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search Input */}
+            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center gap-2 flex-shrink-0">
+              <div className="relative flex-1">
+                <HugeiconsIcon
+                  icon={Search01Icon}
+                  className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"
+                />
+                <input
+                  type="text"
+                  value={branchSearchQuery}
+                  onChange={(e) => setBranchSearchQuery(e.target.value)}
+                  placeholder={t.branchSearchPlaceholder}
+                  className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-sky-500 font-medium"
+                />
+              </div>
+            </div>
+
+            {/* Branch Cards List */}
+            <div className="p-6 overflow-y-auto space-y-3.5 max-h-[60vh]">
+              {filteredBranches.map((br) => {
+                const isCurrent =
+                  br.city.toLowerCase() === currentBranchName.toLowerCase().replace(/\s+branch$/i, "").trim() ||
+                  br.name.en.toLowerCase().includes(currentBranchName.toLowerCase().replace(/\s+branch$/i, "").trim());
+
+                return (
+                  <div
+                    key={br.id}
+                    className={`p-4 rounded-2xl border transition-all ${
+                      isCurrent
+                        ? "bg-sky-50/80 border-sky-300 ring-2 ring-sky-400/20 shadow-xs"
+                        : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-xs"
+                    }`}
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-sm text-slate-900">
+                            {br.name[lang] || br.name.en}
+                          </h4>
+                          {isCurrent && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-600 text-white">
+                              {t.activeBranchBadge}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
+                          <HugeiconsIcon icon={Location01Icon} className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                          <span>{br.address}</span>
+                        </p>
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {t.hours}: {br.hours}
+                        </p>
+                      </div>
+
+                      {/* Phone Numbers & Actions */}
+                      <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-2 flex-shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                        <a
+                          href={`tel:${br.phone.replace(/\s+/g, "")}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs"
+                        >
+                          <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5" />
+                          <span>{br.phone}</span>
+                        </a>
+
+                        {!isCurrent ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedBranchOverride(br.city);
+                              setBranchModalOpen(false);
+                            }}
+                            className="text-[11px] font-bold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100 border border-sky-200/80 px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
+                          >
+                            {t.selectThisBranch}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-emerald-700">✓ Connected</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {br.directLines && br.directLines.length > 0 && (
+                      <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center gap-2 text-xs">
+                        <span className="text-slate-400 text-[10px] font-bold uppercase">{t.directLines}:</span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {br.directLines.map((dl) => (
+                            <a
+                              key={dl}
+                              href={`tel:${dl.replace(/\s+/g, "")}`}
+                              className="text-xs font-mono font-semibold text-slate-700 hover:text-emerald-700 hover:underline"
+                            >
+                              {dl}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {filteredBranches.length === 0 && (
+                <div className="p-8 text-center text-slate-400 text-xs">
+                  No branches found matching "{branchSearchQuery}". Try a different district or city name.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between flex-shrink-0">
+              <span className="text-xs text-slate-500">
+                24/7 Sanasa Hotline: <a href="tel:+94112003000" className="font-bold text-slate-800 hover:underline">+94 112 003 000</a>
+              </span>
+              <button
+                type="button"
+                onClick={() => setBranchModalOpen(false)}
+                className="px-5 py-2 bg-[#0B1E32] hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all border-none cursor-pointer"
+              >
+                {t.close}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Accessibility Control Center Widget — Fully Active for Third-Party Driver */}
+      <AccessibilityWidget />
 
       {/* POLICYHOLDER FOOTER (Exact same footer used across the entire Policyholder website) */}
       <PolicyHolderFooter />

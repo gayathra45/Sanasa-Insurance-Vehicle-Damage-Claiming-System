@@ -53,6 +53,13 @@ interface Claim {
   additionalDocuments?: AdditionalDoc[];
   inspectionSubmitted?: boolean;
   garageEstimateComparison?: any;
+  submittedByDriver?: {
+    isThirdParty?: boolean;
+    driverName?: string;
+    driverNic?: string;
+    driverPhone?: string;
+  };
+  policyHolderName?: string;
 }
 
 interface Vehicle {
@@ -179,11 +186,18 @@ export default function OfficeStaffNotifications() {
 
         // 1. Unassigned Claims (Step = 1, assignedAgent is empty, status is Pending)
         if (claim.status === "Pending" && (!claim.assignedAgent || claim.assignedAgent.trim() === "")) {
+          const isThirdParty = !!(claim.submittedByDriver?.isThirdParty && claim.submittedByDriver?.driverName);
+          const applicantText = isThirdParty
+            ? `authorized third-party driver ${claim.submittedByDriver?.driverName}`
+            : (claim.policyHolderName ? `policyholder ${claim.policyHolderName}` : `policyholder`);
+
           compiled.push({
             id: `${claim._id}-unassigned`,
             type: "urgent",
-            title: `New Claim Awaiting Agent Assignment`,
-            description: `Claim ${claim.claimNumber} for vehicle ${claim.vehiclePlate} has been registered and is waiting for an agent assignment.`,
+            title: isThirdParty
+              ? `New Claim by Driver: ${claim.submittedByDriver?.driverName}`
+              : `New Claim Awaiting Agent Assignment`,
+            description: `Claim ${claim.claimNumber} for vehicle ${claim.vehiclePlate} was lodged by ${applicantText} and is waiting for an agent assignment.`,
             date: dateFormatted,
             isUrgent: true,
             link: `/Office_Staff/Claims?claimId=${claim.claimNumber}`,
@@ -216,11 +230,12 @@ export default function OfficeStaffNotifications() {
             (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
           );
           const latestDoc = docs[0];
+          const uploaderName = latestDoc.uploadedBy || (claim.submittedByDriver?.isThirdParty && claim.submittedByDriver?.driverName ? `Third-Party Driver: ${claim.submittedByDriver.driverName}` : "Policyholder");
           compiled.push({
             id: `${claim._id}-doc-${latestDoc.name}-${latestDoc.uploadedAt}`,
             type: "info",
             title: `New Document Uploaded`,
-            description: `Document "${latestDoc.name}" has been uploaded by ${latestDoc.uploadedBy || "User"} for claim ${claim.claimNumber}.`,
+            description: `Document "${latestDoc.name}" has been uploaded by ${uploaderName} for claim ${claim.claimNumber}.`,
             date: formatDate(latestDoc.uploadedAt),
             isUrgent: false,
             link: `/Office_Staff/Claims?claimId=${claim.claimNumber}`,

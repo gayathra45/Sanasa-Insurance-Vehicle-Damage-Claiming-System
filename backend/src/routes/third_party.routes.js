@@ -553,6 +553,141 @@ router.get("/branch/request/:requestId", async (req, res) => {
 });
 
 /**
+ * GET /api/third-party/branch/driver-activities/:requestId
+ * Fetch all activities of a third-party driver:
+ * - Claims submitted by the driver (with applicant user name, dates, status)
+ * - Supporting documents uploaded by the driver
+ * - Live chat messages sent by the driver
+ * - Access and session history
+ */
+router.get("/branch/driver-activities/:requestId", async (req, res) => {
+  try {
+    const staff = await verifyStaffBranch(req, res);
+    if (!staff) return;
+
+    const { requestId } = req.params;
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Registration request not found." });
+    }
+
+    // Strict Branch Isolation check
+    const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
+    if (baseStaffBranch !== baseReqBranch) {
+      return res.status(403).json({
+        error: "Forbidden: You are not authorized to view activities from another branch."
+      });
+    }
+
+    const driverName = request.driverDetails?.fullName || "";
+    const driverNic = request.driverDetails?.nicNumber || "";
+    const driverPhone = request.driverDetails?.phoneNumber || "";
+
+    // 1. Claims submitted by this third party driver
+    const queryConditions = [
+      { "submittedByDriver.registrationId": request._id }
+    ];
+    if (driverNic) {
+      queryConditions.push({ "submittedByDriver.driverNic": driverNic });
+    }
+    if (driverName) {
+      queryConditions.push({ "submittedByDriver.driverName": driverName });
+      queryConditions.push({ description: new RegExp(driverName, "i") });
+    }
+
+    const claims = await Claim.find({ $or: queryConditions })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // 2. Documents uploaded by this driver
+    const uploadedDocs = [];
+    claims.forEach((c) => {
+      (c.additionalDocuments || []).forEach((doc) => {
+        if (
+          doc.uploadedBy &&
+          (doc.uploadedBy.includes(driverName) || doc.uploadedBy.toLowerCase().includes("driver") || doc.uploadedBy.toLowerCase().includes("third-party"))
+        ) {
+          uploadedDocs.push({
+            claimNumber: c.claimNumber,
+            vehiclePlate: c.vehiclePlate,
+            docName: doc.name,
+            url: doc.url,
+            uploadedAt: doc.uploadedAt,
+            uploadedBy: doc.uploadedBy
+          });
+        }
+      });
+    });
+
+    // 3. Messages sent by this driver
+    const sentMessages = [];
+    claims.forEach((c) => {
+      (c.messages || []).forEach((m) => {
+        if (
+          m.sender &&
+          (m.sender === driverName || m.sender.includes(driverName) || m.sender.toLowerCase().includes("third-party"))
+        ) {
+          sentMessages.push({
+            claimNumber: c.claimNumber,
+            vehiclePlate: c.vehiclePlate,
+            sender: m.sender,
+            message: m.message,
+            sentAt: m.sentAt
+          });
+        }
+      });
+    });
+
+    // 4. Access Logs
+    const accessLogs = request.accessLogs || [];
+
+    return res.json({
+      success: true,
+      driverDetails: {
+        driverName,
+        driverNic,
+        driverPhone,
+        policyHolderName: request.policyHolderName,
+        policyHolderNic: request.policyHolderNic,
+        branch: request.branch,
+        requestReference: request.requestReference,
+        status: request.status
+      },
+      activities: {
+        totalClaimsApplied: claims.length,
+        claims: claims.map((c) => ({
+          claimNumber: c.claimNumber,
+          vehiclePlate: c.vehiclePlate,
+          incidentDate: c.incidentDate,
+          incidentTime: c.incidentTime,
+          damageType: c.damageType,
+          status: c.status,
+          amount: c.amount,
+          approvedAmount: c.approvedAmount,
+          location: c.location,
+          assignedAgent: c.assignedAgent,
+          createdAt: c.createdAt,
+          submittedByDriver: c.submittedByDriver || {
+            isThirdParty: true,
+            driverName,
+            driverNic,
+            driverPhone
+          }
+        })),
+        uploadedDocs,
+        sentMessages,
+        accessLogs
+      }
+    });
+  } catch (err) {
+    console.error("GET driver activities error:", err);
+    return res.status(500).json({ error: "Failed to fetch driver activities." });
+  }
+});
+
+
+/**
  * GET /api/third-party/documents/:requestId/:docType
  * Secure Document Proxy: serves identity/licence photos only to authorized Policyholder or Branch staff
  */
