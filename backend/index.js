@@ -6,6 +6,7 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 import express from "express";
 import mongoose from "mongoose";
 import path from "path";
+import fs from "fs";
 import cors from "cors";
 import signupRouter from "./src/routes/signup.routes.js";
 import myClaimsRouter from "./src/routes/my_claims.routes.js";
@@ -44,8 +45,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve local uploads from Downloads directory
-app.use("/uploads", express.static("C:\\Users\\oshit\\Downloads\\ui"));
+// Serve local uploads safely across Windows and cloud Linux environments
+const localUploadsDir = process.env.UPLOADS_DIR || (fs.existsSync("C:\\Users\\oshit\\Downloads\\ui") ? "C:\\Users\\oshit\\Downloads\\ui" : path.join(__dirname, "uploads"));
+if (!fs.existsSync(localUploadsDir)) {
+  fs.mkdirSync(localUploadsDir, { recursive: true });
+}
+app.use("/uploads", express.static(localUploadsDir));
 
 // Increase payload size limit to support base64 image uploads
 app.use(express.json({ limit: "50mb" }));
