@@ -818,7 +818,7 @@ router.post("/branch/approve/:requestId", async (req, res) => {
     if (request.driverDetails?.phoneNumber) {
       sendSms({
         phone: request.driverDetails.phoneNumber,
-        message: `Sanasa Insurance: You have been approved as an authorized driver for vehicle(s) ${plates} by ${request.policyHolderName}. Access your Digital Driver Pass here: ${accessUrl}`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.driverDetails.fullName},\n\nAuthorization Approved: You have been officially registered as an authorized third-party driver for vehicle(s) ${plates} by policyholder ${request.policyHolderName}.\n\n• Approved Unit: ${request.branch} Branch\n• Digital Driver Pass: ${accessUrl}\n\nPlease present this digital pass during vehicle operation.\n24/7 Hotline: 0725 575 575`,
         recipientType: "ThirdPartyDriver",
         recipientName: request.driverDetails.fullName,
         eventType: "third_party_driver_approved"
@@ -829,7 +829,7 @@ router.post("/branch/approve/:requestId", async (req, res) => {
     if (request.policyHolderPhone) {
       sendSms({
         phone: request.policyHolderPhone,
-        message: `Sanasa Insurance: Your Third-Party Driver authorization for ${request.driverDetails.fullName} on vehicle(s) ${plates} has been APPROVED by ${request.branch} Branch. Digital pass has been issued.`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nYour driver authorization request has been APPROVED.\n\n• Authorized Driver: ${request.driverDetails.fullName}\n• Vehicle(s): ${plates}\n• Approving Unit: ${request.branch} Branch\n• Security Pass: Digital NFC/QR pass issued to driver\n\nManage driver authorizations anytime on your customer portal.\nHotline: 0725 575 575`,
         recipientType: "PolicyHolder",
         recipientName: request.policyHolderName,
         eventType: "third_party_owner_approved"
@@ -908,7 +908,7 @@ router.post("/branch/reject/:requestId", async (req, res) => {
     if (request.driverDetails?.phoneNumber) {
       sendSms({
         phone: request.driverDetails.phoneNumber,
-        message: `Sanasa Insurance: Your third-party driver request for vehicle(s) ${plates} was not approved by the branch. Reason: ${reasonText}`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.driverDetails.fullName},\n\nNotice regarding your driver authorization request for vehicle(s) ${plates}:\nFollowing branch review, the request was not approved.\n• Reason: ${reasonText}\n• Reviewing Unit: ${request.branch} Branch\n\nFor details, please call our 24/7 Helpline: 0725 575 575`,
         recipientType: "ThirdPartyDriver",
         recipientName: request.driverDetails.fullName,
         eventType: "third_party_driver_rejected"
@@ -919,7 +919,7 @@ router.post("/branch/reject/:requestId", async (req, res) => {
     if (request.policyHolderPhone) {
       sendSms({
         phone: request.policyHolderPhone,
-        message: `Sanasa Insurance: Driver authorization for ${request.driverDetails.fullName} on vehicle(s) ${plates} was not approved. Reason: ${reasonText}`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.policyHolderName},\n\nYour driver authorization request for ${request.driverDetails.fullName} on vehicle(s) ${plates} could not be approved by ${request.branch} Branch.\n• Reason: ${reasonText}\n\nPlease check your customer portal for further details or contact 0725 575 575.`,
         recipientType: "PolicyHolder",
         recipientName: request.policyHolderName,
         eventType: "third_party_owner_rejected"
@@ -1033,7 +1033,7 @@ router.get("/driver-pass/:token", async (req, res) => {
     if (request.policyHolderPhone) {
       sendSms({
         phone: request.policyHolderPhone,
-        message: `Sanasa Alert: Authorized driver ${request.driverDetails.fullName} has accessed their Digital Driver Pass for vehicle(s) ${plates}.`,
+        message: `[SANASA SECURITY ALERT]\nDear ${request.policyHolderName},\n\nActivity Notice: Your authorized driver ${request.driverDetails.fullName} has accessed the Digital Driver Pass for vehicle(s) ${plates}.\n• Access Date: ${new Date().toLocaleDateString("en-LK")}\n• Verified by: Sanasa Digital Pass Gateway\n\nIf this was not authorized by you, please contact ${request.branch} Branch or call Hotline: 0725 575 575.`,
         recipientType: "PolicyHolder",
         recipientName: request.policyHolderName,
         eventType: "third_party_pass_accessed"
@@ -1044,7 +1044,7 @@ router.get("/driver-pass/:token", async (req, res) => {
     if (request.driverDetails?.phoneNumber) {
       sendSms({
         phone: request.driverDetails.phoneNumber,
-        message: `Sanasa Insurance: Digital Driver Pass verification accessed for vehicle(s) ${plates}. Pass valid under Sanasa General Insurance policy.`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.driverDetails.fullName},\n\nDigital Driver Pass verification active for vehicle(s) ${plates}.\n• Authorizing Owner: ${request.policyHolderName}\n• Coverage: Underwritten by Sanasa General Insurance\n• Status: Valid & Active\n\n24/7 Hotline: 0725 575 575`,
         recipientType: "ThirdPartyDriver",
         recipientName: request.driverDetails.fullName,
         eventType: "third_party_driver_activity"
@@ -1737,7 +1737,7 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
     if (request.driverDetails?.phoneNumber) {
       sendSms({
         phone: request.driverDetails.phoneNumber,
-        message: `Sanasa Insurance: Your claim ${nextClaimNum} for vehicle ${targetPlate} has been lodged successfully and routed to ${assignedBranch} Branch for inspection.`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${request.driverDetails.fullName},\n\nYour insurance claim has been successfully lodged.\n• Claim No: #${nextClaimNum}\n• Vehicle: ${targetPlate}\n• Routing: ${assignedBranch} Branch\n• Status: Submitted & Pending Inspection\n\nOur branch assessor will review the claim documentation shortly.\n24/7 Hotline: 0725 575 575`,
         recipientType: "ThirdPartyDriver",
         recipientName: request.driverDetails.fullName,
         eventType: "third_party_claim_submitted"
@@ -1747,7 +1747,7 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
     if (request.policyHolderPhone) {
       sendSms({
         phone: request.policyHolderPhone,
-        message: `Sanasa Alert: Authorized driver ${request.driverDetails.fullName} has lodged claim ${nextClaimNum} for your vehicle ${targetPlate}.`,
+        message: `[SANASA CLAIM ALERT]\nDear ${request.policyHolderName},\n\nAn insurance claim has been submitted for your vehicle.\n• Lodged By: ${request.driverDetails.fullName} (Authorized Driver)\n• Claim No: #${nextClaimNum}\n• Vehicle: ${targetPlate}\n• Assigned Branch: ${assignedBranch} Branch\n\nPlease sign in to your Sanasa portal to view claim progress.\nHotline: 0725 575 575`,
         recipientType: "PolicyHolder",
         recipientName: request.policyHolderName,
         eventType: "third_party_claim_owner_alert"
