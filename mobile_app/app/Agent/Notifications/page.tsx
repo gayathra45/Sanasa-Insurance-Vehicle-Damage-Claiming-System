@@ -17,6 +17,7 @@ import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import AgentNavbar from "../../Components/Agent/page";
+import AIChatBot from "../../Components/AIChatBot";
 import { API_BASE_URL } from "../../_config";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
@@ -647,6 +648,7 @@ export default function AgentNotificationsPage() {
       </ScrollView>
 
       {/* Persistent Agent Footer Navbar */}
+      <AIChatBot userRole="agent" bottomOffset={96} />
       <AgentNavbar />
     </View>
   );

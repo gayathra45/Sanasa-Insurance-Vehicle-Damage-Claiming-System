@@ -27,6 +27,14 @@ const BRANCH_PHONES: Record<string, string> = {
   Embilipitiya: "+94 47 223 4567",
 };
 
+const BRANCH_COORDINATES: Record<string, { latitude: number; longitude: number }> = {
+  Galle: { latitude: 6.0535, longitude: 80.2210 },
+  Matara: { latitude: 5.9549, longitude: 80.5550 },
+  Colombo: { latitude: 6.9271, longitude: 79.8612 },
+  Anuradhapura: { latitude: 8.3114, longitude: 80.4037 },
+  Embilipitiya: { latitude: 6.2995, longitude: 80.8507 },
+};
+
 export default function AgentMapRoutePage() {
   const params = useLocalSearchParams<{
     claimId?: string;
@@ -114,13 +122,38 @@ export default function AgentMapRoutePage() {
     }
   }, [userNic]);
 
-  // 2. Geocode incident location
+  // 2. Geocode incident location with quick city check and 2.5s timeout
   useEffect(() => {
     let active = true;
+    const branchCoord = BRANCH_COORDINATES[branch] || BRANCH_COORDINATES.Galle;
+
     const geocode = async () => {
+      // Fast check: If location text mentions a known branch city, resolve instantly without network delay
+      const locLower = (location || "").toLowerCase();
+      for (const [bName, coords] of Object.entries(BRANCH_COORDINATES)) {
+        if (locLower.includes(bName.toLowerCase())) {
+          if (active) {
+            setIncidentCoords(coords);
+            setIsGeocodingClaim(false);
+          }
+          return;
+        }
+      }
+
+      // Try Nominatim with 2.5s AbortController timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+
       try {
         const query = encodeURIComponent(location + ", Sri Lanka");
-        const res = await fetch("https://nominatim.openstreetmap.org/search?q=" + query + "&format=json&limit=1");
+        const res = await fetch("https://nominatim.openstreetmap.org/search?q=" + query + "&format=json&limit=1", {
+          signal: controller.signal,
+          headers: {
+            Accept: "application/json",
+            "User-Agent": "SanasaInsuranceMobileApp/1.0",
+          },
+        });
+        clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
           if (active && data && data.length > 0) {
@@ -132,52 +165,79 @@ export default function AgentMapRoutePage() {
           }
         }
       } catch (e) {
-        console.warn("Nominatim Geocoding failed, using fallback:", e);
+        // Geocode network error or timeout
+      } finally {
+        clearTimeout(timeoutId);
       }
+
       if (active) {
-        setIncidentCoords({ latitude: 6.0535, longitude: 80.2210 }); // fallback Galle
+        setIncidentCoords(branchCoord);
         setIsGeocodingClaim(false);
       }
     };
+
     geocode();
     return () => {
       active = false;
     };
-  }, [location]);
+  }, [location, branch]);
 
-  // 3. Get GPS location
+  // 3. Get GPS location (last-known first for instant load, 2.5s timeout for emulator)
   useEffect(() => {
     let active = true;
+    const branchCoord = BRANCH_COORDINATES[branch] || BRANCH_COORDINATES.Galle;
+
     const getGPS = async () => {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
           if (active) {
-            setAgentLocation({ latitude: 6.9271, longitude: 79.8612 }); // fallback Colombo
+            setAgentLocation(branchCoord);
             setIsLocatingAgent(false);
           }
           return;
         }
-        const loc = await Location.getCurrentPositionAsync({
+
+        // 1. Try last known position first (instant on Android)
+        const lastKnown = await Location.getLastKnownPositionAsync().catch(() => null);
+        if (active && lastKnown?.coords) {
+          setAgentLocation({
+            latitude: lastKnown.coords.latitude,
+            longitude: lastKnown.coords.longitude,
+          });
+          setIsLocatingAgent(false);
+          return;
+        }
+
+        // 2. Try current position with a strict 2.5s timeout so Android Studio emulator doesn't freeze
+        const locPromise = Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
-        if (active) {
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("GPS_TIMEOUT")), 2500)
+        );
+
+        const loc = (await Promise.race([locPromise, timeoutPromise])) as any;
+        if (active && loc?.coords) {
           setAgentLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
           setIsLocatingAgent(false);
+          return;
         }
       } catch (e) {
-        console.warn("GPS lookup error:", e);
-        if (active) {
-          setAgentLocation({ latitude: 6.915, longitude: 79.860 });
-          setIsLocatingAgent(false);
-        }
+        // Timeout or permission error in emulator
+      }
+
+      if (active) {
+        setAgentLocation(branchCoord);
+        setIsLocatingAgent(false);
       }
     };
+
     getGPS();
     return () => {
       active = false;
     };
-  }, []);
+  }, [branch]);
 
   // Handle messages sent back from OSRM router inside WebView
   const handleWebViewMessage = (event: any) => {
@@ -327,10 +387,11 @@ export default function AgentMapRoutePage() {
     }
   };
 
-  const agentLat = agentLocation?.latitude || 6.9271;
-  const agentLon = agentLocation?.longitude || 79.8612;
-  const claimLat = incidentCoords?.latitude || 6.0535;
-  const claimLon = incidentCoords?.longitude || 80.2210;
+  const branchCoord = BRANCH_COORDINATES[branch] || BRANCH_COORDINATES.Galle;
+  const agentLat = agentLocation?.latitude || branchCoord.latitude;
+  const agentLon = agentLocation?.longitude || branchCoord.longitude;
+  const claimLat = incidentCoords?.latitude || branchCoord.latitude;
+  const claimLon = incidentCoords?.longitude || branchCoord.longitude;
 
   // Leaflet map HTML with real road network route plotting using OSRM API
   const mapHtml = `
@@ -1286,7 +1347,7 @@ const styles = StyleSheet.create({
 
   /* Custom Alert Styles */
   alertOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(15, 23, 42, 0.6)",
     alignItems: "center", justifyContent: "center",
     zIndex: 9999,

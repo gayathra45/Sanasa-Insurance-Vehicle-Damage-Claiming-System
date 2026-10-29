@@ -17,6 +17,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { router, useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 
 const { width: SCREEN_W } = Dimensions.get("window");
@@ -108,15 +109,18 @@ export default function NotificationsPage() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
 
-    const requested = (claim.requestedDocuments || []).filter(name => getRecipientForDoc(name) === "User");
+    const requested = (claim.requestedDocuments || []).filter(name => {
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      return rec !== "agent" && rec !== "insurance_agent";
+    });
     const submittedNames = (claim.additionalDocuments || []).map((d: any) => (d.name || d.title || "").toLowerCase());
     const hasGarageComparison = Boolean(claim.garageEstimateComparison?.garageDocumentUrl || claim.garageEstimateComparison?.garageEstimateAmount);
 
@@ -166,13 +170,8 @@ export default function NotificationsPage() {
         if (Array.isArray(data.claims)) dbClaims = data.claims;
       }
       
-      const lastStr = await AsyncStorage.getItem("last_submitted_claim");
-      let localClaims: Claim[] = [];
-      if (lastStr) {
-        const parsed = JSON.parse(lastStr);
-        if (!dbClaims.some((c) => c.claimNumber === parsed.claimNumber)) localClaims.push(parsed);
-      }
-      const all = [...localClaims, ...dbClaims];
+      await AsyncStorage.removeItem("last_submitted_claim");
+      const all = dbClaims;
 
       const notifs: Notification[] = [];
       all.forEach((claim) => {
@@ -1013,6 +1012,8 @@ export default function NotificationsPage() {
           </View>
         </View>
       </Modal>
+
+      <AIChatBot userRole="policy_holder" bottomOffset={24} />
     </View>
   );
 }

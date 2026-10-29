@@ -50,7 +50,7 @@ export default function MapDisplay({ latitude, longitude, onLocationSelect }: Ma
   return (
     <View style={styles.container}>
       <TouchableOpacity 
-        style={StyleSheet.absoluteFillObject} 
+        style={StyleSheet.absoluteFill} 
         onPress={handleOpenMapApp} 
         activeOpacity={0.9}
       >
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(15, 23, 42, 0.1)",

@@ -16,6 +16,12 @@ const adminSchema = new mongoose.Schema({
   resetOtpRequestedAt: { type: Date },
   resetSessionToken: { type: String },
   resetSessionExpires: { type: Date },
+  lastLoginAt: { type: Date, default: null },
+  lastLoginIp: { type: String, default: "" },
+  lastLoginDevice: { type: String, default: "" },
+  loginCount: { type: Number, default: 0 },
+  forceLogoutAt: { type: Date, default: null },
+  sessionRevokedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 

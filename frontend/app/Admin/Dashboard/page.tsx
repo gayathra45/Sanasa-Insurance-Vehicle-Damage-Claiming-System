@@ -5,6 +5,7 @@ import { API_URL } from "@/app/config";
 import AdminNavbar from "@/app/Components/Admin/Navbar";
 import Link from "next/link";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import HeaderNotificationBell from "@/app/Components/HeaderNotificationBell";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
@@ -281,10 +282,8 @@ export default function AdminDashboard() {
             </div>
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
-              <Link href="/Admin/Notifications" className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center">
-                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
-              </Link>
-              {/* User Avatar Icon */}
+              <HeaderNotificationBell href="/Admin/Notifications" />
+              {/* User Avatar Icon & Live Claim Chat Button */}
               <UserAvatarDropdown userType="admin" />
             </div>
           </header>
@@ -634,7 +633,7 @@ export default function AdminDashboard() {
                           pendingBranchResets.map((staff) => (
                             <div key={staff._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
                               <div className="flex flex-col">
-                                <span className="text-xs font-semibold text-slate-850">{staff.branch} Branch</span>
+                                <span className="text-xs font-bold text-slate-900">{staff.branch} Branch</span>
                                 <span className="text-[10px] text-slate-500 font-medium mt-0.5">{staff.email}</span>
                                 <span className="text-[10px] text-slate-500 font-medium">{staff.mobile}</span>
                               </div>
@@ -649,7 +648,7 @@ export default function AdminDashboard() {
                                 <button
                                   onClick={() => handleBranchReset(staff._id, "reject")}
                                   disabled={actioningId !== null}
-                                  className="flex-1 py-1.5 bg-white hover:bg-slate-50 text-slate-550 border border-slate-200 text-[10px] font-semibold rounded-lg transition-all cursor-pointer outline-none disabled:opacity-50"
+                                  className="flex-1 py-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 text-[10px] font-semibold rounded-lg transition-all cursor-pointer outline-none disabled:opacity-50"
                                 >
                                   Reject
                                 </button>
@@ -679,7 +678,7 @@ export default function AdminDashboard() {
                           pendingAdminResets.map((admin) => (
                             <div key={admin._id} className="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 flex flex-col gap-3">
                               <div className="flex flex-col">
-                                <span className="text-xs font-semibold text-slate-850">{admin.name}</span>
+                                <span className="text-xs font-bold text-slate-900">{admin.name}</span>
                                 <span className="text-[10px] text-slate-500 font-medium mt-0.5">Email: {admin.email}</span>
                                 <span className="text-[10px] text-slate-500 font-medium">NIC: {admin.nic}</span>
                               </div>

@@ -340,7 +340,7 @@ export default function MobileSignup() {
 
         const cleanPlate = v.numberPlate.replace(/[\s-]/g, "");
         if (cleanPlate.length < 5 || cleanPlate.length > 10 || !/^[A-Za-z0-9]+$/.test(cleanPlate)) {
-          showAlert("Validation Error", `Vehicle #${i + 1} Number Plate must be 5 to 10 alphanumeric characters.`);
+          showAlert("Validation Error", `Vehicle #${i + 1} Vehicle Number must be 5 to 10 alphanumeric characters.`);
           return;
         }
 
@@ -797,7 +797,7 @@ export default function MobileSignup() {
                     </View>
 
                     <View style={styles.inputBox}>
-                      <Text style={styles.inputLabel}>Number Plate *</Text>
+                      <Text style={styles.inputLabel}>Vehicle Number *</Text>
                       <TextInput style={styles.textInput} placeholder="WP-CAD-8849" placeholderTextColor="#94a3b8" value={veh.numberPlate} onChangeText={(val) => handleVehicleChange(idx, "numberPlate", val)} autoCapitalize="characters" />
                     </View>
 
@@ -1049,7 +1049,7 @@ export default function MobileSignup() {
                     <View key={i} style={styles.reviewVehicleBlock}>
                       <Text style={styles.reviewVehicleTitle}>Vehicle #{i + 1}</Text>
                       <View style={styles.reviewRow}>
-                        <Text style={styles.reviewLabel}>Plate Number:</Text>
+                        <Text style={styles.reviewLabel}>Vehicle Number:</Text>
                         <Text style={styles.reviewValue}>{v.numberPlate}</Text>
                       </View>
                       <View style={styles.reviewRow}>
@@ -1165,7 +1165,7 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(4, 18, 21, 0.88)",
   },
   scrollContent: {
@@ -1572,7 +1572,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   modalOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(2, 11, 13, 0.95)",
     alignItems: "center",
     justifyContent: "center",
@@ -1722,7 +1722,7 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   alertOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(2, 11, 13, 0.95)",
     alignItems: "center",
     justifyContent: "center",

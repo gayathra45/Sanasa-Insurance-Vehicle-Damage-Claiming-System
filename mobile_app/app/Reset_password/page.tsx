@@ -465,7 +465,7 @@ export default function MobileResetPassword() {
 
 const styles = StyleSheet.create({
   bg: { flex: 1, width: "100%", height: "100%" },
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(4, 18, 21, 0.88)" },
+  overlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(4, 18, 21, 0.88)" },
   scrollContent: {
     flexGrow: 1, justifyContent: "center", alignItems: "center",
     paddingHorizontal: 20, paddingTop: Platform.OS === "ios" ? 60 : 40, paddingBottom: 40,
@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
   hintRow: { flexDirection: "row", gap: 16, marginTop: 2, marginLeft: 4 },
   hintOk: { color: "#4ade80", fontSize: 12, fontWeight: "600" },
   hintErr: { color: "#f87171", fontSize: 12, fontWeight: "600" },
-  alertOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(2,11,13,0.95)", alignItems: "center", justifyContent: "center", zIndex: 9999 },
+  alertOverlay: { ...StyleSheet.absoluteFill, backgroundColor: "rgba(2,11,13,0.95)", alignItems: "center", justifyContent: "center", zIndex: 9999 },
   alertCard: {
     width: "85%", maxWidth: 340, backgroundColor: "rgba(10,34,40,0.95)", borderRadius: 32,
     borderWidth: 1.5, borderColor: "rgba(255,255,255,0.15)", padding: 24, alignItems: "center",

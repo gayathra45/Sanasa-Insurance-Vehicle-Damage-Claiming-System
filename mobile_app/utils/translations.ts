@@ -45,7 +45,7 @@ export const translations = {
     },
     myClaims: {
       title: "My Claims",
-      searchPlaceholder: "Search claim plate or description...",
+      searchPlaceholder: "Search claim vehicle number or description...",
       noClaims: "No matching claim files found.",
       noClaimsSub: "Try modifying your search query.",
       claimNumber: "Claim Number",

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
@@ -59,7 +60,7 @@ interface NotificationItem {
   link: string;
   actionLabel: string;
   createdAtRaw?: string;
-  claim: Claim;
+  claim?: Claim;
 }
 
 function formatDate(dateStr?: string): string {
@@ -75,6 +76,7 @@ function formatDate(dateStr?: string): string {
 }
 
 export default function PolicyHolderNotifications() {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [filteredNotifs, setFilteredNotifs] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,30 +133,41 @@ export default function PolicyHolderNotifications() {
   const fetchNotifications = async (nic: string, silent = false) => {
     try {
       if (!silent) setLoading(true);
-      const res = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(nic)}`, {
+      
+      // Fetch user claims
+      const resClaims = await fetch(`${API_URL}/policy-holder/user-claims?nic=${encodeURIComponent(nic)}`, {
         cache: "no-store"
       });
       let dbClaims: Claim[] = [];
-      if (res.ok) {
-        const data = await res.json();
+      if (resClaims.ok) {
+        const data = await resClaims.json();
         if (Array.isArray(data.claims)) {
           dbClaims = data.claims;
         }
       }
 
-      // Check for last submitted claim
-      let localClaims: Claim[] = [];
-      const lastStr = sessionStorage.getItem("last_submitted_claim");
-      if (lastStr) {
-        try {
-          const parsed = JSON.parse(lastStr);
-          if (!dbClaims.some((c) => c.claimNumber === parsed.claimNumber)) {
-            localClaims.push(parsed);
+      // Fetch profile update requests
+      let editRequests: any[] = [];
+      try {
+        const resEdit = await fetch(`${API_URL}/policy-holder/profile-update-requests?nic=${encodeURIComponent(nic)}`, {
+          cache: "no-store"
+        });
+        if (resEdit.ok) {
+          const editData = await resEdit.json();
+          if (Array.isArray(editData.requests)) {
+            editRequests = editData.requests;
           }
-        } catch (e) {}
+        }
+      } catch (errEdit) {
+        console.warn("Could not load edit requests for notifications:", errEdit);
       }
 
-      const allClaims = [...localClaims, ...dbClaims];
+      // The database is the single source of truth for claims
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("last_submitted_claim");
+      }
+
+      const allClaims = dbClaims;
       const compiled: NotificationItem[] = [];
 
       allClaims.forEach((claim) => {
@@ -166,15 +179,15 @@ export default function PolicyHolderNotifications() {
             id: `${claim.claimNumber}-doc`,
             type: "urgent",
             title: "Documents Requested – Action Required",
-            description: `Staff has requested a ${
+            description: `Staff has requested ${
               claim.requestedDocuments && claim.requestedDocuments.length > 0
                 ? claim.requestedDocuments.join(" & ")
-                : "Police Report / Repair Estimate"
+                : "required claim documents"
             } for claim ${claim.claimNumber}.`,
             subText: "Please upload within 3 working days to avoid settlement delays.",
             date: dateFormatted,
             isUrgent: true,
-            link: `/Policy_Holder/Documents?uploadClaim=${claim.claimNumber}`, // Linking directly to documents page as requested
+            link: `/Policy_Holder/Documents?uploadClaim=${claim.claimNumber}`,
             actionLabel: "Upload Documents",
             createdAtRaw: claim.createdAt,
             claim: claim
@@ -209,6 +222,49 @@ export default function PolicyHolderNotifications() {
             actionLabel: "View",
             createdAtRaw: claim.createdAt,
             claim: claim
+          });
+        }
+      });
+
+      // 4. Compile Profile & KYC Edit Request Notifications
+      editRequests.forEach((req) => {
+        const dateFormatted = formatDate(req.reviewedAt || req.createdAt);
+        if (req.status === "Approved") {
+          compiled.push({
+            id: `edit-req-${req._id}-approved`,
+            type: "approved",
+            title: "Profile & KYC Update Approved!",
+            description: `Your update request for "${req.requestType}" has been verified and approved by ${req.branch || "Galle"} Branch staff. Your records are now live in the system.`,
+            date: dateFormatted,
+            isUrgent: false,
+            link: "/Policy_Holder/Profile",
+            actionLabel: "View Profile",
+            createdAtRaw: req.reviewedAt || req.createdAt
+          });
+        } else if (req.status === "Rejected") {
+          compiled.push({
+            id: `edit-req-${req._id}-rejected`,
+            type: "urgent",
+            title: "Profile Update Request Rejected",
+            description: `Your request to update ${req.requestType} was reviewed and rejected by ${req.branch || "Galle"} Branch: "${req.reviewNote || "Information or document mismatch."}"`,
+            subText: "Please check your profile to review your information and re-submit if needed.",
+            date: dateFormatted,
+            isUrgent: true,
+            link: "/Policy_Holder/Profile",
+            actionLabel: "View Profile",
+            createdAtRaw: req.reviewedAt || req.createdAt
+          });
+        } else if (req.status === "Pending") {
+          compiled.push({
+            id: `edit-req-${req._id}-pending`,
+            type: "status",
+            title: "Profile Update Pending Branch Verification",
+            description: `Your update request for "${req.requestType}" was submitted on ${formatDate(req.createdAt)} and is currently being reviewed by ${req.branch || "Galle"} Branch.`,
+            date: dateFormatted,
+            isUrgent: false,
+            link: "/Policy_Holder/Profile",
+            actionLabel: "View Profile",
+            createdAtRaw: req.createdAt
           });
         }
       });
@@ -286,10 +342,10 @@ export default function PolicyHolderNotifications() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
@@ -303,7 +359,8 @@ export default function PolicyHolderNotifications() {
     }
 
     return (claim.requestedDocuments || []).filter((name: string) => {
-      if (getRecipientForDoc(name) !== "User") return false;
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      if (rec === "agent" || rec === "insurance_agent") return false;
       const normName = name.trim().toLowerCase();
       const alreadyUploaded = uploadedNames.some((u: string) => 
         u === normName ||
@@ -623,8 +680,11 @@ export default function PolicyHolderNotifications() {
                   <div
                     key={n.id}
                     onClick={() => {
-                      // Clicking the notification card opens the claim detail popup modal
-                      setSelectedClaim(n.claim);
+                      if (n.claim) {
+                        setSelectedClaim(n.claim);
+                      } else if (n.link) {
+                        router.push(n.link);
+                      }
                       markAsRead(n.id);
                     }}
                     className={`rounded-2xl border border-slate-200/80 p-3.5 md:py-3.5 md:px-5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer ${borderLeft} ${
@@ -670,10 +730,10 @@ export default function PolicyHolderNotifications() {
                         className="flex items-center justify-between md:justify-end gap-2.5 md:gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100"
                       >
                         <div className="flex items-center gap-2 order-2 md:order-1">
-                          {n.actionLabel === "View" ? (
+                          {n.actionLabel === "View" && n.claim ? (
                             <button
                               onClick={() => {
-                                setSelectedClaim(n.claim);
+                                setSelectedClaim(n.claim || null);
                                 markAsRead(n.id);
                               }}
                               className={`w-[136px] md:w-[140px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none shadow-xs whitespace-nowrap shrink-0 ${

@@ -50,7 +50,7 @@ const translations = {
     location: "Location",
     resAddress: "Residential Address",
     vehicleDetails: "Vehicle details",
-    numberPlate: "Number Plate",
+    numberPlate: "Vehicle Number",
     brandCompany: "Brand / Company",
     modelYear: "Model & Year",
     engineNumber: "Engine Number",

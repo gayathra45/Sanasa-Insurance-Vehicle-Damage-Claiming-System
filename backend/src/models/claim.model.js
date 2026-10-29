@@ -1,4 +1,4 @@
-﻿import mongoose from "mongoose";
+import mongoose from "mongoose";
 
 const claimSchema = new mongoose.Schema({
   claimNumber: { type: String, required: true, unique: true },
@@ -36,12 +36,15 @@ const claimSchema = new mongoose.Schema({
   assignedAgent: { type: String, default: "", index: true },
   priority: { type: String, default: "Normal" },
   amount: { type: Number, default: null },
+  approvedAmount: { type: Number, default: null },
+  agentEstimatedAmount: { type: Number, default: null },
   currentStep: { type: Number, default: 1 },
   documentsRequested: { type: Boolean, default: false },
   requestedDocuments: { type: [String], default: [] },
   documentRequestTo: { type: String, default: "" },
   inspectionReport: { type: String, default: "" },
   inspectionSubmitted: { type: Boolean, default: false },
+  inspectionApproved: { type: Boolean, default: false },
   paymentReceipt: { type: String, default: "" },
   paymentReceiptFileName: { type: String, default: "" },
   paymentSettledAt: { type: Date, default: null },
@@ -82,9 +85,19 @@ const claimSchema = new mongoose.Schema({
   manualUpdateReason: { type: String, default: "" },
   manualUpdateAt: { type: Date, default: null },
   manualUpdateBy: { type: String, default: "" },
+  submittedByDriver: {
+    isThirdParty: { type: Boolean, default: false },
+    driverName: { type: String, default: "" },
+    driverNic: { type: String, default: "" },
+    driverPhone: { type: String, default: "" },
+    registrationId: { type: mongoose.Schema.Types.ObjectId, ref: "ThirdPartyRegistration", default: null }
+  },
   createdAt: { type: Date, default: Date.now },
   aiAnalysis: {
     isAnalyzed: { type: Boolean, default: false },
+    isValidAccidentPhoto: { type: Boolean, default: true },
+    authenticityAssessment: { type: String, default: "" },
+    fraudAlert: { type: String, default: "" },
     damagedItems: [
       {
         item: { type: String },
@@ -128,7 +141,7 @@ const claimSchema = new mongoose.Schema({
     reviewedAt: { type: Date, default: null },
     reviewedBy: { type: String, default: "" }
   }
-});
+}, { timestamps: true });
 
 const Claim = mongoose.model("Claim", claimSchema);
 export default Claim;

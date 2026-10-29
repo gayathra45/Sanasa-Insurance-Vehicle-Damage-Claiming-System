@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { label: "Docs",     icon: "folder-open-outline" as const,   iconActive: "folder-open" as const,   route: "/Agent/Documents/page" },
   { label: "Claims",   icon: "document-text-outline" as const, iconActive: "document-text" as const, route: "/Agent/Claims/page", isCenter: true },
   { label: "Contact",  icon: "headset-outline" as const,       iconActive: "headset" as const,        route: "/Agent/Contact/page" },
-  { label: "Profile",  icon: "person-outline" as const,        iconActive: "person" as const,         route: "profile" },
+  { label: "Profile",  icon: "person-outline" as const,        iconActive: "person" as const,         route: "/Agent/Profile/page" },
 ] as const;
 
 interface AgentNavbarProps {
@@ -126,14 +126,9 @@ export default function AgentNavbar({ activeRoute, activeTab }: AgentNavbarProps
       if (item.route === "/Agent/Dashboard/page") {
         return currentRoute === "/Agent/Dashboard/page" || currentRoute === "/Agent/Dashboard";
       }
-      if (item.route === "profile") {
-        return false;
-      }
       return currentRoute === item.route || currentRoute.startsWith(item.route);
     });
   }, [currentRoute, activeTab]);
-
-
 
   useEffect(() => {
     Animated.loop(
@@ -143,28 +138,6 @@ export default function AgentNavbar({ activeRoute, activeTab }: AgentNavbarProps
       ])
     ).start();
   }, [centerPulse]);
-
-  const showProfileAlert = async () => {
-    try {
-      const agentStr = await AsyncStorage.getItem("logged_in_agent");
-      let name = "Agent";
-      let email = "N/A";
-      if (agentStr) {
-        const agent = JSON.parse(agentStr);
-        name = agent.name || "Agent";
-        email = agent.email || "N/A";
-      }
-      setCustomAlert({
-        title: "My Profile 👤",
-        message: "",
-        type: "profile",
-        agentName: name,
-        agentEmail: email
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const handleLogout = async () => {
     setCustomAlert(null);
@@ -194,12 +167,13 @@ export default function AgentNavbar({ activeRoute, activeTab }: AgentNavbarProps
       <View style={styles.shell}>
       {NAV_ITEMS.map((item) => {
         const isActive = activeTab 
-          ? (item.route !== "profile" && (
+          ? (
               (activeTab === "home" && item.route === "/Agent/Dashboard/page") ||
               (activeTab === "docs" && item.route === "/Agent/Documents/page") ||
               (activeTab === "claims" && item.route === "/Agent/Claims/page") ||
-              (activeTab === "contact" && item.route === "/Agent/Contact/page")
-            ))
+              (activeTab === "contact" && item.route === "/Agent/Contact/page") ||
+              (activeTab === "profile" && item.route === "/Agent/Profile/page")
+            )
           : item.route === "/Agent/Dashboard/page"
             ? (currentRoute === "/Agent/Dashboard/page" || currentRoute === "/Agent/Dashboard")
             : (currentRoute === item.route || currentRoute.startsWith(item.route));
@@ -222,11 +196,7 @@ export default function AgentNavbar({ activeRoute, activeTab }: AgentNavbarProps
         }
 
         const handleItemPress = () => {
-          if (item.route === "profile") {
-            showProfileAlert();
-          } else {
-            router.push(item.route as any);
-          }
+          router.push(item.route as any);
         };
 
         return (

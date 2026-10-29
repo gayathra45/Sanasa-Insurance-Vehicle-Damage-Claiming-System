@@ -19,6 +19,7 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
 import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
@@ -26,8 +27,10 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
 import AgentNavbar from "../../Components/Agent/page";
+import AIChatBot from "../../Components/AIChatBot";
 import { API_BASE_URL } from "../../_config";
 import { compressImageMobile } from "../../../utils/imageCompressor";
+import { getViewedClaimsMobile, markClaimAsReadMobile, isClaimUnreadMobile, UnreadDotMobile } from "../../../utils/unreadClaims";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -90,7 +93,7 @@ const parseInspectionReport = (reportText?: string | null) => {
       if (!trimmed) return;
 
       if (trimmed.startsWith("• Odometer:")) {
-        odometer = trimmed.replace("• Odometer:", "").trim();
+        odometer = trimmed.replace("• Odometer:", "").replace(/km/gi, "").trim();
       } else if (trimmed.startsWith("• Fuel Level:")) {
         fuelLevel = trimmed.replace("• Fuel Level:", "").trim();
       } else if (trimmed.startsWith("• Recommended Action:")) {
@@ -246,6 +249,14 @@ export default function AgentClaimsPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeSubTab, setActiveSubTab] = useState<"active" | "activity">("active");
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    (async () => {
+      const viewed = await getViewedClaimsMobile("agent");
+      setViewedClaims(viewed);
+    })();
+  }, []);
 
   // Modal details & edits
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
@@ -506,6 +517,16 @@ export default function AgentClaimsPage() {
     }
   };
 
+  const openClaimPdf = async (claimNum?: string) => {
+    if (!claimNum) return;
+    const url = `${API_BASE_URL}/api/claims/${claimNum}/report`;
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Linking.openURL(url);
+    }
+  };
+
   // Auto-open claim details once when claimId is passed via params
   useEffect(() => {
     if (claimId && claims.length > 0) {
@@ -698,15 +719,18 @@ export default function AgentClaimsPage() {
       return;
     }
 
+    const cleanOdometer = odometer.replace(/km/gi, "").trim();
+    const cleanAmount = Number(assessmentAmount.replace(/[^0-9.]/g, "")) || 0;
+
     const formattedReport = `
 ==================================================
            VEHICLE CLAIM INSPECTION REPORT
 ==================================================
 [1. VEHICLE CONDITION DETAILS]
-• Odometer: ${odometer.trim()} km
+• Odometer: ${cleanOdometer} km
 • Fuel Level: ${fuelLevel}
 • Recommended Action: ${recommendedAction}
-• Estimated Cost: LKR ${Number(assessmentAmount).toLocaleString()}
+• Estimated Cost: LKR ${cleanAmount.toLocaleString()}
 
 [2. COMPONENT DAMAGE CHECKLIST]
 • Front Bumper: [${frontBumperDmg}]
@@ -733,7 +757,7 @@ ${inspectionReportText.trim()}
         body: JSON.stringify({
           inspectionReport: formattedReport,
           inspectionSubmitted: true,
-          amount: Number(assessmentAmount),
+          amount: cleanAmount,
           status: "In Progress"
         }),
       });
@@ -920,7 +944,7 @@ ${inspectionReportText.trim()}
             <Text style={{ fontSize: 12, fontWeight: "800", color: "#0f172a" }}>{selectedClaim.damageType}</Text>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>PLATE NUMBER</Text>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>VEHICLE NUMBER</Text>
             <Text style={{ fontSize: 12, fontWeight: "800", color: "#0f172a" }}>{formatNumberPlate(selectedClaim.vehiclePlate)}</Text>
           </View>
         </View>
@@ -1848,7 +1872,10 @@ ${inspectionReportText.trim()}
                       borderLeftColor: isCompleted ? statusColor : "#1e3a8a",
                     },
                   ]}
-                  onPress={() => setSelectedClaim(claim)}
+                  onPress={() => {
+                    markClaimAsReadMobile(claim._id, viewedClaims, setViewedClaims, "agent");
+                    setSelectedClaim(claim);
+                  }}
                   activeOpacity={0.85}
                 >
                   {/* Left Side: Circular Status/Vehicle Icon Badge */}
@@ -1864,7 +1891,12 @@ ${inspectionReportText.trim()}
                   <View style={{ flex: 1, marginLeft: 12 }}>
                     {/* Header Row: Plate Number and Status Badge */}
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-                      <Text style={styles.claimPlateText}>{formatNumberPlate(claim.vehiclePlate)}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Text style={styles.claimPlateText}>{formatNumberPlate(claim.vehiclePlate)}</Text>
+                        {isClaimUnreadMobile(claim, viewedClaims) && (
+                          <UnreadDotMobile size={8} />
+                        )}
+                      </View>
                       <View
                         style={[
                           styles.statusBadge,
@@ -1950,13 +1982,33 @@ ${inspectionReportText.trim()}
                     </Text>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.popupCloseBtn}
-                  onPress={closeClaimDetailModal}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="close" size={18} color="#475569" />
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <TouchableOpacity
+                    onPress={() => openClaimPdf(selectedClaim?.claimNumber)}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      backgroundColor: "#f0fdf4",
+                      borderWidth: 1,
+                      borderColor: "#86efac",
+                      paddingHorizontal: 9,
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Ionicons name="download-outline" size={13} color="#15803d" />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#15803d" }}>PDF</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.popupCloseBtn}
+                    onPress={closeClaimDetailModal}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="close" size={18} color="#475569" />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Wizard Stepper Visualizer */}
@@ -2319,6 +2371,11 @@ ${inspectionReportText.trim()}
           </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      {/* Sanasa Vehicle Insurance AI Assistant & Support Chat */}
+      {!(selectedClaim && activeInspectionStep === 4) && (
+        <AIChatBot userRole="agent" bottomOffset={96} />
+      )}
 
       <AgentNavbar activeTab="claims" />
     </View>

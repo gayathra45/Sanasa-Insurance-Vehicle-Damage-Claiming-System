@@ -24,6 +24,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import LanguageModal from "../Components/PolicyHolder/LanguageModal";
+import AIChatBot, { openMobileSupportChat } from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 import { translateTextMobile } from "../../utils/translator";
 
@@ -139,6 +140,7 @@ export default function PolicyHolderDashboard() {
   const { lang, t } = useLanguage();
   const [userName, setUserName]       = useState("");
   const [userNic, setUserNic]         = useState("");
+  const [userProfilePhoto, setUserProfilePhoto] = useState("");
   const [vehicles, setVehicles]       = useState<Vehicle[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
@@ -186,13 +188,8 @@ export default function PolicyHolderDashboard() {
         const data = await res.json();
         if (Array.isArray(data.claims)) dbClaims = data.claims;
       }
-      const lastStr = await AsyncStorage.getItem("last_submitted_claim");
-      let localClaims: Claim[] = [];
-      if (lastStr) {
-        const parsed = JSON.parse(lastStr);
-        if (!dbClaims.some((c) => c.claimNumber === parsed.claimNumber)) localClaims.push(parsed);
-      }
-      const all = [...localClaims, ...dbClaims];
+      await AsyncStorage.removeItem("last_submitted_claim");
+      const all = dbClaims;
       const pending     = all.filter((c) => !["approved","done","rejected"].some((v) => (c.status||"Pending").toLowerCase().includes(v)));
       const approvedList = all.filter((c) => ["approved","done","active"].some((v) => (c.status||"").toLowerCase().includes(v)));      const docReq      = all.some((c) => c.documentsRequested === true && getUserRequestedDocs(c).length > 0);
 
@@ -281,13 +278,17 @@ export default function PolicyHolderDashboard() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/policy-holder/vehicles?nic=${encodeURIComponent(nic)}&_=${Date.now()}`);
       if (res.ok) {
-        const contentType = res.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const data = await res.json();
-          if (Array.isArray(data.vehicles)) {
-            setVehicles(data.vehicles);
-            const updatedUser = { ...currentUserObj, vehicles: data.vehicles };
-            await AsyncStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
+        const text = await res.text();
+        if (text && text.trim().length > 0) {
+          try {
+            const data = JSON.parse(text);
+            if (Array.isArray(data.vehicles)) {
+              setVehicles(data.vehicles);
+              const updatedUser = { ...currentUserObj, vehicles: data.vehicles };
+              await AsyncStorage.setItem("logged_in_user", JSON.stringify(updatedUser));
+            }
+          } catch (parseErr) {
+            console.warn("Error parsing vehicles JSON:", parseErr);
           }
         }
       }
@@ -305,6 +306,7 @@ export default function PolicyHolderDashboard() {
         const user = JSON.parse(userStr);
         setUserName(user.firstName || "User");
         setUserNic(user.nic || "");
+        setUserProfilePhoto(user.profilePhoto || "");
         if (user.vehicles && Array.isArray(user.vehicles)) setVehicles(user.vehicles);
         if (user.nic) {
           fetchClaims(user.nic);
@@ -340,6 +342,7 @@ export default function PolicyHolderDashboard() {
         try {
           const user = JSON.parse(userStr);
           const nic = user.nic || userNic;
+          setUserProfilePhoto(user.profilePhoto || "");
           if (nic) {
             fetchClaims(nic);
             fetchVehicles(nic, user);
@@ -420,15 +423,18 @@ export default function PolicyHolderDashboard() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find((m: any) => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find((m: any) => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
 
-    const requested = (claim.requestedDocuments || []).filter((name: string) => getRecipientForDoc(name) === "User");
+    const requested = (claim.requestedDocuments || []).filter((name: string) => {
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      return rec !== "agent" && rec !== "insurance_agent";
+    });
     const submittedNames = (claim.additionalDocuments || []).map((d: any) => (d.name || d.title || "").toLowerCase());
     const hasGarageComparison = Boolean(claim.garageEstimateComparison?.garageDocumentUrl || claim.garageEstimateComparison?.garageEstimateAmount);
 
@@ -572,7 +578,7 @@ export default function PolicyHolderDashboard() {
   };
 
   const handleQuickAction = (route: string) => {
-    if (route === "support") { showSupportAlert(); return; }
+    if (route === "support") { openMobileSupportChat(); return; }
     router.push(route as any);
   };
 
@@ -647,9 +653,24 @@ export default function PolicyHolderDashboard() {
                   </TouchableOpacity>
                 </Animated.View>
 
-                {/* Avatar / logout */}
-                <TouchableOpacity style={styles.avatarButton} onPress={handleLogout} activeOpacity={0.85}>
-                  <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
+                {/* Avatar / Profile Navigation */}
+                <TouchableOpacity
+                  style={styles.avatarButton}
+                  onPress={() => router.push("/PolicyHolder/Profile" as any)}
+                  activeOpacity={0.85}
+                >
+                  {userProfilePhoto ? (
+                    <Image
+                      source={{
+                        uri: userProfilePhoto.startsWith("http") || userProfilePhoto.startsWith("data:")
+                          ? userProfilePhoto
+                          : `${API_BASE_URL.replace("/api", "")}/${userProfilePhoto.startsWith("/") ? userProfilePhoto.slice(1) : userProfilePhoto}`
+                      }}
+                      style={styles.avatarPhoto}
+                    />
+                  ) : (
+                    <Text style={styles.avatarText}>{userName.charAt(0).toUpperCase()}</Text>
+                  )}
                 </TouchableOpacity>
               </View>
 
@@ -896,7 +917,7 @@ export default function PolicyHolderDashboard() {
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>{lang === "en" ? "Contact Support" : lang === "si" ? "සහාය සේවාව අමතන්න" : "ஆதரவைத் தொடர்பு கொள்ளவும்"}</Text>
             </View>
-            <TouchableOpacity style={styles.supportCard} onPress={showSupportAlert} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.supportCard} onPress={openMobileSupportChat} activeOpacity={0.8}>
               <View style={styles.supportContent}>
                 <Ionicons name="headset-outline" size={24} color="#0f172a" />
                 <View style={{ marginLeft: 12 }}>
@@ -940,10 +961,8 @@ export default function PolicyHolderDashboard() {
         </Animated.View>
       </ScrollView>
 
-      {/* Floating support */}
-      <TouchableOpacity style={styles.floatingSupport} onPress={showSupportAlert} activeOpacity={0.8}>
-        <Ionicons name="chatbubble-ellipses" size={26} color="#ffffff" />
-      </TouchableOpacity>
+      {/* Sanasa Vehicle Insurance AI Assistant */}
+      <AIChatBot userRole="policy_holder" bottomOffset={96} />
 
       <PolicyHolderNavbar />
 
@@ -1499,6 +1518,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.15)",
     borderWidth: 1.5, borderColor: "rgba(255,255,255,0.3)",
     alignItems: "center", justifyContent: "center",
+    overflow: "hidden"
+  },
+  avatarPhoto: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 22,
   },
   avatarText: { color: "#ffffff", fontSize: 18, fontWeight: "800" },
 

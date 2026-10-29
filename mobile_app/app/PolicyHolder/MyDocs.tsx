@@ -19,6 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
+import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 import { compressImageMobile } from "../../utils/imageCompressor";
 
@@ -72,10 +73,10 @@ export default function MyDocs() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
@@ -89,7 +90,8 @@ export default function MyDocs() {
     }
 
     return (claim.requestedDocuments || []).filter(name => {
-      if (getRecipientForDoc(name) !== "User") return false;
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      if (rec === "agent" || rec === "insurance_agent") return false;
       const normName = name.trim().toLowerCase();
       const alreadyUploaded = uploadedNames.some(u => 
         u === normName ||
@@ -128,6 +130,39 @@ export default function MyDocs() {
     }
 
     return submitted;
+  };
+
+  const getDocRequestMsg = (claim: Claim, docName: string) => {
+    if (!claim.messages || claim.messages.length === 0) return null;
+    const lowerDoc = docName.toLowerCase();
+    return [...claim.messages]
+      .reverse()
+      .find(m => {
+        if (!m.message) return false;
+        const lowerMsg = m.message.toLowerCase();
+        return (
+          lowerMsg.includes(`requested: ${lowerDoc}`) ||
+          lowerMsg.includes(lowerDoc) ||
+          (lowerDoc.includes("garage") && lowerMsg.includes("garage")) ||
+          (lowerDoc.includes("estimate") && lowerMsg.includes("estimate")) ||
+          (lowerDoc.includes("police") && lowerMsg.includes("police")) ||
+          (lowerDoc.includes("license") && lowerMsg.includes("license"))
+        );
+      });
+  };
+
+  const getDocRequestNote = (claim: Claim, docName: string): string => {
+    const msg = getDocRequestMsg(claim, docName);
+    if (msg && msg.message) {
+      const idx = msg.message.indexOf("Message:");
+      if (idx !== -1) {
+        return msg.message.substring(idx + 8).trim();
+      }
+      if (msg.message.toLowerCase().includes("requested")) {
+        return msg.message;
+      }
+    }
+    return "";
   };
 
   // Upload Modal State
@@ -173,9 +208,16 @@ export default function MyDocs() {
       const res = await fetch(`${API_BASE_URL}/api/policy-holder/user-claims?nic=${encodeURIComponent(nic)}&includeDocs=true`);
       let databaseClaims: Claim[] = [];
       if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data.claims)) {
-          databaseClaims = data.claims;
+        const text = await res.text();
+        if (text && text.trim().length > 0) {
+          try {
+            const data = JSON.parse(text);
+            if (Array.isArray(data.claims)) {
+              databaseClaims = data.claims;
+            }
+          } catch (parseErr) {
+            console.warn("Error parsing claim documents JSON:", parseErr);
+          }
         }
       }
       setClaims(databaseClaims);
@@ -201,7 +243,9 @@ export default function MyDocs() {
     setUploadTargetClaim(claim);
     const initialFiles: { [docName: string]: { base64: string | null; name: string } } = {};
     const userDocs = getUserRequestedDocs(claim);
-    const docs = userDocs.length > 0 ? userDocs : ["Police Report", "Repair Estimate"];
+    const docs = userDocs.length > 0 
+      ? userDocs 
+      : (claim.requestedDocuments && claim.requestedDocuments.length > 0 ? claim.requestedDocuments : ["Document"]);
     
     docs.forEach(docName => {
       initialFiles[docName] = { base64: null, name: "" };
@@ -302,7 +346,7 @@ export default function MyDocs() {
   };
 
   // Compile Requested Documents List
-  const requestedDocsList = claims.filter(c => c.documentsRequested && getUserRequestedDocs(c).length > 0);
+  const requestedDocsList = claims.filter(c => (c.documentsRequested || (c.requestedDocuments && c.requestedDocuments.length > 0)) && getUserRequestedDocs(c).length > 0);
 
   // Compile Grouped Uploaded Documents by Claim ID
   const groupedClaimsList = claims.map(claim => {
@@ -417,8 +461,25 @@ export default function MyDocs() {
                     <View style={{ flex: 1, marginLeft: 12 }}>
                       <Text style={styles.alertTitle}>Documents Requested – Action Required</Text>
                       <Text style={styles.alertText}>
-                        Staff has requested a <Text style={{ fontWeight: "800" }}>{getUserRequestedDocs(claim).join(" & ")}</Text> for <Text style={{ fontWeight: "800" }}>{claim.claimNumber}</Text>.
+                        Staff has requested the following document(s) for <Text style={{ fontWeight: "800" }}>{claim.claimNumber}</Text>:
                       </Text>
+                      <View style={{ marginTop: 6, marginBottom: 4 }}>
+                        {getUserRequestedDocs(claim).map((docName, dIdx) => {
+                          const note = getDocRequestNote(claim, docName);
+                          return (
+                            <View key={dIdx} style={{ marginBottom: 4 }}>
+                              <Text style={{ fontSize: 13, fontWeight: "700", color: "#1e293b" }}>
+                                • {docName}
+                              </Text>
+                              {note ? (
+                                <Text style={{ fontSize: 11, fontStyle: "italic", color: "#64748b", marginLeft: 8 }}>
+                                  Note: "{note}"
+                                </Text>
+                              ) : null}
+                            </View>
+                          );
+                        })}
+                      </View>
                       <Text style={styles.alertWarningText}>Please upload within 3 days...</Text>
                     </View>
                   </View>
@@ -500,32 +561,42 @@ export default function MyDocs() {
               <View style={{ width: "100%" }}>
                 <Text style={styles.modalTitle}>Claim {uploadTargetClaim?.claimNumber}</Text>
                 <Text style={styles.modalSubtitle}>
-                  Staff has requested a {uploadTargetClaim ? getUserRequestedDocs(uploadTargetClaim).join(" & ") : ""}
+                  Staff has requested {Object.keys(uploadFiles).join(" & ") || "required documents"}
                 </Text>
 
                 <View style={styles.modalDivider} />
 
                 <ScrollView style={{ maxHeight: SCREEN_H * 0.4 }} showsVerticalScrollIndicator={false}>
-                  {Object.entries(uploadFiles).map(([docName, val]) => (
-                    <View key={docName} style={styles.modalPillRow}>
-                      <Text style={styles.modalPillLabel}>{docName}</Text>
-                      
-                      {val.base64 === null ? (
-                        <TouchableOpacity onPress={() => handlePickImage(docName)}>
-                          <Text style={styles.modalPillActionText}>Upload</Text>
-                        </TouchableOpacity>
-                      ) : (
-                        <View style={styles.modalSelectedFileWrap}>
-                          <Text style={styles.modalSelectedFileName} numberOfLines={1}>
-                            ✓ {val.name || "Selected"}
-                          </Text>
-                          <TouchableOpacity onPress={() => handleRemoveFile(docName)} style={styles.modalBinBtn}>
-                            <Ionicons name="trash-outline" size={16} color="#ef4444" />
-                          </TouchableOpacity>
+                  {Object.entries(uploadFiles).map(([docName, val]) => {
+                    const note = uploadTargetClaim ? getDocRequestNote(uploadTargetClaim, docName) : "";
+                    return (
+                      <View key={docName} style={{ marginBottom: 10 }}>
+                        <View style={styles.modalPillRow}>
+                          <Text style={styles.modalPillLabel}>{docName}</Text>
+                          
+                          {val.base64 === null ? (
+                            <TouchableOpacity onPress={() => handlePickImage(docName)}>
+                              <Text style={styles.modalPillActionText}>Upload</Text>
+                            </TouchableOpacity>
+                          ) : (
+                            <View style={styles.modalSelectedFileWrap}>
+                              <Text style={styles.modalSelectedFileName} numberOfLines={1}>
+                                ✓ {val.name || "Selected"}
+                              </Text>
+                              <TouchableOpacity onPress={() => handleRemoveFile(docName)} style={styles.modalBinBtn}>
+                                <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                              </TouchableOpacity>
+                            </View>
+                          )}
                         </View>
-                      )}
-                    </View>
-                  ))}
+                        {note ? (
+                          <Text style={{ fontSize: 11, fontStyle: "italic", color: "#64748b", marginLeft: 12, marginTop: 2 }}>
+                            Note: "{note}"
+                          </Text>
+                        ) : null}
+                      </View>
+                    );
+                  })}
                 </ScrollView>
 
                 <View style={styles.modalFooter}>
@@ -533,7 +604,7 @@ export default function MyDocs() {
                     style={styles.modalCloseBtn}
                     onPress={() => setUploadModalOpen(false)}
                   >
-                    <Text style={styles.modalBtnText}>&lt; Close</Text>
+                    <Text style={styles.modalBtnText}>Close</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={[styles.modalSubmitBtn, isUploading && { opacity: 0.6 }]}
@@ -543,7 +614,7 @@ export default function MyDocs() {
                     {isUploading ? (
                       <ActivityIndicator size="small" color="#ffffff" />
                     ) : (
-                      <Text style={styles.modalBtnText}>Submit &gt;</Text>
+                      <Text style={styles.modalBtnText}>Submit</Text>
                     )}
                   </TouchableOpacity>
                 </View>
@@ -605,7 +676,7 @@ export default function MyDocs() {
                   style={styles.modalCloseBtn}
                   onPress={() => setUploadedListModalOpen(false)}
                 >
-                  <Text style={styles.modalBtnText}>&lt; Close</Text>
+                  <Text style={styles.modalBtnText}>Close</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -682,7 +753,7 @@ export default function MyDocs() {
                       style={styles.modalCloseBtn}
                       onPress={() => setViewModalOpen(false)}
                     >
-                      <Text style={styles.modalBtnText}>&lt; Close</Text>
+                      <Text style={styles.modalBtnText}>Close</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -693,6 +764,7 @@ export default function MyDocs() {
         </View>
       </Modal>
 
+      <AIChatBot userRole="policy_holder" bottomOffset={96} />
       <PolicyHolderNavbar />
     </View>
   );

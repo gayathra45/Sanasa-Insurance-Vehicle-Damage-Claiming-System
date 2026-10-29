@@ -39,7 +39,7 @@ const translations = {
     stepIndicator: "STEP 02 OF 04",
     vehicleDetails: "Vehicle Details",
     removeVehicle: "Remove Vehicle",
-    numberPlate: "Number Plate *",
+    numberPlate: "Vehicle Number *",
     vehicleType: "Vehicle Type *",
     selectVehicleType: "Select Vehicle Type",
     year: "Year *",
@@ -52,7 +52,7 @@ const translations = {
     backBtn: "Back",
     nextBtn: "Next",
     fillAllFields: "Please fill out all required fields for Vehicle #",
-    plateAlert: " Number Plate must be an alphanumeric mix between 5 and 10 characters.",
+    plateAlert: " Vehicle Number must be an alphanumeric mix between 5 and 10 characters.",
     yearAlert: " Year must be a 4-digit number.",
     policyAlert: " Insurance Policy Number must start with 'SAN' followed by exactly 7 digits (e.g., SAN9876543)."
   },

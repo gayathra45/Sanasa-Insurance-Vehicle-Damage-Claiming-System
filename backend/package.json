@@ -4,8 +4,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node ../update-ip.js && node index.js",
-    "dev": "node ../update-ip.js && nodemon index.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "dev:local": "node ../update-ip.js && nodemon index.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -14,8 +15,11 @@
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "mongoose": "^8.23.0",
+    "node-cron": "^4.6.0",
     "nodemailer": "^8.0.11",
-    "resend": "^6.12.4"
+    "resend": "^6.12.4",
+    "socket.io": "^4.8.4",
+    "stripe": "^23.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

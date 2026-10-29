@@ -9,14 +9,31 @@ import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
 import Admin from "../models/admin.model.js";
+import ProfileUpdateRequest from "../models/profile_update_request.model.js";
+import AgentProfileUpdateRequest from "../models/agent_profile_update_request.model.js";
+import BranchProfileUpdateRequest from "../models/branch_profile_update_request.model.js";
 import { hashPassword } from "../utils/crypto.js";
-import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { sendEmail, getBaseTemplate, sendProfileUpdateStatusEmail, sendAgentProfileUpdateStatusEmail } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
+import { logLoginActivity } from "../utils/activity.js";
 import { 
   analyzeAccidentDamage, 
   analyzeAccidentDamageWithCostSheet, 
   compareGarageEstimateWithPhotosAndAI 
 } from "../utils/aiAnalyzer.js";
+import { decodeSriLankanNIC, calculateNameMatch, resolveDRPRecord } from "../utils/nicVerifier.js";
+import {
+  notifyClaimAssigned,
+  notifyAgentNewClaimAssigned,
+  notifyClaimStatusChanged,
+  notifyDocumentsRequested,
+  notifyInspectionUpdate,
+  notifyClaimApproved,
+  notifyClaimRejected,
+  notifyAgentClaimDecision,
+  notifyPaymentSettled,
+  notifyAgentSettlementChanged
+} from "../services/smsNotificationService.js";
 
 const router = express.Router();
 
@@ -42,6 +59,20 @@ router.post("/login", async (req, res) => {
     if (staff.password !== hashedInput) {
       return res.status(400).json({ error: "Invalid Email or Password." });
     }
+
+    // Record login activity
+    await logLoginActivity({
+      req,
+      userType: "OfficeStaff",
+      userId: staff._id,
+      userName: staff.name,
+      userEmail: staff.email,
+      userNic: staff.mobile,
+      branch: staff.branch || "Galle",
+      action: "Login",
+      status: "Success",
+      details: `Branch staff (${staff.branch}) login successful.`
+    });
 
     // Return staff details without password
     const staffObj = staff.toObject();
@@ -89,45 +120,85 @@ router.post("/change-password", async (req, res) => {
 // GET dashboard statistics: /api/office-staff/dashboard-stats
 router.get("/dashboard-stats", async (req, res) => {
   try {
-    const branch = req.query.branch ? req.query.branch.trim() : "Galle";
+    const rawBranch = req.query.branch;
+    const branchInput = (
+      typeof rawBranch === "string"
+        ? rawBranch.trim()
+        : Array.isArray(rawBranch) && rawBranch.length > 0 && typeof rawBranch[0] === "string"
+        ? rawBranch[0].trim()
+        : ""
+    ) || "Galle";
 
-    // 1. Calculate stats counts for the branch
+    // Build flexible branch query to match either "Colombo" or "Colombo Branch"
+    const baseBranchName = branchInput.replace(/\s+Branch$/i, "").trim();
+    const branchCondition = {
+      $in: [
+        branchInput,
+        baseBranchName,
+        `${baseBranchName} Branch`,
+        new RegExp(`^${baseBranchName}(?:\\s+Branch)?$`, "i")
+      ]
+    };
+
+    // 1. Calculate stats counts for the branch with safe fallbacks
     const unassignedClaims = await Claim.countDocuments({
-      branch,
+      branch: branchCondition,
       $or: [
         { assignedAgent: { $exists: false } },
         { assignedAgent: null },
         { assignedAgent: "" }
       ]
+    }).catch(err => {
+      console.warn("Error counting unassigned claims:", err.message);
+      return 0;
     });
 
     const newRegistrationsCount = await User.countDocuments({
-      branch,
+      branch: branchCondition,
       status: { $ne: "Approved" }
+    }).catch(err => {
+      console.warn("Error counting new registrations:", err.message);
+      return 0;
     });
 
     const activeClaims = await Claim.countDocuments({
-      branch,
+      branch: branchCondition,
       status: { $in: ["In Progress", "Approved", "Investigating"] }
+    }).catch(err => {
+      console.warn("Error counting active claims:", err.message);
+      return 0;
     });
 
     const pendingClaims = await Claim.countDocuments({
-      branch,
+      branch: branchCondition,
       status: "Pending"
+    }).catch(err => {
+      console.warn("Error counting pending claims:", err.message);
+      return 0;
     });
 
     // 2. Fetch recent new claims for the branch
-    const newClaims = await Claim.find({ branch })
+    const newClaims = await Claim.find({ branch: branchCondition })
       .sort({ createdAt: -1 })
-      .limit(20);
+      .limit(20)
+      .lean()
+      .catch(err => {
+        console.warn("Error finding new claims:", err.message);
+        return [];
+      });
 
     // 3. Fetch recent new registrations for the branch
     const newRegistrations = await User.find({
-      branch,
+      branch: branchCondition,
       status: { $ne: "Approved" }
     })
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(10)
+      .lean()
+      .catch(err => {
+        console.warn("Error finding new registrations:", err.message);
+        return [];
+      });
 
     res.json({
       stats: {
@@ -141,7 +212,10 @@ router.get("/dashboard-stats", async (req, res) => {
     });
   } catch (err) {
     console.error("Office staff dashboard stats API error:", err);
-    res.status(500).json({ error: "Failed to load dashboard metrics." });
+    res.status(500).json({ 
+      error: "Failed to load dashboard metrics.",
+      message: err.message
+    });
   }
 });
 
@@ -235,11 +309,24 @@ router.get("/stats", async (req, res) => {
 // GET all claims for a specific branch: /api/office-staff/claims
 router.get("/claims", async (req, res) => {
   try {
-    const { branch } = req.query;
-    if (!branch) {
-      return res.status(400).json({ error: "Branch query parameter is required." });
-    }
-    const claims = await Claim.find({ branch: branch.trim() }).sort({ createdAt: -1 }).lean();
+    const rawBranch = req.query.branch;
+    const branchInput = (
+      typeof rawBranch === "string"
+        ? rawBranch.trim()
+        : Array.isArray(rawBranch) && rawBranch.length > 0 && typeof rawBranch[0] === "string"
+        ? rawBranch[0].trim()
+        : ""
+    ) || "Galle";
+    const baseBranchName = branchInput.replace(/\s+Branch$/i, "").trim();
+    const branchCondition = {
+      $in: [
+        branchInput,
+        baseBranchName,
+        `${baseBranchName} Branch`,
+        new RegExp(`^${baseBranchName}(?:\\s+Branch)?$`, "i")
+      ]
+    };
+    const claims = await Claim.find({ branch: branchCondition }).sort({ createdAt: -1 }).lean();
 
     // Attach policy holder user profile info & bank details
     const nics = claims.map(c => c.userNic).filter(Boolean);
@@ -274,21 +361,371 @@ router.get("/claims", async (req, res) => {
   }
 });
 
-// GET all policy holders for a specific branch: /api/office-staff/policy-holders
+// GET all policy holders for a specific branch or search across Sri Lanka: /api/office-staff/policy-holders
 router.get("/policy-holders", async (req, res) => {
   try {
-    const { branch } = req.query;
-    if (!branch) {
-      return res.status(400).json({ error: "Branch query parameter is required." });
+    const { branch, search, nic, allSriLanka, status } = req.query;
+    
+    const query = {};
+
+    // Filter by branch if not searching all Sri Lanka
+    const isAllSriLanka = allSriLanka === "true" || allSriLanka === "1";
+    if (!isAllSriLanka && branch) {
+      query.branch = branch.trim();
     }
-    const policyHolders = await User.find(
-      { branch: branch.trim(), status: "Approved" },
-      { password: 0, documents: 0 }
-    ).sort({ createdAt: -1 });
+
+    // Filter by status if specified (default to Approved if none specified and no search)
+    if (status && status !== "all") {
+      query.status = status;
+    } else if (!status && !nic && !search) {
+      query.status = "Approved";
+    }
+
+    // Filter by specific NIC if provided
+    if (nic && nic.trim()) {
+      const cleanNic = nic.trim();
+      query.nic = { $regex: cleanNic, $options: "i" };
+    }
+
+    // Filter by search term across multiple fields
+    if (search && search.trim()) {
+      const cleanSearch = search.trim();
+      const searchRegex = { $regex: cleanSearch, $options: "i" };
+      query.$or = [
+        { nic: searchRegex },
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { email: searchRegex },
+        { mobile: searchRegex },
+        { referenceNumber: searchRegex },
+        { "vehicles.numberPlate": searchRegex },
+        { "vehicles.policyNumber": searchRegex }
+      ];
+    }
+
+    const policyHolders = await User.find(query, { password: 0 }).sort({ createdAt: -1 });
     res.json({ policyHolders });
   } catch (err) {
     console.error("Fetch office staff policy holders error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET single policy holder full details + claims by NIC: /api/office-staff/policy-holders/by-nic/:nic
+router.get("/policy-holders/by-nic/:nic", async (req, res) => {
+  try {
+    const { nic } = req.params;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC is required." });
+    }
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } }, { password: 0 });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+    const claims = await Claim.find({ userNic: { $regex: new RegExp(`^${cleanNic}$`, "i") } }).sort({ createdAt: -1 });
+    res.json({ policyHolder: user, claims });
+  } catch (err) {
+    console.error("Fetch policy holder by NIC error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST add a new vehicle for a policy holder by branch staff: /api/office-staff/policy-holders/:nic/vehicles
+router.post("/policy-holders/:nic/vehicles", async (req, res) => {
+  try {
+    const { nic } = req.params;
+    const {
+      numberPlate,
+      vehicleType,
+      year,
+      company,
+      model,
+      engineNumber,
+      chassisNumber,
+      policyNumber,
+      status
+    } = req.body;
+
+    if (!nic || !nic.trim()) {
+      return res.status(400).json({ error: "Policy holder NIC is required." });
+    }
+
+    if (!numberPlate || !vehicleType || !company || !model) {
+      return res.status(400).json({ error: "Vehicle number, type, make (company), and model are required." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found with the provided NIC." });
+    }
+
+    const staffBranch = req.headers["x-staff-branch"] || req.body.staffBranch;
+    if (staffBranch && user.branch && user.branch.toLowerCase() !== staffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only add vehicles for policyholders registered under your branch (${staffBranch} Branch).`
+      });
+    }
+
+    // Check if plate already registered under this user
+    const normalizedPlate = numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    const plateExists = user.vehicles && user.vehicles.some(
+      v => v.numberPlate && v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === normalizedPlate
+    );
+
+    if (plateExists) {
+      return res.status(400).json({ error: `Vehicle plate ${numberPlate} is already registered under this policy holder.` });
+    }
+
+    // Generate policy number if not provided
+    let finalPolicyNumber = (policyNumber && policyNumber.trim()) ? policyNumber.trim().toUpperCase() : "";
+    if (!finalPolicyNumber) {
+      finalPolicyNumber = `SAN-${Math.floor(100000 + Math.random() * 900000)}`;
+    } else if (!finalPolicyNumber.startsWith("SAN-") && !finalPolicyNumber.startsWith("SAN")) {
+      finalPolicyNumber = `SAN-${finalPolicyNumber}`;
+    }
+
+    const newVehicle = {
+      numberPlate: numberPlate.trim().toUpperCase(),
+      vehicleType: vehicleType.trim(),
+      year: (year && year.toString().trim()) || new Date().getFullYear().toString(),
+      company: company.trim(),
+      model: model.trim(),
+      engineNumber: (engineNumber && engineNumber.trim()) || `ENG-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      chassisNumber: (chassisNumber && chassisNumber.trim()) || `CHS-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+      policyNumber: finalPolicyNumber,
+      status: status || "Approved"
+    };
+
+    if (!user.vehicles) {
+      user.vehicles = [];
+    }
+
+    user.vehicles.push(newVehicle);
+    await user.save();
+
+    res.status(201).json({
+      message: "New vehicle added successfully to policy holder.",
+      vehicle: newVehicle,
+      vehicles: user.vehicles,
+      policyHolder: user
+    });
+  } catch (err) {
+    console.error("Add vehicle to policy holder error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// PUT update policy holder details by Branch Staff: /api/office-staff/policy-holders/:nic
+router.put("/policy-holders/:nic", async (req, res) => {
+  try {
+    const { nic } = req.params;
+    const {
+      newNic,
+      referenceNumber,
+      firstName,
+      lastName,
+      mobile,
+      email,
+      dob,
+      address,
+      city,
+      province,
+      branch,
+      status,
+      bankDetails,
+      staffBranch
+    } = req.body;
+
+    if (!nic || !nic.trim()) {
+      return res.status(400).json({ error: "Policy holder NIC is required." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    const effectiveStaffBranch = req.headers["x-staff-branch"] || staffBranch;
+    if (effectiveStaffBranch && user.branch && user.branch.toLowerCase() !== effectiveStaffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only edit policyholders registered under your branch (${effectiveStaffBranch} Branch). This policyholder is registered under ${user.branch} Branch.`
+      });
+    }
+
+    // 1. Handle NIC change by Branch Staff (with cascading updates to claims & update requests)
+    const targetNic = (newNic || req.body.nic || "").trim().toUpperCase();
+    if (targetNic && targetNic !== user.nic.toUpperCase()) {
+      const existingUserWithNic = await User.findOne({
+        nic: targetNic,
+        _id: { $ne: user._id }
+      });
+      if (existingUserWithNic) {
+        return res.status(400).json({ error: `Another policy holder is already registered with NIC ${targetNic}.` });
+      }
+      const oldNic = user.nic;
+      user.nic = targetNic;
+
+      // Cascade update to claims & profile update requests
+      await Claim.updateMany({ userNic: { $regex: new RegExp(`^${cleanNic}$`, "i") } }, { userNic: targetNic });
+      await ProfileUpdateRequest.updateMany({ userNic: { $regex: new RegExp(`^${cleanNic}$`, "i") } }, { userNic: targetNic });
+    }
+
+    // 2. Handle Policy Holder Reference Number change by Branch Staff
+    if (referenceNumber && referenceNumber.trim() && referenceNumber.trim() !== user.referenceNumber) {
+      const cleanRef = referenceNumber.trim().toUpperCase();
+      const existingUserWithRef = await User.findOne({
+        referenceNumber: cleanRef,
+        _id: { $ne: user._id }
+      });
+      if (existingUserWithRef) {
+        return res.status(400).json({ error: `Another policy holder is already registered with Reference No. ${cleanRef}.` });
+      }
+      user.referenceNumber = cleanRef;
+      await ProfileUpdateRequest.updateMany({ userNic: user.nic }, { userReferenceNumber: cleanRef });
+    }
+
+    // 3. Handle Assigned Branch change by Branch Staff
+    if (branch && branch.trim()) {
+      user.branch = branch.trim();
+    }
+
+    if (firstName) user.firstName = firstName.trim();
+    if (lastName) user.lastName = lastName.trim();
+    if (mobile) user.mobile = mobile.trim();
+    if (email) user.email = email.trim();
+    if (dob) user.dob = dob.trim();
+    if (address) user.address = address.trim();
+    if (city) user.city = city.trim();
+    if (province) user.province = province.trim();
+    if (status) user.status = status.trim();
+
+    if (bankDetails) {
+      user.bankDetails = {
+        bankName: (bankDetails.bankName || user.bankDetails?.bankName || "").trim(),
+        branchName: (bankDetails.branchName || user.bankDetails?.branchName || "").trim(),
+        accountNumber: (bankDetails.accountNumber || user.bankDetails?.accountNumber || "").trim(),
+        accountHolderName: (bankDetails.accountHolderName || user.bankDetails?.accountHolderName || "").trim()
+      };
+    }
+
+    await user.save();
+
+    res.json({
+      message: "Policy holder details updated successfully by Branch.",
+      policyHolder: user
+    });
+  } catch (err) {
+    console.error("Update policy holder error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// PUT update a specific vehicle of a policy holder: /api/office-staff/policy-holders/:nic/vehicles/:plate
+router.put("/policy-holders/:nic/vehicles/:plate", async (req, res) => {
+  try {
+    const { nic, plate } = req.params;
+    const {
+      numberPlate,
+      vehicleType,
+      year,
+      company,
+      model,
+      engineNumber,
+      chassisNumber,
+      policyNumber,
+      status,
+      staffBranch
+    } = req.body;
+
+    if (!nic || !plate) {
+      return res.status(400).json({ error: "NIC and vehicle plate are required." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    const effectiveStaffBranch = req.headers["x-staff-branch"] || staffBranch;
+    if (effectiveStaffBranch && user.branch && user.branch.toLowerCase() !== effectiveStaffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only edit vehicles for policyholders registered under your branch (${effectiveStaffBranch} Branch).`
+      });
+    }
+
+    const normTargetPlate = plate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    const vehicleIndex = (user.vehicles || []).findIndex(
+      v => v.numberPlate && v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === normTargetPlate
+    );
+
+    if (vehicleIndex === -1) {
+      return res.status(404).json({ error: "Vehicle not found for this policy holder." });
+    }
+
+    if (numberPlate) user.vehicles[vehicleIndex].numberPlate = numberPlate.trim().toUpperCase();
+    if (vehicleType) user.vehicles[vehicleIndex].vehicleType = vehicleType.trim();
+    if (year) user.vehicles[vehicleIndex].year = year.toString().trim();
+    if (company) user.vehicles[vehicleIndex].company = company.trim();
+    if (model) user.vehicles[vehicleIndex].model = model.trim();
+    if (engineNumber) user.vehicles[vehicleIndex].engineNumber = engineNumber.trim();
+    if (chassisNumber) user.vehicles[vehicleIndex].chassisNumber = chassisNumber.trim();
+    if (policyNumber) user.vehicles[vehicleIndex].policyNumber = policyNumber.trim();
+    if (status) user.vehicles[vehicleIndex].status = status.trim();
+
+    await user.save();
+
+    res.json({
+      message: "Vehicle updated successfully.",
+      vehicle: user.vehicles[vehicleIndex],
+      vehicles: user.vehicles,
+      policyHolder: user
+    });
+  } catch (err) {
+    console.error("Update vehicle error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// DELETE a specific vehicle of a policy holder: /api/office-staff/policy-holders/:nic/vehicles/:plate
+router.delete("/policy-holders/:nic/vehicles/:plate", async (req, res) => {
+  try {
+    const { nic, plate } = req.params;
+    if (!nic || !plate) {
+      return res.status(400).json({ error: "NIC and vehicle plate are required." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: { $regex: new RegExp(`^${cleanNic}$`, "i") } });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    const staffBranch = req.headers["x-staff-branch"] || req.query.staffBranch;
+    if (staffBranch && user.branch && user.branch.toLowerCase() !== staffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only remove vehicles for policyholders registered under your branch (${staffBranch} Branch).`
+      });
+    }
+
+    const normTargetPlate = plate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    user.vehicles = (user.vehicles || []).filter(
+      v => v.numberPlate && v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() !== normTargetPlate
+    );
+
+    await user.save();
+
+    res.json({
+      message: "Vehicle removed successfully.",
+      vehicles: user.vehicles,
+      policyHolder: user
+    });
+  } catch (err) {
+    console.error("Delete vehicle error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
   }
 });
 
@@ -299,6 +736,20 @@ router.get("/agents", async (req, res) => {
     if (!branch) {
       return res.status(400).json({ error: "Branch query parameter is required." });
     }
+
+    // Automatically sync stale active agents to Offline (> 60s inactivity)
+    const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
+    await Agent.updateMany(
+      {
+        availability: "Active",
+        $or: [
+          { lastSeenAt: { $lt: sixtySecondsAgo } },
+          { lastSeenAt: { $exists: false } }
+        ]
+      },
+      { $set: { availability: "Offline" } }
+    );
+
     const agents = await Agent.find({ branch: branch.trim() }, { password: 0 }).sort({ createdAt: -1 });
     res.json({ agents });
   } catch (err) {
@@ -350,6 +801,180 @@ router.patch("/registrations/:id/status", async (req, res) => {
   }
 });
 
+// POST verify user NIC with Sri Lankan DRP e-Identity: /api/office-staff/verify-nic
+router.post("/verify-nic", async (req, res) => {
+  try {
+    const { nic, userId, applicantName } = req.body;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC number is required for verification." });
+    }
+
+    let user = null;
+    if (userId) {
+      user = await User.findById(userId);
+    } else if (nic) {
+      user = await User.findOne({ nic: String(nic).trim() });
+    }
+
+    const effectiveName = applicantName || (user ? `${user.firstName} ${user.lastName}` : "");
+    const drpResult = resolveDRPRecord(String(nic).trim(), user || { firstName: effectiveName });
+
+    if (!drpResult.success) {
+      return res.status(400).json({
+        verified: false,
+        error: drpResult.error,
+        nic
+      });
+    }
+
+    const matchScore = calculateNameMatch(effectiveName, drpResult.data.officialFullName);
+
+    res.json({
+      verified: true,
+      nic: drpResult.data.nic,
+      format: drpResult.data.format,
+      officialFullName: drpResult.data.officialFullName,
+      dateOfBirth: drpResult.data.dateOfBirth,
+      gender: drpResult.data.gender,
+      age: drpResult.data.age,
+      votingEligibility: drpResult.data.votingEligibility,
+      civilStatus: drpResult.data.civilStatus,
+      cardStatus: drpResult.data.cardStatus,
+      issuingAuthority: drpResult.data.issuingAuthority,
+      drpReference: drpResult.drpReference,
+      verifiedAt: drpResult.verifiedAt,
+      verificationSource: drpResult.verificationSource,
+      applicantName: effectiveName,
+      nameMatchScore: matchScore,
+      nameMatchStatus: matchScore >= 80 ? "MATCH" : matchScore >= 50 ? "PARTIAL_MATCH" : "MISMATCH"
+    });
+  } catch (err) {
+    console.error("Verify NIC error:", err);
+    res.status(500).json({ error: "An error occurred during NIC verification." });
+  }
+});
+
+// GET all profile update requests for a specific branch: /api/office-staff/profile-update-requests
+router.get("/profile-update-requests", async (req, res) => {
+  try {
+    const { branch, status } = req.query;
+    if (!branch) {
+      return res.status(400).json({ error: "Branch query parameter is required." });
+    }
+
+    const query = { branch: branch.trim() };
+    if (status && status !== "all") {
+      query.status = status;
+    }
+
+    const requests = await ProfileUpdateRequest.find(query).sort({ createdAt: -1 });
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch profile update requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PATCH approve or reject a profile update request: /api/office-staff/profile-update-requests/:id/review
+router.patch("/profile-update-requests/:id/review", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, reviewNote, reviewerName } = req.body;
+
+    if (!["Approve", "Reject"].includes(action)) {
+      return res.status(400).json({ error: "Action must be either 'Approve' or 'Reject'." });
+    }
+
+    const request = await ProfileUpdateRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({ error: "Profile update request not found." });
+    }
+
+    if (request.status !== "Pending") {
+      return res.status(400).json({ error: `This request has already been ${request.status.toLowerCase()}.` });
+    }
+
+    const user = await User.findOne({ nic: request.userNic });
+    if (!user) {
+      return res.status(404).json({ error: "Associated policy holder not found in database." });
+    }
+
+    if (action === "Approve") {
+      const changes = request.requestedChanges || {};
+
+      // Apply changes to the user record in database
+      if (changes.firstName) user.firstName = changes.firstName.trim();
+      if (changes.lastName) user.lastName = changes.lastName.trim();
+      if (changes.mobile) user.mobile = changes.mobile.trim();
+      if (changes.email) user.email = changes.email.trim().toLowerCase();
+      if (changes.dob) user.dob = changes.dob.trim();
+      if (changes.address) user.address = changes.address.trim();
+      if (changes.province) user.province = changes.province.trim();
+      if (changes.city) user.city = changes.city.trim();
+
+      if (changes.documents && typeof changes.documents === "object") {
+        if (!user.documents) user.documents = {};
+        if (changes.documents.nicFront) user.documents.nicFront = changes.documents.nicFront;
+        if (changes.documents.nicBack) user.documents.nicBack = changes.documents.nicBack;
+        if (changes.documents.vehicleReg) user.documents.vehicleReg = changes.documents.vehicleReg;
+        if (changes.documents.revenueLicense) user.documents.revenueLicense = changes.documents.revenueLicense;
+      }
+
+      await user.save();
+
+      // Update request status
+      request.status = "Approved";
+      request.reviewedBy = reviewerName || "Branch Staff";
+      request.reviewedAt = new Date();
+      request.reviewNote = reviewNote || "Approved by Branch Office Staff";
+      request.updatedAt = new Date();
+      await request.save();
+
+      // Send status email to policy holder's personal email
+      await sendProfileUpdateStatusEmail(
+        user.email || request.userEmail,
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() || request.userName,
+        "Approved",
+        request.requestType,
+        reviewNote || "Your changes have been verified and applied to your account.",
+        user.branch || request.branch || "Galle"
+      );
+
+      res.json({
+        message: "Profile update request approved successfully. User data has been updated in database.",
+        request,
+        user
+      });
+    } else {
+      // Reject action
+      request.status = "Rejected";
+      request.reviewedBy = reviewerName || "Branch Staff";
+      request.reviewedAt = new Date();
+      request.reviewNote = reviewNote || "Request rejected by branch staff.";
+      request.updatedAt = new Date();
+      await request.save();
+
+      // Send status email to policy holder's personal email
+      await sendProfileUpdateStatusEmail(
+        user.email || request.userEmail,
+        `${user.firstName || ""} ${user.lastName || ""}`.trim() || request.userName,
+        "Rejected",
+        request.requestType,
+        reviewNote || "Your profile update request could not be approved.",
+        user.branch || request.branch || "Galle"
+      );
+
+      res.json({
+        message: "Profile update request rejected.",
+        request
+      });
+    }
+  } catch (err) {
+    console.error("Review profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
 // PATCH update claim details: /api/office-staff/claims/:claimNumber
 router.patch("/claims/:claimNumber", async (req, res) => {
   try {
@@ -375,6 +1000,9 @@ router.patch("/claims/:claimNumber", async (req, res) => {
     if (!claim) {
       return res.status(404).json({ error: "Claim not found." });
     }
+
+    const previousAgent = claim.assignedAgent || "";
+    const previousStatus = claim.status || "";
 
     if (status !== undefined) claim.status = status;
     if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
@@ -415,6 +1043,23 @@ router.patch("/claims/:claimNumber", async (req, res) => {
     }
 
     await claim.save();
+
+    // Trigger non-blocking SMS notifications for relevant business events
+    try {
+      if (assignedAgent !== undefined && claim.assignedAgent && claim.assignedAgent !== previousAgent) {
+        notifyClaimAssigned(claim);
+        notifyAgentNewClaimAssigned(claim);
+      } else if (status !== undefined && status !== previousStatus) {
+        notifyClaimStatusChanged(claim, status);
+      }
+
+      if (documentsRequested && requestedDocuments && Array.isArray(requestedDocuments) && requestedDocuments.length > 0) {
+        notifyDocumentsRequested(claim, requestedDocuments);
+      }
+    } catch (smsErr) {
+      console.warn("SMS notification dispatch warning in office-staff claim update:", smsErr.message);
+    }
+
     res.json({ message: "Claim updated successfully", claim });
   } catch (err) {
     console.error("Update claim error:", err);
@@ -437,12 +1082,15 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
       ...(claim.accidentPhotos?.side || [])
     ];
 
-    // Convert Cloudinary URLs to Base64 format for Gemini (if any exist)
+    // Convert Cloudinary URLs or data URIs to Base64 format for Gemini (if any exist)
     let base64Photos = [];
     if (allUrls.length > 0) {
       try {
         base64Photos = await Promise.all(
           allUrls.map(async (url) => {
+            if (typeof url === "string" && (url.startsWith("data:") || !url.startsWith("http"))) {
+              return url.includes(",") ? url.split(",")[1] : url;
+            }
             const response = await fetch(url);
             const arrayBuffer = await response.arrayBuffer();
             return Buffer.from(arrayBuffer).toString("base64");
@@ -468,8 +1116,13 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
       return res.status(500).json({ error: "AI Damage Assessment failed." });
     }
 
+    const isFraudOrInvalid = aiResult.isValidAccidentPhoto === false || Boolean(aiResult.fraudAlert);
+
     claim.aiAnalysis = {
       isAnalyzed: true,
+      isValidAccidentPhoto: !isFraudOrInvalid,
+      authenticityAssessment: aiResult.authenticityAssessment || (isFraudOrInvalid ? "Fake / Non-Accident Image" : "Genuine Accident Damage"),
+      fraudAlert: aiResult.fraudAlert || null,
       damagedItems: aiResult.damagedItems || [],
       overallDamagePercentage: aiResult.overallDamagePercentage || 0,
       totalEstimatedPartsCost: aiResult.totalEstimatedPartsCost || 0,
@@ -480,7 +1133,27 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
       analyzedAt: new Date()
     };
 
-    // Auto-request Garage Estimate Report from Policy Holder for review and comparison
+    if (isFraudOrInvalid) {
+      // Photo verification failed - halt automatic workflow and alert staff
+      claim.status = "Review";
+      claim.messages.push({
+        sender: "Sanasa AI",
+        message: `🚨 AI FRAUD & AUTHENTICITY ALERT: The uploaded accident photos could not be verified as genuine vehicle accident damage. Reason: ${aiResult.fraudAlert || "Irrelevant, fake, or undamaged vehicle photos detected."}. Automated garage quotation request has been BLOCKED. Manual inspection required.`,
+        sentAt: new Date(),
+        recipient: "All"
+      });
+
+      await claim.save();
+
+      return res.json({
+        message: `AI Photo Verification Alert: ${aiResult.fraudAlert || "Photos do not depict legitimate vehicle accident damage."}`,
+        claim,
+        aiAnalysis: claim.aiAnalysis,
+        fraudAlert: aiResult.fraudAlert
+      });
+    }
+
+    // Genuine damage verified -> Auto-request Garage Estimate Report from Policy Holder for review and comparison
     claim.documentsRequested = true;
     const requested = new Set(claim.requestedDocuments || []);
     requested.add("Garage Estimate Report");
@@ -496,6 +1169,7 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
       recipient: "All"
     });
 
+    claim.updatedAt = new Date();
     await claim.save();
 
     res.json({
@@ -588,6 +1262,105 @@ router.post("/claims/:claimNumber/compare-garage-estimate", async (req, res) => 
   }
 });
 
+// POST approve physical inspection report: /api/office-staff/claims/:claimNumber/approve-inspection
+router.post("/claims/:claimNumber/approve-inspection", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    claim.inspectionApproved = true;
+    claim.status = "Review";
+    claim.currentStep = 4; // Advance to Step 4 Review in tracking
+
+    // Auto-request Garage Estimate Report from Policy Holder
+    claim.documentsRequested = true;
+    claim.documentRequestTo = "Policy Holder";
+    const requested = new Set(claim.requestedDocuments || []);
+    requested.add("Garage Estimate Report");
+    claim.requestedDocuments = Array.from(requested);
+
+    claim.messages.push({
+      sender: "Office Staff",
+      message: "Physical vehicle inspection report approved by branch office. Policy holder has been requested to upload the official Garage Estimate quotation document.",
+      sentAt: new Date(),
+      recipient: "All"
+    });
+
+    claim.updatedAt = new Date();
+    claim.markModified("requestedDocuments");
+    await claim.save();
+
+    // Send email notification to user to upload garage estimate
+    try {
+      const user = await User.findOne({ nic: claim.userNic });
+      if (user && user.email) {
+        const subject = `Physical Inspection Approved — Action Required for Claim ${claim.claimNumber}`;
+        const htmlBody = getBaseTemplate(
+          "Inspection Approved & Action Required",
+          `Dear ${user.firstName || "Policy Holder"},<br><br>The physical inspection report for your insurance claim <strong>${claim.claimNumber}</strong> has been <strong>approved</strong> by our branch office.<br><br>` +
+          `<strong>Next Step:</strong> Please log in to your policy holder portal and upload your official <strong>Garage Estimate Report</strong> to proceed with forensic cost cross-checking and payout disbursement.`
+        );
+        const textBody = `Claim ${claim.claimNumber}: Inspection approved. Please upload your Garage Estimate Report in the portal.`;
+        await sendEmail(user.email, subject, htmlBody, textBody);
+      }
+    } catch (mailErr) {
+      console.warn("Failed to send inspection approval email:", mailErr.message);
+    }
+
+    // Trigger SMS notification
+    try {
+      notifyInspectionUpdate(claim, "approved");
+    } catch (smsErr) {
+      console.warn("Inspection approval SMS warning:", smsErr.message);
+    }
+
+    res.json({
+      message: "Physical inspection report approved. Garage Estimate Report requested from policy holder.",
+      claim
+    });
+  } catch (err) {
+    console.error("Approve inspection error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST reject physical inspection report: /api/office-staff/claims/:claimNumber/reject-inspection
+router.post("/claims/:claimNumber/reject-inspection", async (req, res) => {
+  try {
+    const { claimNumber } = req.params;
+    const { reason } = req.body;
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim().toUpperCase() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim not found." });
+    }
+
+    claim.inspectionApproved = false;
+    claim.inspectionSubmitted = false;
+    claim.status = "In Progress";
+    claim.currentStep = 3; // Keep at step 3 Inspection
+
+    claim.messages.push({
+      sender: "Office Staff",
+      message: `Physical inspection report rejected by branch office.${reason ? ` Reason: ${reason}` : " Please re-inspect vehicle."}`,
+      sentAt: new Date(),
+      recipient: "Agent"
+    });
+
+    await claim.save();
+
+    res.json({
+      message: "Physical inspection report rejected and agent notified.",
+      claim
+    });
+  } catch (err) {
+    console.error("Reject inspection error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 // POST approve or reject claim: /api/office-staff/claims/:claimNumber/decision
 router.post("/claims/:claimNumber/decision", async (req, res) => {
   try {
@@ -605,9 +1378,11 @@ router.post("/claims/:claimNumber/decision", async (req, res) => {
 
     if (action === "Approve") {
       claim.status = "Approved";
-      claim.currentStep = 5;
-      const approvedAmount = Number(amount) || claim.garageEstimateComparison?.garageEstimatedTotal || claim.aiAnalysis?.totalEstimatedCost || claim.amount || 0;
+      claim.currentStep = 5; // Step 5: Decision / Approved
+
+      const approvedAmount = Number(amount) || 0;
       claim.amount = approvedAmount;
+      claim.approvedAmount = approvedAmount;
       claim.rejectionReason = "";
 
       claim.messages.push({
@@ -651,6 +1426,19 @@ router.post("/claims/:claimNumber/decision", async (req, res) => {
       }
     }
 
+    // Trigger non-blocking SMS notifications for Policyholder and Agent
+    try {
+      if (action === "Approve") {
+        notifyClaimApproved(claim, claim.approvedAmount, user);
+        notifyAgentClaimDecision(claim, "Approved", claim.approvedAmount);
+      } else {
+        notifyClaimRejected(claim, claim.rejectionReason, user);
+        notifyAgentClaimDecision(claim, "Rejected");
+      }
+    } catch (smsErr) {
+      console.warn("Claim decision SMS dispatch warning:", smsErr.message);
+    }
+
     res.json({ message: `Claim successfully ${action.toLowerCase()}d.`, claim });
   } catch (err) {
     console.error("Claim decision error:", err);
@@ -676,15 +1464,16 @@ router.post("/claims/:claimNumber/settle-payment", async (req, res) => {
     // Upload receipt to Cloudinary
     const uploadedUrl = await uploadToCloudinary(receiptFile, "claims/payment_receipts");
 
-    const finalAmount = Number(amountPaid) || claim.amount || claim.garageEstimateComparison?.garageEstimatedTotal || claim.aiAnalysis?.totalEstimatedCost || 0;
+    const finalAmount = Number(amountPaid) || claim.approvedAmount || claim.amount || 0;
     claim.paymentReceipt = uploadedUrl;
     claim.paymentReceiptFileName = receiptFileName || "Payment_Receipt.pdf";
     claim.paymentSettledAt = new Date();
     claim.paymentSettledBy = "Office Staff";
     claim.paymentNote = paymentNote || "";
     claim.amount = finalAmount;
+    claim.approvedAmount = finalAmount;
     claim.status = "Settled";
-    claim.currentStep = 5;
+    claim.currentStep = 6;
 
     // Add receipt to additional documents
     claim.additionalDocuments.push({
@@ -731,6 +1520,14 @@ router.post("/claims/:claimNumber/settle-payment", async (req, res) => {
       } catch (e) {
         console.warn("Could not dispatch payment email:", e.message);
       }
+    }
+
+    // Trigger non-blocking SMS notifications for Policyholder and Agent
+    try {
+      notifyPaymentSettled(claim, finalAmount, user);
+      notifyAgentSettlementChanged(claim, finalAmount);
+    } catch (smsErr) {
+      console.warn("Payment settlement SMS warning:", smsErr.message);
     }
 
     res.json({
@@ -1087,6 +1884,406 @@ router.patch("/vehicles/verify", async (req, res) => {
   } catch (err) {
     console.error("Verify vehicle error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET all agent profile update requests for a branch: /api/office-staff/agent-profile-update-requests
+router.get("/agent-profile-update-requests", async (req, res) => {
+  try {
+    const { branch, status, search, allSriLanka } = req.query;
+    const query = {};
+
+    const isAllSriLanka = allSriLanka === "true" || allSriLanka === "1";
+    if (!isAllSriLanka && branch) {
+      query.branch = { $regex: new RegExp(`^${branch.trim()}$`, "i") };
+    }
+
+    if (status && status !== "all") {
+      query.status = status;
+    }
+
+    if (search && search.trim()) {
+      const cleanSearch = search.trim();
+      const sRegex = { $regex: cleanSearch, $options: "i" };
+      query.$or = [
+        { agentId: sRegex },
+        { agentName: sRegex },
+        { agentEmail: sRegex },
+        { agentNic: sRegex },
+        { agentPhone: sRegex }
+      ];
+    }
+
+    const requests = await AgentProfileUpdateRequest.find(query).sort({ createdAt: -1 });
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch agent profile update requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PATCH review agent profile update request: /api/office-staff/agent-profile-update-requests/:id/review
+router.patch("/agent-profile-update-requests/:id/review", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, reviewNote, reviewedBy, staffBranch } = req.body;
+
+    if (!["Approved", "Rejected"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status. Must be Approved or Rejected." });
+    }
+
+    const updateRequest = await AgentProfileUpdateRequest.findById(id);
+    if (!updateRequest) {
+      return res.status(404).json({ error: "Agent profile update request not found." });
+    }
+
+    const effectiveStaffBranch = req.headers["x-staff-branch"] || staffBranch;
+    if (effectiveStaffBranch && updateRequest.branch && updateRequest.branch.toLowerCase() !== effectiveStaffBranch.toLowerCase()) {
+      return res.status(403).json({
+        error: `Unauthorized: You can only review requests for your assigned branch (${effectiveStaffBranch} Branch).`
+      });
+    }
+
+    updateRequest.status = status;
+    updateRequest.reviewNote = reviewNote || "";
+    updateRequest.reviewedBy = reviewedBy || "Office Staff";
+    updateRequest.reviewedAt = new Date();
+    updateRequest.updatedAt = new Date();
+
+    // If Approved, automatically apply the requested changes to the Agent in database
+    if (status === "Approved") {
+      const agent = await Agent.findOne({
+        $or: [
+          { email: updateRequest.agentEmail.toLowerCase() },
+          { agentId: updateRequest.agentId }
+        ]
+      });
+
+      if (agent) {
+        const changes = updateRequest.requestedChanges || {};
+
+        if (changes.phone !== undefined) agent.phone = changes.phone;
+        if (changes.address !== undefined) agent.address = changes.address;
+        if (changes.city !== undefined) agent.city = changes.city;
+        if (changes.district !== undefined) agent.district = changes.district;
+        if (changes.area !== undefined) agent.area = changes.area;
+        if (changes.province !== undefined) agent.province = changes.province;
+
+        if (changes.bankName !== undefined) agent.bankName = changes.bankName;
+        if (changes.bankBranch !== undefined) agent.bankBranch = changes.bankBranch;
+        if (changes.accountNumber !== undefined) agent.accountNumber = changes.accountNumber;
+        if (changes.accountType !== undefined) agent.accountType = changes.accountType;
+        if (changes.accountHolderName !== undefined) agent.accountHolderName = changes.accountHolderName;
+
+        if (changes.profilePhoto !== undefined) agent.profilePhoto = changes.profilePhoto;
+
+        await agent.save();
+      }
+    }
+
+    await updateRequest.save();
+
+    // Send email notification to agent
+    await sendAgentProfileUpdateStatusEmail(
+      updateRequest.agentEmail,
+      updateRequest.agentName,
+      updateRequest.agentId,
+      status,
+      updateRequest.requestType,
+      updateRequest.reviewNote,
+      updateRequest.branch
+    );
+
+    res.json({
+      message: `Agent profile update request has been ${status.toLowerCase()} successfully.`,
+      request: updateRequest
+    });
+  } catch (err) {
+    console.error("Review agent profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// ==========================================
+// --- API: Branch Profile Management & Requests ---
+// ==========================================
+
+// GET branch profile details & live branch stats: /api/office-staff/profile
+router.get("/profile", async (req, res) => {
+  try {
+    const { email, branch } = req.query;
+    if (!email && !branch) {
+      return res.status(400).json({ error: "Branch email or branch name is required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    else if (branch) query.branch = branch.trim();
+
+    const staff = await OfficeStaff.findOne(query, { password: 0 });
+    if (!staff) {
+      return res.status(404).json({ error: "Branch office profile not found." });
+    }
+
+    const branchName = staff.branch;
+
+    // Fetch live branch statistics
+    const [policyHoldersCount, agentsCount, totalClaimsCount, activeClaimsCount, pendingClaimsCount] = await Promise.all([
+      User.countDocuments({ branch: branchName }),
+      Agent.countDocuments({ branch: branchName }),
+      Claim.countDocuments({ branch: branchName }),
+      Claim.countDocuments({ branch: branchName, status: "In Progress" }),
+      Claim.countDocuments({ branch: branchName, status: "Pending" })
+    ]);
+
+    res.json({
+      branch: staff,
+      stats: {
+        totalPolicyHolders: policyHoldersCount,
+        totalAgents: agentsCount,
+        totalClaims: totalClaimsCount,
+        activeClaims: activeClaimsCount,
+        pendingClaims: pendingClaimsCount
+      }
+    });
+  } catch (err) {
+    console.error("Fetch branch profile error:", err);
+    res.status(500).json({ error: "An internal server error occurred while retrieving branch profile." });
+  }
+});
+
+// POST submit a branch profile update request to Admin: /api/office-staff/profile-update-request
+router.post("/profile-update-request", async (req, res) => {
+  try {
+    const { email, requestType, requestedChanges, reason } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Branch email is required." });
+    }
+
+    if (!requestedChanges || Object.keys(requestedChanges).length === 0) {
+      return res.status(400).json({ error: "No changes specified in request." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const staff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (!staff) {
+      return res.status(404).json({ error: "Branch office not found." });
+    }
+
+    // Check if there is already an active Pending request from this branch
+    const existingPending = await BranchProfileUpdateRequest.findOne({
+      branchId: staff._id,
+      status: "Pending"
+    });
+
+    const originalData = {
+      name: staff.name || "",
+      email: staff.email || "",
+      mobile: staff.mobile || "",
+      branch: staff.branch || "",
+      province: staff.province || "",
+      district: staff.district || "",
+      area: staff.area || "",
+      location: staff.location || "",
+      staffCount: staff.staffCount || 1,
+      hotline: staff.hotline || "",
+      managerName: staff.managerName || "",
+      managerEmail: staff.managerEmail || "",
+      managerMobile: staff.managerMobile || "",
+      operatingHours: staff.operatingHours || "",
+      notes: staff.notes || ""
+    };
+
+    // Sanitize requested changes
+    const allowedFields = [
+      "name", "mobile", "branch", "province", "district", "area", "location",
+      "staffCount", "hotline", "managerName", "managerEmail", "managerMobile",
+      "operatingHours", "notes", "profilePhoto"
+    ];
+
+    const sanitizedChanges = {};
+    for (const field of allowedFields) {
+      if (requestedChanges[field] !== undefined) {
+        sanitizedChanges[field] = typeof requestedChanges[field] === "string" 
+          ? requestedChanges[field].trim() 
+          : requestedChanges[field];
+      }
+    }
+
+    let savedRequest;
+    if (existingPending) {
+      // Update existing pending request
+      existingPending.requestType = requestType || existingPending.requestType || "Branch Details";
+      existingPending.requestedChanges = { ...existingPending.requestedChanges, ...sanitizedChanges };
+      existingPending.reason = reason !== undefined ? reason.trim() : existingPending.reason;
+      existingPending.updatedAt = new Date();
+      savedRequest = await existingPending.save();
+    } else {
+      // Create new pending request
+      savedRequest = new BranchProfileUpdateRequest({
+        branchId: staff._id,
+        branchName: staff.branch,
+        staffName: staff.name,
+        email: staff.email,
+        mobile: staff.mobile,
+        requestType: requestType || "Branch Details",
+        originalData,
+        requestedChanges: sanitizedChanges,
+        reason: reason ? reason.trim() : "",
+        status: "Pending"
+      });
+      await savedRequest.save();
+    }
+
+    res.status(201).json({
+      message: "Branch profile update request submitted successfully. It has been routed to the Head Office Admin for verification.",
+      request: savedRequest
+    });
+  } catch (err) {
+    console.error("Submit branch profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// POST request branch password change (requires Admin approval): /api/office-staff/request-password-change
+router.post("/request-password-change", async (req, res) => {
+  try {
+    const { email, currentPassword, newPassword, reason } = req.body;
+    if (!email || !currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Email, current password, and new password are required." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: "New password must be at least 6 characters long." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const staff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (!staff) {
+      return res.status(404).json({ error: "Office staff member not found." });
+    }
+
+    // Verify current existing password
+    const hashedCurrent = hashPassword(currentPassword);
+    if (staff.password !== hashedCurrent) {
+      return res.status(400).json({ error: "Incorrect current password. Please enter your active password to authenticate this request." });
+    }
+
+    const hashedNew = hashPassword(newPassword);
+    if (hashedNew === staff.password) {
+      return res.status(400).json({ error: "New password cannot be the same as your current password." });
+    }
+
+    // Check if there is already an active Pending request of type Password & Security
+    const existingPending = await BranchProfileUpdateRequest.findOne({
+      branchId: staff._id,
+      requestType: "Password & Security",
+      status: "Pending"
+    });
+
+    const originalData = {
+      "Account Security": "Current Branch Password (Active)"
+    };
+
+    const requestedChanges = {
+      "Account Security": "New Password (Awaiting Admin Approval)",
+      pendingPasswordHash: hashedNew
+    };
+
+    let savedRequest;
+    if (existingPending) {
+      existingPending.requestedChanges = requestedChanges;
+      existingPending.reason = reason ? reason.trim() : existingPending.reason;
+      existingPending.updatedAt = new Date();
+      savedRequest = await existingPending.save();
+    } else {
+      savedRequest = new BranchProfileUpdateRequest({
+        branchId: staff._id,
+        branchName: staff.branch,
+        staffName: staff.name,
+        email: staff.email,
+        mobile: staff.mobile,
+        requestType: "Password & Security",
+        originalData,
+        requestedChanges,
+        reason: reason ? reason.trim() : "Branch requested password change via Security settings.",
+        status: "Pending"
+      });
+      await savedRequest.save();
+    }
+
+    res.status(201).json({
+      message: "Password change request submitted successfully. It has been routed to Head Office Administration for review and approval.",
+      request: savedRequest
+    });
+  } catch (err) {
+    console.error("Request branch password change error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred while submitting password change request." });
+  }
+});
+
+// GET branch's own profile update requests: /api/office-staff/profile-update-requests
+router.get("/profile-update-requests", async (req, res) => {
+  try {
+    const { email, branch } = req.query;
+    if (!email && !branch) {
+      return res.status(400).json({ error: "Branch email or branch name is required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    else if (branch) query.branchName = branch.trim();
+
+    const requests = await BranchProfileUpdateRequest.find(query).sort({ createdAt: -1 }).lean();
+    
+    // Sanitize pending password hash from output
+    const sanitizedRequests = requests.map((r) => {
+      if (r.requestedChanges && r.requestedChanges.pendingPasswordHash) {
+        const { pendingPasswordHash, ...restChanges } = r.requestedChanges;
+        return { ...r, requestedChanges: restChanges };
+      }
+      return r;
+    });
+
+    res.json({ requests: sanitizedRequests });
+  } catch (err) {
+    console.error("Fetch branch profile update requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// PUT update branch profile photo: /api/office-staff/profile-photo
+router.put("/profile-photo", async (req, res) => {
+  try {
+    const { email, photo } = req.body;
+    if (!email || !photo) {
+      return res.status(400).json({ error: "Branch email and photo are required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const staff = await OfficeStaff.findOne({ email: cleanEmail });
+    if (!staff) {
+      return res.status(404).json({ error: "Branch office not found." });
+    }
+
+    let photoUrl = photo;
+    if (photo.startsWith("data:image")) {
+      const uploadRes = await uploadToCloudinary(photo, `branch_photos/${staff.branch}`);
+      if (uploadRes && uploadRes.url) {
+        photoUrl = uploadRes.url;
+      }
+    }
+
+    staff.profilePhoto = photoUrl;
+    await staff.save();
+
+    res.json({
+      message: "Branch profile photo updated successfully.",
+      profilePhoto: photoUrl
+    });
+  } catch (err) {
+    console.error("Update branch profile photo error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
   }
 });
 

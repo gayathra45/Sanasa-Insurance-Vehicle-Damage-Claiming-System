@@ -24,8 +24,10 @@ import {
   Delete02Icon,
   Car01Icon,
   SmartPhone01Icon,
-
+  Download01Icon,
 } from "@hugeicons/core-free-icons";
+import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
+import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 interface ClaimMessage {
   sender: string;
@@ -375,8 +377,9 @@ export default function AgentMyClaims() {
   const [claims, setClaims] = useState<Claim[]>([]);
   const [filteredClaims, setFilteredClaims] = useState<Claim[]>([]);
 
-  // Load language from localStorage on mount
+  // Load language and viewed claims from localStorage on mount
   useEffect(() => {
+    setViewedClaims(getViewedClaims("agent"));
     const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
     if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
       setLang(savedLang);
@@ -399,6 +402,7 @@ export default function AgentMyClaims() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"all" | "urgent" | "new" | "pending">("all");
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
 
   // Selected claim modal states
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
@@ -1023,6 +1027,9 @@ export default function AgentMyClaims() {
                         <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
                         <div className="text-sm font-semibold text-slate-800 flex items-center gap-2 flex-wrap">
                           {claim.claimNumber}
+                          {isClaimUnread(claim, viewedClaims) && (
+                            <UnreadDot />
+                          )}
                           <span className={`text-[9px] font-semibold uppercase px-3 py-1 rounded-full select-none tracking-wide border ${badgeStyle}`}>
                             {badgeLabel}
                           </span>
@@ -1061,7 +1068,10 @@ export default function AgentMyClaims() {
 
                     {/* Action button */}
                     <button
-                      onClick={() => setSelectedClaim(claim)}
+                      onClick={() => {
+                        markClaimAsRead(claim._id, viewedClaims, setViewedClaims, "agent");
+                        setSelectedClaim(claim);
+                      }}
                       className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-semibold py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
                     >
                       {t.viewDetails}
@@ -1360,10 +1370,19 @@ export default function AgentMyClaims() {
                   <h2 className="font-semibold text-slate-800 text-xl tracking-tight truncate">
                     {getPolicyHolderName(selectedClaim.userNic)}
                   </h2>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider">
                       ID: {selectedClaim.claimNumber}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
+                      className="border border-sky-300 text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg px-2.5 py-1 text-[10px] font-semibold transition-all cursor-pointer inline-flex items-center gap-1 active:scale-95 shadow-2xs"
+                      title="Download Official Claim PDF Report"
+                    >
+                      <HugeiconsIcon icon={Download01Icon} className="w-3 h-3 text-sky-600" strokeWidth={2} />
+                      <span>PDF Report</span>
+                    </button>
                     <span className={`border rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
                       selectedClaim.status.toLowerCase() === "pending"
                         ? "border-amber-300 text-amber-700 bg-amber-50/50"
@@ -1838,7 +1857,7 @@ export default function AgentMyClaims() {
               </div>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">3</span>
-                <span className="leading-relaxed">Tap on your newly accepted claim plate number.</span>
+                <span className="leading-relaxed">Tap on your newly accepted claim vehicle number.</span>
               </div>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">4</span>

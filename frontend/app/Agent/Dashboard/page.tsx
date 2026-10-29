@@ -32,7 +32,9 @@ import {
   BubbleChatIcon,
   SquareLock02Icon,
   Loading03Icon,
+  Download01Icon,
 } from "@hugeicons/core-free-icons";
+import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
 
 // Interface representing a MongoDB Claim document
 interface ClaimMessage {
@@ -631,10 +633,29 @@ export default function AgentDashboard() {
   const [availability, setAvailability] = useState<"Active" | "Offline">("Active");
   const [showAvailabilityModal, setShowAvailabilityModal] = useState(false);
 
-  // Automatically go offline on browser tab close/exit
+  // Automatically keep heartbeat active while online, and go offline on browser tab close/exit
   useEffect(() => {
     if (!agentEmail) return;
-    const handleUnload = () => {
+
+    // Send initial heartbeat
+    fetch(`${API_URL}/agent/heartbeat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: agentEmail })
+    }).catch(() => {});
+
+    // Periodic heartbeat every 20s to keep lastSeenAt fresh
+    const heartbeatInterval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetch(`${API_URL}/agent/heartbeat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: agentEmail })
+        }).catch(() => {});
+      }
+    }, 20000);
+
+    const handleOfflineBeacon = () => {
       const url = `${API_URL}/agent/availability`;
       const payload = JSON.stringify({ email: agentEmail, availability: "Offline" });
       if (navigator.sendBeacon) {
@@ -646,15 +667,34 @@ export default function AgentDashboard() {
           headers: { "Content-Type": "application/json" },
           body: payload,
           keepalive: true
-        });
+        }).catch(() => {});
       }
     };
 
-    window.addEventListener("beforeunload", handleUnload);
-    window.addEventListener("unload", handleUnload);
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        // Tab hidden or user switched away
+      } else if (document.visibilityState === "visible") {
+        // Tab restored to view - refresh heartbeat
+        fetch(`${API_URL}/agent/heartbeat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: agentEmail })
+        }).catch(() => {});
+      }
+    };
+
+    window.addEventListener("beforeunload", handleOfflineBeacon);
+    window.addEventListener("unload", handleOfflineBeacon);
+    window.addEventListener("pagehide", handleOfflineBeacon);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
-      window.removeEventListener("beforeunload", handleUnload);
-      window.removeEventListener("unload", handleUnload);
+      clearInterval(heartbeatInterval);
+      window.removeEventListener("beforeunload", handleOfflineBeacon);
+      window.removeEventListener("unload", handleOfflineBeacon);
+      window.removeEventListener("pagehide", handleOfflineBeacon);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [agentEmail]);
 
@@ -1922,10 +1962,19 @@ export default function AgentDashboard() {
                   <h2 className="font-semibold text-slate-800 text-xl tracking-tight truncate">
                     {getPolicyHolderName(selectedClaim.userNic)}
                   </h2>
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <span className="border border-amber-300 text-amber-700 bg-amber-50/50 rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider">
                       ID: {selectedClaim.claimNumber}
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
+                      className="border border-sky-300 text-sky-700 bg-sky-50 hover:bg-sky-100 rounded-lg px-2.5 py-1 text-[10px] font-semibold transition-all cursor-pointer inline-flex items-center gap-1 active:scale-95 shadow-2xs"
+                      title="Download Official Claim PDF Report"
+                    >
+                      <HugeiconsIcon icon={Download01Icon} className="w-3 h-3 text-sky-600" strokeWidth={2} />
+                      <span>PDF Report</span>
+                    </button>
                     <span className={`border rounded-lg px-3 py-1 text-[10px] font-semibold uppercase tracking-wider flex items-center gap-1.5 ${
                       selectedClaim.status.toLowerCase() === "pending"
                         ? "border-amber-300 text-amber-700 bg-amber-50/50"
@@ -2366,7 +2415,7 @@ export default function AgentDashboard() {
       )}
 
       {/* Floating Chat Bubble / Support Helpdesk Chat */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+      <div className="fixed bottom-8 right-8 z-40 flex flex-col items-end gap-3">
         {showSupportChat && (
           <div className="bg-white border border-slate-100 rounded-3xl w-[320px] md:w-[350px] shadow-2xl flex flex-col overflow-hidden duration-300">
             {/* Header */}
@@ -2462,7 +2511,7 @@ export default function AgentDashboard() {
               </div>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">3</span>
-                <span className="leading-relaxed">Tap on your newly accepted claim plate number.</span>
+                <span className="leading-relaxed">Tap on your newly accepted claim vehicle number.</span>
               </div>
               <div className="flex gap-2.5 items-start text-xs font-semibold text-slate-700">
                 <span className="w-5 h-5 rounded-full bg-[#0f2d4a] text-white flex items-center justify-center font-bold shrink-0 text-[10px] mt-0.5">4</span>
@@ -2570,7 +2619,7 @@ export default function AgentDashboard() {
                     value={passwordForm.currentPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
                     placeholder="Enter current temp password"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-850 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
                   />
                 </div>
 
@@ -2585,7 +2634,7 @@ export default function AgentDashboard() {
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                     placeholder="Create your new password"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-850 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
                   />
 
                   {/* Password Strength Section (Calm Minimalist Style with High Contrast) */}
@@ -2638,7 +2687,7 @@ export default function AgentDashboard() {
                     value={passwordForm.confirmPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
                     placeholder="Verify your new password"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-850 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
+                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
                   />
                 </div>
 

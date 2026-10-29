@@ -15,16 +15,22 @@ import {
   UserIcon,
   Logout01Icon,
   Menu01Icon,
-  Cancel01Icon,
   Search01Icon,
-  Location01Icon
+  Location01Icon,
+  Cancel01Icon,
+  BubbleChatIcon
 } from "@hugeicons/core-free-icons";
+import { API_URL } from "@/app/config";
+import AccessibilityWidget from "@/app/Components/Homepage/AccessibilityWidget";
+import { useChatNotification } from "@/app/context/ChatNotificationContext";
 
 const translations = {
   en: {
     home: "Home",
     myClaims: "My Claims",
+    myVehicles: "My Vehicles",
     documents: "Documents",
+    thirdParty: "Third-Party",
     contact: "Contact",
     newClaim: "New Claim",
     myProfile: "My Profile",
@@ -40,7 +46,9 @@ const translations = {
   si: {
     home: "මුල් පිටුව",
     myClaims: "මගේ හිමිකම්",
+    myVehicles: "මගේ වාහන",
     documents: "ලේඛන",
+    thirdParty: "තෙවන පාර්ශ්ව",
     contact: "සම්බන්ධ වන්න",
     newClaim: "නව හිමිකම්",
     myProfile: "මගේ පැතිකඩ",
@@ -56,7 +64,9 @@ const translations = {
   ta: {
     home: "முகப்பு",
     myClaims: "என் கோரிக்கைகள்",
+    myVehicles: "எனது வாகனங்கள்",
     documents: "ஆவணங்கள்",
+    thirdParty: "மூன்றாம் தரப்பு",
     contact: "தொடர்பு கொள்ள",
     newClaim: "புதிய கோரிக்கை",
     myProfile: "என் சுயவிவரம்",
@@ -87,6 +97,7 @@ const branches = [
 export default function PolicyHolderNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { chatUnreadCount, notificationUnreadCount, openChat } = useChatNotification();
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -99,12 +110,72 @@ export default function PolicyHolderNavbar() {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const langMenuRef = useRef<HTMLDivElement>(null);
 
-  // Load language from localStorage on mount
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  // Load language and user session from localStorage / sessionStorage on mount
   useEffect(() => {
     const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
     if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
       setLang(savedLang);
     }
+
+    const loadUser = () => {
+      if (typeof window !== "undefined") {
+        const userStr = sessionStorage.getItem("logged_in_user");
+        if (userStr) {
+          try {
+            setCurrentUser(JSON.parse(userStr));
+          } catch (e) {
+            console.error("Error loading user in navbar", e);
+          }
+        }
+      }
+    };
+
+    loadUser();
+    window.addEventListener("user-profile-updated", loadUser);
+    return () => window.removeEventListener("user-profile-updated", loadUser);
+  }, []);
+
+  // Real-time Session Status Monitor
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const userStr = sessionStorage.getItem("logged_in_user");
+    if (!userStr) return;
+
+    const checkSession = async () => {
+      try {
+        const user = JSON.parse(userStr);
+        if (!user?._id) return;
+
+        const res = await fetch(`${API_URL}/auth/session-status`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userType: "PolicyHolder",
+            userId: user._id,
+            loginTimestamp: user.lastLoginAt
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.valid === false) {
+            sessionStorage.clear();
+            window.location.href = `/Login?message=${encodeURIComponent(data.reason || "Your login session was terminated by an administrator.")}`;
+          }
+        }
+      } catch (e) {
+        // network silent
+      }
+    };
+
+    const interval = setInterval(checkSession, 10000);
+    window.addEventListener("focus", checkSession);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("focus", checkSession);
+    };
   }, []);
 
   // Close dropdowns when clicking outside
@@ -182,6 +253,12 @@ export default function PolicyHolderNavbar() {
     return pathname === href || pathname.startsWith(href + "/");
   };
 
+  const getAvatarUrl = (rawUrl?: string) => {
+    if (!rawUrl) return "";
+    if (rawUrl.startsWith("http://") || rawUrl.startsWith("https://") || rawUrl.startsWith("data:")) return rawUrl;
+    return `http://localhost:5000${rawUrl.startsWith('/') ? '' : '/'}${rawUrl}`;
+  };
+
   const t = translations[lang];
 
   const filteredBranches = branches.filter(b => {
@@ -199,11 +276,13 @@ export default function PolicyHolderNavbar() {
   const navLinks = [
     { href: "/Policy_Holder/Home", label: t.home },
     { href: "/Policy_Holder/My_claims", label: t.myClaims },
+    { href: "/Policy_Holder/MyVehicles", label: t.myVehicles },
     { href: "/Policy_Holder/Documents", label: t.documents },
     { href: "/Policy_Holder/Contact", label: t.contact }
   ];
 
   return (
+    <>
     <div className="w-full h-[93px] md:h-[101px] select-none">
       <nav
         className={`fixed left-0 right-0 w-full bg-white border-b border-gray-200 z-50 transition-all duration-300 ease-in-out shadow-md ${
@@ -297,7 +376,7 @@ export default function PolicyHolderNavbar() {
           </div>
 
           {/* Desktop Navigation Links — Matching Homepage Style */}
-          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-7 text-base" : "gap-5 text-sm md:text-[15px]"}`}>
+          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-4 lg:gap-7 text-sm lg:text-base" : "gap-3.5 lg:gap-5 text-xs md:text-sm lg:text-[15px]"}`}>
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
@@ -328,51 +407,97 @@ export default function PolicyHolderNavbar() {
             </Link>
           </div>
 
-          {/* Right Action Icons (Notifications, Profile & Mobile Hamburger) */}
+          {/* Right Action Icons (Claim Chat, Notifications, Profile & Mobile Hamburger) */}
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Live Claim Chat Message Icon */}
+            <button
+              onClick={() => openChat()}
+              className="relative p-2 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 cursor-pointer flex items-center justify-center focus:outline-none"
+              aria-label={chatUnreadCount > 0 ? `Unread messages (${chatUnreadCount})` : "Claim Chat"}
+              title="Claim Communication Desk"
+            >
+              <HugeiconsIcon icon={BubbleChatIcon} className="w-6 h-6" strokeWidth={1.8} />
+              {chatUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-75">
+                  {chatUnreadCount > 9 ? "9+" : chatUnreadCount}
+                </span>
+              )}
+            </button>
+
             {/* Notifications Bell */}
             <Link
               href="/Policy_Holder/Notifications"
               className="relative p-2 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 no-underline flex items-center justify-center"
-              aria-label="Notifications"
+              aria-label={notificationUnreadCount > 0 ? `Notifications (${notificationUnreadCount})` : "Notifications"}
+              title="In-App Notifications"
             >
               <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6" strokeWidth={1.8} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-white" />
+              {notificationUnreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-white shadow-xs animate-in zoom-in-75">
+                  {notificationUnreadCount > 9 ? "9+" : notificationUnreadCount}
+                </span>
+              )}
             </Link>
 
             {/* Profile Dropdown */}
             <div className="relative" ref={profileMenuRef}>
               <button
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
-                className="p-1.5 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 bg-transparent border-none cursor-pointer focus:outline-none flex items-center justify-center"
+                className="p-1 text-slate-700 hover:text-[#0284c7] hover:bg-slate-50 rounded-full transition-colors duration-150 bg-transparent border-none cursor-pointer focus:outline-none flex items-center justify-center"
                 aria-label="User Profile"
                 aria-expanded={profileMenuOpen}
               >
-                <HugeiconsIcon icon={UserCircleIcon} className="w-7 h-7" strokeWidth={1.8} />
+                {currentUser?.profilePhoto ? (
+                  <img
+                    src={getAvatarUrl(currentUser.profilePhoto)}
+                    alt="Profile Avatar"
+                    className="w-8 h-8 rounded-full object-cover border-2 border-sky-500 shadow-2xs"
+                  />
+                ) : (
+                  <HugeiconsIcon icon={UserCircleIcon} className="w-8 h-8" strokeWidth={1.8} />
+                )}
               </button>
 
               {/* Dropdown Menu */}
               {profileMenuOpen && (
                 <div
-                  className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2 z-50 transition-all duration-200 animate-in fade-in slide-in-from-top-2"
+                  className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.12)] border border-slate-100 py-2.5 z-50 transition-all duration-200 animate-in fade-in slide-in-from-top-2 select-none"
                 >
+                  {/* User info header */}
+                  <div className="px-5 py-2 flex flex-col gap-0.5 border-b border-slate-100">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Policy Holder
+                    </span>
+                    <span className="text-sm font-semibold text-slate-800 truncate">
+                      {currentUser ? `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim() || "Policy Holder" : "Policy Holder"}
+                    </span>
+                    <span className="text-xs font-semibold text-slate-500 truncate font-mono">
+                      {currentUser?.email || currentUser?.nic || ""}
+                    </span>
+                    {currentUser?.referenceNumber && (
+                      <span className="text-[9px] font-bold text-[#0284c7] bg-sky-50 px-2 py-0.5 rounded-md w-fit mt-1">
+                        Ref: {currentUser.referenceNumber}
+                      </span>
+                    )}
+                  </div>
+
                   <Link
-                    href="/Policy_Holder/Home"
+                    href="/Policy_Holder/Profile"
                     onClick={() => setProfileMenuOpen(false)}
-                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-medium text-sm transition-colors no-underline"
+                    className="flex items-center gap-3 px-5 py-2.5 text-slate-700 hover:bg-slate-50 hover:text-[#0284c7] font-semibold text-xs transition-colors no-underline mt-1"
                   >
                     <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-slate-500" strokeWidth={2} />
-                    {t.myProfile}
+                    <span>{t.myProfile}</span>
                   </Link>
 
                   <div className="mx-4 my-1 border-t border-slate-100" />
 
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-medium text-sm transition-colors text-left bg-transparent border-none cursor-pointer"
+                    className="flex items-center gap-3 w-full px-5 py-2.5 text-red-500 hover:bg-red-50 font-semibold text-xs transition-colors text-left bg-transparent border-none cursor-pointer"
                   >
                     <HugeiconsIcon icon={Logout01Icon} className="w-4 h-4 text-red-500" strokeWidth={2} />
-                    {t.logout}
+                    <span>{t.logout}</span>
                   </button>
                 </div>
               )}
@@ -518,5 +643,9 @@ export default function PolicyHolderNavbar() {
         </div>
       )}
     </div>
+
+    {/* Accessibility Control Center — visible on all Policy Holder pages */}
+    <AccessibilityWidget />
+    </>
   );
 }

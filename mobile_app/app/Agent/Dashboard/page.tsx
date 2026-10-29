@@ -20,6 +20,7 @@ import {
   Linking,
   Image,
 } from "react-native";
+import * as WebBrowser from "expo-web-browser";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useLocalSearchParams, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -28,6 +29,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
 import AgentNavbar from "../../Components/Agent/page";
+import AIChatBot from "../../Components/AIChatBot";
 import { API_BASE_URL } from "../../_config";
 import { compressImageMobile } from "../../../utils/imageCompressor";
 import { useLanguage } from "../../../utils/translations";
@@ -123,7 +125,7 @@ const parseInspectionReport = (reportText?: string | null) => {
       if (!trimmed) return;
 
       if (trimmed.startsWith("• Odometer:")) {
-        odometer = trimmed.replace("• Odometer:", "").trim();
+        odometer = trimmed.replace("• Odometer:", "").replace(/km/gi, "").trim();
       } else if (trimmed.startsWith("• Fuel Level:")) {
         fuelLevel = trimmed.replace("• Fuel Level:", "").trim();
       } else if (trimmed.startsWith("• Recommended Action:")) {
@@ -283,6 +285,7 @@ export default function AgentDashboard() {
   const { claimId, step } = useLocalSearchParams<{ claimId?: string; step?: string }>();
   const [agentName, setAgentName]     = useState("");
   const [agentEmail, setAgentEmail]   = useState("");
+  const [agentProfilePhoto, setAgentProfilePhoto] = useState("");
   const [claims, setClaims]           = useState<Claim[]>([]);
   const [loading, setLoading]         = useState(true);
   const [refreshing, setRefreshing]   = useState(false);
@@ -385,13 +388,26 @@ export default function AgentDashboard() {
   const [wheelsDmg, setWheelsDmg] = useState("None");
   const activeClaimIdRef = useRef<string | null>(null);
   const handledParamClaimIdRef = useRef<string | null>(null);
-
   const closeDetailModal = () => {
     activeClaimIdRef.current = null;
+    handledParamClaimIdRef.current = selectedClaim?.claimNumber || selectedClaim?._id || "closed";
     if (activeInspectionStep === 5) {
       setActiveTab("activity");
     }
     setSelectedClaim(null);
+    if (claimId) {
+      router.replace("/Agent/Dashboard/page");
+    }
+  };
+
+  const openClaimPdf = async (claimNum?: string) => {
+    if (!claimNum) return;
+    const url = `${API_BASE_URL}/api/claims/${claimNum}/report`;
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Linking.openURL(url);
+    }
   };
 
   // Synchronize wizard activeInspectionStep on claim selection (preserves in-progress form during background polling)
@@ -490,8 +506,8 @@ export default function AgentDashboard() {
           setAvailability(data.availability);
         }
       }
-    } catch (e) {
-      console.error("Error fetching availability:", e);
+    } catch (e: any) {
+      console.warn("Agent availability offline / server reconnecting:", e?.message || e);
     }
   };
 
@@ -681,15 +697,18 @@ export default function AgentDashboard() {
       return;
     }
 
+    const cleanOdometer = odometer.replace(/km/gi, "").trim();
+    const cleanAmount = Number(assessmentAmount.replace(/[^0-9.]/g, "")) || 0;
+
     const formattedReport = `
 ==================================================
            VEHICLE CLAIM INSPECTION REPORT
 ==================================================
 [1. VEHICLE CONDITION DETAILS]
-• Odometer: ${odometer.trim()} km
+• Odometer: ${cleanOdometer} km
 • Fuel Level: ${fuelLevel}
 • Recommended Action: ${recommendedAction}
-• Estimated Cost: LKR ${Number(assessmentAmount).toLocaleString()}
+• Estimated Cost: LKR ${cleanAmount.toLocaleString()}
 
 [2. COMPONENT DAMAGE CHECKLIST]
 • Front Bumper: [${frontBumperDmg}]
@@ -716,7 +735,7 @@ ${inspectionReportText.trim()}
         body: JSON.stringify({
           inspectionReport: formattedReport,
           inspectionSubmitted: true,
-          amount: Number(assessmentAmount),
+          amount: cleanAmount,
           status: "In Progress"
         }),
       });
@@ -903,7 +922,7 @@ ${inspectionReportText.trim()}
             <Text style={{ fontSize: 12, fontWeight: "800", color: "#0f172a" }}>{selectedClaim.damageType}</Text>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>PLATE NUMBER</Text>
+            <Text style={{ fontSize: 11, fontWeight: "700", color: "#64748b" }}>VEHICLE NUMBER</Text>
             <Text style={{ fontSize: 12, fontWeight: "800", color: "#0f172a" }}>{formatNumberPlate(selectedClaim.vehiclePlate)}</Text>
           </View>
         </View>
@@ -1625,6 +1644,7 @@ ${inspectionReportText.trim()}
       try {
         const agent = JSON.parse(agentStr);
         setAgentName(agent.name || "Agent");
+        setAgentProfilePhoto(agent.profilePhoto || "");
         if (agent.email) {
           setAgentEmail(agent.email);
           fetchClaims(agent.email);
@@ -1674,6 +1694,25 @@ ${inspectionReportText.trim()}
     return () => clearInterval(interval);
   }, [agentEmail]);
 
+  // Periodic heartbeat ping while Active (every 20s)
+  useEffect(() => {
+    if (!agentEmail || availability !== "Active") return;
+    const sendHeartbeat = async () => {
+      try {
+        await fetch(`${API_BASE_URL}/api/agent/heartbeat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: agentEmail }),
+        });
+      } catch (err) {
+        // silent on transient network fluctuation
+      }
+    };
+    sendHeartbeat();
+    const hbInterval = setInterval(sendHeartbeat, 20000);
+    return () => clearInterval(hbInterval);
+  }, [agentEmail, availability]);
+
   // Poll claims in background for real-time updates
   useEffect(() => {
     if (!agentEmail) return;
@@ -1692,19 +1731,20 @@ ${inspectionReportText.trim()}
             }
           }
         }
-      } catch (err) {
-        console.warn("Background claims polling failed:", err);
+      } catch (err: any) {
+        // Background poll gracefully skips cycle when server is restarting or network fluctuates
       }
     }, 7000);
     return () => clearInterval(pollInterval);
   }, [agentEmail, selectedClaim]);
 
-  // Auto-open claim details when claimId is passed via params
+  // Auto-open claim details once when claimId is passed via params
   useEffect(() => {
     if (claimId && claims.length > 0) {
-      if (!selectedClaim || (selectedClaim._id !== claimId && selectedClaim.claimNumber !== claimId)) {
+      if (handledParamClaimIdRef.current !== claimId) {
         const matched = claims.find(c => c._id === claimId || c.claimNumber === claimId);
         if (matched) {
+          handledParamClaimIdRef.current = claimId;
           setSelectedClaim(matched);
           if (step === "4") {
             setActiveInspectionStep(4);
@@ -1712,7 +1752,7 @@ ${inspectionReportText.trim()}
         }
       }
     }
-  }, [claimId, claims, step, selectedClaim]);
+  }, [claimId, claims, step]);
 
   // ── Animations ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -2094,9 +2134,24 @@ ${inspectionReportText.trim()}
                 </TouchableOpacity>
               </Animated.View>
 
-              {/* Avatar / logout */}
-              <TouchableOpacity style={styles.avatarButton} onPress={handleLogout} activeOpacity={0.85}>
-                <Text style={styles.avatarText}>{agentName.charAt(0).toUpperCase()}</Text>
+              {/* Avatar / Profile Navigation */}
+              <TouchableOpacity
+                style={styles.avatarButton}
+                onPress={() => router.push("/Agent/Profile/page" as any)}
+                activeOpacity={0.85}
+              >
+                {agentProfilePhoto ? (
+                  <Image
+                    source={{
+                      uri: agentProfilePhoto.startsWith("http") || agentProfilePhoto.startsWith("data:")
+                        ? agentProfilePhoto
+                        : `${API_BASE_URL.replace("/api", "")}/${agentProfilePhoto.startsWith("/") ? agentProfilePhoto.slice(1) : agentProfilePhoto}`
+                    }}
+                    style={styles.avatarPhoto}
+                  />
+                ) : (
+                  <Text style={styles.avatarText}>{agentName.charAt(0).toUpperCase()}</Text>
+                )}
               </TouchableOpacity>
             </View>
 
@@ -2158,7 +2213,7 @@ ${inspectionReportText.trim()}
               >
                 <LinearGradient
                   colors={["rgba(239, 68, 68, 0.15)", "rgba(239, 68, 68, 0.02)"]}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.cardHeaderRow}>
                   <View style={[styles.glowDot, { backgroundColor: "#ef4444", shadowColor: "#ef4444" }]} />
@@ -2178,7 +2233,7 @@ ${inspectionReportText.trim()}
               >
                 <LinearGradient
                   colors={["rgba(6, 182, 212, 0.15)", "rgba(6, 182, 212, 0.02)"]}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.cardHeaderRow}>
                   <View style={[styles.glowDot, { backgroundColor: "#06b6d4", shadowColor: "#06b6d4" }]} />
@@ -2198,7 +2253,7 @@ ${inspectionReportText.trim()}
               >
                 <LinearGradient
                   colors={["rgba(34, 197, 94, 0.15)", "rgba(34, 197, 94, 0.02)"]}
-                  style={StyleSheet.absoluteFillObject}
+                  style={StyleSheet.absoluteFill}
                 />
                 <View style={styles.cardHeaderRow}>
                   <View style={[styles.glowDot, { backgroundColor: "#22c55e", shadowColor: "#22c55e" }]} />
@@ -2456,10 +2511,10 @@ ${inspectionReportText.trim()}
         </Animated.View>
       </ScrollView>
 
-      {/* ── FLOATING SUPPORT ── */}
-      <TouchableOpacity style={styles.floatingSupport} onPress={showSupportAlert} activeOpacity={0.8}>
-        <Ionicons name="chatbubble-ellipses" size={24} color="#ffffff" />
-      </TouchableOpacity>
+      {/* Sanasa Vehicle Insurance AI Assistant & Support Chat */}
+      {!(selectedClaim && activeInspectionStep === 4) && (
+        <AIChatBot userRole="agent" bottomOffset={96} />
+      )}
 
       <AgentNavbar activeTab="home" />
 
@@ -2588,13 +2643,33 @@ ${inspectionReportText.trim()}
                     </Text>
                   </View>
                 </View>
-                <TouchableOpacity
-                  style={styles.popupCloseBtn}
-                  onPress={closeDetailModal}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="close" size={18} color="#475569" />
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <TouchableOpacity
+                    onPress={() => openClaimPdf(selectedClaim?.claimNumber)}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      backgroundColor: "#f0fdf4",
+                      borderWidth: 1,
+                      borderColor: "#86efac",
+                      paddingHorizontal: 9,
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Ionicons name="download-outline" size={13} color="#15803d" />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#15803d" }}>PDF</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.popupCloseBtn}
+                    onPress={closeDetailModal}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="close" size={18} color="#475569" />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               {/* Wizard Stepper Visualizer */}
@@ -3658,6 +3733,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(249,115,22,0.25)",
     borderWidth: 1.5, borderColor: "rgba(249,115,22,0.5)",
     alignItems: "center", justifyContent: "center",
+    overflow: "hidden"
+  },
+  avatarPhoto: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 22,
   },
   avatarText: { color: "#ffffff", fontSize: 18, fontWeight: "800" },
 
@@ -4016,7 +4097,7 @@ const styles = StyleSheet.create({
 
   /* Custom alert */
   alertOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(15, 23, 42, 0.6)",
     alignItems: "center", justifyContent: "center",
     zIndex: 9999,

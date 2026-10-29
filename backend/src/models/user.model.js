@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
   address: { type: String, required: true },
   province: { type: String, required: true },
   city: { type: String, required: true },
+  profilePhoto: { type: String, default: "" },
   password: { type: String, required: true },
   vehicles: [
     {
@@ -21,7 +22,9 @@ const userSchema = new mongoose.Schema({
       engineNumber: { type: String, required: true },
       chassisNumber: { type: String, required: true },
       policyNumber: { type: String, required: true },
-      status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" }
+      status: { type: String, enum: ["Pending", "Approved", "Rejected"], default: "Pending" },
+      renewalCycle: { type: String, default: "Annual (Jan 01 - Dec 31)" },
+      policyExpiryDate: { type: Date }
     }
   ],
   documents: {
@@ -44,6 +47,12 @@ const userSchema = new mongoose.Schema({
   resetOtpRequestedAt: { type: Date },
   resetSessionToken: { type: String },
   resetSessionExpires: { type: Date },
+  lastLoginAt: { type: Date, default: null },
+  lastLoginIp: { type: String, default: "" },
+  lastLoginDevice: { type: String, default: "" },
+  loginCount: { type: Number, default: 0 },
+  forceLogoutAt: { type: Date, default: null },
+  sessionRevokedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 

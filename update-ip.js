@@ -70,3 +70,12 @@ if (fs.existsSync(mobileConfigPath)) {
 } else {
   console.log(`[IP Config Helper] Warning: ${mobileConfigPath} not found.`);
 }
+
+// 3. Auto-reverse port 5000 for connected Android emulator / device
+try {
+  const { execSync } = require('child_process');
+  execSync('adb reverse tcp:5000 tcp:5000', { stdio: 'ignore' });
+  console.log('[IP Config Helper] Port 5000 mapped to Android device via adb reverse.');
+} catch (e) {
+  // ADB not available or no device attached; safe to continue
+}

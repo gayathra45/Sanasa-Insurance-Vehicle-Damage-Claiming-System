@@ -1,0 +1,10 @@
+{
+  "enabled": true,
+  "scheduleTime": "02:00",
+  "retentionDays": 14,
+  "lastBackupAt": "2026-10-29T07:10:22.619Z",
+  "lastStatus": "Success",
+  "lastError": null,
+  "lastFileSize": "0.04 MB",
+  "lastRecordsCount": 1094
+}

@@ -15,15 +15,19 @@ import {
   Alert,
   ImageBackground,
   Image,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import LanguageModal from "../Components/PolicyHolder/LanguageModal";
+import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 import { translateTextMobile } from "../../utils/translator";
+import { getViewedClaimsMobile, markClaimAsReadMobile, isClaimUnreadMobile, UnreadDotMobile } from "../../utils/unreadClaims";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -72,6 +76,14 @@ export default function MyClaims() {
   const [langModalVisible, setLangModalVisible] = useState(false);
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    (async () => {
+      const viewed = await getViewedClaimsMobile("policy_holder");
+      setViewedClaims(viewed);
+    })();
+  }, []);
 
   const getDocUrl = (url?: string) => {
     if (!url) return "";
@@ -85,10 +97,10 @@ export default function MyClaims() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
@@ -102,7 +114,8 @@ export default function MyClaims() {
     }
 
     return (claim.requestedDocuments || []).filter(name => {
-      if (getRecipientForDoc(name) !== "User") return false;
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      if (rec === "agent" || rec === "insurance_agent") return false;
       const normName = name.trim().toLowerCase();
       const alreadyUploaded = uploadedNames.some(u => 
         u === normName ||
@@ -201,37 +214,9 @@ export default function MyClaims() {
         }
       }
 
-      // Check local drafts
-      const lastStr = await AsyncStorage.getItem("last_submitted_claim");
-      let localClaims: Claim[] = [];
-      if (lastStr) {
-        const parsed = JSON.parse(lastStr);
-        const exists = databaseClaims.some((c) => c.claimNumber === parsed.claimNumber);
-        if (!exists) {
-          localClaims.push({
-            claimNumber: parsed.claimNumber,
-            vehiclePlate: parsed.vehiclePlate,
-            incidentDate: formatDateString(parsed.incidentDate),
-            incidentTime: parsed.incidentTime,
-            damageType: parsed.damageType,
-            amount: "Pending",
-            status: "Pending",
-            description: parsed.description,
-            otherVehicleDetails: parsed.otherVehicleDetails,
-            location: parsed.location,
-            officer: "Not Assigned",
-            documentsRequested: false,
-            requestedDocuments: [],
-            currentStep: 1,
-            messages: [],
-            accidentPhotos: parsed.accidentPhotos || {},
-            drivingLicense: parsed.drivingLicense || {},
-            additionalDocuments: parsed.additionalDocuments || []
-          });
-        }
-      }
-
-      setClaims([...localClaims, ...databaseClaims]);
+      // The database is the single source of truth for claims
+      await AsyncStorage.removeItem("last_submitted_claim");
+      setClaims(databaseClaims);
     } catch (err) {
       console.error("Error fetching claims in app:", err);
     } finally {
@@ -270,6 +255,16 @@ export default function MyClaims() {
     setRefreshing(true);
     if (userNic) fetchClaims(userNic);
   }, [userNic, fetchClaims]);
+
+  const openClaimPdf = async (claimNum?: string) => {
+    if (!claimNum) return;
+    const url = `${API_BASE_URL}/api/claims/${claimNum}/report`;
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Linking.openURL(url);
+    }
+  };
 
   const filteredClaims = claims.filter(
     (claim) =>
@@ -439,7 +434,12 @@ export default function MyClaims() {
                 <View key={claim.claimNumber} style={styles.claimCard}>
                   <View style={styles.cardHeader}>
                     <View>
-                      <Text style={styles.claimIdText}>{claim.claimNumber}</Text>
+                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        <Text style={styles.claimIdText}>{claim.claimNumber}</Text>
+                        {isClaimUnreadMobile(claim as any, viewedClaims) && (
+                          <UnreadDotMobile size={8} />
+                        )}
+                      </View>
                       <Text style={styles.claimVehicle}>{formatNumberPlate(claim.vehiclePlate)}</Text>
                     </View>
                     <View
@@ -469,14 +469,38 @@ export default function MyClaims() {
                     </View>
                   </View>
 
-                  <TouchableOpacity
-                    style={styles.viewDetailsBtn}
-                    onPress={() => setSelectedClaim(claim)}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.viewDetailsBtnText}>{t.myClaims.viewDetails}</Text>
-                    <Ionicons name="arrow-forward" size={15} color="#0284c7" />
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
+                    <TouchableOpacity
+                      style={[styles.viewDetailsBtn, { flex: 1, marginTop: 0 }]}
+                      onPress={() => {
+                        markClaimAsReadMobile((claim as any)._id || claim.claimNumber, viewedClaims, setViewedClaims, "policy_holder");
+                        setSelectedClaim(claim);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.viewDetailsBtnText}>{t.myClaims.viewDetails}</Text>
+                      <Ionicons name="arrow-forward" size={15} color="#0284c7" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => openClaimPdf(claim.claimNumber)}
+                      activeOpacity={0.7}
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 4,
+                        paddingHorizontal: 12,
+                        height: 38,
+                        borderRadius: 10,
+                        backgroundColor: "#f0fdf4",
+                        borderWidth: 1,
+                        borderColor: "#86efac",
+                      }}
+                    >
+                      <Ionicons name="download-outline" size={14} color="#15803d" />
+                      <Text style={{ fontSize: 12, fontWeight: "700", color: "#15803d" }}>PDF</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               );
             })
@@ -496,16 +520,36 @@ export default function MyClaims() {
             <View style={styles.modalContent}>
               {/* Modal Header */}
               <View style={styles.modalHeader}>
-                <View>
+                <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.modalTitle}>{t.myClaims.detailsTitle}</Text>
                   <Text style={styles.modalSubtitle}>{selectedClaim.claimNumber}</Text>
                 </View>
-                <TouchableOpacity
-                  onPress={() => setSelectedClaim(null)}
-                  style={styles.closeModalBtn}
-                >
-                  <Ionicons name="close" size={24} color="#64748b" />
-                </TouchableOpacity>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <TouchableOpacity
+                    onPress={() => openClaimPdf(selectedClaim.claimNumber)}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      backgroundColor: "#f0fdf4",
+                      borderWidth: 1,
+                      borderColor: "#86efac",
+                      paddingHorizontal: 10,
+                      paddingVertical: 6,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Ionicons name="download-outline" size={13} color="#15803d" />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#15803d" }}>PDF Report</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={() => setSelectedClaim(null)}
+                    style={styles.closeModalBtn}
+                  >
+                    <Ionicons name="close" size={24} color="#64748b" />
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <ScrollView contentContainerStyle={styles.modalScrollBody} showsVerticalScrollIndicator={false}>
@@ -1042,6 +1086,7 @@ export default function MyClaims() {
         onClose={() => setLangModalVisible(false)}
       />
 
+      <AIChatBot userRole="policy_holder" bottomOffset={96} />
       <PolicyHolderNavbar />
     </View>
   );

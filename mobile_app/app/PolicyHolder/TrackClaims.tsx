@@ -15,13 +15,16 @@ import {
   Keyboard,
   Image,
   Modal,
+  Linking,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import * as WebBrowser from "expo-web-browser";
 import { router, useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import LanguageModal from "../Components/PolicyHolder/LanguageModal";
+import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 import { translateTextMobile } from "../../utils/translator";
 
@@ -82,10 +85,10 @@ export default function TrackClaims() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
@@ -99,7 +102,8 @@ export default function TrackClaims() {
     }
 
     return (claim.requestedDocuments || []).filter(name => {
-      if (getRecipientForDoc(name) !== "User") return false;
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      if (rec === "agent" || rec === "insurance_agent") return false;
       const normName = name.trim().toLowerCase();
       const alreadyUploaded = uploadedNames.some(u => 
         u === normName ||
@@ -267,33 +271,9 @@ export default function TrackClaims() {
                 }));
               }
             }
-            // Check local submitted
-            const lastStr = await AsyncStorage.getItem("last_submitted_claim");
-            let localClaims: Claim[] = [];
-            if (lastStr) {
-              const parsed = JSON.parse(lastStr);
-              const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
-              if (!exists) {
-                localClaims.push({
-                  claimNumber: parsed.claimNumber,
-                  vehiclePlate: parsed.vehiclePlate,
-                  incidentDate: formatDateString(parsed.incidentDate),
-                  incidentTime: parsed.incidentTime,
-                  damageType: parsed.damageType,
-                  amount: "Pending",
-                  status: "Pending",
-                  description: parsed.description,
-                  otherVehicleDetails: parsed.otherVehicleDetails,
-                  location: parsed.location,
-                  officer: "Not Assigned",
-                  documentsRequested: false,
-                  requestedDocuments: [],
-                  currentStep: 1,
-                  messages: []
-                });
-              }
-            }
-            setClaimsList([...localClaims, ...databaseClaims]);
+            // The database is the single source of truth for claims
+            await AsyncStorage.removeItem("last_submitted_claim");
+            setClaimsList(databaseClaims);
           }
         } catch (e) {
           console.error(e);
@@ -311,6 +291,16 @@ export default function TrackClaims() {
       return `${date.getDate().toString().padStart(2, '0')} ${months[date.getMonth()]} ${date.getFullYear()}`;
     } catch (e) {
       return dateStr;
+    }
+  };
+
+  const openClaimPdf = async (claimNum?: string) => {
+    if (!claimNum) return;
+    const url = `${API_BASE_URL}/api/claims/${claimNum}/report`;
+    try {
+      await WebBrowser.openBrowserAsync(url);
+    } catch {
+      Linking.openURL(url);
     }
   };
 
@@ -504,12 +494,32 @@ export default function TrackClaims() {
             {/* Header info card */}
             <View style={styles.claimSummaryCard}>
               <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-                <View>
+                <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.cardHeaderTitle}>{trackedClaim.claimNumber}</Text>
                   <Text style={styles.cardHeaderSub}>{lang === "en" ? "Registered vehicle: " : lang === "si" ? "ලියාපදිංචි වාහනය: " : "பதிவுசெய்யப்பட்ட வாகனம்: "}{formatNumberPlate(trackedClaim.vehiclePlate)}</Text>
                 </View>
-                <View style={styles.badgeWrap}>
-                  <Text style={styles.badgeLabel}>{trackedClaim.status === "Pending" ? t.trackClaims.notAssessed : trackedClaim.status === "In Progress" ? (lang === "en" ? "In Progress" : lang === "si" ? "ක්‍රියාත්මක වෙමින්" : "செயல்பாட்டில்") : trackedClaim.status}</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <TouchableOpacity
+                    onPress={() => openClaimPdf(trackedClaim.claimNumber)}
+                    activeOpacity={0.7}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      backgroundColor: "#f0fdf4",
+                      borderWidth: 1,
+                      borderColor: "#86efac",
+                      paddingHorizontal: 8,
+                      paddingVertical: 5,
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Ionicons name="download-outline" size={13} color="#15803d" />
+                    <Text style={{ fontSize: 11, fontWeight: "700", color: "#15803d" }}>PDF</Text>
+                  </TouchableOpacity>
+                  <View style={styles.badgeWrap}>
+                    <Text style={styles.badgeLabel}>{trackedClaim.status === "Pending" ? t.trackClaims.notAssessed : trackedClaim.status === "In Progress" ? (lang === "en" ? "In Progress" : lang === "si" ? "ක්‍රියාත්මක වෙමින්" : "செயல்பாட்டில்") : trackedClaim.status}</Text>
+                  </View>
                 </View>
               </View>
             </View>
@@ -1044,6 +1054,7 @@ export default function TrackClaims() {
         onClose={() => setLangModalVisible(false)}
       />
 
+      <AIChatBot userRole="policy_holder" bottomOffset={96} />
       <PolicyHolderNavbar />
     </View>
   );

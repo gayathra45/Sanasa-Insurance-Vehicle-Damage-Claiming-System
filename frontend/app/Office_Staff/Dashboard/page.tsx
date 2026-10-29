@@ -5,6 +5,7 @@ import Link from "next/link";
 import { API_URL } from "@/app/config";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import HeaderNotificationBell from "@/app/Components/HeaderNotificationBell";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
@@ -22,6 +23,7 @@ import {
   Loading03Icon
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
+import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 interface RegistrationItem {
   name: string;
@@ -53,6 +55,7 @@ export default function OfficeStaffDashboard() {
   const [error, setError] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
   const [detailedClaim, setDetailedClaim] = useState<any | null>(null);
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
 
   // --- Password Modal States ---
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -197,12 +200,14 @@ export default function OfficeStaffDashboard() {
     }
     setBranch(currentBranch);
     setStaffEmail(email);
+    setViewedClaims(getViewedClaims("office_staff"));
 
     async function fetchStats() {
       try {
         const res = await fetch(`${API_URL}/office-staff/dashboard-stats?branch=${encodeURIComponent(currentBranch)}`);
         if (!res.ok) {
-          throw new Error("Failed to load dashboard metrics.");
+          const errData = await res.json().catch(() => null);
+          throw new Error(errData?.error || errData?.message || `Failed to load dashboard metrics (Status: ${res.status})`);
         }
         const data = await res.json();
         if (data.stats) {
@@ -243,16 +248,19 @@ export default function OfficeStaffDashboard() {
 
         // Format registrations list from DB
         const formattedRegs = (data.newRegistrations || []).map((user: any) => ({
-          name: `${user.firstName} ${user.lastName}`,
-          vehiclesCount: user.vehicles ? user.vehicles.length : 0,
-          date: new Date(user.createdAt).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          }),
+          name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Applicant",
+          vehiclesCount: Array.isArray(user.vehicles) ? user.vehicles.length : 0,
+          date: user.createdAt
+            ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+              })
+            : "Recently",
         }));
         setNewRegistrations(formattedRegs);
+        setError(""); // Clear error on successful fetch
       } catch (err: any) {
-        console.error(err);
+        console.error("Dashboard stats error:", err);
         setError(err.message || "Failed to load branch statistics");
       } finally {
         setLoading(false);
@@ -292,10 +300,8 @@ export default function OfficeStaffDashboard() {
             
             <div className="flex items-center gap-5">
               {/* Notification Bell Icon */}
-              <Link href="/Office_Staff/Notifications" className="relative p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center">
-                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-500 hover:text-slate-800" strokeWidth={2} />
-              </Link>
-              {/* User Avatar Icon */}
+              <HeaderNotificationBell href="/Office_Staff/Notifications" />
+              {/* User Avatar Icon & Live Claim Chat Button */}
               <UserAvatarDropdown userType="office_staff" />
             </div>
           </header>
@@ -517,9 +523,14 @@ export default function OfficeStaffDashboard() {
                               <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 flex-1 min-w-0">
                                 {/* Title / Urgency */}
                                 <div className="flex-shrink-0">
-                                  <span className={`font-semibold text-base ${headerTextClass} block`}>
-                                    {claim.urgency}
-                                  </span>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className={`font-semibold text-base ${headerTextClass} block`}>
+                                      {claim.urgency}
+                                    </span>
+                                    {isClaimUnread(claim.rawClaim || claim, viewedClaims) && (
+                                      <UnreadDot />
+                                    )}
+                                  </div>
                                   <span className="text-[11px] font-semibold text-slate-400 block tracking-wider uppercase">
                                     {claim.id}
                                   </span>
@@ -548,7 +559,10 @@ export default function OfficeStaffDashboard() {
                                   {claim.time}
                                 </span>
                                 <button
-                                  onClick={() => setSelectedClaim(claim.rawClaim)}
+                                  onClick={() => {
+                                    markClaimAsRead(claim.rawClaim || claim.id, viewedClaims, setViewedClaims, "office_staff");
+                                    setSelectedClaim(claim.rawClaim);
+                                  }}
                                   className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-semibold text-[13px] px-6 py-3 rounded-full transition-all tracking-wide cursor-pointer focus:outline-none shadow-sm shadow-slate-500/20 whitespace-nowrap text-center border-none"
                                 >
                                   Details
@@ -640,7 +654,7 @@ export default function OfficeStaffDashboard() {
 
               <div className="space-y-3">
                 <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Vehicle Plate</span>
+                  <span className="text-slate-400 font-medium">Vehicle Number</span>
                   <span className="text-slate-800 font-semibold">{selectedClaim.vehiclePlate}</span>
                 </div>
                 <div className="flex justify-between border-b border-slate-50 pb-2">

@@ -21,7 +21,7 @@ router.post("/add-vehicle", async (req, res) => {
     // Check validation rules matching signup
     const cleanPlate = numberPlate.replace(/[\s-]/g, "");
     if (cleanPlate.length < 5 || cleanPlate.length > 10 || !/^[A-Za-z0-9]+$/.test(cleanPlate)) {
-      return res.status(400).json({ error: "Number Plate must be an alphanumeric mix between 5 and 10 characters." });
+      return res.status(400).json({ error: "Vehicle Number must be an alphanumeric mix between 5 and 10 characters." });
     }
     if (!/^\d{4}$/.test(year.trim())) {
       return res.status(400).json({ error: "Invalid year. Must be a 4-digit number." });
@@ -36,7 +36,7 @@ router.post("/add-vehicle", async (req, res) => {
       v => v.numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase() === numberPlate.replace(/[^a-zA-Z0-9]/g, "").toLowerCase()
     );
     if (exists) {
-      return res.status(400).json({ error: "This vehicle number plate is already registered under your account." });
+      return res.status(400).json({ error: "This vehicle number is already registered under your account." });
     }
 
     const newVehicle = {

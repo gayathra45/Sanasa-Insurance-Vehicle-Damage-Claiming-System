@@ -19,9 +19,12 @@ import {
   Analytics01Icon,
   File01Icon,
   Time02Icon,
+  Download01Icon,
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 import { translateText } from "@/app/utils/translator";
+import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
+import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 interface AdditionalDoc {
   name: string;
@@ -88,7 +91,7 @@ const translations = {
     statusRejected: "Rejected",
     statusCompleted: "Completed",
     tableClaimNum: "Claim #",
-    tablePlate: "Plate #",
+    tablePlate: "Vehicle Number",
     tableDate: "Date",
     tableType: "Damage Type",
     tableAmount: "Amount",
@@ -114,7 +117,7 @@ const translations = {
     claims: "හිමිකම්",
     pending: "ප්‍රතිචාර නොලැබුණු",
     completed: "නිම කළ",
-    searchPlaceholder: "අංකය, තහඩුව, වර්ගය, තත්ත්වය අනුව හිමිකම් සොයන්න...",
+    searchPlaceholder: "අංකය, වාහන අංකය, වර්ගය, තත්ත්වය අනුව හිමිකම් සොයන්න...",
     all: "සියල්ල",
     statusPending: "Pending",
     statusReview: "Review",
@@ -122,7 +125,7 @@ const translations = {
     statusRejected: "Rejected",
     statusCompleted: "Completed",
     tableClaimNum: "හිමිකම් අංකය",
-    tablePlate: "තහඩු අංකය",
+    tablePlate: "වාහන අංකය",
     tableDate: "දිනය",
     tableType: "හානි වර්ගය",
     tableAmount: "මුදල",
@@ -148,7 +151,7 @@ const translations = {
     claims: "கோரிக்கைகள்",
     pending: "நிலுவையில் உள்ளவை",
     completed: "முடிந்தவை",
-    searchPlaceholder: "எண், தட்டு, வகை, நிலை மூலம் கோரிக்கைகளைத் தேடுங்கள்...",
+    searchPlaceholder: "எண், வாகன எண், வகை, நிலை மூலம் கோரிக்கைகளைத் தேடுங்கள்...",
     all: "அனைத்தும்",
     statusPending: "Pending",
     statusReview: "Review",
@@ -156,7 +159,7 @@ const translations = {
     statusRejected: "Rejected",
     statusCompleted: "Completed",
     tableClaimNum: "கோரிக்கை #",
-    tablePlate: "தகடு #",
+    tablePlate: "வாகன எண்",
     tableDate: "தேதி",
     tableType: "சேத வகை",
     tableAmount: "தொகை",
@@ -188,6 +191,7 @@ export default function MyClaims() {
   const [isCancellingClaim, setIsCancellingClaim] = useState(false);
   const [translatedDesc, setTranslatedDesc] = useState<string | null>(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
 
   const getDocUrl = (url?: string) => {
     if (!url) return "";
@@ -197,8 +201,9 @@ export default function MyClaims() {
     return `${API_URL.replace("/api", "")}/uploads/${url}`;
   };
 
-  // Load language from localStorage on mount
+  // Load language and viewed claims from localStorage on mount
   useEffect(() => {
+    setViewedClaims(getViewedClaims("policy_holder"));
     const savedLang = localStorage.getItem("language") as "en" | "si" | "ta";
     if (savedLang && ["en", "si", "ta"].includes(savedLang)) {
       setLang(savedLang);
@@ -249,10 +254,10 @@ export default function MyClaims() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
@@ -266,7 +271,8 @@ export default function MyClaims() {
     }
 
     return (claim.requestedDocuments || []).filter(name => {
-      if (getRecipientForDoc(name) !== "User") return false;
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      if (rec === "agent" || rec === "insurance_agent") return false;
       const normName = name.trim().toLowerCase();
       const alreadyUploaded = uploadedNames.some(u => 
         u === normName ||
@@ -428,49 +434,18 @@ export default function MyClaims() {
       }
     }
 
-    // 3. Fallback to check if a claim was recently submitted in current session
-    let localClaims: Claim[] = [];
-    try {
-      const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-      if (lastSubmitted) {
-        const parsed = JSON.parse(lastSubmitted);
-        // Verify if it is already in database claims to prevent duplication
-        const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
-        if (!exists) {
-          localClaims.push({
-            claimNumber: parsed.claimNumber,
-            vehiclePlate: parsed.vehiclePlate,
-            incidentDate: formatDateString(parsed.incidentDate),
-            incidentTime: parsed.incidentTime,
-            damageType: parsed.damageType,
-            amount: "Pending",
-            status: "Pending",
-            description: parsed.description,
-            otherVehicleDetails: parsed.otherVehicleDetails,
-            location: parsed.location,
-            officer: "Not Assigned",
-            documentsRequested: false,
-            requestedDocuments: [],
-            currentStep: 1,
-            messages: [],
-            accidentPhotos: {},
-            drivingLicense: {},
-            additionalDocuments: [],
-            createdAt: parsed.createdAt || parsed.incidentDate || new Date().toISOString()
-          });
-        }
-      }
-    } catch (err) {
-      console.error("Error parsing local claim draft", err);
+    // The database is the single source of truth for claims
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem("last_submitted_claim");
     }
 
-    // 4. Combine recently submitted claims with database claims
-    const updatedClaims = [...localClaims, ...databaseClaims];
-    setClaims(updatedClaims);
+    setClaims(databaseClaims);
     if (selectedClaim) {
-      const updated = updatedClaims.find(c => c.claimNumber === selectedClaim.claimNumber);
+      const updated = databaseClaims.find(c => c.claimNumber === selectedClaim.claimNumber);
       if (updated) {
         setSelectedClaim(updated);
+      } else {
+        setSelectedClaim(null);
       }
     }
     if (showLoading) setIsLoading(false);
@@ -502,6 +477,13 @@ export default function MyClaims() {
 
   const getStatusBadge = (status: string) => {
     const s = status.toLowerCase();
+    if (s.includes("settled") || s.includes("completed")) {
+      return (
+        <span className="text-emerald-700 bg-emerald-50 border border-emerald-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
+          Completed
+        </span>
+      );
+    }
     if (s.includes("pending") || s.includes("progress")) {
       return (
         <span className="text-orange-500 bg-orange-50/45 border border-orange-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
@@ -520,6 +502,13 @@ export default function MyClaims() {
       return (
         <span className="text-green-500 bg-green-50/45 border border-green-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
           Approved
+        </span>
+      );
+    }
+    if (s.includes("rejected")) {
+      return (
+        <span className="text-rose-600 bg-rose-50 border border-rose-300 rounded-full px-4 py-1 text-center font-bold text-[13px] inline-block min-w-[95px] select-none">
+          Rejected
         </span>
       );
     }
@@ -589,13 +578,13 @@ export default function MyClaims() {
     if (statusFilter === "All") {
       matchesStatus = true;
     } else if (statusFilter === "Completed") {
-      matchesStatus = s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
+      matchesStatus = s.includes("settled") || s.includes("completed") || s.includes("approved") || s.includes("active") || s.includes("done") || s.includes("rejected");
     } else if (statusFilter === "Pending") {
       matchesStatus = s.includes("pending") || s.includes("progress");
     } else if (statusFilter === "Review") {
       matchesStatus = s.includes("review") || s.includes("submit");
     } else if (statusFilter === "Approved") {
-      matchesStatus = s.includes("approved") || s.includes("active") || s.includes("done");
+      matchesStatus = s.includes("settled") || s.includes("completed") || s.includes("approved") || s.includes("active") || s.includes("done");
     } else if (statusFilter === "Rejected") {
       matchesStatus = s.includes("rejected");
     }
@@ -813,7 +802,9 @@ export default function MyClaims() {
               filteredClaims.map((claim) => {
                 const s = claim.status.toLowerCase();
                 let borderLeftColor = "border-l-4 border-l-sky-400";
-                if (s.includes("review") || s.includes("submit")) {
+                if (s.includes("settled") || s.includes("completed")) {
+                  borderLeftColor = "border-l-4 border-l-emerald-500";
+                } else if (s.includes("review") || s.includes("submit")) {
                   borderLeftColor = "border-l-4 border-l-blue-600";
                 } else if (s.includes("approved") || s.includes("active") || s.includes("done")) {
                   borderLeftColor = "border-l-4 border-l-[#0f2d4a]";
@@ -824,12 +815,20 @@ export default function MyClaims() {
                 return (
                   <div
                     key={claim.claimNumber}
-                    onClick={() => setSelectedClaim(claim)}
+                    onClick={() => {
+                      markClaimAsRead((claim as any)._id || claim.claimNumber, viewedClaims, setViewedClaims, "policy_holder");
+                      setSelectedClaim(claim);
+                    }}
                     className={`bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${borderLeftColor}`}
                   >
                     {/* Claim Info */}
                     <div className="flex flex-col min-w-0 select-none">
-                      <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
+                        {isClaimUnread((claim as any), viewedClaims) && (
+                          <UnreadDot />
+                        )}
+                      </div>
                       {claim.createdAt && (
                         <span className="text-[10px] text-slate-400 font-normal mt-1 block">Submitted: {formatSriLankaDateTime(claim.createdAt)}</span>
                       )}
@@ -861,11 +860,19 @@ export default function MyClaims() {
                     </div>
 
                     {/* Action */}
-                    <div className="text-left md:text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-start md:justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        onClick={() => downloadClaimPdf(claim.claimNumber)}
+                        className="p-1.5 rounded-lg border border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-700 transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center justify-center"
+                        title="Download Official Claim PDF Report"
+                      >
+                        <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                      </button>
                       <button
                         type="button"
                         onClick={() => setSelectedClaim(claim)}
-                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-semibold text-[10px] px-4 py-2 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
+                        className="border border-slate-350 hover:bg-slate-50 text-slate-600 font-semibold text-[10px] px-3.5 py-1.5 rounded-lg transition-all cursor-pointer focus:outline-none shadow-sm bg-white whitespace-nowrap active:scale-95"
                       >
                         {t.view}
                       </button>
@@ -906,7 +913,7 @@ export default function MyClaims() {
             }
           }
 
-          const isFullyPaid = (status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
+          const isFullyPaid = (status.toLowerCase() === "settled" || status.toLowerCase() === "completed" || status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
 
           const steps = [
             { num: "01", label: "Submitted" },
@@ -967,9 +974,20 @@ export default function MyClaims() {
               
               {/* Modal Header Title */}
               <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <h2 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
-                  Claim Details – {selectedClaim.claimNumber}
-                </h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
+                    Claim Details – {selectedClaim.claimNumber}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                    title="Download Official Claim Status PDF Report"
+                  >
+                    <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                    <span>Download PDF</span>
+                  </button>
+                </div>
                 <button
                   onClick={() => setSelectedClaim(null)}
                   className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer"

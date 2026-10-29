@@ -25,7 +25,7 @@ import {
   Call02Icon,
   Key01Icon,
   Tick01Icon,
-
+  Logout01Icon,
 } from "@hugeicons/core-free-icons";
 
 export default function AdminStaffPage() {
@@ -69,6 +69,8 @@ export default function AdminStaffPage() {
   // View Staff states
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingStaff, setViewingStaff] = useState<any | null>(null);
+  const [branchLoginActivities, setBranchLoginActivities] = useState<any[]>([]);
+  const [loadingBranchDetails, setLoadingBranchDetails] = useState(false);
 
   // Password reset request states
   const [showRequestsModal, setShowRequestsModal] = useState(false);
@@ -76,6 +78,22 @@ export default function AdminStaffPage() {
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [actioningRequestId, setActioningRequestId] = useState<string | null>(null);
   const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
+
+  // Branch Profile Update Request states
+  const [showBranchRequestsModal, setShowBranchRequestsModal] = useState(false);
+  const [branchRequests, setBranchRequests] = useState<any[]>([]);
+  const [loadingBranchRequests, setLoadingBranchRequests] = useState(false);
+  const [pendingBranchRequestsCount, setPendingBranchRequestsCount] = useState(0);
+  const [branchRequestFilter, setBranchRequestFilter] = useState<"Pending" | "All" | "Approved" | "Rejected">("Pending");
+  const [actioningBranchRequestId, setActioningBranchRequestId] = useState<string | null>(null);
+  const [branchAdminNotes, setBranchAdminNotes] = useState<Record<string, string>>({});
+
+  // Branch Session Termination states
+  const [terminatingBranchSession, setTerminatingBranchSession] = useState(false);
+  const [showTerminateBranchModal, setShowTerminateBranchModal] = useState(false);
+  const [terminateBranchMode, setTerminateBranchMode] = useState<"single" | "branch-wide">("single");
+  const [branchTerminateReason, setBranchTerminateReason] = useState("");
+  const [terminateToastMessage, setTerminateToastMessage] = useState<string | null>(null);
 
   // Fetch pending requests count on load
   const fetchCount = async () => {
@@ -91,8 +109,8 @@ export default function AdminStaffPage() {
     }
   };
 
-  const fetchStaff = async () => {
-    setLoadingStaff(true);
+  const fetchStaff = async (isSilent = false) => {
+    if (!isSilent) setLoadingStaff(true);
     try {
       const baseUrl = API_URL;
       const res = await fetch(`${baseUrl}/admin/staff`);
@@ -101,17 +119,112 @@ export default function AdminStaffPage() {
         setStaffList(data.staff || []);
       }
     } catch (err) {
-      console.error("Error fetching staff list:", err);
+      if (!isSilent) console.error("Error fetching staff list:", err);
     } finally {
-      setLoadingStaff(false);
+      if (!isSilent) setLoadingStaff(false);
+    }
+  };
+
+  const fetchBranchRequests = async (isSilent = false) => {
+    if (!isSilent) setLoadingBranchRequests(true);
+    try {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/branch-profile-requests`);
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.requests)) {
+        setBranchRequests(data.requests);
+        const pending = data.requests.filter((r: any) => r.status === "Pending");
+        setPendingBranchRequestsCount(pending.length);
+      }
+    } catch (err) {
+      if (!isSilent) console.error("Error fetching branch profile update requests:", err);
+    } finally {
+      if (!isSilent) setLoadingBranchRequests(false);
     }
   };
 
   useEffect(() => {
     fetchCount();
     fetchPasswordRequests();
+    fetchBranchRequests();
     fetchStaff();
   }, []);
+
+  // Real-time automatic background polling (every 6s) + instant refresh on tab focus
+  useEffect(() => {
+    const liveInterval = setInterval(() => {
+      if (document.visibilityState === "visible" && !submittingStaff && !editingStaff) {
+        fetchStaff(true);
+        fetchBranchRequests(true);
+        fetchCount();
+      }
+    }, 6000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchStaff(true);
+        fetchBranchRequests(true);
+        fetchCount();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(liveInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [submittingStaff, editingStaff]);
+
+  const handleApproveBranchRequest = async (requestId: string) => {
+    setActioningBranchRequestId(requestId);
+    try {
+      const baseUrl = API_URL;
+      const reviewNote = branchAdminNotes[requestId] || "Branch details verified and approved by Head Office Admin.";
+      const res = await fetch(`${baseUrl}/admin/branch-profile-requests/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId,
+          adminName: "System Admin",
+          reviewNote
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to approve branch update request.");
+
+      // Refresh branch requests & staff directory
+      await Promise.all([fetchBranchRequests(), fetchStaff()]);
+    } catch (err: any) {
+      alert(err.message || "Failed to approve branch request.");
+    } finally {
+      setActioningBranchRequestId(null);
+    }
+  };
+
+  const handleRejectBranchRequest = async (requestId: string) => {
+    setActioningBranchRequestId(requestId);
+    try {
+      const baseUrl = API_URL;
+      const reviewNote = branchAdminNotes[requestId] || "Request was not approved. Please consult Head Office administration.";
+      const res = await fetch(`${baseUrl}/admin/branch-profile-requests/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId,
+          adminName: "System Admin",
+          reviewNote
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reject branch update request.");
+
+      await fetchBranchRequests();
+    } catch (err: any) {
+      alert(err.message || "Failed to reject branch request.");
+    } finally {
+      setActioningBranchRequestId(null);
+    }
+  };
 
   const fetchPasswordRequests = async () => {
     setLoadingRequests(true);
@@ -236,9 +349,26 @@ export default function AdminStaffPage() {
     }
   };
 
-  const triggerView = (staff: any) => {
+  const triggerView = async (staff: any) => {
     setViewingStaff(staff);
+    setBranchLoginActivities([]);
     setShowViewModal(true);
+    setLoadingBranchDetails(true);
+    try {
+      const baseUrl = API_URL;
+      const res = await fetch(`${baseUrl}/admin/staff/${staff._id}/details`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.staff) {
+          setViewingStaff(data.staff);
+        }
+        setBranchLoginActivities(data.loginActivities || []);
+      }
+    } catch (err) {
+      console.error("Error fetching branch details & login activities:", err);
+    } finally {
+      setLoadingBranchDetails(false);
+    }
   };
 
   const triggerEdit = (staff: any) => {
@@ -320,6 +450,54 @@ export default function AdminStaffPage() {
       setStaffList(prev => prev.filter(s => s._id !== id));
     } catch (err: any) {
       alert(err.message || "Failed to delete office staff.");
+    }
+  };
+
+  // Terminate Branch Login Session or Entire Branch Active Sessions
+  const handleTerminateBranchSession = async (mode: "single" | "branch-wide") => {
+    if (!viewingStaff) return;
+    setTerminatingBranchSession(true);
+    try {
+      const baseUrl = API_URL;
+      let endpoint = `${baseUrl}/admin/sessions/terminate`;
+      let body: any = {
+        userType: "OfficeStaff",
+        targetId: viewingStaff._id,
+        reason: branchTerminateReason.trim() || (mode === "single" ? "Administrative session termination" : `Branch session reset for ${viewingStaff.branch}`),
+        adminName: "System Admin"
+      };
+
+      if (mode === "branch-wide") {
+        endpoint = `${baseUrl}/admin/sessions/terminate-branch`;
+        body = {
+          branch: viewingStaff.branch,
+          reason: branchTerminateReason.trim() || `Administrative branch-wide session reset for ${viewingStaff.branch}`,
+          adminName: "System Admin"
+        };
+      }
+
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to terminate branch session.");
+
+      setTerminateToastMessage(data.message || (mode === "single" ? "Branch login session terminated." : `All ${viewingStaff.branch} active sessions terminated.`));
+      setShowTerminateBranchModal(false);
+      setBranchTerminateReason("");
+
+      // Refresh branch details & directory
+      if (viewingStaff._id) {
+        triggerView(viewingStaff);
+      }
+      fetchStaff();
+      setTimeout(() => setTerminateToastMessage(null), 4500);
+    } catch (err: any) {
+      alert(err.message || "Failed to terminate session.");
+    } finally {
+      setTerminatingBranchSession(false);
     }
   };
 
@@ -412,6 +590,40 @@ export default function AdminStaffPage() {
                     </span>
                   )}
                 </button>
+
+                <button
+                  onClick={() => {
+                    fetchBranchRequests();
+                    setShowBranchRequestsModal(true);
+                  }}
+                  className="flex-1 md:flex-none py-2.5 px-5 bg-white hover:bg-blue-50/50 border border-blue-200 hover:scale-105 active:scale-95 text-[#000080] rounded-xl text-xs font-bold shadow-sm transition-all outline-none cursor-pointer flex items-center justify-center gap-1.5 relative"
+                >
+                  <HugeiconsIcon icon={Building01Icon} className="w-4 h-4 text-[#000080]" strokeWidth={2.5} />
+                  <span>Profile Edit Requests</span>
+                  {pendingBranchRequestsCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[9px] w-5 h-5 rounded-full font-bold flex items-center justify-center shadow-md animate-bounce border-2 border-white">
+                      {pendingBranchRequestsCount}
+                    </span>
+                  )}
+                </button>
+
+                <div className="flex items-center gap-1.5 px-3 py-2 bg-emerald-50/80 border border-emerald-200/80 rounded-xl text-[11px] font-bold text-emerald-700 select-none shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Live Sync</span>
+                </div>
+
+                <button
+                  onClick={() => {
+                    fetchStaff();
+                    fetchBranchRequests();
+                    fetchCount();
+                  }}
+                  disabled={loadingStaff}
+                  title="Manual Refresh"
+                  className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  <HugeiconsIcon icon={RefreshIcon} className={`w-4 h-4 ${loadingStaff ? "animate-spin" : ""}`} strokeWidth={2.5} />
+                </button>
               </div>
             </div>
 
@@ -460,12 +672,9 @@ export default function AdminStaffPage() {
                     >
                       {/* Col 1: Branch & Name */}
                       <div className="flex flex-col min-w-0 select-none">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="w-2 h-2 rounded-full shrink-0 bg-blue-500 animate-pulse shadow-[0_0_8px_rgba(59,130,246,0.7)]" />
-                          <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
-                            {staff.branch} Branch
-                          </h3>
-                        </div>
+                        <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap truncate">
+                          {staff.branch} Branch
+                        </h3>
                         <span className="text-[10px] text-slate-600 font-bold block mt-1">
                           {staff.name}
                         </span>
@@ -492,6 +701,16 @@ export default function AdminStaffPage() {
                         <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">Contact Info</span>
                         <span className="text-slate-700 font-semibold text-xs truncate" title={staff.email}>{staff.email}</span>
                         <span className="text-slate-600 font-medium text-xs mt-0.5">{staff.mobile}</span>
+                        {staff.lastLoginAt ? (
+                          <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1 mt-0.5" title={`IP: ${staff.lastLoginIp || "—"} | ${staff.lastLoginDevice || "Web"}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                            Active {new Date(staff.lastLoginAt).toLocaleDateString()}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-normal mt-0.5">
+                            Never logged in
+                          </span>
+                        )}
                       </div>
 
                       {/* Col 5: Staff Count */}
@@ -1187,16 +1406,16 @@ export default function AdminStaffPage() {
       {/* View Branch Staff details Modal */}
       {showViewModal && viewingStaff && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
-          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-lg shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-2xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[90vh]">
             
             {/* Modal Header */}
             <div className="px-8 pt-7 pb-2 select-none bg-white flex justify-between items-center shrink-0">
               <div>
-                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
-                  {viewingStaff.branch} Branch Profile
+                <h2 className="text-[24px] font-bold text-slate-900 tracking-tight leading-none">
+                  {viewingStaff.branch?.endsWith("Branch") ? viewingStaff.branch : `${viewingStaff.branch} Branch`} Profile
                 </h2>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-1.5">
-                  Office Staff Registry Information
+                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-wider mt-1.5">
+                  Office Staff Registry & Login Governance Information
                 </p>
               </div>
               <button
@@ -1211,62 +1430,178 @@ export default function AdminStaffPage() {
             </div>
             
             {/* Horizontal Divider Line */}
-            <div className="border-b border-black mx-8 mb-4 shrink-0" />
+            <div className="border-b border-slate-200 mx-8 mb-4 shrink-0" />
 
             {/* Modal Content */}
             <div className="px-8 pb-8 flex-1 overflow-y-auto flex flex-col gap-5 text-left">
               {/* Branch Profile Name Card */}
-              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-1">
-                <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest block">Profile Name</span>
-                <span className="text-base font-semibold text-slate-800">{viewingStaff.name}</span>
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 flex flex-col gap-1 shadow-2xs">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Profile Name</span>
+                <span className="text-base font-bold text-slate-900">{viewingStaff.name}</span>
               </div>
 
               {/* Grid 1: Location details */}
-              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-4">
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Location & Geography</span>
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 shadow-2xs">
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200/80 pb-1.5 select-none">Location & Geography</span>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Province</span>
-                    <span className="text-slate-850 text-xs font-bold">{viewingStaff.province}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Province</span>
+                    <span className="text-slate-900 text-sm font-bold block">{viewingStaff.province}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">District</span>
-                    <span className="text-slate-850 text-xs font-bold">{viewingStaff.district}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">District</span>
+                    <span className="text-slate-900 text-sm font-bold block">{viewingStaff.district}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Area</span>
-                    <span className="text-slate-850 text-xs font-bold">{viewingStaff.area}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Area</span>
+                    <span className="text-slate-900 text-sm font-bold block">{viewingStaff.area}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Staff Count</span>
-                    <span className="text-[#0f2d4a] text-xs font-bold">{viewingStaff.staffCount} members</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Staff Count</span>
+                    <span className="text-[#0f2d4a] text-sm font-bold block">{viewingStaff.staffCount} members</span>
                   </div>
                 </div>
                 <div className="mt-1">
-                  <span className="text-[9px] font-medium text-slate-400 uppercase block mb-1">Office Location Address</span>
-                  <p className="text-slate-750 text-xs font-semibold leading-relaxed bg-white border border-slate-200/60 rounded-xl p-3">
+                  <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">Office Location Address</span>
+                  <p className="text-slate-900 text-sm font-medium leading-relaxed bg-white border border-slate-200 rounded-xl p-3 shadow-2xs">
                     {viewingStaff.location}
                   </p>
                 </div>
               </div>
 
               {/* Grid 2: Contact Info */}
-              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5 flex flex-col gap-4">
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider border-b pb-1 select-none">Contact Details</span>
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 shadow-2xs">
+                <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider border-b border-slate-200/80 pb-1.5 select-none">Contact Details</span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Email Address</span>
-                    <span className="text-slate-800 text-xs font-bold block break-all">{viewingStaff.email}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Email Address</span>
+                    <span className="text-slate-900 text-sm font-bold block break-all">{viewingStaff.email}</span>
                   </div>
                   <div>
-                    <span className="text-[9px] font-medium text-slate-400 uppercase block mb-0.5">Mobile Number</span>
-                    <span className="text-slate-800 text-xs font-bold block">{viewingStaff.mobile}</span>
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Mobile Number</span>
+                    <span className="text-slate-900 text-sm font-bold block">{viewingStaff.mobile}</span>
                   </div>
                 </div>
               </div>
 
+              {/* Grid 3: Branch Login & Activity Details */}
+              <div className="bg-slate-50/80 border border-slate-200 rounded-2xl p-5 flex flex-col gap-4 shadow-2xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-3">
+                  <div>
+                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider select-none block">
+                      Branch Login & Session Activity
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-500">
+                      {branchLoginActivities.length} Recent Event(s)
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTerminateBranchMode("single");
+                        setBranchTerminateReason("");
+                        setShowTerminateBranchModal(true);
+                      }}
+                      className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
+                      title="Force logout this branch staff's active session"
+                    >
+                      <HugeiconsIcon icon={Logout01Icon} className="w-3.5 h-3.5 text-rose-600" strokeWidth={2.2} />
+                      <span>Terminate Staff Session</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTerminateBranchMode("branch-wide");
+                        setBranchTerminateReason("");
+                        setShowTerminateBranchModal(true);
+                      }}
+                      className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm hover:scale-[1.02] active:scale-95"
+                      title={`Force logout all active sessions in ${viewingStaff.branch} branch (Staff & Policyholders)`}
+                    >
+                      <HugeiconsIcon icon={AlertCircleIcon} className="w-3.5 h-3.5 text-amber-700" strokeWidth={2.2} />
+                      <span>Revoke All Branch Sessions</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Last Login</span>
+                    <span className="text-slate-900 text-xs font-bold block truncate">
+                      {viewingStaff.lastLoginAt ? new Date(viewingStaff.lastLoginAt).toLocaleString() : "Never logged in"}
+                    </span>
+                  </div>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Total Logins</span>
+                    <span className="text-slate-900 text-xs font-bold block">
+                      {viewingStaff.loginCount || branchLoginActivities.length || 0} times
+                    </span>
+                  </div>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Last IP Address</span>
+                    <span className="text-slate-900 font-mono text-xs font-bold block truncate">
+                      {viewingStaff.lastLoginIp || branchLoginActivities[0]?.ipAddress || "—"}
+                    </span>
+                  </div>
+                  <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-0.5">Device Client</span>
+                    <span className="text-slate-900 text-xs font-bold block truncate" title={viewingStaff.lastLoginDevice || branchLoginActivities[0]?.device || "Web Browser"}>
+                      {viewingStaff.lastLoginDevice || branchLoginActivities[0]?.device || "Web Browser"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Login Activity Table */}
+                {loadingBranchDetails ? (
+                  <div className="py-4 flex justify-center"><SimpleLoader message="Loading branch activity..." theme="slate" /></div>
+                ) : branchLoginActivities.length > 0 ? (
+                  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase font-semibold">
+                        <tr>
+                          <th className="py-2 px-3">Date & Time</th>
+                          <th className="py-2 px-3">Action</th>
+                          <th className="py-2 px-3">IP Address</th>
+                          <th className="py-2 px-3">Device / Browser</th>
+                          <th className="py-2 px-3 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-[11px]">
+                        {branchLoginActivities.slice(0, 5).map((act) => (
+                          <tr key={act._id}>
+                            <td className="py-2 px-3 text-slate-700 whitespace-nowrap">
+                              {new Date(act.createdAt).toLocaleString()}
+                            </td>
+                            <td className="py-2 px-3 font-semibold text-slate-900">
+                              {act.action || "Login"}
+                            </td>
+                            <td className="py-2 px-3 font-mono text-slate-600">
+                              {act.ipAddress || "127.0.0.1"}
+                            </td>
+                            <td className="py-2 px-3 text-slate-600">
+                              {act.device} {act.browser ? `(${act.browser})` : ""}
+                            </td>
+                            <td className="py-2 px-3 text-right">
+                              <span className="text-[9px] px-2 py-0.5 rounded font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                {act.status || "Success"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-3 text-slate-400 text-xs">
+                    No login sessions captured for this branch yet.
+                  </div>
+                )}
+              </div>
+
               {/* Close Button */}
-              <div className="flex justify-end mt-4 select-none">
+              <div className="flex justify-end mt-2 select-none">
                 <button
                   type="button"
                   onClick={() => {
@@ -1280,6 +1615,358 @@ export default function AdminStaffPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Branch Profile Update Requests Review Modal */}
+      {showBranchRequestsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-4xl shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden max-h-[92vh]">
+            
+            {/* Modal Header */}
+            <div className="px-8 pt-7 pb-4 select-none bg-white flex justify-between items-center shrink-0 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#000080] flex items-center justify-center">
+                  <HugeiconsIcon icon={Building01Icon} className="w-5 h-5" strokeWidth={2.2} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-[22px] font-bold text-slate-900 tracking-tight leading-none">
+                      Branch Profile Edit Requests
+                    </h2>
+                    {pendingBranchRequestsCount > 0 && (
+                      <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {pendingBranchRequestsCount} Pending
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-semibold mt-1">
+                    Review and authorize modifications submitted by branch office staff.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => fetchBranchRequests()}
+                  className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-all"
+                  title="Refresh requests"
+                >
+                  <HugeiconsIcon icon={RefreshIcon} className="w-4 h-4" strokeWidth={2.5} />
+                </button>
+                <button
+                  onClick={() => setShowBranchRequestsModal(false)}
+                  className="text-slate-400 hover:text-slate-600 bg-transparent border-none outline-none cursor-pointer transition-colors p-1"
+                >
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+                </button>
+              </div>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-2 px-8 py-3 bg-slate-50 border-b border-slate-200/60 select-none overflow-x-auto shrink-0">
+              {(["Pending", "All", "Approved", "Rejected"] as const).map((filter) => {
+                const count = filter === "All"
+                  ? branchRequests.length
+                  : branchRequests.filter((r) => r.status === filter).length;
+                const isActive = branchRequestFilter === filter;
+
+                return (
+                  <button
+                    key={filter}
+                    onClick={() => setBranchRequestFilter(filter)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border-none outline-none ${
+                      isActive
+                        ? "bg-[#000080] text-white shadow-sm"
+                        : "bg-white text-slate-600 hover:bg-slate-200/60"
+                    }`}
+                  >
+                    <span>{filter}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Requests List */}
+            <div className="p-8 flex-1 overflow-y-auto flex flex-col gap-5 bg-slate-50/50">
+              {loadingBranchRequests ? (
+                <SimpleLoader message="Loading branch modification requests..." theme="slate" />
+              ) : (() => {
+                const filtered = branchRequests.filter((r) => {
+                  if (branchRequestFilter === "All") return true;
+                  return r.status === branchRequestFilter;
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="bg-white border-2 border-dashed border-slate-200 rounded-3xl p-12 text-center text-slate-400 font-semibold">
+                      No branch profile update requests found under &quot;{branchRequestFilter}&quot;.
+                    </div>
+                  );
+                }
+
+                return filtered.map((req) => {
+                  const isActioning = actioningBranchRequestId === req._id;
+                  const currentNote = branchAdminNotes[req._id] || "";
+
+                  return (
+                    <div
+                      key={req._id}
+                      className={`bg-white rounded-2xl border p-6 flex flex-col gap-4 shadow-sm transition-all ${
+                        req.status === "Pending"
+                          ? "border-amber-200/80 shadow-amber-500/5 ring-1 ring-amber-100"
+                          : req.status === "Approved"
+                          ? "border-emerald-200"
+                          : "border-rose-200"
+                      }`}
+                    >
+                      {/* Top row */}
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
+                              req.status === "Pending"
+                                ? "bg-amber-100 text-amber-800 border border-amber-300 animate-pulse"
+                                : req.status === "Approved"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                : "bg-rose-100 text-rose-800 border border-rose-300"
+                            }`}
+                          >
+                            {req.status}
+                          </span>
+                          <div>
+                            <h4 className="text-sm font-bold text-slate-900">
+                              {req.branchName} Branch — {req.staffName}
+                            </h4>
+                            <span className="text-xs text-slate-500">
+                              Email: {req.email} • Mobile: {req.mobile || "N/A"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-[11px] font-semibold text-slate-400 block">
+                            Submitted: {new Date(req.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-md mt-1 inline-flex items-center gap-1 ${
+                            req.requestType === "Password & Security"
+                              ? "bg-purple-100 text-purple-800 border border-purple-200"
+                              : "bg-slate-100 text-slate-600"
+                          }`}>
+                            {req.requestType === "Password & Security" && <HugeiconsIcon icon={Key01Icon} className="w-3 h-3 text-purple-700" />}
+                            <span>{req.requestType}</span>
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Branch explanation reason */}
+                      {req.reason && (
+                        <div className="p-3.5 bg-blue-50/50 border border-blue-100 rounded-xl text-xs text-blue-900">
+                          <strong className="font-bold text-blue-950">Branch Remarks: </strong>
+                          {req.reason}
+                        </div>
+                      )}
+
+                      {/* Comparison Table */}
+                      <div className="flex flex-col gap-2">
+                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                          Requested Field Modifications:
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                          {Object.entries(req.requestedChanges || {})
+                            .filter(([key]) => key !== "pendingPasswordHash")
+                            .map(([key, val]) => (
+                            <div key={key} className="p-3 bg-slate-50 border border-slate-200/70 rounded-xl flex flex-col gap-1">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                {key.replace(/([A-Z])/g, " $1")}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-400 line-through text-[11px] truncate max-w-[150px]">
+                                  {String(req.originalData?.[key] || "None")}
+                                </span>
+                                <span className="text-slate-400 font-bold">→</span>
+                                <span className="text-emerald-700 font-bold truncate">
+                                  {String(val || "None")}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Admin Decision Bar */}
+                      {req.status === "Pending" ? (
+                        <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 mb-1">
+                              Admin Review Note / Reason (Optional)
+                            </label>
+                            <input
+                              type="text"
+                              value={currentNote}
+                              onChange={(e) =>
+                                setBranchAdminNotes({
+                                  ...branchAdminNotes,
+                                  [req._id]: e.target.value
+                                })
+                              }
+                              placeholder="e.g. Branch relocation verified, approved."
+                              className="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#000080] bg-white"
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-end gap-3">
+                            <button
+                              type="button"
+                              disabled={isActioning}
+                              onClick={() => handleRejectBranchRequest(req._id)}
+                              className="px-5 py-2 bg-white hover:bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                            >
+                              <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                              <span>Reject</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={isActioning}
+                              onClick={() => handleApproveBranchRequest(req._id)}
+                              className="px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                            >
+                              {isActioning ? (
+                                <>
+                                  <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />
+                                  <span>Processing...</span>
+                                </>
+                              ) : (
+                                <>
+                                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                                  <span>Approve & Apply to Database</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600">
+                          <div>
+                            <strong className="font-semibold text-slate-700">Admin Remarks: </strong>
+                            {req.reviewNote || "No remarks provided."}
+                          </div>
+                          <span className="text-[11px] text-slate-400 shrink-0">
+                            Processed by {req.reviewedBy || "Admin"} on {new Date(req.reviewedAt || req.updatedAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-8 py-4 bg-white border-t border-slate-100 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowBranchRequestsModal(false)}
+                className="px-6 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full text-xs font-bold transition-all cursor-pointer border-none outline-none"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    
+      {/* Terminate Branch Session Confirmation Modal */}
+      {showTerminateBranchModal && viewingStaff && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-md shadow-2xl p-7 flex flex-col gap-5 relative">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${
+                terminateBranchMode === "single" ? "bg-rose-100 text-rose-600" : "bg-amber-100 text-amber-700"
+              }`}>
+                <HugeiconsIcon icon={Logout01Icon} className="w-6 h-6" strokeWidth={2.2} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-bold text-slate-900 leading-tight">
+                  {terminateBranchMode === "single"
+                    ? `Terminate ${viewingStaff.branch} Staff Session?`
+                    : `Revoke All ${viewingStaff.branch} Sessions?`}
+                </h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  {terminateBranchMode === "single"
+                    ? `This will immediately invalidate the current login session for ${viewingStaff.name}. The staff member will be logged out on their next action.`
+                    : `This will invalidate active login sessions for BOTH the ${viewingStaff.branch} branch staff AND all policyholders registered under this branch.`}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-bold text-slate-600 mb-1.5">
+                Revocation Reason / Note (Optional)
+              </label>
+              <input
+                type="text"
+                value={branchTerminateReason}
+                onChange={(e) => setBranchTerminateReason(e.target.value)}
+                placeholder={terminateBranchMode === "single" ? "e.g. Session security review" : "e.g. Branch maintenance / Security reset"}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 bg-slate-50/50"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                disabled={terminatingBranchSession}
+                onClick={() => {
+                  setShowTerminateBranchModal(false);
+                  setBranchTerminateReason("");
+                }}
+                className="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer border-none outline-none disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={terminatingBranchSession}
+                onClick={() => handleTerminateBranchSession(terminateBranchMode)}
+                className={`px-6 py-2.5 text-white rounded-xl text-xs font-bold transition-all shadow-md flex items-center gap-2 cursor-pointer border-none outline-none disabled:opacity-50 ${
+                  terminateBranchMode === "single"
+                    ? "bg-rose-600 hover:bg-rose-700 shadow-rose-600/20"
+                    : "bg-amber-600 hover:bg-amber-700 shadow-amber-600/20"
+                }`}
+              >
+                {terminatingBranchSession ? (
+                  <>
+                    <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />
+                    <span>Terminating...</span>
+                  </>
+                ) : (
+                  <>
+                    <HugeiconsIcon icon={Logout01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                    <span>Confirm Terminate</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification Banner */}
+      {terminateToastMessage && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-slate-700 text-xs font-medium animate-fadeIn">
+          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-400 shrink-0" strokeWidth={2.5} />
+          <span>{terminateToastMessage}</span>
+          <button
+            onClick={() => setTerminateToastMessage(null)}
+            className="ml-2 text-slate-400 hover:text-white"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+          </button>
         </div>
       )}
     

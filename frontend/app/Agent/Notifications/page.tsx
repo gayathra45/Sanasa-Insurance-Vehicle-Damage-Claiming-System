@@ -807,7 +807,7 @@ export default function AgentNotifications() {
 
                 <div className="grid grid-cols-2 gap-x-12 gap-y-5 text-[15px] font-semibold text-slate-700 mb-6 px-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-400 font-semibold w-28 shrink-0">Vehicle Plate:</span>
+                    <span className="text-slate-400 font-semibold w-28 shrink-0">Vehicle Number:</span>
                     <span className="font-bold text-slate-800">{formatNumberPlate(selectedClaim.vehiclePlate)}</span>
                   </div>
                   <div className="flex items-center gap-2">

@@ -15,9 +15,11 @@ import {
   CheckmarkCircle01Icon,
   ViewIcon,
   File01Icon,
+  Download01Icon,
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 import { translateText } from "@/app/utils/translator";
+import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
 
 interface Claim {
   claimNumber: string;
@@ -59,6 +61,7 @@ interface Claim {
   };
   additionalDocuments?: { name: string; url: string; uploadedAt: string; uploadedBy?: string }[];
   createdAt?: string;
+  updatedAt?: string;
   aiAnalysis?: {
     isAnalyzed: boolean;
     damagedItems?: {
@@ -314,10 +317,10 @@ function TrackClaimsContent() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find(m => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find(m => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
@@ -331,7 +334,8 @@ function TrackClaimsContent() {
     }
 
     return (claim.requestedDocuments || []).filter(name => {
-      if (getRecipientForDoc(name) !== "User") return false;
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      if (rec === "agent" || rec === "insurance_agent") return false;
       const normName = name.trim().toLowerCase();
       const alreadyUploaded = uploadedNames.some(u => 
         u === normName ||
@@ -372,33 +376,46 @@ function TrackClaimsContent() {
     return submitted;
   };
 
-  const getDocRequestNote = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "";
-    const msg = [...claim.messages]
+  const getDocRequestMsg = (claim: Claim, docName: string) => {
+    if (!claim.messages || claim.messages.length === 0) return null;
+    const lowerDoc = docName.toLowerCase();
+    return [...claim.messages]
       .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+      .find(m => {
+        if (!m.message) return false;
+        const lowerMsg = m.message.toLowerCase();
+        return (
+          lowerMsg.includes(`requested: ${lowerDoc}`) ||
+          lowerMsg.includes(lowerDoc) ||
+          (lowerDoc.includes("garage") && lowerMsg.includes("garage")) ||
+          (lowerDoc.includes("estimate") && lowerMsg.includes("estimate")) ||
+          (lowerDoc.includes("police") && lowerMsg.includes("police")) ||
+          (lowerDoc.includes("license") && lowerMsg.includes("license"))
+        );
+      });
+  };
+
+  const getDocRequestNote = (claim: Claim, docName: string): string => {
+    const msg = getDocRequestMsg(claim, docName);
     if (msg && msg.message) {
       const idx = msg.message.indexOf("Message:");
       if (idx !== -1) {
         return msg.message.substring(idx + 8).trim();
+      }
+      if (msg.message.toLowerCase().includes("requested")) {
+        return msg.message;
       }
     }
     return "";
   };
 
   const getDocRequestSender = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "Office Staff";
-    const msg = [...claim.messages]
-      .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    const msg = getDocRequestMsg(claim, docName);
     return msg ? (msg.sender || "Office Staff") : "Office Staff";
   };
 
   const getDocRequestTime = (claim: Claim, docName: string): string => {
-    if (!claim.messages) return "";
-    const msg = [...claim.messages]
-      .reverse()
-      .find(m => m.message && m.message.includes(`Requested: ${docName}`));
+    const msg = getDocRequestMsg(claim, docName);
     if (msg && msg.sentAt) {
       return formatDateTimeString(msg.sentAt);
     }
@@ -465,48 +482,18 @@ function TrackClaimsContent() {
           }
         }
 
-        let localClaims: Claim[] = [];
-        try {
-          const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-          if (lastSubmitted) {
-            const parsed = JSON.parse(lastSubmitted);
-            const exists = databaseClaims.some(c => c.claimNumber === parsed.claimNumber);
-            if (!exists) {
-              localClaims.push({
-                claimNumber: parsed.claimNumber,
-                vehiclePlate: parsed.vehiclePlate,
-                incidentDate: formatDateString(parsed.incidentDate),
-                incidentTime: parsed.incidentTime,
-                damageType: parsed.damageType,
-                amount: "Pending",
-                status: "Pending",
-                description: parsed.description,
-                otherVehicleDetails: parsed.otherVehicleDetails,
-                location: parsed.location,
-                officer: "Not Assigned",
-                documentsRequested: false,
-                requestedDocuments: [],
-                currentStep: 1,
-                messages: [],
-                accidentPhotos: parsed.accidentPhotos || {},
-                drivingLicense: parsed.drivingLicense || {},
-                additionalDocuments: parsed.additionalDocuments || [],
-                createdAt: parsed.createdAt || new Date().toISOString()
-              });
-            }
-          }
-        } catch (err) {
-          console.error("Error parsing local claim draft", err);
+        // The database is the single source of truth for claims
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("last_submitted_claim");
         }
 
-        const combined = [...localClaims, ...databaseClaims];
-        setClaimsList(combined);
+        setClaimsList(databaseClaims);
 
         // Check if query parameter 'id' exists
         const idParam = searchParams.get("id");
         if (idParam) {
           setClaimId(idParam);
-          const found = combined.find(c => c.claimNumber.toLowerCase() === idParam.toLowerCase());
+          const found = databaseClaims.find(c => c.claimNumber.toLowerCase() === idParam.toLowerCase());
           if (found) {
             setTrackedClaim(found);
           }
@@ -642,7 +629,7 @@ function TrackClaimsContent() {
       }
     }
 
-    const isFullyPaid = (status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
+    const isFullyPaid = (status.toLowerCase() === "settled" || status.toLowerCase() === "completed" || status.toLowerCase() === "approved" || currentStep >= 6) && !!paymentReceipt;
 
     const steps = [
       { num: "01", label: "Submitted" },
@@ -749,10 +736,19 @@ function TrackClaimsContent() {
         ) : trackedClaim ? (
           <div className="max-w-3xl mx-auto bg-white border border-slate-200 rounded-[24px] shadow-lg overflow-hidden transition-all duration-300">
             {/* Header */}
-            <div className="px-8 py-5 bg-slate-50 border-b border-slate-200">
+            <div className="px-8 py-5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <h3 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
                 {t.detailsTitle} – {trackedClaim.claimNumber}
               </h3>
+              <button
+                type="button"
+                onClick={() => downloadClaimPdf(trackedClaim.claimNumber)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95 w-fit"
+                title="Download Official Claim PDF Report"
+              >
+                <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                <span>Download PDF</span>
+              </button>
             </div>
 
             {/* Tracker Panel */}
@@ -943,7 +939,7 @@ function TrackClaimsContent() {
               )}
 
               {/* Documents Requested Banner (Action Required) */}
-              {trackedClaim.documentsRequested && getUserRequestedDocs(trackedClaim).length > 0 && (
+              {(trackedClaim.documentsRequested || (trackedClaim.requestedDocuments && trackedClaim.requestedDocuments.length > 0)) && getUserRequestedDocs(trackedClaim).length > 0 && (
                 <div className="mb-6 p-6 rounded-[24px] bg-[#ffeaea]/80 border border-[#ffd1d1] flex flex-col gap-3 transition-all duration-300">
                   <div className="flex items-center gap-2.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#df3d3d] animate-pulse" />

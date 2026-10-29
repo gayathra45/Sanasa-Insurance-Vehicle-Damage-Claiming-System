@@ -123,8 +123,20 @@ export default function Login() {
       }
 
       if (data.role === "policy_holder") {
+        const winId = "ph_win_" + Date.now() + "_" + Math.random().toString(36).slice(2);
+        if (typeof window !== "undefined") {
+          window.name = winId;
+          sessionStorage.setItem("policyholder_window_id", winId);
+        }
         sessionStorage.setItem("logged_in_user", JSON.stringify(data.user));
-        router.push("/Policy_Holder/Home");
+
+        const params = new URLSearchParams(window.location.search);
+        const redirectPath = params.get("redirect");
+        if (redirectPath && redirectPath.startsWith("/Policy_Holder")) {
+          router.push(redirectPath);
+        } else {
+          router.push("/Policy_Holder/Home");
+        }
       } else if (data.role === "insurance_agent") {
         sessionStorage.setItem("logged_in_agent", JSON.stringify(data.agent));
         router.push("/Agent/Dashboard");

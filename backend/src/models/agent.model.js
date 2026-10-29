@@ -10,6 +10,7 @@ const agentSchema = new mongoose.Schema({
   address: { type: String, required: true },
   dob: { type: String, required: true },
   branch: { type: String, required: true },
+  profilePhoto: { type: String, default: "" },
   phone: { type: String, default: "" },
   city: { type: String, default: "" },
   district: { type: String, default: "" },
@@ -31,6 +32,13 @@ const agentSchema = new mongoose.Schema({
   resetOtpRequestedAt: { type: Date },
   resetSessionToken: { type: String },
   resetSessionExpires: { type: Date },
+  lastLoginAt: { type: Date, default: null },
+  lastLoginIp: { type: String, default: "" },
+  lastLoginDevice: { type: String, default: "" },
+  loginCount: { type: Number, default: 0 },
+  lastSeenAt: { type: Date, default: Date.now },
+  forceLogoutAt: { type: Date, default: null },
+  sessionRevokedAt: { type: Date, default: null },
   createdAt: { type: Date, default: Date.now }
 });
 

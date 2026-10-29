@@ -1,13 +1,18 @@
 import express from "express";
 import crypto from "crypto";
+import mongoose from "mongoose";
 import Admin from "../models/admin.model.js";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import OfficeStaff from "../models/office_staff.model.js";
 import Agent from "../models/agent.model.js";
 import AgentActivity from "../models/agent_activity.model.js";
+import Inquiry from "../models/inquiry.model.js";
+import BranchProfileUpdateRequest from "../models/branch_profile_update_request.model.js";
+import LoginActivity from "../models/login_activity.model.js";
 import { hashPassword } from "../utils/crypto.js";
-import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { sendEmail, getBaseTemplate, sendBranchProfileUpdateStatusEmail } from "../utils/email.js";
+import { logLoginActivity } from "../utils/activity.js";
 
 const router = express.Router();
 
@@ -30,6 +35,20 @@ router.post("/login", async (req, res) => {
       return res.status(400).json({ error: "Invalid Email or Password." });
     }
 
+    // Record login activity
+    await logLoginActivity({
+      req,
+      userType: "Admin",
+      userId: admin._id,
+      userName: admin.name,
+      userEmail: admin.email,
+      userNic: admin.nic,
+      branch: "Head Office",
+      action: "Login",
+      status: "Success",
+      details: "Administrator logged into Admin Console."
+    });
+
     // Return admin object without password
     const adminObj = admin.toObject();
     delete adminObj.password;
@@ -38,6 +57,53 @@ router.post("/login", async (req, res) => {
   } catch (err) {
     console.error("Admin login API error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// GET admin profile details & system metrics: /api/admin/profile
+router.get("/profile", async (req, res) => {
+  try {
+    const { email, id } = req.query;
+    if (!email && !id) {
+      return res.status(400).json({ error: "Admin email or ID is required." });
+    }
+
+    const query = {};
+    if (email) query.email = email.trim().toLowerCase();
+    if (id) query._id = id;
+
+    const admin = await Admin.findOne(query, { password: 0 })
+      .populate("registeredBy", "name email")
+      .populate("approvedBy", "name email");
+
+    if (!admin) {
+      return res.status(404).json({ error: "Administrator record not found." });
+    }
+
+    // System-wide statistics for the executive dashboard / profile view
+    const totalStaff = await OfficeStaff.countDocuments();
+    const totalAgents = await Agent.countDocuments();
+    const totalPolicyHolders = await User.countDocuments({ status: "Approved" });
+    const totalClaims = await Claim.countDocuments();
+    const pendingClaims = await Claim.countDocuments({ status: "Pending" });
+    const pendingBranchRequests = await BranchProfileUpdateRequest.countDocuments({ status: "Pending" });
+    const totalAdmins = await Admin.countDocuments({ status: "Approved" });
+
+    res.json({
+      admin,
+      systemStats: {
+        totalStaff,
+        totalAgents,
+        totalPolicyHolders,
+        totalClaims,
+        pendingClaims,
+        pendingBranchRequests,
+        totalAdmins
+      }
+    });
+  } catch (err) {
+    console.error("Fetch admin profile error:", err);
+    res.status(500).json({ error: "An internal server error occurred while retrieving admin profile." });
   }
 });
 
@@ -135,6 +201,10 @@ router.get("/dashboard-stats", async (req, res) => {
     const pendingAdminResets = await Admin.find({ resetRequestStatus: "Pending" }, { password: 0 })
       .sort({ createdAt: -1 });
 
+    // 6. Pending Branch Profile Update Requests
+    const pendingBranchProfileRequests = await BranchProfileUpdateRequest.find({ status: "Pending" })
+      .sort({ createdAt: -1 });
+
     res.json({
       stats: {
         policyHolders: policyHoldersCount,
@@ -142,12 +212,14 @@ router.get("/dashboard-stats", async (req, res) => {
         activeClaims: activeClaimsCount,
         pendingClaims: pendingClaimsCount,
         totalAgents: totalAgentsCount,
-        totalBranches: totalBranchesCount
+        totalBranches: totalBranchesCount,
+        pendingBranchProfileRequestsCount: pendingBranchProfileRequests.length
       },
       branches,
       monthlyClaims,
       pendingBranchResets,
-      pendingAdminResets
+      pendingAdminResets,
+      pendingBranchProfileRequests
     });
   } catch (err) {
     console.error("Admin dashboard stats API error:", err);
@@ -305,6 +377,26 @@ router.get("/notifications", async (req, res) => {
           agent
         });
       }
+    });
+
+    // 4. Branch Profile Update Request notifications
+    const branchRequests = await BranchProfileUpdateRequest.find({ status: "Pending" }).sort({ createdAt: -1 });
+    branchRequests.forEach((brReq) => {
+      const isPasswordReq = brReq.requestType === "Password & Security";
+      compiled.push({
+        id: `${brReq._id}-branch-profile-req`,
+        type: "action",
+        category: "branches",
+        title: isPasswordReq ? "Branch Password Change Request" : "Branch Profile Edit Request",
+        description: isPasswordReq
+          ? `The ${brReq.branchName} Branch submitted a new password change request awaiting Admin approval.`
+          : `The ${brReq.branchName} Branch submitted a profile update request (${brReq.requestType}) awaiting Admin review.`,
+        date: brReq.createdAt,
+        isUrgent: true,
+        link: `/Admin/Staff?tab=requests&requestId=${brReq._id}`,
+        actionLabel: "Review Request",
+        branchRequest: brReq
+      });
     });
 
     // Sort: Urgent first, then newest first
@@ -580,6 +672,164 @@ router.post("/staff/password-requests/reject", async (req, res) => {
   } catch (err) {
     console.error("Reject staff password request error:", err);
     res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// ==========================================
+// --- API: Branch Profile Update Requests (Admin Review) ---
+// ==========================================
+
+// GET all branch profile update requests: /api/admin/branch-profile-requests
+router.get("/branch-profile-requests", async (req, res) => {
+  try {
+    const { status, branch } = req.query;
+    const query = {};
+    if (status && status !== "All") {
+      query.status = status;
+    }
+    if (branch) {
+      query.branchName = branch.trim();
+    }
+
+    const requests = await BranchProfileUpdateRequest.find(query).sort({ createdAt: -1 }).lean();
+    
+    // Sanitize any sensitive password hash from output
+    const sanitizedRequests = requests.map((r) => {
+      if (r.requestedChanges && r.requestedChanges.pendingPasswordHash) {
+        const { pendingPasswordHash, ...restChanges } = r.requestedChanges;
+        return { ...r, requestedChanges: restChanges };
+      }
+      return r;
+    });
+
+    res.json({ requests: sanitizedRequests });
+  } catch (err) {
+    console.error("Fetch branch profile requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// POST approve branch profile update request: /api/admin/branch-profile-requests/approve
+router.post("/branch-profile-requests/approve", async (req, res) => {
+  try {
+    const { requestId, adminName, reviewNote } = req.body;
+    if (!requestId) {
+      return res.status(400).json({ error: "Request ID is required." });
+    }
+
+    const updateRequest = await BranchProfileUpdateRequest.findById(requestId);
+    if (!updateRequest) {
+      return res.status(404).json({ error: "Branch profile update request not found." });
+    }
+
+    if (updateRequest.status === "Approved") {
+      return res.status(400).json({ error: "This request has already been approved." });
+    }
+
+    const staff = await OfficeStaff.findById(updateRequest.branchId);
+    if (!staff) {
+      return res.status(404).json({ error: "Associated branch office staff record not found." });
+    }
+
+    const changes = updateRequest.requestedChanges || {};
+
+    // Apply approved password change if present
+    if (changes.pendingPasswordHash) {
+      staff.password = changes.pendingPasswordHash;
+      staff.mustChangePassword = false;
+    }
+
+    // Apply approved changes to OfficeStaff record
+    if (changes.name !== undefined && changes.name.trim()) staff.name = changes.name.trim();
+    if (changes.mobile !== undefined && changes.mobile.trim()) staff.mobile = changes.mobile.trim();
+    if (changes.branch !== undefined && changes.branch.trim()) staff.branch = changes.branch.trim();
+    if (changes.province !== undefined && changes.province.trim()) staff.province = changes.province.trim();
+    if (changes.district !== undefined && changes.district.trim()) staff.district = changes.district.trim();
+    if (changes.area !== undefined && changes.area.trim()) staff.area = changes.area.trim();
+    if (changes.location !== undefined && changes.location.trim()) staff.location = changes.location.trim();
+    if (changes.staffCount !== undefined && changes.staffCount !== null) staff.staffCount = Number(changes.staffCount);
+    if (changes.hotline !== undefined) staff.hotline = changes.hotline.trim();
+    if (changes.managerName !== undefined) staff.managerName = changes.managerName.trim();
+    if (changes.managerEmail !== undefined) staff.managerEmail = changes.managerEmail.trim().toLowerCase();
+    if (changes.managerMobile !== undefined) staff.managerMobile = changes.managerMobile.trim();
+    if (changes.operatingHours !== undefined) staff.operatingHours = changes.operatingHours.trim();
+    if (changes.notes !== undefined) staff.notes = changes.notes.trim();
+    if (changes.profilePhoto !== undefined) staff.profilePhoto = changes.profilePhoto;
+
+    await staff.save();
+
+    // Mark update request as Approved
+    updateRequest.status = "Approved";
+    updateRequest.reviewedBy = adminName || "Admin";
+    updateRequest.reviewedAt = new Date();
+    updateRequest.reviewNote = reviewNote || (updateRequest.requestType === "Password & Security" 
+      ? "Branch password change verified and approved by Head Office Admin." 
+      : "Branch profile updates verified and approved.");
+    updateRequest.updatedAt = new Date();
+    await updateRequest.save();
+
+    // Send email notification to branch
+    await sendBranchProfileUpdateStatusEmail(
+      updateRequest.email,
+      updateRequest.branchName,
+      updateRequest.staffName,
+      "Approved",
+      updateRequest.requestType,
+      updateRequest.reviewNote
+    );
+
+    const staffObj = staff.toObject();
+    delete staffObj.password;
+
+    res.json({
+      message: `Branch profile update request for ${updateRequest.branchName} Branch has been approved successfully.`,
+      request: updateRequest,
+      staff: staffObj
+    });
+  } catch (err) {
+    console.error("Approve branch profile request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// POST reject branch profile update request: /api/admin/branch-profile-requests/reject
+router.post("/branch-profile-requests/reject", async (req, res) => {
+  try {
+    const { requestId, adminName, reviewNote } = req.body;
+    if (!requestId) {
+      return res.status(400).json({ error: "Request ID is required." });
+    }
+
+    const updateRequest = await BranchProfileUpdateRequest.findById(requestId);
+    if (!updateRequest) {
+      return res.status(404).json({ error: "Branch profile update request not found." });
+    }
+
+    // Mark update request as Rejected
+    updateRequest.status = "Rejected";
+    updateRequest.reviewedBy = adminName || "Admin";
+    updateRequest.reviewedAt = new Date();
+    updateRequest.reviewNote = reviewNote || "Request was not approved. Please contact Head Office administration.";
+    updateRequest.updatedAt = new Date();
+    await updateRequest.save();
+
+    // Send email notification to branch
+    await sendBranchProfileUpdateStatusEmail(
+      updateRequest.email,
+      updateRequest.branchName,
+      updateRequest.staffName,
+      "Rejected",
+      updateRequest.requestType,
+      updateRequest.reviewNote
+    );
+
+    res.json({
+      message: `Branch profile update request for ${updateRequest.branchName} Branch has been rejected.`,
+      request: updateRequest
+    });
+  } catch (err) {
+    console.error("Reject branch profile request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
   }
 });
 
@@ -898,4 +1148,2008 @@ router.post("/admins/change-password", async (req, res) => {
   }
 });
 
+// ==========================================
+// ADMIN CONTACT & INQUIRY MANAGEMENT ROUTES
+// ==========================================
+
+// Seed initial realistic inquiries if none exist
+const seedInitialInquiries = async () => {
+  const count = await Inquiry.countDocuments();
+  if (count === 0) {
+    const sampleInquiries = [
+      {
+        ticketId: "INQ-2026-1082",
+        senderName: "Kamal Perera",
+        senderEmail: "kamal.perera@gmail.com",
+        senderPhone: "0771234567",
+        senderRole: "Policy Holder",
+        category: "Claims Escalation",
+        priority: "Urgent",
+        subject: "Claim CLM-2026-0042 delay inquiry",
+        message: "My vehicle accident assessment was submitted last Monday at Galle branch, but the status is still pending approval. Could you please check the status with the branch assessor?",
+        branch: "Galle",
+        status: "Pending",
+        adminNotes: ""
+      },
+      {
+        ticketId: "INQ-2026-1045",
+        senderName: "Nimali Rathnayake",
+        senderEmail: "nimali.rath@yahoo.com",
+        senderPhone: "0719876543",
+        senderRole: "Policy Holder",
+        category: "Policy Inquiry",
+        priority: "Normal",
+        subject: "Adding comprehensive motor rider for electric car",
+        message: "I would like to inquire about the terms and premium calculation for EV battery replacement coverage under my existing policy POL-88219.",
+        branch: "Colombo (Head Office)",
+        status: "In Review",
+        adminNotes: "Assigned to underwriting department for EV rate confirmation."
+      },
+      {
+        ticketId: "INQ-2026-0988",
+        senderName: "Sunil Shantha (Agent)",
+        senderEmail: "sunil.agt04@sanasainsurance.lk",
+        senderPhone: "0773344556",
+        senderRole: "Agent",
+        category: "Agent Support",
+        priority: "Normal",
+        subject: "Commission statement discrepancy for August 2026",
+        message: "The commission payout statement for motor policy renewals registered in Matara branch area shows 3 missing policies. Attached are the registration slips.",
+        branch: "Matara",
+        status: "Resolved",
+        adminNotes: "Finance reconciled missing 3 policies on 18 Sep 2026. Paid out in supplemental cycle.",
+        resolvedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+        resolvedBy: "System Admin"
+      },
+      {
+        ticketId: "INQ-2026-0920",
+        senderName: "Dilshan Fernando",
+        senderEmail: "dilshan.f@hotmail.com",
+        senderPhone: "0765544332",
+        senderRole: "Public Visitor",
+        category: "General Inquiry",
+        priority: "Normal",
+        subject: "Corporate Fleet Insurance quotation request",
+        message: "Our logistics company in Kandy operates 15 commercial vans. We require a comprehensive group fleet insurance proposal with roadside assistance.",
+        branch: "Kandy",
+        status: "In Review",
+        adminNotes: "Forwarded to Corporate Sales team & Kandy Branch Manager."
+      },
+      {
+        ticketId: "INQ-2026-0870",
+        senderName: "Kandy Branch Office",
+        senderEmail: "kandy@sanasainsurance.lk",
+        senderPhone: "0812234500",
+        senderRole: "Office Staff",
+        category: "Branch Operations",
+        priority: "High",
+        subject: "Assessment portal slow response during morning peak",
+        message: "Branch claims assessors experienced latency when uploading high resolution photo evidence between 9:30 AM and 11:00 AM.",
+        branch: "Kandy",
+        status: "Resolved",
+        adminNotes: "IT infrastructure team scaled image compression cache on server.",
+        resolvedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+        resolvedBy: "System Admin"
+      }
+    ];
+    await Inquiry.insertMany(sampleInquiries);
+    console.log("Seeded initial support inquiries.");
+  }
+};
+
+// GET all inquiries: /api/admin/contact/inquiries
+router.get("/contact/inquiries", async (req, res) => {
+  try {
+    await seedInitialInquiries();
+    const { category, status, search } = req.query;
+    const filter = {};
+
+    if (category && category !== "All") {
+      filter.category = category;
+    }
+    if (status && status !== "All") {
+      filter.status = status;
+    }
+    if (search) {
+      const q = search.trim();
+      filter.$or = [
+        { ticketId: { $regex: q, $options: "i" } },
+        { senderName: { $regex: q, $options: "i" } },
+        { senderEmail: { $regex: q, $options: "i" } },
+        { subject: { $regex: q, $options: "i" } },
+        { message: { $regex: q, $options: "i" } },
+        { branch: { $regex: q, $options: "i" } }
+      ];
+    }
+
+    const inquiries = await Inquiry.find(filter).sort({ createdAt: -1 });
+    
+    // Quick statistics
+    const totalCount = await Inquiry.countDocuments();
+    const pendingCount = await Inquiry.countDocuments({ status: "Pending" });
+    const inReviewCount = await Inquiry.countDocuments({ status: "In Review" });
+    const resolvedCount = await Inquiry.countDocuments({ status: "Resolved" });
+
+    res.json({
+      inquiries,
+      stats: {
+        total: totalCount,
+        pending: pendingCount,
+        inReview: inReviewCount,
+        resolved: resolvedCount
+      }
+    });
+  } catch (err) {
+    console.error("Fetch inquiries error:", err);
+    res.status(500).json({ error: "Failed to load support inquiries." });
+  }
+});
+
+// POST create inquiry: /api/admin/contact/inquiries
+router.post("/contact/inquiries", async (req, res) => {
+  try {
+    const { senderName, senderEmail, senderPhone, senderRole, category, priority, subject, message, branch } = req.body;
+    if (!senderName || !senderEmail || !subject || !message) {
+      return res.status(400).json({ error: "Name, email, subject, and message are required." });
+    }
+
+    const newInquiry = new Inquiry({
+      senderName: senderName.trim(),
+      senderEmail: senderEmail.trim().toLowerCase(),
+      senderPhone: senderPhone ? senderPhone.trim() : "",
+      senderRole: senderRole || "General",
+      category: category || "General Inquiry",
+      priority: priority || "Normal",
+      subject: subject.trim(),
+      message: message.trim(),
+      branch: branch || "Head Office",
+      status: "Pending"
+    });
+
+    await newInquiry.save();
+    res.status(201).json({ message: "Inquiry registered successfully.", inquiry: newInquiry });
+  } catch (err) {
+    console.error("Create inquiry error:", err);
+    res.status(500).json({ error: "Failed to submit inquiry." });
+  }
+});
+
+// PATCH update inquiry: /api/admin/contact/inquiries/:id
+router.patch("/contact/inquiries/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, priority, adminNotes, resolvedBy } = req.body;
+
+    const inquiry = await Inquiry.findById(id);
+    if (!inquiry) {
+      return res.status(404).json({ error: "Inquiry not found." });
+    }
+
+    if (status) inquiry.status = status;
+    if (priority) inquiry.priority = priority;
+    if (adminNotes !== undefined) inquiry.adminNotes = adminNotes;
+    
+    if (status === "Resolved" && !inquiry.resolvedAt) {
+      inquiry.resolvedAt = new Date();
+      inquiry.resolvedBy = resolvedBy || "Admin";
+    }
+
+    await inquiry.save();
+    res.json({ message: "Inquiry updated successfully.", inquiry });
+  } catch (err) {
+    console.error("Update inquiry error:", err);
+    res.status(500).json({ error: "Failed to update inquiry." });
+  }
+});
+
+// POST reply to inquiry: /api/admin/contact/inquiries/:id/reply
+router.post("/contact/inquiries/:id/reply", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { replyMessage, adminName } = req.body;
+
+    if (!replyMessage || !replyMessage.trim()) {
+      return res.status(400).json({ error: "Reply message cannot be empty." });
+    }
+
+    const inquiry = await Inquiry.findById(id);
+    if (!inquiry) {
+      return res.status(404).json({ error: "Inquiry not found." });
+    }
+
+    const responder = adminName || "Sanasa Insurance Executive Support Team";
+
+    // Compose official email
+    const emailSubject = `Response to Inquiry [${inquiry.ticketId}]: ${inquiry.subject}`;
+    const emailHtml = getBaseTemplate(
+      `Support Response — ${inquiry.ticketId}`,
+      `
+      <h2>Official Inquiry Response</h2>
+      <p>Dear <strong>${inquiry.senderName}</strong>,</p>
+      <p>Thank you for contacting Sanasa General Insurance. Below is the official response regarding your inquiry:</p>
+      
+      <table class="data-table">
+        <tr>
+          <td class="label">Ticket Reference:</td>
+          <td class="value highlight-value">${inquiry.ticketId}</td>
+        </tr>
+        <tr>
+          <td class="label">Category / Subject:</td>
+          <td class="value">${inquiry.category} — ${inquiry.subject}</td>
+        </tr>
+        <tr>
+          <td class="label">Original Message:</td>
+          <td class="value" style="font-style: italic; color: #666;">"${inquiry.message}"</td>
+        </tr>
+      </table>
+
+      <div style="background-color: #f0f7fa; border-left: 4px solid #004f6e; padding: 16px; margin: 20px 0; border-radius: 4px;">
+        <h4 style="margin: 0 0 8px 0; color: #004f6e; font-size: 14px; text-transform: uppercase;">Official Response:</h4>
+        <p style="margin: 0; color: #1e293b; font-size: 14px; line-height: 1.6; white-space: pre-line;">${replyMessage.trim()}</p>
+      </div>
+
+      <p style="font-size: 12px; color: #64748b; margin-top: 24px;">
+        If you have further questions, you can reply directly to this email or contact our 24/7 hotline at <strong>+94 112 003 000</strong>.
+      </p>
+      `
+    );
+
+    const emailText = `Dear ${inquiry.senderName},\n\nTicket Reference: ${inquiry.ticketId}\nSubject: ${inquiry.subject}\n\nOfficial Response:\n${replyMessage.trim()}\n\nBest Regards,\n${responder}\nSanasa General Insurance PLC`;
+
+    let emailSent = false;
+    let emailError = null;
+    try {
+      const result = await sendEmail(inquiry.senderEmail, emailSubject, emailHtml, emailText);
+      emailSent = result.sent;
+      emailError = result.error || null;
+    } catch (e) {
+      emailError = e.message;
+    }
+
+    inquiry.replyMessage = replyMessage.trim();
+    inquiry.repliedAt = new Date();
+    inquiry.repliedBy = responder;
+    inquiry.status = "Resolved";
+    inquiry.resolvedAt = new Date();
+    inquiry.resolvedBy = responder;
+    await inquiry.save();
+
+    res.json({
+      message: emailSent ? "Reply sent successfully to recipient!" : "Reply saved (Dev Mode: Email delivery simulated).",
+      emailSent,
+      emailError,
+      inquiry
+    });
+  } catch (err) {
+    console.error("Reply inquiry error:", err);
+    res.status(500).json({ error: "Failed to send reply to inquiry." });
+  }
+});
+
+// POST send official broadcast/direct email: /api/admin/contact/send-email
+router.post("/contact/send-email", async (req, res) => {
+  try {
+    const { targetGroup, specificEmail, subject, message, priority, senderName } = req.body;
+
+    if (!subject || !message) {
+      return res.status(400).json({ error: "Subject and message are required." });
+    }
+
+    let recipientEmails = [];
+
+    if (targetGroup === "custom") {
+      if (!specificEmail || !specificEmail.trim()) {
+        return res.status(400).json({ error: "Recipient email address is required for custom dispatch." });
+      }
+      recipientEmails = [specificEmail.trim().toLowerCase()];
+    } else if (targetGroup === "all_branches") {
+      const branches = await OfficeStaff.find({}, "email");
+      recipientEmails = branches.map(b => b.email).filter(Boolean);
+      if (recipientEmails.length === 0) {
+        recipientEmails = ["galle@sanasainsurance.lk", "colombo@sanasainsurance.lk", "kandy@sanasainsurance.lk"];
+      }
+    } else if (targetGroup === "all_agents") {
+      const agents = await Agent.find({ status: "active" }, "email");
+      recipientEmails = agents.map(a => a.email).filter(Boolean);
+      if (recipientEmails.length === 0) {
+        recipientEmails = ["agents@sanasainsurance.lk"];
+      }
+    } else if (targetGroup?.startsWith("branch_")) {
+      const branchName = targetGroup.replace("branch_", "");
+      const branchStaff = await OfficeStaff.findOne({ branch: branchName });
+      if (branchStaff && branchStaff.email) {
+        recipientEmails = [branchStaff.email];
+      } else {
+        recipientEmails = [`${branchName.toLowerCase().replace(/\s+/g, "")}@sanasainsurance.lk`];
+      }
+    } else {
+      if (specificEmail) recipientEmails = [specificEmail.trim().toLowerCase()];
+    }
+
+    if (recipientEmails.length === 0) {
+      return res.status(400).json({ error: "No valid recipient email addresses found for the selected target." });
+    }
+
+    const priorityBadgeColor = priority === "Urgent" ? "#ef4444" : priority === "High" ? "#f59e0b" : "#0284c7";
+    const priorityLabel = priority || "Normal Priority";
+
+    const emailHtml = getBaseTemplate(
+      `Executive Communication — Sanasa Insurance`,
+      `
+      <div style="display: inline-block; background-color: ${priorityBadgeColor}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 12px;">
+        ${priorityLabel}
+      </div>
+      <h2>${subject}</h2>
+      <p>Official communication from Sanasa General Insurance Executive Administration.</p>
+      
+      <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0; color: #1e293b; font-size: 14px; line-height: 1.7; white-space: pre-line;">${message.trim()}</p>
+      </div>
+
+      <p style="font-size: 12px; color: #64748b; margin-top: 24px;">
+        Sent by <strong>${senderName || "System Administrator"}</strong> — Executive Head Office, Sanasa General Insurance PLC.
+      </p>
+      `
+    );
+
+    const emailText = `${subject}\nPriority: ${priorityLabel}\n\n${message.trim()}\n\nSent by ${senderName || "System Administrator"} — Sanasa General Insurance PLC`;
+
+    let successCount = 0;
+    let failedCount = 0;
+
+    for (const email of recipientEmails) {
+      try {
+        const result = await sendEmail(email, subject, emailHtml, emailText);
+        if (result.sent) successCount++;
+        else failedCount++;
+      } catch (err) {
+        console.error(`Failed to send email to ${email}:`, err);
+        failedCount++;
+      }
+    }
+
+    res.json({
+      message: `Dispatched message to ${recipientEmails.length} recipient(s). (${successCount} delivered)`,
+      recipients: recipientEmails,
+      successCount,
+      failedCount
+    });
+  } catch (err) {
+    console.error("Admin send email error:", err);
+    res.status(500).json({ error: "Failed to send email." });
+  }
+});
+// ==========================================
+// --- API: Claims Management (Admin Console) ---
+// ==========================================
+
+// GET all claims with executive analytics & filters: /api/admin/claims
+router.get("/claims", async (req, res) => {
+  try {
+    const { branch, status, damageType, priority, search, sortBy } = req.query;
+    const query = {};
+
+    if (branch && branch !== "All") query.branch = branch.trim();
+    if (status && status !== "All") query.status = status.trim();
+    if (damageType && damageType !== "All") query.damageType = damageType.trim();
+    if (priority && priority !== "All") query.priority = priority.trim();
+
+    if (search) {
+      const q = search.trim();
+      query.$or = [
+        { claimNumber: { $regex: q, $options: "i" } },
+        { userNic: { $regex: q, $options: "i" } },
+        { vehiclePlate: { $regex: q, $options: "i" } },
+        { branch: { $regex: q, $options: "i" } },
+        { assignedAgent: { $regex: q, $options: "i" } },
+        { location: { $regex: q, $options: "i" } }
+      ];
+    }
+
+    let sortOption = { createdAt: -1 };
+    if (sortBy === "oldest") sortOption = { createdAt: 1 };
+    else if (sortBy === "amount-desc") sortOption = { amount: -1 };
+    else if (sortBy === "amount-asc") sortOption = { amount: 1 };
+
+    const rawClaims = await Claim.find(query).sort(sortOption).lean();
+
+    // Attach policy holder info
+    const nics = Array.from(new Set(rawClaims.map(c => c.userNic).filter(Boolean)));
+    const users = await User.find(
+      { nic: { $in: nics } },
+      { nic: 1, email: 1, mobile: 1, firstName: 1, lastName: 1, vehicles: 1, bankDetails: 1 }
+    ).lean();
+    const userMap = new Map(users.map(u => [u.nic, u]));
+
+    const claims = rawClaims.map(c => {
+      const u = userMap.get(c.userNic);
+      const fullName = u ? `${u.firstName || ""} ${u.lastName || ""}`.trim() : "Policy Holder";
+      const vehicle = u?.vehicles?.find((v) => (v.numberPlate || "").replace(/[\s-]/g, "").toUpperCase() === (c.vehiclePlate || "").replace(/[\s-]/g, "").toUpperCase());
+
+      return {
+        ...c,
+        policyHolderName: fullName,
+        policyHolderEmail: u?.email || "",
+        policyHolderMobile: u?.mobile || "",
+        vehicleDetails: vehicle ? `${vehicle.company || ""} ${vehicle.model || ""}`.trim() : ""
+      };
+    });
+
+    // Executive Metrics & Summary Calculations across entire dataset
+    const allClaims = await Claim.find({}, { status: 1, amount: 1, branch: 1, damageType: 1, createdAt: 1 }).lean();
+    const totalClaimsCount = allClaims.length;
+    const pendingClaimsCount = allClaims.filter(c => c.status === "Pending").length;
+    const inProgressClaimsCount = allClaims.filter(c => c.status === "In Progress" || c.currentStep === 2 || c.currentStep === 3).length;
+    const approvedClaimsCount = allClaims.filter(c => c.status === "Approved").length;
+    const rejectedClaimsCount = allClaims.filter(c => c.status === "Rejected").length;
+
+    const totalApprovedPayout = allClaims
+      .filter(c => c.status === "Approved" && c.amount)
+      .reduce((sum, c) => sum + (c.amount || 0), 0);
+
+    const totalEstimatedLoss = allClaims
+      .filter(c => c.amount)
+      .reduce((sum, c) => sum + (c.amount || 0), 0);
+
+    // Damage Type Category Distribution
+    const damageTypeMap = {};
+    allClaims.forEach(c => {
+      const cat = c.damageType || "Other";
+      damageTypeMap[cat] = (damageTypeMap[cat] || 0) + 1;
+    });
+
+    // Branch Breakdown
+    const branchMap = {};
+    allClaims.forEach(c => {
+      const br = c.branch || "General";
+      if (!branchMap[br]) branchMap[br] = { count: 0, approvedPayout: 0, pending: 0 };
+      branchMap[br].count += 1;
+      if (c.status === "Approved" && c.amount) branchMap[br].approvedPayout += c.amount;
+      if (c.status === "Pending") branchMap[br].pending += 1;
+    });
+
+    res.json({
+      claims,
+      summary: {
+        totalClaims: totalClaimsCount,
+        pendingClaims: pendingClaimsCount,
+        inProgressClaims: inProgressClaimsCount,
+        approvedClaims: approvedClaimsCount,
+        rejectedClaims: rejectedClaimsCount,
+        totalApprovedPayout,
+        totalEstimatedLoss,
+        categoryDistribution: damageTypeMap,
+        branchBreakdown: branchMap
+      }
+    });
+  } catch (err) {
+    console.error("Admin fetch claims error:", err);
+    res.status(500).json({ error: "Failed to fetch claims report." });
+  }
+});
+
+// GET single claim by ID or Claim Number: /api/admin/claims/:id
+router.get("/claims/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { claimNumber: id.trim().toUpperCase() };
+    const claim = await Claim.findOne(query).lean();
+    if (!claim) {
+      return res.status(404).json({ error: "Claim record not found." });
+    }
+
+    // Attach user profile
+    const user = await User.findOne({ nic: claim.userNic }, { password: 0 }).lean();
+    res.json({ claim, user });
+  } catch (err) {
+    console.error("Admin fetch single claim error:", err);
+    res.status(500).json({ error: "Failed to fetch claim details." });
+  }
+});
+
+// PUT update / override claim decision (Admin Authority): /api/admin/claims/:id
+router.put("/claims/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, amount, priority, branch, assignedAgent, rejectionReason, adminNote, currentStep } = req.body;
+
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { claimNumber: id.trim().toUpperCase() };
+    const claim = await Claim.findOne(query);
+    if (!claim) {
+      return res.status(404).json({ error: "Claim record not found." });
+    }
+
+    if (status !== undefined) claim.status = status.trim();
+    if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
+    if (priority !== undefined) claim.priority = priority.trim();
+    if (branch !== undefined) claim.branch = branch.trim();
+    if (assignedAgent !== undefined) claim.assignedAgent = assignedAgent.trim();
+    if (rejectionReason !== undefined) claim.rejectionReason = rejectionReason.trim();
+    if (currentStep !== undefined) claim.currentStep = Number(currentStep);
+
+    if (adminNote && adminNote.trim()) {
+      claim.notes.push({
+        text: `[Admin Override] ${adminNote.trim()}`,
+        addedBy: "System Admin",
+        addedAt: new Date()
+      });
+      claim.messages.push({
+        sender: "System Admin",
+        message: adminNote.trim(),
+        sentAt: new Date(),
+        recipient: "Policy Holder"
+      });
+    }
+
+    claim.isManuallyUpdated = true;
+    claim.manualUpdateAt = new Date();
+    claim.manualUpdateBy = "System Admin";
+
+    await claim.save();
+    res.json({ message: "Claim record updated successfully.", claim });
+  } catch (err) {
+    console.error("Admin update claim error:", err);
+    res.status(500).json({ error: err.message || "Failed to update claim record." });
+  }
+});
+
+// DELETE single claim by ID (Admin Authority): /api/admin/claims/:id
+router.delete("/claims/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { claimNumber: id.trim().toUpperCase() };
+    const deleted = await Claim.findOneAndDelete(query);
+    if (!deleted) {
+      return res.status(404).json({ error: "Claim record not found." });
+    }
+    res.json({ message: `Claim ${deleted.claimNumber} removed successfully.` });
+  } catch (err) {
+    console.error("Admin delete claim error:", err);
+    res.status(500).json({ error: "Failed to delete claim." });
+  }
+});
+
+// ===============================================
+// --- API: Policyholders Management (Admin) ---
+// ===============================================
+
+// GET all policyholders with executive metrics & search: /api/admin/policyholders
+router.get("/policyholders", async (req, res) => {
+  try {
+    const { branch, status, search, province, sortBy } = req.query;
+    const query = {};
+
+    if (branch && branch !== "All") {
+      query.branch = { $regex: new RegExp(`^${branch.trim()}$`, "i") };
+    }
+    if (status && status !== "All") {
+      query.status = status.trim();
+    }
+    if (province && province !== "All") {
+      query.province = { $regex: new RegExp(`^${province.trim()}$`, "i") };
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const cleanPlate = q.replace(/[\s-]/g, "");
+      query.$or = [
+        { nic: { $regex: escaped, $options: "i" } },
+        { firstName: { $regex: escaped, $options: "i" } },
+        { lastName: { $regex: escaped, $options: "i" } },
+        { email: { $regex: escaped, $options: "i" } },
+        { mobile: { $regex: escaped, $options: "i" } },
+        { referenceNumber: { $regex: escaped, $options: "i" } },
+        { city: { $regex: escaped, $options: "i" } },
+        { branch: { $regex: escaped, $options: "i" } },
+        { "vehicles.numberPlate": { $regex: cleanPlate || escaped, $options: "i" } },
+        { "vehicles.policyNumber": { $regex: escaped, $options: "i" } }
+      ];
+    }
+
+    let sortOption = { createdAt: -1 };
+    if (sortBy === "oldest") sortOption = { createdAt: 1 };
+    else if (sortBy === "name-asc") sortOption = { firstName: 1, lastName: 1 };
+    else if (sortBy === "name-desc") sortOption = { firstName: -1, lastName: -1 };
+
+    const rawUsers = await User.find(query, { password: 0 }).sort(sortOption).lean();
+
+    // Attach claims counts per policyholder
+    const nics = rawUsers.map((u) => u.nic).filter(Boolean);
+    const claims = await Claim.find({ userNic: { $in: nics } }, { userNic: 1, status: 1, amount: 1 }).lean();
+    
+    const claimsMap = {};
+    claims.forEach((c) => {
+      if (!claimsMap[c.userNic]) {
+        claimsMap[c.userNic] = { total: 0, active: 0, approvedPayout: 0 };
+      }
+      claimsMap[c.userNic].total += 1;
+      if (c.status === "In Progress" || c.status === "Pending") {
+        claimsMap[c.userNic].active += 1;
+      }
+      if (c.status === "Approved" && c.amount) {
+        claimsMap[c.userNic].approvedPayout += c.amount;
+      }
+    });
+
+    const policyholders = rawUsers.map((u) => {
+      const cData = claimsMap[u.nic] || { total: 0, active: 0, approvedPayout: 0 };
+      return {
+        ...u,
+        totalClaimsCount: cData.total,
+        activeClaimsCount: cData.active,
+        totalApprovedPayout: cData.approvedPayout
+      };
+    });
+
+    // Compute Overall Summary Metrics across all users
+    const allUsers = await User.find({}, { status: 1, branch: 1, province: 1, vehicles: 1, createdAt: 1 }).lean();
+    const totalPolicyholders = allUsers.length;
+    const approvedPolicyholders = allUsers.filter((u) => u.status === "Approved").length;
+    const pendingPolicyholders = allUsers.filter((u) => u.status === "Pending" || !u.status).length;
+    
+    let totalVehicles = 0;
+    const branchMap = {};
+    const provinceMap = {};
+
+    allUsers.forEach((u) => {
+      const vCount = u.vehicles ? u.vehicles.length : 0;
+      totalVehicles += vCount;
+
+      const br = u.branch || "General";
+      if (!branchMap[br]) branchMap[br] = { count: 0, vehicles: 0, pending: 0 };
+      branchMap[br].count += 1;
+      branchMap[br].vehicles += vCount;
+      if (u.status === "Pending" || !u.status) branchMap[br].pending += 1;
+
+      const prov = u.province || "Other";
+      provinceMap[prov] = (provinceMap[prov] || 0) + 1;
+    });
+
+    res.json({
+      policyholders,
+      summary: {
+        totalPolicyholders,
+        approvedPolicyholders,
+        pendingPolicyholders,
+        totalVehicles,
+        branchBreakdown: branchMap,
+        provinceDistribution: provinceMap
+      }
+    });
+  } catch (err) {
+    console.error("Admin fetch policyholders error:", err);
+    res.status(500).json({ error: "Failed to fetch policyholders." });
+  }
+});
+
+// GET single policyholder by ID or NIC with full details & claims: /api/admin/policyholders/:id
+router.get("/policyholders/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query, { password: 0 }).lean();
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    const claims = await Claim.find({ userNic: user.nic }).sort({ createdAt: -1 }).lean();
+    const loginActivities = await LoginActivity.find({
+      $or: [{ userId: user._id }, { userNic: user.nic }, { userEmail: user.email }]
+    }).sort({ createdAt: -1 }).limit(30).lean();
+
+    res.json({ policyholder: user, claims, loginActivities });
+  } catch (err) {
+    console.error("Admin fetch single policyholder error:", err);
+    res.status(500).json({ error: "Failed to fetch policyholder details." });
+  }
+});
+
+// PUT update policyholder profile / status (Admin Authority): /api/admin/policyholders/:id
+router.put("/policyholders/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      firstName,
+      lastName,
+      mobile,
+      email,
+      dob,
+      address,
+      city,
+      province,
+      branch,
+      status,
+      bankName,
+      branchName,
+      accountNumber,
+      accountHolderName
+    } = req.body;
+
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    if (firstName !== undefined) user.firstName = firstName.trim();
+    if (lastName !== undefined) user.lastName = lastName.trim();
+    if (mobile !== undefined) user.mobile = mobile.trim();
+    if (email !== undefined) user.email = email.trim().toLowerCase();
+    if (dob !== undefined) user.dob = dob.trim();
+    if (address !== undefined) user.address = address.trim();
+    if (city !== undefined) user.city = city.trim();
+    if (province !== undefined) user.province = province.trim();
+    if (branch !== undefined) user.branch = branch.trim();
+    if (status !== undefined) user.status = status.trim();
+
+    if (!user.bankDetails) user.bankDetails = {};
+    if (bankName !== undefined) user.bankDetails.bankName = bankName.trim();
+    if (branchName !== undefined) user.bankDetails.branchName = branchName.trim();
+    if (accountNumber !== undefined) user.bankDetails.accountNumber = accountNumber.trim();
+    if (accountHolderName !== undefined) user.bankDetails.accountHolderName = accountHolderName.trim();
+
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ message: "Policyholder updated successfully.", policyholder: userObj });
+  } catch (err) {
+    console.error("Admin update policyholder error:", err);
+    res.status(500).json({ error: err.message || "Failed to update policyholder." });
+  }
+});
+
+// DELETE policyholder record (Admin Authority): /api/admin/policyholders/:id
+router.delete("/policyholders/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const deleted = await User.findOneAndDelete(query);
+    if (!deleted) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+    res.json({ message: `Policyholder ${deleted.firstName} ${deleted.lastName} removed successfully.` });
+  } catch (err) {
+    console.error("Admin delete policyholder error:", err);
+    res.status(500).json({ error: "Failed to delete policyholder." });
+  }
+});
+
+// POST add vehicle to policyholder (Admin): /api/admin/policyholders/:id/vehicles
+router.post("/policyholders/:id/vehicles", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { numberPlate, vehicleType, company, model, year, engineNumber, chassisNumber, policyNumber, status } = req.body;
+
+    if (!numberPlate || !company || !model || !year) {
+      return res.status(400).json({ error: "Vehicle number, company, model, and year are required." });
+    }
+
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    const cleanPlate = numberPlate.replace(/[\s-]/g, "").toUpperCase();
+    const existing = user.vehicles.find((v) => v.numberPlate.replace(/[\s-]/g, "").toUpperCase() === cleanPlate);
+    if (existing) {
+      return res.status(400).json({ error: `Vehicle ${numberPlate} is already registered under this policyholder.` });
+    }
+
+    const newVehicle = {
+      numberPlate: numberPlate.trim().toUpperCase(),
+      vehicleType: (vehicleType || "Car").trim(),
+      company: company.trim(),
+      model: model.trim(),
+      year: String(year).trim(),
+      engineNumber: (engineNumber || "ENG-" + Math.floor(100000 + Math.random() * 900000)).trim(),
+      chassisNumber: (chassisNumber || "CHS-" + Math.floor(100000 + Math.random() * 900000)).trim(),
+      policyNumber: (policyNumber || "POL-" + Math.floor(100000 + Math.random() * 900000)).trim(),
+      status: (status || "Approved").trim()
+    };
+
+    user.vehicles.push(newVehicle);
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ message: "Vehicle added successfully.", policyholder: userObj });
+  } catch (err) {
+    console.error("Admin add vehicle error:", err);
+    res.status(500).json({ error: err.message || "Failed to add vehicle." });
+  }
+});
+
+// PUT update vehicle of policyholder (Admin): /api/admin/policyholders/:id/vehicles/:plate
+router.put("/policyholders/:id/vehicles/:plate", async (req, res) => {
+  try {
+    const { id, plate } = req.params;
+    const { vehicleType, company, model, year, engineNumber, chassisNumber, policyNumber, status } = req.body;
+
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    const cleanPlate = plate.replace(/[\s-]/g, "").toUpperCase();
+    const vehicle = user.vehicles.find((v) => v.numberPlate.replace(/[\s-]/g, "").toUpperCase() === cleanPlate);
+    if (!vehicle) {
+      return res.status(404).json({ error: "Vehicle not found under this policyholder." });
+    }
+
+    if (vehicleType !== undefined) vehicle.vehicleType = vehicleType.trim();
+    if (company !== undefined) vehicle.company = company.trim();
+    if (model !== undefined) vehicle.model = model.trim();
+    if (year !== undefined) vehicle.year = String(year).trim();
+    if (engineNumber !== undefined) vehicle.engineNumber = engineNumber.trim();
+    if (chassisNumber !== undefined) vehicle.chassisNumber = chassisNumber.trim();
+    if (policyNumber !== undefined) vehicle.policyNumber = policyNumber.trim();
+    if (status !== undefined) vehicle.status = status.trim();
+
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ message: "Vehicle updated successfully.", policyholder: userObj });
+  } catch (err) {
+    console.error("Admin update vehicle error:", err);
+    res.status(500).json({ error: err.message || "Failed to update vehicle." });
+  }
+});
+
+// DELETE vehicle from policyholder (Admin): /api/admin/policyholders/:id/vehicles/:plate
+router.delete("/policyholders/:id/vehicles/:plate", async (req, res) => {
+  try {
+    const { id, plate } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id) ? { _id: id } : { nic: id.trim() };
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder not found." });
+    }
+
+    const cleanPlate = plate.replace(/[\s-]/g, "").toUpperCase();
+    user.vehicles = user.vehicles.filter((v) => v.numberPlate.replace(/[\s-]/g, "").toUpperCase() !== cleanPlate);
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    res.json({ message: "Vehicle removed successfully.", policyholder: userObj });
+  } catch (err) {
+    console.error("Admin delete vehicle error:", err);
+    res.status(500).json({ error: err.message || "Failed to delete vehicle." });
+  }
+});
+
+// ==========================================
+// --- API: Branch / Staff Activity & Details ---
+// ==========================================
+
+// GET single branch staff with login activities: /api/admin/staff/:id/details
+router.get("/staff/:id/details", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const staff = await OfficeStaff.findById(id, { password: 0 }).lean();
+    if (!staff) {
+      return res.status(404).json({ error: "Branch office staff not found." });
+    }
+
+    const loginActivities = await LoginActivity.find({
+      $or: [
+        { userId: staff._id },
+        { userEmail: staff.email.toLowerCase() },
+        { branch: staff.branch }
+      ]
+    }).sort({ createdAt: -1 }).limit(30).lean();
+
+    res.json({ staff, loginActivities });
+  } catch (err) {
+    console.error("Fetch single staff details error:", err);
+    res.status(500).json({ error: "Failed to fetch branch details." });
+  }
+});
+
+// Seed initial realistic login activity records if none exist
+const seedInitialLoginActivities = async () => {
+  const count = await LoginActivity.countDocuments();
+  if (count === 0) {
+    const users = await User.find({}).limit(10);
+    const staff = await OfficeStaff.find({}).limit(10);
+    const agents = await Agent.find({}).limit(10);
+    const admins = await Admin.find({}).limit(5);
+
+    const sampleLogs = [];
+    const now = Date.now();
+
+    // Policyholders
+    users.forEach((u, i) => {
+      const timeOffset = (i * 4 + 1) * 3600 * 1000;
+      const loginTime = new Date(now - timeOffset);
+      const isMobile = i % 2 === 1;
+      const device = isMobile ? "Android Mobile" : "Desktop (Web)";
+      const browser = isMobile ? "Sanasa Mobile App" : "Google Chrome";
+      const os = isMobile ? "Android 14" : "Windows 11";
+      const ip = `192.168.1.${10 + i}`;
+
+      sampleLogs.push({
+        userType: "PolicyHolder",
+        userId: u._id,
+        userName: `${u.firstName || ""} ${u.lastName || ""}`.trim(),
+        userEmail: u.email,
+        userNic: u.nic,
+        branch: u.branch || "Galle",
+        action: "Login",
+        ipAddress: ip,
+        device,
+        browser,
+        os,
+        status: "Success",
+        details: `Policyholder portal sign-in via ${device}`,
+        createdAt: loginTime
+      });
+
+      if (!u.lastLoginAt) {
+        User.findByIdAndUpdate(u._id, {
+          lastLoginAt: loginTime,
+          lastLoginIp: ip,
+          lastLoginDevice: `${device} - ${browser}`,
+          loginCount: Math.floor(Math.random() * 8) + 2
+        }).exec();
+      }
+    });
+
+    // Branch Staff
+    staff.forEach((s, i) => {
+      const timeOffset = (i * 2 + 0.5) * 3600 * 1000;
+      const loginTime = new Date(now - timeOffset);
+      const ip = `10.0.${i + 1}.45`;
+
+      sampleLogs.push({
+        userType: "OfficeStaff",
+        userId: s._id,
+        userName: s.name,
+        userEmail: s.email,
+        userNic: s.mobile,
+        branch: s.branch || "Galle",
+        action: "Login",
+        ipAddress: ip,
+        device: "Desktop (Web)",
+        browser: "Google Chrome",
+        os: "Windows 11",
+        status: "Success",
+        details: `Branch office staff operational portal session started.`,
+        createdAt: loginTime
+      });
+
+      if (!s.lastLoginAt) {
+        OfficeStaff.findByIdAndUpdate(s._id, {
+          lastLoginAt: loginTime,
+          lastLoginIp: ip,
+          lastLoginDevice: "Desktop (Web) - Google Chrome",
+          loginCount: Math.floor(Math.random() * 15) + 5
+        }).exec();
+      }
+    });
+
+    // Agents
+    agents.forEach((a, i) => {
+      const timeOffset = (i * 3 + 2) * 3600 * 1000;
+      const loginTime = new Date(now - timeOffset);
+      const ip = `172.20.10.${12 + i}`;
+
+      sampleLogs.push({
+        userType: "Agent",
+        userId: a._id,
+        userName: a.name,
+        userEmail: a.email,
+        userNic: a.nic,
+        branch: a.branch || "Galle",
+        action: "Login",
+        ipAddress: ip,
+        device: "Mobile App",
+        browser: "Sanasa Mobile App",
+        os: "Android 14",
+        status: "Success",
+        details: `Insurance agent field app authentication.`,
+        createdAt: loginTime
+      });
+
+      if (!a.lastLoginAt) {
+        Agent.findByIdAndUpdate(a._id, {
+          lastLoginAt: loginTime,
+          lastLoginIp: ip,
+          lastLoginDevice: "Mobile App - Sanasa Agent App",
+          loginCount: Math.floor(Math.random() * 20) + 3
+        }).exec();
+      }
+    });
+
+    // Admins
+    admins.forEach((adm, i) => {
+      const timeOffset = (i * 5 + 0.2) * 3600 * 1000;
+      const loginTime = new Date(now - timeOffset);
+      const ip = `127.0.0.1`;
+
+      sampleLogs.push({
+        userType: "Admin",
+        userId: adm._id,
+        userName: adm.name,
+        userEmail: adm.email,
+        userNic: adm.nic,
+        branch: "Head Office",
+        action: "Login",
+        ipAddress: ip,
+        device: "Desktop (Web)",
+        browser: "Google Chrome",
+        os: "Windows 11",
+        status: "Success",
+        details: "Administrator logged into Admin Governance Console.",
+        createdAt: loginTime
+      });
+
+      if (!adm.lastLoginAt) {
+        Admin.findByIdAndUpdate(adm._id, {
+          lastLoginAt: loginTime,
+          lastLoginIp: ip,
+          lastLoginDevice: "Desktop (Web) - Google Chrome",
+          loginCount: Math.floor(Math.random() * 25) + 10
+        }).exec();
+      }
+    });
+
+    if (sampleLogs.length > 0) {
+      await LoginActivity.insertMany(sampleLogs);
+    }
+  }
+};
+
+// ==========================================
+// --- API: Activity & Login Governance Audit ---
+// ==========================================
+
+// GET all login activities with filters & analytics: /api/admin/login-activity
+router.get("/login-activity", async (req, res) => {
+  try {
+    await seedInitialLoginActivities();
+    const { userType, branch, search, status, timeRange, limit = 50, page = 1 } = req.query;
+    const query = {};
+
+    if (userType && userType !== "All") {
+      query.userType = userType;
+    }
+    if (branch && branch !== "All") {
+      query.branch = { $regex: new RegExp(`^${branch.trim()}$`, "i") };
+    }
+    if (status && status !== "All") {
+      query.status = status;
+    }
+
+    if (timeRange && timeRange !== "all") {
+      const now = new Date();
+      if (timeRange === "today") {
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        query.createdAt = { $gte: startOfDay };
+      } else if (timeRange === "7days") {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        query.createdAt = { $gte: sevenDaysAgo };
+      } else if (timeRange === "30days") {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        query.createdAt = { $gte: thirtyDaysAgo };
+      }
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      query.$or = [
+        { userName: { $regex: escaped, $options: "i" } },
+        { userEmail: { $regex: escaped, $options: "i" } },
+        { userNic: { $regex: escaped, $options: "i" } },
+        { branch: { $regex: escaped, $options: "i" } },
+        { ipAddress: { $regex: escaped, $options: "i" } },
+        { device: { $regex: escaped, $options: "i" } },
+        { browser: { $regex: escaped, $options: "i" } },
+        { os: { $regex: escaped, $options: "i" } },
+        { action: { $regex: escaped, $options: "i" } }
+      ];
+    }
+
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(200, Math.max(1, parseInt(limit) || 50));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [activities, totalCount] = await Promise.all([
+      LoginActivity.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+      LoginActivity.countDocuments(query)
+    ]);
+
+    // Summary statistics for executive KPI header
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [
+      totalLogins,
+      policyHolderLogins,
+      branchStaffLogins,
+      agentLogins,
+      adminLogins,
+      todayLogins
+    ] = await Promise.all([
+      LoginActivity.countDocuments(),
+      LoginActivity.countDocuments({ userType: "PolicyHolder" }),
+      LoginActivity.countDocuments({ userType: "OfficeStaff" }),
+      LoginActivity.countDocuments({ userType: "Agent" }),
+      LoginActivity.countDocuments({ userType: "Admin" }),
+      LoginActivity.countDocuments({ createdAt: { $gte: today } })
+    ]);
+
+    // Device breakdown
+    const rawDevices = await LoginActivity.aggregate([
+      { $group: { _id: "$device", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]);
+    const deviceBreakdown = rawDevices.map((d) => ({ device: d._id || "Unknown", count: d.count }));
+
+    // Branch breakdown
+    const rawBranches = await LoginActivity.aggregate([
+      { $group: { _id: "$branch", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 6 }
+    ]);
+    const branchBreakdown = rawBranches.map((b) => ({ branch: b._id || "Head Office", count: b.count }));
+
+    res.json({
+      activities,
+      pagination: {
+        total: totalCount,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(totalCount / limitNum)
+      },
+      summary: {
+        totalLogins,
+        policyHolderLogins,
+        branchStaffLogins,
+        agentLogins,
+        adminLogins,
+        todayLogins,
+        deviceBreakdown,
+        branchBreakdown
+      }
+    });
+  } catch (err) {
+    console.error("Admin fetch login activity error:", err);
+    res.status(500).json({ error: "Failed to load login activity audit log." });
+  }
+});
+
+// GET login history for a specific user: /api/admin/login-activity/user/:id
+router.get("/login-activity/user/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { $or: [{ userId: id }, { userNic: id }, { userEmail: id.toLowerCase() }] }
+      : { $or: [{ userNic: id }, { userEmail: id.toLowerCase() }] };
+
+    const activities = await LoginActivity.find(query).sort({ createdAt: -1 }).limit(50).lean();
+    res.json({ activities });
+  } catch (err) {
+    console.error("Fetch user login activity error:", err);
+    res.status(500).json({ error: "Failed to fetch user login activity history." });
+  }
+});
+
+// ==========================================
+// --- API: Session Management & Force Logout ---
+// ==========================================
+
+// POST terminate / log out an active login session (Admin authority): /api/admin/sessions/terminate
+router.post("/sessions/terminate", async (req, res) => {
+  try {
+    const { userType, targetId, reason, adminName } = req.body;
+
+    if (!userType || !targetId) {
+      return res.status(400).json({ error: "userType and targetId are required." });
+    }
+
+    let targetDoc = null;
+    let displayName = "";
+    let email = "";
+    let nicOrMobile = "";
+    let branch = "Head Office";
+
+    const now = new Date();
+
+    if (userType === "PolicyHolder") {
+      const query = mongoose.Types.ObjectId.isValid(targetId) ? { _id: targetId } : { nic: targetId.trim() };
+      targetDoc = await User.findOne(query);
+      if (!targetDoc) return res.status(404).json({ error: "Policyholder not found." });
+      displayName = `${targetDoc.firstName || ""} ${targetDoc.lastName || ""}`.trim();
+      email = targetDoc.email;
+      nicOrMobile = targetDoc.nic;
+      branch = targetDoc.branch || "Galle";
+    } else if (userType === "OfficeStaff") {
+      targetDoc = await OfficeStaff.findById(targetId);
+      if (!targetDoc) return res.status(404).json({ error: "Branch office staff record not found." });
+      displayName = `${targetDoc.branch} Branch (${targetDoc.name})`;
+      email = targetDoc.email;
+      nicOrMobile = targetDoc.mobile;
+      branch = targetDoc.branch || "Galle";
+    } else if (userType === "Agent") {
+      const query = mongoose.Types.ObjectId.isValid(targetId) ? { _id: targetId } : { email: targetId.trim().toLowerCase() };
+      targetDoc = await Agent.findOne(query);
+      if (!targetDoc) return res.status(404).json({ error: "Agent record not found." });
+      displayName = targetDoc.name;
+      email = targetDoc.email;
+      nicOrMobile = targetDoc.nic;
+      branch = targetDoc.branch || "Galle";
+      targetDoc.availability = "Offline";
+    } else if (userType === "Admin") {
+      targetDoc = await Admin.findById(targetId);
+      if (!targetDoc) return res.status(404).json({ error: "Administrator record not found." });
+      displayName = targetDoc.name;
+      email = targetDoc.email;
+      nicOrMobile = targetDoc.nic;
+      branch = "Head Office";
+    } else {
+      return res.status(400).json({ error: "Invalid userType specified." });
+    }
+
+    // Invalidate session
+    targetDoc.forceLogoutAt = now;
+    targetDoc.sessionRevokedAt = now;
+    targetDoc.resetSessionToken = undefined;
+    targetDoc.resetSessionExpires = undefined;
+    await targetDoc.save();
+
+    // Record audit activity log entry
+    await logLoginActivity({
+      req,
+      userType,
+      userId: targetDoc._id,
+      userName: displayName,
+      userEmail: email,
+      userNic: nicOrMobile,
+      branch,
+      action: "Session Revoked",
+      status: "Warning",
+      details: `Active login session forcefully terminated by Administrator (${adminName || "System Admin"}). Reason: ${reason || "Security governance action."}`
+    });
+
+    res.json({
+      message: `Active login session for ${displayName} has been terminated successfully.`,
+      targetId: targetDoc._id,
+      userType,
+      forceLogoutAt: now
+    });
+  } catch (err) {
+    console.error("Terminate session error:", err);
+    res.status(500).json({ error: err.message || "Failed to terminate user login session." });
+  }
+});
+
+// POST terminate all sessions for a branch: /api/admin/sessions/terminate-branch
+router.post("/sessions/terminate-branch", async (req, res) => {
+  try {
+    const { branch, reason, adminName } = req.body;
+    if (!branch || branch === "All") {
+      return res.status(400).json({ error: "Specific branch name is required." });
+    }
+
+    const now = new Date();
+    const branchClean = branch.trim();
+
+    // Terminate branch staff
+    await OfficeStaff.updateMany(
+      { branch: { $regex: new RegExp(`^${branchClean}$`, "i") } },
+      { $set: { forceLogoutAt: now, sessionRevokedAt: now, resetSessionToken: undefined } }
+    );
+
+    // Terminate policyholders under branch
+    const usersResult = await User.updateMany(
+      { branch: { $regex: new RegExp(`^${branchClean}$`, "i") } },
+      { $set: { forceLogoutAt: now, sessionRevokedAt: now, resetSessionToken: undefined } }
+    );
+
+    // Audit log
+    await logLoginActivity({
+      req,
+      userType: "OfficeStaff",
+      userName: `${branchClean} Branch Staff & Users`,
+      userEmail: `${branchClean.toLowerCase()}@sanasainsurance.lk`,
+      branch: branchClean,
+      action: "Branch Sessions Revoked",
+      status: "Warning",
+      details: `All active sessions in ${branchClean} branch revoked by Admin (${adminName || "System Admin"}). ${usersResult.modifiedCount} user session(s) reset. Reason: ${reason || "Branch Session Reset"}`
+    });
+
+    res.json({
+      message: `All active sessions for ${branchClean} branch have been revoked.`,
+      modifiedUsersCount: usersResult.modifiedCount,
+      forceLogoutAt: now
+    });
+  } catch (err) {
+    console.error("Terminate branch sessions error:", err);
+    res.status(500).json({ error: "Failed to reset branch sessions." });
+  }
+});
+
+// ==========================================
+// --- API: Admin Agent Management ---
+// ==========================================
+
+// GET all agents with filters and analytics: /api/admin/agents
+router.get("/agents", async (req, res) => {
+  try {
+    // Automatically update agents who haven't been active in > 60 seconds to Offline
+    const sixtySecondsAgo = new Date(Date.now() - 60 * 1000);
+    await Agent.updateMany(
+      {
+        availability: "Active",
+        $or: [
+          { lastSeenAt: { $lt: sixtySecondsAgo } },
+          { lastSeenAt: { $exists: false } }
+        ]
+      },
+      { $set: { availability: "Offline" } }
+    );
+
+    const { branch, availability, province, search, sortBy } = req.query;
+    const query = {};
+
+    if (branch && branch !== "All") {
+      query.branch = { $regex: new RegExp(`^${branch.trim()}$`, "i") };
+    }
+    if (availability && availability !== "All") {
+      query.availability = availability;
+    }
+    if (province && province !== "All") {
+      query.province = { $regex: new RegExp(`^${province.trim()}$`, "i") };
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      query.$or = [
+        { name: { $regex: escaped, $options: "i" } },
+        { email: { $regex: escaped, $options: "i" } },
+        { agentId: { $regex: escaped, $options: "i" } },
+        { nic: { $regex: escaped, $options: "i" } },
+        { phone: { $regex: escaped, $options: "i" } },
+        { district: { $regex: escaped, $options: "i" } },
+        { city: { $regex: escaped, $options: "i" } }
+      ];
+    }
+
+    // Sort order
+    let sortOptions = { createdAt: -1 };
+    if (sortBy === "oldest") sortOptions = { createdAt: 1 };
+    else if (sortBy === "name-asc") sortOptions = { name: 1 };
+    else if (sortBy === "name-desc") sortOptions = { name: -1 };
+
+    const agents = await Agent.find(query, { password: 0 }).sort(sortOptions).lean();
+
+    // Summary statistics
+    const [totalAgents, activeAgents, offlineAgents, distinctBranches] = await Promise.all([
+      Agent.countDocuments(),
+      Agent.countDocuments({ availability: "Active" }),
+      Agent.countDocuments({ availability: "Offline" }),
+      Agent.distinct("branch")
+    ]);
+
+    res.json({
+      agents,
+      summary: {
+        totalAgents,
+        activeAgents,
+        offlineAgents,
+        totalBranches: distinctBranches.length
+      }
+    });
+  } catch (err) {
+    console.error("Admin fetch agents error:", err);
+    res.status(500).json({ error: "Failed to load insurance agents." });
+  }
+});
+
+// GET single agent details + assigned claims & login activity: /api/admin/agents/:id
+router.get("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { $or: [{ agentId: id }, { email: id.toLowerCase() }] };
+
+    const agent = await Agent.findOne(query, { password: 0 }).lean();
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    // Fetch assigned claims
+    const claims = await Claim.find({
+      $or: [
+        { assignedAgent: agent.name },
+        { assignedAgentEmail: agent.email }
+      ]
+    }).sort({ incidentDate: -1 }).limit(20).lean();
+
+    // Fetch login activity history
+    const loginActivities = await LoginActivity.find({
+      $or: [
+        { userId: agent._id },
+        { userEmail: agent.email.toLowerCase() },
+        { userNic: agent.nic }
+      ]
+    }).sort({ createdAt: -1 }).limit(30).lean();
+
+    res.json({
+      agent,
+      claims,
+      loginActivities
+    });
+  } catch (err) {
+    console.error("Admin fetch agent details error:", err);
+    res.status(500).json({ error: "Failed to load agent details." });
+  }
+});
+
+// POST register new agent: /api/admin/agents
+router.post("/agents", async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      nic,
+      address,
+      dob,
+      branch,
+      phone,
+      city,
+      district,
+      area,
+      province,
+      bankName,
+      bankBranch,
+      accountNumber,
+      accountType,
+      accountHolderName
+    } = req.body;
+
+    if (!name || !email || !nic || !branch || !phone || !dob || !address) {
+      return res.status(400).json({ error: "Name, Email, NIC, Branch, Phone, DOB, and Address are required." });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanNic = nic.trim().toUpperCase();
+
+    const existingAgent = await Agent.findOne({
+      $or: [{ email: cleanEmail }, { nic: cleanNic }]
+    });
+    if (existingAgent) {
+      return res.status(400).json({ error: "An agent with this Email or NIC already exists." });
+    }
+
+    const totalAgents = await Agent.countDocuments();
+    const nextAgentId = `AGT-${String(totalAgents + 1).padStart(4, "0")}`;
+
+    // Generate random 8-character temporary password
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let tempPassword = "";
+    for (let i = 0; i < 8; i++) {
+      tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    const hashedPassword = hashPassword(tempPassword);
+
+    const newAgent = new Agent({
+      agentId: nextAgentId,
+      name: name.trim(),
+      email: cleanEmail,
+      password: hashedPassword,
+      nic: cleanNic,
+      dob: dob.trim(),
+      address: address.trim(),
+      phone: phone.trim(),
+      city: district ? district.trim() : (city ? city.trim() : ""),
+      district: district ? district.trim() : "",
+      area: area ? area.trim() : "",
+      province: province ? province.trim() : "",
+      branch: branch.trim(),
+      bankName: bankName ? bankName.trim() : "",
+      bankBranch: bankBranch ? bankBranch.trim() : "",
+      accountNumber: accountNumber ? accountNumber.trim() : "",
+      accountType: accountType ? accountType.trim() : "",
+      accountHolderName: accountHolderName ? accountHolderName.trim() : "",
+      status: "active",
+      availability: "Active",
+      mustChangePassword: true
+    });
+
+    await newAgent.save();
+
+    // Dispatch email notification with credentials
+    try {
+      const emailHtml = getBaseTemplate({
+        title: "Welcome to Sanasa Insurance — Field Agent Access",
+        preheader: "Your Sanasa Agent credentials have been issued.",
+        bodyContent: `
+          <p style="margin: 0 0 16px 0; color: #334155; font-size: 15px;">Dear <strong>${name.trim()}</strong>,</p>
+          <p style="margin: 0 0 16px 0; color: #334155; font-size: 14px; line-height: 1.6;">
+            Your insurance field agent profile has been officially created by Head Office Administration. You may now log in to the Sanasa Agent Mobile Application.
+          </p>
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Agent ID:</strong> <span style="font-family: monospace; color: #000080; font-weight: bold;">${nextAgentId}</span></p>
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Branch Office:</strong> ${branch.trim()}</p>
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Login Email:</strong> ${cleanEmail}</p>
+            <p style="margin: 0; font-size: 13px; color: #64748b;"><strong>Temporary Password:</strong> <span style="font-family: monospace; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: bold;">${tempPassword}</span></p>
+          </div>
+          <p style="margin: 0; color: #64748b; font-size: 12px;">Please change your password immediately upon first login.</p>
+        `
+      });
+
+      await sendEmail({
+        to: cleanEmail,
+        subject: "Sanasa Insurance — Field Agent Login Credentials",
+        html: emailHtml
+      });
+    } catch (mailErr) {
+      console.error("Agent welcome email sending failed:", mailErr);
+    }
+
+    res.status(201).json({
+      message: `Agent ${newAgent.name} (${newAgent.agentId}) created successfully.`,
+      agent: newAgent,
+      tempPassword
+    });
+  } catch (err) {
+    console.error("Admin create agent error:", err);
+    res.status(500).json({ error: err.message || "Failed to create agent." });
+  }
+});
+
+// PUT update agent: /api/admin/agents/:id
+router.put("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      email,
+      nic,
+      address,
+      dob,
+      branch,
+      phone,
+      city,
+      district,
+      area,
+      province,
+      bankName,
+      bankBranch,
+      accountNumber,
+      accountType,
+      accountHolderName,
+      availability,
+      status
+    } = req.body;
+
+    const agent = await Agent.findById(id);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    if (name) agent.name = name.trim();
+    if (email) agent.email = email.trim().toLowerCase();
+    if (nic) agent.nic = nic.trim().toUpperCase();
+    if (address) agent.address = address.trim();
+    if (dob) agent.dob = dob.trim();
+    if (branch) agent.branch = branch.trim();
+    if (phone) agent.phone = phone.trim();
+    if (city !== undefined) agent.city = city.trim();
+    if (district !== undefined) agent.district = district.trim();
+    if (area !== undefined) agent.area = area.trim();
+    if (province !== undefined) agent.province = province.trim();
+    if (bankName !== undefined) agent.bankName = bankName.trim();
+    if (bankBranch !== undefined) agent.bankBranch = bankBranch.trim();
+    if (accountNumber !== undefined) agent.accountNumber = accountNumber.trim();
+    if (accountType !== undefined) agent.accountType = accountType.trim();
+    if (accountHolderName !== undefined) agent.accountHolderName = accountHolderName.trim();
+    if (availability) agent.availability = availability;
+    if (status) agent.status = status;
+
+    await agent.save();
+
+    res.json({
+      message: `Agent profile for ${agent.name} updated successfully.`,
+      agent
+    });
+  } catch (err) {
+    console.error("Admin update agent error:", err);
+    res.status(500).json({ error: err.message || "Failed to update agent profile." });
+  }
+});
+
+// DELETE agent: /api/admin/agents/:id
+router.delete("/agents/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await Agent.findByIdAndDelete(id);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    res.json({
+      message: `Agent ${agent.name} (${agent.agentId}) has been removed.`
+    });
+  } catch (err) {
+    console.error("Admin delete agent error:", err);
+    res.status(500).json({ error: "Failed to delete agent." });
+  }
+});
+
+// POST reset agent password: /api/admin/agents/:id/reset-password
+router.post("/agents/:id/reset-password", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await Agent.findById(id);
+    if (!agent) {
+      return res.status(404).json({ error: "Agent not found." });
+    }
+
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let tempPassword = "";
+    for (let i = 0; i < 8; i++) {
+      tempPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    agent.password = hashPassword(tempPassword);
+    agent.mustChangePassword = true;
+    agent.forceLogoutAt = new Date();
+    await agent.save();
+
+    try {
+      const emailHtml = getBaseTemplate({
+        title: "Password Reset — Sanasa Field Agent",
+        preheader: "Your Sanasa Agent password has been reset by Administrator.",
+        bodyContent: `
+          <p style="margin: 0 0 16px 0; color: #334155; font-size: 15px;">Dear <strong>${agent.name}</strong>,</p>
+          <p style="margin: 0 0 16px 0; color: #334155; font-size: 14px; line-height: 1.6;">
+            Your account password has been reset by Head Office Administrator. Use the temporary password below to log in:
+          </p>
+          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; margin: 20px 0;">
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Agent ID:</strong> ${agent.agentId}</p>
+            <p style="margin: 0 0 8px 0; font-size: 13px; color: #64748b;"><strong>Email:</strong> ${agent.email}</p>
+            <p style="margin: 0; font-size: 13px; color: #64748b;"><strong>New Temporary Password:</strong> <span style="font-family: monospace; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 6px; font-weight: bold;">${tempPassword}</span></p>
+          </div>
+          <p style="margin: 0; color: #64748b; font-size: 12px;">Please change your password immediately upon login.</p>
+        `
+      });
+
+      await sendEmail({
+        to: agent.email,
+        subject: "Sanasa Insurance — Agent Password Reset",
+        html: emailHtml
+      });
+    } catch (mailErr) {
+      console.error("Agent password reset email failed:", mailErr);
+    }
+
+    res.json({
+      message: `Password for agent ${agent.name} has been reset. Temporary credentials dispatched via email.`,
+      tempPassword
+    });
+  } catch (err) {
+    console.error("Admin reset agent password error:", err);
+    res.status(500).json({ error: "Failed to reset agent password." });
+  }
+});
+
+// GET comprehensive executive analytics & system overview: /api/admin/comprehensive-analytics
+router.get("/comprehensive-analytics", async (req, res) => {
+  try {
+    const { branch, timeRange, province, search, startDate, endDate } = req.query;
+
+    // Build date filter
+    const now = new Date();
+    let dateMatch = {};
+    if (startDate && endDate) {
+      const s = new Date(startDate);
+      const e = new Date(endDate);
+      e.setHours(23, 59, 59, 999);
+      dateMatch = { createdAt: { $gte: s, $lte: e } };
+    } else if (timeRange === "today") {
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      dateMatch = { createdAt: { $gte: startOfDay } };
+    } else if (timeRange === "7days") {
+      const d = new Date();
+      d.setDate(d.getDate() - 7);
+      dateMatch = { createdAt: { $gte: d } };
+    } else if (timeRange === "30days") {
+      const d = new Date();
+      d.setDate(d.getDate() - 30);
+      dateMatch = { createdAt: { $gte: d } };
+    } else if (timeRange === "90days") {
+      const d = new Date();
+      d.setDate(d.getDate() - 90);
+      dateMatch = { createdAt: { $gte: d } };
+    } else if (timeRange === "thisyear") {
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      dateMatch = { createdAt: { $gte: startOfYear } };
+    }
+
+    // Branch filter
+    const branchMatch = (branch && branch !== "All")
+      ? { branch: { $regex: new RegExp(`^${branch.trim()}$`, "i") } }
+      : {};
+
+    const claimQuery = { ...dateMatch, ...branchMatch };
+
+    // 1. Fetch claims data for KPIs and deep aggregation
+    const [claims, allClaims, allUsers, allAgents, allStaff] = await Promise.all([
+      Claim.find(claimQuery).lean(),
+      Claim.find().lean(),
+      User.find().lean(),
+      Agent.find().lean(),
+      OfficeStaff.find().lean()
+    ]);
+
+    // KPI sums
+    const totalClaimsCount = claims.length;
+    let approvedClaimsCount = 0;
+    let pendingClaimsCount = 0;
+    let inProgressClaimsCount = 0;
+    let rejectedClaimsCount = 0;
+    let totalApprovedPayout = 0;
+    let totalEstimatedLoss = 0;
+    const damageTypeMap = {};
+    const priorityMap = {};
+    const monthlyTrendMap = {};
+    const branchClaimsMap = {};
+
+    claims.forEach(c => {
+      const status = c.status || "Pending";
+      if (status === "Approved") {
+        approvedClaimsCount++;
+        totalApprovedPayout += (Number(c.amount) || 0);
+      } else if (status === "Pending") {
+        pendingClaimsCount++;
+      } else if (status === "In Progress") {
+        inProgressClaimsCount++;
+      } else if (status === "Rejected") {
+        rejectedClaimsCount++;
+      }
+
+      if (c.amount) {
+        totalEstimatedLoss += Number(c.amount);
+      }
+
+      // Damage categories
+      const dtype = c.damageType || "Other";
+      if (!damageTypeMap[dtype]) damageTypeMap[dtype] = { count: 0, amount: 0 };
+      damageTypeMap[dtype].count++;
+      if (c.amount) damageTypeMap[dtype].amount += Number(c.amount);
+
+      // Priority
+      const prio = c.priority || "Normal";
+      priorityMap[prio] = (priorityMap[prio] || 0) + 1;
+
+      // Branch claims
+      const br = c.branch || "Head Office";
+      if (!branchClaimsMap[br]) {
+        branchClaimsMap[br] = { total: 0, approved: 0, pending: 0, inProgress: 0, rejected: 0, payout: 0 };
+      }
+      branchClaimsMap[br].total++;
+      if (status === "Approved") {
+        branchClaimsMap[br].approved++;
+        branchClaimsMap[br].payout += (Number(c.amount) || 0);
+      } else if (status === "Pending") branchClaimsMap[br].pending++;
+      else if (status === "In Progress") branchClaimsMap[br].inProgress++;
+      else if (status === "Rejected") branchClaimsMap[br].rejected++;
+
+      // Monthly breakdown
+      const cDate = c.createdAt ? new Date(c.createdAt) : new Date();
+      const monthKey = `${cDate.getFullYear()}-${String(cDate.getMonth() + 1).padStart(2, '0')}`;
+      if (!monthlyTrendMap[monthKey]) {
+        monthlyTrendMap[monthKey] = { monthKey, submitted: 0, approved: 0, rejected: 0, payout: 0 };
+      }
+      monthlyTrendMap[monthKey].submitted++;
+      if (status === "Approved") {
+        monthlyTrendMap[monthKey].approved++;
+        monthlyTrendMap[monthKey].payout += (Number(c.amount) || 0);
+      } else if (status === "Rejected") {
+        monthlyTrendMap[monthKey].rejected++;
+      }
+    });
+
+    // 2. Policyholders & Vehicles breakdown
+    let totalVehicles = 0;
+    let approvedHolders = 0;
+    let pendingHolders = 0;
+    const vehicleTypeMap = {};
+    const provinceMap = {};
+
+    allUsers.forEach(u => {
+      if (u.status === "Approved") approvedHolders++;
+      else pendingHolders++;
+
+      const prov = u.province || "Western Province";
+      provinceMap[prov] = (provinceMap[prov] || 0) + 1;
+
+      if (Array.isArray(u.vehicles)) {
+        totalVehicles += u.vehicles.length;
+        u.vehicles.forEach(v => {
+          const vtype = v.vehicleType || "Car";
+          vehicleTypeMap[vtype] = (vehicleTypeMap[vtype] || 0) + 1;
+        });
+      }
+    });
+
+    // 3. Agents breakdown
+    let activeAgentsCount = 0;
+    let offlineAgentsCount = 0;
+    const agentPerformanceList = allAgents.map(a => {
+      if (a.availability === "Active") activeAgentsCount++;
+      else offlineAgentsCount++;
+
+      const assigned = allClaims.filter(c => c.assignedAgent && (c.assignedAgent.toLowerCase() === a.email?.toLowerCase() || c.assignedAgent === a.agentId));
+      const completed = assigned.filter(c => c.inspectionSubmitted || c.status === "Approved");
+      const evalSum = assigned.reduce((acc, cur) => acc + (Number(cur.amount) || 0), 0);
+
+      return {
+        _id: a._id,
+        agentId: a.agentId,
+        name: a.name,
+        email: a.email,
+        phone: a.phone || a.mobile || "",
+        branch: a.branch,
+        availability: a.availability || "Offline",
+        assignedClaimsCount: assigned.length,
+        completedClaimsCount: completed.length,
+        evaluatedLossLKR: evalSum,
+        lastSeenAt: a.lastSeenAt,
+        status: a.status
+      };
+    }).sort((a, b) => b.assignedClaimsCount - a.assignedClaimsCount);
+
+    // 4. Branch Network Performance Table
+    const sriLankaBranches = [
+      "Colombo", "Galle", "Kandy", "Matara", "Gampaha", "Kurunegala", "Negombo",
+      "Jaffna", "Ratnapura", "Kalutara", "Anuradhapura", "Badulla", "Batticaloa",
+      "Trincomalee", "Hambantota", "Kegalle", "Matale", "Nuwara Eliya", "Puttalam",
+      "Polonnaruwa", "Monaragala", "Ampara", "Mannar", "Vavuniya", "Sooriyawewa", "Head Office"
+    ];
+
+    const branchMatrix = sriLankaBranches.map(branchName => {
+      const bStaff = allStaff.find(s => s.branch && s.branch.toLowerCase().trim() === branchName.toLowerCase().trim());
+      const bStats = branchClaimsMap[branchName] || { total: 0, approved: 0, pending: 0, inProgress: 0, rejected: 0, payout: 0 };
+      const bAgents = allAgents.filter(a => a.branch && a.branch.toLowerCase().trim() === branchName.toLowerCase().trim());
+      const bActiveAgents = bAgents.filter(a => a.availability === "Active").length;
+      const bHolders = allUsers.filter(u => u.branch && u.branch.toLowerCase().trim() === branchName.toLowerCase().trim()).length;
+
+      return {
+        branch: branchName,
+        district: bStaff?.district || "-",
+        province: bStaff?.province || "-",
+        staffCount: bStaff?.staffCount || 1,
+        agentCount: bAgents.length,
+        activeAgentCount: bActiveAgents,
+        policyholdersCount: bHolders,
+        totalClaims: bStats.total,
+        approvedClaims: bStats.approved,
+        pendingClaims: bStats.pending,
+        inProgressClaims: bStats.inProgress,
+        rejectedClaims: bStats.rejected,
+        totalPayoutLKR: bStats.payout,
+        avgPayoutLKR: bStats.approved > 0 ? Math.round(bStats.payout / bStats.approved) : 0,
+        resolutionRate: bStats.total > 0 ? Math.round((bStats.approved / bStats.total) * 100) : 0
+      };
+    }).sort((a, b) => b.totalClaims - a.totalClaims);
+
+    // 5. Recent Login Activity & Security
+    const recentLogins = await LoginActivity.find().sort({ createdAt: -1 }).limit(30).lean();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayLoginsCount = await LoginActivity.countDocuments({ createdAt: { $gte: startOfToday } });
+    const successLoginsCount = await LoginActivity.countDocuments({ status: "Success" });
+    const totalLoginsCount = await LoginActivity.countDocuments();
+    const loginSuccessRate = totalLoginsCount > 0 ? Math.round((successLoginsCount / totalLoginsCount) * 100) : 98;
+
+    // Build last 6 months list for clean bar visualization
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const last6Months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const mKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const mLabel = `${monthNames[d.getMonth()]} ${d.getFullYear().toString().slice(-2)}`;
+      const found = monthlyTrendMap[mKey] || { submitted: 0, approved: 0, rejected: 0, payout: 0 };
+      last6Months.push({
+        key: mKey,
+        label: mLabel,
+        submitted: found.submitted,
+        approved: found.approved,
+        rejected: found.rejected,
+        payout: found.payout
+      });
+    }
+
+    // Damage categories array
+    const damageCategoriesArray = Object.keys(damageTypeMap).map(k => ({
+      category: k,
+      count: damageTypeMap[k].count,
+      amount: damageTypeMap[k].amount,
+      percentage: totalClaimsCount > 0 ? Math.round((damageTypeMap[k].count / totalClaimsCount) * 100) : 0
+    })).sort((a, b) => b.count - a.count);
+
+    // Vehicle types array
+    const vehicleTypesArray = Object.keys(vehicleTypeMap).map(k => ({
+      vehicleType: k,
+      count: vehicleTypeMap[k],
+      percentage: totalVehicles > 0 ? Math.round((vehicleTypeMap[k] / totalVehicles) * 100) : 0
+    })).sort((a, b) => b.count - a.count);
+
+    // Province distribution array
+    const provinceArray = Object.keys(provinceMap).map(k => ({
+      province: k,
+      count: provinceMap[k],
+      percentage: allUsers.length > 0 ? Math.round((provinceMap[k] / allUsers.length) * 100) : 0
+    })).sort((a, b) => b.count - a.count);
+
+    res.json({
+      summary: {
+        totalClaims: totalClaimsCount,
+        approvedClaims: approvedClaimsCount,
+        pendingClaims: pendingClaimsCount,
+        inProgressClaims: inProgressClaimsCount,
+        rejectedClaims: rejectedClaimsCount,
+        approvalRate: totalClaimsCount > 0 ? Math.round((approvedClaimsCount / totalClaimsCount) * 100) : 0,
+        totalApprovedPayout,
+        totalEstimatedLoss,
+        avgPayoutPerClaim: approvedClaimsCount > 0 ? Math.round(totalApprovedPayout / approvedClaimsCount) : 0,
+        totalPolicyholders: allUsers.length,
+        approvedPolicyholders: approvedHolders,
+        pendingPolicyholders: pendingHolders,
+        totalVehicles,
+        totalAgents: allAgents.length,
+        activeAgents: activeAgentsCount,
+        offlineAgents: offlineAgentsCount,
+        agentDutyRate: allAgents.length > 0 ? Math.round((activeAgentsCount / allAgents.length) * 100) : 0,
+        totalBranches: allStaff.length || sriLankaBranches.length,
+        totalStaffMembers: allStaff.reduce((acc, s) => acc + (s.staffCount || 1), 0),
+        todayLogins: todayLoginsCount,
+        loginSuccessRate
+      },
+      monthlyTrends: last6Months,
+      damageCategories: damageCategoriesArray,
+      priorityDistribution: priorityMap,
+      branchMatrix,
+      vehicleTypes: vehicleTypesArray,
+      provinceDistribution: provinceArray,
+      agentPerformance: agentPerformanceList,
+      recentLogins,
+      claims: claims.map(c => ({
+        _id: c._id,
+        claimNumber: c.claimNumber,
+        policyHolderName: c.policyHolderName,
+        userNic: c.userNic,
+        vehicleNumber: c.vehicleNumber,
+        damageType: c.damageType,
+        amount: c.amount,
+        status: c.status,
+        branch: c.branch,
+        assignedAgent: c.assignedAgent,
+        bankName: c.bankName,
+        bankAccount: c.bankAccount,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt
+      }))
+    });
+  } catch (err) {
+    console.error("Comprehensive analytics API error:", err);
+    res.status(500).json({ error: "Failed to generate comprehensive system analytics." });
+  }
+});
+
 export default router;
+

@@ -11,6 +11,7 @@ import PhotoHash from "../models/photoHash.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { getNearestBranch } from "../utils/branch.js";
 import { sendEmail, getBaseTemplate, formatSriLankaDateTime } from "../utils/email.js";
+import { notifyClaimSubmitted } from "../services/smsNotificationService.js";
 import { analyzeAccidentDamage } from "../utils/aiAnalyzer.js";
 import {
   extractBase64Buffer,
@@ -22,7 +23,7 @@ import {
 const router = express.Router();
 
 // Auto-index historical claims photos on startup if empty
-async function ensurePhotoHashesIndexed() {
+export async function ensurePhotoHashesIndexed() {
   try {
     const count = await PhotoHash.countDocuments();
     if (count > 0) return;
@@ -83,9 +84,6 @@ async function ensurePhotoHashesIndexed() {
   }
 }
 
-// Initial sync
-ensurePhotoHashesIndexed();
-
 // ==========================================
 // --- API: Check Duplicate Photos ---
 // ==========================================
@@ -100,6 +98,10 @@ router.post("/check-duplicate-photos", async (req, res) => {
 
     for (const item of photos) {
       if (!item.base64) continue;
+      // Driving licenses are personal identity documents and should never be flagged as duplicate crash photos
+      if (item.type && (item.type.toLowerCase().includes("license") || item.type.toLowerCase().includes("driving"))) {
+        continue;
+      }
       const buffer = extractBase64Buffer(item.base64);
       if (!buffer) continue;
 
@@ -127,6 +129,14 @@ router.post("/check-duplicate-photos", async (req, res) => {
       }
 
       if (match) {
+        // Verify that the matched claim still exists in the database
+        const existingClaim = await Claim.findOne({ claimNumber: match.claimNumber }, { _id: 1 });
+        if (!existingClaim) {
+          // Claim was deleted from database, clean up the orphaned photo hash
+          await PhotoHash.deleteMany({ claimNumber: match.claimNumber });
+          continue;
+        }
+
         duplicates.push({
           photoId: item.id || item.type,
           photoType: item.type || "Accident Photo",
@@ -314,12 +324,19 @@ router.post("/new-claim", async (req, res) => {
         front: licenseFront,
         rear: licenseRear
       },
-      // Save the AI Analysis findings directly in MongoDB
       aiAnalysis: aiResult ? {
         isAnalyzed: true,
-        damagedItems: aiResult.damagedItems,
-        overallDamagePercentage: aiResult.overallDamagePercentage,
-        summary: aiResult.summary
+        isValidAccidentPhoto: aiResult.isValidAccidentPhoto !== false,
+        authenticityAssessment: aiResult.authenticityAssessment || "",
+        fraudAlert: aiResult.fraudAlert || null,
+        damagedItems: aiResult.damagedItems || [],
+        overallDamagePercentage: aiResult.overallDamagePercentage || 0,
+        totalEstimatedPartsCost: aiResult.totalEstimatedPartsCost || 0,
+        totalEstimatedLaborCost: aiResult.totalEstimatedLaborCost || 0,
+        totalEstimatedCost: aiResult.totalEstimatedCost || 0,
+        currency: aiResult.currency || "LKR",
+        summary: aiResult.summary || "",
+        analyzedAt: aiResult.analyzedAt || new Date()
       } : { isAnalyzed: false }
     });
 
@@ -352,10 +369,8 @@ router.post("/new-claim", async (req, res) => {
       (accidentPhotos?.front || []).forEach(b => recordHash(b, "Accident Front"));
       (accidentPhotos?.rear || []).forEach(b => recordHash(b, "Accident Rear"));
       (accidentPhotos?.side || []).forEach(b => recordHash(b, "Accident Side"));
-      (drivingLicense?.front || []).forEach(b => recordHash(b, "License Front"));
-      (drivingLicense?.rear || []).forEach(b => recordHash(b, "License Rear"));
+      // Note: Driving licenses are personal identity documents and are excluded from PhotoHash duplicate checks
       (otherVehicleDetails || []).forEach(ov => {
-        (ov.licensePhotos || []).forEach(b => recordHash(b, "Other Vehicle License"));
         (ov.vehiclePhotos || []).forEach(b => recordHash(b, "Other Vehicle Damage"));
       });
 
@@ -469,6 +484,13 @@ router.post("/new-claim", async (req, res) => {
       ]);
     } catch (emailErr) {
       console.error("⚠️ Failed to send claim submission emails:", emailErr.message);
+    }
+
+    // Trigger non-blocking SMS notification to Policyholder
+    try {
+      notifyClaimSubmitted(newClaim, user);
+    } catch (smsErr) {
+      console.warn("SMS notification dispatch warning:", smsErr.message);
     }
 
     res.status(201).json({

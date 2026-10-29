@@ -254,7 +254,7 @@ const translations = {
     otherCount: "Number of other vehicles involved",
     selectCountPlaceholder: "Select number of vehicles",
     otherVehicleHeader: "Other Vehicle",
-    plateNum: "Vehicle Plate Number *",
+    plateNum: "Vehicle Number *",
     insuranceCompany: "Insurance Company *",
     policyNum: "Policy Number *",
     driverName: "Driver Full Name *",
@@ -513,9 +513,7 @@ export default function FileNewClaim() {
       return next;
     });
 
-    if (previews.length > 0) {
-      await checkDuplicatePhotos(previews, base64s, `Third-Party #${index + 1} License`);
-    }
+    // License photos are identity documents and do not require duplicate check
   };
 
   const removeOtherLicensePhoto = (index: number, photoIdx: number) => {
@@ -1840,15 +1838,6 @@ export default function FileNewClaim() {
 
         </form>
       </main>
-
-      {/* Floating Chat Support Bubble */}
-      <button
-        type="button"
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
-        aria-label="Chat support"
-      >
-        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
-      </button>
 
       <PolicyHolderFooter />
     </div>

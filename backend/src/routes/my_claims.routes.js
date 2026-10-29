@@ -3,10 +3,12 @@ import crypto from "crypto";
 import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import Agent from "../models/agent.model.js";
+import ProfileUpdateRequest from "../models/profile_update_request.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { logAgentActivity } from "../utils/activity.js";
 import { sendAgentActivityEmail, sendEmail } from "../utils/email.js";
 import { compareGarageEstimateWithPhotosAndAI } from "../utils/aiAnalyzer.js";
+import { notifyDocumentsVerified, notifyAgentDocumentsUploaded } from "../services/smsNotificationService.js";
 
 const router = express.Router();
 
@@ -157,22 +159,29 @@ router.post("/upload-garage-estimate/:claimNumber", async (req, res) => {
     const allUrls = [
       ...(claim.accidentPhotos?.front || []),
       ...(claim.accidentPhotos?.rear || []),
-      ...(claim.accidentPhotos?.side || [])
+      ...(claim.accidentPhotos?.side || []),
+      ...(claim.additionalDocuments || []).filter(d => d.uploadedBy === "Agent" && d.url).map(d => d.url)
     ];
 
     let base64Photos = [];
     if (allUrls.length > 0) {
-      try {
-        base64Photos = await Promise.all(
-          allUrls.map(async (url) => {
-            const response = await fetch(url);
+      const photoPromises = allUrls.slice(0, 6).map(async (url) => {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          const response = await fetch(url, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (response.ok) {
             const arrayBuffer = await response.arrayBuffer();
             return Buffer.from(arrayBuffer).toString("base64");
-          })
-        );
-      } catch (err) {
-        console.warn("Could not convert accident photos to base64:", err.message);
-      }
+          }
+        } catch (fetchErr) {
+          console.warn(`Failed fetching photo from ${url}:`, fetchErr.message);
+        }
+        return null;
+      });
+      const fetched = await Promise.all(photoPromises);
+      base64Photos = fetched.filter(Boolean);
     }
 
     // Run AI comparison between garage doc and accident photos
@@ -195,7 +204,16 @@ router.post("/upload-garage-estimate/:claimNumber", async (req, res) => {
     claim.markModified("requestedDocuments");
     claim.markModified("additionalDocuments");
     claim.markModified("garageEstimateComparison");
+    claim.updatedAt = new Date();
     await claim.save();
+
+    // Trigger non-blocking SMS notifications for Policyholder and Agent
+    try {
+      notifyDocumentsVerified(claim, "Garage Estimate Report");
+      notifyAgentDocumentsUploaded(claim, "Garage Estimate Report");
+    } catch (smsErr) {
+      console.warn("Garage estimate upload SMS warning:", smsErr.message);
+    }
 
     res.json({
       message: "Garage Estimate Report uploaded and cross-checked successfully!",
@@ -280,23 +298,38 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
           }
 
           // If this is a garage estimate report, auto-trigger AI comparison against accident photos
-          if (documentName.toLowerCase().includes("garage")) {
+          const isGarageDoc = documentName.toLowerCase().includes("garage") || 
+                              documentName.toLowerCase().includes("estimate") ||
+                              (claim.requestedDocuments && claim.requestedDocuments.some(r => r.toLowerCase().includes("garage") || r.toLowerCase().includes("estimate")));
+          
+          if (isGarageDoc) {
             try {
               const allUrls = [
                 ...(claim.accidentPhotos?.front || []),
                 ...(claim.accidentPhotos?.rear || []),
-                ...(claim.accidentPhotos?.side || [])
+                ...(claim.accidentPhotos?.side || []),
+                ...(claim.additionalDocuments || []).filter(d => d.uploadedBy === "Agent" && d.url).map(d => d.url)
               ];
 
               let base64Photos = [];
               if (allUrls.length > 0) {
-                base64Photos = await Promise.all(
-                  allUrls.map(async (url) => {
-                    const response = await fetch(url);
-                    const arrayBuffer = await response.arrayBuffer();
-                    return Buffer.from(arrayBuffer).toString("base64");
-                  })
-                );
+                const photoPromises = allUrls.slice(0, 6).map(async (url) => {
+                  try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 6000);
+                    const response = await fetch(url, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (response.ok) {
+                      const arrayBuffer = await response.arrayBuffer();
+                      return Buffer.from(arrayBuffer).toString("base64");
+                    }
+                  } catch (fetchErr) {
+                    console.warn(`Failed fetching photo from ${url}:`, fetchErr.message);
+                  }
+                  return null;
+                });
+                const fetched = await Promise.all(photoPromises);
+                base64Photos = fetched.filter(Boolean);
               }
 
               const comparison = await compareGarageEstimateWithPhotosAndAI(
@@ -307,6 +340,14 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
               );
               comparison.garageDocumentUrl = uploadedUrl;
               claim.garageEstimateComparison = comparison;
+
+              // Append AI evaluation message
+              claim.messages.push({
+                sender: "Sanasa AI",
+                message: `AI Forensic Comparison completed for Garage Estimate. Match Confidence: ${comparison.matchConfidenceScore}%. Verdict: ${comparison.verdict}. Cost Variance: ${comparison.costDifferencePercentage}%.`,
+                sentAt: new Date(),
+                recipient: "All"
+              });
             } catch (aiErr) {
               console.warn("Garage estimate auto-comparison warning:", aiErr.message);
             }
@@ -357,6 +398,7 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
     claim.markModified("requestedDocuments");
     claim.markModified("additionalDocuments");
     claim.markModified("garageEstimateComparison");
+    claim.updatedAt = new Date();
     await claim.save();
 
     // Send activity update email to agent
@@ -373,6 +415,17 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
       }
       
       await sendAgentActivityEmail(claim.assignedAgent, activityText, claim, customMsg);
+    }
+
+    // Trigger non-blocking SMS notifications for Policyholder and Agent
+    try {
+      if (uploadedDocuments && Array.isArray(uploadedDocuments) && uploadedDocuments.length > 0) {
+        const docSummary = uploadedDocuments.map(d => d.documentName).join(", ");
+        notifyDocumentsVerified(claim, docSummary);
+        notifyAgentDocumentsUploaded(claim, docSummary);
+      }
+    } catch (smsErr) {
+      console.warn("Document upload SMS warning:", smsErr.message);
     }
 
     res.json({ message: "Claim updated successfully", claim });
@@ -474,7 +527,7 @@ router.delete("/delete-claim/:claimNumber", async (req, res) => {
     }
 
     // Delete the claim
-    await Claim.findOneAndDelete({ cleanClaimNum });
+    await Claim.findOneAndDelete({ claimNumber: cleanClaimNum });
 
     res.json({ message: "Claim cancelled and deleted successfully." });
   } catch (err) {
@@ -483,4 +536,208 @@ router.delete("/delete-claim/:claimNumber", async (req, res) => {
   }
 });
 
+// 8. GET policy holder profile by NIC
+router.get("/profile", async (req, res) => {
+  try {
+    const { nic, email } = req.query;
+    if (!nic && !email) {
+      return res.status(400).json({ error: "NIC or Email query parameter is required." });
+    }
+
+    const query = {};
+    if (nic) query.nic = nic.trim();
+    if (email) query.email = email.trim().toLowerCase();
+
+    const user = await User.findOne(query, { password: 0 });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    res.json({ user });
+  } catch (err) {
+    console.error("Get policy holder profile error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// 9. PUT update policy holder profile (photo, mobile, address, bankDetails, etc.)
+router.put("/profile", async (req, res) => {
+  try {
+    const { nic, firstName, lastName, mobile, email, address, province, city, bankDetails, profilePhoto, currentPassword, newPassword } = req.body;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC is required to update profile." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: cleanNic });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    if (firstName) user.firstName = firstName.trim();
+    if (lastName) user.lastName = lastName.trim();
+    if (mobile) user.mobile = mobile.trim();
+    if (email) user.email = email.trim().toLowerCase();
+    if (address) user.address = address.trim();
+    if (province) user.province = province.trim();
+    if (city) user.city = city.trim();
+
+    if (bankDetails) {
+      user.bankDetails = {
+        bankName: bankDetails.bankName || user.bankDetails?.bankName || "",
+        branchName: bankDetails.branchName || user.bankDetails?.branchName || "",
+        accountNumber: bankDetails.accountNumber || user.bankDetails?.accountNumber || "",
+        accountHolderName: bankDetails.accountHolderName || user.bankDetails?.accountHolderName || ""
+      };
+    }
+
+    if (profilePhoto !== undefined) {
+      if (profilePhoto && profilePhoto.startsWith("data:image")) {
+        try {
+          const photoUrl = await uploadToCloudinary(profilePhoto, "policy_holders/avatars");
+          user.profilePhoto = photoUrl;
+        } catch (uploadErr) {
+          console.warn("Cloudinary upload failed for avatar, storing direct:", uploadErr.message);
+          user.profilePhoto = profilePhoto;
+        }
+      } else {
+        user.profilePhoto = profilePhoto;
+      }
+    }
+
+    if (newPassword && newPassword.trim().length >= 6) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: "Current password is required to change password." });
+      }
+      const hashedCurrent = hashPassword(currentPassword.trim());
+      if (user.password !== hashedCurrent) {
+        return res.status(400).json({ error: "Current password is incorrect. Please enter your existing password." });
+      }
+      user.password = hashPassword(newPassword.trim());
+    }
+
+    await user.save();
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.json({ message: "Profile updated successfully.", user: userObj });
+  } catch (err) {
+    console.error("Update policy holder profile error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
+// 10. POST submit a profile / KYC update request for branch approval
+router.post("/profile-update-request", async (req, res) => {
+  try {
+    const { nic, requestType, requestedChanges } = req.body;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC is required to submit an update request." });
+    }
+
+    const cleanNic = nic.trim();
+    const user = await User.findOne({ nic: cleanNic });
+    if (!user) {
+      return res.status(404).json({ error: "Policy holder not found." });
+    }
+
+    if (!requestedChanges || typeof requestedChanges !== "object" || Object.keys(requestedChanges).length === 0) {
+      return res.status(400).json({ error: "No changes provided in the update request." });
+    }
+
+    // Security check: strictly disallow editing nic, branch, referenceNumber
+    const sanitizedChanges = { ...requestedChanges };
+    delete sanitizedChanges.nic;
+    delete sanitizedChanges.branch;
+    delete sanitizedChanges.referenceNumber;
+    delete sanitizedChanges._id;
+    delete sanitizedChanges.password;
+
+    // Handle document image uploads if any base64 images are sent in documents
+    if (sanitizedChanges.documents && typeof sanitizedChanges.documents === "object") {
+      const docKeys = ["nicFront", "nicBack", "vehicleReg", "revenueLicense"];
+      for (const key of docKeys) {
+        const val = sanitizedChanges.documents[key];
+        if (val && typeof val === "string" && val.startsWith("data:image")) {
+          try {
+            const uploadedUrl = await uploadToCloudinary(val, "policy_holders/kyc_documents");
+            sanitizedChanges.documents[key] = uploadedUrl;
+          } catch (uploadErr) {
+            console.warn(`Cloudinary upload failed for document ${key}, storing directly:`, uploadErr.message);
+          }
+        }
+      }
+    }
+
+    // Capture original state snapshot
+    const originalData = {
+      firstName: user.firstName,
+      lastName: user.lastName,
+      mobile: user.mobile,
+      email: user.email,
+      dob: user.dob,
+      address: user.address,
+      province: user.province,
+      city: user.city,
+      documents: {
+        nicFront: user.documents?.nicFront || "",
+        nicBack: user.documents?.nicBack || "",
+        vehicleReg: user.documents?.vehicleReg || "",
+        revenueLicense: user.documents?.revenueLicense || ""
+      }
+    };
+
+    // Determine request type
+    let finalType = requestType || "Personal & Contact";
+    if (sanitizedChanges.documents && (sanitizedChanges.firstName || sanitizedChanges.lastName || sanitizedChanges.mobile || sanitizedChanges.email || sanitizedChanges.address)) {
+      finalType = "Personal & Documents";
+    } else if (sanitizedChanges.documents && !sanitizedChanges.firstName && !sanitizedChanges.lastName && !sanitizedChanges.mobile && !sanitizedChanges.email && !sanitizedChanges.address) {
+      finalType = "KYC Documents";
+    }
+
+    const newRequest = new ProfileUpdateRequest({
+      userNic: user.nic,
+      userReferenceNumber: user.referenceNumber || "",
+      userName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+      userEmail: user.email || "",
+      userMobile: user.mobile || "",
+      branch: user.branch || "Galle",
+      requestType: finalType,
+      originalData,
+      requestedChanges: sanitizedChanges,
+      status: "Pending"
+    });
+
+    await newRequest.save();
+
+    res.status(201).json({
+      message: "Your profile update request has been submitted to your branch for review.",
+      request: newRequest
+    });
+  } catch (err) {
+    console.error("Submit profile update request error:", err);
+    res.status(500).json({ error: err.message || "An internal server error occurred." });
+  }
+});
+
+// 11. GET policy holder's profile update requests
+router.get("/profile-update-requests", async (req, res) => {
+  try {
+    const { nic } = req.query;
+    if (!nic) {
+      return res.status(400).json({ error: "NIC query parameter is required." });
+    }
+
+    const cleanNic = nic.trim();
+    const requests = await ProfileUpdateRequest.find({ userNic: cleanNic }).sort({ createdAt: -1 });
+
+    res.json({ requests });
+  } catch (err) {
+    console.error("Fetch policy holder profile update requests error:", err);
+    res.status(500).json({ error: "An internal server error occurred." });
+  }
+});
+
 export default router;
+

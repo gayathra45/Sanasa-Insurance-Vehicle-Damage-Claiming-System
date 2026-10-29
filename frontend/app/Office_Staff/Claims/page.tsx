@@ -27,8 +27,11 @@ import {
   Delete02Icon,
   Tick01Icon,
   BubbleChatIcon,
-  Location01Icon
+  Location01Icon,
+  Download01Icon
 } from "@hugeicons/core-free-icons";
+import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
+import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 interface ClaimMessage {
   sender: string;
@@ -68,6 +71,8 @@ interface Claim {
   branch: string;
   assignedAgent: string;
   amount: number | null;
+  approvedAmount?: number | null;
+  agentEstimatedAmount?: number | null;
   currentStep: number;
   documentsRequested: boolean;
   requestedDocuments: string[];
@@ -87,6 +92,7 @@ interface Claim {
   priority?: string;
   inspectionReport?: string;
   inspectionSubmitted?: boolean;
+  inspectionApproved?: boolean;
   paymentReceipt?: string;
   bankName?: string;
   bankBranch?: string;
@@ -113,6 +119,9 @@ interface Claim {
   manualUpdateBy?: string;
   aiAnalysis?: {
     isAnalyzed: boolean;
+    isValidAccidentPhoto?: boolean;
+    authenticityAssessment?: string;
+    fraudAlert?: string;
     damagedItems?: {
       item: string;
       damagePercentage: number;
@@ -422,6 +431,7 @@ function OfficeStaffClaimsPageContent() {
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"All" | "Pending" | "In Progress" | "Approved" | "Rejected">("All");
+  const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
 
   // Modal / Detail / Action states
   const [selectedClaim, setSelectedClaim] = useState<Claim | null>(null);
@@ -453,7 +463,7 @@ function OfficeStaffClaimsPageContent() {
 
   const [analyzingClaim, setAnalyzingClaim] = useState<string | null>(null);
 
-  const handleCompareGarageEstimate = async (claimNumber: string) => {
+  const handleCompareGarageEstimate = async (claimNumber: string, isAuto: boolean = false) => {
     try {
       setComparingGarageClaim(claimNumber);
       const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(claimNumber)}/compare-garage-estimate`, {
@@ -464,26 +474,62 @@ function OfficeStaffClaimsPageContent() {
         setClaims((prevClaims) =>
           prevClaims.map((c) =>
             c.claimNumber === claimNumber
-              ? { ...c, garageEstimateComparison: data.garageEstimateComparison, status: "Review", currentStep: 4 }
+              ? {
+                  ...c,
+                  garageEstimateComparison: data.garageEstimateComparison,
+                  status: data.claim?.status || (c.status === "Approved" || c.status === "Settled" || c.status === "Completed" ? c.status : "Review"),
+                  currentStep: data.claim?.currentStep || (c.currentStep && c.currentStep >= 4 ? c.currentStep : 4)
+                }
               : c
           )
         );
         setSelectedClaim((prev) =>
           prev && prev.claimNumber === claimNumber
-            ? { ...prev, garageEstimateComparison: data.garageEstimateComparison, status: "Review", currentStep: 4 }
+            ? {
+                ...prev,
+                garageEstimateComparison: data.garageEstimateComparison,
+                status: data.claim?.status || (prev.status === "Approved" || prev.status === "Settled" || prev.status === "Completed" ? prev.status : "Review"),
+                currentStep: data.claim?.currentStep || (prev.currentStep && prev.currentStep >= 4 ? prev.currentStep : 4)
+              }
             : prev
         );
-        alert("Garage estimate comparison & photo cross-check completed successfully!");
+        if (!isAuto) {
+          alert("Garage estimate comparison & photo cross-check completed successfully!");
+        }
       } else {
-        alert(data.error || "Failed to compare garage estimate.");
+        if (!isAuto) {
+          alert(data.error || "Failed to compare garage estimate.");
+        }
       }
     } catch (err) {
       console.error(err);
-      alert("An error occurred during garage comparison.");
+      if (!isAuto) {
+        alert("An error occurred during garage comparison.");
+      }
     } finally {
       setComparingGarageClaim(null);
     }
   };
+
+  // Automatically calculate garage estimate vs. AI benchmark as soon as a garage document is detected
+  useEffect(() => {
+    if (!selectedClaim) return;
+    const isInspectionApproved = Boolean(
+      selectedClaim.inspectionApproved ||
+      (selectedClaim.currentStep && selectedClaim.currentStep >= 4)
+    );
+    const hasGarageDoc = (selectedClaim.additionalDocuments || []).some(
+      d => d.name && (d.name.toLowerCase().includes("garage") || d.name.toLowerCase().includes("estimate"))
+    );
+    if (
+      isInspectionApproved &&
+      hasGarageDoc &&
+      !selectedClaim.garageEstimateComparison?.isCompared &&
+      comparingGarageClaim !== selectedClaim.claimNumber
+    ) {
+      handleCompareGarageEstimate(selectedClaim.claimNumber, true);
+    }
+  }, [selectedClaim?._id, selectedClaim?.claimNumber, selectedClaim?.garageEstimateComparison?.isCompared, selectedClaim?.additionalDocuments?.length]);
 
   const handleSettlePayment = async () => {
     if (!selectedClaim) return;
@@ -615,6 +661,58 @@ function OfficeStaffClaimsPageContent() {
   const [rejectionReasonChoice, setRejectionReasonChoice] = useState<string>("Damaged parts do not match accident photo evidence");
   const [customRejectionText, setCustomRejectionText] = useState<string>("");
   const [comparingGarage, setComparingGarage] = useState(false);
+  const [isApprovingInspection, setIsApprovingInspection] = useState(false);
+  const [isRejectingInspection, setIsRejectingInspection] = useState(false);
+
+  const handleApproveInspection = async () => {
+    if (!selectedClaim) return;
+    try {
+      setIsApprovingInspection(true);
+      const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(selectedClaim.claimNumber)}/approve-inspection`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setClaims(prev => prev.map(c => c.claimNumber === selectedClaim.claimNumber ? { ...c, ...data.claim } : c));
+        setSelectedClaim(prev => prev && prev.claimNumber === selectedClaim.claimNumber ? { ...prev, ...data.claim } : prev);
+        alert("Physical inspection approved! Document request for official Garage Estimate Report dispatched to policy holder.");
+      } else {
+        alert(data.error || "Failed to approve inspection.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Error approving inspection: " + err.message);
+    } finally {
+      setIsApprovingInspection(false);
+    }
+  };
+
+  const handleRejectInspection = async () => {
+    if (!selectedClaim) return;
+    const reason = window.prompt("Enter rejection reason for agent:", "Physical inspection details incomplete or photos unclear");
+    if (reason === null) return;
+    try {
+      setIsRejectingInspection(true);
+      const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(selectedClaim.claimNumber)}/reject-inspection`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setClaims(prev => prev.map(c => c.claimNumber === selectedClaim.claimNumber ? { ...c, ...data.claim } : c));
+        setSelectedClaim(prev => prev && prev.claimNumber === selectedClaim.claimNumber ? { ...prev, ...data.claim } : prev);
+        alert("Physical inspection report rejected. Agent notified to re-inspect.");
+      } else {
+        alert(data.error || "Failed to reject inspection.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Error rejecting inspection: " + err.message);
+    } finally {
+      setIsRejectingInspection(false);
+    }
+  };
 
   const handleClaimDecision = async (action: "Approve" | "Reject") => {
     if (!selectedClaim) return;
@@ -641,7 +739,9 @@ function OfficeStaffClaimsPageContent() {
         setClaims(prev => prev.map(c => c.claimNumber === selectedClaim.claimNumber ? { ...c, ...data.claim } : c));
         setSelectedClaim(prev => prev && prev.claimNumber === selectedClaim.claimNumber ? { ...prev, ...data.claim } : prev);
         alert("Claim successfully " + (action === "Approve" ? "APPROVED" : "REJECTED") + "!");
-        setActiveSubModal(null);
+        if (activeSubModal !== "inspection") {
+          setActiveSubModal(null);
+        }
       } else {
         alert(data.error || ("Failed to " + action.toLowerCase() + " claim."));
       }
@@ -764,6 +864,8 @@ function OfficeStaffClaimsPageContent() {
         return;
       }
     }
+
+    setViewedClaims(getViewedClaims("office_staff"));
 
     if (currentBranch) {
       loadClaimsAndAgents(currentBranch);
@@ -975,10 +1077,10 @@ function OfficeStaffClaimsPageContent() {
 
   const getStatusStyle = (status: string, damageType: string = "", priority: string = "", paymentReceipt: string = "") => {
     const s = status.toLowerCase();
+    if (s.includes("settled") || s.includes("completed") || (s.includes("approved") && paymentReceipt)) {
+      return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+    }
     if (s.includes("approved") || s.includes("active") || s.includes("done")) {
-      if (paymentReceipt) {
-        return "bg-emerald-50 text-emerald-700 border border-emerald-200";
-      }
       return "bg-blue-50 text-blue-600 border border-blue-200";
     }
     if (s.includes("rejected") || s.includes("decline") || s.includes("cancel")) {
@@ -1007,27 +1109,38 @@ function OfficeStaffClaimsPageContent() {
   };
 
   const getStepperSteps = (claim: Claim) => {
-    const isAssigned = claim.currentStep >= 2;
-    const isInspection = claim.currentStep >= 3;
-    const isReview = claim.currentStep >= 4;
-    const isDecision = claim.currentStep >= 5 || claim.status === "Approved" || claim.status === "Rejected";
-    const isPayment = claim.currentStep >= 6 || (claim.status === "Approved" && claim.amount !== null);
+    const isAssigned = Boolean(
+      claim.assignedAgent &&
+      claim.assignedAgent.trim() !== "" &&
+      claim.assignedAgent.toLowerCase() !== "unassigned"
+    );
+    const isInspection = Boolean(claim.inspectionSubmitted || (claim.inspectionReport && claim.inspectionReport.trim().length > 0));
+    const isReviewCompleted = Boolean(
+      claim.inspectionApproved ||
+      claim.status === "Review" ||
+      claim.status === "Approved" ||
+      claim.status === "Settled" ||
+      claim.status === "Completed" ||
+      (claim.currentStep && claim.currentStep >= 4)
+    );
+    const isDecisionCompleted = (claim.status === "Approved" || claim.status === "Settled" || claim.status === "Completed" || claim.status === "Rejected" || (claim.currentStep && claim.currentStep >= 5));
+    const isPaymentCompleted = Boolean(claim.paymentReceipt || claim.status === "Settled" || claim.status === "Completed" || (claim.currentStep && claim.currentStep >= 6));
 
     return [
-      { num: "01", label: "Submitted", active: true },
-      { num: "02", label: "Assigned", active: isAssigned },
-      { num: "03", label: "Inspection", active: isInspection },
-      { num: "04", label: "Review", active: isReview },
-      { num: "05", label: "Decision", active: isDecision },
-      { num: "06", label: "Payment", active: isPayment },
+      { num: "01", label: "Submitted", active: true, completed: true },
+      { num: "02", label: "Assigned", active: isAssigned, completed: isAssigned },
+      { num: "03", label: "Inspection", active: isInspection, completed: isInspection },
+      { num: "04", label: "Review", active: isInspection, completed: isReviewCompleted },
+      { num: "05", label: "Decision", active: isReviewCompleted, completed: isDecisionCompleted },
+      { num: "06", label: "Payment", active: isDecisionCompleted, completed: isPaymentCompleted },
     ];
   };
 
   const getStepperPercent = (claim: Claim) => {
     const steps = getStepperSteps(claim);
-    const activeCount = steps.filter(s => s.active).length;
-    if (activeCount <= 1) return 0;
-    return ((activeCount - 1) / 5) * 100;
+    const completedCount = steps.filter(s => s.completed).length;
+    if (completedCount <= 1) return 0;
+    return ((completedCount - 1) / 5) * 100;
   };
 
   // Filtering claims based on tabs and search query
@@ -1035,7 +1148,7 @@ function OfficeStaffClaimsPageContent() {
     // 1. Filter by active tab
     if (activeTab === "Pending" && claim.status !== "Pending") return false;
     if (activeTab === "In Progress" && claim.status !== "In Progress") return false;
-    if (activeTab === "Approved" && claim.status !== "Approved") return false;
+    if (activeTab === "Approved" && claim.status !== "Approved" && claim.status !== "Settled" && claim.status !== "Completed") return false;
     if (activeTab === "Rejected" && claim.status !== "Rejected") return false;
 
     // 2. Filter by search query (Claim Number, Plate, or NIC)
@@ -1115,7 +1228,7 @@ function OfficeStaffClaimsPageContent() {
                             : "text-slate-500 hover:text-slate-800 hover:bg-slate-200/60"
                         }`}
                       >
-                        {tab} ({tab === "All" ? claims.length : claims.filter(c => c.status === tab).length})
+                        {tab} ({tab === "All" ? claims.length : tab === "Approved" ? claims.filter(c => c.status === "Approved" || c.status === "Settled" || c.status === "Completed").length : claims.filter(c => c.status === tab).length})
                       </button>
                     ))}
                   </div>
@@ -1143,7 +1256,7 @@ function OfficeStaffClaimsPageContent() {
                 ) : (
                   <div className="flex flex-col gap-3">
                     {/* Header Row for Desktop */}
-                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-3 text-[10px] font-medium text-slate-400 uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-4 border-l-transparent mb-1">
+                    <div className="hidden md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,1.1fr)_minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,1.4fr)] items-center gap-4 px-5 py-3 text-[10px] font-medium text-slate-400 uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 border-l-4 border-l-transparent mb-1">
                       <div className="flex flex-col select-none min-w-0">Claim Info</div>
                       <div className="flex flex-col select-none min-w-0">Vehicle No</div>
                       <div className="flex flex-col select-none min-w-0">Damage Type</div>
@@ -1159,7 +1272,8 @@ function OfficeStaffClaimsPageContent() {
                       const isUrgent = claim.priority === "Urgent" || claim.damageType.toLowerCase().includes("severe") || claim.description.toLowerCase().includes("urgent");
                       const isApproved = s.includes("approved") || s.includes("active") || s.includes("done");
                       const isRejected = s.includes("rejected");
-                      const isCompleted = isApproved && !!claim.paymentReceipt;
+                      const isCompleted = s.includes("settled") || s.includes("completed") || (isApproved && !!claim.paymentReceipt);
+                      const isReview = s.includes("review");
 
                       let cardThemeClass = "";
                       let indicatorDot = "";
@@ -1170,6 +1284,9 @@ function OfficeStaffClaimsPageContent() {
                       } else if (isApproved) {
                         cardThemeClass = "border-l-4 border-l-blue-500 hover:bg-slate-50/40";
                         indicatorDot = "bg-blue-500";
+                      } else if (isReview) {
+                        cardThemeClass = "border-l-4 border-l-purple-500 hover:bg-slate-50/40";
+                        indicatorDot = "bg-purple-500";
                       } else if (isRejected) {
                         cardThemeClass = "border-l-4 border-l-slate-400 hover:bg-slate-50/40";
                         indicatorDot = "bg-slate-400";
@@ -1182,10 +1299,14 @@ function OfficeStaffClaimsPageContent() {
                         <div
                           key={claim._id}
                           onClick={() => {
+                            markClaimAsRead(claim._id, viewedClaims, setViewedClaims, "office_staff");
                             setSelectedClaim(claim);
-                            setAssessmentAmount(typeof claim.amount === "number" ? claim.amount.toString() : "");
+                            const approvedVal = (claim.status === "Approved" || claim.status === "Settled" || claim.status === "Completed")
+                              ? (claim.approvedAmount || claim.amount)
+                              : null;
+                            setAssessmentAmount(typeof approvedVal === "number" ? approvedVal.toString() : "");
                           }}
-                          className={`bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,0.9fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.8fr)_minmax(0,1.0fr)_minmax(0,1.2fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-colors duration-150 cursor-pointer shadow-xs hover:border-slate-300 relative overflow-hidden ${cardThemeClass}`}
+                          className={`bg-white border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.4fr)_minmax(0,0.9fr)_minmax(0,1.2fr)_minmax(0,1.1fr)_minmax(0,1.4fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,1.4fr)] md:items-center gap-4 transition-colors duration-150 cursor-pointer shadow-xs hover:border-slate-300 relative overflow-hidden ${cardThemeClass}`}
                         >
                           {/* Claim ID & Date */}
                           <div className="flex flex-col select-none min-w-0">
@@ -1194,6 +1315,9 @@ function OfficeStaffClaimsPageContent() {
                               <h3 className="font-semibold text-sm text-slate-800 whitespace-nowrap">
                                 {claim.claimNumber}
                               </h3>
+                              {isClaimUnread(claim, viewedClaims) && (
+                                <UnreadDot className="ml-0.5" />
+                              )}
                               {isUrgent && (
                                 <span className="bg-red-100 text-red-700 text-[8px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded whitespace-nowrap">Urgent</span>
                               )}
@@ -1251,20 +1375,26 @@ function OfficeStaffClaimsPageContent() {
                           {/* Assessment */}
                           <div className="flex flex-col select-none min-w-0">
                             <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 md:hidden">Assessment</span>
-                            <span className="text-xs font-semibold text-slate-700">
-                              {typeof claim.amount === "number" ? (
-                                `Rs. ${claim.amount.toLocaleString()}`
+                            <div className="text-xs font-semibold text-slate-700 flex items-center">
+                              {(claim.status === "Approved" || claim.status === "Settled" || claim.status === "Completed") && (claim.approvedAmount || claim.amount) ? (
+                                <span className="text-slate-800 font-bold whitespace-nowrap">
+                                  Rs. {(claim.approvedAmount || claim.amount)!.toLocaleString()}
+                                </span>
+                              ) : claim.status === "Rejected" ? (
+                                <span className="text-slate-400 font-normal italic text-[11px] whitespace-nowrap">Rejected</span>
                               ) : (
-                                <span className="text-slate-400 font-normal italic text-[11px]">Not Assessed</span>
+                                <span className="inline-flex items-center justify-center text-amber-700 font-semibold text-[9.5px] bg-amber-50 px-2.5 py-1 rounded-md border border-amber-200 whitespace-nowrap w-fit shadow-2xs">
+                                  Pending Approval
+                                </span>
                               )}
-                            </span>
+                            </div>
                           </div>
 
                           {/* Status Badge */}
                           <div className="flex flex-col select-none items-center min-w-0">
                             <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block mb-1 md:hidden">Status</span>
                             <span className={`text-[9px] font-semibold px-3 py-1 rounded-full uppercase tracking-wide block text-center whitespace-nowrap ${getStatusStyle(claim.status, claim.damageType, claim.priority, claim.paymentReceipt)}`}>
-                              {claim.status.toLowerCase() === "approved" && claim.paymentReceipt ? "Completed" : claim.status}
+                              {claim.status.toLowerCase() === "settled" || claim.status.toLowerCase() === "completed" || (claim.status.toLowerCase() === "approved" && claim.paymentReceipt) ? "Completed" : claim.status}
                             </span>
                           </div>
 
@@ -1321,19 +1451,28 @@ function OfficeStaffClaimsPageContent() {
                       Vehicle Physical Inspection Report & Loss Assessment
                     </h2>
                     <p className="text-xs text-slate-500 mt-1 font-medium">
-                      Claim {selectedClaim.claimNumber} � {formatPlate(selectedClaim.vehiclePlate)} � Agent: {selectedClaim.assignedAgent || "Assigned Agent"}
+                      Claim {selectedClaim.claimNumber} • {formatPlate(selectedClaim.vehiclePlate)} • Agent: {selectedClaim.assignedAgent || "Assigned Agent"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                    title="Download Official Claim PDF Report"
+                  >
+                    <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                    <span>Download PDF</span>
+                  </button>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                    selectedClaim.status === "Settled" || selectedClaim.status === "Completed" ? "bg-emerald-100 text-emerald-800" :
                     selectedClaim.status === "Approved" ? "bg-emerald-100 text-emerald-800" :
-                    selectedClaim.status === "Settled" ? "bg-blue-100 text-blue-800" :
                     selectedClaim.status === "Rejected" ? "bg-red-100 text-red-800" :
                     selectedClaim.status === "Review" ? "bg-purple-100 text-purple-800" :
                     "bg-amber-100 text-amber-800"
                   }`}>
-                    {selectedClaim.status}
+                    {selectedClaim.status === "Settled" || selectedClaim.status === "Completed" ? "Completed" : selectedClaim.status}
                   </span>
                   <button
                     type="button"
@@ -1347,24 +1486,42 @@ function OfficeStaffClaimsPageContent() {
 
               {/* Scrollable Inspection & Assessment Body */}
               <div className="px-8 py-6 flex-1 overflow-y-auto space-y-6">
-                
-                {/* 1. PHYSICAL INSPECTION REPORT FINDINGS (SUBMITTED BY AGENT) */}
-                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-5">
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">??</span>
-                      <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
-                        1. Physical Vehicle Findings (Agent Submission)
-                      </h3>
-                    </div>
-                    <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
-                      Physical Inspection Completed
-                    </span>
-                  </div>
+                {(() => {
+                  const isInspectionApproved = Boolean(
+                    selectedClaim.inspectionApproved ||
+                    selectedClaim.status === "Approved" ||
+                    selectedClaim.status === "Settled" ||
+                    selectedClaim.status === "Completed"
+                  );
 
-                  {(() => {
-                    const parsedReport = parseInspectionReport(selectedClaim.inspectionReport || "");
-                    const parsed = (parsedReport && !parsedReport.isRaw) ? parsedReport : {
+                  const isClaimApprovedOrSettled = Boolean(
+                    selectedClaim.status === "Approved" ||
+                    selectedClaim.status === "Settled" ||
+                    selectedClaim.status === "Completed" ||
+                    selectedClaim.paymentReceipt ||
+                    (selectedClaim.currentStep && selectedClaim.currentStep >= 5)
+                  );
+
+                  const isClaimPaymentSettled = Boolean(
+                    selectedClaim.status === "Settled" ||
+                    selectedClaim.status === "Completed" ||
+                    Boolean(selectedClaim.paymentReceipt) ||
+                    (selectedClaim.currentStep && selectedClaim.currentStep >= 6)
+                  );
+
+                  const garageDoc = (selectedClaim.additionalDocuments || []).find(
+                    (d) => d.name && (d.name.toLowerCase().includes("garage") || d.name.toLowerCase().includes("quotation") || d.name.toLowerCase().includes("estimate"))
+                  ) || (selectedClaim.additionalDocuments && selectedClaim.additionalDocuments.find(d => d.uploadedBy === "Policy Holder" && (d.name.toLowerCase().includes("estimate") || d.name.toLowerCase().includes("repair"))));
+
+                  const hasGarageDoc = Boolean(garageDoc || selectedClaim.garageEstimateComparison?.isCompared);
+
+                  return (
+                    <>
+                      {/* 1. PHYSICAL INSPECTION REPORT FINDINGS (SUBMITTED BY AGENT) */}
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-5 space-y-5">
+                        {(() => {
+                          const parsedReport = parseInspectionReport(selectedClaim.inspectionReport || "");
+                          const parsed = (parsedReport && !parsedReport.isRaw) ? parsedReport : {
                       isRaw: false,
                       odometer: "N/A",
                       fuelLevel: "N/A",
@@ -1385,98 +1542,187 @@ function OfficeStaffClaimsPageContent() {
                       });
 
                     return (
-                      <div className="space-y-4">
-                        {/* 4 Metric Badges */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Odometer Mileage</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.odometer || "N/A"}</span>
+                      <>
+                        <div className="flex justify-between items-center border-b border-slate-200 pb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">📋</span>
+                            <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                              1. Physical Vehicle Findings (Agent Submission)
+                            </h3>
                           </div>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Fuel Level</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.fuelLevel || "N/A"}</span>
-                          </div>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Recommended Action</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.recommendedAction || "Repairable (Minor)"}</span>
-                          </div>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3">
-                            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Pre-Existing Damage</span>
-                            <span className="text-xs font-bold text-slate-800 mt-0.5 block truncate" title={parsed.preExistingDamage}>
-                              {parsed.preExistingDamage !== "None reported." ? parsed.preExistingDamage : "None reported"}
-                            </span>
-                          </div>
+                          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                            isInspectionApproved
+                              ? "text-emerald-700 bg-emerald-50 border border-emerald-200"
+                              : "text-amber-800 bg-amber-100 border border-amber-300"
+                          }`}>
+                            {isInspectionApproved ? "✓ Physical Inspection Approved" : "Inspection Report Pending Approval"}
+                          </span>
                         </div>
 
-                        {/* Damage Checklist Grid */}
-                        <div>
-                          <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Component Damage Checklist</span>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                            {Object.entries(parsed.checklist || {}).map(([key, val]) => (
-                              <div key={key} className="flex justify-between items-center py-1 border-b border-slate-100 last:border-0 text-xs px-1">
-                                <span className="text-slate-600 font-medium">{key}:</span>
-                                <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${
-                                  val === "None" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                                  val === "Minor" ? "bg-amber-50 text-amber-700 border border-amber-200" :
-                                  "bg-rose-50 text-rose-700 border border-rose-200"
-                                }`}>
-                                  {val}
-                                </span>
-                              </div>
-                            ))}
+                        <div className="space-y-4">
+                          {/* 4 Metric Badges */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="bg-white border border-slate-200 rounded-xl p-3">
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Odometer Mileage</span>
+                              <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.odometer || "N/A"}</span>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3">
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Fuel Level</span>
+                              <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.fuelLevel || "N/A"}</span>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3">
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Recommended Action</span>
+                              <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.recommendedAction || "Repairable (Minor)"}</span>
+                            </div>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3">
+                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Pre-Existing Damage</span>
+                              <span className="text-xs font-bold text-slate-800 mt-0.5 block truncate" title={parsed.preExistingDamage}>
+                                {parsed.preExistingDamage !== "None reported." ? parsed.preExistingDamage : "None reported"}
+                              </span>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Physical Remarks */}
-                        <div>
-                          <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-1.5">Agent Physical Inspection Remarks</span>
-                          <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
-                            {parsed.physicalInspectionNotes || "No physical remarks recorded."}
-                          </div>
-                        </div>
-
-                        {/* Inspection Photos */}
-                        {agentPhotos.length > 0 && (
+                          {/* Damage Checklist Grid */}
                           <div>
-                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Agent On-Site Photos ({agentPhotos.length})</span>
-                            <div className="flex flex-wrap gap-2.5">
-                              {agentPhotos.map((p, idx) => (
-                                <div
-                                  key={idx}
-                                  onClick={() => setPreviewImage(p.url)}
-                                  className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
-                                >
-                                  <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
+                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Component Damage Checklist</span>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                              {Object.entries(parsed.checklist || {}).map(([key, val]) => (
+                                <div key={key} className="flex justify-between items-center py-1 border-b border-slate-100 last:border-0 text-xs px-1">
+                                  <span className="text-slate-600 font-medium">{key}:</span>
+                                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${
+                                    val === "None" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
+                                    val === "Minor" ? "bg-amber-50 text-amber-700 border border-amber-200" :
+                                    "bg-rose-50 text-rose-700 border border-rose-200"
+                                  }`}>
+                                    {val}
+                                  </span>
                                 </div>
                               ))}
                             </div>
                           </div>
-                        )}
-                      </div>
+
+                          {/* Physical Remarks */}
+                          <div>
+                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-1.5">Agent Physical Inspection Remarks</span>
+                            <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
+                              {parsed.physicalInspectionNotes || "No physical remarks recorded."}
+                            </div>
+                          </div>
+
+                          {/* Inspection Photos */}
+                          {agentPhotos.length > 0 && (
+                            <div>
+                              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Agent On-Site Photos ({agentPhotos.length})</span>
+                              <div className="flex flex-wrap gap-2.5">
+                                {agentPhotos.map((p, idx) => (
+                                  <div
+                                    key={idx}
+                                    onClick={() => setPreviewImage(p.url)}
+                                    className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
+                                  >
+                                    <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Action Bar: Approve or Reject Inspection Report */}
+                          {!isInspectionApproved && (
+                            <div className="bg-amber-50 border border-amber-300 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 shadow-xs">
+                              <div>
+                                <span className="text-xs font-bold text-amber-950 block">Action Required: Review Physical Inspection Findings</span>
+                                <p className="text-[11px] text-amber-800 font-medium mt-0.5 leading-relaxed">
+                                  Approve the inspection report to update the tracking timeline to "Review" (Step 4) and dispatch the Garage Estimate upload request to the policy holder.
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0 w-full sm:w-auto">
+                                <button
+                                  type="button"
+                                  onClick={handleRejectInspection}
+                                  disabled={isRejectingInspection || isApprovingInspection}
+                                  className="px-4 py-2 rounded-full bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                                >
+                                  {isRejectingInspection ? "Rejecting..." : "Reject Inspection"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleApproveInspection}
+                                  disabled={isApprovingInspection || isRejectingInspection}
+                                  className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                                >
+                                  <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4" strokeWidth={3} />
+                                  {isApprovingInspection ? "Approving..." : "Approve Inspection Report"}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+
+                          {isInspectionApproved && (
+                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-900 font-medium">
+                              <div className="flex items-center gap-2">
+                                <span className="font-bold">✓ Physical Inspection Report Approved & Verified by Branch Office</span>
+                              </div>
+                              <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                                Step 4 Review Active
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </>
                     );
                   })()}
                 </div>
 
                 {/* 2. AI DAMAGE ASSESSMENT & ESTIMATION COST SHEET */}
                 <div className="bg-indigo-50/50 border border-indigo-200 rounded-2xl p-5 space-y-4">
-                  <div className="flex justify-between items-center border-b border-indigo-100 pb-3">
+                  <div className="flex flex-wrap justify-between items-center gap-2 border-b border-indigo-100 pb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-base">??</span>
+                      <span className="text-base">🤖</span>
                       <h3 className="text-sm font-bold text-indigo-950 uppercase tracking-wider">
                         2. AI Loss Assessment & Estimation Cost Sheet
                       </h3>
                     </div>
-                    {selectedClaim.aiAnalysis?.isAnalyzed && (
-                      <span className="text-xs font-bold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full">
-                        Assessed via Gemini Vision
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {selectedClaim.aiAnalysis?.isAnalyzed && (
+                        <button
+                          type="button"
+                          onClick={() => handleRunAIAnalysis(selectedClaim.claimNumber)}
+                          disabled={analyzingClaim === selectedClaim.claimNumber}
+                          className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                          title="Recalculate damage and cost sheet with Gemini AI"
+                        >
+                          {analyzingClaim === selectedClaim.claimNumber ? (
+                            <>
+                              <span className="animate-spin text-xs">⏳</span>
+                              <span>Calculating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>⚡</span>
+                              <span>Recalculate AI Assessment</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                      {selectedClaim.aiAnalysis?.isAnalyzed && (
+                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                          selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
+                            ? "text-rose-700 bg-rose-100 border border-rose-200"
+                            : "text-indigo-700 bg-indigo-100"
+                        }`}>
+                          {selectedClaim.aiAnalysis?.isValidAccidentPhoto === false || selectedClaim.aiAnalysis?.fraudAlert
+                            ? "⚠️ Photo Validation Alert"
+                            : "Assessed via Gemini Vision"}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {!selectedClaim.aiAnalysis?.isAnalyzed ? (
                     <div className="bg-white border border-indigo-200 rounded-xl p-5 text-center space-y-3">
                       <p className="text-xs text-slate-600 font-medium max-w-md mx-auto">
-                        Run the AI Damage Assessment engine to analyze accident photos and agent physical inspection notes, generate the itemized loss cost sheet in LKR, and automatically request the official Garage Estimate Report from the policy holder.
+                        Run the AI Damage Assessment engine to analyze accident photos and agent physical inspection notes, verify photo authenticity against fraud, and generate the itemized loss cost sheet in LKR.
                       </p>
                       <button
                         type="button"
@@ -1484,135 +1730,186 @@ function OfficeStaffClaimsPageContent() {
                         disabled={analyzingClaim === selectedClaim.claimNumber}
                         className="px-6 py-2.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2"
                       >
-                        {analyzingClaim === selectedClaim.claimNumber ? "Analyzing Damage..." : "? Run AI Damage Assessment / Cost Sheet"}
+                        {analyzingClaim === selectedClaim.claimNumber ? "Analyzing Damage..." : "⚡ Run AI Damage Assessment / Cost Sheet"}
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {/* 4 Loss KPI Cards */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Estimated Loss</span>
-                          <span className="text-sm font-extrabold text-indigo-900 font-mono mt-0.5 block">
-                            LKR {(selectedClaim.aiAnalysis.totalEstimatedCost || 0).toLocaleString()}
-                          </span>
+                      {/* FRAUD / INVALID PHOTO WARNING BANNER */}
+                      {selectedClaim.aiAnalysis.isValidAccidentPhoto === false || selectedClaim.aiAnalysis.fraudAlert ? (
+                        <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">🚨</span>
+                            <span className="text-xs font-extrabold text-rose-800 uppercase tracking-wide">
+                              AI Authenticity Alert: Non-Accident / Inauthentic Photos Detected
+                            </span>
+                          </div>
+                          <p className="text-xs text-rose-900 leading-relaxed bg-white border border-rose-200/80 rounded-lg p-3">
+                            <strong className="block text-rose-950 font-bold mb-0.5">Assessment Findings:</strong>
+                            {selectedClaim.aiAnalysis.fraudAlert || selectedClaim.aiAnalysis.summary || "The uploaded photos do not depict legitimate vehicle accident damage."}
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                            <div className="bg-white border border-rose-100 rounded-lg p-2.5">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Authenticity Verdict</span>
+                              <span className="text-xs font-bold text-rose-700 block mt-0.5">
+                                {selectedClaim.aiAnalysis.authenticityAssessment || "Fake / Irrelevant Image"}
+                              </span>
+                            </div>
+                            <div className="bg-white border border-rose-100 rounded-lg p-2.5">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Calculated Loss</span>
+                              <span className="text-xs font-extrabold text-slate-800 block mt-0.5 font-mono">
+                                LKR 0 (Halted)
+                              </span>
+                            </div>
+                            <div className="bg-white border border-rose-100 rounded-lg p-2.5">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Garage Estimate Workflow</span>
+                              <span className="text-xs font-bold text-amber-700 block mt-0.5">
+                                Blocked (Pending Manual Review)
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Parts Cost</span>
-                          <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
-                            LKR {(selectedClaim.aiAnalysis.totalEstimatedPartsCost || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Labor & Repair</span>
-                          <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
-                            LKR {(selectedClaim.aiAnalysis.totalEstimatedLaborCost || 0).toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
-                          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Assessed Damage</span>
-                          <span className="text-sm font-extrabold text-amber-600 font-mono mt-0.5 block">
-                            {selectedClaim.aiAnalysis.overallDamagePercentage || 0}%
-                          </span>
-                        </div>
-                      </div>
+                      ) : (
+                        <>
+                          {/* 4 Loss KPI Cards */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                            <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Total Estimated Loss</span>
+                              <span className="text-sm font-extrabold text-indigo-900 font-mono mt-0.5 block">
+                                LKR {(selectedClaim.aiAnalysis.totalEstimatedCost || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Parts Cost</span>
+                              <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
+                                LKR {(selectedClaim.aiAnalysis.totalEstimatedPartsCost || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Labor & Repair</span>
+                              <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
+                                LKR {(selectedClaim.aiAnalysis.totalEstimatedLaborCost || 0).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="bg-white border border-indigo-200/80 rounded-xl p-3 shadow-xs">
+                              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider block">Assessed Damage</span>
+                              <span className="text-sm font-extrabold text-amber-600 font-mono mt-0.5 block">
+                                {selectedClaim.aiAnalysis.overallDamagePercentage || 0}%
+                              </span>
+                            </div>
+                          </div>
 
-                      {/* Itemized Cost Sheet Table */}
-                      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                        <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wider">
-                          Itemized Automotive Parts & Labor Cost Sheet (LKR)
-                        </div>
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-xs text-left">
-                            <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100">
-                              <tr>
-                                <th className="py-2.5 px-4">Damaged Component / Assembly</th>
-                                <th className="py-2.5 px-3 text-center">Damage %</th>
-                                <th className="py-2.5 px-3 text-center">Action</th>
-                                <th className="py-2.5 px-3 text-right">Parts Cost</th>
-                                <th className="py-2.5 px-3 text-right">Labor Cost</th>
-                                <th className="py-2.5 px-4 text-right">Line Total</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                              {(selectedClaim.aiAnalysis.damagedItems || []).map((item, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                                  <td className="py-2.5 px-4 font-semibold text-slate-800">
-                                    <div>{item.item}</div>
-                                    {item.description && (
-                                      <div className="text-[10px] text-slate-400 font-normal mt-0.5">{item.description}</div>
-                                    )}
-                                  </td>
-                                  <td className="py-2.5 px-3 text-center font-bold text-amber-600">{item.damagePercentage}%</td>
-                                  <td className="py-2.5 px-3 text-center">
-                                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                      item.action === "Replace" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
-                                    }`}>
-                                      {item.action || "Repair"}
-                                    </span>
-                                  </td>
-                                  <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                                    LKR {(item.estimatedPartCost || 0).toLocaleString()}
-                                  </td>
-                                  <td className="py-2.5 px-3 text-right font-mono text-slate-700">
-                                    LKR {(item.estimatedLaborCost || 0).toLocaleString()}
-                                  </td>
-                                  <td className="py-2.5 px-4 text-right font-bold font-mono text-slate-900">
-                                    LKR {(item.totalItemCost || (item.estimatedPartCost || 0) + (item.estimatedLaborCost || 0)).toLocaleString()}
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
+                          {/* Itemized Cost Sheet Table */}
+                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wider">
+                              Itemized Automotive Parts & Labor Cost Sheet (LKR)
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs text-left">
+                                <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100">
+                                  <tr>
+                                    <th className="py-2.5 px-4">Damaged Component / Assembly</th>
+                                    <th className="py-2.5 px-3 text-center">Damage %</th>
+                                    <th className="py-2.5 px-3 text-center">Action</th>
+                                    <th className="py-2.5 px-3 text-right">Parts Cost</th>
+                                    <th className="py-2.5 px-3 text-right">Labor Cost</th>
+                                    <th className="py-2.5 px-4 text-right">Line Total</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {(!selectedClaim.aiAnalysis.damagedItems || selectedClaim.aiAnalysis.damagedItems.length === 0) ? (
+                                    <tr>
+                                      <td colSpan={6} className="py-6 px-4 text-center text-slate-500 bg-slate-50/30">
+                                        <p className="font-semibold text-xs text-slate-600 mb-1">No itemized damaged parts calculated yet.</p>
+                                        <p className="text-[11px] text-slate-400 mb-3">Run AI loss assessment to generate automotive parts and labor cost breakdown.</p>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRunAIAnalysis(selectedClaim.claimNumber)}
+                                          disabled={analyzingClaim === selectedClaim.claimNumber}
+                                          className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all disabled:opacity-50"
+                                        >
+                                          {analyzingClaim === selectedClaim.claimNumber ? "Analyzing..." : "⚡ Calculate Loss & Itemized Cost Sheet"}
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  ) : (
+                                    selectedClaim.aiAnalysis.damagedItems.map((item, idx) => (
+                                      <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                                        <td className="py-2.5 px-4 font-semibold text-slate-800">
+                                          <div>{item.item}</div>
+                                          {item.description && (
+                                            <div className="text-[10px] text-slate-400 font-normal mt-0.5">{item.description}</div>
+                                          )}
+                                        </td>
+                                        <td className="py-2.5 px-3 text-center font-bold text-amber-600">{item.damagePercentage}%</td>
+                                        <td className="py-2.5 px-3 text-center">
+                                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                            item.action === "Replace" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"
+                                          }`}>
+                                            {item.action || "Repair"}
+                                          </span>
+                                        </td>
+                                        <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                                          LKR {(item.estimatedPartCost || 0).toLocaleString()}
+                                        </td>
+                                        <td className="py-2.5 px-3 text-right font-mono text-slate-700">
+                                          LKR {(item.estimatedLaborCost || 0).toLocaleString()}
+                                        </td>
+                                        <td className="py-2.5 px-4 text-right font-bold font-mono text-slate-900">
+                                          LKR {(item.totalItemCost || (item.estimatedPartCost || 0) + (item.estimatedLaborCost || 0)).toLocaleString()}
+                                        </td>
+                                      </tr>
+                                    ))
+                                  )}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
 
-                      {/* AI Auditor Narrative Summary */}
-                      {selectedClaim.aiAnalysis.summary && (
-                        <div className="bg-white border border-indigo-100 rounded-xl p-3.5 text-xs text-slate-700 leading-relaxed font-medium">
-                          <strong className="text-indigo-950 font-bold block mb-1">AI Assessment Summary:</strong>
-                          {selectedClaim.aiAnalysis.summary}
-                        </div>
+                          {/* AI Auditor Narrative Summary */}
+                          {selectedClaim.aiAnalysis.summary && (
+                            <div className="bg-white border border-indigo-100 rounded-xl p-3.5 text-xs text-slate-700 leading-relaxed font-medium">
+                              <strong className="text-indigo-950 font-bold block mb-1">AI Assessment Summary:</strong>
+                              {selectedClaim.aiAnalysis.summary}
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
                 </div>
 
                 {/* 3. GARAGE ESTIMATE DOCUMENT REQUEST & POLICY HOLDER SUBMISSION */}
-                {(() => {
-                  const garageDoc = (selectedClaim.additionalDocuments || []).find(
-                    (d) => d.name && d.name.toLowerCase().includes("garage")
-                  ) || (selectedClaim.additionalDocuments && selectedClaim.additionalDocuments.find(d => d.uploadedBy === "Policy Holder"));
-
-                  return (
-                    <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-5 space-y-4">
-                      <div className="flex justify-between items-center border-b border-amber-200 pb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">??</span>
-                          <h3 className="text-sm font-bold text-amber-950 uppercase tracking-wider">
-                            3. Garage Estimate Report from Policy Holder
-                          </h3>
-                        </div>
-                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                          garageDoc ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-                        }`}>
-                          {garageDoc ? "Document Uploaded" : "Awaiting Policy Holder Upload"}
-                        </span>
+                {isInspectionApproved && (
+                  <div className="bg-amber-50/50 border border-amber-200 rounded-2xl p-5 space-y-4">
+                    <div className="flex justify-between items-center border-b border-amber-200 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">📋</span>
+                        <h3 className="text-sm font-bold text-amber-950 uppercase tracking-wider">
+                          3. Garage Estimate Report from Policy Holder
+                        </h3>
                       </div>
+                      <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                        hasGarageDoc ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                      }`}>
+                        {hasGarageDoc ? "Document Uploaded" : "Awaiting Policy Holder Upload"}
+                      </span>
+                    </div>
 
-                      {!garageDoc ? (
-                        <div className="bg-white border border-amber-200 rounded-xl p-4 text-xs text-slate-700 leading-relaxed">
-                          <span className="font-bold text-amber-900 block mb-1">Status: Document Request Dispatched</span>
-                          The policy holder has been notified to upload the official Garage Estimate quotation document. Once uploaded from their portal, the quotation will automatically appear here for forensic cost cross-checking.
+                    {!hasGarageDoc ? (
+                      <div className="bg-white border border-amber-200 rounded-xl p-4 text-xs text-slate-700 leading-relaxed">
+                        <span className="font-bold text-amber-900 block mb-1">Status: Document Request Dispatched</span>
+                        The policy holder has been notified to upload the official Garage Estimate quotation document. Once uploaded from their portal, the quotation will automatically appear here for forensic cost cross-checking.
+                      </div>
+                    ) : (
+                      <div className="bg-white border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div>
+                          <span className="text-xs font-bold text-slate-900 block">{garageDoc?.name || "Official Garage Estimate Quotation"}</span>
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            Uploaded by {garageDoc?.uploadedBy || "Policy Holder"}{garageDoc?.uploadedAt ? ` on ${formatSriLankaDateTime(garageDoc.uploadedAt)}` : ""}
+                          </span>
                         </div>
-                      ) : (
-                        <div className="bg-white border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                          <div>
-                            <span className="text-xs font-bold text-slate-900 block">{garageDoc.name}</span>
-                            <span className="text-[10px] text-slate-400 font-medium">
-                              Uploaded by {garageDoc.uploadedBy || "Policy Holder"} on {formatSriLankaDateTime(garageDoc.uploadedAt)}
-                            </span>
-                          </div>
+                        {garageDoc?.url && (
                           <div className="flex items-center gap-2">
                             <a
                               href={garageDoc.url}
@@ -1624,150 +1921,306 @@ function OfficeStaffClaimsPageContent() {
                               View Garage Quotation
                             </a>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* 4. GARAGE ESTIMATE VS. AI BENCHMARK FORENSIC COMPARISON */}
-                {(() => {
-                  const garageDoc = (selectedClaim.additionalDocuments || []).find(
-                    (d) => d.name && d.name.toLowerCase().includes("garage")
-                  );
-
-                  return (
-                    <div className="bg-emerald-50/50 border border-emerald-200 rounded-2xl p-5 space-y-4">
-                      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-200 pb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-base">??</span>
-                          <h3 className="text-sm font-bold text-emerald-950 uppercase tracking-wider">
-                            4. Garage vs. AI Benchmark & Photo Cross-Check
-                          </h3>
-                        </div>
-                        {garageDoc && (
-                          <button
-                            type="button"
-                            onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber)}
-                            disabled={comparingGarageClaim === selectedClaim.claimNumber}
-                            className="px-4 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
-                          >
-                            {comparingGarageClaim === selectedClaim.claimNumber ? "Comparing..." : "? Run Cost Comparison"}
-                          </button>
                         )}
                       </div>
+                    )}
+                  </div>
+                )}
 
-                      {!selectedClaim.garageEstimateComparison?.isCompared ? (
-                        <div className="bg-white border border-emerald-200 rounded-xl p-4 text-xs text-slate-600 text-center font-medium">
-                          {garageDoc ? "Click 'Run Cost Comparison' above to compare the uploaded garage quotation against AI loss benchmarks and accident photos." : "Awaiting Garage Estimate document upload before performing cost comparison."}
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {/* Comparison Metric Grid */}
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
-                              <span className="text-[10px] text-slate-500 font-bold uppercase block">AI Loss Benchmark</span>
-                              <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
-                                LKR {(selectedClaim.garageEstimateComparison.aiEstimatedTotal || 0).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
-                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Garage Quoted Total</span>
-                              <span className="text-sm font-extrabold text-slate-900 font-mono mt-0.5 block">
-                                LKR {(selectedClaim.garageEstimateComparison.garageEstimatedTotal || 0).toLocaleString()}
-                              </span>
-                            </div>
-                            <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
-                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Cost Variance</span>
-                              <span className={`text-sm font-extrabold font-mono mt-0.5 block ${
-                                (selectedClaim.garageEstimateComparison.costDifferencePercentage || 0) <= 15 ? "text-emerald-600" : "text-rose-600"
-                              }`}>
-                                {(selectedClaim.garageEstimateComparison.costDifferencePercentage || 0) >= 0 ? "+" : ""}
-                                {selectedClaim.garageEstimateComparison.costDifferencePercentage || 0}%
-                              </span>
-                            </div>
-                            <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
-                              <span className="text-[10px] text-slate-500 font-bold uppercase block">Forensic Verdict</span>
-                              <span className={`text-xs font-extrabold mt-1 block uppercase ${
-                                selectedClaim.garageEstimateComparison.verdict === "Match" ? "text-emerald-700" : "text-rose-700"
-                              }`}>
-                                {selectedClaim.garageEstimateComparison.verdict || "Match"}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Confidence Progress Meter */}
-                          <div className="bg-white border border-emerald-200 rounded-xl p-3.5">
-                            <div className="flex justify-between items-center text-xs font-bold mb-1.5">
-                              <span className="text-slate-700">Photo & Item Match Confidence Score:</span>
-                              <span className="text-emerald-700">{selectedClaim.garageEstimateComparison.matchConfidenceScore || 90}% Alignment</span>
-                            </div>
-                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${selectedClaim.garageEstimateComparison.matchConfidenceScore || 90}%` }}
-                              />
-                            </div>
-                          </div>
-
-                          {/* Itemized Photo Cross-Check Table */}
-                          {(selectedClaim.garageEstimateComparison.photoVerificationDetails || []).length > 0 && (
-                            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
-                              <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wider">
-                                Forensic Photo Evidence Cross-Check
-                              </div>
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-xs text-left">
-                                  <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100">
-                                    <tr>
-                                      <th className="py-2.5 px-4">Claimed Component</th>
-                                      <th className="py-2.5 px-3 text-right">Garage Cost</th>
-                                      <th className="py-2.5 px-3 text-right">AI Cost</th>
-                                      <th className="py-2.5 px-3 text-center">Photo Evidence</th>
-                                      <th className="py-2.5 px-4">Auditor / Forensic Notes</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-slate-100">
-                                    {(selectedClaim.garageEstimateComparison.photoVerificationDetails || []).map((p, idx) => (
-                                      <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
-                                        <td className="py-2.5 px-4 font-semibold text-slate-800">{p.item}</td>
-                                        <td className="py-2.5 px-3 text-right font-mono text-slate-800">LKR {p.garageCost.toLocaleString()}</td>
-                                        <td className="py-2.5 px-3 text-right font-mono text-slate-600">LKR {p.aiCost.toLocaleString()}</td>
-                                        <td className="py-2.5 px-3 text-center">
-                                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                            p.matchesAccidentPhotos ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800"
-                                          }`}>
-                                            {p.matchesAccidentPhotos ? "? Photo Verified" : "? Discrepancy"}
-                                          </span>
-                                        </td>
-                                        <td className="py-2.5 px-4 text-[11px] text-slate-600 font-medium">{p.notes}</td>
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
+                {/* 4. GARAGE ESTIMATE VS. AI BENCHMARK FORENSIC COMPARISON */}
+                {isInspectionApproved && hasGarageDoc && (
+                  <div className="bg-emerald-50/50 border border-emerald-200 rounded-2xl p-5 space-y-4">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-200 pb-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">📋</span>
+                        <h3 className="text-sm font-bold text-emerald-950 uppercase tracking-wider">
+                          4. Garage vs. AI Benchmark & Photo Cross-Check
+                        </h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber, false)}
+                        disabled={comparingGarageClaim === selectedClaim.claimNumber}
+                        className="px-4 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        {comparingGarageClaim === selectedClaim.claimNumber ? (
+                          <>
+                            <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            <span>Calculating...</span>
+                          </>
+                        ) : selectedClaim.garageEstimateComparison?.isCompared ? (
+                          <span>🔄 Recalculate Comparison</span>
+                        ) : (
+                          <span>🔍 Run Cost Comparison</span>
+                        )}
+                      </button>
                     </div>
-                  );
-                })()}
+
+                    {!selectedClaim.garageEstimateComparison?.isCompared ? (
+                      <div className="bg-white border border-emerald-200 rounded-xl p-6 text-center space-y-2">
+                        {comparingGarageClaim === selectedClaim.claimNumber ? (
+                          <div className="flex flex-col items-center justify-center gap-2 py-2">
+                            <div className="w-6 h-6 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-xs text-emerald-800 font-semibold">
+                              AI is automatically cross-checking the uploaded garage quotation with accident photos and loss benchmarks...
+                            </p>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-xs text-slate-600 font-medium">
+                              Uploaded garage quotation is ready for forensic comparison against AI loss benchmarks and accident photos.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleCompareGarageEstimate(selectedClaim.claimNumber, false)}
+                              className="mt-2 px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
+                            >
+                              🔍 Run Cost Comparison Now
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* Comparison Metric Grid */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase block">AI Loss Benchmark</span>
+                            <span className="text-sm font-extrabold text-slate-800 font-mono mt-0.5 block">
+                              LKR {(selectedClaim.garageEstimateComparison.aiEstimatedTotal || 0).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase block">Garage Quoted Total</span>
+                            <span className="text-sm font-extrabold text-slate-900 font-mono mt-0.5 block">
+                              LKR {(selectedClaim.garageEstimateComparison.garageEstimatedTotal || 0).toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase block">Cost Variance</span>
+                            <span className={`text-sm font-extrabold font-mono mt-0.5 block ${
+                              (selectedClaim.garageEstimateComparison.costDifferencePercentage || 0) <= 15 ? "text-emerald-600" : "text-rose-600"
+                            }`}>
+                              {(selectedClaim.garageEstimateComparison.costDifferencePercentage || 0) >= 0 ? "+" : ""}
+                              {selectedClaim.garageEstimateComparison.costDifferencePercentage || 0}%
+                            </span>
+                          </div>
+                          <div className="bg-white border border-emerald-200 rounded-xl p-3 shadow-xs">
+                            <span className="text-[10px] text-slate-500 font-bold uppercase block">Forensic Verdict</span>
+                            <span className={`text-xs font-extrabold mt-1 block uppercase ${
+                              selectedClaim.garageEstimateComparison.verdict === "Match" ? "text-emerald-700" : "text-rose-700"
+                            }`}>
+                              {selectedClaim.garageEstimateComparison.verdict || "Match"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Confidence Progress Meter */}
+                        <div className="bg-white border border-emerald-200 rounded-xl p-3.5">
+                          <div className="flex justify-between items-center text-xs font-bold mb-1.5">
+                            <span className="text-slate-700">Photo & Item Match Confidence Score:</span>
+                            <span className="text-emerald-700">{selectedClaim.garageEstimateComparison.matchConfidenceScore || 90}% Alignment</span>
+                          </div>
+                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div
+                              className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                              style={{ width: `${selectedClaim.garageEstimateComparison.matchConfidenceScore || 90}%` }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Itemized Photo Cross-Check Table */}
+                        {(selectedClaim.garageEstimateComparison.photoVerificationDetails || []).length > 0 && (
+                          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-xs">
+                            <div className="px-4 py-2.5 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wider">
+                              Forensic Photo Evidence Cross-Check
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-xs text-left">
+                                <thead className="bg-slate-50/50 text-slate-500 font-semibold border-b border-slate-100">
+                                  <tr>
+                                    <th className="py-2.5 px-4 font-bold text-slate-700 min-w-[190px]">Claimed Component</th>
+                                    <th className="py-2.5 px-3 text-right font-bold text-slate-700 whitespace-nowrap min-w-[110px]">Garage Cost</th>
+                                    <th className="py-2.5 px-3 text-right font-bold text-slate-700 whitespace-nowrap min-w-[110px]">AI Cost</th>
+                                    <th className="py-2.5 px-4 text-center font-bold text-slate-700 whitespace-nowrap min-w-[150px]">Photo Evidence</th>
+                                    <th className="py-2.5 px-4 font-bold text-slate-700 min-w-[240px]">Auditor / Forensic Notes</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100">
+                                  {(selectedClaim.garageEstimateComparison.photoVerificationDetails || []).map((p, idx) => (
+                                    <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
+                                      <td className="py-3 px-4 font-semibold text-slate-800">{p.item}</td>
+                                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">LKR {Number(p.garageCost || 0).toLocaleString()}</td>
+                                      <td className="py-3 px-3 text-right font-mono font-bold text-slate-600 whitespace-nowrap">LKR {Number(p.aiCost || 0).toLocaleString()}</td>
+                                      <td className="py-3 px-4 text-center whitespace-nowrap align-middle">
+                                        {p.matchesAccidentPhotos ? (
+                                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 shadow-2xs whitespace-nowrap tracking-tight">
+                                            <svg className="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span>Photo Verified</span>
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200/80 shadow-2xs whitespace-nowrap tracking-tight">
+                                            <svg className="w-3.5 h-3.5 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            <span>Discrepancy</span>
+                                          </span>
+                                        )}
+                                      </td>
+                                      <td className="py-3 px-4 text-[11px] text-slate-600 font-normal leading-relaxed">{p.notes}</td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* SETTLEMENT AMOUNT ENTERING & APPROVAL SECTION */}
+                {isInspectionApproved && hasGarageDoc && !isClaimApprovedOrSettled && selectedClaim.status !== "Rejected" && (
+                  <div className="bg-white border-2 border-emerald-300 rounded-2xl p-5 space-y-4 shadow-sm">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-emerald-100 pb-3">
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={2.5} />
+                          Final Settlement Determination & Claim Approval
+                        </h4>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Enter the approved claim settlement payout amount. Submitting will approve the claim and unlock bank disbursement (Section 5).
+                        </p>
+                      </div>
+                      <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                        Step 4 → Step 5
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Settlement Amount */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 block">
+                          Approved Settlement Payout (LKR) <span className="text-rose-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">
+                            LKR
+                          </span>
+                          <input
+                            type="number"
+                            value={approvingAmount}
+                            onChange={(e) => setApprovingAmount(e.target.value)}
+                            placeholder={
+                              selectedClaim.garageEstimateComparison?.garageEstimatedTotal
+                                ? String(selectedClaim.garageEstimateComparison.garageEstimatedTotal)
+                                : selectedClaim.aiAnalysis?.totalEstimatedCost
+                                ? String(selectedClaim.aiAnalysis.totalEstimatedCost)
+                                : "Enter amount in LKR"
+                            }
+                            className="w-full pl-12 pr-4 py-2.5 border border-slate-300 rounded-xl text-sm font-extrabold text-slate-900 font-mono bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all"
+                          />
+                        </div>
+
+                        {/* Quick Fill Helpers */}
+                        <div className="flex flex-wrap gap-2 pt-1">
+                          {selectedClaim.garageEstimateComparison?.garageEstimatedTotal ? (
+                            <button
+                              type="button"
+                              onClick={() => setApprovingAmount(String(selectedClaim.garageEstimateComparison?.garageEstimatedTotal))}
+                              className="text-[11px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                            >
+                              Use Garage Total: LKR {selectedClaim.garageEstimateComparison.garageEstimatedTotal.toLocaleString()}
+                            </button>
+                          ) : null}
+                          {selectedClaim.aiAnalysis?.totalEstimatedCost ? (
+                            <button
+                              type="button"
+                              onClick={() => setApprovingAmount(String(selectedClaim.aiAnalysis?.totalEstimatedCost))}
+                              className="text-[11px] font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                            >
+                              Use AI Loss: LKR {selectedClaim.aiAnalysis.totalEstimatedCost.toLocaleString()}
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {/* Approval / Settlement Note */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-700 block">
+                          Approval & Settlement Remarks
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={approvalNote}
+                          onChange={(e) => setApprovalNote(e.target.value)}
+                          placeholder="e.g. Approved based on forensic photo verification and verified garage estimate."
+                          className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-xs text-slate-800 bg-slate-50 focus:bg-white focus:border-emerald-500 focus:outline-none transition-all resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Submit Button */}
+                    <div className="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2 border-t border-slate-100">
+                      <div className="text-[11px] text-slate-400">
+                        Bank disbursement instructions will automatically be presented to proceed with fund transfer once approved.
+                      </div>
+                      <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setRejectionReasonText("");
+                            setActiveSubModal("decision_reject");
+                          }}
+                          className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-xs shadow-xs transition-all active:scale-95 cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          Reject
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleClaimDecision("Approve")}
+                          disabled={updatingClaim}
+                          className="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-xs transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center justify-center gap-1.5 whitespace-nowrap"
+                        >
+                          <HugeiconsIcon icon={Tick01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                          {updatingClaim ? "Approving..." : "Approve"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Summary Banner if already approved */}
+                {isInspectionApproved && isClaimApprovedOrSettled && (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 flex items-center justify-between text-xs text-emerald-900 font-medium">
+                    <div className="flex items-center gap-2">
+                      <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4 text-emerald-600" strokeWidth={3} />
+                      <span className="font-bold">Claim Settlement Approved: LKR {(selectedClaim.amount || 0).toLocaleString()}</span>
+                    </div>
+                    <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                      {isClaimPaymentSettled ? "Payment Disbursed" : "Proceed to Bank Settlement Below"}
+                    </span>
+                  </div>
+                )}
 
                 {/* 5. POST-APPROVAL PAYMENT SETTLEMENT & RECEIPT WORKFLOW */}
-                {(selectedClaim.status === "Approved" || selectedClaim.status === "Settled") && (
+                {isClaimApprovedOrSettled && (
                   <div className="bg-blue-50/50 border border-blue-200 rounded-2xl p-5 space-y-4">
                     <div className="flex justify-between items-center border-b border-blue-200 pb-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">??</span>
+                        <span className="text-base">💳</span>
                         <h3 className="text-sm font-bold text-blue-950 uppercase tracking-wider">
                           5. Policy Holder Bank Account & Payment Settlement
                         </h3>
                       </div>
                       <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                        selectedClaim.status === "Settled" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                        isClaimPaymentSettled ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
                       }`}>
-                        {selectedClaim.status === "Settled" ? "Payment Completed" : "Payment Pending Disbursement"}
+                        {isClaimPaymentSettled ? "Payment Completed" : "Payment Pending Disbursement"}
                       </span>
                     </div>
 
@@ -1798,14 +2251,14 @@ function OfficeStaffClaimsPageContent() {
                         <div>
                           <span className="text-slate-400 block text-[10px]">Account Number</span>
                           <strong className="text-slate-900 font-mono block mt-0.5">
-                            {selectedClaim.policyHolderBankDetails?.accountNumber || selectedClaim.bankAccount || "�"}
+                            {selectedClaim.policyHolderBankDetails?.accountNumber || selectedClaim.bankAccount || "—"}
                           </strong>
                         </div>
                       </div>
                     </div>
 
                     {/* Payment Receipt Upload & Completion Box */}
-                    {selectedClaim.status === "Approved" && (
+                    {!isClaimPaymentSettled && (
                       <div className="bg-white border border-blue-200 rounded-xl p-5 space-y-4">
                         <div className="flex flex-col gap-1">
                           <span className="text-xs font-bold text-slate-800">
@@ -1868,20 +2321,20 @@ function OfficeStaffClaimsPageContent() {
                             disabled={isSettlingPayment || !settlingReceiptFile}
                             className="px-6 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-2"
                           >
-                            {isSettlingPayment ? "Uploading & Settling..." : "? Confirm Payment & Settle Claim"}
+                            {isSettlingPayment ? "Uploading & Settling..." : "💳 Confirm Payment & Settle Claim"}
                           </button>
                         </div>
                       </div>
                     )}
 
                     {/* If Already Settled */}
-                    {selectedClaim.status === "Settled" && (
+                    {isClaimPaymentSettled && (
                       <div className="bg-white border border-emerald-200 rounded-xl p-4 flex justify-between items-center">
                         <div>
                           <span className="text-xs font-bold text-emerald-800 block">Payment Disbursed Successfully</span>
                           <span className="text-[11px] text-slate-500">
                             Amount: <strong>LKR {(selectedClaim.amount || 0).toLocaleString()}</strong>
-                            {selectedClaim.paymentSettledAt && ` � Settled on ${formatSriLankaDateTime(selectedClaim.paymentSettledAt)}`}
+                            {selectedClaim.paymentSettledAt && ` • Settled on ${formatSriLankaDateTime(selectedClaim.paymentSettledAt)}`}
                           </span>
                         </div>
                         {selectedClaim.paymentReceipt && (
@@ -1899,17 +2352,24 @@ function OfficeStaffClaimsPageContent() {
                     )}
                   </div>
                 )}
-              </div>
+              </>
+            );
+          })()}
+        </div>
 
-              {/* Footer Decision Action Bar inside Inspection Modal */}
+              {/* Footer Action Bar inside Inspection Modal */}
               <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3 select-none">
                 <div className="text-xs text-slate-500 font-medium">
-                  {selectedClaim.status === "Approved" || selectedClaim.status === "Settled" ? (
-                    <span className="text-emerald-700 font-bold">? Claim Decision: Approved</span>
+                  {selectedClaim.status === "Settled" || selectedClaim.status === "Completed" || selectedClaim.paymentReceipt ? (
+                    <span className="text-emerald-700 font-bold">✓ Claim Completed & Settled</span>
+                  ) : selectedClaim.status === "Approved" ? (
+                    <span className="text-emerald-700 font-bold">✓ Claim Decision: Approved</span>
                   ) : selectedClaim.status === "Rejected" ? (
-                    <span className="text-red-700 font-bold">? Claim Decision: Rejected</span>
+                    <span className="text-red-700 font-bold">✕ Claim Decision: Rejected</span>
+                  ) : selectedClaim.status === "Review" ? (
+                    <span className="text-purple-700 font-bold">⟳ Step 4 Review: Verify Benchmarks & Enter Passed Settlement Amount in Section 4</span>
                   ) : (
-                    <span>Ready for branch review and settlement decision</span>
+                    <span>Physical inspection submitted. Review and approve/reject inspection above in Section 1.</span>
                   )}
                 </div>
                 
@@ -1917,46 +2377,10 @@ function OfficeStaffClaimsPageContent() {
                   <button
                     type="button"
                     onClick={() => setActiveSubModal(null)}
-                    className="px-5 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer bg-white"
+                    className="px-6 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer bg-white"
                   >
                     Close Inspection
                   </button>
-
-                  {/* Approve & Reject Decision Buttons inside Inspection Modal */}
-                  {(selectedClaim.status === "Pending" || selectedClaim.status === "In Progress" || selectedClaim.status === "Review") && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRejectionReasonText("");
-                          setActiveSubModal("decision_reject");
-                        }}
-                        className="px-5 py-2.5 rounded-full bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
-                        Reject Claim
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setApprovingAmount(
-                            selectedClaim.garageEstimateComparison?.garageEstimatedTotal
-                              ? String(selectedClaim.garageEstimateComparison.garageEstimatedTotal)
-                              : selectedClaim.aiAnalysis?.totalEstimatedCost
-                              ? String(selectedClaim.aiAnalysis.totalEstimatedCost)
-                              : selectedClaim.amount
-                              ? String(selectedClaim.amount)
-                              : ""
-                          );
-                          setActiveSubModal("decision_approve");
-                        }}
-                        className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition-all active:scale-95 cursor-pointer inline-flex items-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={Tick01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
-                        Approve Claim
-                      </button>
-                    </>
-                  )}
                 </div>
               </div>
             </div>
@@ -3250,17 +3674,19 @@ function OfficeStaffClaimsPageContent() {
             </div>
           )}
 
-          {/* APPROVE CLAIM DECISION MODAL */}
+          {/* APPROVE CLAIM SIMPLE CONFIRMATION MODAL */}
           {activeSubModal === "decision_approve" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[650px] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden text-left">
-              <div className="px-8 pt-6 pb-3 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl">✅</span>
+            <div className="bg-white border border-slate-200 rounded-[28px] w-full max-w-[480px] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden text-left animate-in fade-in zoom-in-95">
+              <div className="px-6 pt-6 pb-4 border-b border-slate-100 flex justify-between items-center bg-emerald-50/60">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700 shadow-xs">
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-6 h-6 text-emerald-600" strokeWidth={2.5} />
+                  </div>
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
+                    <h2 className="text-base font-bold text-slate-900 tracking-tight leading-none">
                       Approve Insurance Claim
                     </h2>
-                    <p className="text-xs text-slate-500 mt-1 font-normal">
+                    <p className="text-xs text-slate-500 mt-1 font-medium">
                       {selectedClaim.claimNumber} • {selectedClaim.vehiclePlate}
                     </p>
                   </div>
@@ -3268,96 +3694,63 @@ function OfficeStaffClaimsPageContent() {
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition-all border-none bg-transparent cursor-pointer"
+                  className="p-1.5 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-200/60 transition-all border-none bg-transparent cursor-pointer"
                 >
                   <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
                 </button>
               </div>
 
-              <div className="p-8 flex flex-col gap-5 overflow-y-auto max-h-[70vh]">
-                {/* Cost Comparison Reference Box */}
-                <div className="bg-emerald-50/70 border border-emerald-200 rounded-2xl p-4 flex flex-col gap-2">
-                  <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider">Estimated Settlement Reference</span>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-medium block">AI Assessed Cost</span>
-                      <span className="text-xs font-bold text-slate-800 font-mono">
-                        LKR {(selectedClaim.aiAnalysis?.totalEstimatedCost || 0).toLocaleString()}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-medium block">Garage Quoted Cost</span>
-                      <span className="text-xs font-bold text-slate-800 font-mono">
-                        {selectedClaim.garageEstimateComparison?.garageEstimatedTotal ? `LKR ${selectedClaim.garageEstimateComparison.garageEstimatedTotal.toLocaleString()}` : "N/A"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-500 font-medium block">Forensic Status</span>
-                      <span className="text-xs font-bold text-emerald-700">
-                        {selectedClaim.garageEstimateComparison?.verdict || "Loss Estimated"}
-                      </span>
-                    </div>
+              <div className="p-6 flex flex-col gap-4">
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs space-y-1.5">
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Policy Holder:</span>
+                    <strong className="text-slate-900">{selectedClaim.policyHolderName || "N/A"}</strong>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Vehicle Number:</span>
+                    <strong className="text-slate-900">{selectedClaim.vehiclePlate || "N/A"}</strong>
+                  </div>
+                  <div className="flex justify-between items-center text-slate-600">
+                    <span>Current Stage:</span>
+                    <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 text-[11px]">
+                      {selectedClaim.status || "Submitted"}
+                    </span>
                   </div>
                 </div>
 
-                {/* Approved Settlement Amount Input */}
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Are you sure you want to approve this claim? The claim status will be updated to <strong className="text-emerald-700 font-semibold">Approved</strong> and recorded in the system.
+                </p>
+
+                {/* Optional Approval Note */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-800">
-                    Approved Payout Amount (LKR) <span className="text-red-500">*</span>
-                  </label>
+                  <label className="text-xs font-semibold text-slate-700">Approval Remarks / Note (Optional)</label>
                   <input
-                    type="number"
-                    value={approvingAmount}
-                    onChange={(e) => setApprovingAmount(e.target.value)}
-                    placeholder="e.g. 175000"
-                    className="w-full px-4 py-3 border border-slate-300 rounded-xl text-sm font-bold text-slate-900 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-mono"
-                  />
-                  <span className="text-[10px] text-slate-400 font-normal">
-                    Amount will be committed as final settlement payout for claim {selectedClaim.claimNumber}.
-                  </span>
-                </div>
-
-                {/* Policyholder Bank Info preview */}
-                {selectedClaim.policyHolderBankDetails && (
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-xs space-y-1">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Policy Holder Bank Settlement Profile</span>
-                    <div className="grid grid-cols-2 gap-2 text-slate-700 font-medium pt-1">
-                      <div>Bank: <strong className="text-slate-900">{selectedClaim.policyHolderBankDetails.bankName || "N/A"}</strong></div>
-                      <div>Branch: <strong className="text-slate-900">{selectedClaim.policyHolderBankDetails.branchName || "N/A"}</strong></div>
-                      <div>Account: <strong className="text-slate-900">{selectedClaim.policyHolderBankDetails.accountNumber || "N/A"}</strong></div>
-                      <div>Holder: <strong className="text-slate-900">{selectedClaim.policyHolderBankDetails.accountHolderName || "N/A"}</strong></div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Approval Remarks */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-slate-800">Approval Remarks / Notes (Optional)</label>
-                  <textarea
-                    rows={2}
+                    type="text"
                     value={approvalNote}
                     onChange={(e) => setApprovalNote(e.target.value)}
-                    placeholder="e.g. Approved based on verified accident photos and garage estimate within acceptable range."
-                    className="w-full p-3 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                    placeholder="e.g. Approved by branch office staff"
+                    className="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-xs font-medium text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
               </div>
 
-              <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+              <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="px-5 py-2.5 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer bg-white"
+                  className="px-4 py-2 rounded-full border border-slate-300 text-slate-700 text-xs font-semibold hover:bg-slate-100 transition-all cursor-pointer bg-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="button"
                   onClick={() => handleClaimDecision("Approve")}
-                  disabled={updatingClaim || !approvingAmount}
-                  className="px-6 py-2.5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
+                  disabled={updatingClaim}
+                  className="px-5 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all active:scale-95 disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
                 >
-                  {updatingClaim ? "Approving Claim..." : "Confirm & Approve Claim"}
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                  <span>{updatingClaim ? "Approving..." : "Confirm Approval"}</span>
                 </button>
               </div>
             </div>
@@ -3445,9 +3838,20 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Modal Header */}
               <div className="px-8 pt-6 pb-2 select-none bg-white flex justify-between items-center">
-                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
-                  {selectedClaim.claimNumber}
-                </h2>
+                <div className="flex items-center gap-3">
+                  <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
+                    {selectedClaim.claimNumber}
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                    title="Download Official Claim PDF Report"
+                  >
+                    <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
+                    <span>Download PDF</span>
+                  </button>
+                </div>
                 <button
                   type="button"
                   onClick={() => {
@@ -3503,7 +3907,15 @@ function OfficeStaffClaimsPageContent() {
                         Submitted At : <span className="font-medium text-slate-600">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
                       </p>
                       <p>
-                        Est. Amount : <span className="font-medium text-slate-600">{selectedClaim.amount ? `LKR ${selectedClaim.amount.toLocaleString()}` : "Not Assessed"}</span>
+                        Branch Approved Amount : <span className={
+                          (selectedClaim.status === "Approved" || selectedClaim.status === "Settled" || selectedClaim.status === "Completed") && (selectedClaim.approvedAmount || selectedClaim.amount)
+                            ? "font-bold text-emerald-700"
+                            : "font-semibold text-amber-600 text-xs bg-amber-50 px-2 py-0.5 rounded border border-amber-200"
+                        }>
+                          {(selectedClaim.status === "Approved" || selectedClaim.status === "Settled" || selectedClaim.status === "Completed") && (selectedClaim.approvedAmount || selectedClaim.amount)
+                            ? `LKR ${(selectedClaim.approvedAmount || selectedClaim.amount)!.toLocaleString()}`
+                            : "Pending Branch Approval"}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -3518,13 +3930,27 @@ function OfficeStaffClaimsPageContent() {
                         Type : <span className="font-medium text-slate-600">{selectedClaim.damageType}</span>
                       </div>
                       <div>
-                        Status : <span className={selectedClaim.priority === "Urgent" || selectedClaim.status === "Rejected" ? "text-red-500 font-semibold" : "font-medium text-slate-600"}>{selectedClaim.status}</span>
+                        Status : <span className={
+                          selectedClaim.status === "Settled" || selectedClaim.status === "Completed" || (selectedClaim.status === "Approved" && selectedClaim.paymentReceipt)
+                            ? "text-emerald-600 font-bold"
+                            : selectedClaim.priority === "Urgent" || selectedClaim.status === "Rejected"
+                              ? "text-red-500 font-semibold"
+                              : selectedClaim.status === "Approved"
+                                ? "text-blue-600 font-semibold"
+                                : selectedClaim.status === "Review"
+                                  ? "text-purple-600 font-semibold"
+                                  : "font-medium text-slate-600"
+                        }>
+                          {selectedClaim.status === "Settled" || selectedClaim.status === "Completed" || (selectedClaim.status === "Approved" && selectedClaim.paymentReceipt)
+                            ? "Completed"
+                            : selectedClaim.status}
+                        </span>
                       </div>
                     </div>
 
                     {/* Cyan Buttons Stack */}
                     <div className="pt-2 flex flex-col gap-3">
-                      {(selectedClaim.inspectionSubmitted || selectedClaim.inspectionReport || selectedClaim.currentStep >= 3 || selectedClaim.aiAnalysis) && (
+                      {Boolean(selectedClaim.inspectionSubmitted || (selectedClaim.inspectionReport && selectedClaim.inspectionReport.trim().length > 0)) && (
                         <button
                           type="button"
                           onClick={() => {
@@ -3839,25 +4265,29 @@ function OfficeStaffClaimsPageContent() {
                     {getStepperSteps(selectedClaim).map((stepObj, idx) => {
                       const stepNum = idx + 1;
                       
-                      // Calculate step status
+                      // Calculate step status based on REAL task completion:
+                      const allSteps = getStepperSteps(selectedClaim);
+                      const isCompleted = stepObj.completed;
+                      
+                      // Active step is the FIRST step that has not yet been completed
+                      const activeStepIndex = allSteps.findIndex(s => !s.completed);
+                      const isActive = !isCompleted && (activeStepIndex === -1 ? false : activeStepIndex === idx);
+
                       let stepStatus: "completed" | "active" | "pending" = "pending";
                       if (selectedClaim.status === "Rejected") {
-                        if (stepNum <= 5) {
-                          stepStatus = "completed";
-                        } else {
-                          stepStatus = "pending";
-                        }
-                      } else {
-                        const isPaid = (selectedClaim.status === "Approved" || selectedClaim.currentStep >= 6) && !!selectedClaim.paymentReceipt;
-                        if (isPaid) {
-                          stepStatus = "completed";
-                        } else if (stepNum < selectedClaim.currentStep) {
-                          stepStatus = "completed";
-                        } else if (stepNum === selectedClaim.currentStep) {
+                        if (stepNum === 5) {
                           stepStatus = "active";
+                        } else if (isCompleted) {
+                          stepStatus = "completed";
                         } else {
                           stepStatus = "pending";
                         }
+                      } else if (isCompleted) {
+                        stepStatus = "completed";
+                      } else if (isActive) {
+                        stepStatus = "active";
+                      } else {
+                        stepStatus = "pending";
                       }
 
                       let circleStyle = "";
@@ -3936,30 +4366,35 @@ function OfficeStaffClaimsPageContent() {
                     Add Note
                   </button>
 
-                  {/* Decision Action Buttons: Approve & Reject */}
-                  {selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setApprovingAmount(String(selectedClaim.garageEstimateComparison?.garageEstimatedTotal || selectedClaim.aiAnalysis?.totalEstimatedCost || selectedClaim.amount || ""));
-                          setActiveSubModal("decision_approve");
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                        Approve Claim
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveSubModal("decision_reject")}
-                        className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
-                      >
-                        <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
-                        Reject Claim
-                      </button>
-                    </>
-                  )}
+                  {/* First status only: allow early rejection before agent assignment/inspection. Final decision approval/rejection is handled inside Inspection Report & Tracking. */}
+                  {(() => {
+                    const hasAgent = Boolean(
+                      selectedClaim.assignedAgent &&
+                      selectedClaim.assignedAgent.trim() !== "" &&
+                      selectedClaim.assignedAgent.toLowerCase() !== "unassigned"
+                    );
+
+                    // Only show early Reject button in the first status (Submitted / Pending / unassigned)
+                    const isFirstStatus = (selectedClaim.currentStep === 1 || selectedClaim.status === "Pending" || !hasAgent) &&
+                      selectedClaim.status !== "Approved" &&
+                      selectedClaim.status !== "Rejected" &&
+                      selectedClaim.status !== "Cancelled";
+
+                    if (isFirstStatus) {
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => setActiveSubModal("decision_reject")}
+                          className="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-6 py-3 rounded-full transition-all border-none cursor-pointer shadow-sm active:scale-95 flex items-center gap-1.5"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 text-white" strokeWidth={2.5} />
+                          Reject Claim
+                        </button>
+                      );
+                    }
+
+                    return null;
+                  })()}
                 </div>
 
                 {/* Internal Notes — Bottom Section */}
@@ -4297,7 +4732,7 @@ function OfficeStaffClaimsPageContent() {
             <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-4 mb-2 text-xs font-semibold text-slate-600 space-y-2 select-none">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
                 <div>
-                  <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block">Vehicle Plate</span>
+                  <span className="text-[9px] text-slate-400 font-medium uppercase tracking-wider block">Vehicle Number</span>
                   <span className="text-slate-800 font-semibold">{formatPlate(showAssignModal.vehiclePlate)}</span>
                 </div>
                 <div>
@@ -4519,6 +4954,22 @@ function OfficeStaffClaimsPageContent() {
         </div>
       )}
 
+      {/* Floating Action Chat Button */}
+      <button
+        type="button"
+        onClick={() => {
+          if (claims.length > 0 && !selectedClaim) {
+            setSelectedClaim(claims[0]);
+          }
+          const chatEl = document.querySelector("#claim-chat-section");
+          if (chatEl) chatEl.scrollIntoView({ behavior: "smooth" });
+        }}
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        aria-label="Chat support"
+      >
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+      </button>
+
     </div>
   );
 }
@@ -4555,16 +5006,7 @@ function formatMessageTime(dateStr: string) {
 
 export default function OfficeStaffClaimsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Loading claims...
-      {/* Floating Chat Bubble Button */}
-      <button
-        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
-        aria-label="Chat support"
-      >
-        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
-      </button>
-
-    </div>}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Loading claims...</div>}>
       <OfficeStaffClaimsPageContent />
     </Suspense>
   );

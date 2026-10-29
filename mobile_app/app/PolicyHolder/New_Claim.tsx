@@ -283,6 +283,15 @@ export default function FileNewClaim() {
 
   // Check duplicate photo against backend
   const checkDuplicateMobilePhoto = async (photoKey: string, base64Data: string, typeLabel: string) => {
+    // Skip checking driving license photos entirely
+    if (
+      photoKey.toLowerCase().includes("license") ||
+      typeLabel.toLowerCase().includes("license") ||
+      typeLabel.toLowerCase().includes("driving")
+    ) {
+      return;
+    }
+
     try {
       setIsCheckingDuplicates(true);
       const res = await fetch(`${API_BASE_URL}/api/policy-holder/check-duplicate-photos`, {
@@ -355,7 +364,9 @@ export default function FileNewClaim() {
 
         const photoKey = `other_${index}_${photoField}_${nextIndex}`;
         const typeLabel = photoField === "licensePhotos" ? `Third-Party #${index + 1} License` : `Third-Party #${index + 1} Damage`;
-        await checkDuplicateMobilePhoto(photoKey, base64Data, typeLabel);
+        if (photoField !== "licensePhotos") {
+          await checkDuplicateMobilePhoto(photoKey, base64Data, typeLabel);
+        }
       } catch (err) {
         Alert.alert("Error", "Failed to compress selected image.");
       }
@@ -803,7 +814,10 @@ export default function FileNewClaim() {
           uri: asset.uri,
           base64: base64Data
         });
-        await checkDuplicateMobilePhoto(photoKey, base64Data, typeLabel);
+        const isLicense = photoKey.toLowerCase().includes("license") || typeLabel.toLowerCase().includes("license");
+        if (!isLicense) {
+          await checkDuplicateMobilePhoto(photoKey, base64Data, typeLabel);
+        }
       } catch (err) {
         Alert.alert("Error", "Failed to compress selected image.");
       }
@@ -923,8 +937,8 @@ export default function FileNewClaim() {
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
-    // Check duplicate photos
-    const duplicateKeys = Object.keys(duplicatesMap);
+    // Check duplicate photos (ignoring licenses)
+    const duplicateKeys = Object.keys(duplicatesMap).filter((k) => !k.toLowerCase().includes("license"));
     if (duplicateKeys.length > 0) {
       const firstDup = duplicatesMap[duplicateKeys[0]];
       Alert.alert(
@@ -1024,7 +1038,8 @@ export default function FileNewClaim() {
     photo: PhotoState | null,
     stateSetter: React.Dispatch<React.SetStateAction<PhotoState | null>>
   ) => {
-    const dup = duplicatesMap[photoKey];
+    const isLicenseBox = photoKey.toLowerCase().includes("license") || label.toLowerCase().includes("license");
+    const dup = !isLicenseBox ? duplicatesMap[photoKey] : undefined;
 
     return (
       <View style={styles.uploadBoxContainer}>
@@ -1387,16 +1402,9 @@ export default function FileNewClaim() {
                   <Text style={styles.fieldLabel}>Driver's License Photos</Text>
                   <View style={styles.multiplePhotosRow}>
                     {(vehicle.licensePhotos || []).map((photo: any, pIdx: number) => {
-                      const pKey = `other_${index}_licensePhotos_${pIdx}`;
-                      const dup = duplicatesMap[pKey];
                       return (
-                        <View key={pIdx} style={[styles.multiplePhotoWrapper, dup ? styles.multiplePhotoWrapperDuplicate : null]}>
+                        <View key={pIdx} style={styles.multiplePhotoWrapper}>
                           <Image source={{ uri: photo.uri }} style={styles.multiplePhotoThumb} />
-                          {dup && (
-                            <View style={styles.miniDupBadge}>
-                              <Ionicons name="warning" size={10} color="#ffffff" />
-                            </View>
-                          )}
                           <TouchableOpacity
                             style={styles.deletePhotoThumbBtn}
                             onPress={() => removeOtherVehiclePhoto(index, "licensePhotos", pIdx)}

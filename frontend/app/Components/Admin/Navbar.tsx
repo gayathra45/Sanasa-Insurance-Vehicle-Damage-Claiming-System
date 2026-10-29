@@ -17,12 +17,17 @@ import {
   ArrowRight01Icon,
   Cancel01Icon,
   SecurityCheckIcon,
-  Notification01Icon
+  Notification01Icon,
+  RefreshIcon,
+  BubbleChatIcon,
+  DatabaseIcon
 } from "@hugeicons/core-free-icons";
+import { useChatNotification } from "@/app/context/ChatNotificationContext";
 
 export default function AdminNavbar() {
   const pathname = usePathname();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const { chatUnreadCount, notificationUnreadCount, openChat } = useChatNotification();
 
   useEffect(() => {
     const handleOpen = () => setIsMobileOpen(true);
@@ -30,14 +35,22 @@ export default function AdminNavbar() {
     return () => window.removeEventListener("open-admin-mobile-menu", handleOpen);
   }, []);
 
-  const menuItems = [
+  interface MenuItem {
+    name: string;
+    href: string;
+    isChatAction?: boolean;
+  }
+
+  const menuItems: MenuItem[] = [
     { name: "Dashboard", href: "/Admin/Dashboard" },
     { name: "Staff", href: "/Admin/Staff" },
     { name: "Policy Holders", href: "/Admin/PolicyHolders" },
+    { name: "Renewals", href: "/Admin/Renewals" },
     { name: "Admins", href: "/Admin/Admins" },
     { name: "Claims", href: "/Admin/Claims" },
-    { name: "Analytics & Reports", href: "/Admin/Analytics" },
+    { name: "Reports", href: "/Admin/Analytics" },
     { name: "Agents", href: "/Admin/Agents" },
+    { name: "Backups", href: "/Admin/Backups" },
     { name: "Notifications", href: "/Admin/Notifications" },
     { name: "Contact", href: "/Admin/Contact" },
   ];
@@ -52,6 +65,9 @@ export default function AdminNavbar() {
         return <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "policy holders":
         return <HugeiconsIcon icon={Folder01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "renewals":
+      case "policy renewals":
+        return <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "agents":
         return <HugeiconsIcon icon={Briefcase01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "admins":
@@ -61,8 +77,13 @@ export default function AdminNavbar() {
       case "reports":
       case "analytics & reports":
         return <HugeiconsIcon icon={Analytics01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "claim chat":
+        return <HugeiconsIcon icon={BubbleChatIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "notifications":
         return <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "backups":
+      case "backup":
+        return <HugeiconsIcon icon={DatabaseIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "contact":
         return <HugeiconsIcon icon={Call02Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       default:
@@ -90,9 +111,47 @@ export default function AdminNavbar() {
         {/* Menu Navigation Links */}
         <nav className="flex-1 mt-6 flex flex-col overflow-y-auto">
           {menuItems.map((item) => {
-            // Check if active (matches exact path or prefix path)
-            const isActive = pathname === item.href || (item.href !== "/Admin/Dashboard" && pathname?.startsWith(item.href));
-            const hasChevron = ["policy holders", "agents", "staff", "admins", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+            const isChat = item.isChatAction;
+            const isActive = !isChat && (pathname === item.href || (item.href !== "/Admin/Dashboard" && pathname?.startsWith(item.href)));
+            const hasChevron = ["policy holders", "renewals", "policy renewals", "agents", "staff", "admins", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+
+            const badgeCount =
+              item.name === "Claim Chat"
+                ? chatUnreadCount
+                : item.name === "Notifications"
+                ? notificationUnreadCount
+                : 0;
+
+            const content = (
+              <>
+                {getIcon(item.name)}
+                <span>{item.name}</span>
+                {badgeCount > 0 && (
+                  <span className="ml-auto px-2 py-0.5 bg-red-600 text-white text-[11px] font-bold rounded-full border border-white/20 shadow-xs">
+                    {badgeCount > 9 ? "9+" : badgeCount}
+                  </span>
+                )}
+                {hasChevron && badgeCount === 0 && (
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity"
+                    strokeWidth={2.5}
+                  />
+                )}
+              </>
+            );
+
+            if (isChat) {
+              return (
+                <button
+                  key={item.name}
+                  onClick={() => openChat()}
+                  className="mx-4 my-1 px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl group text-slate-100 hover:bg-white/10 hover:text-white cursor-pointer border-none bg-transparent w-[calc(100%-32px)] text-left focus:outline-none"
+                >
+                  {content}
+                </button>
+              );
+            }
 
             return (
               <Link
@@ -104,15 +163,7 @@ export default function AdminNavbar() {
                     : "text-slate-100 hover:bg-white/10 hover:text-white"
                 }`}
               >
-                {getIcon(item.name)}
-                <span>{item.name}</span>
-                {hasChevron && (
-                  <HugeiconsIcon
-                    icon={ArrowRight01Icon}
-                    className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity"
-                    strokeWidth={2.5}
-                  />
-                )}
+                {content}
               </Link>
             );
           })}
@@ -154,8 +205,51 @@ export default function AdminNavbar() {
             {/* Menu Links */}
             <nav className="flex-1 flex flex-col gap-1 overflow-y-auto">
               {menuItems.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/Admin/Dashboard" && pathname?.startsWith(item.href));
+                const isChat = item.isChatAction;
+                const isActive = !isChat && (pathname === item.href || (item.href !== "/Admin/Dashboard" && pathname?.startsWith(item.href)));
                 const hasChevron = ["policy holders", "agents", "staff", "admins", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+
+                const badgeCount =
+                  item.name === "Claim Chat"
+                    ? chatUnreadCount
+                    : item.name === "Notifications"
+                    ? notificationUnreadCount
+                    : 0;
+
+                const content = (
+                  <>
+                    {isActive && <div className="absolute left-1 w-2 h-5 bg-[#00ddff] rounded-full" />}
+                    {getIcon(item.name)}
+                    <span>{item.name}</span>
+                    {badgeCount > 0 && (
+                      <span className="ml-auto px-2 py-0.5 bg-red-600 text-white text-[11px] font-bold rounded-full border border-white/20 shadow-xs">
+                        {badgeCount > 9 ? "9+" : badgeCount}
+                      </span>
+                    )}
+                    {hasChevron && badgeCount === 0 && (
+                      <HugeiconsIcon
+                        icon={ArrowRight01Icon}
+                        className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity"
+                        strokeWidth={2.5}
+                      />
+                    )}
+                  </>
+                );
+
+                if (isChat) {
+                  return (
+                    <button
+                      key={item.name}
+                      onClick={() => {
+                        setIsMobileOpen(false);
+                        openChat();
+                      }}
+                      className="px-4 py-3 text-base font-semibold transition-all duration-150 no-underline flex items-center gap-3 rounded-xl relative text-slate-100 hover:bg-white/10 hover:text-white cursor-pointer border-none bg-transparent w-full text-left focus:outline-none"
+                    >
+                      {content}
+                    </button>
+                  );
+                }
 
                 return (
                   <Link
@@ -168,16 +262,7 @@ export default function AdminNavbar() {
                         : "text-slate-100 hover:bg-white/10 hover:text-white"
                     }`}
                   >
-                    {isActive && <div className="absolute left-1 w-2 h-5 bg-[#00ddff] rounded-full" />}
-                    {getIcon(item.name)}
-                    <span>{item.name}</span>
-                    {hasChevron && (
-                      <HugeiconsIcon
-                        icon={ArrowRight01Icon}
-                        className="w-4 h-4 ml-auto text-slate-100 opacity-60 group-hover:opacity-100 transition-opacity"
-                        strokeWidth={2.5}
-                      />
-                    )}
+                    {content}
                   </Link>
                 );
               })}

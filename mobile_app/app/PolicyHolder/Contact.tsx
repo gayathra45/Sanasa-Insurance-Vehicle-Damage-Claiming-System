@@ -15,6 +15,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
+import AIChatBot, { openMobileSupportChat } from "../Components/AIChatBot";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE_URL } from "../_config";
 
@@ -198,7 +199,7 @@ export default function PolicyHolderContact() {
           {/* Card 3: Live Chat */}
           <TouchableOpacity
             style={styles.channelCard}
-            onPress={handleChatPress}
+            onPress={openMobileSupportChat}
             activeOpacity={0.7}
           >
             <View style={styles.channelLeft}>
@@ -242,10 +243,8 @@ export default function PolicyHolderContact() {
 
       </ScrollView>
 
-      {/* Floating support */}
-      <TouchableOpacity style={styles.floatingSupport} onPress={handleChatPress} activeOpacity={0.8}>
-        <Ionicons name="chatbubble-ellipses" size={26} color="#ffffff" />
-      </TouchableOpacity>
+      {/* Sanasa Vehicle Insurance AI Assistant */}
+      <AIChatBot userRole="policy_holder" bottomOffset={96} />
 
       <PolicyHolderNavbar />
 

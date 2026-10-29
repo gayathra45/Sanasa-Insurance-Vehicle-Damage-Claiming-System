@@ -184,7 +184,7 @@ export default function PolicyHolderHome() {
         `POLICY CERTIFICATE / COVER NOTE\n`,
         `========================================\n`,
         `Policy Number: ${vehicle.policyNumber}\n`,
-        `Vehicle Number Plate: ${formatNumberPlate(vehicle.numberPlate)}\n`,
+        `Vehicle Number: ${formatNumberPlate(vehicle.numberPlate)}\n`,
         `Vehicle Type: ${vehicle.vehicleType}\n`,
         `Make & Model: ${vehicle.company} ${vehicle.model} (${vehicle.year})\n`,
         `Engine Number: ${vehicle.engineNumber}\n`,
@@ -229,10 +229,10 @@ export default function PolicyHolderHome() {
     const getRecipientForDoc = (name: string) => {
       const msg = [...(claim.messages || [])]
         .reverse()
-        .find((m: any) => m.message && m.message.includes(`Requested: ${name}`));
-      if (msg) {
+        .find((m: any) => m.message && (m.message.includes(`Requested: ${name}`) || m.message.includes(name)));
+      if (msg && msg.message) {
         if (msg.message.includes("[Document Request to Agent]")) return "Agent";
-        if (msg.message.includes("[Document Request to User]")) return "User";
+        if (msg.message.includes("[Document Request to User]") || msg.message.includes("[Document Request to Policy Holder]")) return "User";
       }
       return claim.documentRequestTo || "User";
     };
@@ -246,7 +246,8 @@ export default function PolicyHolderHome() {
     }
 
     return (claim.requestedDocuments || []).filter((name: string) => {
-      if (getRecipientForDoc(name) !== "User") return false;
+      const rec = (getRecipientForDoc(name) || "").toLowerCase().trim();
+      if (rec === "agent" || rec === "insurance_agent") return false;
       const normName = name.trim().toLowerCase();
       const alreadyUploaded = uploadedNames.some((u: string) => 
         u === normName ||
@@ -379,18 +380,12 @@ export default function PolicyHolderHome() {
                 }
               }
 
-              // Check for local session submitted claims
-              let localClaims: any[] = [];
-              const lastSubmitted = sessionStorage.getItem("last_submitted_claim");
-              if (lastSubmitted) {
-                const parsed = JSON.parse(lastSubmitted);
-                const exists = dbClaims.some(c => c.claimNumber === parsed.claimNumber);
-                if (!exists) {
-                  localClaims.push(parsed);
-                }
+              // The database is the single source of truth for claims
+              if (typeof window !== "undefined") {
+                sessionStorage.removeItem("last_submitted_claim");
               }
 
-              const allClaims = [...localClaims, ...dbClaims];
+              const allClaims = dbClaims;
 
               // A claim is pending if status is not approved, done, or rejected
               const pendingClaims = allClaims.filter(c => {
@@ -413,7 +408,7 @@ export default function PolicyHolderHome() {
                     id: claim.claimNumber + "-doc",
                     type: "urgent",
                     title: "Documents Requested – Action Required",
-                    description: `Staff has requested a ${claim.requestedDocuments && claim.requestedDocuments.length > 0 ? claim.requestedDocuments.join(' & ') : 'Police Report & Repair Estimate'} for ${claim.claimNumber}.`,
+                    description: `Staff has requested ${getUserRequestedDocs(claim).length > 0 ? getUserRequestedDocs(claim).join(' & ') : (claim.requestedDocuments && claim.requestedDocuments.length > 0 ? claim.requestedDocuments.join(' & ') : 'required documents')} for ${claim.claimNumber}.`,
                     subText: "Please upload within 3 days...",
                     date: claim.createdAt ? formatDateString(claim.createdAt) : "Today",
                     actions: [
@@ -871,7 +866,7 @@ export default function PolicyHolderHome() {
               {/* 2-Column Specs Layout */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-4 text-sm font-normal text-slate-700 mb-8 px-2">
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
-                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Number Plate</span>
+                  <span className="text-slate-500 text-xs font-medium uppercase tracking-wider">Vehicle Number</span>
                   <span className="font-semibold text-slate-800 text-base">{formatNumberPlate(selectedVehicleForModal.numberPlate)}</span>
                 </div>
                 <div className="flex flex-col gap-1 border-b border-slate-100 pb-2">
