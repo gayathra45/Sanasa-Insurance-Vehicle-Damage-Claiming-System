@@ -10,6 +10,7 @@ import {
   StatusBar,
   Platform,
   ImageBackground,
+  Image,
   Modal,
   TextInput,
   Alert,
@@ -21,11 +22,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useNavigation } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import * as ImagePicker from "expo-image-picker";
+import { compressImageMobile } from "../../utils/imageCompressor";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import AIChatBot from "../Components/AIChatBot";
 import { API_BASE_URL } from "../_config";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+function normalizeSriLankanPhone(input: string): string {
+  let cleaned = (input || "").replace(/[^0-9+]/g, "").trim();
+  if (cleaned.startsWith("+94")) cleaned = "0" + cleaned.slice(3);
+  else if (cleaned.startsWith("94") && cleaned.length >= 11) cleaned = "0" + cleaned.slice(2);
+  return cleaned;
+}
 
 interface Vehicle {
   numberPlate: string;
@@ -163,6 +173,227 @@ export default function MyVehicles() {
     setCustomAlert({ title, message, type, onClose });
   };
 
+  // ── THIRD-PARTY DRIVER MANAGEMENT STATES ──
+  const [activeMainTab, setActiveMainTab] = useState<"vehicles" | "third_party">("vehicles");
+  const [thirdPartyRequests, setThirdPartyRequests] = useState<any[]>([]);
+  const [vehicleDriverMap, setVehicleDriverMap] = useState<Record<string, string>>({});
+  const [loadingThirdParty, setLoadingThirdParty] = useState(false);
+  const [resumingPaymentId, setResumingPaymentId] = useState<string | null>(null);
+
+  // Third-party registration modal
+  const [thirdPartyModalOpen, setThirdPartyModalOpen] = useState(false);
+  const [tpFullName, setTpFullName] = useState("");
+  const [tpNicNumber, setTpNicNumber] = useState("");
+  const [tpPhoneNumber, setTpPhoneNumber] = useState("");
+  const [tpResidentialAddress, setTpResidentialAddress] = useState("");
+  const [tpLicensePhoto, setTpLicensePhoto] = useState<string | null>(null);
+  const [tpSelectedPlates, setTpSelectedPlates] = useState<string[]>([]);
+  const [tpSubmitting, setTpSubmitting] = useState(false);
+  const [tpError, setTpError] = useState<string | null>(null);
+
+  // Fetch Third-Party Requests for Policyholder
+  const fetchThirdPartyRequests = useCallback(async (nic: string, silent = false) => {
+    if (!nic) return;
+    if (!silent) setLoadingThirdParty(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/third-party/my-registrations?nic=${encodeURIComponent(nic)}&_=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.registrations)) {
+          setThirdPartyRequests(data.registrations);
+
+          // Build vehiclePlate -> driverName map for approved requests
+          const map: Record<string, string> = {};
+          data.registrations.forEach((req: any) => {
+            if (req.status === "Approved" && req.selectedVehicles) {
+              req.selectedVehicles.forEach((sv: any) => {
+                if (sv.numberPlate) {
+                  map[sv.numberPlate] = req.driverDetails?.fullName || "Authorized Driver";
+                }
+              });
+            }
+          });
+          setVehicleDriverMap(map);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching third-party registrations:", err);
+    } finally {
+      if (!silent) setLoadingThirdParty(false);
+    }
+  }, []);
+
+  const handleOpenThirdPartyForPlate = (plate?: string) => {
+    setTpError(null);
+    setTpFullName("");
+    setTpNicNumber("");
+    setTpPhoneNumber("");
+    setTpResidentialAddress("");
+    setTpLicensePhoto(null);
+    if (plate) {
+      setTpSelectedPlates([plate]);
+    } else if (vehicles.length > 0) {
+      setTpSelectedPlates([vehicles[0].numberPlate]);
+    } else {
+      setTpSelectedPlates([]);
+    }
+    setThirdPartyModalOpen(true);
+  };
+
+  const toggleVehiclePlateSelection = (plate: string) => {
+    setTpSelectedPlates((prev) =>
+      prev.includes(plate) ? prev.filter((p) => p !== plate) : [...prev, plate]
+    );
+  };
+
+  const handlePickLicensePhoto = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Please allow photo library access to upload driver license photo.");
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsEditing: true,
+        quality: 0.7,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const compressed = await compressImageMobile(result.assets[0].uri, 1000, 0.7);
+        setTpLicensePhoto(compressed);
+      }
+    } catch (err) {
+      console.error("Image pick error:", err);
+      Alert.alert("Error", "Failed to select driver license photo.");
+    }
+  };
+
+  const handleSubmitThirdParty = async () => {
+    setTpError(null);
+    if (!tpFullName.trim()) {
+      setTpError("Please enter driver's full name.");
+      return;
+    }
+    if (!tpNicNumber.trim()) {
+      setTpError("Please enter driver's NIC number.");
+      return;
+    }
+    const cleanPhone = normalizeSriLankanPhone(tpPhoneNumber);
+    if (!/^07[01245678]\d{7}$/.test(cleanPhone)) {
+      setTpError("Please enter a valid 10-digit Sri Lankan mobile number (e.g. 0771234567).");
+      return;
+    }
+    if (!tpResidentialAddress.trim()) {
+      setTpError("Please enter residential address.");
+      return;
+    }
+    if (tpSelectedPlates.length === 0) {
+      setTpError("Please select at least one vehicle to cover.");
+      return;
+    }
+
+    try {
+      setTpSubmitting(true);
+      const payload = {
+        policyHolderNic: userNic,
+        driverDetails: {
+          fullName: tpFullName.trim(),
+          nicNumber: tpNicNumber.trim().toUpperCase(),
+          phoneNumber: cleanPhone,
+          residentialAddress: tpResidentialAddress.trim(),
+          drivingLicensePhoto: tpLicensePhoto || undefined,
+        },
+        selectedVehicles: tpSelectedPlates.map((plate) => ({ numberPlate: plate })),
+      };
+
+      const res = await fetch(`${API_BASE_URL}/api/third-party/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setTpError(data.error || "Failed to submit third-party registration.");
+        setTpSubmitting(false);
+        return;
+      }
+
+      setThirdPartyModalOpen(false);
+
+      if (data.checkoutUrl) {
+        await WebBrowser.openBrowserAsync(data.checkoutUrl, {
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+          controlsColor: "#0284c7",
+          toolbarColor: "#0f172a",
+        });
+
+        if (data.sessionId) {
+          try {
+            await fetch(`${API_BASE_URL}/api/third-party/verify-payment`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                sessionId: data.sessionId,
+                requestReference: data.registration?.requestReference,
+              }),
+            });
+          } catch (e) {
+            console.error("Verification error:", e);
+          }
+        }
+      }
+
+      fetchThirdPartyRequests(userNic);
+      setActiveMainTab("third_party");
+      showCustomAlert(
+        "Registration Submitted",
+        "Third-party driver registration submitted successfully for LKR 300! It will be reviewed by branch office staff.",
+        "success"
+      );
+    } catch (err: any) {
+      setTpError(err.message || "Failed to process registration.");
+    } finally {
+      setTpSubmitting(false);
+    }
+  };
+
+  const handleResumeThirdPartyPayment = async (regId: string, ref: string) => {
+    try {
+      setResumingPaymentId(regId);
+      const res = await fetch(`${API_BASE_URL}/api/third-party/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ registrationId: regId, policyHolderNic: userNic }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.checkoutUrl) {
+        Alert.alert("Payment Error", data.error || "Failed to initialize payment session.");
+        return;
+      }
+
+      await WebBrowser.openBrowserAsync(data.checkoutUrl, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.FULL_SCREEN,
+        controlsColor: "#0284c7",
+        toolbarColor: "#0f172a",
+      });
+
+      if (data.sessionId) {
+        await fetch(`${API_BASE_URL}/api/third-party/verify-payment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId: data.sessionId, requestReference: ref }),
+        });
+      }
+
+      fetchThirdPartyRequests(userNic);
+    } catch (err: any) {
+      Alert.alert("Payment Error", err.message || "Failed to process payment.");
+    } finally {
+      setResumingPaymentId(null);
+    }
+  };
+
   // Fetch renewal & installment data for a single vehicle in real time
   const fetchSingleVehicleRenewal = useCallback(async (plate: string) => {
     if (!plate) return;
@@ -249,13 +480,14 @@ export default function MyVehicles() {
           if (user.nic) {
             setUserNic(user.nic);
             fetchVehicles(user.nic, false);
+            fetchThirdPartyRequests(user.nic, false);
           }
         } catch (e) {
           console.error(e);
         }
       }
     })();
-  }, [fetchVehicles]);
+  }, [fetchVehicles, fetchThirdPartyRequests]);
 
   // Real-time polling:
   // 1. Silent poll for vehicles list every 5 seconds when screen is focused
@@ -268,7 +500,8 @@ export default function MyVehicles() {
       if (intervalId) clearInterval(intervalId);
       intervalId = setInterval(() => {
         fetchVehicles(nic, true);
-      }, 5000);
+        fetchThirdPartyRequests(nic, true);
+      }, 6000);
     };
 
     const stopPolling = () => {
@@ -286,6 +519,7 @@ export default function MyVehicles() {
           const nic = user.nic || userNic;
           if (nic) {
             fetchVehicles(nic, true);
+            fetchThirdPartyRequests(nic, true);
             startPolling(nic);
           }
         } catch {}
@@ -314,14 +548,15 @@ export default function MyVehicles() {
       stopPolling();
       if (modalIntervalId) clearInterval(modalIntervalId);
     };
-  }, [navigation, userNic, fetchVehicles, selectedVehicleForModal?.numberPlate, fetchSingleVehicleRenewal]);
+  }, [navigation, userNic, fetchVehicles, fetchThirdPartyRequests, selectedVehicleForModal?.numberPlate, fetchSingleVehicleRenewal]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     if (userNic) {
       fetchVehicles(userNic);
+      fetchThirdPartyRequests(userNic);
     }
-  }, [userNic, fetchVehicles]);
+  }, [userNic, fetchVehicles, fetchThirdPartyRequests]);
 
   // Open Vehicle Details Modal
   const handleOpenVehicleModal = (vehicle: Vehicle) => {
@@ -602,279 +837,558 @@ export default function MyVehicles() {
           }
           contentContainerStyle={styles.scrollContent}
         >
-          {/* Search bar */}
-          <View style={styles.searchContainer}>
-            <Ionicons name="search-outline" size={18} color="#64748b" style={styles.searchIcon} />
-            <TextInput
-              placeholder="Search make, plate, or policy..."
-              placeholderTextColor="#94a3b8"
-              style={styles.searchInput}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery("")}>
-                <Ionicons name="close-circle" size={18} color="#64748b" />
-              </TouchableOpacity>
-            )}
-          </View>
+          {/* Main Tab Switcher: Insured Vehicles vs Third-Party Drivers */}
+          <View style={styles.tabSwitcherRow}>
+            <TouchableOpacity
+              style={[styles.mainTabBtn, activeMainTab === "vehicles" && styles.mainTabBtnActive]}
+              onPress={() => setActiveMainTab("vehicles")}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons
+                name="car-multiple"
+                size={18}
+                color={activeMainTab === "vehicles" ? "#ffffff" : "#64748b"}
+              />
+              <Text style={[styles.mainTabText, activeMainTab === "vehicles" && styles.mainTabTextActive]}>
+                All Vehicles
+              </Text>
+              <View style={[styles.tabCountPill, activeMainTab === "vehicles" && styles.tabCountPillActive]}>
+                <Text style={[styles.tabCountText, activeMainTab === "vehicles" && styles.tabCountTextActive]}>
+                  {vehicles.length}
+                </Text>
+              </View>
+            </TouchableOpacity>
 
-          {/* Categories select tabs */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.categoryScroll}
-            contentContainerStyle={styles.categoryContent}
-          >
-            {categories.map((cat) => {
-              const isActive = activeCategory === cat.id;
-              return (
-                <TouchableOpacity
-                  key={cat.id}
-                  onPress={() => setActiveCategory(cat.id)}
-                  style={[styles.categoryPill, isActive && styles.categoryPillActive]}
-                >
-                  <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>
-                    {cat.label}
+            <TouchableOpacity
+              style={[styles.mainTabBtn, activeMainTab === "third_party" && styles.mainTabBtnActive]}
+              onPress={() => setActiveMainTab("third_party")}
+              activeOpacity={0.8}
+            >
+              <MaterialCommunityIcons
+                name="account-key"
+                size={18}
+                color={activeMainTab === "third_party" ? "#ffffff" : "#64748b"}
+              />
+              <Text style={[styles.mainTabText, activeMainTab === "third_party" && styles.mainTabTextActive]}>
+                Third-Party
+              </Text>
+              {thirdPartyRequests.length > 0 && (
+                <View style={[styles.tabCountPill, activeMainTab === "third_party" && styles.tabCountPillActive]}>
+                  <Text style={[styles.tabCountText, activeMainTab === "third_party" && styles.tabCountTextActive]}>
+                    {thirdPartyRequests.length}
                   </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-
-          {/* Stats Summaries */}
-          <View style={styles.statsRow}>
-            <View style={styles.statCard}>
-              <View style={[styles.statIconBox, { backgroundColor: "#f0f9ff" }]}>
-                <MaterialCommunityIcons name="car-multiple" size={22} color="#0284c7" />
-              </View>
-              <View>
-                <Text style={styles.statNum}>{vehicles.length}</Text>
-                <Text style={styles.statLabel}>Total Insured</Text>
-              </View>
-            </View>
-            <View style={styles.statCard}>
-              <View style={[styles.statIconBox, { backgroundColor: "#f0fdf4" }]}>
-                <MaterialCommunityIcons name="shield-check" size={22} color="#16a34a" />
-              </View>
-              <View>
-                <Text style={styles.statNum}>{vehicles.filter((v) => v.policyNumber).length}</Text>
-                <Text style={styles.statLabel}>Active Policies</Text>
-              </View>
-            </View>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
 
-          {/* Vehicles list */}
-          {filteredVehicles.length === 0 ? (
-            <View style={styles.emptyCard}>
-              <Ionicons name="car-outline" size={48} color="#cbd5e1" />
-              <Text style={styles.emptyText}>No matching vehicles found.</Text>
-            </View>
-          ) : (
-            filteredVehicles.map((v, idx) => {
-              const qInfo = renewalMap[v.numberPlate];
-              const iInfo = installmentMap[v.numberPlate];
-              const isQuoteReady = qInfo?.hasCalculatedQuote && qInfo?.renewalQuote?.status === "Calculated";
-              const isInstallmentDue = iInfo?.hasActivePlan && iInfo?.nextInstallment && !iInfo?.isFullyPaid;
-              const isRenewed = qInfo?.isRenewed || iInfo?.isFullyPaid;
-
-              // Check renewal date reaching (within 45 days)
-              const expDateStr = qInfo?.expiryDate || v.policyExpiryDate;
-              let daysRemaining = qInfo?.daysRemaining;
-              if (daysRemaining == null && expDateStr) {
-                const expTime = new Date(expDateStr).getTime();
-                if (!isNaN(expTime)) {
-                  daysRemaining = Math.ceil((expTime - Date.now()) / (1000 * 60 * 60 * 24));
-                }
-              }
-              const isRenewalReaching = !isRenewed && (qInfo?.isWithin30Days || (daysRemaining !== null && daysRemaining !== undefined && daysRemaining <= 45));
-              const hasAlert = isQuoteReady || isInstallmentDue || isRenewalReaching;
-
-              return (
-                <View
-                  key={idx}
-                  style={[
-                    styles.vehicleCard,
-                    hasAlert && { borderColor: "#fecaca", shadowColor: "#ef4444", shadowOpacity: 0.08 }
-                  ]}
+          {/* ── TAB 1: ALL INSURED VEHICLES ── */}
+          {activeMainTab === "vehicles" && (
+            <>
+              {/* Quick Third-Party Driver Authorization Banner - Unified Design */}
+              <LinearGradient
+                colors={["#102A43", "#163e63", "#312e81"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={[styles.tpHeroBanner, { marginBottom: 16 }]}
+              >
+                <View style={styles.tpHeroBadge}>
+                  <MaterialCommunityIcons name="shield-star" size={13} color="#38bdf8" />
+                  <Text style={styles.tpHeroBadgeText}>Flat Fee: LKR 300 per Registration</Text>
+                </View>
+                <Text style={styles.tpHeroTitle}>Third-Party Driver Authorizations</Text>
+                <Text style={styles.tpHeroDesc}>
+                  Authorize drivers to legally operate your insured vehicles. Covered under your policy with a single fixed fee of LKR 300 for all selected vehicles, reviewed by your nearest branch office.
+                </Text>
+                <TouchableOpacity
+                  style={styles.tpRegisterHeroBtn}
+                  onPress={() => handleOpenThirdPartyForPlate()}
+                  activeOpacity={0.85}
                 >
-                  {/* Header Row */}
-                  <View style={styles.cardHeader}>
-                    <View style={{ position: "relative" }}>
-                      <View
-                        style={[
-                          styles.iconBox,
-                          {
-                            backgroundColor: getVehicleTheme(v.vehicleType).bg,
-                            borderColor: getVehicleTheme(v.vehicleType).border,
-                          },
-                        ]}
-                      >
-                        <MaterialCommunityIcons
-                          name={getVehicleTheme(v.vehicleType).icon as any}
-                          size={28}
-                          color={getVehicleTheme(v.vehicleType).color}
-                        />
-                      </View>
-                      {/* Highlight Red Dot Icon for renewal reaching or new update */}
-                      {hasAlert && <View style={styles.redDotHighlight} />}
-                    </View>
+                  <Ionicons name="person-add" size={15} color="#0f172a" />
+                  <Text style={styles.tpRegisterHeroBtnText}>+ Register New Driver (LKR 300)</Text>
+                </TouchableOpacity>
+              </LinearGradient>
 
-                    <View style={{ flex: 1, marginLeft: 12 }}>
-                      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        <Text style={styles.plateText}>{formatPlate(v.numberPlate)}</Text>
-                        {hasAlert && <View style={styles.plateRedDot} />}
-                      </View>
-                      <Text style={styles.companyModelText}>
-                        {[v.company, v.model].filter(Boolean).join(" ")} ({v.year})
+              {/* Search bar */}
+              <View style={styles.searchContainer}>
+                <Ionicons name="search-outline" size={18} color="#64748b" style={styles.searchIcon} />
+                <TextInput
+                  placeholder="Search make, plate, or policy..."
+                  placeholderTextColor="#94a3b8"
+                  style={styles.searchInput}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setSearchQuery("")}>
+                    <Ionicons name="close-circle" size={18} color="#64748b" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Categories select tabs */}
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.categoryScroll}
+                contentContainerStyle={styles.categoryContent}
+              >
+                {categories.map((cat) => {
+                  const isActive = activeCategory === cat.id;
+                  return (
+                    <TouchableOpacity
+                      key={cat.id}
+                      onPress={() => setActiveCategory(cat.id)}
+                      style={[styles.categoryPill, isActive && styles.categoryPillActive]}
+                    >
+                      <Text style={[styles.categoryText, isActive && styles.categoryTextActive]}>
+                        {cat.label}
                       </Text>
-                    </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
 
-                    {/* Real-time Status Badge */}
-                    {isQuoteReady ? (
-                      <View style={[styles.statusBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
-                        <View style={[styles.dot, { backgroundColor: "#ef4444" }]} />
-                        <Text style={[styles.badgeLabel, { color: "#dc2626" }]}>Quote Ready</Text>
-                      </View>
-                    ) : isInstallmentDue ? (
-                      <View style={[styles.statusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
-                        <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
-                        <Text style={[styles.badgeLabel, { color: "#b45309" }]}>Due Installment</Text>
-                      </View>
-                    ) : isRenewalReaching ? (
-                      <View style={[styles.statusBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
-                        <View style={[styles.dot, { backgroundColor: "#ef4444" }]} />
-                        <Text style={[styles.badgeLabel, { color: "#dc2626" }]}>
-                          {daysRemaining !== null && daysRemaining !== undefined ? `Expires ${daysRemaining}d` : "Renewal Due"}
-                        </Text>
-                      </View>
-                    ) : isRenewed ? (
-                      <View style={[styles.statusBadge, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
-                        <View style={[styles.dot, { backgroundColor: "#22c55e" }]} />
-                        <Text style={[styles.badgeLabel, { color: "#16a34a" }]}>Renewed</Text>
-                      </View>
-                    ) : (
-                      <View style={styles.statusBadge}>
-                        <View style={styles.dot} />
-                        <Text style={styles.badgeLabel}>Active</Text>
-                      </View>
-                    )}
+              {/* Stats Summaries */}
+              <View style={styles.statsRow}>
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconBox, { backgroundColor: "#f0f9ff" }]}>
+                    <MaterialCommunityIcons name="car-multiple" size={22} color="#0284c7" />
                   </View>
-
-                  {/* Real-time Renewal Alert Banner (If Quote Ready or Installment Due) */}
-                  {isQuoteReady && qInfo.renewalQuote && (
-                    <View style={styles.quoteReadyBanner}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.quoteReadyTitle}>License Renewal Quote Calculated</Text>
-                        <Text style={styles.quoteReadyAmount}>
-                          Total Fee: LKR {qInfo.renewalQuote.calculation?.totalRenewalAmount?.toLocaleString()}
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.quoteReadyBtn}
-                        onPress={() => handleOpenRenewalWizard(v)}
-                        activeOpacity={0.8}
-                      >
-                        <MaterialCommunityIcons name="refresh" size={15} color="#ffffff" />
-                        <Text style={styles.quoteReadyBtnText}>Renew Now</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                  {isInstallmentDue && iInfo.nextInstallment && (
-                    <View style={styles.installmentDueBanner}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.installmentDueTitle}>
-                          {iInfo.nextInstallment.label || `Installment #${iInfo.nextInstallment.installmentNumber}`} Due
-                        </Text>
-                        <Text style={styles.installmentDueAmount}>
-                          Amount: LKR {iInfo.nextInstallment.amount?.toLocaleString()} (Due:{" "}
-                          {new Date(iInfo.nextInstallment.dueDate).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          })}
-                          )
-                        </Text>
-                      </View>
-                      <TouchableOpacity
-                        style={styles.installmentDueBtn}
-                        onPress={() => handleInitiateStripePayment(iInfo.renewal._id, iInfo.nextInstallment.installmentNumber)}
-                        activeOpacity={0.8}
-                      >
-                        <MaterialCommunityIcons name="credit-card-outline" size={14} color="#ffffff" />
-                        <Text style={styles.installmentDueBtnText}>Pay Due</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
-
-                  <View style={styles.cardDivider} />
-
-                  {/* Technical specs list */}
-                  <View style={styles.specsList}>
-                    <View style={styles.specItem}>
-                      <Text style={styles.specLabel}>Policy Number</Text>
-                      <Text style={styles.specVal}>{v.policyNumber || "SGI-88942-019"}</Text>
-                    </View>
-                    <View style={styles.specItem}>
-                      <Text style={styles.specLabel}>Vehicle Type</Text>
-                      <Text style={styles.specVal}>{v.vehicleType || "Car"}</Text>
-                    </View>
-                    <View style={styles.specItem}>
-                      <Text style={styles.specLabel}>Engine Number</Text>
-                      <Text style={styles.specVal}>{v.engineNumber || "1NZ-FE-778122"}</Text>
-                    </View>
-                    <View style={styles.specItemNoBorder}>
-                      <Text style={styles.specLabel}>Chassis Number</Text>
-                      <Text style={styles.specVal}>{v.chassisNumber || "NZE141-8890204"}</Text>
-                    </View>
-                  </View>
-
-                  {/* Quick actions row */}
-                  <View style={styles.cardActions}>
-                    <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: "#e0f2fe" }]}
-                      onPress={() => handleOpenVehicleModal(v)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="eye-outline" size={15} color="#0284c7" />
-                      <Text style={[styles.actionBtnText, { color: "#0284c7" }]}>View & Renew</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: "#f0fdf4" }]}
-                      onPress={() => handleOpenCoverNote(v)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="document-text-outline" size={15} color="#16a34a" />
-                      <Text style={[styles.actionBtnText, { color: "#16a34a" }]}>Cover Note</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: "#fee2e2" }]}
-                      onPress={() => handleFileClaim(v)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="alert-circle-outline" size={15} color="#dc2626" />
-                      <Text style={[styles.actionBtnText, { color: "#dc2626" }]}>File Claim</Text>
-                    </TouchableOpacity>
+                  <View>
+                    <Text style={styles.statNum}>{vehicles.length}</Text>
+                    <Text style={styles.statLabel}>Total Insured</Text>
                   </View>
                 </View>
-              );
-            })
+                <View style={styles.statCard}>
+                  <View style={[styles.statIconBox, { backgroundColor: "#f0fdf4" }]}>
+                    <MaterialCommunityIcons name="shield-check" size={22} color="#16a34a" />
+                  </View>
+                  <View>
+                    <Text style={styles.statNum}>{vehicles.filter((v) => v.policyNumber).length}</Text>
+                    <Text style={styles.statLabel}>Active Policies</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Vehicles list */}
+              {filteredVehicles.length === 0 ? (
+                <View style={styles.emptyCard}>
+                  <Ionicons name="car-outline" size={48} color="#cbd5e1" />
+                  <Text style={styles.emptyText}>No matching vehicles found.</Text>
+                </View>
+              ) : (
+                filteredVehicles.map((v, idx) => {
+                  const qInfo = renewalMap[v.numberPlate];
+                  const iInfo = installmentMap[v.numberPlate];
+                  const isQuoteReady = qInfo?.hasCalculatedQuote && qInfo?.renewalQuote?.status === "Calculated";
+                  const isInstallmentDue = iInfo?.hasActivePlan && iInfo?.nextInstallment && !iInfo?.isFullyPaid;
+                  const isRenewed = qInfo?.isRenewed || iInfo?.isFullyPaid;
+
+                  // Check renewal date reaching (only if >= 0 and within 30 days)
+                  const expDateStr = qInfo?.expiryDate || v.policyExpiryDate;
+                  let daysRemaining = qInfo?.daysRemaining;
+                  if (daysRemaining == null && expDateStr) {
+                    const expTime = new Date(expDateStr).getTime();
+                    if (!isNaN(expTime)) {
+                      daysRemaining = Math.ceil((expTime - Date.now()) / (1000 * 60 * 60 * 24));
+                    }
+                  }
+                  const isRenewalReaching = !isRenewed && (
+                    (daysRemaining !== null && daysRemaining !== undefined && daysRemaining >= 0 && daysRemaining <= 30) ||
+                    (qInfo?.isWithin30Days && (daysRemaining === null || daysRemaining >= 0))
+                  );
+                  // Fix: Only show actionable alerts when a quote is ready or installment is due
+                  const hasActionableAlert = isQuoteReady || isInstallmentDue;
+                  const hasAlert = hasActionableAlert;
+                  const assignedDriver = vehicleDriverMap[v.numberPlate];
+
+                  return (
+                    <View
+                      key={idx}
+                      style={[
+                        styles.vehicleCard,
+                        hasAlert && { borderColor: "#fecaca", shadowColor: "#ef4444", shadowOpacity: 0.08 }
+                      ]}
+                    >
+                      {/* Top Header Row with Plate and Status */}
+                      <View style={styles.cardHeader}>
+                        {/* Sri Lankan Monospace Plate Badge */}
+                        <View style={styles.modernPlateBadge}>
+                          <View style={styles.plateStripe}>
+                            <Text style={styles.plateStripeText}>SL</Text>
+                          </View>
+                          <Text style={styles.modernPlateText}>{formatPlate(v.numberPlate)}</Text>
+                        </View>
+
+                        {/* Real-time Status Badge */}
+                        {isQuoteReady ? (
+                          <View style={[styles.statusBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+                            <View style={[styles.dot, { backgroundColor: "#ef4444" }]} />
+                            <Text style={[styles.badgeLabel, { color: "#dc2626" }]}>Quote Ready</Text>
+                          </View>
+                        ) : isInstallmentDue ? (
+                          <View style={[styles.statusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
+                            <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
+                            <Text style={[styles.badgeLabel, { color: "#b45309" }]}>Due Installment</Text>
+                          </View>
+                        ) : isRenewalReaching ? (
+                          <View style={[styles.statusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
+                            <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
+                            <Text style={[styles.badgeLabel, { color: "#b45309" }]}>
+                              {daysRemaining !== null && daysRemaining !== undefined ? `Expires ${daysRemaining}d` : "Renewal Due"}
+                            </Text>
+                          </View>
+                        ) : isRenewed ? (
+                          <View style={[styles.statusBadge, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
+                            <View style={[styles.dot, { backgroundColor: "#22c55e" }]} />
+                            <Text style={[styles.badgeLabel, { color: "#16a34a" }]}>Renewed</Text>
+                          </View>
+                        ) : (
+                          <View style={styles.statusBadge}>
+                            <View style={styles.dot} />
+                            <Text style={styles.badgeLabel}>Active</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {/* Vehicle Identity Subtitle Row */}
+                      <View style={styles.vehicleIdentityRow}>
+                        <View
+                          style={[
+                            styles.smallTypeBox,
+                            {
+                              backgroundColor: getVehicleTheme(v.vehicleType).bg,
+                              borderColor: getVehicleTheme(v.vehicleType).border,
+                            },
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name={getVehicleTheme(v.vehicleType).icon as any}
+                            size={18}
+                            color={getVehicleTheme(v.vehicleType).color}
+                          />
+                          <Text style={[styles.smallTypeBoxText, { color: getVehicleTheme(v.vehicleType).color }]}>
+                            {v.vehicleType || "Vehicle"}
+                          </Text>
+                        </View>
+                        <Text style={styles.companyModelText}>
+                          {[v.company, v.model].filter(Boolean).join(" ")} ({v.year})
+                        </Text>
+                      </View>
+
+                      {/* Third-Party Driver Assignment Indicator */}
+                      <View style={styles.driverIndicatorRow}>
+                        {assignedDriver ? (
+                          <View style={styles.assignedDriverBadge}>
+                            <MaterialCommunityIcons name="account-check" size={13} color="#059669" />
+                            <Text style={styles.assignedDriverText} numberOfLines={1}>
+                              Authorized Driver: <Text style={{ fontWeight: "700" }}>{assignedDriver}</Text>
+                            </Text>
+                          </View>
+                        ) : (
+                          <View style={styles.unassignedDriverBadge}>
+                            <MaterialCommunityIcons name="account-outline" size={13} color="#94a3b8" />
+                            <Text style={styles.unassignedDriverText}>Self-Driven (Policyholder Only)</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {/* Real-time Renewal Alert Banner (If Quote Ready) */}
+                      {isQuoteReady && qInfo.renewalQuote && (
+                        <View style={styles.quoteReadyBanner}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.quoteReadyTitle}>License Renewal Quote Calculated</Text>
+                            <Text style={styles.quoteReadyAmount}>
+                              Total Fee: LKR {qInfo.renewalQuote.calculation?.totalRenewalAmount?.toLocaleString()}
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.quoteReadyBtn}
+                            onPress={() => handleOpenRenewalWizard(v)}
+                            activeOpacity={0.8}
+                          >
+                            <MaterialCommunityIcons name="refresh" size={15} color="#ffffff" />
+                            <Text style={styles.quoteReadyBtnText}>Renew Now</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+
+                      {/* Real-time Installment Alert Banner (If Installment Due) */}
+                      {isInstallmentDue && iInfo.nextInstallment && (
+                        <View style={styles.installmentDueBanner}>
+                          <View style={{ flex: 1 }}>
+                            <Text style={styles.installmentDueTitle}>
+                              {iInfo.nextInstallment.label || `Installment #${iInfo.nextInstallment.installmentNumber}`} Due
+                            </Text>
+                            <Text style={styles.installmentDueAmount}>
+                              Amount: LKR {iInfo.nextInstallment.amount?.toLocaleString()} (Due:{" "}
+                              {new Date(iInfo.nextInstallment.dueDate).toLocaleDateString("en-US", {
+                                month: "short",
+                                day: "numeric",
+                              })}
+                              )
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.installmentDueBtn}
+                            onPress={() => handleInitiateStripePayment(iInfo.renewal._id, iInfo.nextInstallment.installmentNumber)}
+                            activeOpacity={0.8}
+                          >
+                            <MaterialCommunityIcons name="credit-card-outline" size={14} color="#ffffff" />
+                            <Text style={styles.installmentDueBtnText}>Pay Due</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+
+                      <View style={styles.cardDivider} />
+
+                      {/* Technical specs list */}
+                      <View style={styles.specsList}>
+                        <View style={styles.specItem}>
+                          <Text style={styles.specLabel}>Policy Number</Text>
+                          <Text style={styles.specVal}>{v.policyNumber || "SGI-88942-019"}</Text>
+                        </View>
+                        <View style={styles.specItem}>
+                          <Text style={styles.specLabel}>Engine Number</Text>
+                          <Text style={styles.specVal}>{v.engineNumber || "1NZ-FE-778122"}</Text>
+                        </View>
+                        <View style={styles.specItemNoBorder}>
+                          <Text style={styles.specLabel}>Chassis Number</Text>
+                          <Text style={styles.specVal}>{v.chassisNumber || "NZE141-8890204"}</Text>
+                        </View>
+                      </View>
+
+                      {/* Quick actions row */}
+                      <View style={styles.cardActions}>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: "#e0f2fe" }]}
+                          onPress={() => handleOpenVehicleModal(v)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="eye-outline" size={14} color="#0284c7" />
+                          <Text style={[styles.actionBtnText, { color: "#0284c7" }]}>Details</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: "#eef2ff" }]}
+                          onPress={() => handleOpenThirdPartyForPlate(v.numberPlate)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="person-add-outline" size={14} color="#4f46e5" />
+                          <Text style={[styles.actionBtnText, { color: "#4f46e5" }]}>Assign Driver</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: "#f0fdf4" }]}
+                          onPress={() => handleOpenCoverNote(v)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="document-text-outline" size={14} color="#16a34a" />
+                          <Text style={[styles.actionBtnText, { color: "#16a34a" }]}>Cover Note</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: "#fee2e2" }]}
+                          onPress={() => handleFileClaim(v)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="alert-circle-outline" size={14} color="#dc2626" />
+                          <Text style={[styles.actionBtnText, { color: "#dc2626" }]}>Claim</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  );
+                })
+              )}
+
+              {/* Dashed Add Vehicle Card */}
+              <TouchableOpacity
+                style={styles.dashedAddCard}
+                onPress={() => setIsAddModalOpen(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.dashedAddIconBox}>
+                  <Ionicons name="add-outline" size={26} color="#0284c7" />
+                </View>
+                <Text style={styles.dashedAddTitle}>Add Another Vehicle</Text>
+                <Text style={styles.dashedAddDesc}>Register another vehicle to your active policy coverage</Text>
+              </TouchableOpacity>
+            </>
           )}
 
-          {/* Dashed Add Vehicle Card */}
-          <TouchableOpacity
-            style={styles.dashedAddCard}
-            onPress={() => setIsAddModalOpen(true)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.dashedAddIconBox}>
-              <Ionicons name="add-outline" size={26} color="#0284c7" />
-            </View>
-            <Text style={styles.dashedAddTitle}>Add Another Vehicle</Text>
-            <Text style={styles.dashedAddDesc}>Register another vehicle to your active policy coverage</Text>
-          </TouchableOpacity>
+          {/* ── TAB 2: THIRD-PARTY DRIVERS MANAGEMENT ── */}
+          {activeMainTab === "third_party" && (
+            <View style={styles.thirdPartyViewContainer}>
+              {/* Header Info Banner */}
+              <LinearGradient
+                colors={["#102A43", "#163e63", "#312e81"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.tpHeroBanner}
+              >
+                <View style={styles.tpHeroBadge}>
+                  <MaterialCommunityIcons name="shield-star" size={13} color="#38bdf8" />
+                  <Text style={styles.tpHeroBadgeText}>Flat Fee: LKR 300 per Registration</Text>
+                </View>
+                <Text style={styles.tpHeroTitle}>Third-Party Driver Authorizations</Text>
+                <Text style={styles.tpHeroDesc}>
+                  Authorize drivers to legally operate your insured vehicles. Covered under your policy with a single fixed fee of LKR 300 for all selected vehicles, reviewed by your nearest branch office.
+                </Text>
+                <TouchableOpacity
+                  style={styles.tpRegisterHeroBtn}
+                  onPress={() => handleOpenThirdPartyForPlate()}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="person-add" size={15} color="#0f172a" />
+                  <Text style={styles.tpRegisterHeroBtnText}>+ Register New Driver (LKR 300)</Text>
+                </TouchableOpacity>
+              </LinearGradient>
 
-          {/* Galle office Support banner */}
+              {/* Requests List */}
+              {loadingThirdParty ? (
+                <View style={styles.tpLoaderBox}>
+                  <ActivityIndicator size="large" color="#0284c7" />
+                  <Text style={styles.tpLoaderText}>Loading registered drivers...</Text>
+                </View>
+              ) : thirdPartyRequests.length === 0 ? (
+                <View style={styles.tpEmptyBox}>
+                  <View style={styles.tpEmptyIconCircle}>
+                    <MaterialCommunityIcons name="account-clock-outline" size={36} color="#6366f1" />
+                  </View>
+                  <Text style={styles.tpEmptyTitle}>No Third-Party Drivers Registered Yet</Text>
+                  <Text style={styles.tpEmptyDesc}>
+                    You haven't authorized any third-party drivers yet. Authorize drivers to allow others to safely and officially drive your insured vehicles.
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.tpEmptyBtn}
+                    onPress={() => handleOpenThirdPartyForPlate()}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="person-add-outline" size={15} color="#ffffff" />
+                    <Text style={styles.tpEmptyBtnText}>Register Your First Driver (LKR 300)</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                thirdPartyRequests.map((req: any) => (
+                  <View key={req._id} style={styles.tpRequestCard}>
+                    {/* Header: Ref & Status Badge */}
+                    <View style={styles.tpCardHeader}>
+                      <View style={styles.tpRefBox}>
+                        <Text style={styles.tpRefText}>{req.requestReference || "REF"}</Text>
+                      </View>
+                      {req.status === "Approved" ? (
+                        <View style={[styles.tpStatusPill, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
+                          <MaterialCommunityIcons name="check-circle" size={13} color="#16a34a" />
+                          <Text style={[styles.tpStatusText, { color: "#16a34a" }]}>Approved</Text>
+                        </View>
+                      ) : req.status === "Pending Branch Approval" ? (
+                        <View style={[styles.tpStatusPill, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
+                          <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
+                          <Text style={[styles.tpStatusText, { color: "#b45309" }]}>Pending Review</Text>
+                        </View>
+                      ) : req.status === "Rejected" ? (
+                        <View style={[styles.tpStatusPill, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+                          <MaterialCommunityIcons name="close-circle" size={13} color="#dc2626" />
+                          <Text style={[styles.tpStatusText, { color: "#dc2626" }]}>Rejected</Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.tpStatusPill, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
+                          <MaterialCommunityIcons name="credit-card-outline" size={13} color="#d97706" />
+                          <Text style={[styles.tpStatusText, { color: "#d97706" }]}>Pending Payment</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    {/* Driver Details Row */}
+                    <View style={styles.tpDriverRow}>
+                      <View style={styles.tpDriverAvatar}>
+                        <MaterialCommunityIcons name="account" size={24} color="#4f46e5" />
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 12 }}>
+                        <Text style={styles.tpDriverName}>{req.driverDetails?.fullName}</Text>
+                        <Text style={styles.tpDriverMeta}>
+                          NIC: {req.driverDetails?.nicNumber || "—"} · Tel: {req.driverDetails?.phoneNumber}
+                        </Text>
+                        {req.driverDetails?.residentialAddress ? (
+                          <Text style={styles.tpDriverAddress} numberOfLines={1}>
+                            {req.driverDetails.residentialAddress}
+                          </Text>
+                        ) : null}
+                      </View>
+                    </View>
+
+                    {/* Assigned Vehicles */}
+                    <View style={styles.tpVehiclesSection}>
+                      <Text style={styles.tpVehiclesLabel}>
+                        Authorized Vehicles ({req.selectedVehicles?.length || 0})
+                      </Text>
+                      <View style={styles.tpVehiclesChipsRow}>
+                        {req.selectedVehicles?.map((sv: any, i: number) => (
+                          <View key={i} style={styles.tpVehicleChip}>
+                            <MaterialCommunityIcons name="car-side" size={12} color="#475569" />
+                            <Text style={styles.tpVehicleChipText}>{formatPlate(sv.numberPlate)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Rejection Notice if rejected */}
+                    {req.status === "Rejected" && req.branchReview?.rejectionReason && (
+                      <View style={styles.tpRejectionBox}>
+                        <Text style={styles.tpRejectionTitle}>Reason for Rejection:</Text>
+                        <Text style={styles.tpRejectionText}>{req.branchReview.rejectionReason}</Text>
+                      </View>
+                    )}
+
+                    {/* Footer: Fee Status & Actions */}
+                    <View style={styles.tpCardFooter}>
+                      <View style={styles.tpPaymentStatusRow}>
+                        {req.payment?.status === "Paid" ? (
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                            <MaterialCommunityIcons name="check-decagram" size={15} color="#16a34a" />
+                            <Text style={styles.tpPaidText}>Fee Paid (LKR 300)</Text>
+                          </View>
+                        ) : (
+                          <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+                            <MaterialCommunityIcons name="clock-outline" size={14} color="#d97706" />
+                            <Text style={styles.tpUnpaidText}>LKR 300 Unpaid</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      {req.status === "Pending Payment" && req.payment?.status !== "Paid" && (
+                        <TouchableOpacity
+                          style={styles.tpPayNowBtn}
+                          onPress={() => handleResumeThirdPartyPayment(req._id, req.requestReference)}
+                          disabled={resumingPaymentId === req._id}
+                          activeOpacity={0.8}
+                        >
+                          {resumingPaymentId === req._id ? (
+                            <ActivityIndicator size="small" color="#ffffff" />
+                          ) : (
+                            <>
+                              <MaterialCommunityIcons name="credit-card-outline" size={14} color="#ffffff" />
+                              <Text style={styles.tpPayNowBtnText}>Pay LKR 300 Now</Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      )}
+
+                      {req.status === "Approved" && (
+                        <View style={styles.tpDigitalPassBadge}>
+                          <Text style={styles.tpDigitalPassText}>Digital Pass Ready</Text>
+                        </View>
+                      )}
+                    </View>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+
+          {/* Support Banner */}
           <View style={styles.helpBanner}>
             <View style={{ flex: 1, marginRight: 12 }}>
               <Text style={styles.helpTitle}>Need to update registry?</Text>
@@ -893,6 +1407,222 @@ export default function MyVehicles() {
           </View>
         </ScrollView>
       )}
+
+      {/* ── THIRD-PARTY DRIVER REGISTRATION MODAL ── */}
+      <Modal
+        visible={thirdPartyModalOpen}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => !tpSubmitting && setThirdPartyModalOpen(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          style={styles.modalBackdrop}
+        >
+          <View style={styles.modalOverlayLarge}>
+            {/* Modal Header */}
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalTitleLarge}>Authorize Third-Party Driver</Text>
+                <Text style={styles.modalSubPlate}>
+                  Fixed Fee: LKR 300 · Single authorization covers all chosen vehicles
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => !tpSubmitting && setThirdPartyModalOpen(false)}
+                style={styles.modalCloseIconBtn}
+                disabled={tpSubmitting}
+              >
+                <Ionicons name="close" size={22} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{ padding: 20, paddingBottom: 30 }}
+            >
+              {/* Fee Notice Box */}
+              <LinearGradient
+                colors={["#102A43", "#1e3a8a"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.tpModalFeeBox}
+              >
+                <MaterialCommunityIcons name="shield-check" size={20} color="#38bdf8" />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.tpModalFeeTitle}>Fixed Fee: LKR 300</Text>
+                  <Text style={styles.tpModalFeeDesc}>
+                    Covers this driver for any and all of your selected vehicles under your existing policy. Reviewed & activated by your regional branch.
+                  </Text>
+                </View>
+              </LinearGradient>
+
+              {/* Error Message */}
+              {tpError ? (
+                <View style={styles.tpErrorBox}>
+                  <Ionicons name="alert-circle" size={16} color="#dc2626" />
+                  <Text style={styles.tpErrorText}>{tpError}</Text>
+                </View>
+              ) : null}
+
+              {/* Driver Full Name */}
+              <View style={styles.tpFormGroup}>
+                <Text style={styles.tpFieldLabel}>Driver Full Name *</Text>
+                <TextInput
+                  style={styles.tpInput}
+                  placeholder="e.g. Kamal Sunimal Perera"
+                  placeholderTextColor="#94a3b8"
+                  value={tpFullName}
+                  onChangeText={setTpFullName}
+                  editable={!tpSubmitting}
+                />
+              </View>
+
+              {/* National Identity Card (NIC) */}
+              <View style={styles.tpFormGroup}>
+                <Text style={styles.tpFieldLabel}>National Identity Card (NIC) *</Text>
+                <TextInput
+                  style={styles.tpInput}
+                  placeholder="e.g. 199012345678 or 901234567V"
+                  placeholderTextColor="#94a3b8"
+                  value={tpNicNumber}
+                  onChangeText={(val) => setTpNicNumber(val.toUpperCase())}
+                  autoCapitalize="characters"
+                  editable={!tpSubmitting}
+                />
+              </View>
+
+              {/* Mobile Phone Number */}
+              <View style={styles.tpFormGroup}>
+                <Text style={styles.tpFieldLabel}>Mobile Phone Number (Sri Lanka) *</Text>
+                <TextInput
+                  style={styles.tpInput}
+                  placeholder="e.g. 0771234567"
+                  placeholderTextColor="#94a3b8"
+                  keyboardType="phone-pad"
+                  value={tpPhoneNumber}
+                  onChangeText={setTpPhoneNumber}
+                  editable={!tpSubmitting}
+                />
+              </View>
+
+              {/* Residential Address */}
+              <View style={styles.tpFormGroup}>
+                <Text style={styles.tpFieldLabel}>Residential Address *</Text>
+                <TextInput
+                  style={[styles.tpInput, { height: 70, textAlignVertical: "top", paddingTop: 10 }]}
+                  placeholder="e.g. No. 45, Temple Road, Galle"
+                  placeholderTextColor="#94a3b8"
+                  multiline
+                  numberOfLines={3}
+                  value={tpResidentialAddress}
+                  onChangeText={setTpResidentialAddress}
+                  editable={!tpSubmitting}
+                />
+              </View>
+
+              {/* Driving License Copy Upload */}
+              <View style={styles.tpFormGroup}>
+                <Text style={styles.tpFieldLabel}>Driving License Photo (Optional / Recommended)</Text>
+                <TouchableOpacity
+                  style={styles.tpUploadBox}
+                  onPress={handlePickLicensePhoto}
+                  disabled={tpSubmitting}
+                  activeOpacity={0.7}
+                >
+                  {tpLicensePhoto ? (
+                    <View style={styles.tpPhotoPreviewRow}>
+                      <Image source={{ uri: tpLicensePhoto }} style={styles.tpPhotoPreviewThumb} />
+                      <View style={{ flex: 1, marginLeft: 12 }}>
+                        <Text style={styles.tpPhotoSelectedText}>License Photo Selected</Text>
+                        <Text style={styles.tpPhotoChangeText}>Tap to change</Text>
+                      </View>
+                      <Ionicons name="checkmark-circle" size={20} color="#16a34a" />
+                    </View>
+                  ) : (
+                    <View style={styles.tpUploadPlaceholder}>
+                      <Ionicons name="camera-outline" size={24} color="#6366f1" />
+                      <Text style={styles.tpUploadText}>Upload Driving License Copy</Text>
+                      <Text style={styles.tpUploadSubText}>PNG or JPG (Processed safely)</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+
+              {/* Vehicle Selection Checkboxes */}
+              <View style={styles.tpFormGroup}>
+                <Text style={styles.tpFieldLabel}>Select Insured Vehicles to Authorize *</Text>
+                <Text style={styles.tpFieldSubLabel}>
+                  Check all vehicles this driver is permitted to operate. A single LKR 300 fee covers all selected vehicles!
+                </Text>
+
+                <View style={styles.tpVehiclesSelectionBox}>
+                  {vehicles.length === 0 ? (
+                    <Text style={styles.tpNoVehiclesText}>No vehicles available.</Text>
+                  ) : (
+                    vehicles.map((v) => {
+                      const isSelected = tpSelectedPlates.includes(v.numberPlate);
+                      return (
+                        <TouchableOpacity
+                          key={v.numberPlate}
+                          style={[
+                            styles.tpVehicleCheckboxRow,
+                            isSelected && styles.tpVehicleCheckboxRowSelected,
+                          ]}
+                          onPress={() => toggleVehiclePlateSelection(v.numberPlate)}
+                          disabled={tpSubmitting}
+                          activeOpacity={0.7}
+                        >
+                          <MaterialCommunityIcons
+                            name={isSelected ? "checkbox-marked" : "checkbox-blank-outline"}
+                            size={22}
+                            color={isSelected ? "#4f46e5" : "#94a3b8"}
+                          />
+                          <View style={{ flex: 1, marginLeft: 10 }}>
+                            <Text style={styles.tpVehiclePlateName}>{formatPlate(v.numberPlate)}</Text>
+                            <Text style={styles.tpVehicleModelSub}>
+                              {v.company} {v.model} ({v.year}) · {v.vehicleType || "Car"}
+                            </Text>
+                          </View>
+                          {isSelected && (
+                            <View style={styles.tpCoveredTag}>
+                              <Text style={styles.tpCoveredTagText}>Covered</Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })
+                  )}
+                </View>
+              </View>
+
+              {/* Total Summary & Pay Button */}
+              <View style={styles.tpSubmitSummaryBox}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.tpSummaryFeeLabel}>Total Due Fee</Text>
+                  <Text style={styles.tpSummaryFeeAmount}>LKR 300.00</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.tpSubmitPayBtn, tpSubmitting && { opacity: 0.6 }]}
+                  onPress={handleSubmitThirdParty}
+                  disabled={tpSubmitting}
+                  activeOpacity={0.85}
+                >
+                  {tpSubmitting ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <>
+                      <MaterialCommunityIcons name="credit-card-check" size={18} color="#ffffff" />
+                      <Text style={styles.tpSubmitPayBtnText}>Pay LKR 300 & Submit</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* ── 1. VEHICLE SPECIFICATIONS & RENEWAL MODAL ── */}
       {selectedVehicleForModal && (
@@ -2904,4 +3634,723 @@ const styles: any = StyleSheet.create({
     elevation: 3,
   },
   alertButtonText: { color: "#fff", fontSize: 14, fontWeight: "bold" },
+
+  // ── TAB SWITCHER & MODERN CARDS STYLES ──
+  tabSwitcherRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 16,
+  },
+  mainTabBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#f1f5f9",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    paddingVertical: 11,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+  },
+  mainTabBtnActive: {
+    backgroundColor: "#102a43",
+    borderColor: "#102a43",
+    shadowColor: "#102a43",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  mainTabText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#64748b",
+  },
+  mainTabTextActive: {
+    color: "#ffffff",
+  },
+  tabCountPill: {
+    backgroundColor: "#e2e8f0",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 99,
+  },
+  tabCountPillActive: {
+    backgroundColor: "rgba(255, 255, 255, 0.22)",
+  },
+  tabCountText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#475569",
+  },
+  tabCountTextActive: {
+    color: "#ffffff",
+  },
+
+  // Quick Third Party Banner
+  tpQuickBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 14,
+    borderRadius: 20,
+    marginBottom: 16,
+    shadowColor: "#0284c7",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  tpBannerBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 99,
+    marginBottom: 4,
+  },
+  tpBannerBadgeText: {
+    color: "#bae6fd",
+    fontSize: 10.5,
+    fontWeight: "700",
+  },
+  tpBannerTitle: {
+    color: "#ffffff",
+    fontSize: 13.5,
+    fontWeight: "800",
+  },
+  tpBannerDesc: {
+    color: "rgba(255, 255, 255, 0.8)",
+    fontSize: 11,
+    lineHeight: 14,
+    marginTop: 2,
+  },
+  tpBannerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tpBannerBtnText: {
+    color: "#0f172a",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+
+  // Sri Lankan Number Plate Badge
+  modernPlateBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0f172a",
+    borderRadius: 10,
+    overflow: "hidden",
+    borderWidth: 1.5,
+    borderColor: "#334155",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  plateStripe: {
+    backgroundColor: "#0284c7",
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  plateStripeText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+  },
+  modernPlateText: {
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "800",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    letterSpacing: 1,
+  },
+
+  vehicleIdentityRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 8,
+  },
+  smallTypeBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  smallTypeBoxText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+
+  driverIndicatorRow: {
+    marginTop: 8,
+  },
+  assignedDriverBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    alignSelf: "flex-start",
+  },
+  assignedDriverText: {
+    fontSize: 11,
+    color: "#065f46",
+    fontWeight: "600",
+  },
+  unassignedDriverBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: 8,
+    alignSelf: "flex-start",
+  },
+  unassignedDriverText: {
+    fontSize: 10.5,
+    color: "#64748b",
+    fontWeight: "500",
+  },
+
+  // ── THIRD-PARTY DRIVERS VIEW ──
+  thirdPartyViewContainer: {
+    gap: 16,
+    marginBottom: 20,
+  },
+  tpHeroBanner: {
+    padding: 18,
+    borderRadius: 24,
+    shadowColor: "#102A43",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  tpHeroBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 99,
+    alignSelf: "flex-start",
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+  },
+  tpHeroBadgeText: {
+    color: "#bae6fd",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  tpHeroTitle: {
+    color: "#ffffff",
+    fontSize: 17,
+    fontWeight: "800",
+    marginBottom: 4,
+  },
+  tpHeroDesc: {
+    color: "rgba(255, 255, 255, 0.85)",
+    fontSize: 12,
+    lineHeight: 16,
+    marginBottom: 14,
+  },
+  tpRegisterHeroBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#38bdf8",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tpRegisterHeroBtnText: {
+    color: "#0f172a",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  tpLoaderBox: {
+    padding: 30,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  tpLoaderText: {
+    marginTop: 8,
+    fontSize: 13,
+    color: "#64748b",
+    fontWeight: "600",
+  },
+
+  tpEmptyBox: {
+    padding: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  tpEmptyIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#eef2ff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  tpEmptyTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#1e293b",
+    marginBottom: 6,
+    textAlign: "center",
+  },
+  tpEmptyDesc: {
+    fontSize: 12,
+    color: "#64748b",
+    lineHeight: 16,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  tpEmptyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#102a43",
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 14,
+  },
+  tpEmptyBtnText: {
+    color: "#ffffff",
+    fontSize: 12.5,
+    fontWeight: "700",
+  },
+
+  // Request Card
+  tpRequestCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    gap: 12,
+  },
+  tpCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+    paddingBottom: 10,
+  },
+  tpRefBox: {
+    backgroundColor: "#f1f5f9",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  tpRefText: {
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    fontSize: 11.5,
+    fontWeight: "800",
+    color: "#1e293b",
+  },
+  tpStatusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 99,
+    borderWidth: 1,
+  },
+  tpStatusText: {
+    fontSize: 11.5,
+    fontWeight: "700",
+  },
+
+  tpDriverRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+  },
+  tpDriverAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#eef2ff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tpDriverName: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  tpDriverMeta: {
+    fontSize: 11.5,
+    color: "#64748b",
+    marginTop: 2,
+  },
+  tpDriverAddress: {
+    fontSize: 11,
+    color: "#94a3b8",
+    marginTop: 2,
+  },
+
+  tpVehiclesSection: {
+    backgroundColor: "#f8fafc",
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
+  },
+  tpVehiclesLabel: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: "#64748b",
+    textTransform: "uppercase",
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
+  tpVehiclesChipsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+  },
+  tpVehicleChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 7,
+  },
+  tpVehicleChipText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#334155",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+
+  tpRejectionBox: {
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    borderRadius: 12,
+    padding: 10,
+  },
+  tpRejectionTitle: {
+    fontSize: 11.5,
+    fontWeight: "800",
+    color: "#991b1b",
+  },
+  tpRejectionText: {
+    fontSize: 11,
+    color: "#b91c1c",
+    marginTop: 2,
+  },
+
+  tpCardFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: "#f1f5f9",
+    paddingTop: 10,
+  },
+  tpPaymentStatusRow: {},
+  tpPaidText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#16a34a",
+  },
+  tpUnpaidText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#d97706",
+  },
+  tpPayNowBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#ff9800",
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+  },
+  tpPayNowBtnText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "800",
+  },
+  tpDigitalPassBadge: {
+    backgroundColor: "#ecfdf5",
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 99,
+  },
+  tpDigitalPassText: {
+    fontSize: 10.5,
+    fontWeight: "800",
+    color: "#065f46",
+  },
+
+  // ── THIRD-PARTY REGISTRATION MODAL STYLES ──
+  tpModalFeeBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  tpModalFeeTitle: {
+    color: "#38bdf8",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  tpModalFeeDesc: {
+    color: "#cbd5e1",
+    fontSize: 11,
+    lineHeight: 15,
+    marginTop: 2,
+  },
+  tpErrorBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    padding: 10,
+    borderRadius: 12,
+    marginBottom: 14,
+  },
+  tpErrorText: {
+    color: "#b91c1c",
+    fontSize: 12,
+    fontWeight: "700",
+    flex: 1,
+  },
+  tpFormGroup: {
+    marginBottom: 14,
+  },
+  tpFieldLabel: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginBottom: 4,
+  },
+  tpFieldSubLabel: {
+    fontSize: 11,
+    color: "#64748b",
+    marginBottom: 8,
+  },
+  tpInput: {
+    borderWidth: 1,
+    borderColor: "#cbd5e1",
+    borderRadius: 14,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 14,
+    paddingVertical: Platform.OS === "ios" ? 12 : 8,
+    fontSize: 13.5,
+    color: "#0f172a",
+    fontWeight: "600",
+  },
+
+  tpUploadBox: {
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "#a5b4fc",
+    borderRadius: 16,
+    backgroundColor: "#f5f3ff",
+    padding: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tpUploadPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 6,
+  },
+  tpUploadText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#4f46e5",
+    marginTop: 4,
+  },
+  tpUploadSubText: {
+    fontSize: 10.5,
+    color: "#94a3b8",
+    marginTop: 2,
+  },
+  tpPhotoPreviewRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+  },
+  tpPhotoPreviewThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: "#e2e8f0",
+  },
+  tpPhotoSelectedText: {
+    fontSize: 12.5,
+    fontWeight: "700",
+    color: "#1e293b",
+  },
+  tpPhotoChangeText: {
+    fontSize: 11,
+    color: "#6366f1",
+    marginTop: 1,
+  },
+
+  tpVehiclesSelectionBox: {
+    gap: 8,
+  },
+  tpNoVehiclesText: {
+    fontSize: 12,
+    color: "#94a3b8",
+    fontStyle: "italic",
+  },
+  tpVehicleCheckboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f8fafc",
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    padding: 12,
+    borderRadius: 14,
+  },
+  tpVehicleCheckboxRowSelected: {
+    backgroundColor: "#eef2ff",
+    borderColor: "#818cf8",
+  },
+  tpVehiclePlateName: {
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  tpVehicleModelSub: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 1,
+  },
+  tpCoveredTag: {
+    backgroundColor: "#4f46e5",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 99,
+  },
+  tpCoveredTagText: {
+    color: "#ffffff",
+    fontSize: 10,
+    fontWeight: "800",
+  },
+
+  tpSubmitSummaryBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 16,
+    borderRadius: 18,
+    marginTop: 10,
+  },
+  tpSummaryFeeLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#64748b",
+    textTransform: "uppercase",
+  },
+  tpSummaryFeeAmount: {
+    fontSize: 18,
+    fontWeight: "900",
+    color: "#0f172a",
+  },
+  tpSubmitPayBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#102a43",
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tpSubmitPayBtnText: {
+    color: "#ffffff",
+    fontSize: 13,
+    fontWeight: "800",
+  },
 });
