@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import HeaderNotificationBell from "@/app/Components/HeaderNotificationBell";
 import SimpleLoader from "@/app/Components/SimpleLoader";
 import { getVehicleIconContainer, getVehicleIconSvg } from "@/app/Components/VehicleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -342,23 +343,23 @@ export default function OfficeStaffRenewalsPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* Top Navbar */}
-        <header className="h-18 bg-white border-b border-slate-200/80 px-6 sm:px-8 flex items-center justify-between z-10 flex-shrink-0 shadow-xs">
+        <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <button
               onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
-              className="lg:hidden p-2 text-slate-600 hover:text-slate-900 focus:outline-none"
+              className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
             >
-              <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" />
+              <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
             </button>
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
-              <h1 className="text-xl font-bold text-[#102A43] tracking-tight">Policy Renewals Management</h1>
-              <span className="hidden md:inline-block text-xs bg-blue-50 text-blue-700 font-semibold px-2.5 py-1 rounded-full border border-blue-200">
-                {branch} Branch
+            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+              <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
+                {branch || "Galle"} Branch
               </span>
-            </div>
+              <span className="hidden md:inline text-slate-400 font-medium">— Policy Renewals</span>
+            </h1>
           </div>
           <div className="flex items-center gap-4">
+            <HeaderNotificationBell href="/Office_Staff/Notifications" />
             <UserAvatarDropdown userType="office_staff" />
           </div>
         </header>

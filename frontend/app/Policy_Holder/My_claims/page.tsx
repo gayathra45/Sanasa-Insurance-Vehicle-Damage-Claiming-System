@@ -624,7 +624,7 @@ export default function MyClaims() {
       </div>
 
       {/* Main Table Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 flex flex-col gap-8">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 py-8 sm:py-10 flex flex-col gap-6 sm:gap-8">
         
         {/* Top Overview Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
@@ -819,9 +819,9 @@ export default function MyClaims() {
                       markClaimAsRead((claim as any)._id || claim.claimNumber, viewedClaims, setViewedClaims, "policy_holder");
                       setSelectedClaim(claim);
                     }}
-                    className={`bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl px-5 py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${borderLeftColor}`}
+                    className={`bg-white border border-slate-200/90 hover:border-slate-300 rounded-2xl md:rounded-xl p-4 sm:p-5 md:px-5 md:py-4 flex flex-col md:grid md:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,1.2fr)_minmax(0,1.2fr)_minmax(0,0.8fr)] md:items-center gap-3 sm:gap-4 transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md relative overflow-hidden ${borderLeftColor}`}
                   >
-                    {/* Claim Info */}
+                    {/* Top Row: Claim Info */}
                     <div className="flex flex-col min-w-0 select-none">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="font-semibold text-slate-800 text-sm whitespace-nowrap">{claim.claimNumber}</span>
@@ -830,37 +830,76 @@ export default function MyClaims() {
                         )}
                       </div>
                       {claim.createdAt && (
-                        <span className="text-[10px] text-slate-400 font-normal mt-1 block">Submitted: {formatSriLankaDateTime(claim.createdAt)}</span>
+                        <span className="text-[10px] text-slate-400 font-normal mt-0.5 sm:mt-1 block">Submitted: {formatSriLankaDateTime(claim.createdAt)}</span>
                       )}
                     </div>
 
-                    {/* Vehicle Plate */}
-                    <div className="text-xs md:text-sm font-semibold text-slate-800">
+                    {/* Mobile View Metadata Grid (Visible on phone/tablet < 768px) */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs md:hidden pt-2.5 border-t border-slate-100">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Plate</span>
+                        <span className="font-semibold text-slate-800 text-xs mt-0.5 block">{formatNumberPlate(claim.vehiclePlate)}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Incident</span>
+                        <span className="text-slate-600 text-xs mt-0.5 block">{claim.incidentDate}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Damage</span>
+                        <span className="text-slate-600 text-xs mt-0.5 block truncate" title={claim.damageType}>{claim.damageType}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider block">Amount</span>
+                        <span className="font-semibold text-slate-700 text-xs mt-0.5 block">{claim.amount}</span>
+                      </div>
+                    </div>
+
+                    {/* Mobile Bottom Status & Actions Row */}
+                    <div className="flex md:hidden items-center justify-between pt-2.5 border-t border-slate-100" onClick={(e) => e.stopPropagation()}>
+                      <div>
+                        {getStatusBadge(claim.status)}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => downloadClaimPdf(claim.claimNumber)}
+                          className="p-2 rounded-xl border border-sky-200 bg-sky-50 hover:bg-sky-100 text-sky-700 transition-all cursor-pointer shadow-2xs active:scale-95 flex items-center justify-center"
+                          title="Download Official Claim PDF Report"
+                        >
+                          <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 text-sky-600" strokeWidth={2} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedClaim(claim)}
+                          className="bg-[#102A43] hover:bg-[#163e63] text-white font-semibold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer shadow-sm whitespace-nowrap active:scale-95"
+                        >
+                          {t.view}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Desktop Only Columns (Hidden on mobile) */}
+                    <div className="hidden md:block text-xs md:text-sm font-semibold text-slate-800">
                       {formatNumberPlate(claim.vehiclePlate)}
                     </div>
 
-                    {/* Incident Date */}
-                    <div className="text-xs md:text-sm font-normal text-slate-600">
+                    <div className="hidden md:block text-xs md:text-sm font-normal text-slate-600">
                       {claim.incidentDate}
                     </div>
 
-                    {/* Damage Type */}
-                    <div className="text-xs md:text-sm font-normal text-slate-600 truncate" title={claim.damageType}>
+                    <div className="hidden md:block text-xs md:text-sm font-normal text-slate-600 truncate" title={claim.damageType}>
                       {claim.damageType}
                     </div>
 
-                    {/* Amount */}
-                    <div className="text-xs md:text-sm font-semibold text-slate-700 text-center">
+                    <div className="hidden md:block text-xs md:text-sm font-semibold text-slate-700 text-center">
                       {claim.amount}
                     </div>
 
-                    {/* Status Badge */}
-                    <div className="flex flex-col items-center min-w-0">
+                    <div className="hidden md:flex flex-col items-center min-w-0">
                       {getStatusBadge(claim.status)}
                     </div>
 
-                    {/* Action */}
-                    <div className="flex items-center justify-start md:justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                    <div className="hidden md:flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                       <button
                         type="button"
                         onClick={() => downloadClaimPdf(claim.claimNumber)}
@@ -925,14 +964,14 @@ export default function MyClaims() {
           ];
 
           return (
-            <div className="bg-[#f8fafc] border border-slate-100 rounded-[24px] pt-6 pb-5 px-8 mb-8 flex justify-between items-center relative select-none w-full max-w-[540px] mx-auto shadow-sm">
+            <div className="bg-[#f8fafc] border border-slate-100 rounded-2xl sm:rounded-[24px] pt-4 sm:pt-6 pb-3 sm:pb-5 px-3 sm:px-8 mb-6 sm:mb-8 flex justify-between items-center relative select-none w-full max-w-[540px] mx-auto shadow-sm overflow-x-auto">
               {/* Background Grey Line */}
-              <div className="absolute top-[44px] -translate-y-1/2 left-[52px] right-[52px] h-[3px] bg-slate-200 z-0 pointer-events-none" />
+              <div className="absolute top-[32px] sm:top-[44px] -translate-y-1/2 left-[36px] sm:left-[52px] right-[36px] sm:right-[52px] h-[2.5px] sm:h-[3px] bg-slate-200 z-0 pointer-events-none" />
               
               {/* Active Blue Progress Line */}
               <div
-                className="absolute top-[44px] -translate-y-1/2 left-[52px] h-[3px] bg-gradient-to-r from-sky-400 to-[#0f2d4a] z-0 pointer-events-none transition-all duration-300"
-                style={{ width: isFullyPaid ? "calc(100% - 104px)" : `calc((100% - 104px) * ${currentStep - 1} / 5)` }}
+                className="absolute top-[32px] sm:top-[44px] -translate-y-1/2 left-[36px] sm:left-[52px] h-[2.5px] sm:h-[3px] bg-gradient-to-r from-sky-400 to-[#0f2d4a] z-0 pointer-events-none transition-all duration-300"
+                style={{ width: isFullyPaid ? "calc(100% - 72px)" : `calc((100% - 72px) * ${currentStep - 1} / 5)` }}
               />
 
               {steps.map((step, idx) => {
@@ -944,21 +983,21 @@ export default function MyClaims() {
                 if (isCompleted) {
                   circleClass = "border-blue-600 text-blue-600 bg-blue-50";
                 } else if (isActive) {
-                  circleClass = "border-sky-500 text-sky-600 bg-white ring-4 ring-sky-100";
+                  circleClass = "border-sky-500 text-sky-600 bg-white ring-2 sm:ring-4 ring-sky-100";
                 } else {
                   circleClass = "border-slate-300 text-slate-400 bg-white";
                 }
 
                 return (
-                  <div key={step.num} className="relative z-10 flex flex-col items-center flex-1">
-                    <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-[14px] font-bold relative z-10 ${circleClass}`}>
+                  <div key={step.num} className="relative z-10 flex flex-col items-center flex-1 min-w-[45px] sm:min-w-0">
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 flex items-center justify-center text-xs sm:text-[14px] font-bold relative z-10 ${circleClass}`}>
                       {isCompleted ? (
-                        <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5 text-blue-600" strokeWidth={3} />
+                        <HugeiconsIcon icon={Tick01Icon} className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" strokeWidth={3} />
                       ) : (
                         step.num
                       )}
                     </div>
-                    <span className={`text-[11px] font-medium mt-2 leading-none relative z-10 ${isActive ? "text-sky-600 font-bold" : isCompleted ? "text-blue-900 font-semibold" : "text-slate-400"}`}>
+                    <span className={`text-[9px] sm:text-[11px] font-medium mt-1 sm:mt-2 leading-none relative z-10 truncate ${isActive ? "text-sky-600 font-bold" : isCompleted ? "text-blue-900 font-semibold" : "text-slate-400"}`}>
                       {step.label}
                     </span>
                   </div>
@@ -969,19 +1008,19 @@ export default function MyClaims() {
         };
 
         return (
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-            <div className="bg-white border border-slate-200 rounded-[24px] w-full max-w-[720px] max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 transition-all duration-300">
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[24px] w-full max-w-[720px] max-h-[92vh] sm:max-h-[90vh] shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col relative transition-all duration-300 overflow-hidden">
               
               {/* Modal Header Title */}
-              <div className="flex justify-between items-center px-8 pt-6 pb-4 border-b border-slate-200 flex-shrink-0">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
+              <div className="flex justify-between items-center px-4 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b border-slate-200 flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <h2 className="text-base sm:text-lg md:text-[20px] font-bold text-[#0f2d3a] tracking-tight leading-none">
                     Claim Details – {selectedClaim.claimNumber}
                   </h2>
                   <button
                     type="button"
                     onClick={() => downloadClaimPdf(selectedClaim.claimNumber)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
+                    className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 hover:text-sky-900 border border-sky-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs active:scale-95"
                     title="Download Official Claim Status PDF Report"
                   >
                     <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-sky-600" strokeWidth={2} />
@@ -990,14 +1029,14 @@ export default function MyClaims() {
                 </div>
                 <button
                   onClick={() => setSelectedClaim(null)}
-                  className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer"
+                  className="text-slate-400 hover:text-slate-600 text-2xl font-normal border-none bg-transparent cursor-pointer flex-shrink-0 p-1"
                 >
                   &times;
                 </button>
               </div>
 
               {/* Modal Content */}
-              <div className="p-8 flex-1 overflow-y-auto">
+              <div className="p-4 sm:p-8 flex-1 overflow-y-auto">
                 
                 {/* Dynamic Tracker Wizard */}
                 {renderClaimProgress(selectedClaim.status, selectedClaim.currentStep, selectedClaim.paymentReceipt)}

@@ -1174,7 +1174,7 @@ export default function AgentDashboard() {
       <Navbar />
 
       {/* Main Banner Area */}
-      <div className="w-full relative overflow-hidden bg-gradient-to-b from-slate-950 via-[#0b1c30] to-[#071320] text-white pt-8 pb-10 px-6 md:px-12 flex flex-col justify-center rounded-b-[2rem] md:rounded-b-[3rem] shadow-2xl border-b border-slate-800/60">
+      <div className="w-full relative overflow-hidden bg-gradient-to-b from-slate-950 via-[#0b1c30] to-[#071320] text-white pt-6 sm:pt-8 pb-8 sm:pb-10 px-4 sm:px-6 md:px-12 flex flex-col justify-center rounded-b-[2rem] md:rounded-b-[3rem] shadow-2xl border-b border-slate-800/60">
         {/* Subtle Background Pattern & Ambient Glow */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-15 mix-blend-luminosity transition-all duration-750 ease-out"
@@ -1388,14 +1388,14 @@ export default function AgentDashboard() {
       </div>
 
       {/* Grid Dashboard Content */}
-      <main className="max-w-7xl mx-auto w-full px-6 py-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 md:px-8 py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
         
         {/* Left Column: New Claims (Takes 2 grid columns on large screens) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           
           {/* Pending Document Requests Section */}
           {claimsWithPendingAgentRequests.length > 0 && (
-            <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-red-200/40 rounded-3xl p-6 shadow-lg shadow-red-500/[0.005] relative overflow-hidden">
+            <div className="flex flex-col gap-4 bg-gradient-to-br from-white/90 to-slate-50/50 backdrop-blur-md border border-red-200/40 rounded-3xl p-4 sm:p-6 shadow-lg shadow-red-500/[0.005] relative overflow-hidden">
               <div className="flex items-center justify-between flex-wrap gap-4 border-b border-slate-200/60 pb-3 mb-2">
                 <h2 className="text-lg font-semibold text-slate-800 tracking-tight flex items-center gap-2.5 select-none">
                   <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500 animate-pulse" strokeWidth={2.5} />
@@ -1428,7 +1428,7 @@ export default function AgentDashboard() {
                       {/* Vertical Red Accent Strip */}
                       <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-red-500 to-rose-600 group-hover:w-2 transition-all duration-300" />
                       
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4 items-center mr-2">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 items-center mr-0 md:mr-2">
                         {/* Col 1: Claim ID & Plate */}
                         <div className="flex flex-col gap-1 min-w-0">
                           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.claimPlate}</span>
@@ -1463,7 +1463,7 @@ export default function AgentDashboard() {
 
                       <Link
                         href={`/Agent/Documents?uploadClaim=${claim.claimNumber}`}
-                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-semibold py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0 text-center no-underline"
+                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-semibold py-2.5 sm:py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none w-full sm:w-auto self-stretch sm:self-center flex-shrink-0 text-center no-underline"
                       >
                         {t.uploadDocs}
                       </Link>
@@ -1502,12 +1502,12 @@ export default function AgentDashboard() {
                   return (
                     <div
                       key={claim._id}
-                      className="relative overflow-hidden bg-white/70 backdrop-blur-sm border border-slate-100/80 rounded-2xl p-4 pl-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm hover:shadow-[0_8px_24px_rgba(0,0,0,0.03)] hover:border-slate-200 hover:bg-white hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-300 group"
+                      className="relative overflow-hidden bg-white/70 backdrop-blur-sm border border-slate-100/80 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm hover:shadow-[0_8px_24px_rgba(0,0,0,0.03)] hover:border-slate-200 hover:bg-white hover:scale-[1.01] hover:-translate-y-0.5 transition-all duration-300 group"
                     >
                       {/* Decorative vertical color bar that glows/width-increases on card hover */}
                       <div className={`absolute left-0 top-0 bottom-0 w-1 group-hover:w-2 transition-all duration-300 ${isUrgent ? 'bg-gradient-to-b from-red-500 to-rose-600' : 'bg-gradient-to-b from-cyan-400 to-cyan-500'}`} />
                       
-                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-center mr-2">
+                      <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 items-center mr-0 md:mr-2">
                         {/* Col 1: Claim ID & Severity */}
                         <div className="flex flex-col gap-1 min-w-0">
                           <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">{t.claimNumber}</span>
@@ -1556,7 +1556,7 @@ export default function AgentDashboard() {
                       
                       <button
                         onClick={() => setSelectedClaim(claim)}
-                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-semibold py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none self-start md:self-center flex-shrink-0"
+                        className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-[0_4px_14px_rgba(0,221,255,0.3)] text-xs font-semibold py-2.5 sm:py-3 px-5 rounded-full transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer shadow-sm border-none w-full sm:w-auto self-stretch sm:self-center flex-shrink-0 text-center"
                       >
                         {t.details}
                       </button>
@@ -1678,21 +1678,21 @@ export default function AgentDashboard() {
       </main>
       {/* Detailed Claim Modal & Sub-modals (Matching Branch Claims Portal layout) */}
       {selectedClaim && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 transition-all duration-300">
           
           {/* SUB-MODAL 1: DOCUMENTS */}
           {activeSubModal === "documents" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[32px] w-full max-w-[800px] h-full sm:h-[650px] max-h-[92vh] sm:max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
-              <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
+              <div className="px-4 sm:px-8 pt-5 sm:pt-6 pb-2 select-none bg-white">
+                <h2 className="text-xl sm:text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Documents - {selectedClaim.claimNumber}
                 </h2>
               </div>
-              <div className="border-b border-black mx-8 mb-6" />
+              <div className="border-b border-black mx-4 sm:mx-8 mb-4 sm:mb-6" />
 
               {/* Body */}
-              <div className="px-8 pb-8 flex-1 overflow-y-auto space-y-6">
+              <div className="px-4 sm:px-8 pb-6 sm:pb-8 flex-1 overflow-y-auto space-y-4 sm:space-y-6">
                 <div className="text-left font-bold text-slate-800 space-y-1.5 text-[13px] select-none leading-relaxed">
                   <p>Vehicle No : <span className="font-medium text-slate-600">{formatPlate(selectedClaim.vehiclePlate)}</span></p>
                 </div>
@@ -1930,11 +1930,11 @@ export default function AgentDashboard() {
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-4 bg-white border-t border-slate-200 flex justify-end flex-shrink-0">
+              <div className="px-4 sm:px-8 py-3.5 sm:py-4 bg-white border-t border-slate-200 flex justify-end flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
-                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
+                  className="bg-[#000080] hover:bg-[#000066] text-white font-bold text-xs sm:text-sm px-6 py-2 rounded-full transition-all border-none cursor-pointer flex items-center shadow-sm active:scale-95"
                 >
                   Close
                 </button>
@@ -1944,22 +1944,22 @@ export default function AgentDashboard() {
 
           {/* MAIN DETAILS MODAL */}
           {activeSubModal === null && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[780px] max-h-[90vh] p-8 shadow-2xl relative flex flex-col transition-all duration-300 select-none">
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[32px] w-full max-w-[780px] max-h-[92vh] sm:max-h-[90vh] p-4 sm:p-6 md:p-8 shadow-2xl relative flex flex-col transition-all duration-300 select-none">
               
               {/* Close Button X */}
               <button
                 type="button"
                 onClick={() => setSelectedClaim(null)}
-                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent"
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent"
                 title="Close"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
               </button>
 
               {/* Header: Title, Tags & Avatar */}
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-4 pr-8 sm:pr-0">
                 <div className="overflow-hidden">
-                  <h2 className="font-semibold text-slate-800 text-xl tracking-tight truncate">
+                  <h2 className="font-semibold text-slate-800 text-lg sm:text-xl tracking-tight truncate">
                     {getPolicyHolderName(selectedClaim.userNic)}
                   </h2>
                   <div className="flex flex-wrap items-center gap-2 mt-2">

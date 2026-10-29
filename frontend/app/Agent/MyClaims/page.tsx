@@ -856,29 +856,29 @@ export default function AgentMyClaims() {
       <Navbar />
 
       {/* Styled curved header matching mockup */}
-      <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
-        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 mt-6 sm:mt-8 relative">
+        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-4 sm:right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[50px] sm:rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           {/* Mockup dark slate overlay */}
           <div className="absolute inset-0 bg-slate-900/35" />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
         </div>
 
         {/* Text content */}
-        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-          <h1 className="text-white text-3xl md:text-[40px] font-semibold tracking-tight leading-none">
+        <header className="relative z-10 h-[180px] sm:h-[210px] flex flex-col justify-center pl-2 sm:pl-4 md:pl-8 select-none">
+          <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-semibold tracking-tight leading-none">
             {t.title}
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-2.5 sm:mt-3.5 tracking-wide opacity-95">
             {t.subtitle}
           </p>
         </header>
       </div>
 
       {/* Search and Tab Filters Section */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-6 md:px-16 py-10 relative z-20 flex flex-col gap-8">
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 md:px-16 py-8 sm:py-10 relative z-20 flex flex-col gap-6 sm:gap-8">
         
         {/* Horizontal Top Controls Row */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-2 select-none">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6 mb-2 select-none">
           {/* Search Input */}
           <div className="relative w-full max-w-[420px] bg-slate-50 hover:bg-white focus-within:bg-white border border-slate-200 rounded-full pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-sm focus-within:shadow-md focus-within:border-cyan-500 focus-within:ring-4 focus-within:ring-cyan-500/10">
             <span className="text-slate-400 flex items-center justify-center">
@@ -1017,10 +1017,10 @@ export default function AgentMyClaims() {
                 return (
                   <div
                     key={claim._id}
-                    className={`relative overflow-hidden bg-white/70 backdrop-blur-sm border border-slate-100 rounded-3xl p-6 pl-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-md hover:border-slate-200 hover:bg-white hover:scale-[1.005] transition-all duration-200 group ${borderLeft}`}
+                    className={`relative overflow-hidden bg-white/70 backdrop-blur-sm border border-slate-100 rounded-2xl sm:rounded-3xl p-4 sm:p-6 pl-5 sm:pl-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6 shadow-[0_4px_20px_rgba(0,0,0,0.01)] hover:shadow-md hover:border-slate-200 hover:bg-white hover:scale-[1.005] transition-all duration-200 group ${borderLeft}`}
                   >
                     {/* Main content grid */}
-                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 items-center">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-5 items-center">
                       
                       {/* Claim Reference & Badges */}
                       <div className="flex flex-col gap-1 min-w-0">
@@ -1072,7 +1072,7 @@ export default function AgentMyClaims() {
                         markClaimAsRead(claim._id, viewedClaims, setViewedClaims, "agent");
                         setSelectedClaim(claim);
                       }}
-                      className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-semibold py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 self-start lg:self-center"
+                      className="bg-[#000080] hover:bg-[#00ddff] hover:text-black hover:shadow-md text-white text-xs font-semibold py-2.5 sm:py-3 px-6 rounded-full transition-all cursor-pointer border-none flex-shrink-0 w-full sm:w-auto self-stretch lg:self-center text-center"
                     >
                       {t.viewDetails}
                     </button>
@@ -1086,21 +1086,21 @@ export default function AgentMyClaims() {
       </main>
       {/* Detailed Claim Modal & Sub-modals (Matching Branch Claims Portal layout) */}
       {selectedClaim && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 transition-all duration-300">
           
           {/* SUB-MODAL 1: DOCUMENTS */}
           {activeSubModal === "documents" && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[800px] h-[650px] max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[32px] w-full max-w-[800px] h-full sm:h-[650px] max-h-[92vh] sm:max-h-[90vh] shadow-2xl flex flex-col relative transition-all duration-300 overflow-hidden">
               {/* Header */}
-              <div className="px-8 pt-6 pb-2 select-none bg-white">
-                <h2 className="text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
+              <div className="px-4 sm:px-8 pt-5 sm:pt-6 pb-2 select-none bg-white">
+                <h2 className="text-[20px] sm:text-[24px] font-semibold text-slate-900 tracking-tight leading-none">
                   Documents - {selectedClaim.claimNumber}
                 </h2>
               </div>
-              <div className="border-b border-black mx-8 mb-6" />
+              <div className="border-b border-black mx-4 sm:mx-8 mb-4 sm:mb-6" />
 
               {/* Body */}
-              <div className="px-8 pb-8 flex-1 overflow-y-auto space-y-6">
+              <div className="px-4 sm:px-8 pb-6 sm:pb-8 flex-1 overflow-y-auto space-y-6">
                 <div className="text-left font-bold text-slate-800 space-y-1.5 text-[13px] select-none leading-relaxed">
                   <p>Vehicle No : <span className="font-medium text-slate-600">{formatPlate(selectedClaim.vehiclePlate)}</span></p>
                 </div>
@@ -1338,7 +1338,7 @@ export default function AgentMyClaims() {
               </div>
 
               {/* Footer */}
-              <div className="px-8 py-4 bg-white border-t border-slate-200 flex justify-end flex-shrink-0">
+              <div className="px-4 sm:px-8 py-3.5 sm:py-4 bg-white border-t border-slate-200 flex justify-end flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setActiveSubModal(null)}
@@ -1352,13 +1352,13 @@ export default function AgentMyClaims() {
 
           {/* MAIN DETAILS MODAL */}
           {activeSubModal === null && (
-            <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-[780px] max-h-[90vh] p-8 shadow-2xl relative flex flex-col transition-all duration-300 select-none">
+            <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-[32px] w-full max-w-[780px] max-h-[92vh] sm:max-h-[90vh] p-4 sm:p-6 md:p-8 shadow-2xl relative flex flex-col transition-all duration-300 select-none">
               
               {/* Close Button X */}
               <button
                 type="button"
                 onClick={() => setSelectedClaim(null)}
-                className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent"
+                className="absolute top-4 right-4 sm:top-6 sm:right-6 text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent"
                 title="Close"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
@@ -1763,12 +1763,12 @@ export default function AgentMyClaims() {
 
               {/* Action Buttons: Accept / Decline */}
               {(selectedClaim.currentStep === 2 || selectedClaim.currentStep === 1) && selectedClaim.status !== "Approved" && selectedClaim.status !== "Rejected" && (
-                <div className="flex items-center gap-4 mt-6 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 mt-6 flex-shrink-0">
                   <button
                     type="button"
                     onClick={() => handleAcceptClaim(selectedClaim._id)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
                     <HugeiconsIcon icon={Tick01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     Accept Assignment
@@ -1777,7 +1777,7 @@ export default function AgentMyClaims() {
                     type="button"
                     onClick={() => handleDeclineClaim(selectedClaim._id, selectedClaim.claimNumber)}
                     disabled={isAcceptingClaim}
-                    className="flex-1 bg-red-650 hover:bg-red-750 text-white font-semibold text-sm py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
+                    className="w-full sm:flex-1 bg-red-650 hover:bg-red-750 text-white font-semibold text-sm py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50 border-none"
                   >
                     <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
                     Decline Assignment

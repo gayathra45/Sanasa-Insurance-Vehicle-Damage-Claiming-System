@@ -430,24 +430,24 @@ export default function UploadDocumentsPage() {
       <PolicyHolderNavbar />
 
       {/* Styled curved header matching the mockup exactly */}
-      <div className="max-w-4xl w-full mx-auto px-6 md:px-12 mt-8 relative">
-        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+      <div className="max-w-4xl w-full mx-auto px-4 sm:px-6 md:px-12 mt-6 sm:mt-8 relative">
+        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-4 sm:right-6 md:right-12 bg-[url('/newclaim1.webp')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
           <div className="absolute inset-0 bg-slate-900/35" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
         </div>
 
-        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
-          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+        <header className="relative z-10 h-[180px] sm:h-[210px] flex flex-col justify-center pl-2 sm:pl-4 md:pl-8 select-none">
+          <h1 className="text-white text-2xl sm:text-3xl md:text-[40px] font-bold tracking-tight leading-none">
             File New Claim
           </h1>
-          <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
+          <p className="text-slate-200 text-xs md:text-sm font-normal mt-2.5 sm:mt-3.5 tracking-wide opacity-95">
             Report an accident or damage incident
           </p>
         </header>
       </div>
 
       {/* Main Form Content */}
-      <main className="flex-1 max-w-4xl w-full mx-auto px-6 md:px-12 py-10">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 md:px-12 py-8 sm:py-10">
         <form onSubmit={handleSubmit} className="flex flex-col gap-10">
           
           {/* Section: Upload Documents */}
@@ -485,10 +485,10 @@ export default function UploadDocumentsPage() {
           </section>
 
           {/* Action Button Row */}
-          <div className="flex flex-row justify-between items-center mt-6 mb-10">
+          <div className="flex flex-row justify-between items-center gap-3 mt-6 mb-10">
             <Link
               href="/Policy_Holder/New_Claim"
-              className={`bg-[#000080] hover:bg-[#000066] text-white font-medium text-sm md:text-base px-10 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center justify-center ${
+              className={`bg-[#000080] hover:bg-[#000066] text-white font-medium text-xs sm:text-base px-6 sm:px-10 py-3 sm:py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] no-underline shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center justify-center ${
                 isSubmitting ? "pointer-events-none opacity-50" : ""
               }`}
             >
@@ -497,7 +497,7 @@ export default function UploadDocumentsPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="bg-[#000080] hover:bg-[#000066] disabled:bg-[#000080]/50 text-white font-medium text-sm md:text-base px-12 py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(0,0,128,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[140px]"
+              className="bg-[#000080] hover:bg-[#000066] disabled:bg-[#000080]/50 text-white font-medium text-xs sm:text-base px-8 sm:px-12 py-3 sm:py-3.5 rounded-full transition-all duration-150 active:scale-[0.97] shadow-[0_4px_12px_rgba(0,0,128,0.25)] border-none cursor-pointer flex items-center justify-center min-w-[120px] sm:min-w-[140px]"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
@@ -516,28 +516,28 @@ export default function UploadDocumentsPage() {
 
       {/* Success Modal Popup matching the mockup exactly */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
-          <div className="bg-[#e2e8f0] border border-slate-300 rounded-[35px] md:rounded-[45px] w-full max-w-[480px] p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col items-center select-none relative transition-all duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-3 sm:p-4 transition-all duration-300">
+          <div className="bg-[#e2e8f0] border border-slate-300 rounded-3xl sm:rounded-[45px] w-full max-w-[480px] p-6 sm:p-8 md:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex flex-col items-center select-none relative transition-all duration-300">
             {/* Green Check Circle */}
-            <div className="w-20 h-20 bg-[#00b050] rounded-full flex items-center justify-center shadow-md select-none">
-              <HugeiconsIcon icon={Tick01Icon} className="w-10 h-10 text-white" strokeWidth={4.5} />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#00b050] rounded-full flex items-center justify-center shadow-md select-none">
+              <HugeiconsIcon icon={Tick01Icon} className="w-8 h-8 sm:w-10 sm:h-10 text-white" strokeWidth={4.5} />
             </div>
 
             {/* Thank You & Success messages */}
-            <h2 className="text-xl font-semibold text-[#0f2d3a] tracking-tight mt-6 leading-none">
+            <h2 className="text-lg sm:text-xl font-semibold text-[#0f2d3a] tracking-tight mt-5 sm:mt-6 leading-none">
               Thank You.
             </h2>
-            <p className="text-lg font-medium text-[#0f2d3a] tracking-tight mt-2 leading-none">
+            <p className="text-base sm:text-lg font-medium text-[#0f2d3a] tracking-tight mt-2 leading-none">
               Application Submitted!
             </p>
 
             {/* Reference Number Pill */}
-            <div className="bg-black text-white font-semibold text-[14px] px-7 py-2.5 rounded-full mt-7 shadow-md tracking-wider">
+            <div className="bg-black text-white font-semibold text-[13px] sm:text-[14px] px-6 sm:px-7 py-2 sm:py-2.5 rounded-full mt-6 sm:mt-7 shadow-md tracking-wider">
               {generatedClaimNumber}
             </div>
 
             {/* Sub-text description */}
-            <p className="text-slate-600 text-xs md:text-[13px] font-normal text-center leading-relaxed mt-6 max-w-[320px] select-none">
+            <p className="text-slate-600 text-xs md:text-[13px] font-normal text-center leading-relaxed mt-5 sm:mt-6 max-w-[320px] select-none">
               Your insurance application has been received. Our office staff will review your documents.
             </p>
 
@@ -547,7 +547,7 @@ export default function UploadDocumentsPage() {
                 router.refresh();
                 router.push("/Policy_Holder/Home");
               }}
-              className="mt-9 self-start bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-[14px] px-8 py-3.5 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center gap-3.5 border-none cursor-pointer"
+              className="mt-7 sm:mt-9 self-center sm:self-start bg-[#000080] hover:bg-[#000066] active:scale-[0.97] text-white font-medium text-[13px] sm:text-[14px] px-6 sm:px-8 py-3 sm:py-3.5 rounded-full transition-all duration-150 shadow-[0_4px_12px_rgba(0,0,128,0.25)] flex items-center justify-center gap-3.5 border-none cursor-pointer w-full sm:w-auto"
             >
               <span>Back to Home</span>
             </button>

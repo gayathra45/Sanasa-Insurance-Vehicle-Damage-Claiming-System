@@ -538,17 +538,17 @@ export default function PolicyHolderHome() {
           </div>
 
           {/* Action Buttons - Highly highlighted with glowing drop shadows */}
-          <div className="flex flex-row justify-center gap-6 mt-2">
+          <div className="flex flex-wrap sm:flex-nowrap justify-center gap-3 sm:gap-6 mt-2 w-full max-w-md mx-auto">
             <Link
               href="/Policy_Holder/New_Claim"
-              className="bg-red-600 hover:bg-red-700 text-white font-bold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-sm sm:text-base md:text-lg px-6 sm:px-10 py-3.5 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline flex-1 sm:flex-none text-center"
               style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
             >
               {t.newClaim}
             </Link>
             <Link
               href="/Policy_Holder/TrackClaims"
-              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-bold text-base md:text-lg px-10 py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline"
+              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-bold text-sm sm:text-base md:text-lg px-6 sm:px-10 py-3.5 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] no-underline flex-1 sm:flex-none text-center"
               style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
             >
               {t.trackClaim}
@@ -559,10 +559,10 @@ export default function PolicyHolderHome() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 relative z-20">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 py-8 sm:py-10 relative z-20">
         
         {/* Three Stat Cards - Overlapping header area & clickable buttons */}
-        <section className="-mt-[60px] md:-mt-[50px] grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <section className="-mt-[40px] sm:-mt-[60px] md:-mt-[50px] grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8 sm:mb-12">
           
           {/* Total Claims */}
           <Link

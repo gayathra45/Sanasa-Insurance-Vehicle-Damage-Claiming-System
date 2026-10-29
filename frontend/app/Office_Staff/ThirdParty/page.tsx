@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
 import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
+import HeaderNotificationBell from "@/app/Components/HeaderNotificationBell";
 import SimpleLoader from "@/app/Components/SimpleLoader";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -381,33 +382,27 @@ export default function OfficeStaffThirdPartyPage() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Header */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
-          <div className="flex items-center gap-4">
+        <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => {
                 if (typeof window !== "undefined") {
                   window.dispatchEvent(new CustomEvent("open-mobile-menu"));
                 }
               }}
-              className="lg:hidden p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+              className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
             >
-              <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" />
+              <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
             </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-[#102A43]">Third-Party Drivers</h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#102A43]/10 text-[#102A43]">
-                  <HugeiconsIcon icon={Building01Icon} className="w-3 h-3" />
-                  {branch || "Branch"}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Review driver registration requests, verify KYC documents, and issue secure digital NFC passes.
-              </p>
-            </div>
+            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+              <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
+                {branch || "Galle"} Branch
+              </span>
+              <span className="hidden md:inline text-slate-400 font-medium">— Third-Party Drivers</span>
+            </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => staffInfo?._id && loadRequests(staffInfo._id, branch)}
               disabled={refreshing}
@@ -420,6 +415,7 @@ export default function OfficeStaffThirdPartyPage() {
               />
               <span>Refresh</span>
             </button>
+            <HeaderNotificationBell href="/Office_Staff/Notifications" />
             <UserAvatarDropdown userType="office_staff" />
           </div>
         </header>
@@ -443,6 +439,12 @@ export default function OfficeStaffThirdPartyPage() {
 
         {/* Body Content */}
         <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
+          {/* Subtitle / Context Bar */}
+          <div className="-mt-1 mb-1">
+            <p className="text-xs text-slate-500 font-normal">
+              Review driver registration requests, verify KYC documents, and issue secure digital NFC passes.
+            </p>
+          </div>
           {/* Quick Metrics Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
