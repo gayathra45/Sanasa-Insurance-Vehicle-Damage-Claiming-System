@@ -846,4 +846,209 @@ export async function sendRenewalPaymentSuccessEmails({ user, vehiclePlate, rene
   }
 }
 
+/**
+ * Send Third-Party Driver Approval Email to Policy Holder
+ */
+export async function sendThirdPartyDriverApprovalEmail({ request, accessUrl }) {
+  try {
+    if (!request?.policyHolderEmail) return;
+
+    const formattedTime = formatSriLankaDateTime(new Date());
+    const vehiclesStr = (request.selectedVehicles || [])
+      .map((v) => `${v.numberPlate}${v.model ? ` (${v.company || ""} ${v.model})` : ""}`)
+      .join(", ");
+
+    const subject = `[Sanasa Insurance] Third-Party Driver Authorization Approved — ${request.driverDetails.fullName}`;
+
+    const bodyHtml = `
+      <h2 style="color: #059669; margin-top: 0;">Third-Party Driver Authorization Approved</h2>
+      <p>Dear <strong>${request.policyHolderName || "Policyholder"}</strong>,</p>
+      <p>
+        Your application to authorize a third-party driver under your insurance policy has been 
+        <strong>reviewed and approved</strong> by the <strong>${request.branch} Branch Office</strong>.
+      </p>
+
+      <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 560px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #ecfdf5;">
+          <td style="padding: 12px 16px; font-weight: 700; width: 38%; color: #065f46;">Approval Status:</td>
+          <td style="padding: 12px 16px; color: #059669; font-weight: 800;">APPROVED & ACTIVE</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Driver Name:</td>
+          <td style="padding: 12px 16px; color: #1a202c; font-weight: 700;">${request.driverDetails.fullName}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Driver Mobile / NIC:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${request.driverDetails.phoneNumber} | ${request.driverDetails.nicNumber || "Verified"}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Authorized Vehicles:</td>
+          <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehiclesStr}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Approved Branch:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${request.branch} Branch Office</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Reference Number:</td>
+          <td style="padding: 12px 16px; color: #1a202c; font-family: monospace;">${request.requestReference}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Approval Timestamp:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${formattedTime}</td>
+        </tr>
+      </table>
+
+      <div style="background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 14px; border-radius: 6px; font-size: 14px; color: #065f46; margin: 20px 0;">
+        <strong>Digital Pass Issued:</strong> An automated SMS containing the secure digital pass access link has been dispatched to <strong>${request.driverDetails.fullName}</strong> at <strong>${request.driverDetails.phoneNumber}</strong>.
+      </div>
+
+      <p style="margin-top: 15px; font-size: 13px; color: #4a5568;">
+        <strong>Driver Access URL:</strong><br />
+        <a href="${accessUrl}" style="color: #0284c7; word-break: break-all;">${accessUrl}</a>
+      </p>
+
+      <p style="margin-top: 20px; font-size: 13px; color: #718096;">
+        You can revoke or manage this driver authorization anytime by logging into your Sanasa portal under <em>My Vehicles</em>.
+      </p>
+    `;
+
+    const htmlBody = getBaseTemplate(subject, bodyHtml, `Sanasa General Insurance • ${request.branch} Branch`);
+    await sendEmail(request.policyHolderEmail.trim().toLowerCase(), subject, htmlBody);
+    console.log(`✅ Third-party driver approval email sent to Policyholder: ${request.policyHolderEmail}`);
+  } catch (error) {
+    console.error("❌ Error sending third-party driver approval email:", error);
+  }
+}
+
+/**
+ * Send Third-Party Driver Rejection Email to Policy Holder
+ */
+export async function sendThirdPartyDriverRejectionEmail({ request, rejectionReason }) {
+  try {
+    if (!request?.policyHolderEmail) return;
+
+    const formattedTime = formatSriLankaDateTime(new Date());
+    const vehiclesStr = (request.selectedVehicles || [])
+      .map((v) => v.numberPlate)
+      .join(", ");
+
+    const subject = `[Sanasa Insurance] Third-Party Driver Authorization Status — ${request.driverDetails.fullName}`;
+
+    const bodyHtml = `
+      <h2 style="color: #dc2626; margin-top: 0;">Third-Party Driver Application Not Approved</h2>
+      <p>Dear <strong>${request.policyHolderName || "Policyholder"}</strong>,</p>
+      <p>
+        Your application to authorize driver <strong>${request.driverDetails.fullName}</strong> under vehicle(s) <strong>${vehiclesStr}</strong> 
+        was reviewed by the <strong>${request.branch} Branch Office</strong> and could not be approved at this time.
+      </p>
+
+      <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 560px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #fef2f2;">
+          <td style="padding: 12px 16px; font-weight: 700; width: 38%; color: #991b1b;">Review Decision:</td>
+          <td style="padding: 12px 16px; color: #dc2626; font-weight: 800;">NOT APPROVED</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Driver Name:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${request.driverDetails.fullName}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Vehicle Plate(s):</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${vehiclesStr}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #fff1f2;">
+          <td style="padding: 12px 16px; font-weight: 700; color: #9f1239;">Branch Reason:</td>
+          <td style="padding: 12px 16px; color: #be123c; font-weight: 600;">${rejectionReason || "Identity or driving licence verification incomplete."}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Reviewing Branch:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${request.branch} Branch Office</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Processed At:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${formattedTime}</td>
+        </tr>
+      </table>
+
+      <p style="margin-top: 15px; font-size: 14px; color: #4a5568;">
+        Please log into the <em>My Vehicles</em> portal to review your driver's uploaded documents and re-submit with clear photos of the NIC and Driving Licence.
+      </p>
+    `;
+
+    const htmlBody = getBaseTemplate(subject, bodyHtml, `Sanasa General Insurance • ${request.branch} Branch`);
+    await sendEmail(request.policyHolderEmail.trim().toLowerCase(), subject, htmlBody);
+    console.log(`✅ Third-party driver rejection email sent to Policyholder: ${request.policyHolderEmail}`);
+  } catch (error) {
+    console.error("❌ Error sending third-party driver rejection email:", error);
+  }
+}
+
+/**
+ * Send Third-Party Driver Activity Email to Policy Holder (Pass Accessed / Verified)
+ */
+export async function sendThirdPartyDriverActivityEmail({ request, activityType, accessMeta = {} }) {
+  try {
+    if (!request?.policyHolderEmail) return;
+
+    const formattedTime = formatSriLankaDateTime(new Date());
+    const vehiclesStr = (request.selectedVehicles || [])
+      .map((v) => v.numberPlate)
+      .join(", ");
+
+    const subject = `[Sanasa Activity Alert] Digital Pass Accessed — Driver: ${request.driverDetails.fullName}`;
+
+    const bodyHtml = `
+      <h2 style="color: #0f2d4a; margin-top: 0;">Driver Digital Pass Activity Alert</h2>
+      <p>Dear <strong>${request.policyHolderName || "Policyholder"}</strong>,</p>
+      <p>
+        This is an automated activity notification regarding your authorized third-party driver under Sanasa General Insurance:
+      </p>
+
+      <table class="data-table" style="border-collapse: collapse; width: 100%; max-width: 560px; margin: 20px 0; font-size: 14px; border: 1px solid #edf2f7; border-radius: 8px; overflow: hidden;">
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; width: 38%; color: #4a5568;">Activity Event:</td>
+          <td style="padding: 12px 16px; color: #0284c7; font-weight: 700;">${activityType || "Digital Driver Pass Accessed"}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Driver Name:</td>
+          <td style="padding: 12px 16px; color: #1a202c; font-weight: 700;">${request.driverDetails.fullName}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Covered Vehicles:</td>
+          <td style="padding: 12px 16px; color: #0f2d4a; font-weight: 700;">${vehiclesStr}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Reference:</td>
+          <td style="padding: 12px 16px; color: #1a202c; font-family: monospace;">${request.requestReference}</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #edf2f7; background-color: #f7fafc;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Access Timestamp:</td>
+          <td style="padding: 12px 16px; color: #1a202c;">${formattedTime} (Sri Lanka Time)</td>
+        </tr>
+        ${
+          accessMeta.ipAddress
+            ? `
+        <tr style="border-bottom: 1px solid #edf2f7;">
+          <td style="padding: 12px 16px; font-weight: 600; color: #4a5568;">Device / IP:</td>
+          <td style="padding: 12px 16px; color: #4a5568; font-size: 12px;">${accessMeta.ipAddress}</td>
+        </tr>
+        `
+            : ""
+        }
+      </table>
+
+      <div style="background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 12px; border-radius: 6px; font-size: 13px; color: #1e40af; margin: 20px 0;">
+        ℹ️ This alert was sent because the driver's digital verification pass was opened or scanned by traffic authorities. If this activity was unauthorized, you can immediately revoke access from your Sanasa Portal.
+      </div>
+    `;
+
+    const htmlBody = getBaseTemplate(subject, bodyHtml, `Sanasa General Insurance • Security & Alerts`);
+    await sendEmail(request.policyHolderEmail.trim().toLowerCase(), subject, htmlBody);
+    console.log(`✅ Third-party driver activity email sent to Policyholder: ${request.policyHolderEmail}`);
+  } catch (error) {
+    console.error("❌ Error sending third-party driver activity email:", error);
+  }
+}
+
+
 

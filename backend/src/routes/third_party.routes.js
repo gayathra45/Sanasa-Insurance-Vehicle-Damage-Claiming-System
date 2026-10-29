@@ -5,7 +5,12 @@ import User from "../models/user.model.js";
 import OfficeStaff from "../models/office_staff.model.js";
 import ThirdPartyRegistration from "../models/third_party_registration.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
-import { normalizeSriLankanPhone } from "../services/smsService.js";
+import { normalizeSriLankanPhone, sendSms } from "../services/smsService.js";
+import {
+  sendThirdPartyDriverApprovalEmail,
+  sendThirdPartyDriverRejectionEmail,
+  sendThirdPartyDriverActivityEmail
+} from "../utils/email.js";
 
 const router = express.Router();
 
@@ -663,6 +668,37 @@ router.post("/branch/approve/:requestId", async (req, res) => {
 
     await request.save();
 
+    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+
+    // 1. Send SMS to Third-Party Driver with digital pass access URL
+    if (request.driverDetails?.phoneNumber) {
+      sendSms({
+        phone: request.driverDetails.phoneNumber,
+        message: `Sanasa Insurance: You have been approved as an authorized driver for vehicle(s) ${plates} by ${request.policyHolderName}. Access your Digital Driver Pass here: ${accessUrl}`,
+        recipientType: "ThirdPartyDriver",
+        recipientName: request.driverDetails.fullName,
+        eventType: "third_party_driver_approved"
+      }).catch((e) => console.warn("Driver approval SMS error:", e.message));
+    }
+
+    // 2. Send SMS to Policyholder (Vehicle Owner)
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `Sanasa Insurance: Your Third-Party Driver authorization for ${request.driverDetails.fullName} on vehicle(s) ${plates} has been APPROVED by ${request.branch} Branch. Digital pass has been issued.`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_owner_approved"
+      }).catch((e) => console.warn("Policyholder approval SMS error:", e.message));
+    }
+
+    // 3. Send Email to Policyholder (Vehicle Owner)
+    if (request.policyHolderEmail) {
+      sendThirdPartyDriverApprovalEmail({ request, accessUrl }).catch((e) =>
+        console.warn("Policyholder approval Email error:", e.message)
+      );
+    }
+
     return res.json({
       success: true,
       message: "Third-party driver registration approved successfully.",
@@ -721,6 +757,38 @@ router.post("/branch/reject/:requestId", async (req, res) => {
 
     await request.save();
 
+    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+    const reasonText = rejectionReason.trim();
+
+    // 1. Send SMS to Third-Party Driver
+    if (request.driverDetails?.phoneNumber) {
+      sendSms({
+        phone: request.driverDetails.phoneNumber,
+        message: `Sanasa Insurance: Your third-party driver request for vehicle(s) ${plates} was not approved by the branch. Reason: ${reasonText}`,
+        recipientType: "ThirdPartyDriver",
+        recipientName: request.driverDetails.fullName,
+        eventType: "third_party_driver_rejected"
+      }).catch((e) => console.warn("Driver rejection SMS error:", e.message));
+    }
+
+    // 2. Send SMS to Policyholder (Vehicle Owner)
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `Sanasa Insurance: Driver authorization for ${request.driverDetails.fullName} on vehicle(s) ${plates} was not approved. Reason: ${reasonText}`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_owner_rejected"
+      }).catch((e) => console.warn("Policyholder rejection SMS error:", e.message));
+    }
+
+    // 3. Send Email to Policyholder (Vehicle Owner)
+    if (request.policyHolderEmail) {
+      sendThirdPartyDriverRejectionEmail({ request, rejectionReason: reasonText }).catch((e) =>
+        console.warn("Policyholder rejection Email error:", e.message)
+      );
+    }
+
     return res.json({
       success: true,
       message: "Registration request rejected.",
@@ -767,6 +835,108 @@ router.post("/branch/revoke-token/:requestId", async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ error: "Failed to revoke token." });
+  }
+});
+
+/**
+ * GET /api/third-party/driver-pass/:token
+ * Public verified access to Digital Driver Authorization Pass
+ * Notifies policyholder and driver of activity
+ */
+router.get("/driver-pass/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    if (!token) {
+      return res.status(400).json({ error: "Access token is required." });
+    }
+
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    const request = await ThirdPartyRegistration.findOne({
+      "secureAccess.tokenHash": tokenHash
+    });
+
+    if (!request) {
+      return res.status(404).json({ error: "Digital pass not found or invalid token." });
+    }
+
+    if (request.secureAccess?.isRevoked) {
+      return res.status(403).json({
+        error: "This digital driver pass has been revoked by the policyholder or branch administration."
+      });
+    }
+
+    if (request.status !== "Approved") {
+      return res.status(403).json({
+        error: `Digital pass is not active. Current status: ${request.status}`
+      });
+    }
+
+    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+    const userAgent = req.headers["user-agent"] || "";
+
+    // Record activity log
+    request.accessLogs = request.accessLogs || [];
+    request.accessLogs.push({
+      accessedAt: new Date(),
+      ipAddress: String(clientIp).split(",")[0].trim(),
+      userAgent
+    });
+    await request.save();
+
+    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+
+    // 1. Send SMS to Policyholder (Owner) about driver activity
+    if (request.policyHolderPhone) {
+      sendSms({
+        phone: request.policyHolderPhone,
+        message: `Sanasa Alert: Authorized driver ${request.driverDetails.fullName} has accessed their Digital Driver Pass for vehicle(s) ${plates}.`,
+        recipientType: "PolicyHolder",
+        recipientName: request.policyHolderName,
+        eventType: "third_party_pass_accessed"
+      }).catch((e) => console.warn("Policyholder access SMS error:", e.message));
+    }
+
+    // 2. Send SMS to Third-Party Driver
+    if (request.driverDetails?.phoneNumber) {
+      sendSms({
+        phone: request.driverDetails.phoneNumber,
+        message: `Sanasa Insurance: Digital Driver Pass verification accessed for vehicle(s) ${plates}. Pass valid under Sanasa General Insurance policy.`,
+        recipientType: "ThirdPartyDriver",
+        recipientName: request.driverDetails.fullName,
+        eventType: "third_party_driver_activity"
+      }).catch((e) => console.warn("Driver access SMS error:", e.message));
+    }
+
+    // 3. Send Email to Policyholder (Owner)
+    if (request.policyHolderEmail) {
+      sendThirdPartyDriverActivityEmail({
+        request,
+        activityType: "Digital Driver Pass Verification Accessed",
+        accessMeta: { ipAddress: String(clientIp).split(",")[0].trim(), userAgent }
+      }).catch((e) => console.warn("Policyholder activity Email error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      pass: {
+        reference: request.requestReference,
+        policyHolderName: request.policyHolderName,
+        policyHolderNic: request.policyHolderNic,
+        branch: request.branch,
+        driverName: request.driverDetails.fullName,
+        driverNic: request.driverDetails.nicNumber,
+        driverPhone: request.driverDetails.phoneNumber,
+        driverAddress: request.driverDetails.residentialAddress,
+        authorizedVehicles: request.selectedVehicles,
+        approvalDate: request.branchReview?.reviewedAt || request.updatedAt,
+        status: request.status,
+        verificationToken: token.substring(0, 12).toUpperCase(),
+        totalAccessCount: request.accessLogs.length
+      }
+    });
+  } catch (err) {
+    console.error("GET driver-pass error:", err);
+    return res.status(500).json({ error: "Failed to load digital driver pass." });
   }
 });
 

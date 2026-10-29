@@ -137,6 +137,13 @@ const thirdPartyRegistrationSchema = new mongoose.Schema(
       revokedAt: { type: Date, default: null },
       revokedBy: { type: String, default: "" }
     },
+    accessLogs: [
+      {
+        accessedAt: { type: Date, default: Date.now },
+        ipAddress: { type: String, default: "" },
+        userAgent: { type: String, default: "" }
+      }
+    ],
     idempotencyKey: {
       type: String,
       index: true,
