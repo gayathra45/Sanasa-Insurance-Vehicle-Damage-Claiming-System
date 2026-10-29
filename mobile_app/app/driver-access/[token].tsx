@@ -11,13 +11,17 @@ import {
   Alert,
   SafeAreaView,
   Platform,
-  StatusBar
+  StatusBar,
+  Dimensions
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { API_BASE_URL } from "../_config";
+
+const { width: SCREEN_W } = Dimensions.get("window");
 
 interface AuthorizedVehicle {
   numberPlate: string;
@@ -51,6 +55,38 @@ interface ClaimItem {
 }
 
 type TabType = "dashboard" | "vehicles" | "submit" | "claims" | "pass";
+
+function formatPlate(plate: string) {
+  if (!plate) return "";
+  const cleaned = plate.trim();
+  if (cleaned.includes("-")) return cleaned.toUpperCase();
+  const m = cleaned.match(/^(.*[A-Za-z]+)(\d+)$/);
+  if (m) return `${m[1].trim().toUpperCase()}-${m[2]}`;
+  return cleaned.toUpperCase();
+}
+
+function getVehicleTheme(type: string) {
+  const t = (type || "").toLowerCase().trim();
+  if (t.includes("bike") || t.includes("motorcycle") || t.includes("scooter")) {
+    return { icon: "motorbike", color: "#e11d48", bg: "#ffe4e6", border: "#fecdd3" };
+  }
+  if (t.includes("van") || t.includes("minibus")) {
+    return { icon: "van-utility", color: "#d97706", bg: "#fef3c7", border: "#fde68a" };
+  }
+  if (t.includes("bus")) {
+    return { icon: "bus", color: "#9333ea", bg: "#f3e8ff", border: "#e9d5ff" };
+  }
+  if (t.includes("truck") || t.includes("lorry")) {
+    return { icon: "truck", color: "#475569", bg: "#f1f5f9", border: "#e2e8f0" };
+  }
+  if (t.includes("suv")) {
+    return { icon: "car-estate", color: "#6366f1", bg: "#e0e7ff", border: "#c7d2fe" };
+  }
+  if (t.includes("tuk") || t.includes("three") || t.includes("rickshaw")) {
+    return { icon: "rickshaw", color: "#059669", bg: "#d1fae5", border: "#a7f3d0" };
+  }
+  return { icon: "car-side", color: "#0284c7", bg: "#e0f2fe", border: "#bae6fd" };
+}
 
 export default function MobileDriverPortalScreen() {
   const router = useRouter();
@@ -99,10 +135,8 @@ export default function MobileDriverPortalScreen() {
 
         const sToken = data.sessionToken;
         setSessionToken(sToken);
-        // Save isolated from normal policyholder session
         await AsyncStorage.setItem("@tp_driver_restricted_session", sToken);
 
-        // Load profile, vehicles, and claims
         await loadData(sToken);
       } catch (err: any) {
         setError(err.message || "Failed to initialize driver portal.");
@@ -201,7 +235,7 @@ export default function MobileDriverPortalScreen() {
         throw new Error(data.error || "Failed to submit claim.");
       }
 
-      Alert.alert("Claim Lodged", `Claim Reference: ${data.claimNumber}\nRouted to ${profile?.branch || "regional"} branch.`);
+      Alert.alert("Claim Lodged", `Claim Reference: ${data.claimNumber}\nAssigned to ${profile?.branch || "regional"} branch queue.`);
       setClaimDesc("");
       setClaimLocation("");
       setAccidentPhotoBase64("");
@@ -215,23 +249,32 @@ export default function MobileDriverPortalScreen() {
   };
 
   const handleLogout = async () => {
-    if (sessionToken) {
-      try {
-        await fetch(`${API_BASE_URL}/api/third-party/portal/logout`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${sessionToken}` }
-        });
-      } catch {}
-    }
-    await AsyncStorage.removeItem("@tp_driver_restricted_session");
-    router.replace("/");
+    Alert.alert("Logout", "Are you sure you want to exit the driver portal?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          if (sessionToken) {
+            try {
+              await fetch(`${API_BASE_URL}/api/third-party/portal/logout`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${sessionToken}` }
+              });
+            } catch {}
+          }
+          await AsyncStorage.removeItem("@tp_driver_restricted_session");
+          router.replace("/");
+        }
+      }
+    ]);
   };
 
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#00ddff" />
-        <Text style={styles.loadingText}>Verifying Digital Pass & Session...</Text>
+        <ActivityIndicator size="large" color="#0284c7" />
+        <Text style={styles.loadingText}>Verifying Authorized Driver Pass...</Text>
       </View>
     );
   }
@@ -239,272 +282,397 @@ export default function MobileDriverPortalScreen() {
   if (error || !sessionToken) {
     return (
       <View style={styles.centerContainer}>
-        <Ionicons name="alert-circle-outline" size={54} color="#f43f5e" />
+        <View style={styles.errorIconCircle}>
+          <Ionicons name="alert-circle-outline" size={42} color="#dc2626" />
+        </View>
         <Text style={styles.errorTitle}>Access Link Inactive</Text>
         <Text style={styles.errorDesc}>{error || "This driver link has been revoked or expired."}</Text>
-        <TouchableOpacity style={styles.btnSecondary} onPress={() => router.replace("/")}>
-          <Text style={styles.btnSecondaryText}>Return to Home</Text>
+        <TouchableOpacity style={styles.btnPrimary} onPress={() => router.replace("/")}>
+          <Text style={styles.btnPrimaryText}>Return to Home</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  const pendingCount = claims.filter(c => c.status !== "Approved" && c.status !== "Settled" && c.status !== "Rejected").length;
+  const approvedCount = claims.filter(c => c.status === "Approved" || c.status === "Settled").length;
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
 
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoBadgeText}>S</Text>
+      {/* ========================================================================= */}
+      {/* EXACT POLICYHOLDER MOBILE HEADER (Gradient, Welcome, User Avatar) */}
+      {/* ========================================================================= */}
+      <LinearGradient colors={["#0f172a", "#1e293b"]} style={styles.headerGradient}>
+        
+        {/* Top bar with greeting & user initial */}
+        <View style={styles.topBar}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.welcomeLabel}>Welcome back,</Text>
+            <Text style={styles.welcomeName}>{profile?.driverName} 👋</Text>
           </View>
-          <View>
-            <Text style={styles.brandTitle}>SANASA INSURANCE</Text>
-            <Text style={styles.driverSubTitle}>Authorized: {profile?.driverName}</Text>
+
+          <View style={styles.headerRightActions}>
+            <View style={styles.badgeBranch}>
+              <Ionicons name="business-outline" size={12} color="#38bdf8" />
+              <Text style={styles.badgeBranchText}>{profile?.branch || "Galle"}</Text>
+            </View>
+
+            <TouchableOpacity style={styles.avatarButton} onPress={handleLogout} activeOpacity={0.85}>
+              <Text style={styles.avatarText}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
-          <Ionicons name="log-out-outline" size={18} color="#f43f5e" />
-        </TouchableOpacity>
-      </View>
+        {/* Status banner */}
+        <View style={styles.subtitleBanner}>
+          <View style={styles.dotIndicator} />
+          <Text style={styles.subtitleText} numberOfLines={2}>
+            Authorized by {profile?.policyHolderName} • All vehicles active
+          </Text>
+        </View>
 
-      {/* Navigation Tabs */}
+        {/* 3 Stat Cards (Identical to PolicyHolder mobile dashboard) */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Text style={styles.statNumber}>{claims.length}</Text>
+            <Text style={styles.statLabel}>Total Claims</Text>
+          </View>
+          <View style={[styles.statCard, styles.statCardMiddle]}>
+            <Text style={[styles.statNumber, { color: "#38bdf8" }]}>{pendingCount}</Text>
+            <Text style={styles.statLabel}>In Progress</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={[styles.statNumber, { color: "#4ade80" }]}>{approvedCount}</Text>
+            <Text style={styles.statLabel}>Approved</Text>
+          </View>
+        </View>
+      </LinearGradient>
+
+      {/* Clean Quick Action / Tab Selector */}
       <View style={styles.tabBar}>
-        {[
-          { id: "dashboard", label: "Dashboard", icon: "shield-checkmark-outline" },
-          { id: "vehicles", label: `Vehicles (${vehicles.length})`, icon: "car-outline" },
-          { id: "submit", label: "Lodge Claim", icon: "camera-outline" },
-          { id: "claims", label: `Claims (${claims.length})`, icon: "time-outline" },
-          { id: "pass", label: "Pass", icon: "card-outline" }
-        ].map((t) => (
-          <TouchableOpacity
-            key={t.id}
-            onPress={() => setActiveTab(t.id as TabType)}
-            style={[styles.tabItem, activeTab === t.id && styles.tabItemActive]}
-          >
-            <Ionicons
-              name={t.icon as any}
-              size={16}
-              color={activeTab === t.id ? "#00ddff" : "#94a3b8"}
-            />
-            <Text style={[styles.tabLabel, activeTab === t.id && styles.tabLabelActive]}>
-              {t.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Main Body */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* TAB 1: DASHBOARD */}
-        {activeTab === "dashboard" && (
-          <View style={styles.section}>
-            <View style={styles.welcomeCard}>
-              <View style={styles.verifiedPill}>
-                <View style={styles.greenDot} />
-                <Text style={styles.verifiedPillText}>AUTHORIZED DRIVER</Text>
-              </View>
-              <Text style={styles.welcomeName}>Hello, {profile?.driverName}</Text>
-              <Text style={styles.welcomeSub}>
-                Authorized by vehicle owner {profile?.policyHolderName} under Sanasa {profile?.branch} Branch.
-              </Text>
-
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
+          {[
+            { id: "dashboard", label: "Dashboard", icon: "grid-outline" },
+            { id: "vehicles", label: `Vehicles (${vehicles.length})`, icon: "car-outline" },
+            { id: "submit", label: "New Claim", icon: "add-circle-outline" },
+            { id: "claims", label: `Claims (${claims.length})`, icon: "document-text-outline" },
+            { id: "pass", label: "Digital Pass", icon: "shield-checkmark-outline" }
+          ].map((t) => {
+            const isActive = activeTab === t.id;
+            return (
               <TouchableOpacity
-                style={styles.primaryCtaBtn}
-                onPress={() => setActiveTab("submit")}
+                key={t.id}
+                onPress={() => setActiveTab(t.id as TabType)}
+                style={[styles.tabItem, isActive && styles.tabItemActive]}
               >
-                <Ionicons name="camera" size={16} color="#0f172a" />
-                <Text style={styles.primaryCtaText}>Lodge Accident Claim</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Quick Metrics */}
-            <View style={styles.metricsRow}>
-              <View style={styles.metricCard}>
-                <Text style={styles.metricVal}>{vehicles.length}</Text>
-                <Text style={styles.metricLbl}>Assigned Vehicles</Text>
-              </View>
-              <View style={styles.metricCard}>
-                <Text style={[styles.metricVal, { color: "#00ddff" }]}>{claims.length}</Text>
-                <Text style={styles.metricLbl}>Lodged Claims</Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* TAB 2: ASSIGNED VEHICLES */}
-        {activeTab === "vehicles" && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Assigned Insured Vehicles</Text>
-            {vehicles.map((v) => (
-              <View key={v.numberPlate} style={styles.vehicleCard}>
-                <View style={styles.plateBadge}>
-                  <View style={styles.goldDot} />
-                  <Text style={styles.plateText}>{v.numberPlate}</Text>
-                </View>
-                <Text style={styles.vehicleModel}>{v.company} {v.model}</Text>
-                <Text style={styles.vehicleSub}>{v.vehicleType} • {v.year} • Comprehensive Policy</Text>
-
-                <TouchableOpacity
-                  style={styles.btnSecondary}
-                  onPress={() => {
-                    setClaimPlate(v.numberPlate);
-                    setActiveTab("submit");
-                  }}
-                >
-                  <Text style={styles.btnSecondaryText}>Lodge Claim for this Vehicle</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* TAB 3: SUBMIT CLAIM */}
-        {activeTab === "submit" && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Lodge Accident Claim</Text>
-            <Text style={styles.sectionSubtitle}>Select vehicle and provide incident details</Text>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Selected Vehicle Plate</Text>
-              <View style={styles.platePickerRow}>
-                {vehicles.map((v) => (
-                  <TouchableOpacity
-                    key={v.numberPlate}
-                    style={[
-                      styles.plateOption,
-                      claimPlate === v.numberPlate && styles.plateOptionSelected
-                    ]}
-                    onPress={() => setClaimPlate(v.numberPlate)}
-                  >
-                    <Text style={claimPlate === v.numberPlate ? styles.plateOptTextActive : styles.plateOptText}>
-                      {v.numberPlate}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Incident Date (YYYY-MM-DD)</Text>
-              <TextInput
-                style={styles.input}
-                value={claimDate}
-                onChangeText={setClaimDate}
-                placeholder="2026-10-29"
-                placeholderTextColor="#64748b"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Incident Location (City/Road)</Text>
-              <TextInput
-                style={styles.input}
-                value={claimLocation}
-                onChangeText={setClaimLocation}
-                placeholder="e.g. Galle Road, Kalutara"
-                placeholderTextColor="#64748b"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Description of Incident</Text>
-              <TextInput
-                style={[styles.input, { height: 80 }]}
-                multiline
-                value={claimDesc}
-                onChangeText={setClaimDesc}
-                placeholder="Describe how the incident occurred..."
-                placeholderTextColor="#64748b"
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Damage Photograph</Text>
-              <TouchableOpacity style={styles.photoUploadBtn} onPress={handlePickPhoto}>
-                <Ionicons name="camera-outline" size={20} color="#00ddff" />
-                <Text style={styles.photoUploadText}>
-                  {accidentPhotoBase64 ? "Photo Attached (Tap to change)" : "Take / Attach Photo"}
+                <Ionicons
+                  name={t.icon as any}
+                  size={15}
+                  color={isActive ? "#ffffff" : "#64748B"}
+                />
+                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+                  {t.label}
                 </Text>
               </TouchableOpacity>
-              {accidentPhotoBase64 ? (
-                <Image source={{ uri: accidentPhotoBase64 }} style={styles.previewImage} />
-              ) : null}
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Main Scroll Content */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        
+        {/* ========================================================================= */}
+        {/* TAB 1: DASHBOARD */}
+        {/* ========================================================================= */}
+        {activeTab === "dashboard" && (
+          <View style={styles.section}>
+            
+            {/* Quick Actions Grid (Exact Policyholder Mobile Quick Action Style) */}
+            <View style={styles.quickGrid}>
+              <TouchableOpacity style={styles.quickActionBox} onPress={() => setActiveTab("submit")}>
+                <View style={[styles.quickActionIconCircle, { backgroundColor: "#ff9800" }]}>
+                  <Ionicons name="add" size={24} color="#ffffff" />
+                </View>
+                <Text style={styles.quickActionText}>New Claim</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.quickActionBox} onPress={() => setActiveTab("vehicles")}>
+                <View style={[styles.quickActionIconCircle, { backgroundColor: "#0284c7" }]}>
+                  <Ionicons name="car" size={22} color="#ffffff" />
+                </View>
+                <Text style={styles.quickActionText}>My Vehicles</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.quickActionBox} onPress={() => setActiveTab("claims")}>
+                <View style={[styles.quickActionIconCircle, { backgroundColor: "#10b981" }]}>
+                  <Ionicons name="document-text" size={22} color="#ffffff" />
+                </View>
+                <Text style={styles.quickActionText}>My Claims</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.quickActionBox} onPress={() => setActiveTab("pass")}>
+                <View style={[styles.quickActionIconCircle, { backgroundColor: "#6366f1" }]}>
+                  <Ionicons name="shield-checkmark" size={22} color="#ffffff" />
+                </View>
+                <Text style={styles.quickActionText}>Digital Pass</Text>
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              style={styles.submitBtn}
-              onPress={handleSubmitClaim}
-              disabled={submittingClaim}
-            >
-              {submittingClaim ? (
-                <ActivityIndicator color="#0f172a" />
+            {/* Recent Notifications Card */}
+            <View style={styles.contentCard}>
+              <View style={styles.contentCardHeader}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Ionicons name="notifications-outline" size={18} color="#0f172a" />
+                  <Text style={styles.contentCardTitle}>Recent Updates</Text>
+                </View>
+                <TouchableOpacity onPress={() => setActiveTab("claims")}>
+                  <Text style={styles.linkText}>View All</Text>
+                </TouchableOpacity>
+              </View>
+
+              {claims.length === 0 ? (
+                <Text style={styles.emptyNotice}>No pending claims or requests for your vehicles.</Text>
               ) : (
-                <Text style={styles.submitBtnText}>Submit Claim to Branch</Text>
+                claims.slice(0, 3).map((c) => (
+                  <View key={c.claimNumber} style={styles.claimListItem}>
+                    <View style={styles.plateBadgeSmall}>
+                      <Text style={styles.plateBadgeSmallText}>{formatPlate(c.vehiclePlate)}</Text>
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 10 }}>
+                      <Text style={styles.claimListNum}>{c.claimNumber}</Text>
+                      <Text style={styles.claimListSub}>{c.damageType} • {c.incidentDate}</Text>
+                    </View>
+                    <View style={styles.statusBadgeSoft}>
+                      <Text style={styles.statusBadgeSoftText}>{c.status}</Text>
+                    </View>
+                  </View>
+                ))
               )}
-            </TouchableOpacity>
+            </View>
           </View>
         )}
 
-        {/* TAB 4: CLAIMS HISTORY */}
-        {activeTab === "claims" && (
+        {/* ========================================================================= */}
+        {/* TAB 2: MY VEHICLES (Exact PolicyHolder Mobile Vehicle Cards) */}
+        {/* ========================================================================= */}
+        {activeTab === "vehicles" && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>My Lodged Claims</Text>
-            {claims.length === 0 ? (
-              <Text style={styles.emptyText}>No claims lodged under this driver yet.</Text>
-            ) : (
-              claims.map((c) => (
-                <View key={c.claimNumber} style={styles.claimCard}>
-                  <View style={styles.claimCardHeader}>
-                    <Text style={styles.claimNumber}>{c.claimNumber}</Text>
-                    <View style={styles.statusPill}>
-                      <Text style={styles.statusPillText}>{c.status}</Text>
+            <Text style={styles.sectionHeaderTitle}>Registered Vehicles</Text>
+            <Text style={styles.sectionHeaderSubtitle}>Authorized under policyholder {profile?.policyHolderName}</Text>
+
+            {vehicles.map((v) => {
+              const theme = getVehicleTheme(v.vehicleType || "Car");
+              return (
+                <View key={v.numberPlate} style={styles.contentCard}>
+                  <View style={styles.cardTopRow}>
+                    <View style={styles.plateBadge}>
+                      <View style={styles.goldDot} />
+                      <Text style={styles.plateText}>{formatPlate(v.numberPlate)}</Text>
+                    </View>
+                    <View style={styles.activeTag}>
+                      <Text style={styles.activeTagText}>Active</Text>
                     </View>
                   </View>
-                  <Text style={styles.claimSub}>
-                    Vehicle: {c.vehiclePlate} • {c.damageType}
+
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 8 }}>
+                    <View style={[styles.vehicleIconCircle, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+                      <MaterialCommunityIcons name={theme.icon as any} size={24} color={theme.color} />
+                    </View>
+                    <View>
+                      <Text style={styles.vehicleName}>{v.company} {v.model}</Text>
+                      <Text style={styles.vehicleMeta}>{v.vehicleType} • {v.year}</Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.specBox}>
+                    <View style={styles.specRow}>
+                      <Text style={styles.specLabel}>Policy Reference:</Text>
+                      <Text style={styles.specVal}>{v.policyNumber || "SANASA-COMPREHENSIVE"}</Text>
+                    </View>
+                    <View style={styles.specRow}>
+                      <Text style={styles.specLabel}>Coverage Expiry:</Text>
+                      <Text style={styles.specVal}>{v.policyExpiryDate || "2027-11-20"}</Text>
+                    </View>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.cardBtn}
+                    onPress={() => {
+                      setClaimPlate(v.numberPlate);
+                      setActiveTab("submit");
+                    }}
+                  >
+                    <Ionicons name="camera-outline" size={16} color="#ffffff" />
+                    <Text style={styles.cardBtnText}>Lodge Claim for This Vehicle</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          </View>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 3: SUBMIT CLAIM */}
+        {/* ========================================================================= */}
+        {activeTab === "submit" && (
+          <View style={styles.section}>
+            <View style={styles.contentCard}>
+              <Text style={styles.contentCardTitle}>Lodge Accident Claim</Text>
+              <Text style={styles.sectionHeaderSubtitle}>Incident information for branch review</Text>
+
+              <View style={styles.formItem}>
+                <Text style={styles.inputLabel}>Select Operating Vehicle</Text>
+                <View style={styles.plateRowWrap}>
+                  {vehicles.map((v) => (
+                    <TouchableOpacity
+                      key={v.numberPlate}
+                      style={[
+                        styles.plateSelectBtn,
+                        claimPlate === v.numberPlate && styles.plateSelectBtnActive
+                      ]}
+                      onPress={() => setClaimPlate(v.numberPlate)}
+                    >
+                      <Text style={claimPlate === v.numberPlate ? styles.plateSelectTextActive : styles.plateSelectText}>
+                        {formatPlate(v.numberPlate)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.formItem}>
+                <Text style={styles.inputLabel}>Incident Date</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={claimDate}
+                  onChangeText={setClaimDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.formItem}>
+                <Text style={styles.inputLabel}>Incident Location (City/Road)</Text>
+                <TextInput
+                  style={styles.textInput}
+                  value={claimLocation}
+                  onChangeText={setClaimLocation}
+                  placeholder="e.g. Galle Road, Kalutara"
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.formItem}>
+                <Text style={styles.inputLabel}>Incident Description</Text>
+                <TextInput
+                  style={[styles.textInput, { height: 75, textAlignVertical: "top" }]}
+                  multiline
+                  value={claimDesc}
+                  onChangeText={setClaimDesc}
+                  placeholder="Describe how the accident occurred..."
+                  placeholderTextColor="#94a3b8"
+                />
+              </View>
+
+              <View style={styles.formItem}>
+                <Text style={styles.inputLabel}>Damage Photograph</Text>
+                <TouchableOpacity style={styles.uploadBox} onPress={handlePickPhoto}>
+                  <Ionicons name="camera-outline" size={22} color="#0284c7" />
+                  <Text style={styles.uploadBoxText}>
+                    {accidentPhotoBase64 ? "Photo Attached (Tap to change)" : "Attach Photo from Gallery"}
                   </Text>
-                  <Text style={styles.claimDate}>Incident: {c.incidentDate} • {c.location}</Text>
+                </TouchableOpacity>
+                {accidentPhotoBase64 ? (
+                  <Image source={{ uri: accidentPhotoBase64 }} style={styles.photoPreview} />
+                ) : null}
+              </View>
+
+              <TouchableOpacity
+                style={styles.btnPrimary}
+                onPress={handleSubmitClaim}
+                disabled={submittingClaim}
+              >
+                {submittingClaim ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <Text style={styles.btnPrimaryText}>Submit Claim to Branch</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 4: CLAIMS HISTORY */}
+        {/* ========================================================================= */}
+        {activeTab === "claims" && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeaderTitle}>Lodged Claims</Text>
+            <Text style={styles.sectionHeaderSubtitle}>All claims filed for authorized vehicles</Text>
+
+            {claims.length === 0 ? (
+              <View style={styles.contentCard}>
+                <Text style={styles.emptyNotice}>No claims found for this driver.</Text>
+              </View>
+            ) : (
+              claims.map((c) => (
+                <View key={c.claimNumber} style={styles.contentCard}>
+                  <View style={styles.cardTopRow}>
+                    <Text style={styles.claimNumberText}>{c.claimNumber}</Text>
+                    <View style={styles.statusBadgeSoft}>
+                      <Text style={styles.statusBadgeSoftText}>{c.status}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.claimSubText}>Vehicle: {formatPlate(c.vehiclePlate)} • {c.damageType}</Text>
+                  <Text style={styles.claimDateText}>Date: {c.incidentDate} • Location: {c.location}</Text>
                 </View>
               ))
             )}
           </View>
         )}
 
+        {/* ========================================================================= */}
         {/* TAB 5: DIGITAL PASS */}
+        {/* ========================================================================= */}
         {activeTab === "pass" && (
           <View style={styles.section}>
-            <View style={styles.passCard}>
-              <View style={styles.passHeader}>
-                <Text style={styles.passBrand}>SANASA GENERAL INSURANCE</Text>
-                <Text style={styles.passTitle}>Official Digital Driver Pass</Text>
+            <View style={styles.contentCard}>
+              <View style={styles.passTopBar}>
+                <View>
+                  <Text style={styles.passHeaderTitle}>SANASA GENERAL INSURANCE</Text>
+                  <Text style={styles.passHeaderSub}>Official Digital Driver Pass</Text>
+                </View>
+                <View style={styles.activeTag}>
+                  <Text style={styles.activeTagText}>VERIFIED</Text>
+                </View>
               </View>
 
-              <View style={styles.passBody}>
-                <Text style={styles.passLabel}>Authorized Driver</Text>
+              <View style={{ marginTop: 14 }}>
+                <Text style={styles.passFieldLabel}>Authorized Driver</Text>
                 <Text style={styles.passDriverName}>{profile?.driverName}</Text>
 
-                <View style={styles.passMetaRow}>
+                <View style={styles.passRow}>
                   <View>
-                    <Text style={styles.passLabel}>Masked NIC</Text>
-                    <Text style={styles.passVal}>{profile?.driverNicMasked}</Text>
+                    <Text style={styles.passFieldLabel}>Masked NIC</Text>
+                    <Text style={styles.passFieldVal}>{profile?.driverNicMasked}</Text>
                   </View>
                   <View>
-                    <Text style={styles.passLabel}>Branch</Text>
-                    <Text style={styles.passVal}>{profile?.branch}</Text>
+                    <Text style={styles.passFieldLabel}>Branch</Text>
+                    <Text style={styles.passFieldVal}>{profile?.branch}</Text>
                   </View>
                 </View>
 
-                <Text style={styles.passLabel}>Pass Reference</Text>
-                <Text style={styles.passRefText}>{profile?.reference}</Text>
+                <Text style={styles.passFieldLabel}>Pass Reference</Text>
+                <Text style={styles.passRef}>{profile?.reference}</Text>
 
-                <Text style={[styles.passLabel, { marginTop: 12 }]}>Authorized Vehicles</Text>
-                <View style={styles.passPlatesRow}>
+                <Text style={[styles.passFieldLabel, { marginTop: 12 }]}>Permitted Operating Vehicles</Text>
+                <View style={styles.passPillsWrap}>
                   {vehicles.map((v) => (
                     <View key={v.numberPlate} style={styles.passPlatePill}>
-                      <Text style={styles.passPlatePillText}>{v.numberPlate}</Text>
+                      <Text style={styles.passPlatePillText}>{formatPlate(v.numberPlate)}</Text>
                     </View>
                   ))}
                 </View>
@@ -524,102 +692,175 @@ export default function MobileDriverPortalScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#020617"
+    backgroundColor: "#F8FAFC"
   },
   centerContainer: {
     flex: 1,
-    backgroundColor: "#020617",
+    backgroundColor: "#F8FAFC",
     alignItems: "center",
     justifyContent: "center",
     padding: 24
   },
   loadingText: {
-    color: "#94a3b8",
+    color: "#64748B",
     fontSize: 13,
-    marginTop: 12
+    marginTop: 12,
+    fontWeight: "500"
+  },
+  errorIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#FEE2E2",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12
   },
   errorTitle: {
-    color: "#fff",
+    color: "#0F172A",
     fontSize: 18,
-    fontWeight: "bold",
-    marginTop: 12
+    fontWeight: "bold"
   },
   errorDesc: {
-    color: "#94a3b8",
-    fontSize: 12,
+    color: "#64748B",
+    fontSize: 13,
     textAlign: "center",
     marginTop: 6,
     marginBottom: 20
   },
-  header: {
+  headerGradient: {
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === "android" ? 20 : 10,
+    paddingBottom: 24,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32
+  },
+  topBar: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#0f172a",
-    borderBottomWidth: 1,
-    borderBottomColor: "#1e293b"
+    marginBottom: 12
   },
-  headerLeft: {
+  welcomeLabel: {
+    color: "#94A3B8",
+    fontSize: 12,
+    fontWeight: "500"
+  },
+  welcomeName: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "800",
+    letterSpacing: -0.3
+  },
+  headerRightActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10
+    gap: 8
   },
-  logoBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: "#00ddff",
+  badgeBranch: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12
+  },
+  badgeBranchText: {
+    color: "#38bdf8",
+    fontSize: 11,
+    fontWeight: "bold"
+  },
+  avatarButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#0284c7",
     alignItems: "center",
     justifyContent: "center"
   },
-  logoBadgeText: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: "#0f172a"
+  avatarText: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "800"
   },
-  brandTitle: {
-    color: "#fff",
-    fontSize: 13,
-    fontWeight: "900",
-    letterSpacing: 0.5
-  },
-  driverSubTitle: {
-    color: "#94a3b8",
-    fontSize: 11
-  },
-  logoutBtn: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: "rgba(244, 63, 94, 0.1)"
-  },
-  tabBar: {
+  subtitleBanner: {
     flexDirection: "row",
-    backgroundColor: "#0f172a",
-    borderBottomWidth: 1,
-    borderBottomColor: "#1e293b",
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    justifyContent: "space-around"
-  },
-  tabItem: {
     alignItems: "center",
-    paddingVertical: 4,
-    paddingHorizontal: 6,
-    borderRadius: 8
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    marginBottom: 16
   },
-  tabItemActive: {
-    backgroundColor: "#1e293b"
+  dotIndicator: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: "#4ade80",
+    marginRight: 8
   },
-  tabLabel: {
-    color: "#94a3b8",
+  subtitleText: {
+    color: "#E2E8F0",
+    fontSize: 11,
+    fontWeight: "500"
+  },
+  statsContainer: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8
+  },
+  statCard: {
+    flex: 1,
+    alignItems: "center"
+  },
+  statCardMiddle: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.12)"
+  },
+  statNumber: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "800"
+  },
+  statLabel: {
+    color: "#94A3B8",
     fontSize: 10,
     fontWeight: "600",
     marginTop: 2
   },
+  tabBar: {
+    backgroundColor: "#ffffff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E2E8F0"
+  },
+  tabScroll: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 8
+  },
+  tabItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: "#F1F5F9",
+    gap: 6
+  },
+  tabItemActive: {
+    backgroundColor: "#0d2a3a"
+  },
+  tabLabel: {
+    color: "#64748B",
+    fontSize: 12,
+    fontWeight: "600"
+  },
   tabLabelActive: {
-    color: "#00ddff"
+    color: "#ffffff"
   },
   scrollContent: {
     padding: 16
@@ -627,361 +868,383 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20
   },
-  welcomeCard: {
-    backgroundColor: "#0f172a",
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#1e293b"
+  quickGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16
   },
-  verifiedPill: {
+  quickActionBox: {
+    alignItems: "center",
+    width: (SCREEN_W - 56) / 4
+  },
+  quickActionIconCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+    marginBottom: 6
+  },
+  quickActionText: {
+    color: "#334155",
+    fontSize: 11,
+    fontWeight: "600",
+    textAlign: "center"
+  },
+  contentCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 1
+  },
+  contentCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12
+  },
+  contentCardTitle: {
+    color: "#0F172A",
+    fontSize: 15,
+    fontWeight: "bold"
+  },
+  linkText: {
+    color: "#0284c7",
+    fontSize: 12,
+    fontWeight: "bold"
+  },
+  emptyNotice: {
+    color: "#94A3B8",
+    fontSize: 12,
+    textAlign: "center",
+    paddingVertical: 14
+  },
+  claimListItem: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(16, 185, 129, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(16, 185, 129, 0.3)",
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#F1F5F9"
+  },
+  plateBadgeSmall: {
+    backgroundColor: "#0F172A",
     paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 20,
-    marginBottom: 8
+    paddingVertical: 4,
+    borderRadius: 6
   },
-  greenDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#10b981",
-    marginRight: 6
+  plateBadgeSmallText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "bold",
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace"
   },
-  verifiedPillText: {
-    color: "#10b981",
+  claimListNum: {
+    color: "#0F172A",
+    fontSize: 12,
+    fontWeight: "bold",
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace"
+  },
+  claimListSub: {
+    color: "#64748B",
+    fontSize: 11,
+    marginTop: 1
+  },
+  statusBadgeSoft: {
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#DBEAFE",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12
+  },
+  statusBadgeSoftText: {
+    color: "#1D4ED8",
     fontSize: 10,
     fontWeight: "bold"
   },
-  welcomeName: {
-    color: "#fff",
-    fontSize: 20,
+  sectionHeaderTitle: {
+    color: "#0F172A",
+    fontSize: 17,
     fontWeight: "bold"
   },
-  welcomeSub: {
-    color: "#94a3b8",
+  sectionHeaderSubtitle: {
+    color: "#64748B",
     fontSize: 12,
-    lineHeight: 18,
-    marginTop: 6
+    marginTop: 2,
+    marginBottom: 14
   },
-  primaryCtaBtn: {
+  cardTopRow: {
     flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "#00ddff",
-    borderRadius: 12,
-    paddingVertical: 12,
-    gap: 8,
-    marginTop: 16
-  },
-  primaryCtaText: {
-    color: "#0f172a",
-    fontSize: 13,
-    fontWeight: "bold"
-  },
-  metricsRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 12
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: "#0f172a",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#1e293b"
-  },
-  metricVal: {
-    color: "#fff",
-    fontSize: 22,
-    fontWeight: "bold"
-  },
-  metricLbl: {
-    color: "#94a3b8",
-    fontSize: 11,
-    marginTop: 4
-  },
-  sectionTitle: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 4
-  },
-  sectionSubtitle: {
-    color: "#94a3b8",
-    fontSize: 12,
-    marginBottom: 16
-  },
-  vehicleCard: {
-    backgroundColor: "#0f172a",
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#1e293b",
-    marginBottom: 12
+    marginBottom: 6
   },
   plateBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#020617",
+    backgroundColor: "#0F172A",
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 8,
-    alignSelf: "flex-start",
-    borderWidth: 1,
-    borderColor: "#1e293b",
-    marginBottom: 8
+    borderRadius: 6
   },
   goldDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: "#fbbf24",
+    backgroundColor: "#FBBF24",
     marginRight: 6
   },
   plateText: {
-    color: "#fff",
+    color: "#ffffff",
     fontSize: 12,
     fontWeight: "bold",
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace"
   },
-  vehicleModel: {
-    color: "#fff",
+  activeTag: {
+    backgroundColor: "#ECFDF5",
+    borderWidth: 1,
+    borderColor: "#A7F3D0",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 12
+  },
+  activeTagText: {
+    color: "#059669",
+    fontSize: 10,
+    fontWeight: "bold"
+  },
+  vehicleIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  vehicleName: {
+    color: "#0F172A",
     fontSize: 15,
     fontWeight: "bold"
   },
-  vehicleSub: {
-    color: "#94a3b8",
+  vehicleMeta: {
+    color: "#64748B",
     fontSize: 11,
-    marginTop: 2,
+    marginTop: 2
+  },
+  specBox: {
+    backgroundColor: "#F8FAFC",
+    borderRadius: 10,
+    padding: 10,
+    gap: 4,
     marginBottom: 12
   },
-  btnSecondary: {
-    backgroundColor: "#1e293b",
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: "center"
+  specRow: {
+    flexDirection: "row",
+    justifyContent: "space-between"
   },
-  btnSecondaryText: {
-    color: "#00ddff",
-    fontSize: 12,
+  specLabel: {
+    color: "#64748B",
+    fontSize: 11
+  },
+  specVal: {
+    color: "#0F172A",
+    fontSize: 11,
     fontWeight: "600"
   },
-  formGroup: {
+  cardBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#ff9800",
+    paddingVertical: 10,
+    borderRadius: 12,
+    gap: 6
+  },
+  cardBtnText: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "bold"
+  },
+  formItem: {
     marginBottom: 14
   },
-  formLabel: {
-    color: "#cbd5e1",
+  inputLabel: {
+    color: "#334155",
     fontSize: 12,
-    fontWeight: "600",
+    fontWeight: "bold",
     marginBottom: 6
   },
-  input: {
-    backgroundColor: "#0f172a",
-    borderWidth: 1,
-    borderColor: "#1e293b",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    color: "#fff",
-    fontSize: 13
-  },
-  platePickerRow: {
+  plateRowWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8
   },
-  plateOption: {
+  plateSelectBtn: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "#0f172a",
+    borderRadius: 8,
+    backgroundColor: "#F1F5F9",
     borderWidth: 1,
-    borderColor: "#1e293b",
-    borderRadius: 8
+    borderColor: "#E2E8F0"
   },
-  plateOptionSelected: {
-    borderColor: "#00ddff",
-    backgroundColor: "rgba(0, 221, 255, 0.1)"
+  plateSelectBtnActive: {
+    backgroundColor: "#0d2a3a",
+    borderColor: "#0d2a3a"
   },
-  plateOptText: {
-    color: "#94a3b8",
-    fontSize: 12
-  },
-  plateOptTextActive: {
-    color: "#00ddff",
+  plateSelectText: {
+    color: "#475569",
     fontSize: 12,
     fontWeight: "bold"
   },
-  photoUploadBtn: {
+  plateSelectTextActive: {
+    color: "#ffffff",
+    fontSize: 12,
+    fontWeight: "bold"
+  },
+  textInput: {
+    backgroundColor: "#F8FAFC",
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    color: "#0F172A",
+    fontSize: 13
+  },
+  uploadBox: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
+    paddingVertical: 14,
+    backgroundColor: "#F8FAFC",
     borderWidth: 1.5,
-    borderColor: "#1e293b",
+    borderColor: "#CBD5E1",
     borderStyle: "dashed",
     borderRadius: 10,
-    paddingVertical: 16,
-    backgroundColor: "#0f172a"
+    gap: 8
   },
-  photoUploadText: {
-    color: "#94a3b8",
-    fontSize: 12
+  uploadBoxText: {
+    color: "#0284c7",
+    fontSize: 12,
+    fontWeight: "600"
   },
-  previewImage: {
+  photoPreview: {
     width: "100%",
-    height: 160,
+    height: 150,
     borderRadius: 10,
-    marginTop: 10
+    marginTop: 8
   },
-  submitBtn: {
-    backgroundColor: "#00ddff",
-    paddingVertical: 14,
+  btnPrimary: {
+    backgroundColor: "#0d2a3a",
+    paddingVertical: 13,
     borderRadius: 12,
     alignItems: "center",
-    marginTop: 10
+    marginTop: 8
   },
-  submitBtnText: {
-    color: "#0f172a",
-    fontSize: 14,
+  btnPrimaryText: {
+    color: "#ffffff",
+    fontSize: 13,
     fontWeight: "bold"
   },
-  emptyText: {
-    color: "#64748b",
-    fontSize: 13,
-    textAlign: "center",
-    marginTop: 30
-  },
-  claimCard: {
-    backgroundColor: "#0f172a",
-    borderRadius: 14,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#1e293b",
-    marginBottom: 10
-  },
-  claimCardHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  claimNumber: {
-    color: "#fff",
+  claimNumberText: {
+    color: "#0F172A",
     fontSize: 14,
     fontWeight: "bold",
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace"
   },
-  statusPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    backgroundColor: "rgba(0, 221, 255, 0.1)"
-  },
-  statusPillText: {
-    color: "#00ddff",
-    fontSize: 10,
-    fontWeight: "bold"
-  },
-  claimSub: {
-    color: "#cbd5e1",
+  claimSubText: {
+    color: "#475569",
     fontSize: 12,
     marginTop: 4
   },
-  claimDate: {
-    color: "#64748b",
+  claimDateText: {
+    color: "#94A3B8",
     fontSize: 11,
     marginTop: 2
   },
-  passCard: {
-    backgroundColor: "#0f172a",
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "#1e293b"
-  },
-  passHeader: {
+  passTopBar: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderBottomWidth: 1,
-    borderBottomColor: "#1e293b",
-    paddingBottom: 12,
-    marginBottom: 14
+    borderBottomColor: "#F1F5F9",
+    paddingBottom: 10
   },
-  passBrand: {
-    color: "#00ddff",
+  passHeaderTitle: {
+    color: "#0d2a3a",
     fontSize: 13,
-    fontWeight: "bold"
+    fontWeight: "900"
   },
-  passTitle: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "900",
-    marginTop: 2
+  passHeaderSub: {
+    color: "#64748B",
+    fontSize: 11
   },
-  passBody: {
-    marginBottom: 14
-  },
-  passLabel: {
-    color: "#64748b",
+  passFieldLabel: {
+    color: "#94A3B8",
     fontSize: 10,
     textTransform: "uppercase",
     fontWeight: "bold"
   },
   passDriverName: {
-    color: "#fff",
-    fontSize: 18,
+    color: "#0F172A",
+    fontSize: 17,
     fontWeight: "bold",
     marginTop: 2,
     marginBottom: 10
   },
-  passMetaRow: {
+  passRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 10
   },
-  passVal: {
-    color: "#cbd5e1",
-    fontSize: 12,
-    fontWeight: "600",
-    marginTop: 2
-  },
-  passRefText: {
-    color: "#00ddff",
+  passFieldVal: {
+    color: "#0F172A",
     fontSize: 12,
     fontWeight: "bold",
     marginTop: 2
   },
-  passPlatesRow: {
+  passRef: {
+    color: "#0d2a3a",
+    fontSize: 12,
+    fontWeight: "bold",
+    fontFamily: Platform.OS === "ios" ? "Courier" : "monospace"
+  },
+  passPillsWrap: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 6,
     marginTop: 6
   },
   passPlatePill: {
-    backgroundColor: "#020617",
+    backgroundColor: "#0F172A",
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#1e293b"
+    paddingVertical: 3,
+    borderRadius: 6
   },
   passPlatePillText: {
-    color: "#fff",
+    color: "#ffffff",
     fontSize: 11,
     fontWeight: "bold",
     fontFamily: Platform.OS === "ios" ? "Courier" : "monospace"
   },
   passFooter: {
+    marginTop: 14,
     borderTopWidth: 1,
-    borderTopColor: "#1e293b",
-    paddingTop: 10
+    borderTopColor: "#F1F5F9",
+    paddingTop: 8
   },
   passFooterText: {
-    color: "#64748b",
+    color: "#94A3B8",
     fontSize: 10,
     textAlign: "center"
   }
