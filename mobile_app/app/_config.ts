@@ -12,34 +12,43 @@ LogBox.ignoreLogs([
   "fetch failed",
 ]);
 
+export const LIVE_RENDER_API = "https://sanasa-insurance-api.onrender.com";
+
 const getApiBaseUrl = () => {
-  // 1. Resolve host IP from Expo hostUri (Metro server IP)
+  // 1. Standalone production APK (installed on device outside Expo Go)
+  const isExpoGo = Constants.appOwnership === "expo";
+  if (!isExpoGo || !__DEV__) {
+    console.log("MOBILE API BASE URL (Live Render Production):", LIVE_RENDER_API);
+    return LIVE_RENDER_API;
+  }
+
+  // 2. Resolve host IP from Expo hostUri (Metro server IP)
   const hostUri = Constants.expoConfig?.hostUri || (Constants as any).manifest2?.extra?.expoGo?.debuggerHost;
   let metroIp = "";
   if (hostUri) {
     metroIp = hostUri.split(":")[0];
   }
 
-  // 2. Physical device (Android or iOS) - must use local network IP
+  // 3. Physical device (Android or iOS) in Expo Go
   if (Constants.isDevice) {
     const ip = metroIp || "192.168.42.36";
     console.log(`MOBILE API BASE URL (Physical Device): http://${ip}:5000`);
     return `http://${ip}:5000`;
   }
 
-  // 3. Android Emulator - route through 10.0.2.2 (host loopback)
+  // 4. Android Emulator in Expo Go - route through 10.0.2.2 (host loopback)
   if (Platform.OS === "android") {
     console.log("MOBILE API BASE URL (Android Emulator): http://10.0.2.2:5000");
     return "http://10.0.2.2:5000";
   }
 
-  // 4. iOS Simulator loopback
+  // 5. iOS Simulator loopback
   if (Platform.OS === "ios") {
     console.log("MOBILE API BASE URL (iOS Simulator): http://localhost:5000");
     return "http://localhost:5000";
   }
 
-  // 5. Fallback to detected LAN IP
+  // 6. Fallback to detected LAN IP
   const fallbackIp = metroIp || "192.168.42.36";
   console.log("MOBILE API BASE URL (Fallback):", `http://${fallbackIp}:5000`);
   return `http://${fallbackIp}:5000`;
