@@ -261,6 +261,10 @@ export default function MyVehicles() {
   const [terminateSuccessMsg, setTerminateSuccessMsg] = useState("");
   const [terminateErrMsg, setTerminateErrMsg] = useState("");
 
+  // Manage Assigned Driver State
+  const [selectedDriverForManage, setSelectedDriverForManage] = useState<any | null>(null);
+  const [copiedPassLink, setCopiedPassLink] = useState(false);
+
   const handleOpenTerminateModal = (req: any) => {
     setTerminateTargetReq(req);
     setTerminateReason("Driver resigned / employment ended");
@@ -276,7 +280,7 @@ export default function MyVehicles() {
 
   // Map of vehicle plate -> assigned driver info
   const vehicleDriverMap = useMemo(() => {
-    const map: Record<string, { driverName: string; status: string; ref: string }> = {};
+    const map: Record<string, { driverName: string; status: string; ref: string; req: any }> = {};
     thirdPartyRequests.forEach((req) => {
       if (req.status !== "Terminated") {
         req.selectedVehicles?.forEach((v: any) => {
@@ -284,7 +288,8 @@ export default function MyVehicles() {
             map[v.numberPlate] = {
               driverName: req.driverDetails?.fullName || "Assigned Driver",
               status: req.status,
-              ref: req.requestReference
+              ref: req.requestReference,
+              req: req
             };
           }
         });
