@@ -53,10 +53,21 @@ export function initSocketServer(httpServer) {
   });
 
   io.on("connection", (socket) => {
-    const { userId, userType, name } = socket.user || {};
+    const { userId, userType, name, branch } = socket.user || {};
     const userRoom = `user:${userType}:${userId}`;
     socket.join(userRoom);
+    if (branch) {
+      socket.join(`branch:${branch}`);
+      console.log(`[Socket.IO] Joined branch room branch:${branch}`);
+    }
     console.log(`[Socket.IO] Client connected: ${name || userId} (${userType}) -> joined room ${userRoom}`);
+
+    socket.on("join:branch", ({ branch: b }) => {
+      const targetBranch = (b || branch || "").trim();
+      if (targetBranch) {
+        socket.join(`branch:${targetBranch}`);
+      }
+    });
 
     // Join claim conversation room with server-side authorization check
     socket.on("join:conversation", async ({ conversationId }) => {

@@ -45,6 +45,16 @@ const claimSchema = new mongoose.Schema({
   inspectionReport: { type: String, default: "" },
   inspectionSubmitted: { type: Boolean, default: false },
   inspectionApproved: { type: Boolean, default: false },
+  inspectionData: {
+    reportId: { type: mongoose.Schema.Types.ObjectId, ref: "InspectionReport", default: null },
+    vehicleCategory: { type: String, default: "" },
+    totalMarkers: { type: Number, default: 0 },
+    damageMarkers: { type: Array, default: [] },
+    checklist: { type: Array, default: [] },
+    vehicleCondition: { type: Object, default: {} },
+    status: { type: String, default: "Draft" },
+    submittedAt: { type: Date, default: null }
+  },
   paymentReceipt: { type: String, default: "" },
   paymentReceiptFileName: { type: String, default: "" },
   paymentSettledAt: { type: Date, default: null },

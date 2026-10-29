@@ -1,6 +1,7 @@
 import express from "express";
 import Claim from "../models/claim.model.js";
 import User from "../models/user.model.js";
+import InspectionReport from "../models/inspection_report.model.js";
 
 const router = express.Router();
 
@@ -66,6 +67,7 @@ router.get("/:claimNumber/report", async (req, res) => {
     const vehicle = user?.vehicles?.find(
       (v) => v.numberPlate?.replace(/\s+/g, "").toUpperCase() === claim.vehiclePlate?.replace(/\s+/g, "").toUpperCase()
     ) || {};
+    const inspectionDoc = await InspectionReport.findOne({ claimNumber: claim.claimNumber });
 
     const policyholderName = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.name || "N/A" : "N/A";
     const reportDate = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -530,6 +532,55 @@ router.get("/:claimNumber/report", async (req, res) => {
         <td class="lbl">Inspection Report Status</td>
         <td class="val">${claim.inspectionApproved ? "Verified & Approved" : claim.inspectionSubmitted ? "Report Submitted" : "Pending On-site Inspection"}</td>
       </tr>
+      <tr>
+        <td class="lbl">Vehicle Diagram Category</td>
+        <td class="val"><strong>${inspectionDoc?.diagramCategory || inspectionDoc?.vehicleCategory || vehicle.vehicleType || "Car"}</strong> ${inspectionDoc?.isFallbackDiagram ? '<span style="color: #b45309; font-size: 9px;">(Fallback Schematic)</span>' : ''}</td>
+        <td class="lbl">Odometer Mileage / Fuel</td>
+        <td class="val"><strong>${inspectionDoc?.vehicleCondition?.odometer ? inspectionDoc.vehicleCondition.odometer + " km" : "N/A"}</strong> / ${inspectionDoc?.vehicleCondition?.fuelLevel || "N/A"}</td>
+      </tr>
+      ${inspectionDoc?.damageMarkers && inspectionDoc.damageMarkers.length > 0 ? `
+      <tr>
+        <td class="lbl" colspan="4" style="background: #e2e8f0; font-weight: bold; color: #0f2d4a; padding: 6px 8px;">
+          Interactive Damage Markers (${inspectionDoc.damageMarkers.length} Recorded Findings)
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4" style="padding: 0;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 10px;">
+            <thead>
+              <tr style="background: #f1f5f9; color: #334155; border-bottom: 1px solid #cbd5e1;">
+                <th style="padding: 5px 6px; text-align: center; width: 5%;">#</th>
+                <th style="padding: 5px 6px; text-align: left; width: 25%;">Vehicle Part</th>
+                <th style="padding: 5px 6px; text-align: center; width: 12%;">View</th>
+                <th style="padding: 5px 6px; text-align: left; width: 18%;">Damage Type</th>
+                <th style="padding: 5px 6px; text-align: center; width: 12%;">Severity</th>
+                <th style="padding: 5px 6px; text-align: center; width: 12%;">Classification</th>
+                <th style="padding: 5px 6px; text-align: right; width: 16%;">Est. Repair</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${inspectionDoc.damageMarkers.map((m, idx) => `
+              <tr style="border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 5px 6px; text-align: center; font-weight: bold;">${idx + 1}</td>
+                <td style="padding: 5px 6px; font-weight: bold;">${m.partName || "Component"}</td>
+                <td style="padding: 5px 6px; text-align: center; text-transform: capitalize;">${m.view}</td>
+                <td style="padding: 5px 6px;">${m.damageType}</td>
+                <td style="padding: 5px 6px; text-align: center;">
+                  <span style="padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; background: ${m.severity === 'Minor' ? '#fef3c7; color: #92400e' : m.severity === 'Moderate' ? '#ffedd5; color: #c2410c' : '#fee2e2; color: #991b1b'};">
+                    ${m.severity}
+                  </span>
+                </td>
+                <td style="padding: 5px 6px; text-align: center; font-size: 9px;">
+                  ${m.isPreExisting ? '<span style="color: #b45309; font-weight: bold;">Pre-existing</span>' : '<span style="color: #15803d; font-weight: bold;">Incident</span>'}
+                </td>
+                <td style="padding: 5px 6px; text-align: right; font-family: monospace;">${m.estimatedRepairCost ? formatCurrency(m.estimatedRepairCost) : "-"}</td>
+              </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        </td>
+      </tr>
+      ` : ''}
       <tr>
         <td class="lbl">Inspection Findings & Summary</td>
         <td class="val" colspan="3" style="background: #fafafa;">

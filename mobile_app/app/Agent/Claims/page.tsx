@@ -31,6 +31,7 @@ import AIChatBot from "../../Components/AIChatBot";
 import { API_BASE_URL } from "../../_config";
 import { compressImageMobile } from "../../../utils/imageCompressor";
 import { getViewedClaimsMobile, markClaimAsReadMobile, isClaimUnreadMobile, UnreadDotMobile } from "../../../utils/unreadClaims";
+import InteractiveDamageInspection from "../../Components/Agent/InteractiveDamageInspection";
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get("window");
 
@@ -1084,9 +1085,30 @@ ${inspectionReportText.trim()}
     );
   };
 
-  // ── Wizard Step 4 Physical Inspection Form ──────────────────────────────────
+  // ── Wizard Step 4 Interactive Vehicle Damage Inspection ──────────────────
   const renderStep4InspectionForm = () => {
     if (!selectedClaim) return null;
+
+    return (
+      <View style={{ flex: 1, backgroundColor: "#f8fafc" }}>
+        <InteractiveDamageInspection
+          claimNumber={selectedClaim.claimNumber}
+          vehiclePlate={selectedClaim.vehiclePlate}
+          vehicleModel={selectedClaim.vehicleModel}
+          policyholderNic={selectedClaim.userNic}
+          assignedAgent={agentEmail || selectedClaim.assignedAgent}
+          branch={selectedClaim.branch}
+          onInspectionSubmitted={(updatedClaim) => {
+            setSelectedClaim((prev) =>
+              prev ? { ...prev, ...updatedClaim, inspectionSubmitted: true, currentStep: 4 } : null
+            );
+            setActiveInspectionStep(5);
+            fetchClaims(agentEmail);
+          }}
+          onCancel={() => setActiveInspectionStep(3)}
+        />
+      </View>
+    );
 
     const checklistItems = [
       { key: "frontBumper", label: "Front Bumper Damage", val: frontBumperDmg, setVal: setFrontBumperDmg },
@@ -1959,7 +1981,7 @@ ${inspectionReportText.trim()}
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={{ width: "100%", maxWidth: 460, alignSelf: "center", flex: 1, justifyContent: "flex-end" }}
           >
-            <View style={[styles.modalCard, activeInspectionStep > 1 && { height: SCREEN_H * 0.8 }]}>
+            <View style={[styles.modalCard, activeInspectionStep > 1 && { height: SCREEN_H * 0.8 }, activeInspectionStep === 4 && { height: SCREEN_H * 0.94 }]}>
               {/* Drag Handle */}
               <View style={styles.modalDragHandle} />
 

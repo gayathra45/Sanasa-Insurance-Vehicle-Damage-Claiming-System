@@ -26,6 +26,7 @@ import notificationsRouter from "./src/routes/notifications.routes.js";
 import smsRouter from "./src/routes/sms.routes.js";
 import thirdPartyRouter from "./src/routes/third_party.routes.js";
 import backupRouter from "./src/routes/backup.routes.js";
+import inspectionRouter from "./src/routes/inspection.routes.js";
 import { initBackupScheduler } from "./src/services/backup.service.js";
 import { initSocketServer } from "./src/utils/socket.js";
 
@@ -85,6 +86,7 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/sms", smsRouter);
 app.use("/api/third-party", thirdPartyRouter);
 app.use("/api/admin/backups", backupRouter);
+app.use("/api/inspection", inspectionRouter);
 
 
 

@@ -33,6 +33,8 @@ import {
 } from "@hugeicons/core-free-icons";
 import { downloadClaimPdf } from "@/app/utils/claimPdfGenerator";
 import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
+import VehicleDamageViewer from "@/app/Components/VehicleDamageViewer";
+import { getSocket } from "@/app/utils/socket";
 
 interface ClaimMessage {
   sender: string;
@@ -94,6 +96,8 @@ interface Claim {
   inspectionReport?: string;
   inspectionSubmitted?: boolean;
   inspectionApproved?: boolean;
+  inspectionData?: any;
+  vehicleType?: string;
   paymentReceipt?: string;
   bankName?: string;
   bankBranch?: string;
@@ -671,6 +675,8 @@ function OfficeStaffClaimsPageContent() {
   const [comparingGarage, setComparingGarage] = useState(false);
   const [isApprovingInspection, setIsApprovingInspection] = useState(false);
   const [isRejectingInspection, setIsRejectingInspection] = useState(false);
+  const [detailedInspectionReport, setDetailedInspectionReport] = useState<any | null>(null);
+  const [loadingInspection, setLoadingInspection] = useState<boolean>(false);
 
   const handleApproveInspection = async () => {
     if (!selectedClaim) return;
@@ -905,6 +911,62 @@ function OfficeStaffClaimsPageContent() {
     }, 7000);
     return () => clearInterval(pollInterval);
   }, [branch, selectedClaim]);
+
+  // Load detailed structured vehicle damage inspection report when inspecting a claim
+  useEffect(() => {
+    if (selectedClaim && (activeSubModal === "inspection" || selectedClaim.inspectionSubmitted)) {
+      let isMounted = true;
+      setLoadingInspection(true);
+      fetch(`${API_URL}/inspection/claim/${encodeURIComponent(selectedClaim.claimNumber)}`, {
+        headers: {
+          "x-user-role": "Branch",
+          "x-user-branch": branch || selectedClaim.branch || ""
+        }
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (isMounted && data && data.report) {
+            setDetailedInspectionReport(data.report);
+          }
+        })
+        .catch((err) => console.warn("[Inspection] Fetch report failed:", err))
+        .finally(() => {
+          if (isMounted) setLoadingInspection(false);
+        });
+
+      return () => {
+        isMounted = false;
+      };
+    } else {
+      setDetailedInspectionReport(null);
+    }
+  }, [selectedClaim?.claimNumber, activeSubModal, branch]);
+
+  // Socket.IO real-time branch inspection updates
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleInspectionLiveEvent = (data: any) => {
+      if (!data || !data.claimNumber) return;
+      if (!branch || data.branch === branch) {
+        if (selectedClaim && selectedClaim.claimNumber === data.claimNumber) {
+          if (data.report) setDetailedInspectionReport(data.report);
+        }
+        if (branch) {
+          loadClaimsAndAgents(branch);
+        }
+      }
+    };
+
+    socket.on("inspection:saved", handleInspectionLiveEvent);
+    socket.on("inspection:submitted", handleInspectionLiveEvent);
+
+    return () => {
+      socket.off("inspection:saved", handleInspectionLiveEvent);
+      socket.off("inspection:submitted", handleInspectionLiveEvent);
+    };
+  }, [branch, selectedClaim?.claimNumber]);
 
   // Poll agents in background for real-time status updates
   useEffect(() => {
@@ -1583,73 +1645,16 @@ function OfficeStaffClaimsPageContent() {
                           </span>
                         </div>
 
+                        {/* Interactive Vehicle Damage Inspection Diagram & Evidence */}
                         <div className="space-y-4">
-                          {/* 4 Metric Badges */}
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                            <div className="bg-white border border-slate-200 rounded-xl p-3">
-                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Odometer Mileage</span>
-                              <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.odometer || "N/A"}</span>
-                            </div>
-                            <div className="bg-white border border-slate-200 rounded-xl p-3">
-                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Fuel Level</span>
-                              <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.fuelLevel || "N/A"}</span>
-                            </div>
-                            <div className="bg-white border border-slate-200 rounded-xl p-3">
-                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Recommended Action</span>
-                              <span className="text-xs font-bold text-slate-800 mt-0.5 block">{parsed.recommendedAction || "Repairable (Minor)"}</span>
-                            </div>
-                            <div className="bg-white border border-slate-200 rounded-xl p-3">
-                              <span className="text-[10px] text-slate-400 font-semibold uppercase block">Pre-Existing Damage</span>
-                              <span className="text-xs font-bold text-slate-800 mt-0.5 block truncate" title={parsed.preExistingDamage}>
-                                {parsed.preExistingDamage !== "None reported." ? parsed.preExistingDamage : "None reported"}
-                              </span>
-                            </div>
-                          </div>
-
-                          {/* Damage Checklist Grid */}
-                          <div>
-                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Component Damage Checklist</span>
-                            <div className="bg-white border border-slate-200 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                              {Object.entries(parsed.checklist || {}).map(([key, val]) => (
-                                <div key={key} className="flex justify-between items-center py-1 border-b border-slate-100 last:border-0 text-xs px-1">
-                                  <span className="text-slate-600 font-medium">{key}:</span>
-                                  <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${
-                                    val === "None" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" :
-                                    val === "Minor" ? "bg-amber-50 text-amber-700 border border-amber-200" :
-                                    "bg-rose-50 text-rose-700 border border-rose-200"
-                                  }`}>
-                                    {val}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Physical Remarks */}
-                          <div>
-                            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-1.5">Agent Physical Inspection Remarks</span>
-                            <div className="bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-700 font-medium leading-relaxed whitespace-pre-wrap">
-                              {parsed.physicalInspectionNotes || "No physical remarks recorded."}
-                            </div>
-                          </div>
-
-                          {/* Inspection Photos */}
-                          {agentPhotos.length > 0 && (
-                            <div>
-                              <span className="text-xs text-slate-500 font-bold uppercase tracking-wider block mb-2">Agent On-Site Photos ({agentPhotos.length})</span>
-                              <div className="flex flex-wrap gap-2.5">
-                                {agentPhotos.map((p, idx) => (
-                                  <div
-                                    key={idx}
-                                    onClick={() => setPreviewImage(p.url)}
-                                    className="w-16 h-16 rounded-xl border border-slate-200 overflow-hidden cursor-pointer hover:opacity-90 active:scale-95 transition-all shadow-xs"
-                                  >
-                                    <img src={p.url} alt={p.name} className="w-full h-full object-cover" />
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
+                          <VehicleDamageViewer
+                            inspectionData={detailedInspectionReport || selectedClaim.inspectionData}
+                            rawInspectionReport={selectedClaim.inspectionReport}
+                            vehiclePlate={selectedClaim.vehiclePlate}
+                            vehicleCategory={detailedInspectionReport?.vehicleCategory || selectedClaim.vehicleType || "Car"}
+                            claimNumber={selectedClaim.claimNumber}
+                            onPhotoClick={(url) => setPreviewImage(url)}
+                          />
 
                           {/* Action Bar: Approve or Reject Inspection Report */}
                           {!isInspectionApproved && (
