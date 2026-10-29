@@ -202,7 +202,8 @@ real-time environment:
   - Zero sensitive credentials, passwords, or production secrets stored in repository.
 
 ================================================================================
-Client : SANASA General Insurance PLC (Sri Lanka)
-System : SClaim Go Motor Claim, Policy Renewal & Fleet Management Platform
-Author : Gayathra Samuditha (https://github.com/gayathra45)
+Client  : SANASA General Insurance PLC (Sri Lanka)
+System  : SClaim Go Motor Claim, Policy Renewal & Fleet Management Platform
+Author  : Gayathra Samuditha (https://github.com/gayathra45)
+License : MIT License (Refer to LICENSE file)
 ================================================================================

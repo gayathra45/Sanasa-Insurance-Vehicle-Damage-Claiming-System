@@ -10,6 +10,7 @@
 [![Tailwind CSS 4](https://img.shields.io/badge/Tailwind%20CSS%204-Vibrant%20Modern%20UI-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Vercel Analytics](https://img.shields.io/badge/Vercel-Web%20Analytics-blue?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/analytics)
 [![Vercel Speed Insights](https://img.shields.io/badge/Vercel-Speed%20Insights-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://vercel.com/docs/speed-insights)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](./LICENSE)
 
 ---
 
@@ -382,6 +383,7 @@ npx expo start -c
 ---
 
 ## 📄 License & Ownership
+- **Software License**: This project is licensed under the **[MIT License](./LICENSE)**.
 - **Client Organization**: SANASA General Insurance PLC (Sri Lanka)
 - **Platform Name**: SClaim Go Motor Claim, Policy Renewal & Fleet Management System
-- **Engineering Lead**: Gayathra Samuditha ([@gayathra45](https://github.com/gayathra45))
+- **Engineering Lead & Author**: Gayathra Samuditha ([@gayathra45](https://github.com/gayathra45))
