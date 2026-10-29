@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  StatusBar,
   Platform,
   ImageBackground,
   Image,
@@ -17,6 +16,7 @@ import {
   KeyboardAvoidingView,
   Dimensions,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
@@ -867,7 +867,7 @@ export default function MyVehicles() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar style="light" />
 
       {/* Header Background */}
       <ImageBackground
@@ -1529,7 +1529,9 @@ export default function MyVehicles() {
         visible={thirdPartyModalOpen}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => !tpSubmitting && setThirdPartyModalOpen(false)}
+        onRequestClose={() => {
+          if (!tpSubmitting) setThirdPartyModalOpen(false);
+        }}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}

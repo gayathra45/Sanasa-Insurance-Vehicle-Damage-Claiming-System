@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   Linking,
   Platform,
-  StatusBar,
   ImageBackground,
   Modal,
   TextInput,
   ActivityIndicator,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import AIChatBot, { openMobileSupportChat } from "../Components/AIChatBot";
@@ -138,7 +138,7 @@ export default function PolicyHolderContact() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar style="light" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

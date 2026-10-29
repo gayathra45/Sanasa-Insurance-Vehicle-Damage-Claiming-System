@@ -8,7 +8,6 @@ import {
   TextInput,
   ActivityIndicator,
   Dimensions,
-  StatusBar,
   Platform,
   Alert,
   ImageBackground,
@@ -17,6 +16,7 @@ import {
   Modal,
   Linking,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import * as WebBrowser from "expo-web-browser";
 import { router, useLocalSearchParams } from "expo-router";
@@ -440,7 +440,7 @@ export default function TrackClaims() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar style="light" />
 
       {/* Styled curved header matching the dashboard */}
       <ImageBackground

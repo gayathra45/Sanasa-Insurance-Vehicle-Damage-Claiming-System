@@ -211,10 +211,10 @@ export default function VehicleDamageViewer({
             </span>
           </div>
 
-          <div className="relative w-full aspect-[400/260] max-w-[500px] flex items-center justify-center bg-slate-50/50 rounded-2xl border border-slate-100 overflow-hidden">
+          <div className="relative w-full aspect-[360/250] max-w-[540px] flex items-center justify-center bg-white rounded-2xl border border-slate-100 overflow-hidden">
             {/* SVG Illustration */}
             <svg
-              viewBox="0 0 400 260"
+              viewBox={currentViewSpec.viewBox || "0 0 360 250"}
               className="w-full h-full object-contain pointer-events-none select-none"
               xmlns="http://www.w3.org/2000/svg"
             >

@@ -7,13 +7,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
-  StatusBar,
   Platform,
   Alert,
   ImageBackground,
   Image,
   Modal,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
@@ -411,7 +411,7 @@ export default function MyDocs() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar style="light" />
 
       {/* Styled curved header */}
       <ImageBackground

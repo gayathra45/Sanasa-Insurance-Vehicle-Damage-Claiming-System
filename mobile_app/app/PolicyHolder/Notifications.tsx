@@ -6,7 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  StatusBar,
   Platform,
   TextInput,
   Modal,
@@ -14,6 +13,7 @@ import {
   RefreshControl,
   Image,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -437,7 +437,7 @@ export default function NotificationsPage() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar style="dark" />
 
       {/* Header */}
       <View style={styles.header}>

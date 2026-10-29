@@ -1622,7 +1622,7 @@ const styles = StyleSheet.create({
   },
   svgTouchable: {
     width: "100%",
-    height: 220,
+    height: 270,
     position: "relative",
     backgroundColor: "#ffffff"
   },

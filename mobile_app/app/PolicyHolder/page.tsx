@@ -8,7 +8,6 @@ import {
   RefreshControl,
   ActivityIndicator,
   Dimensions,
-  StatusBar,
   Platform,
   Alert,
   Animated,
@@ -18,6 +17,7 @@ import {
   Linking,
   Image,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -585,7 +585,7 @@ export default function PolicyHolderDashboard() {
   if (loading) {
     return (
       <View style={styles.loadingWrap}>
-        <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
+        <StatusBar style="dark" />
         <ActivityIndicator size="large" color="#0ea5e9" />
         <Text style={styles.loadingText}>Verifying credentials...</Text>
       </View>
@@ -597,7 +597,7 @@ export default function PolicyHolderDashboard() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar style="light" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

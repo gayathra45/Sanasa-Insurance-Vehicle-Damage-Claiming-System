@@ -8,13 +8,13 @@ import {
   TextInput,
   ActivityIndicator,
   Dimensions,
-  StatusBar,
   Platform,
   Alert,
   ImageBackground,
   Modal,
   Image,
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -1079,7 +1079,7 @@ export default function FileNewClaim() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar style="light" />
 
       {/* Styled curved header matching the dashboard */}
       <ImageBackground

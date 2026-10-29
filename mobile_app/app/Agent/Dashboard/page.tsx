@@ -42,8 +42,12 @@ interface Claim {
   _id: string;
   claimNumber: string;
   userNic: string;
+  userName?: string;
+  policyholderName?: string;
   vehiclePlate: string;
   vehicleModel?: string;
+  vehicleType?: string;
+  vehicleCategory?: string;
   incidentDate: string;
   incidentTime: string;
   damageType: string;

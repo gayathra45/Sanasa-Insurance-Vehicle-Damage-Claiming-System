@@ -8,7 +8,6 @@ import {
   RefreshControl,
   ActivityIndicator,
   Dimensions,
-  StatusBar,
   Platform,
   Alert,
   Image,
@@ -16,6 +15,7 @@ import {
   TextInput,
   KeyboardAvoidingView
 } from "react-native";
+import { StatusBar } from "expo-status-bar";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { router, useNavigation } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -617,7 +617,7 @@ export default function PolicyHolderProfilePage() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+      <StatusBar style="light" />
 
       {/* ── HEADER BAR ── */}
       <View style={styles.headerBar}>
