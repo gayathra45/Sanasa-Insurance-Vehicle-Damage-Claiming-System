@@ -1,17 +1,45 @@
+<!-- ========================================================================= -->
+<!-- 🛡️ SANASA GENERAL INSURANCE — SCLAIM GO ENTERPRISE PLATFORM               -->
+<!-- ========================================================================= -->
+
 <div align="center">
 
-# 🛡️ SANASA General Insurance — SClaim Go
-### Enterprise Motor Claim, Policy Renewal & Fleet Management Ecosystem
+<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=10,16,42,14,116,144,16,185,129&height=220&section=header&text=SANASA%20SCLAIM%20GO&fontSize=42&fontAlignY=38&desc=Enterprise%20Motor%20Claim%2C%20Policy%20Renewal%20%26%20Fleet%20Ecosystem&descAlignY=58&descAlign=50&animation=fadeIn" width="100%" alt="SANASA SClaim Go Header Banner" />
 
-[![Build Status](https://img.shields.io/badge/System_Status-100%25_Operational-22c55e?style=for-the-badge&logo=statuspage&logoColor=white)](#)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](./LICENSE)
-[![Release Version](https://img.shields.io/badge/Version-2.0.0_Enterprise-102A43?style=for-the-badge)](#)
+<!-- Animated Dynamic Typing Banner -->
+<a href="https://sanasa-insurance-vehicle-damage-cla.vercel.app/">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=2800&pause=1000&color=38BDF8&center=true&vCenter=true&width=750&lines=🛡️+Enterprise+Motor+Claim+%26+Policy+Management;⚡+Rapid+45-Minute+Scene-of-Accident+Reporting;🔑+Tokenized+Third-Party+Driver+Passes+%26+Branch+Sign-Off;💳+Stripe+Multi-Installment+Policy+Renewals;💬+Tri-Party+Real-Time+Claim+Chat+via+Socket.io;🤖+Conversational+Sanasa+AI+Customer+Assistant;📞+24%2F7+Emergency+Assistance+Hotline+0725+575+575" alt="Typing SVG Animation" />
+</a>
 
-<br/>
+<br/><br/>
 
-[🚀 **Launch Live Web Portal**](https://sanasa-insurance-vehicle-damage-cla.vercel.app/) &nbsp;&bull;&nbsp; [📲 **Download Android App (APK)**](https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/9159f4c0-c72a-47eb-8221-48521d8c8de5) &nbsp;&bull;&nbsp; [📞 **24/7 Hotline: 0725 575 575**](tel:0725575575)
+<!-- Modern Call-To-Action Button Pills -->
+<p align="center">
+  <a href="https://sanasa-insurance-vehicle-damage-cla.vercel.app/" target="_blank">
+    <img src="https://img.shields.io/badge/🚀_LAUNCH_WEB_PORTAL-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Launch Web Portal" />
+  </a>
+  &nbsp;
+  <a href="https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/9159f4c0-c72a-47eb-8221-48521d8c8de5" target="_blank">
+    <img src="https://img.shields.io/badge/📲_DOWNLOAD_ANDROID_APK-10b981?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+  </a>
+  &nbsp;
+  <a href="tel:0725575575">
+    <img src="https://img.shields.io/badge/📞_24%2F7_HOTLINE-0725_575_575-3b82f6?style=for-the-badge" alt="24/7 Hotline" />
+  </a>
+</p>
 
-<br/>
+<!-- Live Status & Standards Strip -->
+<p align="center">
+  <img src="https://img.shields.io/badge/Platform-100%25_Operational-success?style=flat-square&logo=statuspage&logoColor=white" alt="Operational Status" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/Version-2.0.0_Enterprise-102A43?style=flat-square" alt="Version 2.0.0" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/License-MIT-yellow?style=flat-square" alt="MIT License" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/Deployment-Vercel_%26_Render-black?style=flat-square&logo=vercel&logoColor=white" alt="Vercel & Render" />
+  &nbsp;
+  <img src="https://img.shields.io/badge/Island--Wide_Network-27_Branches-blue?style=flat-square" alt="27 Branches" />
+</p>
 
 </div>
 
@@ -19,9 +47,9 @@
 
 ## 📌 Executive Overview
 
-**SANASA SClaim Go** is an enterprise digital motor claims, policy underwriting, and driver fleet governance platform engineered for **SANASA General Insurance PLC (Sri Lanka)**. The platform unites **Policyholders**, **Field Insurance Assessors**, **Branch Officers**, and **System Administrators** into a synchronized, real-time operational ecosystem.
+**SANASA SClaim Go** is a full-stack, enterprise-grade motor vehicle insurance claims, policy underwriting, and driver fleet governance platform built for **SANASA General Insurance PLC (Sri Lanka)**. The platform connects **Policyholders**, **Field Insurance Assessors**, **Branch Officers**, and **System Administrators** into a synchronized, real-time ecosystem.
 
-By replacing manual paperwork with automated on-site incident capture, **SClaim Go** shortens claim lifecycle turnaround from **14 days to under 45 minutes**, enables secondary driver onboarding with branch-controlled termination sign-offs, automates SMS customer alerts, and features an integrated **Sanasa AI Assistant**.
+By eliminating manual paperwork and physical queues with automated on-site incident capture, **SClaim Go** shortens claim lifecycle turnaround from **14 days down to 45 minutes**, enables secondary driver onboarding with branch-controlled termination sign-offs, automates SMS customer alerts, and features an integrated **Sanasa AI Assistant**.
 
 ---
 
@@ -34,29 +62,37 @@ Traditional Paper Workflow [█████████████████�
 SClaim Go Digital Workflow [█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 45 Minutes (-98.5% TAT)
 ```
 
-| Performance Dimension | Traditional Insurance Claims | SANASA SClaim Go Platform | Impact / Improvement |
-| :--- | :--- | :--- | :--- |
-| **Accident Report Time** | 24 - 48 Hours (Physical Visit) | **< 2 Minutes** (GPS Scene-of-Accident) | ⚡ **99% Faster Submission** |
-| **Assessor Dispatch** | Manual Telephone Dispatch | **Automated Spatial Routing** (MapRoute) | 🛵 **Instant Proximity Match** |
-| **Damage Photo Verification** | Physical Camera Prints | **Client-Compressed Live Capture** | 📸 **Zero Loss / Deduplicated** |
-| **Driver Authorization** | In-Branch Paper Endorsement | **Instant Tokenized Web Pass** | 🔑 **Real-Time Remote Pass** |
-| **Driver Termination** | Weeks of Delays | **Branch Sign-off + Instant 403 Lockout** | 🛡️ **Permanent Real-Time Revoke** |
-| **Settlement Payout** | 2 - 3 Weeks | **Same-Day Approval Workflow** | 💳 **95% TAT Reduction** |
+| Operational Dimension | Traditional Insurance Claims | SANASA SClaim Go Platform | Velocity Gain |
+| :--- | :--- | :--- | :---: |
+| **Accident Incident Reporting** | 24 - 48 Hours (Physical Visit) | **< 2 Minutes** (GPS Scene-of-Accident) | ⚡ **99% Faster** |
+| **Field Assessor Dispatch** | Manual Telephone Queue | **Spatial GPS Routing** (`MapRoute`) | 🛵 **Instant Match** |
+| **Damage Photo Verification** | Physical Camera Prints | **Client-Compressed Live Capture** | 📸 **Zero Loss** |
+| **Driver Authorization Pass** | In-Branch Endorsements | **Instant Tokenized Web Pass** | 🔑 **Real-Time** |
+| **Driver Termination Sign-Off** | Manual Delays / Unknown | **Branch Sign-Off + Instant 403 Lockout** | 🛡️ **Zero Latency** |
+| **Claim Settlement Approval** | 2 - 3 Weeks | **Same-Day Approval Workflow** | 💳 **95% Reduction** |
 
 <br/>
 
-### 📈 Core Web Vitals & Observability Metrics
+### 📈 Core Web Vitals & Real-Time Observability
 
 ```
-  Metric                           Measured Score      Target Benchmark       Status
-  ---------------------------------------------------------------------------------
+  Metric                           Measured Score      Target Benchmark       Performance Level
+  ---------------------------------------------------------------------------------------------
   First Contentful Paint (FCP)     0.6s               < 1.8s                 🟢 Exceptional
   Largest Contentful Paint (LCP)   0.9s               < 2.5s                 🟢 Exceptional
-  Cumulative Layout Shift (CLS)    0.001              < 0.1                  🟢 Zero Shift
+  Cumulative Layout Shift (CLS)    0.001              < 0.1                  🟢 Zero Visual Shift
   First Input Delay (FID)          12ms               < 100ms                🟢 Sub-millisecond
   Interaction to Next Paint (INP)  48ms               < 200ms                🟢 High Responsiveness
-  Vercel Edge Availability         99.98%             > 99.9%                🟢 Production Ready
+  Vercel Edge Availability         99.98%             > 99.9%                🟢 24/7 Global SLA
 ```
+
+<br/>
+
+<div align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=gayathra45&show_icons=true&theme=radical&hide_border=true&include_all_commits=true&count_private=true" alt="Gayathra GitHub Stats" height="150" />
+  &nbsp;&nbsp;
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=gayathra45&layout=compact&theme=radical&hide_border=true" alt="Top Languages" height="150" />
+</div>
 
 ---
 
@@ -68,12 +104,12 @@ graph TB
         PH_WEB["💻 Policyholder Web Portal<br/>(Next.js 16 App Router)"]
         PH_APP["📱 SClaim Go Mobile App<br/>(React Native / Expo SDK 57)"]
         AGENT_WEB["🛵 Field Agent Portal<br/>(Mobile & Tablet Optimized)"]
-        STAFF_WEB["🏢 Branch Staff Claims Desk<br/>(Adjudication & Verification)"]
+        STAFF_WEB["🏢 Branch Staff Claims Desk<br/>(Adjudication & Dispatch)"]
         ADMIN_WEB["⚙️ Executive Admin Portal<br/>(System Governance & Audit)"]
         DRIVER_PORTAL["🔑 Tokenized Driver Pass<br/>(/driver-access/[token])"]
     end
 
-    subgraph API Gateway & Micro-Services
+    subgraph API Gateway & Micro-Services Layer
         API["Node.js / Express REST Engine"]
         SOCKET["Socket.io Real-Time Event Hub"]
         AUTH_MW["Stateless JWT Authentication & RBAC Guard"]
@@ -83,7 +119,7 @@ graph TB
         HEALTH_SVC["Health & Uptime Monitoring Service (/health)"]
     end
 
-    subgraph Cloud Storage & Third-Party Gateways
+    subgraph Cloud Storage & Integrated Services
         DB[("MongoDB Atlas Database<br/>(GeoJSON Spatial Indexes)")]
         STRIPE["Stripe Payment Gateway<br/>(Renewals & LKR 300 Fees)"]
         SMS["TextBee SMS Gateway<br/>(24/7 Hotline Alerts)"]
@@ -113,47 +149,41 @@ graph TB
 
 ## 💻 Dedicated Technology Stack
 
-The platform is structured into modular layers utilizing modern enterprise technologies:
+<div align="center">
 
-### 1. Web Frontend & Design System
-| Technology | Badge | Role in Platform |
-| :--- | :--- | :--- |
-| **Next.js 16** | ![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=flat-square&logo=next.js&logoColor=white) | App Router, Server Components, Edge Prerendering, Turbopack |
-| **React 19** | ![React](https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB) | Reactive UI state, Client Hydration, Optimistic UI Updates |
-| **TypeScript** | ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) | End-to-end static type safety across schemas and endpoints |
-| **Tailwind CSS 4** | ![Tailwind](https://img.shields.io/badge/Tailwind_4-38B2AC?style=flat-square&logo=tailwind-css&logoColor=white) | Curated Sanasa corporate design system, glassmorphism, responsive UI |
-| **Hugeicons** | ![Icons](https://img.shields.io/badge/Hugeicons-4338CA?style=flat-square&logoColor=white) | Accessible, vector-sharp enterprise icons across all modules |
+### 1. Frontend Web & UI Framework
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?style=for-the-badge&logo=next.js&logoColor=white)
+![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Turbopack](https://img.shields.io/badge/Turbopack-000000?style=for-the-badge&logo=turbopack&logoColor=white)
 
-### 2. Mobile Application (SClaim Go)
-| Technology | Badge | Role in Platform |
-| :--- | :--- | :--- |
-| **React Native** | ![React Native](https://img.shields.io/badge/React_Native-20232A?style=flat-square&logo=react&logoColor=61DAFB) | High-performance native Android & iOS mobile interface |
-| **Expo SDK 57** | ![Expo](https://img.shields.io/badge/Expo_SDK_57-000020?style=flat-square&logo=expo&logoColor=white) | Hardware camera, geolocation, network state, and push services |
-| **EAS Pipeline** | ![EAS](https://img.shields.io/badge/EAS_Build-Cloud_CI%2FCD-4630EB?style=flat-square&logo=expo&logoColor=white) | Automated cloud builds producing standalone installable APKs |
-| **Auto-IP Sync** | ![Node](https://img.shields.io/badge/update--ip.js-Automated-339933?style=flat-square&logo=nodedotjs&logoColor=white) | Auto-detects local IPv4 and links ADB reverse proxy for emulators |
+### 2. Native Mobile Architecture (SClaim Go)
+![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![Expo](https://img.shields.io/badge/Expo_SDK_57-000020?style=for-the-badge&logo=expo&logoColor=white)
+![EAS Build](https://img.shields.io/badge/EAS_Cloud_Build-4630EB?style=for-the-badge&logo=expo&logoColor=white)
+![Android](https://img.shields.io/badge/Android_APK-22C55E?style=for-the-badge&logo=android&logoColor=white)
 
-### 3. Backend REST Engine & Real-Time Services
-| Technology | Badge | Role in Platform |
-| :--- | :--- | :--- |
-| **Node.js** | ![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat-square&logo=nodedotjs&logoColor=white) | High-throughput asynchronous JavaScript runtime environment |
-| **Express.js** | ![Express](https://img.shields.io/badge/Express.js-000000?style=flat-square&logo=express&logoColor=white) | REST API routing, rate limiting, and request sanitization |
-| **Socket.io** | ![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=flat-square&logo=socket.io&logoColor=white) | Bi-directional WebSocket channels for Live Claim Chat |
-| **Bcrypt & JWT** | ![JWT](https://img.shields.io/badge/JWT_Auth-Stateless_RBAC-000000?style=flat-square&logo=jsonwebtokens&logoColor=white) | Cryptographic password hashing (salt 10) & scoped role claims |
+### 3. Backend REST Engine & Real-Time Channels
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+![Socket.io](https://img.shields.io/badge/Socket.io-010101?style=for-the-badge&logo=socket.io&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT_Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
 
-### 4. Database, Cloud & Integrations
-| Technology | Badge | Role in Platform |
-| :--- | :--- | :--- |
-| **MongoDB Atlas** | ![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-47A248?style=flat-square&logo=mongodb&logoColor=white) | Document cluster with 2dsphere spatial indexing & schema validation |
-| **Stripe API** | ![Stripe](https://img.shields.io/badge/Stripe_API-635BFF?style=flat-square&logo=stripe&logoColor=white) | PCI-DSS compliant credit card checkout for renewals & driver passes |
-| **TextBee SMS** | ![SMS](https://img.shields.io/badge/TextBee_SMS-Automated_Gateway-F97316?style=flat-square&logoColor=white) | Dispatches automated SMS notices referencing 24/7 hotline `0725 575 575` |
-| **OpenStreetMap & Photon** | ![OSM](https://img.shields.io/badge/OpenStreetMap-Photon_Geocoding-7EBC6F?style=flat-square&logo=openstreetmap&logoColor=white) | Scene-of-accident coordinates & Sri Lankan address autocomplete |
-| **Vercel Observability** | ![Vercel](https://img.shields.io/badge/Vercel-Analytics_%26_Speed_Insights-000000?style=flat-square&logo=vercel&logoColor=white) | Real-time Core Web Vitals tracking and visitor analytics |
+### 4. Database, Telephony & Cloud Services
+![MongoDB](https://img.shields.io/badge/MongoDB_Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Stripe](https://img.shields.io/badge/Stripe_API-635BFF?style=for-the-badge&logo=stripe&logoColor=white)
+![TextBee](https://img.shields.io/badge/TextBee_SMS_Gateway-F97316?style=for-the-badge&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel_Speed_Insights-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-7EBC6F?style=for-the-badge&logo=openstreetmap&logoColor=white)
+
+</div>
 
 ---
 
 ## 🎯 Stakeholder Role & Permission Matrix
 
-| Module / Capability | Policyholder | Field Agent | Branch Staff | System Admin | Third-Party Driver |
+| Operational Capability | Policyholder | Field Agent | Branch Staff | System Admin | Third-Party Driver |
 | :--- | :---: | :---: | :---: | :---: | :---: |
 | **View Insured Vehicles & Plates** | ✅ | ❌ | ✅ | ✅ | 🔍 (Assigned Only) |
 | **Submit Scene-of-Accident Claim** | ✅ | ❌ | ❌ | ❌ | ✅ |
@@ -174,12 +204,12 @@ The platform is structured into modular layers utilizing modern enterprise techn
 
 ### 1. 🛡️ Third-Party Driver Lifecycle & Branch Termination Engine
 
-Designed for vehicle owners employing personal chauffeurs, fleet drivers, or family members:
+Designed for vehicle owners employing personal chauffeurs, fleet operators, or family members:
 
 - **Driver Registration & KYC Upload**:
-  - Policyholder selects which active vehicles to assign to the driver.
+  - Policyholders select which active vehicles to assign to the driver.
   - Driver KYC onboarding: Full Name, NIC, Mobile Phone Number, Residential Address.
-  - Mandatory identity uploads: Driver NIC (Front & Back) and Driving Licence (Front & Back).
+  - Mandatory identity uploads: Driver NIC (Front & Back) and Valid Driving Licence (Front & Back).
   - Single flat fee of **LKR 300** covering all selected vehicles simultaneously via Stripe Checkout.
 - **Secure Tokenized Digital Driver Pass (`/driver-access/[token]`)**:
   - Generates a tamper-proof verification token with zero passwords required.
@@ -189,12 +219,7 @@ Designed for vehicle owners employing personal chauffeurs, fleet drivers, or fam
   - Displays full driver profile, contact details, covered vehicles list, and active token status.
   - Provides a **"Copy Driver Pass Link"** clipboard tool to share access easily.
 - **Formal Branch-Approved Termination Flow**:
-  1. Policyholder submits termination request with reason:
-     - *Driver resigned / employment ended*
-     - *Vehicle sold or transferred*
-     - *Misconduct / policy violation*
-     - *Owner revocation*
-     - *Custom explanation*
+  1. Policyholder submits termination request with reason (*Resigned*, *Vehicle Sold*, *Misconduct*, *Owner Revocation*, *Custom*).
   2. Status immediately enters `"Pending Termination Approval"`.
   3. Branch staff reviews the request in their management drawer.
   4. **Upon Branch Approval**: Pass status changes to `"Terminated"`, the token is revoked (`isRevoked: true`), the driver is **100% blocked** (HTTP `403 Forbidden`) across all endpoints, and automated SMS alerts are dispatched to both owner and driver.
@@ -263,7 +288,7 @@ sequenceDiagram
 - **Automated Valuation**: Calculates premium based on vehicle valuation, engine capacity (CC), and vehicle category.
 - **Flexible Payment Schedules**:
   - **1-Time Full Annual Payment**: 100% upfront with zero surcharge.
-  - **2-Installment Plan**: 50% initial payment + 50% mid-term installment.
+  - **2-Installment Plan**: 50% initial payment + 50% scheduled mid-term installment.
   - **4-Installment Plan**: 25% down payment + 3 quarterly installments.
 - **Stripe Webhooks**: Extends policy validity in MongoDB instantly upon payment verification and issues official digital cover notes.
 
@@ -300,10 +325,10 @@ SANASA General Insurance maintains an active branch presence across all 9 provin
 git clone https://github.com/gayathra45/SanasaInsuarance.git
 cd SanasaInsuarance
 
-# 2. Start Backend REST API
+# 2. Start Backend REST API Server
 cd backend
 npm install
-npm run dev    # Server running on http://localhost:5000 and 0.0.0.0:5000
+npm run dev    # Server active on http://localhost:5000 and 0.0.0.0:5000
 
 # 3. Start Frontend Web Application
 cd ../frontend
@@ -331,3 +356,9 @@ npx expo start -c   # Auto-syncs IP; scan QR with Expo Go app
 - **Client Organization**: SANASA General Insurance PLC (Sri Lanka)
 - **Platform Name**: SClaim Go Motor Claim, Policy Renewal & Fleet Management System
 - **Engineering Lead & Author**: Gayathra Samuditha ([@gayathra45](https://github.com/gayathra45))
+
+<br/>
+
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=10,16,42,16,185,129&height=100&section=footer" width="100%" alt="Footer Banner" />
+</div>
