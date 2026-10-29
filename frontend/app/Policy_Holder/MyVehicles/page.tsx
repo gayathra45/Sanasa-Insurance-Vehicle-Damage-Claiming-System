@@ -1242,7 +1242,7 @@ export default function MyVehicles() {
 
                 {/* VIEW MODE 1: CLEAN MODERN GRID */}
                 {vehicleViewMode === "grid" && filteredVehicles.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
                     {filteredVehicles.map((vehicle) => {
                       const qInfo = renewalMap[vehicle.numberPlate];
                       const iInfo = installmentMap[vehicle.numberPlate];
@@ -1254,94 +1254,112 @@ export default function MyVehicles() {
                       return (
                         <div
                           key={vehicle.numberPlate}
-                          className="bg-white border border-slate-200/80 hover:border-slate-300 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between group"
+                          className="relative bg-white rounded-3xl border border-slate-200/80 hover:border-slate-300 p-5 sm:p-6 shadow-[0_4px_20px_-4px_rgba(16,42,67,0.06)] hover:shadow-[0_14px_32px_-6px_rgba(16,42,67,0.12)] hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between group overflow-hidden"
                         >
+                          {/* Ambient Accent Line */}
+                          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#102A43]/20 to-transparent group-hover:via-[#102A43]/60 transition-all duration-300" />
+
                           <div>
-                            {/* Card Header: License Plate & Status Pill */}
-                            <div className="flex items-center justify-between gap-2 mb-3.5">
-                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-900 text-white rounded-lg font-mono font-bold text-xs tracking-wider shadow-2xs select-all">
-                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                            {/* Card Header: Plate & Status Badges */}
+                            <div className="flex items-center justify-between gap-2 mb-4">
+                              {/* Authenticated Sri Lankan Style Plate Pill */}
+                              <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#0b1727] text-white rounded-xl font-mono font-bold text-xs tracking-wider shadow-sm ring-1 ring-white/10 select-all">
+                                <span className="w-2 h-2 rounded-full bg-amber-400 ring-2 ring-amber-400/25 flex-shrink-0" />
                                 <span>{formatNumberPlate(vehicle.numberPlate)}</span>
                               </div>
 
-                              <div className="flex items-center gap-1.5">
-                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/70 rounded-full px-2.5 py-0.5 select-none">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              {/* Status Badges */}
+                              <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2.5 py-0.5 select-none">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                   <span>Active</span>
                                 </span>
 
                                 {isInstallmentDue && (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-200 rounded-full px-2 py-0.5">
-                                    <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-amber-700" />
+                                  <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-amber-800 bg-amber-500/10 border border-amber-500/25 rounded-full px-2.5 py-0.5 select-none">
+                                    <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-amber-700" strokeWidth={2.2} />
                                     <span>Due</span>
                                   </span>
                                 )}
 
                                 {isQuoteReady && (
-                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-800 bg-blue-100 border border-blue-200 rounded-full px-2 py-0.5">
-                                    <HugeiconsIcon icon={CreditCardIcon} className="w-3 h-3 text-blue-700" />
+                                  <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-sky-800 bg-sky-500/10 border border-sky-500/25 rounded-full px-2.5 py-0.5 select-none">
+                                    <HugeiconsIcon icon={CreditCardIcon} className="w-3 h-3 text-sky-700" strokeWidth={2.2} />
                                     <span>Quote</span>
                                   </span>
                                 )}
                               </div>
                             </div>
 
-                            {/* Vehicle Make & Model Title */}
-                            <div className="mb-3.5">
-                              <h3 className="text-base font-bold text-slate-900 group-hover:text-[#102A43] transition-colors truncate">
-                                {vehicle.company} {vehicle.model}
-                              </h3>
-                              <p className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5 font-normal">
-                                <span className="text-slate-700 font-medium">{vehicle.vehicleType}</span>
-                                <span>•</span>
-                                <span>{vehicle.year}</span>
-                                <span>•</span>
-                                <span className="font-mono text-slate-400">Policy: {vehicle.policyNumber || "N/A"}</span>
-                              </p>
+                            {/* Vehicle Profile: Icon + Make/Model */}
+                            <div className="flex items-center gap-3.5 mb-4 select-none">
+                              {getVehicleIconContainer(vehicle.vehicleType, "w-13 h-13 rounded-2xl")}
+                              <div className="min-w-0 flex-1">
+                                <span className="text-[10.5px] font-bold tracking-wider text-slate-400 uppercase block">
+                                  {vehicle.vehicleType} • {vehicle.year}
+                                </span>
+                                <h3 className="text-base sm:text-[17px] font-bold text-slate-900 group-hover:text-[#102A43] transition-colors truncate leading-snug mt-0.5">
+                                  {vehicle.company} {vehicle.model}
+                                </h3>
+                                <p className="text-xs text-slate-400 font-mono mt-0.5 truncate">
+                                  Policy: <span className="text-slate-600 font-medium">{vehicle.policyNumber || "N/A"}</span>
+                                </p>
+                              </div>
                             </div>
 
-                            {/* Clean Micro Info Row */}
-                            <div className="p-3 bg-slate-50/70 rounded-xl border border-slate-100/80 flex items-center justify-between text-xs mb-4">
-                              <div>
-                                <span className="text-[10.5px] uppercase font-bold tracking-wider text-slate-400 block">Coverage Expiry</span>
-                                <span className="font-semibold text-slate-800 text-xs block mt-0.5">
+                            {/* Clean Micro Info Grid */}
+                            <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-100/90 grid grid-cols-2 gap-3 divide-x divide-slate-200/70 mb-4 select-none">
+                              {/* Coverage Expiry */}
+                              <div className="flex flex-col justify-between">
+                                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Coverage Expiry</span>
+                                <span className="font-bold text-slate-800 text-xs sm:text-[13px] mt-1 block">
                                   {expDateStr ? new Date(expDateStr).toLocaleDateString() : "Active Coverage"}
                                 </span>
                               </div>
 
-                              <div className="text-right">
-                                <span className="text-[10.5px] uppercase font-bold tracking-wider text-slate-400 block">Assigned Driver</span>
-                                {driverInfo?.status === "Approved" ? (
-                                  <span className="font-semibold text-indigo-700 text-xs inline-flex items-center gap-1 mt-0.5">
-                                    <HugeiconsIcon icon={UserCheck01Icon} className="w-3 h-3 text-indigo-600" />
-                                    <span className="truncate max-w-[110px]">{driverInfo.driverName}</span>
-                                  </span>
-                                ) : driverInfo?.status === "Pending Branch Approval" ? (
-                                  <span className="text-amber-700 font-medium text-xs block mt-0.5">Review Pending</span>
-                                ) : (
-                                  <span className="text-slate-400 text-xs italic block mt-0.5">None</span>
-                                )}
+                              {/* Assigned Driver */}
+                              <div className="flex flex-col justify-between pl-3 min-w-0">
+                                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Assigned Driver</span>
+                                <div className="mt-1">
+                                  {driverInfo?.status === "Approved" ? (
+                                    <span className="font-semibold text-emerald-700 text-xs inline-flex items-center gap-1.5 truncate max-w-full">
+                                      <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                                      <span className="truncate" title={driverInfo.driverName}>{driverInfo.driverName}</span>
+                                    </span>
+                                  ) : driverInfo?.status === "Pending Branch Approval" ? (
+                                    <span className="font-semibold text-amber-700 text-xs inline-flex items-center gap-1.5 truncate max-w-full">
+                                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
+                                      <span className="truncate">Review Pending</span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-400 text-xs font-normal italic block">None Assigned</span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
 
                           {/* Action Buttons */}
-                          <div className="pt-2 border-t border-slate-100 flex items-center gap-2">
+                          <div className="pt-3 border-t border-slate-100/90 flex items-center gap-2.5">
                             <button
                               onClick={() => setSelectedVehicleForModal(vehicle)}
-                              className="flex-1 bg-[#102A43] hover:bg-[#163e63] text-white font-semibold text-xs py-2 px-3 rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-2xs active:scale-[0.98] cursor-pointer border-none"
+                              className="flex-1 bg-[#102A43] hover:bg-[#163e63] active:scale-[0.98] text-white font-semibold text-xs sm:text-[13px] py-2.5 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 shadow-2xs hover:shadow cursor-pointer border-none"
                             >
-                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-white" strokeWidth={2} />
-                              <span>View Details</span>
+                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-white" strokeWidth={2.2} />
+                              <span>{t.viewDetails}</span>
                             </button>
 
                             <button
                               onClick={() => handleOpenThirdPartyForVehicle(vehicle.numberPlate)}
-                              className="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-semibold text-xs py-2 px-3 rounded-xl transition-colors flex items-center justify-center gap-1.5 active:scale-[0.98] cursor-pointer"
+                              className={`font-semibold text-xs sm:text-[13px] py-2.5 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 active:scale-[0.98] cursor-pointer ${
+                                driverInfo?.status === "Approved"
+                                  ? "bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/80"
+                                  : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/70 shadow-2xs"
+                              }`}
                               title="Assign Third-Party Driver"
                             >
-                              <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5 text-indigo-600" />
-                              <span>Assign Driver</span>
+                              <HugeiconsIcon icon={driverInfo?.status === "Approved" ? UserCheck01Icon : UserAdd01Icon} className="w-3.5 h-3.5" />
+                              <span>{driverInfo?.status === "Approved" ? "Manage Driver" : "Assign Driver"}</span>
                             </button>
                           </div>
                         </div>
@@ -1351,16 +1369,16 @@ export default function MyVehicles() {
                     {/* Add Vehicle Card */}
                     <button
                       onClick={handleOpenAddVehicle}
-                      className="bg-slate-50/50 hover:bg-slate-100/60 border-2 border-dashed border-slate-200 hover:border-slate-300 rounded-2xl p-6 min-h-[200px] flex flex-col items-center justify-center gap-3 transition-all duration-200 group cursor-pointer w-full text-slate-800"
+                      className="bg-gradient-to-b from-slate-50/70 via-white to-slate-50/50 hover:from-slate-100/70 hover:to-slate-50/80 border-2 border-dashed border-slate-200/90 hover:border-[#102A43]/40 rounded-3xl p-6 min-h-[220px] flex flex-col items-center justify-center gap-3.5 transition-all duration-300 group cursor-pointer w-full text-slate-800 shadow-[0_2px_10px_-2px_rgba(15,45,74,0.03)] hover:shadow-md hover:-translate-y-1"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-white border border-slate-200/80 group-hover:border-slate-300 flex items-center justify-center text-slate-400 group-hover:text-slate-700 shadow-2xs transition-all">
-                        <HugeiconsIcon icon={Add01Icon} className="w-6 h-6" strokeWidth={2} />
+                      <div className="w-13 h-13 rounded-2xl bg-white border border-slate-200 group-hover:border-[#102A43]/30 group-hover:bg-[#102A43]/5 flex items-center justify-center text-slate-400 group-hover:text-[#102A43] group-hover:scale-110 shadow-sm transition-all duration-300">
+                        <HugeiconsIcon icon={Add01Icon} className="w-6 h-6" strokeWidth={2.2} />
                       </div>
                       <div className="text-center select-none">
-                        <h4 className="text-slate-800 font-bold text-sm mb-0.5">
+                        <h4 className="text-slate-900 group-hover:text-[#102A43] font-bold text-sm mb-1 transition-colors">
                           {t.addVehicle}
                         </h4>
-                        <p className="text-slate-400 font-normal text-xs">{t.registerDesc}</p>
+                        <p className="text-slate-400 font-normal text-xs max-w-[200px] leading-relaxed">{t.registerDesc}</p>
                       </div>
                     </button>
                   </div>
