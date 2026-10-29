@@ -24,6 +24,8 @@ import claimChatRouter from "./src/routes/claim_chat.routes.js";
 import notificationsRouter from "./src/routes/notifications.routes.js";
 import smsRouter from "./src/routes/sms.routes.js";
 import thirdPartyRouter from "./src/routes/third_party.routes.js";
+import backupRouter from "./src/routes/backup.routes.js";
+import { initBackupScheduler } from "./src/services/backup.service.js";
 import { initSocketServer } from "./src/utils/socket.js";
 
 
@@ -64,6 +66,7 @@ app.use("/api/claim-chat", claimChatRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/sms", smsRouter);
 app.use("/api/third-party", thirdPartyRouter);
+app.use("/api/admin/backups", backupRouter);
 
 
 
@@ -78,6 +81,13 @@ const startServer = async () => {
       serverSelectionTimeoutMS: 30000
     });
     console.log("✅ MongoDB Connected");
+
+    // Initialize daily auto-backup scheduler
+    try {
+      initBackupScheduler();
+    } catch (schedErr) {
+      console.warn("Backup scheduler initialization error:", schedErr.message);
+    }
 
     // Index historical photos in background once DB is connected
     ensurePhotoHashesIndexed().catch((err) => {

@@ -19,7 +19,8 @@ import {
   SecurityCheckIcon,
   Notification01Icon,
   RefreshIcon,
-  BubbleChatIcon
+  BubbleChatIcon,
+  DatabaseIcon
 } from "@hugeicons/core-free-icons";
 import { useChatNotification } from "@/app/context/ChatNotificationContext";
 
@@ -49,6 +50,7 @@ export default function AdminNavbar() {
     { name: "Claims", href: "/Admin/Claims" },
     { name: "Reports", href: "/Admin/Analytics" },
     { name: "Agents", href: "/Admin/Agents" },
+    { name: "Backups", href: "/Admin/Backups" },
     { name: "Notifications", href: "/Admin/Notifications" },
     { name: "Contact", href: "/Admin/Contact" },
   ];
@@ -79,6 +81,9 @@ export default function AdminNavbar() {
         return <HugeiconsIcon icon={BubbleChatIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "notifications":
         return <HugeiconsIcon icon={Notification01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "backups":
+      case "backup":
+        return <HugeiconsIcon icon={DatabaseIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "contact":
         return <HugeiconsIcon icon={Call02Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       default:
