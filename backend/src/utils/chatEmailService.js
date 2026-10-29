@@ -156,6 +156,7 @@ export async function queueChatEmailNotification({
   else if (recipientType === "OfficeStaff") rolePath = "/Office_Staff/Claims";
   else if (recipientType === "Admin") rolePath = "/Admin/Claims";
   else if (recipientType === "PolicyHolder") rolePath = "/Policy_Holder/TrackClaims";
+  else if (recipientType === "ThirdParty") rolePath = "/driver-access";
 
   const actionUrl = `${publicFrontendUrl}${rolePath}?claim=${encodeURIComponent(claimNumber)}&openChat=true`;
   const subject = `New Message Regarding Your Insurance Claim [${claimNumber}]`;

@@ -36,9 +36,14 @@ interface AuthorizedVehicle {
 interface DriverProfile {
   driverName: string;
   driverNicMasked: string;
+  driverNicRaw?: string;
   driverPhone: string;
   driverAddress: string;
   policyHolderName: string;
+  policyHolderNicMasked?: string;
+  policyHolderNicRaw?: string;
+  policyHolderEmail?: string;
+  policyHolderPhone?: string;
   branch: string;
   reference: string;
   verificationToken: string;
@@ -54,7 +59,7 @@ interface ClaimItem {
   currentStep: number;
 }
 
-type TabType = "dashboard" | "vehicles" | "submit" | "claims" | "pass";
+type TabType = "dashboard" | "vehicles" | "submit" | "claims" | "chat" | "pass";
 
 function formatPlate(plate: string) {
   if (!plate) return "";
@@ -111,6 +116,183 @@ export default function MobileDriverPortalScreen() {
   const [claimDesc, setClaimDesc] = useState("");
   const [accidentPhotoBase64, setAccidentPhotoBase64] = useState("");
   const [submittingClaim, setSubmittingClaim] = useState(false);
+
+  // Chat States & Logic
+  const [chatRecipients, setChatRecipients] = useState<any[]>([]);
+  const [selectedRecipient, setSelectedRecipient] = useState<any | null>(null);
+  const [selectedChatRef, setSelectedChatRef] = useState<string>("");
+  const [chatMessages, setChatMessages] = useState<any[]>([]);
+  const [chatInputText, setChatInputText] = useState("");
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatSending, setChatSending] = useState(false);
+
+  const driverId = profile?.driverNicRaw || profile?.driverNicMasked || profile?.reference || "driver";
+
+  const fetchChatRecipients = async (ref: string) => {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/claim-chat/claims/${encodeURIComponent(ref)}/recipients?userId=${encodeURIComponent(driverId)}&userType=ThirdParty`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data.recipients && data.recipients.length > 0) {
+          setChatRecipients(data.recipients);
+          setSelectedRecipient(data.recipients[0]);
+          return data.recipients;
+        }
+      }
+    } catch (e) {
+      console.warn("fetchChatRecipients error:", e);
+    }
+
+    const fallbacks = [
+      {
+        userId: profile?.policyHolderNicRaw || "owner",
+        userType: "PolicyHolder",
+        name: profile?.policyHolderName || "Vehicle Owner",
+        role: "Vehicle Owner (Policyholder)",
+        branch: profile?.branch
+      },
+      {
+        userId: profile?.branch || "Galle",
+        userType: "OfficeStaff",
+        name: `${profile?.branch || "Galle"} Branch`,
+        role: "Branch Officer",
+        branch: profile?.branch
+      }
+    ];
+    setChatRecipients(fallbacks);
+    setSelectedRecipient(fallbacks[0]);
+    return fallbacks;
+  };
+
+  const loadConversation = async (ref: string, recipient: any) => {
+    if (!ref || !recipient) return;
+    setChatLoading(true);
+    try {
+      const convRes = await fetch(`${API_BASE_URL}/api/claim-chat/conversations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          claimNumber: ref,
+          type: "direct",
+          sender: {
+            userId: driverId,
+            userType: "ThirdParty",
+            name: profile?.driverName || "Authorized Driver",
+            role: "Authorized Driver",
+            branch: profile?.branch || "Galle"
+          },
+          recipient: {
+            userId: recipient.userId,
+            userType: recipient.userType,
+            name: recipient.name,
+            email: recipient.email || "",
+            role: recipient.role,
+            branch: recipient.branch || profile?.branch || "Galle"
+          }
+        })
+      });
+
+      if (convRes.ok) {
+        const convData = await convRes.json();
+        const convId = convData.conversation?._id;
+        setActiveConversationId(convId);
+
+        const msgRes = await fetch(
+          `${API_BASE_URL}/api/claim-chat/conversations/${convId}/messages?userId=${encodeURIComponent(driverId)}`
+        );
+        if (msgRes.ok) {
+          const msgData = await msgRes.json();
+          setChatMessages(msgData.messages || []);
+        }
+      }
+    } catch (e) {
+      console.warn("loadConversation error:", e);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "chat") {
+      const targetRef = selectedChatRef || claims[0]?.claimNumber || profile?.reference || "";
+      if (targetRef && (!selectedChatRef || !selectedRecipient)) {
+        setSelectedChatRef(targetRef);
+        fetchChatRecipients(targetRef).then((recs) => {
+          if (recs && recs[0]) {
+            loadConversation(targetRef, recs[0]);
+          }
+        });
+      }
+    }
+  }, [activeTab, profile, claims]);
+
+  useEffect(() => {
+    if (activeTab !== "chat" || !activeConversationId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const msgRes = await fetch(
+          `${API_BASE_URL}/api/claim-chat/conversations/${activeConversationId}/messages?userId=${encodeURIComponent(driverId)}`
+        );
+        if (msgRes.ok) {
+          const msgData = await msgRes.json();
+          if (Array.isArray(msgData.messages)) {
+            setChatMessages(msgData.messages);
+          }
+        }
+      } catch (e) {}
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [activeTab, activeConversationId, driverId]);
+
+  const handleSendChatMessage = async (textToSend?: string) => {
+    const text = (textToSend || chatInputText).trim();
+    if (!text || !activeConversationId || !selectedRecipient) return;
+
+    setChatSending(true);
+    setChatInputText("");
+
+    const optimistic = {
+      _id: `temp-${Date.now()}`,
+      senderId: driverId,
+      senderType: "ThirdParty",
+      senderName: profile?.driverName || "Authorized Driver",
+      text,
+      createdAt: new Date().toISOString()
+    };
+    setChatMessages((prev) => [...prev, optimistic]);
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/claim-chat/conversations/${activeConversationId}/messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          senderId: driverId,
+          senderType: "ThirdParty",
+          senderName: profile?.driverName || "Authorized Driver",
+          senderRole: "Authorized Driver",
+          recipientId: selectedRecipient.userId,
+          recipientType: selectedRecipient.userType,
+          recipientName: selectedRecipient.name,
+          text
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.message) {
+          setChatMessages((prev) => prev.map((m) => (m._id === optimistic._id ? data.message : m)));
+        }
+      }
+    } catch (e) {
+      console.warn("handleSendChatMessage error:", e);
+    } finally {
+      setChatSending(false);
+    }
+  };
 
   useEffect(() => {
     if (!token) {
@@ -358,6 +540,7 @@ export default function MobileDriverPortalScreen() {
             { id: "vehicles", label: `Vehicles (${vehicles.length})`, icon: "car-outline" },
             { id: "submit", label: "New Claim", icon: "add-circle-outline" },
             { id: "claims", label: `Claims (${claims.length})`, icon: "document-text-outline" },
+            { id: "chat", label: "Live Chat", icon: "chatbubbles-outline" },
             { id: "pass", label: "Digital Pass", icon: "shield-checkmark-outline" }
           ].map((t) => {
             const isActive = activeTab === t.id;
@@ -452,6 +635,35 @@ export default function MobileDriverPortalScreen() {
                 ))
               )}
             </View>
+
+            {/* Live Chat with Policyholder & Agent Card */}
+            <TouchableOpacity
+              style={[styles.contentCard, { backgroundColor: "#0B1E32", borderColor: "#0B1E32" }]}
+              onPress={() => {
+                const initialRef = claims[0]?.claimNumber || profile?.reference || "";
+                setSelectedChatRef(initialRef);
+                fetchChatRecipients(initialRef).then((recs) => {
+                  if (recs && recs[0]) loadConversation(initialRef, recs[0]);
+                });
+                setActiveTab("chat");
+              }}
+              activeOpacity={0.9}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#0284c7", alignItems: "center", justifyContent: "center" }}>
+                    <Ionicons name="chatbubbles" size={22} color="#ffffff" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "bold" }}>Live Claims & Operations Chat</Text>
+                    <Text style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>
+                      Chat directly with {profile?.policyHolderName || "Vehicle Owner"}, Claims Agent & Branch
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="#38bdf8" />
+              </View>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -627,10 +839,286 @@ export default function MobileDriverPortalScreen() {
                     </View>
                   </View>
                   <Text style={styles.claimSubText}>Vehicle: {formatPlate(c.vehiclePlate)} • {c.damageType}</Text>
-                  <Text style={styles.claimDateText}>Date: {c.incidentDate} • Location: {c.location}</Text>
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#F1F5F9" }}>
+                    <Text style={styles.claimDateText}>Date: {c.incidentDate} • {c.location}</Text>
+                    <TouchableOpacity
+                      onPress={() => {
+                        setSelectedChatRef(c.claimNumber);
+                        fetchChatRecipients(c.claimNumber).then((recs) => {
+                          if (recs && recs[0]) loadConversation(c.claimNumber, recs[0]);
+                        });
+                        setActiveTab("chat");
+                      }}
+                      style={{ flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#e0f2fe", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 }}
+                    >
+                      <Ionicons name="chatbubbles" size={12} color="#0284c7" />
+                      <Text style={{ fontSize: 11, fontWeight: "bold", color: "#0284c7" }}>Chat</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))
             )}
+          </View>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 4.5: LIVE CHAT (Policyholder, Agent, Branch) */}
+        {/* ========================================================================= */}
+        {activeTab === "chat" && (
+          <View style={styles.section}>
+            {/* Header Card */}
+            <View style={[styles.contentCard, { backgroundColor: "#0B1E32", borderColor: "#0B1E32" }]}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <View>
+                  <Text style={{ color: "#ffffff", fontSize: 16, fontWeight: "bold" }}>Driver Live Chat Desk</Text>
+                  <Text style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>
+                    Direct communication with Owner, Assigned Agent & Branch
+                  </Text>
+                </View>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: "rgba(34,197,94,0.15)", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 }}>
+                  <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: "#22c55e" }} />
+                  <Text style={{ color: "#4ade80", fontSize: 10, fontWeight: "bold" }}>ONLINE</Text>
+                </View>
+              </View>
+
+              {/* Context Selector: Claim or Authorization Reference */}
+              <View style={{ marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)" }}>
+                <Text style={{ color: "#94a3b8", fontSize: 10, fontWeight: "bold", textTransform: "uppercase", marginBottom: 6 }}>
+                  Select Claim / Reference Context:
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      const ref = profile?.reference || "";
+                      setSelectedChatRef(ref);
+                      fetchChatRecipients(ref).then((recs) => {
+                        if (recs && recs[0]) loadConversation(ref, recs[0]);
+                      });
+                    }}
+                    style={{
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 12,
+                      backgroundColor: selectedChatRef === profile?.reference ? "#0284c7" : "rgba(255,255,255,0.08)",
+                      borderWidth: 1,
+                      borderColor: selectedChatRef === profile?.reference ? "#38bdf8" : "rgba(255,255,255,0.15)"
+                    }}
+                  >
+                    <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "bold" }}>
+                      Pass: {profile?.reference}
+                    </Text>
+                  </TouchableOpacity>
+
+                  {claims.map((c) => (
+                    <TouchableOpacity
+                      key={c.claimNumber}
+                      onPress={() => {
+                        setSelectedChatRef(c.claimNumber);
+                        fetchChatRecipients(c.claimNumber).then((recs) => {
+                          if (recs && recs[0]) loadConversation(c.claimNumber, recs[0]);
+                        });
+                      }}
+                      style={{
+                        paddingHorizontal: 12,
+                        paddingVertical: 6,
+                        borderRadius: 12,
+                        backgroundColor: selectedChatRef === c.claimNumber ? "#0284c7" : "rgba(255,255,255,0.08)",
+                        borderWidth: 1,
+                        borderColor: selectedChatRef === c.claimNumber ? "#38bdf8" : "rgba(255,255,255,0.15)"
+                      }}
+                    >
+                      <Text style={{ color: "#ffffff", fontSize: 11, fontWeight: "bold" }}>
+                        Claim: {c.claimNumber}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+
+              {/* Recipient Channel Selector */}
+              <View style={{ marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: "rgba(255,255,255,0.1)" }}>
+                <Text style={{ color: "#94a3b8", fontSize: 10, fontWeight: "bold", textTransform: "uppercase", marginBottom: 6 }}>
+                  Select Recipient:
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                  {chatRecipients.map((rec) => {
+                    const isSelected = selectedRecipient?.userId === rec.userId;
+                    return (
+                      <TouchableOpacity
+                        key={rec.userId}
+                        onPress={() => {
+                          setSelectedRecipient(rec);
+                          loadConversation(selectedChatRef || profile?.reference || "", rec);
+                        }}
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 6,
+                          paddingHorizontal: 12,
+                          paddingVertical: 8,
+                          borderRadius: 14,
+                          backgroundColor: isSelected ? "#38bdf8" : "#ffffff"
+                        }}
+                      >
+                        <Ionicons
+                          name={
+                            rec.userType === "PolicyHolder"
+                              ? "person-circle-outline"
+                              : rec.userType === "Agent"
+                              ? "shield-checkmark-outline"
+                              : "business-outline"
+                          }
+                          size={16}
+                          color={isSelected ? "#0F172A" : "#334155"}
+                        />
+                        <View>
+                          <Text style={{ fontSize: 11, fontWeight: "bold", color: isSelected ? "#0F172A" : "#1E293B" }}>
+                            {rec.name}
+                          </Text>
+                          <Text style={{ fontSize: 9, color: isSelected ? "#1E293B" : "#64748B" }}>
+                            {rec.role || rec.userType}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            </View>
+
+            {/* Conversation Window */}
+            <View style={[styles.contentCard, { minHeight: 380, padding: 12 }]}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingBottom: 10, borderBottomWidth: 1, borderBottomColor: "#F1F5F9" }}>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                  <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: "#e0f2fe", alignItems: "center", justifyContent: "center" }}>
+                    <Text style={{ color: "#0284c7", fontWeight: "bold", fontSize: 13 }}>
+                      {selectedRecipient?.name?.charAt(0) || "U"}
+                    </Text>
+                  </View>
+                  <View>
+                    <Text style={{ color: "#0f172a", fontSize: 13, fontWeight: "bold" }}>
+                      {selectedRecipient?.name || "Select Recipient"}
+                    </Text>
+                    <Text style={{ color: "#64748b", fontSize: 10 }}>
+                      {selectedRecipient?.role} • {selectedRecipient?.branch || profile?.branch}
+                    </Text>
+                  </View>
+                </View>
+                <View style={{ backgroundColor: "#F1F5F9", paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 }}>
+                  <Text style={{ color: "#475569", fontSize: 10, fontWeight: "bold" }}>
+                    {selectedChatRef}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Messages Container */}
+              <View style={{ minHeight: 220, paddingVertical: 10 }}>
+                {chatLoading ? (
+                  <ActivityIndicator size="small" color="#0284c7" style={{ marginTop: 40 }} />
+                ) : chatMessages.length === 0 ? (
+                  <View style={{ alignItems: "center", justifyContent: "center", paddingVertical: 40 }}>
+                    <Ionicons name="chatbubbles-outline" size={36} color="#cbd5e1" />
+                    <Text style={{ color: "#64748b", fontSize: 12, fontWeight: "600", marginTop: 8 }}>
+                      No messages yet
+                    </Text>
+                    <Text style={{ color: "#94a3b8", fontSize: 10, textAlign: "center", marginTop: 4, paddingHorizontal: 20 }}>
+                      Send a message to {selectedRecipient?.name} regarding vehicle operation or claim status.
+                    </Text>
+                  </View>
+                ) : (
+                  chatMessages.map((msg, i) => {
+                    const isMe = String(msg.senderId) === String(driverId) || msg.senderType === "ThirdParty";
+                    return (
+                      <View
+                        key={msg._id || i}
+                        style={{
+                          alignSelf: isMe ? "flex-end" : "flex-start",
+                          maxWidth: "85%",
+                          marginBottom: 8
+                        }}
+                      >
+                        <Text style={{ fontSize: 9, color: "#94a3b8", marginBottom: 2, textAlign: isMe ? "right" : "left" }}>
+                          {isMe ? "You" : msg.senderName || selectedRecipient?.name}
+                        </Text>
+                        <View
+                          style={{
+                            backgroundColor: isMe ? "#0284c7" : "#F8FAFC",
+                            paddingHorizontal: 12,
+                            paddingVertical: 8,
+                            borderRadius: 14,
+                            borderTopRightRadius: isMe ? 2 : 14,
+                            borderTopLeftRadius: !isMe ? 2 : 14,
+                            borderWidth: !isMe ? 1 : 0,
+                            borderColor: "#E2E8F0"
+                          }}
+                        >
+                          <Text style={{ color: isMe ? "#ffffff" : "#1E293B", fontSize: 12 }}>
+                            {msg.text}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  })
+                )}
+              </View>
+
+              {/* Quick Template Chips */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 6 }}>
+                {[
+                  "Photos uploaded for review",
+                  "Front bumper minor damage",
+                  "Repair completed",
+                  "Awaiting inspection"
+                ].map((txt, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    onPress={() => handleSendChatMessage(txt)}
+                    style={{ backgroundColor: "#F1F5F9", paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12 }}
+                  >
+                    <Text style={{ color: "#475569", fontSize: 10, fontWeight: "600" }}>{txt}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Chat Input Bar */}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6, paddingTop: 8, borderTopWidth: 1, borderTopColor: "#F1F5F9" }}>
+                <TextInput
+                  value={chatInputText}
+                  onChangeText={setChatInputText}
+                  placeholder={`Message ${selectedRecipient?.name || "recipient"}...`}
+                  placeholderTextColor="#94a3b8"
+                  style={{
+                    flex: 1,
+                    backgroundColor: "#F8FAFC",
+                    borderWidth: 1,
+                    borderColor: "#E2E8F0",
+                    borderRadius: 16,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    fontSize: 12,
+                    color: "#0F172A"
+                  }}
+                />
+                <TouchableOpacity
+                  onPress={() => handleSendChatMessage()}
+                  disabled={!chatInputText.trim() || chatSending}
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 19,
+                    backgroundColor: chatInputText.trim() ? "#0284c7" : "#cbd5e1",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}
+                >
+                  {chatSending ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <Ionicons name="send" size={16} color="#ffffff" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         )}
 
