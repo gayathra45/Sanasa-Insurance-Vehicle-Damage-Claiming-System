@@ -272,10 +272,10 @@ router.post("/checkout-session", async (req, res) => {
         }
       ],
       mode: "payment",
-      success_url: `${frontendUrl}/Policy_Holder/ThirdParty?payment_success=true&session_id={CHECKOUT_SESSION_ID}&ref=${encodeURIComponent(
+      success_url: `${frontendUrl}/Policy_Holder/MyVehicles?third_party_payment=success&session_id={CHECKOUT_SESSION_ID}&ref=${encodeURIComponent(
         registration.requestReference
       )}`,
-      cancel_url: `${frontendUrl}/Policy_Holder/ThirdParty?payment_cancelled=true&ref=${encodeURIComponent(
+      cancel_url: `${frontendUrl}/Policy_Holder/MyVehicles?third_party_payment=cancelled&ref=${encodeURIComponent(
         registration.requestReference
       )}`,
       metadata: {

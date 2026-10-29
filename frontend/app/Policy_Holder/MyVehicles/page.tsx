@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import Link from "next/link";
@@ -33,9 +33,53 @@ function formatNumberPlate(plate: string): string {
   return cleaned;
 }
 
+const normalizeSriLankanPhone = (input: string) => {
+  const cleaned = (input || "").replace(/[\s-]/g, "");
+  if (!cleaned) return { isValid: false, error: "Phone number is required." };
+  let normalized = cleaned;
+  if (normalized.startsWith("+94")) {
+    normalized = "0" + normalized.slice(3);
+  } else if (normalized.startsWith("94")) {
+    normalized = "0" + normalized.slice(2);
+  }
+  if (!/^07\d{8}$/.test(normalized)) {
+    return {
+      isValid: false,
+      error: "Please enter a valid 10-digit Sri Lankan mobile number (e.g., 0771234567 or +94771234567)."
+    };
+  }
+  return { isValid: true, normalized };
+};
+
 import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Car01Icon, SecurityCheckIcon, Search01Icon, Alert02Icon, ViewIcon, Add01Icon, AlertCircleIcon, Download01Icon, BubbleChatIcon, Clock01Icon, Loading03Icon, RefreshIcon, CreditCardIcon, CheckmarkCircle01Icon, Tick01Icon, Money01Icon } from "@hugeicons/core-free-icons";
+import {
+  Car01Icon,
+  SecurityCheckIcon,
+  Search01Icon,
+  Alert02Icon,
+  ViewIcon,
+  Add01Icon,
+  AlertCircleIcon,
+  Download01Icon,
+  BubbleChatIcon,
+  Clock01Icon,
+  Loading03Icon,
+  RefreshIcon,
+  CreditCardIcon,
+  CheckmarkCircle01Icon,
+  Tick01Icon,
+  Money01Icon,
+  UserAdd01Icon,
+  UserCheck01Icon,
+  File01Icon,
+  Upload01Icon,
+  Shield01Icon,
+  Cancel01Icon,
+  Building04Icon,
+  InformationCircleIcon,
+  ArrowRight01Icon
+} from "@hugeicons/core-free-icons";
 
 const translations = {
   en: {
@@ -186,6 +230,223 @@ export default function MyVehicles() {
   const [paymentSuccessDetails, setPaymentSuccessDetails] = useState<{ plate: string; installment: string } | null>(null);
   const [coverNoteModalOpen, setCoverNoteModalOpen] = useState(false);
   const [coverNoteVehicle, setCoverNoteVehicle] = useState<Vehicle | null>(null);
+
+  // Third-Party Drivers Integration
+  const [activeMainTab, setActiveMainTab] = useState<"vehicles" | "third_party">("vehicles");
+  const [thirdPartyRequests, setThirdPartyRequests] = useState<any[]>([]);
+  const [loadingThirdParty, setLoadingThirdParty] = useState(false);
+  const [thirdPartyModalOpen, setThirdPartyModalOpen] = useState(false);
+  const [submittingThirdParty, setSubmittingThirdParty] = useState(false);
+
+  // Third-Party Driver Registration Form States
+  const [tpSelectedPlates, setTpSelectedPlates] = useState<string[]>([]);
+  const [tpDriverName, setTpDriverName] = useState("");
+  const [tpDriverAddress, setTpDriverAddress] = useState("");
+  const [tpDriverPhone, setTpDriverPhone] = useState("");
+  const [tpDriverNic, setTpDriverNic] = useState("");
+  const [tpNicFront, setTpNicFront] = useState("");
+  const [tpNicBack, setTpNicBack] = useState("");
+  const [tpDlFront, setTpDlFront] = useState("");
+  const [tpDlBack, setTpDlBack] = useState("");
+  const [tpErrorMessage, setTpErrorMessage] = useState("");
+  const [tpReviewOpen, setTpReviewOpen] = useState(false);
+  const [resumingPaymentId, setResumingPaymentId] = useState<string | null>(null);
+
+  const tpNicFrontRef = useRef<HTMLInputElement>(null);
+  const tpNicBackRef = useRef<HTMLInputElement>(null);
+  const tpDlFrontRef = useRef<HTMLInputElement>(null);
+  const tpDlBackRef = useRef<HTMLInputElement>(null);
+
+  // Map of vehicle plate -> assigned driver info
+  const vehicleDriverMap = useMemo(() => {
+    const map: Record<string, { driverName: string; status: string; ref: string }> = {};
+    thirdPartyRequests.forEach((req) => {
+      req.selectedVehicles?.forEach((v: any) => {
+        if (!map[v.numberPlate] || req.status === "Approved") {
+          map[v.numberPlate] = {
+            driverName: req.driverDetails?.fullName || "Assigned Driver",
+            status: req.status,
+            ref: req.requestReference
+          };
+        }
+      });
+    });
+    return map;
+  }, [thirdPartyRequests]);
+
+  const loadThirdPartyRequests = async (overrideNic?: string) => {
+    if (typeof window === "undefined") return;
+    const userStr = sessionStorage.getItem("logged_in_user");
+    const nic = overrideNic || (userStr ? JSON.parse(userStr)?.nic : null);
+    if (!nic) return;
+    try {
+      setLoadingThirdParty(true);
+      const res = await fetch(`${API_URL}/third-party/my-requests?nic=${encodeURIComponent(nic)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setThirdPartyRequests(data.requests || []);
+      }
+    } catch (e) {
+      console.error("Error loading third party requests:", e);
+    } finally {
+      setLoadingThirdParty(false);
+    }
+  };
+
+  const handleOpenThirdPartyForVehicle = (plate: string) => {
+    setTpSelectedPlates([plate]);
+    setTpDriverName("");
+    setTpDriverAddress("");
+    setTpDriverPhone("");
+    setTpDriverNic("");
+    setTpNicFront("");
+    setTpNicBack("");
+    setTpDlFront("");
+    setTpDlBack("");
+    setTpErrorMessage("");
+    setTpReviewOpen(false);
+    setThirdPartyModalOpen(true);
+  };
+
+  const handleOpenThirdPartyNew = () => {
+    setTpSelectedPlates([]);
+    setTpDriverName("");
+    setTpDriverAddress("");
+    setTpDriverPhone("");
+    setTpDriverNic("");
+    setTpNicFront("");
+    setTpNicBack("");
+    setTpDlFront("");
+    setTpDlBack("");
+    setTpErrorMessage("");
+    setTpReviewOpen(false);
+    setThirdPartyModalOpen(true);
+  };
+
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (val: string) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setTpErrorMessage("File size exceeds 5MB limit. Please upload a smaller image.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setter(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSubmitThirdParty = async () => {
+    setTpErrorMessage("");
+    if (tpSelectedPlates.length === 0) {
+      setTpErrorMessage("Please select at least one vehicle.");
+      return;
+    }
+    if (!tpDriverName.trim() || !tpDriverAddress.trim() || !tpDriverPhone.trim() || !tpDriverNic.trim()) {
+      setTpErrorMessage("All driver details are required.");
+      return;
+    }
+    const phoneCheck = normalizeSriLankanPhone(tpDriverPhone);
+    if (!phoneCheck.isValid) {
+      setTpErrorMessage(phoneCheck.error || "Invalid phone number.");
+      return;
+    }
+    if (!tpNicFront || !tpNicBack || !tpDlFront || !tpDlBack) {
+      setTpErrorMessage("All 4 KYC identity photographs (NIC Front, NIC Back, Licence Front, Licence Back) are mandatory.");
+      return;
+    }
+
+    const userStr = typeof window !== "undefined" ? sessionStorage.getItem("logged_in_user") : null;
+    const u = userStr ? JSON.parse(userStr) : null;
+    if (!u?.nic) {
+      setTpErrorMessage("User authentication missing. Please log in again.");
+      return;
+    }
+
+    setSubmittingThirdParty(true);
+    try {
+      const regRes = await fetch(`${API_URL}/third-party/request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          policyHolderNic: u.nic,
+          selectedVehiclePlates: tpSelectedPlates,
+          driverDetails: {
+            fullName: tpDriverName.trim(),
+            residentialAddress: tpDriverAddress.trim(),
+            phoneNumber: phoneCheck.normalized,
+            nicNumber: tpDriverNic.trim().toUpperCase(),
+            documents: {
+              nicFront: tpNicFront,
+              nicBack: tpNicBack,
+              drivingLicenceFront: tpDlFront,
+              drivingLicenceBack: tpDlBack
+            }
+          }
+        })
+      });
+
+      const regData = await regRes.json();
+      if (!regRes.ok) {
+        throw new Error(regData.error || "Failed to create third-party driver request.");
+      }
+
+      const createdRequestId = regData.request?._id;
+
+      const checkoutRes = await fetch(`${API_URL}/third-party/checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId: createdRequestId,
+          policyHolderNic: u.nic
+        })
+      });
+
+      const checkoutData = await checkoutRes.json();
+      if (!checkoutRes.ok) {
+        throw new Error(checkoutData.error || "Failed to initiate Stripe checkout.");
+      }
+
+      if (checkoutData.checkoutUrl) {
+        window.location.href = checkoutData.checkoutUrl;
+      } else {
+        throw new Error("No checkout URL returned from payment gateway.");
+      }
+    } catch (err: any) {
+      setTpErrorMessage(err.message || "An unexpected error occurred.");
+      setSubmittingThirdParty(false);
+    }
+  };
+
+  const handleResumeThirdPartyPayment = async (requestId: string) => {
+    const userStr = typeof window !== "undefined" ? sessionStorage.getItem("logged_in_user") : null;
+    const u = userStr ? JSON.parse(userStr) : null;
+    if (!u?.nic) return;
+
+    setResumingPaymentId(requestId);
+    try {
+      const res = await fetch(`${API_URL}/third-party/checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          requestId,
+          policyHolderNic: u.nic
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to resume payment session.");
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    } catch (err: any) {
+      triggerToast(err.message || "Failed to redirect to payment.");
+      setResumingPaymentId(null);
+    }
+  };
 
   const getAddCardTitle = () => {
     switch (activeCategory) {
@@ -389,10 +650,14 @@ export default function MyVehicles() {
     }
   }, [vehicles]);
 
-  // Real-time polling for vehicles list
+  // Real-time polling for vehicles list & third-party requests
   useEffect(() => {
     fetchVehicles(true);
-    const vehicleInterval = setInterval(() => fetchVehicles(false), 5000);
+    loadThirdPartyRequests();
+    const vehicleInterval = setInterval(() => {
+      fetchVehicles(false);
+      loadThirdPartyRequests();
+    }, 6000);
     return () => clearInterval(vehicleInterval);
   }, []);
 
@@ -414,7 +679,7 @@ export default function MyVehicles() {
 
   // 3. Disable body scroll when any modal is active
   useEffect(() => {
-    if (selectedVehicleForModal || isAddVehicleOpen || showSuccessModal || coverNoteModalOpen) {
+    if (selectedVehicleForModal || isAddVehicleOpen || showSuccessModal || coverNoteModalOpen || thirdPartyModalOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -422,7 +687,7 @@ export default function MyVehicles() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [selectedVehicleForModal, isAddVehicleOpen, showSuccessModal, renewalWizardOpen, paymentSuccessModal, coverNoteModalOpen]);
+  }, [selectedVehicleForModal, isAddVehicleOpen, showSuccessModal, renewalWizardOpen, paymentSuccessModal, coverNoteModalOpen, thirdPartyModalOpen]);
 
   // 4. Real-time background sync when modal is open for a vehicle (every 4s)
   useEffect(() => {
@@ -444,6 +709,7 @@ export default function MyVehicles() {
     const handleSyncOnActive = () => {
       if (typeof document !== "undefined" && document.visibilityState === "visible") {
         fetchVehicles(false);
+        loadThirdPartyRequests();
         if (selectedVehicleForModal?.numberPlate) {
           fetchRenewalData(selectedVehicleForModal.numberPlate);
         }
@@ -462,10 +728,36 @@ export default function MyVehicles() {
     if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
       const isSuccess = urlParams.get("payment_success");
+      const tpPaymentSuccess = urlParams.get("third_party_payment");
       const sessionId = urlParams.get("session_id");
       const plate = urlParams.get("plate");
       const inst = urlParams.get("inst");
+      const tpRef = urlParams.get("ref");
 
+      // Third-Party Registration Payment Return
+      if (tpPaymentSuccess === "success" && sessionId) {
+        fetch(`${API_URL}/third-party/verify-payment`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, requestReference: tpRef })
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              triggerToast(`Payment confirmed for Request ${tpRef || ""}! Application queued for branch approval.`);
+              setActiveMainTab("third_party");
+              loadThirdPartyRequests();
+              window.history.replaceState({}, "", window.location.pathname);
+            }
+          })
+          .catch((err) => console.error("Verify TP session error:", err));
+      } else if (tpPaymentSuccess === "cancelled") {
+        triggerToast("Third-party driver registration payment was cancelled.");
+        setActiveMainTab("third_party");
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+
+      // Renewal Payment Return
       if (isSuccess === "true" && sessionId) {
         fetch(`${API_URL}/renewals/verify-session`, {
           method: "POST",
@@ -758,202 +1050,295 @@ export default function MyVehicles() {
           </div>
         </section>
 
-        {/* Section Heading */}
-        <div className="flex items-center gap-2.5 mb-6 select-none">
-          <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-          <h2 className="text-xl md:text-[24px] font-bold text-slate-800 tracking-tight">
-            {t.allVehicles}
-          </h2>
-        </div>
-
-        {/* Filtering & Search Controls Panel */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-8 bg-white border border-slate-200/80 p-5 rounded-[26px] shadow-sm select-none">
-          {/* Real-time Category Selector tabs matching My Claims design */}
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => setActiveCategory(cat.id)}
-                className={`px-5 py-2.5 rounded-full font-semibold text-[13px] md:text-sm tracking-wide transition-all outline-none border cursor-pointer select-none ${
-                  activeCategory === cat.id
-                    ? "bg-[#000080] border-[#000080] text-white shadow-sm"
-                    : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+        {/* Main Tab Switcher: Insured Vehicles vs Third-Party Drivers */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 border-b border-slate-200/80 pb-4 select-none">
+          <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pb-1 sm:pb-0">
+            <button
+              onClick={() => setActiveMainTab("vehicles")}
+              className={`flex items-center gap-2.5 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm tracking-wide transition-all outline-none cursor-pointer border ${
+                activeMainTab === "vehicles"
+                  ? "bg-[#102A43] border-[#102A43] text-white shadow-md"
+                  : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <HugeiconsIcon icon={Car01Icon} className="w-4 h-4" />
+              <span>All Insured Vehicles</span>
+              <span
+                className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+                  activeMainTab === "vehicles" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-700"
                 }`}
               >
-                {cat.label}
-              </button>
-            ))}
+                {vehicles.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setActiveMainTab("third_party")}
+              className={`flex items-center gap-2.5 px-5 py-2.5 rounded-2xl font-bold text-xs sm:text-sm tracking-wide transition-all outline-none cursor-pointer border ${
+                activeMainTab === "third_party"
+                  ? "bg-[#102A43] border-[#102A43] text-white shadow-md"
+                  : "bg-white border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+              }`}
+            >
+              <HugeiconsIcon icon={UserCheck01Icon} className="w-4 h-4" />
+              <span>Third-Party Drivers</span>
+              {thirdPartyRequests.length > 0 && (
+                <span
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-bold ${
+                    activeMainTab === "third_party" ? "bg-white/20 text-white" : "bg-indigo-100 text-indigo-700"
+                  }`}
+                >
+                  {thirdPartyRequests.length}
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Search bar matching design guidelines */}
-          <div className="relative w-full md:max-w-[300px]">
-            <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
-              <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2} />
-            </span>
-            <input
-              type="text"
-              placeholder={t.searchPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-800 rounded-full py-2.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#000080] transition-all border border-slate-200 font-normal"
-            />
-            {searchQuery.length > 0 && (
-              <button
-                onClick={() => setSearchQuery("")}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
-              >
-                &times;
-              </button>
-            )}
-          </div>
+          <button
+            onClick={handleOpenThirdPartyNew}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl font-semibold text-xs bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow transition-all self-start sm:self-auto cursor-pointer border-none"
+          >
+            <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" />
+            <span>+ Authorize Driver (LKR 300)</span>
+          </button>
         </div>
 
-        {/* Vehicles Display Grid */}
-        {isLoading ? (
-          <SimpleLoader message="Loading registered vehicles..." theme="blue" />
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* If no vehicles match the criteria, show a helpful inner-grid card */}
-            {filteredVehicles.length === 0 && (
-              <div className="bg-white border border-slate-200 rounded-[30px] p-7 shadow-sm flex flex-col justify-center items-center text-center min-h-[280px]">
-                <div className="w-16 h-16 bg-slate-50 border border-slate-200/50 rounded-2xl flex items-center justify-center text-slate-400 mb-4">
-                  <HugeiconsIcon icon={Alert02Icon} className="w-8 h-8" strokeWidth={1.8} />
+        {/* TAB 1: ALL INSURED VEHICLES */}
+        {activeMainTab === "vehicles" && (
+          <>
+            {/* Quick Driver Authorization Banner */}
+            <div className="bg-gradient-to-r from-[#102A43] via-[#163c61] to-[#0284c7] rounded-3xl p-5 mb-8 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm border border-slate-700/30">
+              <div className="flex items-center gap-4">
+                <div className="w-11 h-11 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0 text-sky-200">
+                  <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" />
                 </div>
-                <h4 className="text-slate-800 font-semibold text-base mb-1">
-                  {t.noVehiclesFound}
-                </h4>
-                <p className="text-slate-400 font-normal text-xs max-w-[240px] leading-relaxed mb-4">
-                  {searchQuery ? `${t.searchNoMatch} "${searchQuery}".` : t.noCategoryVehiclesFound}
-                </p>
-                {searchQuery && (
+                <div>
+                  <h4 className="font-bold text-sm text-white">Third-Party Driver Management</h4>
+                  <p className="text-xs text-sky-100/90 mt-0.5">
+                    Need someone else to drive your vehicle? Authorize drivers with digital NFC passes for a single fixed fee of <strong>LKR 300</strong> covering all your vehicles.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={handleOpenThirdPartyNew}
+                className="px-4 py-2 rounded-xl bg-white text-[#102A43] hover:bg-sky-50 font-bold text-xs whitespace-nowrap shadow-sm transition-colors flex items-center gap-1.5 self-start sm:self-auto cursor-pointer border-none"
+              >
+                <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4 text-indigo-700" />
+                <span>Register Driver</span>
+              </button>
+            </div>
+
+            {/* Filtering & Search Controls Panel */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 mb-8 bg-white border border-slate-200/80 p-5 rounded-[26px] shadow-sm select-none">
+              <div className="flex flex-wrap gap-2">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.id}
+                    onClick={() => setActiveCategory(cat.id)}
+                    className={`px-5 py-2.5 rounded-full font-semibold text-[13px] md:text-sm tracking-wide transition-all outline-none border cursor-pointer select-none ${
+                      activeCategory === cat.id
+                        ? "bg-[#000080] border-[#000080] text-white shadow-sm"
+                        : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-800"
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="relative w-full md:max-w-[300px]">
+                <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+                  <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2} />
+                </span>
+                <input
+                  type="text"
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-slate-50 hover:bg-slate-100/70 focus:bg-white text-slate-800 rounded-full py-2.5 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#000080] transition-all border border-slate-200 font-normal"
+                />
+                {searchQuery.length > 0 && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-xs px-4 py-2 rounded-full transition-all cursor-pointer border-none"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer"
                   >
-                    {t.clearSearch}
+                    &times;
                   </button>
                 )}
               </div>
-            )}
+            </div>
 
-            {filteredVehicles.map((vehicle) => {
-              const qInfo = renewalMap[vehicle.numberPlate];
-              const iInfo = installmentMap[vehicle.numberPlate];
-              const isQuoteReady = qInfo?.hasCalculatedQuote && qInfo?.renewalQuote?.status === "Calculated";
-              const isInstallmentDue = iInfo?.hasActivePlan && iInfo?.nextInstallment && !iInfo?.isFullyPaid;
-              const isRenewed = qInfo?.isRenewed || iInfo?.isFullyPaid;
+            {/* Vehicles Display Grid */}
+            {isLoading ? (
+              <SimpleLoader message="Loading registered vehicles..." theme="blue" />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {filteredVehicles.length === 0 && (
+                  <div className="bg-white border border-slate-200 rounded-[30px] p-7 shadow-sm flex flex-col justify-center items-center text-center min-h-[280px]">
+                    <div className="w-16 h-16 bg-slate-50 border border-slate-200/50 rounded-2xl flex items-center justify-center text-slate-400 mb-4">
+                      <HugeiconsIcon icon={Alert02Icon} className="w-8 h-8" strokeWidth={1.8} />
+                    </div>
+                    <h4 className="text-slate-800 font-semibold text-base mb-1">
+                      {t.noVehiclesFound}
+                    </h4>
+                    <p className="text-slate-400 font-normal text-xs max-w-[240px] leading-relaxed mb-4">
+                      {searchQuery ? `${t.searchNoMatch} "${searchQuery}".` : t.noCategoryVehiclesFound}
+                    </p>
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="bg-[#000080] hover:bg-[#000066] text-white font-medium text-xs px-4 py-2 rounded-full transition-all cursor-pointer border-none"
+                      >
+                        {t.clearSearch}
+                      </button>
+                    )}
+                  </div>
+                )}
 
-              // Check renewal date reaching (within 45 days)
-              const expDateStr = qInfo?.expiryDate || vehicle.policyExpiryDate;
-              let daysRemaining = qInfo?.daysRemaining;
-              if (daysRemaining == null && expDateStr) {
-                const expTime = new Date(expDateStr).getTime();
-                if (!isNaN(expTime)) {
-                  daysRemaining = Math.ceil((expTime - Date.now()) / (1000 * 60 * 60 * 24));
-                }
-              }
-              const isRenewalReaching = !isRenewed && (qInfo?.isWithin30Days || (daysRemaining !== null && daysRemaining !== undefined && daysRemaining <= 45));
-              const hasAlert = isQuoteReady || isInstallmentDue || isRenewalReaching;
+                {filteredVehicles.map((vehicle) => {
+                  const qInfo = renewalMap[vehicle.numberPlate];
+                  const iInfo = installmentMap[vehicle.numberPlate];
+                  const isQuoteReady = qInfo?.hasCalculatedQuote && qInfo?.renewalQuote?.status === "Calculated";
+                  const isInstallmentDue = iInfo?.hasActivePlan && iInfo?.nextInstallment && !iInfo?.isFullyPaid;
+                  const expDateStr = qInfo?.expiryDate || vehicle.policyExpiryDate;
+                  const driverInfo = vehicleDriverMap[vehicle.numberPlate];
 
-              return (
-                <div
-                  key={vehicle.numberPlate}
-                  className={`bg-white border rounded-[30px] p-7 shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1 ${
-                    hasAlert ? "border-rose-300 ring-2 ring-rose-500/10 shadow-rose-100/50" : "border-slate-200"
-                  }`}
-                >
-                  {/* Decorative faint background accent positioned safely behind content */}
-                  <div className="absolute top-0 right-0 w-28 h-28 bg-gradient-to-bl from-cyan-50/70 via-sky-50/30 to-transparent rounded-bl-[100px] pointer-events-none z-0 group-hover:from-cyan-100/60 transition-colors duration-300" />
+                  return (
+                    <div
+                      key={vehicle.numberPlate}
+                      className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-[28px] p-6 sm:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_12px_32px_rgba(15,45,74,0.08)] transition-all duration-300 flex flex-col justify-between relative overflow-hidden group hover:-translate-y-1"
+                    >
+                      {/* Subtle top gradient accent */}
+                      <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#102A43] via-[#0284c7] to-[#1fcbf2]" />
 
-                  <div className="relative z-10">
-                    {/* Header Row: Icon + Plate Number & Status */}
-                    <div className="flex items-center justify-between mb-5">
-                      <div className="flex items-center gap-4">
-                        <div className="relative">
-                          {getVehicleIconContainer(vehicle.vehicleType)}
-                          {/* Highlight Red Dot Icon for renewal reaching or new update */}
-                          {hasAlert && (
-                            <span
-                              className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 z-20 pointer-events-none"
-                              title={
-                                isQuoteReady
-                                  ? "Renewal quote calculated - ready to renew"
-                                  : isInstallmentDue
-                                  ? "Upcoming installment payment due"
-                                  : "Renewal date reaching - coverage expiring soon"
-                              }
-                            >
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-rose-600 border-2 border-white shadow-xs"></span>
+                      <div className="relative z-10 space-y-4">
+                        {/* Header Row: Icon + Plate Number & Category */}
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3.5">
+                            <div className="relative flex-shrink-0">
+                              {getVehicleIconContainer(vehicle.vehicleType, "w-13 h-13 rounded-2xl shadow-xs")}
+                            </div>
+
+                            <div>
+                              {/* Sri Lankan Monospace Plate Badge */}
+                              <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg font-mono font-black text-sm sm:text-base tracking-wider shadow-xs border border-slate-700 select-all">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                <span>{formatNumberPlate(vehicle.numberPlate)}</span>
+                              </div>
+
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <h3 className="text-slate-800 font-bold text-base sm:text-lg tracking-tight leading-tight">
+                                  {vehicle.company} {vehicle.model}
+                                </h3>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                            <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getVehicleTheme(vehicle.vehicleType).badge} select-none shadow-2xs`}>
+                              {vehicle.vehicleType}
+                            </span>
+                            <span className="text-slate-500 font-medium text-[10px] bg-slate-100 border border-slate-200/70 rounded-full px-2 py-0.5 select-none">
+                              {vehicle.year}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Status Badges Row */}
+                        <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/70 rounded-full px-3 py-1 select-none">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>{t.activeCoverage}</span>
+                          </span>
+
+                          {/* Third-Party Driver Badge on this vehicle */}
+                          {driverInfo ? (
+                            driverInfo.status === "Approved" ? (
+                              <span
+                                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200"
+                                title={`Authorized Driver: ${driverInfo.driverName} (${driverInfo.ref})`}
+                              >
+                                <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600" />
+                                <span>Driver: {driverInfo.driverName}</span>
+                              </span>
+                            ) : driverInfo.status === "Pending Branch Approval" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                <span>Driver Review Pending</span>
+                              </span>
+                            ) : driverInfo.status === "Pending Payment" ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                <span>Driver Fee Due</span>
+                              </span>
+                            ) : null
+                          ) : null}
+
+                          {isQuoteReady && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                              <HugeiconsIcon icon={CreditCardIcon} className="w-3 h-3" />
+                              <span>Quote Ready</span>
+                            </span>
+                          )}
+
+                          {isInstallmentDue && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                              <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3" />
+                              <span>Installment Due</span>
                             </span>
                           )}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-slate-800 font-bold text-lg md:text-xl tracking-tight leading-none">
-                              {formatNumberPlate(vehicle.numberPlate)}
-                            </h3>
-                            {hasAlert && (
-                              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 shadow-2xs select-none">
-                                <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-                                {isQuoteReady
-                                  ? "Quote Ready"
-                                  : isInstallmentDue
-                                  ? "Payment Due"
-                                  : isRenewalReaching
-                                  ? (daysRemaining !== null && daysRemaining !== undefined ? `Expires ${daysRemaining}d` : "Renewal Due")
-                                  : "Update"}
-                              </span>
-                            )}
+
+                        {/* Specifications Grid */}
+                        <div className="grid grid-cols-2 gap-2.5 bg-slate-50/80 p-3.5 rounded-2xl border border-slate-100 text-xs">
+                          <div>
+                            <span className="text-slate-400 block text-[11px] font-medium">{t.policyNum}</span>
+                            <span className="font-mono font-bold text-slate-800 tracking-wide text-xs">
+                              {vehicle.policyNumber || "N/A"}
+                            </span>
                           </div>
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-500 bg-emerald-50/70 border border-emerald-100 rounded-full px-3 py-1 mt-1.5 select-none">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                            <span>{t.activeCoverage}</span>
-                          </span>
+                          <div>
+                            <span className="text-slate-400 block text-[11px] font-medium">Chassis Number</span>
+                            <span className="font-mono text-slate-700 text-xs truncate block" title={vehicle.chassisNumber}>
+                              {vehicle.chassisNumber || "N/A"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[11px] font-medium">Engine Number</span>
+                            <span className="font-mono text-slate-700 text-xs truncate block" title={vehicle.engineNumber}>
+                              {vehicle.engineNumber || "N/A"}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-slate-400 block text-[11px] font-medium">Policy Expiry</span>
+                            <span className="font-semibold text-slate-700 text-xs">
+                              {expDateStr ? new Date(expDateStr).toLocaleDateString() : "Active / Verified"}
+                            </span>
+                          </div>
                         </div>
                       </div>
 
-                      {/* Category & Year Pill - Always clearly visible above background */}
-                      <div className="flex flex-col items-end gap-1.5 self-start">
-                        <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getVehicleTheme(vehicle.vehicleType).badge} select-none shadow-xs`}>
-                          {vehicle.vehicleType}
-                        </span>
-                        <span className="text-slate-500 font-medium text-[11px] bg-slate-100 border border-slate-200/70 rounded-full px-2.5 py-0.5 select-none shadow-xs">
-                          {vehicle.year}
-                        </span>
+                      {/* Card Action Buttons */}
+                      <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2.5 relative z-10">
+                        <button
+                          onClick={() => setSelectedVehicleForModal(vehicle)}
+                          className="flex-1 bg-[#102A43] hover:bg-[#1C3E63] text-white font-semibold text-xs py-3 rounded-xl text-center transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.98] cursor-pointer border-none"
+                        >
+                          <HugeiconsIcon icon={ViewIcon} className="w-4 h-4 text-white" strokeWidth={2} />
+                          <span>{t.viewDetails}</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleOpenThirdPartyForVehicle(vehicle.numberPlate)}
+                          className="px-3.5 py-3 rounded-xl text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors flex items-center gap-1.5 active:scale-[0.98] cursor-pointer"
+                          title="Assign third-party driver to this vehicle"
+                        >
+                          <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4 text-indigo-600" />
+                          <span className="hidden sm:inline">Assign Driver</span>
+                        </button>
                       </div>
                     </div>
-
-                    {/* Technical details rows */}
-                    <div className="flex flex-col gap-3.5 border-t border-slate-100 pt-4.5">
-                      <div className="flex justify-between items-center text-sm font-normal">
-                        <span className="text-slate-400">{t.makeModel}</span>
-                        <span className="text-slate-800 font-semibold">{vehicle.company} {vehicle.model}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm font-normal">
-                        <span className="text-slate-400">{t.policyNum}</span>
-                        <span className="text-slate-800 font-semibold tracking-wide">{vehicle.policyNumber || "N/A"}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-sm font-normal">
-                        <span className="text-slate-400">{t.vehicleType}</span>
-                        <span className="text-slate-800 font-semibold">{vehicle.vehicleType}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* View Details CTA Button */}
-                  <div className="mt-6 pt-4.5 border-t border-slate-100 flex-shrink-0 relative z-10">
-                    <button
-                      onClick={() => setSelectedVehicleForModal(vehicle)}
-                      className="w-full bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-semibold text-xs md:text-sm py-3 rounded-full text-center transition-all flex items-center justify-center gap-2 cursor-pointer border-none shadow-sm hover:scale-[1.01] active:scale-[0.98] outline-none"
-                    >
-                      <HugeiconsIcon icon={ViewIcon} className="w-5 h-5 text-white" strokeWidth={2} />
-                      {t.viewDetails}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
 
             {/* Dashed Add Vehicle Card in the Grid */}
             <button
@@ -972,6 +1357,186 @@ export default function MyVehicles() {
             </button>
           </div>
         )}
+      </>
+    )}
+
+    {/* TAB 2: THIRD-PARTY DRIVERS MANAGEMENT */}
+    {activeMainTab === "third_party" && (
+      <div className="space-y-6">
+        {/* Header / Intro Card */}
+        <div className="bg-gradient-to-br from-[#102A43] via-[#163e63] to-indigo-900 rounded-[30px] p-6 sm:p-8 text-white shadow-md relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 text-cyan-300 text-xs font-bold rounded-full border border-white/15">
+                <HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" />
+                <span>Fixed Fee: LKR 300 per Registration</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                Third-Party Driver Authorizations
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                Register authorized drivers who operate your insured vehicles. Covered under your existing policy with a single fixed fee of <strong>LKR 300</strong> covering all chosen vehicles, reviewed by your regional branch office.
+              </p>
+            </div>
+
+            <button
+              onClick={handleOpenThirdPartyNew}
+              className="px-6 py-3.5 bg-cyan-400 hover:bg-cyan-300 text-slate-900 font-bold text-xs sm:text-sm rounded-2xl shadow-lg transition-all flex items-center gap-2 self-start md:self-auto cursor-pointer border-none flex-shrink-0"
+            >
+              <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 text-slate-900" />
+              <span>+ Register New Driver</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Third-Party Drivers List */}
+        {loadingThirdParty ? (
+          <div className="py-16 bg-white rounded-3xl border border-slate-200 flex flex-col items-center justify-center">
+            <SimpleLoader message="Loading third-party drivers..." theme="blue" />
+          </div>
+        ) : thirdPartyRequests.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-[30px] p-10 text-center shadow-xs">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-4">
+              <HugeiconsIcon icon={UserCheck01Icon} className="w-8 h-8" />
+            </div>
+            <h4 className="text-slate-800 font-bold text-base mb-1">No Third-Party Drivers Registered Yet</h4>
+            <p className="text-slate-500 text-xs max-w-md mx-auto mb-6">
+              You haven't authorized any third-party drivers yet. Authorize drivers to allow others to safely and officially drive your insured vehicles.
+            </p>
+            <button
+              onClick={handleOpenThirdPartyNew}
+              className="px-6 py-3 bg-[#102A43] hover:bg-[#1C3E63] text-white font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer border-none inline-flex items-center gap-2"
+            >
+              <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" />
+              <span>Register Your First Driver (LKR 300)</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {thirdPartyRequests.map((req) => (
+              <div
+                key={req._id}
+                className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden flex flex-col justify-between"
+              >
+                <div className="space-y-4">
+                  {/* Top Header Row */}
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-xs text-[#102A43] bg-slate-100 px-2.5 py-1 rounded-lg">
+                        {req.requestReference}
+                      </span>
+                    </div>
+
+                    {/* Status Badge */}
+                    {req.status === "Approved" ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+                        Approved
+                      </span>
+                    ) : req.status === "Pending Branch Approval" ? (
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                        Pending Branch Review
+                      </span>
+                    ) : req.status === "Rejected" ? (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                        <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                        Rejected
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                        <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5" />
+                        Pending Payment
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Driver Details Card */}
+                  <div className="flex items-start gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center flex-shrink-0">
+                      <HugeiconsIcon icon={UserCheck01Icon} className="w-6 h-6" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-bold text-slate-800 text-base">{req.driverDetails?.fullName}</h4>
+                      <div className="text-xs text-slate-500 font-mono mt-0.5">
+                        NIC: {req.driverDetails?.nicNumber || "—"} • Tel: {req.driverDetails?.phoneNumber}
+                      </div>
+                      <div className="text-[11px] text-slate-400 mt-0.5 truncate">
+                        {req.driverDetails?.residentialAddress}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Covered Vehicles */}
+                  <div>
+                    <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1.5">
+                      Authorized Vehicles ({req.selectedVehicles?.length || 0})
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {req.selectedVehicles?.map((v: any) => (
+                        <span
+                          key={v.numberPlate}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-mono font-medium text-xs border border-slate-200"
+                        >
+                          <HugeiconsIcon icon={Car01Icon} className="w-3 3 text-slate-500" />
+                          {v.numberPlate}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rejection Notice if applicable */}
+                  {req.status === "Rejected" && req.branchReview?.rejectionReason && (
+                    <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
+                      <p className="font-semibold">Reason for rejection:</p>
+                      <p className="mt-0.5 text-rose-700">{req.branchReview.rejectionReason}</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Bottom Status & Actions Bar */}
+                <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-3 text-xs">
+                  <div>
+                    {req.payment?.status === "Paid" ? (
+                      <span className="font-semibold text-emerald-700 flex items-center gap-1">
+                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+                        Fee Paid (LKR 300)
+                      </span>
+                    ) : (
+                      <span className="font-semibold text-amber-700 flex items-center gap-1">
+                        <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5" />
+                        Fee: LKR 300 Unpaid
+                      </span>
+                    )}
+                  </div>
+
+                  <div>
+                    {req.payment?.status !== "Paid" && req.status === "Pending Payment" && (
+                      <button
+                        onClick={() => handleResumeThirdPartyPayment(req._id)}
+                        disabled={resumingPaymentId === req._id}
+                        className="px-4 py-2 bg-[#ff9800] hover:bg-[#e68900] text-white font-bold rounded-xl transition-colors cursor-pointer border-none flex items-center gap-1.5 disabled:opacity-50"
+                      >
+                        <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5" />
+                        <span>{resumingPaymentId === req._id ? "Redirecting..." : "Pay LKR 300 Now"}</span>
+                      </button>
+                    )}
+
+                    {req.status === "Approved" && (
+                      <span className="text-emerald-700 font-semibold text-[11px] bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                        Digital Pass Ready
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    )}
 
         {/* Supportive Help Banner */}
         <section className="bg-slate-800 border border-slate-900 rounded-[30px] p-7 mt-12 text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_15px_30px_rgba(0,0,0,0.06)]">
@@ -2095,6 +2660,257 @@ export default function MyVehicles() {
             >
               Understood
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Third-Party Driver Registration Modal Popup */}
+      {thirdPartyModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+          <div className="bg-white border border-slate-200 rounded-[32px] w-full max-w-2xl max-h-[92vh] shadow-2xl flex flex-col relative overflow-hidden text-slate-800 animate-in fade-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="px-8 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-xs">
+                  <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-[#102A43]">Register Third-Party Driver</h3>
+                  <p className="text-xs text-slate-500">
+                    Authorize an external driver across your vehicles • Single fixed fee: <strong>LKR 300</strong>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setThirdPartyModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-200/60 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="p-8 overflow-y-auto flex-1 space-y-6">
+              {/* Error Message */}
+              {tpErrorMessage && (
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 flex items-start gap-2">
+                  <HugeiconsIcon icon={AlertCircleIcon} className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>{tpErrorMessage}</span>
+                </div>
+              )}
+
+              {/* Step 1: Vehicle Selection */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <HugeiconsIcon icon={Car01Icon} className="w-4 h-4 text-blue-600" />
+                    <span>Select Covered Vehicles <span className="text-rose-500">*</span></span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (tpSelectedPlates.length === vehicles.length) {
+                        setTpSelectedPlates([]);
+                      } else {
+                        setTpSelectedPlates(vehicles.map((v) => v.numberPlate));
+                      }
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-semibold cursor-pointer border-none bg-transparent"
+                  >
+                    {tpSelectedPlates.length === vehicles.length ? "Deselect All" : "Select All"}
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-40 overflow-y-auto p-1">
+                  {vehicles.map((veh) => {
+                    const isChecked = tpSelectedPlates.includes(veh.numberPlate);
+                    return (
+                      <div
+                        key={veh.numberPlate}
+                        onClick={() => {
+                          if (isChecked) {
+                            setTpSelectedPlates(tpSelectedPlates.filter((p) => p !== veh.numberPlate));
+                          } else {
+                            setTpSelectedPlates([...tpSelectedPlates, veh.numberPlate]);
+                          }
+                        }}
+                        className={`p-3 rounded-xl border flex items-center justify-between gap-3 cursor-pointer transition-all ${
+                          isChecked
+                            ? "bg-indigo-50/70 border-indigo-300 ring-2 ring-indigo-500/10"
+                            : "bg-slate-50 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="font-mono font-bold text-xs text-slate-900">{formatNumberPlate(veh.numberPlate)}</div>
+                          <div className="text-[11px] text-slate-500 truncate">{veh.company} {veh.model}</div>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => {}}
+                          className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 cursor-pointer pointer-events-none"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Fixed Fee Banner */}
+              <div className="p-4 rounded-2xl bg-indigo-50/80 border border-indigo-200/80 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                    LKR
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-indigo-950">Fixed Registration Fee</div>
+                    <div className="text-[11px] text-indigo-700">Covers all {tpSelectedPlates.length} selected vehicle(s)</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-lg font-black text-indigo-950 font-mono">LKR 300.00</div>
+                  <div className="text-[10px] text-indigo-600">Single One-Time Fee</div>
+                </div>
+              </div>
+
+              {/* Step 2: Driver Details */}
+              <div className="space-y-3.5">
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                  Driver Personal Details
+                </label>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
+                      Full Name <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Sunil Perera"
+                      value={tpDriverName}
+                      onChange={(e) => setTpDriverName(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
+                      NIC Number <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 199512345678 or 951234567V"
+                      value={tpDriverNic}
+                      onChange={(e) => setTpDriverNic(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-mono font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
+                      Contact Mobile <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. 0771234567 or +94771234567"
+                      value={tpDriverPhone}
+                      onChange={(e) => setTpDriverPhone(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-mono font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-slate-700 block mb-1">
+                      Residential Address <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. No. 45, Temple Road, Galle"
+                      value={tpDriverAddress}
+                      onChange={(e) => setTpDriverAddress(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all font-medium"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 3: KYC Document Uploaders */}
+              <div className="space-y-3">
+                <label className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                  Driver Identity & Licence Documents (All 4 Required) <span className="text-rose-500">*</span>
+                </label>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: "NIC Front", state: tpNicFront, setter: setTpNicFront, ref: tpNicFrontRef },
+                    { label: "NIC Back", state: tpNicBack, setter: setTpNicBack, ref: tpNicBackRef },
+                    { label: "Licence Front", state: tpDlFront, setter: setTpDlFront, ref: tpDlFrontRef },
+                    { label: "Licence Back", state: tpDlBack, setter: setTpDlBack, ref: tpDlBackRef }
+                  ].map((doc, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-center flex flex-col justify-between"
+                    >
+                      <span className="text-xs font-semibold text-slate-700 mb-2 block">{doc.label}</span>
+
+                      {doc.state ? (
+                        <div className="relative h-24 rounded-xl overflow-hidden border border-slate-200 group">
+                          <img src={doc.state} alt={doc.label} className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => doc.setter("")}
+                            className="absolute top-1 right-1 p-1 bg-rose-600 text-white rounded-lg text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer border-none"
+                            title="Remove image"
+                          >
+                            <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div
+                          onClick={() => doc.ref.current?.click()}
+                          className="h-24 rounded-xl border border-dashed border-slate-300 hover:border-indigo-400 bg-white flex flex-col items-center justify-center cursor-pointer transition-colors"
+                        >
+                          <HugeiconsIcon icon={Upload01Icon} className="w-5 h-5 text-slate-400 mb-1" />
+                          <span className="text-[11px] text-slate-500 font-medium">Upload Photo</span>
+                        </div>
+                      )}
+
+                      <input
+                        type="file"
+                        ref={doc.ref}
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(e, doc.setter)}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-8 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-4 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setThirdPartyModalOpen(false)}
+                className="px-5 py-2.5 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer bg-white"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={handleSubmitThirdParty}
+                disabled={submittingThirdParty}
+                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 text-white font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer border-none"
+              >
+                <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                <span>{submittingThirdParty ? "Connecting to Stripe..." : "Pay LKR 300 via Stripe"}</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
