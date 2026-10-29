@@ -55,6 +55,19 @@ app.use("/uploads", express.static(localUploadsDir));
 // Increase payload size limit to support base64 image uploads
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// Lightweight server & database health check endpoint for monitoring & uptime pinging
+app.get(["/health", "/api/health"], (req, res) => {
+  const isDbConnected = mongoose.connection.readyState === 1;
+  res.status(isDbConnected ? 200 : 503).json({
+    status: isDbConnected ? "ok" : "degraded",
+    service: "SANASA General Insurance API",
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    database: isDbConnected ? "connected" : "disconnected",
+  });
+});
+
 app.use("/api/signup", signupRouter);
 app.use("/api/policy-holder", myClaimsRouter);
 app.use("/api/policy-holder", newClaimRouter);
