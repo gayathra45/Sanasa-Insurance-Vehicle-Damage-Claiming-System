@@ -5,6 +5,7 @@ import WebAIChatBot from "./Components/AIChatBot";
 import { ChatNotificationProvider } from "./context/ChatNotificationContext";
 import ClaimChatModal from "./Components/ClaimChat/ClaimChatModal";
 import FloatingClaimChatButton from "./Components/ClaimChat/FloatingClaimChatButton";
+import { Analytics } from "@vercel/analytics/next";
 
 const afacad = Afacad({
   variable: "--font-afacad",
@@ -35,6 +36,7 @@ export default function RootLayout({
           <ClaimChatModal />
           <FloatingClaimChatButton />
           <WebAIChatBot />
+          <Analytics />
         </ChatNotificationProvider>
       </body>
     </html>
