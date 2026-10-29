@@ -1,17 +1,9 @@
-<!-- ========================================================================= -->
-<!-- 🛡️ SANASA GENERAL INSURANCE — SCLAIM GO ENTERPRISE PLATFORM               -->
-<!-- ========================================================================= -->
-
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=10,16,42,14,116,144,16,185,129&height=220&section=header&text=SANASA%20SCLAIM%20GO&fontSize=42&fontAlignY=38&desc=Enterprise%20Motor%20Claim%2C%20Policy%20Renewal%20%26%20Fleet%20Ecosystem&descAlignY=58&descAlign=50&animation=fadeIn" width="100%" alt="SANASA SClaim Go Header Banner" />
+# 🛡️ SANASA General Insurance — SClaim Go
+### Enterprise Motor Claim, Policy Renewal & Fleet Management Ecosystem
 
-<!-- Animated Dynamic Typing Banner -->
-<a href="https://sanasa-insurance-vehicle-damage-cla.vercel.app/">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=2800&pause=1000&color=38BDF8&center=true&vCenter=true&width=750&lines=🛡️+Enterprise+Motor+Claim+%26+Policy+Management;⚡+Rapid+45-Minute+Scene-of-Accident+Reporting;🔑+Tokenized+Third-Party+Driver+Passes+%26+Branch+Sign-Off;💳+Stripe+Multi-Installment+Policy+Renewals;💬+Tri-Party+Real-Time+Claim+Chat+via+Socket.io;🤖+Conversational+Sanasa+AI+Customer+Assistant;📞+24%2F7+Emergency+Assistance+Hotline+0725+575+575" alt="Typing SVG Animation" />
-</a>
-
-<br/><br/>
+<br/>
 
 <!-- Modern Call-To-Action Button Pills -->
 <p align="center">
@@ -30,7 +22,7 @@
 
 <!-- Live Status & Standards Strip -->
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-100%25_Operational-success?style=flat-square&logo=statuspage&logoColor=white" alt="Operational Status" />
+  <img src="https://img.shields.io/badge/System_Status-100%25_Operational-22c55e?style=flat-square&logo=statuspage&logoColor=white" alt="Operational Status" />
   &nbsp;
   <img src="https://img.shields.io/badge/Version-2.0.0_Enterprise-102A43?style=flat-square" alt="Version 2.0.0" />
   &nbsp;
@@ -49,17 +41,24 @@
 
 **SANASA SClaim Go** is a full-stack, enterprise-grade motor vehicle insurance claims, policy underwriting, and driver fleet governance platform built for **SANASA General Insurance PLC (Sri Lanka)**. The platform connects **Policyholders**, **Field Insurance Assessors**, **Branch Officers**, and **System Administrators** into a synchronized, real-time ecosystem.
 
-By eliminating manual paperwork and physical queues with automated on-site incident capture, **SClaim Go** shortens claim lifecycle turnaround from **14 days down to 45 minutes**, enables secondary driver onboarding with branch-controlled termination sign-offs, automates SMS customer alerts, and features an integrated **Sanasa AI Assistant**.
+By replacing manual paperwork with automated on-site incident capture, **SClaim Go** shortens claim lifecycle turnaround from **14 days down to 45 minutes**, enables secondary driver onboarding with branch-controlled termination sign-offs, automates SMS customer alerts, and features an integrated **Sanasa AI Assistant**.
 
 ---
 
-## 📊 Analytics & Performance Benchmarks
+## 📊 Project Statistics & Operational Analytics
 
-### ⏱️ Claim Processing Velocity: Traditional vs. SClaim Go
+### 📈 Platform Architecture & Scale Dashboard
 
 ```
-Traditional Paper Workflow [████████████████████████████████████████] 14 - 21 Days
-SClaim Go Digital Workflow [█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 45 Minutes (-98.5% TAT)
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     SANASA SCLAIM GO PLATFORM METRICS                       │
+├──────────────────────┬──────────────────────┬───────────────────────────────┤
+│ 58 App Routes        │ 27 Branch Network    │ 8-Stage Claim Lifecycle       │
+│ Next.js 16 AppRouter │ All 9 Sri Lankan Prov│ Scene-to-Settlement Pipeline  │
+├──────────────────────┼──────────────────────┼───────────────────────────────┤
+│ < 45 Min Total TAT   │ 100% Tokenized Pass  │ Tri-Party Live Chat           │
+│ -98.5% Speed Gain    │ Instant 403 Lockout  │ WebSocket Bidirectional Sync  │
+└──────────────────────┴──────────────────────┴───────────────────────────────┘
 ```
 
 | Operational Dimension | Traditional Insurance Claims | SANASA SClaim Go Platform | Velocity Gain |
@@ -73,7 +72,16 @@ SClaim Go Digital Workflow [█░░░░░░░░░░░░░░░░�
 
 <br/>
 
-### 📈 Core Web Vitals & Real-Time Observability
+### ⏱️ Claim Processing Velocity: Traditional vs. SClaim Go
+
+```
+Traditional Paper Workflow [████████████████████████████████████████] 14 - 21 Days
+SClaim Go Digital Workflow [█░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 45 Minutes (-98.5% TAT)
+```
+
+<br/>
+
+### ⚡ Core Web Vitals & Real-Time Performance Analytics
 
 ```
   Metric                           Measured Score      Target Benchmark       Performance Level
@@ -85,14 +93,6 @@ SClaim Go Digital Workflow [█░░░░░░░░░░░░░░░░�
   Interaction to Next Paint (INP)  48ms               < 200ms                🟢 High Responsiveness
   Vercel Edge Availability         99.98%             > 99.9%                🟢 24/7 Global SLA
 ```
-
-<br/>
-
-<div align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=gayathra45&show_icons=true&theme=radical&hide_border=true&include_all_commits=true&count_private=true" alt="Gayathra GitHub Stats" height="150" />
-  &nbsp;&nbsp;
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=gayathra45&layout=compact&theme=radical&hide_border=true" alt="Top Languages" height="150" />
-</div>
 
 ---
 
@@ -356,9 +356,3 @@ npx expo start -c   # Auto-syncs IP; scan QR with Expo Go app
 - **Client Organization**: SANASA General Insurance PLC (Sri Lanka)
 - **Platform Name**: SClaim Go Motor Claim, Policy Renewal & Fleet Management System
 - **Engineering Lead & Author**: Gayathra Samuditha ([@gayathra45](https://github.com/gayathra45))
-
-<br/>
-
-<div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&customColorList=10,16,42,16,185,129&height=100&section=footer" width="100%" alt="Footer Banner" />
-</div>
