@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import Claim from "../models/claim.model.js";
 import User from "../models/user.model.js";
 import Agent from "../models/agent.model.js";
+import ThirdPartyRegistration from "../models/third_party_registration.model.js";
 
 dotenv.config();
 
@@ -371,6 +372,67 @@ function formatUserVehiclesList(vehicles, nic) {
 }
 
 /**
+ * Format authorized driver claims list
+ */
+function formatDriverClaimsList(claims, driverName) {
+  let response = `📋 **Authorized Driver Claims for ${driverName || "Driver"}:**\n\n`;
+  response += `Found **${claims.length}** claim(s) lodged under your authorized driver access:\n\n`;
+
+  claims.forEach((c, idx) => {
+    const statusEmoji = c.status === "Approved" ? "🟢" : c.status === "Rejected" ? "🔴" : "🔵";
+    response += `${idx + 1}. **${c.claimNumber}** — Vehicle: **${formatPlate(c.vehiclePlate)}**\n`;
+    response += `   • **Status**: ${statusEmoji} **${c.status}** (Step ${c.currentStep || 1}/5)\n`;
+    response += `   • **Incident Date**: ${c.incidentDate || "N/A"}${c.incidentTime ? ` at ${c.incidentTime}` : ""} • **Damage**: ${c.damageType || "General Collision"}\n`;
+    response += `   • **Assessed Amount**: ${formatCurrency(c.amount)}\n`;
+    response += `   • **Report Dossier**: [Download PDF Report](/api/claims/${c.claimNumber}/report)\n\n`;
+  });
+
+  response += `💡 *Type any Claim ID above (e.g. \`${claims[0].claimNumber}\`) to view its full inspection status and document checklist.*`;
+  return response;
+}
+
+/**
+ * Format authorized vehicles for a third-party driver
+ */
+function formatDriverVehiclesList(vehicles, driverName, policyHolderName) {
+  let response = `🚗 **Authorized Vehicles for ${driverName || "Driver"}:**\n`;
+  if (policyHolderName) response += `*Authorized by Policyholder: ${policyHolderName}*\n\n`;
+  response += `You are legally authorized to drive **${vehicles.length}** vehicle(s) under this digital pass:\n\n`;
+
+  vehicles.forEach((v, idx) => {
+    response += `${idx + 1}. **${formatPlate(v.numberPlate)}** — ${v.company || ""} ${v.model || ""} (${v.vehicleType || "Vehicle"}${v.year ? `, ${v.year}` : ""})\n`;
+    if (v.policyNumber) {
+      response += `   • **Insurance Policy No**: \`${v.policyNumber}\` • **Status**: 🟢 Authorized\n`;
+    }
+  });
+
+  response += `\n💡 *Need to lodge an accident claim for one of these vehicles? Tap **"New Claim"** on your portal or let me know!*`;
+  return response;
+}
+
+/**
+ * Format third-party driver digital pass details
+ */
+function formatDriverPassDetails(regDoc) {
+  let response = `🪪 **Sanasa Authorized Driver Pass Details**\n\n`;
+  response += `• **Authorized Driver**: **${regDoc.driverDetails.fullName}**\n`;
+  response += `• **NIC Number**: \`${regDoc.driverDetails.nicNumber || "On File"}\`\n`;
+  response += `• **Contact Phone**: 📞 ${regDoc.driverDetails.phoneNumber}\n`;
+  response += `• **Residential Address**: ${regDoc.driverDetails.residentialAddress}\n`;
+  response += `• **Policyholder (Owner)**: **${regDoc.policyHolderName}** (NIC: \`${regDoc.policyHolderNic}\`)\n`;
+  response += `• **Sanasa Branch**: ${regDoc.branch} Branch\n`;
+  response += `• **Pass Reference**: \`${regDoc.requestReference}\`\n`;
+  response += `• **Pass Status**: 🟢 **${regDoc.status}**\n\n`;
+
+  const vList = regDoc.selectedVehicles || [];
+  response += `🚗 **Authorized Vehicles (${vList.length}):**\n`;
+  vList.forEach((v, i) => {
+    response += `${i + 1}. **${formatPlate(v.numberPlate)}** — ${v.company || ""} ${v.model || ""} (${v.vehicleType || "Vehicle"})\n`;
+  });
+  return response;
+}
+
+/**
  * Smart domain-specific fallback when Gemini API key is missing, rate-limited, or network fails
  */
 function getSmartInsuranceFallback(message = "", userRole = "policy_holder") {
@@ -434,6 +496,7 @@ router.post("/message", async (req, res) => {
     const cleanMsg = message.trim();
     const lowerMsg = cleanMsg.toLowerCase();
     const isGuest = userRole === "guest" || userRole === "public" || !userRole;
+    const isDriver = userRole === "third_party_driver" || userRole === "driver";
     const isStaffOrAdmin = userRole === "office_staff" || userRole === "admin";
     const staffBranch = (branch || userBranch || "").trim();
 
@@ -498,6 +561,21 @@ router.post("/message", async (req, res) => {
             reply: `🔒 For privacy and data security, you can only view claims registered under your own verified policyholder account.`,
             source: "policyholder_privacy_guardrail"
           });
+        }
+
+        if (isDriver) {
+          const cleanDriverNic = (userNic || "").trim().toUpperCase();
+          const cleanDriverName = (userName || "").trim().toLowerCase();
+          const isDriverOwner =
+            (cleanDriverNic && matchedClaim.submittedByDriver?.driverNic && matchedClaim.submittedByDriver.driverNic.toUpperCase() === cleanDriverNic) ||
+            (cleanDriverName && matchedClaim.submittedByDriver?.driverName && matchedClaim.submittedByDriver.driverName.toLowerCase().includes(cleanDriverName));
+
+          if (!isDriverOwner && matchedClaim.submittedByDriver?.isThirdParty) {
+            return res.json({
+              reply: `🔒 For privacy and data security, you can only view claims lodged under your own authorized driver pass.`,
+              source: "driver_privacy_guardrail"
+            });
+          }
         }
 
         if (isSimpleClaimQuery) {
@@ -813,6 +891,92 @@ router.post("/message", async (req, res) => {
           reply += `• **Claims**: 0 active or historical claims on record.\n\n💡 *Need to submit an accident claim? Tap **"New Claim"** to lodge an official report.*`;
         }
         return res.json({ reply, source: "database_nic_lookup" });
+      }
+    }
+
+    // ── 9.1 THIRD-PARTY AUTHORIZED DRIVER INQUIRIES ──────────────────────────
+    if (isDriver) {
+      const driverNic = (userNic || "").trim();
+      const driverName = (userName || "").trim();
+      const driverRef = (userEmail || "").trim();
+
+      const regDoc = await ThirdPartyRegistration.findOne({
+        $or: [
+          ...(driverRef ? [{ requestReference: driverRef }] : []),
+          ...(driverNic ? [{ "driverDetails.nicNumber": driverNic }] : []),
+          ...(driverName ? [{ "driverDetails.fullName": new RegExp(`^${driverName}$`, "i") }] : [])
+        ]
+      });
+
+      // A. Driver asks about their claims
+      const isAskingDriverClaims =
+        lowerMsg.includes("my claim") ||
+        lowerMsg.includes("my claims") ||
+        lowerMsg.includes("what are my claim") ||
+        lowerMsg.includes("show my claim") ||
+        lowerMsg.includes("list my claim") ||
+        lowerMsg.includes("all my claim") ||
+        lowerMsg.includes("check my claim") ||
+        lowerMsg.includes("status of my claim") ||
+        (lowerMsg.includes("claim") && (lowerMsg.includes("i lodged") || lowerMsg.includes("i submitted") || lowerMsg.includes("for me") || lowerMsg.includes("driver")));
+
+      if (isAskingDriverClaims) {
+        const queryConditions = [];
+        if (regDoc) queryConditions.push({ "submittedByDriver.registrationId": regDoc._id });
+        if (driverNic) queryConditions.push({ "submittedByDriver.driverNic": driverNic });
+        if (driverName) queryConditions.push({ "submittedByDriver.driverName": new RegExp(driverName, "i") });
+
+        const driverClaims = queryConditions.length > 0
+          ? await Claim.find({ $or: queryConditions }).sort({ _id: -1 }).limit(10)
+          : [];
+
+        if (driverClaims && driverClaims.length > 0) {
+          const reply = formatDriverClaimsList(driverClaims, driverName || regDoc?.driverDetails?.fullName);
+          return res.json({ reply, source: "database_driver_claims", count: driverClaims.length });
+        } else {
+          return res.json({
+            reply: `📂 You currently have **0 active or past claims** lodged under your authorized driver access.\n\nIf you were involved in an accident while operating an authorized vehicle, tap **"New Claim"** on your portal to lodge an official report with damage photos and location coordinates.`,
+            source: "database_driver_no_claims"
+          });
+        }
+      }
+
+      // B. Driver asks about authorized vehicles
+      const isAskingDriverVehicles =
+        lowerMsg.includes("my vehicle") ||
+        lowerMsg.includes("my vehicles") ||
+        lowerMsg.includes("what vehicle") ||
+        lowerMsg.includes("what vehicles") ||
+        lowerMsg.includes("show my vehicle") ||
+        lowerMsg.includes("authorized vehicle") ||
+        lowerMsg.includes("can i drive") ||
+        lowerMsg.includes("allowed to drive");
+
+      if (isAskingDriverVehicles) {
+        if (regDoc && Array.isArray(regDoc.selectedVehicles) && regDoc.selectedVehicles.length > 0) {
+          const reply = formatDriverVehiclesList(regDoc.selectedVehicles, driverName || regDoc.driverDetails.fullName, regDoc.policyHolderName);
+          return res.json({ reply, source: "database_driver_vehicles", count: regDoc.selectedVehicles.length });
+        } else {
+          return res.json({
+            reply: `🚗 No authorized vehicles found for this driver access pass. Please check your digital pass status or contact your sponsoring policyholder.`,
+            source: "database_driver_no_vehicles"
+          });
+        }
+      }
+
+      // C. Driver asks about pass / profile / details
+      const isAskingDriverPass =
+        lowerMsg.includes("my pass") ||
+        lowerMsg.includes("my detail") ||
+        lowerMsg.includes("my profile") ||
+        lowerMsg.includes("who am i") ||
+        lowerMsg.includes("my info") ||
+        lowerMsg.includes("about me") ||
+        lowerMsg.includes("pass detail");
+
+      if (isAskingDriverPass && regDoc) {
+        const reply = formatDriverPassDetails(regDoc);
+        return res.json({ reply, source: "database_driver_pass_details" });
       }
     }
 
