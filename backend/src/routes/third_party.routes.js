@@ -1166,7 +1166,7 @@ router.post("/branch/approve/:requestId", async (req, res) => {
       tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
     }
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/+$/, "");
     const accessUrl = `${frontendUrl}/driver-access/${rawToken}`;
 
     request.status = "Approved";
