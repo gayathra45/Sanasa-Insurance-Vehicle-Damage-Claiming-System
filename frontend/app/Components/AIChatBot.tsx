@@ -333,11 +333,13 @@ export default function WebAIChatBot() {
     pathname?.includes("/Admin/")
   );
 
-  // User instructions: exclude claim apply process and login pages
+  // User instructions: exclude claim apply process, login pages, and driver access portal
   const isExcluded = Boolean(
     pathname?.includes("/Policy_Holder/New_Claim") ||
     pathname === "/Login" ||
-    pathname?.toLowerCase().startsWith("/login")
+    pathname?.toLowerCase().startsWith("/login") ||
+    pathname?.startsWith("/driver-access") ||
+    pathname?.includes("/driver-access")
   );
 
   // Aligned cleanly above the floating claim chat button (bottom-8 right-8)
