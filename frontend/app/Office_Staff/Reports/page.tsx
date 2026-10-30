@@ -31,7 +31,11 @@ import {
   RefreshIcon,
   SecurityCheckIcon,
   Building01Icon,
-  Folder01Icon
+  Folder01Icon,
+  UserCheck01Icon,
+  Copy01Icon,
+  CreditCardIcon,
+  Link01Icon
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 
@@ -163,6 +167,78 @@ interface VehicleRenewalRecord {
   latestPaymentDate?: string | null;
 }
 
+export interface ThirdPartyRecord {
+  _id: string;
+  requestReference: string;
+  policyHolderNic: string;
+  policyHolderName?: string;
+  policyHolderEmail?: string;
+  policyHolderPhone?: string;
+  branch: string;
+  driverDetails: {
+    fullName: string;
+    residentialAddress: string;
+    phoneNumber: string;
+    nicNumber?: string;
+    documents?: {
+      nicFront?: string;
+      nicBack?: string;
+      drivingLicenceFront?: string;
+      drivingLicenceBack?: string;
+    };
+  };
+  selectedVehicles: Array<{
+    numberPlate: string;
+    vehicleType?: string;
+    model?: string;
+    policyNumber?: string;
+  }>;
+  fee: number;
+  currency: string;
+  status:
+    | "Pending Payment"
+    | "Pending Branch Approval"
+    | "Approved"
+    | "Rejected"
+    | "Pending Termination Approval"
+    | "Terminated";
+  payment: {
+    status: "Pending Payment" | "Paid" | "Failed";
+    amountPaid?: number;
+    currency?: string;
+    paidAt?: string;
+    stripePaymentIntentId?: string;
+  };
+  secureAccess?: {
+    rawToken?: string;
+    accessUrl?: string;
+    generatedAt?: string;
+    isRevoked?: boolean;
+    revokedAt?: string;
+    revocationReason?: string;
+  };
+  branchReview?: {
+    reviewedByStaffId?: string;
+    reviewedByStaffName?: string;
+    reviewedAt?: string;
+    notes?: string;
+    rejectionReason?: string;
+  };
+  terminationRequest?: {
+    requestedBy?: string;
+    requestedAt?: string;
+    reason?: string;
+    status?: "None" | "Pending Branch Approval" | "Approved" | "Rejected";
+    reviewedBy?: string;
+    reviewedByStaffId?: string;
+    reviewedAt?: string;
+    branchNotes?: string;
+    rejectionReason?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
 // Time Range Matching Helper Function
 const matchesDateRange = (
   dateStr?: string | null,
@@ -218,6 +294,8 @@ export default function OfficeStaffReports() {
   const [policyHolders, setPolicyHolders] = useState<PolicyHolderRecord[]>([]);
   const [agents, setAgents] = useState<AgentRecord[]>([]);
   const [renewals, setRenewals] = useState<VehicleRenewalRecord[]>([]);
+  const [thirdPartyRequests, setThirdPartyRequests] = useState<ThirdPartyRecord[]>([]);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
   const [summaryStats, setSummaryStats] = useState({
     totalClaims: 0,
     approvedClaims: 0,
@@ -230,7 +308,7 @@ export default function OfficeStaffReports() {
   const [monthlyTrend, setMonthlyTrend] = useState<{ month: string; claims: number }[]>([]);
 
   // Filter States
-  const [activeReportType, setActiveReportType] = useState<"overview" | "claims" | "policyholders" | "agents" | "renewals" | "financial" | "analytics">("overview");
+  const [activeReportType, setActiveReportType] = useState<"overview" | "claims" | "policyholders" | "agents" | "renewals" | "thirdparty" | "financial" | "analytics">("overview");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -250,7 +328,7 @@ export default function OfficeStaffReports() {
 
   // Dedicated Filtered Detail Report Download Modal States
   const [showFilteredReportModal, setShowFilteredReportModal] = useState(false);
-  const [exportDomain, setExportDomain] = useState<"claims" | "policyholders" | "renewals" | "agents" | "financial">("claims");
+  const [exportDomain, setExportDomain] = useState<"claims" | "policyholders" | "renewals" | "agents" | "thirdparty" | "financial">("claims");
   const [exportTimeRange, setExportTimeRange] = useState<"all" | "today" | "this_week" | "this_month" | "last_30" | "this_quarter" | "this_year" | "custom">("all");
   const [exportCustomStart, setExportCustomStart] = useState("");
   const [exportCustomEnd, setExportCustomEnd] = useState("");
@@ -278,12 +356,13 @@ export default function OfficeStaffReports() {
       }
       setError("");
 
-      const [statsRes, claimsRes, holdersRes, agentsRes, renewalsRes] = await Promise.all([
+      const [statsRes, claimsRes, holdersRes, agentsRes, renewalsRes, thirdPartyRes] = await Promise.all([
         fetch(`${API_URL}/office-staff/stats?branch=${encodeURIComponent(branchName)}`),
         fetch(`${API_URL}/office-staff/claims?branch=${encodeURIComponent(branchName)}`),
         fetch(`${API_URL}/office-staff/policy-holders?branch=${encodeURIComponent(branchName)}`),
         fetch(`${API_URL}/office-staff/agents?branch=${encodeURIComponent(branchName)}`),
-        fetch(`${API_URL}/renewals/branch-expiring-vehicles?branch=${encodeURIComponent(branchName)}&all=true`)
+        fetch(`${API_URL}/renewals/branch-expiring-vehicles?branch=${encodeURIComponent(branchName)}&all=true`),
+        fetch(`${API_URL}/third-party/branch/requests?branch=${encodeURIComponent(branchName)}&all=true&limit=1000`)
       ]);
 
       if (statsRes.ok) {
@@ -310,6 +389,11 @@ export default function OfficeStaffReports() {
       if (renewalsRes.ok) {
         const renewalsData = await renewalsRes.json();
         setRenewals(renewalsData.vehicles || []);
+      }
+
+      if (thirdPartyRes && thirdPartyRes.ok) {
+        const thirdPartyData = await thirdPartyRes.json();
+        setThirdPartyRequests(thirdPartyData.requests || []);
       }
 
       if (isRefresh) {
@@ -572,6 +656,39 @@ export default function OfficeStaffReports() {
     });
   }, [renewals, statusFilter, categoryFilter, dateRange, customStartDate, customEndDate, searchQuery, sortBy]);
 
+  // Filtered Third-Party Drivers
+  const filteredThirdParty = useMemo(() => {
+    return thirdPartyRequests.filter((t) => {
+      // Status Filter
+      if (statusFilter !== "all" && t.status.toLowerCase() !== statusFilter.toLowerCase()) {
+        return false;
+      }
+
+      // Date Range Filter
+      if (t.createdAt && !matchesDateRange(t.createdAt, dateRange, customStartDate, customEndDate)) {
+        return false;
+      }
+
+      // Search Query
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesRef = t.requestReference?.toLowerCase().includes(q);
+        const matchesDriver = t.driverDetails?.fullName?.toLowerCase().includes(q);
+        const matchesPhone = t.driverDetails?.phoneNumber?.includes(q);
+        const matchesDriverNic = t.driverDetails?.nicNumber?.toLowerCase().includes(q);
+        const matchesHolder = t.policyHolderName?.toLowerCase().includes(q);
+        const matchesHolderNic = t.policyHolderNic?.toLowerCase().includes(q);
+        const matchesPlate = t.selectedVehicles?.some((v) => v.numberPlate?.toLowerCase().includes(q));
+        return matchesRef || matchesDriver || matchesPhone || matchesDriverNic || matchesHolder || matchesHolderNic || matchesPlate;
+      }
+
+      return true;
+    }).sort((a, b) => {
+      if (sortBy === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+  }, [thirdPartyRequests, statusFilter, dateRange, customStartDate, customEndDate, searchQuery, sortBy]);
+
   // Dynamic Portfolio & Renewal Calculations
   const totalVehiclesCount = useMemo(() => {
     return policyHolders.reduce((acc, h) => acc + (h.vehicles?.length || 0), 0);
@@ -732,6 +849,27 @@ export default function OfficeStaffReports() {
         ];
         csvContent += row.join(",") + "\n";
       });
+    } else if (activeReportType === "thirdparty") {
+      csvContent += "Reference No,Driver Full Name,Driver NIC,Driver Phone,Driver Address,Policyholder Name,Policyholder NIC,Vehicles,Fee (LKR),Payment Status,Authorization Status,Pass URL,Created Date\n";
+      filteredThirdParty.forEach((t) => {
+        const plates = (t.selectedVehicles || []).map((v) => v.numberPlate).join("; ");
+        const row = [
+          `"${t.requestReference || "-"}"`,
+          `"${t.driverDetails?.fullName || "-"}"`,
+          `"${t.driverDetails?.nicNumber || "-"}"`,
+          `"${t.driverDetails?.phoneNumber || "-"}"`,
+          `"${t.driverDetails?.residentialAddress ? t.driverDetails.residentialAddress.replace(/"/g, '""') : "-"}"`,
+          `"${t.policyHolderName || "-"}"`,
+          `"${t.policyHolderNic || "-"}"`,
+          `"${plates || "-"}"`,
+          `"${t.fee || 300}"`,
+          `"${t.payment?.status || "Pending Payment"}"`,
+          `"${t.status || "Pending Branch Approval"}"`,
+          `"${t.secureAccess?.accessUrl || "-"}"`,
+          `"${t.createdAt ? new Date(t.createdAt).toLocaleDateString("en-GB") : "-"}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
     } else {
       csvContent += "Agent Code,Agent Name,Email,Phone,Assigned Branch,Status\n";
       filteredAgents.forEach((a, idx) => {
@@ -801,6 +939,13 @@ export default function OfficeStaffReports() {
         return acc;
       }, 0);
       return { list, count: list.length, totalSum: totalPremiums };
+    } else if (exportDomain === "thirdparty") {
+      const list = thirdPartyRequests.filter((t) => {
+        if (status !== "all" && t.status.toLowerCase() !== status.toLowerCase()) return false;
+        return matchesDateRange(t.createdAt, range, start, end);
+      });
+      const totalFees = list.reduce((acc, t) => acc + (t.payment?.status === "Paid" ? (t.fee || 300) : 0), 0);
+      return { list, count: list.length, totalSum: totalFees };
     } else {
       const list = agents.filter((a) => {
         if (status !== "all" && a.status?.toLowerCase() !== status.toLowerCase()) return false;
@@ -808,7 +953,7 @@ export default function OfficeStaffReports() {
       });
       return { list, count: list.length, totalSum: list.length };
     }
-  }, [claims, policyHolders, renewals, agents, exportDomain, exportTimeRange, exportCustomStart, exportCustomEnd, exportStatus]);
+  }, [claims, policyHolders, renewals, agents, thirdPartyRequests, exportDomain, exportTimeRange, exportCustomStart, exportCustomEnd, exportStatus]);
 
   // Download filtered CSV from the modal
   const handleDownloadFilteredCSVModal = () => {
@@ -892,6 +1037,27 @@ export default function OfficeStaffReports() {
           `"${quote?.calculation?.finalAnnualTotal || 0}"`,
           `"${quote?.paymentPlanType || (quote?.selectedPlan ? "Annual" : "-")}"`,
           `"${totalInstCount > 0 ? `${paidInstCount}/${totalInstCount}` : r.isPaid ? "Full" : "0"}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+    } else if (exportDomain === "thirdparty") {
+      csvContent += "Reference No,Driver Full Name,Driver NIC,Driver Phone,Driver Address,Policyholder Name,Policyholder NIC,Vehicles,Fee (LKR),Payment Status,Authorization Status,Pass URL,Created Date\n";
+      modalFilteredData.list.forEach((t: any) => {
+        const plates = (t.selectedVehicles || []).map((v: any) => v.numberPlate).join("; ");
+        const row = [
+          `"${t.requestReference || "-"}"`,
+          `"${t.driverDetails?.fullName || "-"}"`,
+          `"${t.driverDetails?.nicNumber || "-"}"`,
+          `"${t.driverDetails?.phoneNumber || "-"}"`,
+          `"${t.driverDetails?.residentialAddress ? t.driverDetails.residentialAddress.replace(/"/g, '""') : "-"}"`,
+          `"${t.policyHolderName || "-"}"`,
+          `"${t.policyHolderNic || "-"}"`,
+          `"${plates || "-"}"`,
+          `"${t.fee || 300}"`,
+          `"${t.payment?.status || "Pending Payment"}"`,
+          `"${t.status || "Pending Branch Approval"}"`,
+          `"${t.secureAccess?.accessUrl || "-"}"`,
+          `"${t.createdAt ? new Date(t.createdAt).toLocaleDateString("en-GB") : "-"}"`
         ];
         csvContent += row.join(",") + "\n";
       });
@@ -1152,7 +1318,7 @@ export default function OfficeStaffReports() {
   };
 
   // Handler for downloading single record case file report
-  const handleDownloadRecordReport = (record: { type: "claim" | "holder" | "agent" | "renewal"; data: any }) => {
+  const handleDownloadRecordReport = (record: { type: "claim" | "holder" | "agent" | "renewal" | "thirdparty"; data: any }) => {
     const branchName = branch || "Galle";
     const reportDate = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
@@ -1632,6 +1798,101 @@ export default function OfficeStaffReports() {
         </body>
         </html>
       `;
+    } else if (record.type === "thirdparty") {
+      const t = record.data;
+      docTitle = `Sanasa_ThirdParty_Report_${t.requestReference || "TPR"}`;
+      contentHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>${t.requestReference} - Third-Party Driver Audit Report</title>
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 40px; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #102A43; padding-bottom: 20px; margin-bottom: 24px; }
+            .company { font-size: 22px; font-weight: 800; color: #102A43; text-transform: uppercase; }
+            .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; font-weight: 500; }
+            .meta { text-align: right; font-size: 12px; color: #64748b; line-height: 1.5; }
+            .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; color: #102A43; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-top: 24px; margin-bottom: 12px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 13px; }
+            td { padding: 10px 12px; border: 1px solid #e2e8f0; color: #334155; }
+            .label { font-weight: 600; color: #475569; width: 35%; background: #f8fafc; }
+            .val { font-weight: 500; color: #0f172a; }
+            .highlight { font-weight: 700; color: #0f172a; font-family: monospace; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+            .signature-box { margin-top: 40px; display: flex; justify-content: space-between; }
+            .signature-line { width: 180px; border-top: 1px dashed #94a3b8; text-align: center; padding-top: 6px; font-size: 11px; color: #64748b; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div>
+              <div class="company">Sanasa General Insurance Co. LTD</div>
+              <div class="subtitle">Third-Party Driver Authorization Audit Report • ${branchName} Branch</div>
+            </div>
+            <div class="meta">
+              <div><strong>Reference ID:</strong> ${t.requestReference}</div>
+              <div><strong>Status:</strong> ${t.status}</div>
+              <div><strong>Date Generated:</strong> ${reportDate} ${reportTime}</div>
+            </div>
+          </div>
+
+          <div class="section-title">1. Driver Identification & Authorization</div>
+          <table>
+            <tr><td class="label">Driver Full Name</td><td class="val"><strong>${t.driverDetails?.fullName || "-"}</strong></td></tr>
+            <tr><td class="label">NIC Number</td><td class="val highlight">${t.driverDetails?.nicNumber || "Not Provided"}</td></tr>
+            <tr><td class="label">Contact Phone</td><td class="val highlight">${t.driverDetails?.phoneNumber || "-"}</td></tr>
+            <tr><td class="label">Residential Address</td><td class="val">${t.driverDetails?.residentialAddress || "-"}</td></tr>
+            <tr><td class="label">Authorization Status</td><td class="val"><strong>${t.status}</strong></td></tr>
+          </table>
+
+          <div class="section-title">2. Policyholder Information</div>
+          <table>
+            <tr><td class="label">Policyholder Name</td><td class="val"><strong>${t.policyHolderName || "Policyholder"}</strong></td></tr>
+            <tr><td class="label">Policyholder NIC</td><td class="val highlight">${t.policyHolderNic || "-"}</td></tr>
+            <tr><td class="label">Branch</td><td class="val">${t.branch || branchName} Branch</td></tr>
+          </table>
+
+          <div class="section-title">3. Authorized Vehicle Plates</div>
+          <table>
+            <thead>
+              <tr style="background:#f8fafc;">
+                <td style="font-weight:700;">Plate Number</td>
+                <td style="font-weight:700;">Model / Classification</td>
+                <td style="font-weight:700;">Policy Reference</td>
+              </tr>
+            </thead>
+            <tbody>
+              ${(t.selectedVehicles || []).map((v: any) => `
+                <tr>
+                  <td class="highlight">${v.numberPlate}</td>
+                  <td>${v.model || v.vehicleType || "Authorized Vehicle"}</td>
+                  <td>${v.policyNumber || "SAN-POL"}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+
+          <div class="section-title">4. Pass Fee & Payment Record</div>
+          <table>
+            <tr><td class="label">Pass Fee Amount</td><td class="val highlight">LKR ${t.fee || 300}</td></tr>
+            <tr><td class="label">Payment Status</td><td class="val"><strong>${t.payment?.status || "Pending Payment"}</strong></td></tr>
+            <tr><td class="label">Digital Pass URL</td><td class="val highlight">${t.secureAccess?.accessUrl || "Pending Approval"}</td></tr>
+          </table>
+
+          <div class="signature-box">
+            <div class="signature-line">Branch Staff Officer</div>
+            <div class="signature-line">Branch Manager</div>
+            <div class="signature-line">Official Sanasa Seal</div>
+          </div>
+
+          <div class="footer">
+            <div>Confidential • Sanasa General Insurance Company Limited • ${branchName} Regional Hub</div>
+            <div>Official Third-Party Driver Authorization Audit Record</div>
+          </div>
+        </body>
+        </html>
+      `;
     } else {
       const a = record.data;
       docTitle = `Sanasa_Agent_Report_${a.name ? a.name.replace(/\s+/g, "_") : "Agent"}`;
@@ -1745,6 +2006,8 @@ export default function OfficeStaffReports() {
       ? filteredHolders
       : activeReportType === "renewals"
       ? filteredRenewals
+      : activeReportType === "thirdparty"
+      ? filteredThirdParty
       : activeReportType === "agents"
       ? filteredAgents
       : [];
@@ -2105,6 +2368,7 @@ export default function OfficeStaffReports() {
                       { id: "claims", label: "Claims & Loss", icon: Shield01Icon, count: filteredClaims.length },
                       { id: "policyholders", label: "Policyholders & Fleet", icon: Car01Icon, count: filteredHolders.length },
                       { id: "renewals", label: "Policy Renewals", icon: RefreshIcon, count: filteredRenewals.length },
+                      { id: "thirdparty", label: "Third-Party Drivers", icon: UserGroupIcon, count: filteredThirdParty.length },
                       { id: "agents", label: "Field Agents", icon: Briefcase01Icon, count: filteredAgents.length },
                       { id: "financial", label: "Bank Disbursals", icon: Building01Icon, count: filteredClaims.filter((c) => c.status === "Approved").length },
                       { id: "analytics", label: "Risk & Incidents", icon: Location01Icon, count: null }
@@ -2435,6 +2699,74 @@ export default function OfficeStaffReports() {
                             {renewals.filter((r) => !r.isPaid && (!r.renewalQuote || r.renewalQuote.status === "Draft" || r.renewalQuote.status === "Pending_Payment")).length} Pending
                           </div>
                           <span className="text-[10px] text-slate-400 font-semibold mt-1">Awaiting customer payment</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Third-Party Drivers & NFC Access Passes Summary Banner */}
+                    <div className="bg-gradient-to-br from-white to-indigo-50/40 p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col gap-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                            <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-900">Third-Party Driver Access & NFC Authorizations</h3>
+                            <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                              {branch} Branch authorized secondary drivers, KYC document verification & pass issuance
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              setActiveReportType("thirdparty");
+                              setCurrentPage(1);
+                            }}
+                            className="px-3.5 py-1.5 bg-[#000080] text-white text-xs font-bold rounded-xl hover:bg-[#102A43] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 border-none"
+                          >
+                            <span>Inspect Third-Party Report</span>
+                            <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
+                          </button>
+                          <Link
+                            href="/Office_Staff/ThirdParty"
+                            className="px-3.5 py-1.5 bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 text-xs font-bold rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 no-underline"
+                          >
+                            <span>Open Third-Party Portal</span>
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs font-semibold">
+                        <div className="p-4 bg-white rounded-xl border border-blue-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-bold text-blue-700 tracking-wider">Total Registrations</span>
+                          <div className="text-2xl font-black text-[#102A43] mt-2">{thirdPartyRequests.length} Drivers</div>
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1">Authorized branch drivers</span>
+                        </div>
+
+                        <div className="p-4 bg-white rounded-xl border border-emerald-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-bold text-emerald-700 tracking-wider">Active Digital Passes</span>
+                          <div className="text-2xl font-black text-emerald-600 mt-2">
+                            {thirdPartyRequests.filter((t) => t.status === "Approved").length} Active
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1">Approved & issued passes</span>
+                        </div>
+
+                        <div className="p-4 bg-white rounded-xl border border-amber-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-bold text-amber-700 tracking-wider">Pending Branch Review</span>
+                          <div className="text-2xl font-black text-amber-600 mt-2">
+                            {thirdPartyRequests.filter((t) => t.status === "Pending Branch Approval").length} Pending
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1">Awaiting KYC confirmation</span>
+                        </div>
+
+                        <div className="p-4 bg-white rounded-xl border border-indigo-200/80 shadow-2xs flex flex-col justify-between">
+                          <span className="text-[10px] uppercase font-bold text-indigo-700 tracking-wider">Pass Fees Collected</span>
+                          <div className="text-xl font-black text-indigo-700 mt-2 truncate">
+                            {formatLKR(thirdPartyRequests.reduce((acc, t) => acc + (t.payment?.status === "Paid" ? (t.fee || 300) : 0), 0))}
+                          </div>
+                          <span className="text-[10px] text-slate-400 font-semibold mt-1">LKR 300 driver pass revenue</span>
                         </div>
                       </div>
                     </div>
@@ -3165,6 +3497,272 @@ export default function OfficeStaffReports() {
                   </div>
                 )}
 
+                {/* TAB: THIRD-PARTY DRIVERS AUTHORIZATIONS */}
+                {activeReportType === "thirdparty" && (
+                  <div className="flex flex-col gap-6">
+                    {/* Third-Party KPI Banner */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-blue-600 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Registrations</span>
+                        <div className="text-2xl font-black text-[#102A43] mt-1">{thirdPartyRequests.length} Drivers</div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">{branch} Regional Network</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-emerald-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approved & Active Passes</span>
+                        <div className="text-2xl font-black text-emerald-600 mt-1">
+                          {thirdPartyRequests.filter((t) => t.status === "Approved").length} Active
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Secure digital NFC passes</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-amber-500 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Branch Approval</span>
+                        <div className="text-2xl font-black text-amber-600 mt-1">
+                          {thirdPartyRequests.filter((t) => t.status === "Pending Branch Approval").length} Pending
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">Requires KYC verification</span>
+                      </div>
+
+                      <div className="bg-white p-5 rounded-2xl border-l-[6px] border-l-indigo-600 border border-slate-200 shadow-sm">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Driver Fees Collected</span>
+                        <div className="text-xl font-black text-indigo-700 mt-1 truncate">
+                          {formatLKR(thirdPartyRequests.reduce((acc, t) => acc + (t.payment?.status === "Paid" ? (t.fee || 300) : 0), 0))}
+                        </div>
+                        <span className="text-[11px] text-slate-400 font-semibold block mt-0.5">LKR 300 issuance fee</span>
+                      </div>
+                    </div>
+
+                    {/* Filter & Action Controls Bar */}
+                    <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-wrap items-center justify-between gap-3 text-xs select-none">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative">
+                          <select
+                            value={statusFilter}
+                            onChange={(e) => {
+                              setStatusFilter(e.target.value);
+                              setCurrentPage(1);
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl border border-slate-300 font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 shadow-2xs"
+                          >
+                            <option value="all">Status: All Statuses</option>
+                            <option value="Approved">Status: Approved</option>
+                            <option value="Pending Branch Approval">Status: Pending Branch Approval</option>
+                            <option value="Pending Termination Approval">Status: Pending Termination</option>
+                            <option value="Terminated">Status: Terminated</option>
+                            <option value="Rejected">Status: Rejected</option>
+                            <option value="Pending Payment">Status: Pending Payment</option>
+                          </select>
+                        </div>
+
+                        <select
+                          value={sortBy}
+                          onChange={(e) => setSortBy(e.target.value as any)}
+                          className="px-3.5 py-1.5 rounded-xl border border-slate-300 font-semibold text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400 shadow-2xs"
+                        >
+                          <option value="newest">Sort: Newest First</option>
+                          <option value="oldest">Sort: Oldest First</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href="/Office_Staff/ThirdParty"
+                          className="px-3.5 py-1.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer no-underline"
+                        >
+                          <span>Open Third-Party Portal</span>
+                        </Link>
+                        <button
+                          onClick={handleExportCSV}
+                          className="px-3.5 py-1.5 bg-[#000080] hover:bg-[#102A43] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer border-none"
+                        >
+                          <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5 text-white" />
+                          <span>Export CSV</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Third-Party Drivers Table */}
+                    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
+                      {paginatedData.length === 0 ? (
+                        <div className="p-12 text-center text-slate-400 font-medium select-none">
+                          No third-party driver records found matching your active filter criteria.
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left text-xs border-collapse">
+                            <thead>
+                              <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px] select-none">
+                                <th className="py-3 px-4 whitespace-nowrap">Reference ID</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Third-Party Driver</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Policyholder (Owner)</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Authorized Vehicles</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">Fee & Payment</th>
+                                <th className="py-3 px-4 text-center whitespace-nowrap">Authorization Status</th>
+                                <th className="py-3 px-4 whitespace-nowrap">Registered Date</th>
+                                <th className="py-3 px-4 text-right whitespace-nowrap">Actions</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {(paginatedData as ThirdPartyRecord[]).map((t, idx) => {
+                                const isApproved = t.status === "Approved";
+                                const isPending = t.status === "Pending Branch Approval";
+                                const isTerminated = t.status === "Terminated";
+                                const isRejected = t.status === "Rejected";
+                                const isPaid = t.payment?.status === "Paid";
+
+                                return (
+                                  <tr
+                                    key={t._id || idx}
+                                    onClick={() => setSelectedRecord({ type: "thirdparty", data: t })}
+                                    className={`hover:bg-slate-50/80 transition-colors cursor-pointer border-l-[6px] ${
+                                      isApproved
+                                        ? "border-l-emerald-500"
+                                        : isPending
+                                        ? "border-l-amber-500"
+                                        : isTerminated || isRejected
+                                        ? "border-l-rose-500"
+                                        : "border-l-blue-500"
+                                    }`}
+                                  >
+                                    <td className="py-3.5 px-4 font-mono font-bold text-[#102A43] whitespace-nowrap">
+                                      {t.requestReference || `TPR-2026-${String(idx + 1).padStart(4, "0")}`}
+                                    </td>
+
+                                    <td className="py-3.5 px-4 whitespace-nowrap">
+                                      <span className="font-bold text-slate-800 block">
+                                        {t.driverDetails?.fullName || "Authorized Driver"}
+                                      </span>
+                                      <span className="font-mono text-[10px] text-slate-400 block">
+                                        {t.driverDetails?.nicNumber ? `NIC: ${t.driverDetails.nicNumber}` : t.driverDetails?.phoneNumber || "-"}
+                                      </span>
+                                    </td>
+
+                                    <td className="py-3.5 px-4 whitespace-nowrap">
+                                      <span className="font-bold text-slate-800 block">
+                                        {t.policyHolderName || "Policyholder"}
+                                      </span>
+                                      <span className="font-mono text-[10px] text-slate-400 block">
+                                        {t.policyHolderNic}
+                                      </span>
+                                    </td>
+
+                                    <td className="py-3.5 px-4 whitespace-nowrap">
+                                      <div className="flex flex-wrap gap-1 max-w-[220px]">
+                                        {(t.selectedVehicles || []).map((v, vIdx) => (
+                                          <span
+                                            key={vIdx}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-mono text-[10px] font-semibold"
+                                          >
+                                            <HugeiconsIcon icon={Car01Icon} className="w-3 h-3 text-slate-500" />
+                                            <span>{v.numberPlate}</span>
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </td>
+
+                                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                      <span
+                                        className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                                          isPaid
+                                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                            : "bg-amber-50 text-amber-700 border-amber-200"
+                                        }`}
+                                      >
+                                        <HugeiconsIcon icon={CreditCardIcon} className="w-3 h-3" />
+                                        <span>LKR {t.fee || 300} ({isPaid ? "Paid" : "Pending"})</span>
+                                      </span>
+                                    </td>
+
+                                    <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                                      <span
+                                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                                          isApproved
+                                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                            : isPending
+                                            ? "bg-amber-50 text-amber-700 border-amber-200"
+                                            : isTerminated
+                                            ? "bg-slate-100 text-slate-600 border-slate-200"
+                                            : isRejected
+                                            ? "bg-rose-50 text-rose-700 border-rose-200"
+                                            : "bg-blue-50 text-blue-700 border-blue-200"
+                                        }`}
+                                      >
+                                        {t.status}
+                                      </span>
+                                    </td>
+
+                                    <td className="py-3.5 px-4 text-slate-600 font-medium whitespace-nowrap">
+                                      {t.createdAt ? new Date(t.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "-"}
+                                    </td>
+
+                                    <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                          onClick={() => setSelectedRecord({ type: "thirdparty", data: t })}
+                                          className="p-1.5 rounded-lg text-slate-600 hover:text-blue-700 hover:bg-blue-50 border border-slate-200 transition-colors cursor-pointer"
+                                          title="View details"
+                                        >
+                                          <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+                                        </button>
+                                        {isApproved && t.secureAccess?.accessUrl && (
+                                          <button
+                                            onClick={() => {
+                                              if (typeof navigator !== "undefined" && t.secureAccess?.accessUrl) {
+                                                navigator.clipboard.writeText(t.secureAccess.accessUrl);
+                                                setCopiedToken(t._id);
+                                                showToast("Digital pass access link copied to clipboard!", "success");
+                                                setTimeout(() => setCopiedToken(null), 3000);
+                                              }
+                                            }}
+                                            className="p-1.5 rounded-lg text-slate-600 hover:text-blue-700 hover:bg-blue-50 border border-slate-200 transition-colors cursor-pointer"
+                                            title="Copy digital NFC pass link"
+                                          >
+                                            <HugeiconsIcon icon={copiedToken === t._id ? CheckmarkCircle01Icon : Copy01Icon} className="w-3.5 h-3.5" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+
+                      {/* Pagination Controls */}
+                      {paginatedData.length > 0 && (
+                        <div className="p-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 select-none">
+                          <span>
+                            Showing {(currentPage - 1) * rowsPerPage + 1} to{" "}
+                            {Math.min(currentPage * rowsPerPage, currentDataset.length)} of {currentDataset.length} records
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              disabled={currentPage === 1}
+                              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Previous
+                            </button>
+                            <span className="font-semibold text-slate-800">
+                              {currentPage} / {totalPages}
+                            </span>
+                            <button
+                              disabled={currentPage === totalPages}
+                              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                              className="px-3 py-1.5 border border-slate-300 rounded-lg font-semibold hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed bg-white"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* TAB 5: FIELD AGENTS FORCE */}
                 {activeReportType === "agents" && (
                   <div className="flex flex-col gap-6">
@@ -3649,12 +4247,16 @@ export default function OfficeStaffReports() {
                       ? `Policyholder Profile: ${selectedRecord.data.firstName} ${selectedRecord.data.lastName}`
                       : selectedRecord.type === "renewal"
                       ? `Policy Renewal: ${selectedRecord.data.vehicle.numberPlate}`
+                      : selectedRecord.type === "thirdparty"
+                      ? `Third-Party Driver Pass: ${selectedRecord.data.requestReference || "TPR-2026"}`
                       : `Agent Profile: ${selectedRecord.data.name}`}
                   </h3>
                   <p className="text-xs text-slate-400 font-medium">
                     Branch Case Audit • Ref:{" "}
                     {selectedRecord.type === "renewal"
                       ? `${selectedRecord.data.vehicle.numberPlate} (${selectedRecord.data.vehicle.policyNumber || "SAN-POL"})`
+                      : selectedRecord.type === "thirdparty"
+                      ? `${selectedRecord.data.requestReference} • Driver: ${selectedRecord.data.driverDetails?.fullName}`
                       : selectedRecord.data.claimNumber || selectedRecord.data.referenceNumber || selectedRecord.data.nic}
                   </p>
                 </div>
@@ -4058,6 +4660,181 @@ export default function OfficeStaffReports() {
                   );
                 })()
               )}
+
+              {selectedRecord.type === "thirdparty" && (
+                (() => {
+                  const t = selectedRecord.data as ThirdPartyRecord;
+                  const isApproved = t.status === "Approved";
+                  const isPaid = t.payment?.status === "Paid";
+
+                  return (
+                    <div className="space-y-4">
+                      {/* Status Banner */}
+                      <div
+                        className={`p-3.5 rounded-2xl border flex items-center justify-between ${
+                          isApproved
+                            ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                            : t.status === "Pending Branch Approval"
+                            ? "bg-amber-50 border-amber-200 text-amber-900"
+                            : t.status === "Terminated" || t.status === "Rejected"
+                            ? "bg-rose-50 border-rose-200 text-rose-900"
+                            : "bg-blue-50 border-blue-200 text-blue-900"
+                        }`}
+                      >
+                        <div>
+                          <span className="font-bold text-xs uppercase tracking-wide block">
+                            Authorization Status: {t.status}
+                          </span>
+                          <span className="text-[11px] opacity-80 block">
+                            {isApproved
+                              ? "NFC Digital pass issued and authorized for vehicle operation"
+                              : t.status === "Pending Branch Approval"
+                              ? "Awaiting branch office staff document review & approval"
+                              : t.status === "Terminated"
+                              ? "Driver authorization terminated"
+                              : "Registration submitted"}
+                          </span>
+                        </div>
+                        <span
+                          className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
+                            isApproved
+                              ? "bg-emerald-600 text-white"
+                              : t.status === "Pending Branch Approval"
+                              ? "bg-amber-500 text-white"
+                              : t.status === "Terminated" || t.status === "Rejected"
+                              ? "bg-rose-600 text-white"
+                              : "bg-blue-600 text-white"
+                          }`}
+                        >
+                          {t.status}
+                        </span>
+                      </div>
+
+                      {/* Driver & Policyholder Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Driver Profile */}
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                            1. Third-Party Driver Details
+                          </span>
+                          <div className="space-y-1.5 text-xs">
+                            <div><span className="text-slate-400">Full Name:</span> <strong className="text-slate-900 ml-1">{t.driverDetails?.fullName}</strong></div>
+                            <div><span className="text-slate-400">NIC Number:</span> <strong className="font-mono text-slate-900 ml-1">{t.driverDetails?.nicNumber || "Not Provided"}</strong></div>
+                            <div><span className="text-slate-400">Phone:</span> <strong className="font-mono text-slate-900 ml-1">{t.driverDetails?.phoneNumber}</strong></div>
+                            <div><span className="text-slate-400">Residential Address:</span> <span className="text-slate-800 ml-1 font-medium">{t.driverDetails?.residentialAddress}</span></div>
+                          </div>
+                        </div>
+
+                        {/* Policyholder Info */}
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                            2. Authorizing Policyholder (Owner)
+                          </span>
+                          <div className="space-y-1.5 text-xs">
+                            <div><span className="text-slate-400">Owner Name:</span> <strong className="text-slate-900 ml-1">{t.policyHolderName || "Policyholder"}</strong></div>
+                            <div><span className="text-slate-400">NIC:</span> <strong className="font-mono text-slate-900 ml-1">{t.policyHolderNic}</strong></div>
+                            <div><span className="text-slate-400">Registered Branch:</span> <strong className="text-slate-800 ml-1">{t.branch || branch} Branch</strong></div>
+                            <div><span className="text-slate-400">Reference:</span> <span className="font-mono text-blue-700 font-semibold ml-1">{t.requestReference}</span></div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Authorized Vehicles */}
+                      <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                          3. Authorized Vehicles ({(t.selectedVehicles || []).length})
+                        </span>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          {(t.selectedVehicles || []).map((v, vIdx) => (
+                            <div key={vIdx} className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center">
+                                  <HugeiconsIcon icon={Car01Icon} className="w-3.5 h-3.5" />
+                                </div>
+                                <div>
+                                  <span className="font-mono font-bold text-slate-800 text-xs block">{v.numberPlate}</span>
+                                  <span className="text-[10px] text-slate-400 block">{v.model || v.vehicleType || "Authorized Vehicle"}</span>
+                                </div>
+                              </div>
+                              <span className="text-[10px] font-mono text-slate-500 bg-slate-50 px-2 py-0.5 rounded border border-slate-200">
+                                {v.policyNumber || "SAN-POL"}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Fee, Payment & Digital NFC Pass */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                            4. Issuance Fee & Payment
+                          </span>
+                          <div className="flex items-center justify-between text-xs pt-1">
+                            <span className="text-slate-500">Authorized Pass Fee:</span>
+                            <span className="font-black text-slate-900">LKR {t.fee || 300}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-slate-500">Payment Status:</span>
+                            <span className={`font-bold px-2 py-0.5 rounded-full text-[10px] border ${isPaid ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                              {isPaid ? "Payment Settled" : "Payment Pending"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                            5. Digital NFC Pass Access
+                          </span>
+                          {t.secureAccess?.accessUrl ? (
+                            <div className="space-y-1.5 pt-1">
+                              <div className="text-[11px] font-mono text-blue-700 truncate bg-white p-2 rounded-xl border border-blue-100">
+                                {t.secureAccess.accessUrl}
+                              </div>
+                              <button
+                                onClick={() => {
+                                  if (typeof navigator !== "undefined" && t.secureAccess?.accessUrl) {
+                                    navigator.clipboard.writeText(t.secureAccess.accessUrl);
+                                    setCopiedToken(t._id);
+                                    showToast("Driver pass link copied to clipboard!", "success");
+                                    setTimeout(() => setCopiedToken(null), 3000);
+                                  }
+                                }}
+                                className="w-full py-1.5 bg-[#000080] hover:bg-[#102A43] text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer border-none shadow-2xs"
+                              >
+                                <HugeiconsIcon icon={copiedToken === t._id ? CheckmarkCircle01Icon : Copy01Icon} className="w-3.5 h-3.5" />
+                                <span>{copiedToken === t._id ? "Copied Link!" : "Copy Digital NFC Pass Link"}</span>
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-400 italic pt-1">
+                              Digital pass token generated upon branch approval.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Branch Review Information */}
+                      {t.branchReview && (
+                        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs space-y-1">
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                            6. Branch Staff Audit Record
+                          </span>
+                          <div className="flex justify-between text-slate-600">
+                            <span>Reviewed by: <strong className="text-slate-800">{t.branchReview.reviewedByStaffName || "Branch Staff"}</strong></span>
+                            <span>{t.branchReview.reviewedAt ? new Date(t.branchReview.reviewedAt).toLocaleDateString("en-GB") : "-"}</span>
+                          </div>
+                          {t.branchReview.notes && (
+                            <p className="text-slate-600 text-[11px] bg-white p-2 rounded-xl border border-slate-200 mt-1">
+                              <strong>Notes:</strong> {t.branchReview.notes}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
+              )}
             </div>
 
             <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
@@ -4123,6 +4900,7 @@ export default function OfficeStaffReports() {
                     { id: "claims", label: "Claims & Losses", desc: "Claims, damage & payouts" },
                     { id: "policyholders", label: "Policyholders", desc: "Active clients & vehicles" },
                     { id: "renewals", label: "Vehicle Renewals", desc: "Policy expiry & plans" },
+                    { id: "thirdparty", label: "Third-Party Drivers", desc: "Driver authorizations & passes" },
                     { id: "agents", label: "Field Agents", desc: "Agent duty & performance" },
                     { id: "financial", label: "Disbursement Audit", desc: "Approved bank payouts" }
                   ].map((m) => (
@@ -4215,6 +4993,20 @@ export default function OfficeStaffReports() {
                     <option value="Expiring Soon">Expiring Soon (45 Days Window)</option>
                     <option value="Calculated">Quote Calculated</option>
                     <option value="Pending">Pending Calculation</option>
+                  </select>
+                ) : exportDomain === "thirdparty" ? (
+                  <select
+                    value={exportStatus}
+                    onChange={(e) => setExportStatus(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs font-medium text-slate-700 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  >
+                    <option value="all">All Driver Authorization Statuses</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Pending Branch Approval">Pending Branch Approval</option>
+                    <option value="Pending Termination Approval">Pending Termination</option>
+                    <option value="Terminated">Terminated</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Pending Payment">Pending Payment</option>
                   </select>
                 ) : exportDomain === "claims" || exportDomain === "financial" ? (
                   <select

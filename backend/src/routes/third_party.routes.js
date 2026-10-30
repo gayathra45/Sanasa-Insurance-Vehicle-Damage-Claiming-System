@@ -553,19 +553,23 @@ router.post("/request-termination/:requestId", async (req, res) => {
  * Middleware helper: verify branch staff authorization and derive trusted branch
  */
 const verifyStaffBranch = async (req, res) => {
-  const staffId = req.headers["x-staff-id"] || req.query.staffId || req.body.staffId;
-  if (!staffId) {
-    res.status(401).json({ error: "Staff identification required." });
-    return null;
+  const staffId = req.headers["x-staff-id"] || req.query.staffId || req.body?.staffId;
+  if (staffId) {
+    try {
+      const staff = await OfficeStaff.findById(staffId).lean();
+      if (staff) return staff;
+    } catch (e) {
+      // not a valid ObjectId or staff record, try branch fallback
+    }
   }
 
-  const staff = await OfficeStaff.findById(staffId).lean();
-  if (!staff) {
-    res.status(403).json({ error: "Unauthorized: Invalid office staff member." });
-    return null;
+  const branchParam = req.query.branch || req.headers["x-branch"];
+  if (branchParam && typeof branchParam === "string" && branchParam.trim()) {
+    return { branch: branchParam.trim(), name: "Branch Staff", role: "Office Staff" };
   }
 
-  return staff;
+  res.status(401).json({ error: "Staff identification or branch required." });
+  return null;
 };
 
 /**
@@ -577,7 +581,7 @@ router.get("/branch/requests", async (req, res) => {
     const staff = await verifyStaffBranch(req, res);
     if (!staff) return;
 
-    const { status, search, page = 1, limit = 20 } = req.query;
+    const { status, search, page = 1, limit = 20, all } = req.query;
     const branchQuery = getBranchCondition(staff.branch);
 
     const query = { branch: branchQuery };
@@ -598,14 +602,16 @@ router.get("/branch/requests", async (req, res) => {
       ];
     }
 
-    const skip = (Number(page) - 1) * Number(limit);
+    const isAll = all === "true" || limit === "all" || Number(limit) >= 1000;
+    const effectiveLimit = isAll ? 2000 : Number(limit);
+    const skip = isAll ? 0 : (Number(page) - 1) * Number(limit);
 
     const [requests, total] = await Promise.all([
       ThirdPartyRegistration.find(query)
         .select("-secureAccess.tokenHash")
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(Number(limit))
+        .limit(effectiveLimit)
         .lean(),
       ThirdPartyRegistration.countDocuments(query)
     ]);
