@@ -177,6 +177,7 @@ export default function MyVehicles() {
   const [activeMainTab, setActiveMainTab] = useState<"vehicles" | "third_party">("vehicles");
   const [thirdPartyRequests, setThirdPartyRequests] = useState<any[]>([]);
   const [vehicleDriverMap, setVehicleDriverMap] = useState<Record<string, string>>({});
+  const [vehicleDriversMap, setVehicleDriversMap] = useState<Record<string, Array<{ name: string; status: string; ref: string; req: any }>>>({});
   const [loadingThirdParty, setLoadingThirdParty] = useState(false);
   const [resumingPaymentId, setResumingPaymentId] = useState<string | null>(null);
 
@@ -221,18 +222,29 @@ export default function MyVehicles() {
         if (data.success && Array.isArray(data.registrations)) {
           setThirdPartyRequests(data.registrations);
 
-          // Build vehiclePlate -> driverName map for approved requests (excluding terminated)
-          const map: Record<string, string> = {};
+          // Build vehiclePlate -> drivers list map and legacy single map (excluding terminated)
+          const listMap: Record<string, Array<{ name: string; status: string; ref: string; req: any }>> = {};
+          const nameMap: Record<string, string> = {};
           data.registrations.forEach((req: any) => {
-            if (req.status === "Approved" && req.selectedVehicles) {
+            if (req.status !== "Terminated" && req.selectedVehicles) {
               req.selectedVehicles.forEach((sv: any) => {
                 if (sv.numberPlate) {
-                  map[sv.numberPlate] = req.driverDetails?.fullName || "Authorized Driver";
+                  if (!listMap[sv.numberPlate]) listMap[sv.numberPlate] = [];
+                  listMap[sv.numberPlate].push({
+                    name: req.driverDetails?.fullName || "Authorized Driver",
+                    status: req.status,
+                    ref: req.requestReference,
+                    req: req,
+                  });
+                  if (!nameMap[sv.numberPlate] || req.status === "Approved") {
+                    nameMap[sv.numberPlate] = req.driverDetails?.fullName || "Authorized Driver";
+                  }
                 }
               });
             }
           });
-          setVehicleDriverMap(map);
+          setVehicleDriversMap(listMap);
+          setVehicleDriverMap(nameMap);
         }
       }
     } catch (err) {
@@ -1163,7 +1175,7 @@ export default function MyVehicles() {
                         </View>
                       </View>
 
-                      {/* ── SIMPLE VEHICLE NUMBER & DRIVER ROW ── */}
+                      {/* ── SIMPLE VEHICLE NUMBER & DRIVER ROW (Multi-Driver Supported) ── */}
                       <View style={styles.simplePlateRow}>
                         {/* Simple Clean Plate Number Badge */}
                         <View style={styles.simplePlateBadge}>
@@ -1171,19 +1183,43 @@ export default function MyVehicles() {
                         </View>
 
                         {/* Driver Indicator */}
-                        {assignedDriver ? (
-                          <View style={styles.simpleDriverTag}>
-                            <MaterialCommunityIcons name="account-check" size={13} color="#059669" />
-                            <Text style={styles.simpleDriverText} numberOfLines={1}>
-                              {assignedDriver}
-                            </Text>
-                          </View>
-                        ) : (
-                          <View style={styles.simpleSelfDrivenTag}>
-                            <MaterialCommunityIcons name="shield-check-outline" size={12} color="#64748b" />
-                            <Text style={styles.simpleSelfDrivenText}>Self-Driven</Text>
-                          </View>
-                        )}
+                        {(() => {
+                          const drivers = vehicleDriversMap[v.numberPlate] || [];
+                          if (drivers.length === 0) {
+                            return (
+                              <View style={styles.simpleSelfDrivenTag}>
+                                <MaterialCommunityIcons name="shield-check-outline" size={12} color="#64748b" />
+                                <Text style={styles.simpleSelfDrivenText}>Self-Driven</Text>
+                              </View>
+                            );
+                          }
+                          if (drivers.length === 1) {
+                            return (
+                              <TouchableOpacity
+                                style={styles.simpleDriverTag}
+                                onPress={() => handleOpenVehicleModal(v)}
+                                activeOpacity={0.7}
+                              >
+                                <MaterialCommunityIcons name="account-check" size={13} color="#059669" />
+                                <Text style={styles.simpleDriverText} numberOfLines={1}>
+                                  {drivers[0].name}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          }
+                          return (
+                            <TouchableOpacity
+                              style={[styles.simpleDriverTag, { backgroundColor: "#eef2ff", borderColor: "#c7d2fe" }]}
+                              onPress={() => handleOpenVehicleModal(v)}
+                              activeOpacity={0.7}
+                            >
+                              <MaterialCommunityIcons name="account-multiple-check" size={13} color="#4338ca" />
+                              <Text style={[styles.simpleDriverText, { color: "#4338ca" }]} numberOfLines={1}>
+                                {drivers.length} Drivers Authorized
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })()}
                       </View>
 
                       {/* Real-time Renewal Alert Banner (If Quote Ready) */}
@@ -2292,6 +2328,7 @@ export default function MyVehicles() {
 
                   {(() => {
                     const vehicleDrivers = thirdPartyRequests.filter((r: any) =>
+                      r.status !== "Terminated" &&
                       r.selectedVehicles?.some((sv: any) => sv.numberPlate === selectedVehicleForModal.numberPlate)
                     );
 

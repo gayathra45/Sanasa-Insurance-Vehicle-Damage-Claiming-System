@@ -278,25 +278,38 @@ export default function MyVehicles() {
   const tpDlFrontRef = useRef<HTMLInputElement>(null);
   const tpDlBackRef = useRef<HTMLInputElement>(null);
 
-  // Map of vehicle plate -> assigned driver info
-  const vehicleDriverMap = useMemo(() => {
-    const map: Record<string, { driverName: string; status: string; ref: string; req: any }> = {};
+  // Map of vehicle plate -> list of assigned drivers (excluding terminated)
+  const vehicleDriversMap = useMemo(() => {
+    const map: Record<string, Array<{ driverName: string; status: string; ref: string; req: any }>> = {};
     thirdPartyRequests.forEach((req) => {
       if (req.status !== "Terminated") {
         req.selectedVehicles?.forEach((v: any) => {
-          if (!map[v.numberPlate] || req.status === "Approved") {
-            map[v.numberPlate] = {
-              driverName: req.driverDetails?.fullName || "Assigned Driver",
-              status: req.status,
-              ref: req.requestReference,
-              req: req
-            };
+          if (!map[v.numberPlate]) {
+            map[v.numberPlate] = [];
           }
+          map[v.numberPlate].push({
+            driverName: req.driverDetails?.fullName || "Assigned Driver",
+            status: req.status,
+            ref: req.requestReference,
+            req: req
+          });
         });
       }
     });
     return map;
   }, [thirdPartyRequests]);
+
+  // Backward compatibility alias (primary driver)
+  const vehicleDriverMap = useMemo(() => {
+    const map: Record<string, { driverName: string; status: string; ref: string; req: any }> = {};
+    Object.entries(vehicleDriversMap).forEach(([plate, drivers]) => {
+      if (drivers.length > 0) {
+        const approved = drivers.find((d) => d.status === "Approved");
+        map[plate] = approved || drivers[0];
+      }
+    });
+    return map;
+  }, [vehicleDriversMap]);
 
   const handleSubmitTermination = async () => {
     if (!terminateTargetReq) return;
@@ -1382,29 +1395,57 @@ export default function MyVehicles() {
                                 </span>
                               </div>
 
-                              {/* Assigned Driver */}
+                              {/* Assigned Driver(s) */}
                               <div className="flex flex-col justify-between pl-3 min-w-0">
-                                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Assigned Driver</span>
+                                <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                                  {(vehicleDriversMap[vehicle.numberPlate] || []).length > 1
+                                    ? `Drivers (${(vehicleDriversMap[vehicle.numberPlate] || []).length})`
+                                    : "Assigned Driver"}
+                                </span>
                                 <div className="mt-1">
-                                  {driverInfo?.status === "Approved" ? (
-                                    <span className="font-semibold text-emerald-700 text-xs inline-flex items-center gap-1.5 truncate max-w-full">
-                                      <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                                      <span className="truncate" title={driverInfo.driverName}>{driverInfo.driverName}</span>
-                                    </span>
-                                  ) : driverInfo?.status === "Pending Branch Approval" ? (
-                                    <span className="font-semibold text-amber-700 text-xs inline-flex items-center gap-1.5 truncate max-w-full">
-                                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" />
-                                      <span className="truncate">Review Pending</span>
-                                    </span>
-                                  ) : (
-                                    <span className="text-slate-400 text-xs font-normal italic block">None Assigned</span>
-                                  )}
+                                  {(() => {
+                                    const drivers = vehicleDriversMap[vehicle.numberPlate] || [];
+                                    if (drivers.length === 0) {
+                                      return <span className="text-slate-400 text-xs font-normal italic block">None Assigned</span>;
+                                    }
+                                    if (drivers.length === 1) {
+                                      const d = drivers[0];
+                                      const isApp = d.status === "Approved";
+                                      return (
+                                        <span
+                                          onClick={() => setSelectedVehicleForModal(vehicle)}
+                                          className={`font-semibold text-xs inline-flex items-center gap-1.5 truncate max-w-full cursor-pointer hover:underline ${
+                                            isApp ? "text-emerald-700" : "text-amber-700"
+                                          }`}
+                                          title={d.driverName}
+                                        >
+                                          <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isApp ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`} />
+                                          <span className="truncate">{d.driverName}</span>
+                                        </span>
+                                      );
+                                    }
+                                    return (
+                                      <div
+                                        onClick={() => setSelectedVehicleForModal(vehicle)}
+                                        className="cursor-pointer group/drv"
+                                        title={drivers.map((d) => d.driverName).join(", ")}
+                                      >
+                                        <span className="font-semibold text-indigo-700 text-xs inline-flex items-center gap-1.5 truncate max-w-full">
+                                          <span className="w-2 h-2 rounded-full bg-indigo-500 flex-shrink-0" />
+                                          <span className="truncate font-bold">{drivers.length} Drivers Authorized</span>
+                                        </span>
+                                        <span className="text-[10px] text-slate-500 block truncate group-hover/drv:text-indigo-600 transition-colors">
+                                          {drivers[0].driverName} +{drivers.length - 1} more
+                                        </span>
+                                      </div>
+                                    );
+                                  })()}
                                 </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* Action Buttons */}
+                          {/* Action Buttons: Always allow Assign Driver */}
                           <div className="pt-3 border-t border-slate-100/90 flex items-center gap-2.5">
                             <button
                               onClick={() => setSelectedVehicleForModal(vehicle)}
@@ -1415,22 +1456,12 @@ export default function MyVehicles() {
                             </button>
 
                             <button
-                              onClick={() => {
-                                if (driverInfo?.req) {
-                                  setSelectedDriverForManage(driverInfo.req);
-                                } else {
-                                  handleOpenThirdPartyForVehicle(vehicle.numberPlate);
-                                }
-                              }}
-                              className={`font-semibold text-xs sm:text-[13px] py-2.5 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 active:scale-[0.98] cursor-pointer ${
-                                driverInfo?.status === "Approved"
-                                  ? "bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/80"
-                                  : "bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/70 shadow-2xs"
-                              }`}
-                              title={driverInfo?.status === "Approved" ? "Manage Authorized Driver" : "Assign Third-Party Driver"}
+                              onClick={() => handleOpenThirdPartyForVehicle(vehicle.numberPlate)}
+                              className="font-semibold text-xs sm:text-[13px] py-2.5 px-3 rounded-xl transition-all duration-200 flex items-center justify-center gap-1.5 active:scale-[0.98] cursor-pointer bg-indigo-50/80 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/70 shadow-2xs"
+                              title="Assign another authorized driver to this vehicle"
                             >
-                              <HugeiconsIcon icon={driverInfo?.status === "Approved" ? UserCheck01Icon : UserAdd01Icon} className="w-3.5 h-3.5" />
-                              <span>{driverInfo?.status === "Approved" ? "Manage Driver" : "Assign Driver"}</span>
+                              <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+                              <span>{(vehicleDriversMap[vehicle.numberPlate] || []).length > 0 ? "+ Assign Driver" : "Assign Driver"}</span>
                             </button>
                           </div>
                         </div>
@@ -1503,15 +1534,39 @@ export default function MyVehicles() {
                             </div>
 
                             <div>
-                              <span className="text-[10px] sm:text-[10.5px] uppercase font-bold text-slate-400 block">Driver</span>
-                              {driverInfo?.status === "Approved" ? (
-                                <span className="font-semibold text-indigo-700 flex items-center gap-1 text-xs">
-                                  <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600" />
-                                  <span className="truncate max-w-[120px]">{driverInfo.driverName}</span>
-                                </span>
-                              ) : (
-                                <span className="text-slate-400 italic text-xs">None</span>
-                              )}
+                              <span className="text-[10px] sm:text-[10.5px] uppercase font-bold text-slate-400 block">
+                                {(vehicleDriversMap[vehicle.numberPlate] || []).length > 1
+                                  ? `Drivers (${(vehicleDriversMap[vehicle.numberPlate] || []).length})`
+                                  : "Driver"}
+                              </span>
+                              {(() => {
+                                const drivers = vehicleDriversMap[vehicle.numberPlate] || [];
+                                if (drivers.length === 0) {
+                                  return <span className="text-slate-400 italic text-xs">None</span>;
+                                }
+                                if (drivers.length === 1) {
+                                  return (
+                                    <span
+                                      onClick={() => setSelectedVehicleForModal(vehicle)}
+                                      className="font-semibold text-indigo-700 flex items-center gap-1 text-xs cursor-pointer hover:underline"
+                                      title={drivers[0].driverName}
+                                    >
+                                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600" />
+                                      <span className="truncate max-w-[120px]">{drivers[0].driverName}</span>
+                                    </span>
+                                  );
+                                }
+                                return (
+                                  <span
+                                    onClick={() => setSelectedVehicleForModal(vehicle)}
+                                    className="font-bold text-indigo-700 flex items-center gap-1 text-xs cursor-pointer hover:underline"
+                                    title={drivers.map((d) => d.driverName).join(", ")}
+                                  >
+                                    <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600" />
+                                    <span>{drivers.length} Drivers</span>
+                                  </span>
+                                );
+                              })()}
                             </div>
 
                             <div className="flex items-center gap-1.5">
@@ -1540,22 +1595,12 @@ export default function MyVehicles() {
                             </button>
 
                             <button
-                              onClick={() => {
-                                if (driverInfo?.req) {
-                                  setSelectedDriverForManage(driverInfo.req);
-                                } else {
-                                  handleOpenThirdPartyForVehicle(vehicle.numberPlate);
-                                }
-                              }}
-                              className={`flex-1 sm:flex-none justify-center font-semibold text-xs py-2 px-3 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 ${
-                                driverInfo?.status === "Approved"
-                                  ? "bg-slate-100 hover:bg-slate-200/80 text-slate-700 border border-slate-200/80"
-                                  : "bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80"
-                              }`}
-                              title={driverInfo?.status === "Approved" ? "Manage Driver" : "Assign Driver"}
+                              onClick={() => handleOpenThirdPartyForVehicle(vehicle.numberPlate)}
+                              className="flex-1 sm:flex-none justify-center font-semibold text-xs py-2 px-3 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 shadow-2xs"
+                              title="Assign another authorized driver"
                             >
-                              <HugeiconsIcon icon={driverInfo?.status === "Approved" ? UserCheck01Icon : UserAdd01Icon} className="w-3.5 h-3.5" />
-                              <span>{driverInfo?.status === "Approved" ? "Manage Driver" : "Assign Driver"}</span>
+                              <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+                              <span>{(vehicleDriversMap[vehicle.numberPlate] || []).length > 0 ? "+ Assign Driver" : "Assign Driver"}</span>
                             </button>
                           </div>
                         </div>
@@ -1879,74 +1924,131 @@ export default function MyVehicles() {
                   </div>
                 </div>
 
-                {/* Third-Party Driver Status / Add Driver Inside Modal */}
-                {modalDriverInfo ? (
-                  <div className="bg-indigo-50/80 border border-indigo-200 rounded-2xl p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
-                        <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100/80 px-2 py-0.5 rounded-full inline-block">
-                            Authorized Driver
-                          </span>
-                          <span className="text-xs font-bold text-indigo-900">
-                            {modalDriverInfo.driverName}
-                          </span>
+                {/* Third-Party Driver Status / Multi-Driver Section Inside Modal */}
+                {(() => {
+                  const modalDrivers = vehicleDriversMap[selectedVehicleForModal.numberPlate] || [];
+                  return (
+                    <div className="space-y-3 bg-slate-50/70 p-4 sm:p-5 rounded-2xl border border-slate-200/90">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200/80">
+                        <div>
+                          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                            <HugeiconsIcon icon={UserCheck01Icon} className="w-4 h-4 text-indigo-600" />
+                            <span>Authorized Third-Party Drivers ({modalDrivers.length})</span>
+                          </h4>
+                          <p className="text-[11px] text-slate-500 mt-0.5">
+                            Multiple drivers can be authorized to operate this vehicle. Fixed fee LKR 300 per registration.
+                          </p>
                         </div>
-                        <p className="text-xs text-indigo-700/90 mt-0.5">
-                          Status: <strong className="text-indigo-950">{modalDriverInfo.status}</strong> • Pass Ref: <span className="font-mono">{modalDriverInfo.ref}</span>
-                        </p>
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={() => {
-                        const req = modalDriverInfo?.req;
-                        const plate = selectedVehicleForModal.numberPlate;
-                        setSelectedVehicleForModal(null);
-                        if (req) {
-                          setSelectedDriverForManage(req);
-                        } else {
-                          handleOpenThirdPartyForVehicle(plate);
-                        }
-                      }}
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-white text-indigo-700 hover:bg-indigo-100/70 border border-indigo-200 transition-colors cursor-pointer self-start sm:self-auto shadow-2xs"
-                    >
-                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5" />
-                      <span>Manage Driver</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="bg-slate-50 border border-dashed border-indigo-200/90 rounded-2xl p-4.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-                    <div className="flex items-center gap-3.5">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-600 flex items-center justify-center flex-shrink-0">
-                        <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5" />
+                        <button
+                          onClick={() => {
+                            const plate = selectedVehicleForModal.numberPlate;
+                            setSelectedVehicleForModal(null);
+                            handleOpenThirdPartyForVehicle(plate);
+                          }}
+                          className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-all cursor-pointer border-none shadow-2xs self-start sm:self-auto flex-shrink-0"
+                        >
+                          <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+                          <span>+ Assign Driver</span>
+                        </button>
                       </div>
-                      <div>
-                        <h4 className="font-bold text-slate-800 text-xs sm:text-sm">
-                          Third-Party Driver Authorization
-                        </h4>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          Need someone else to drive? Authorize drivers under this policy for a flat fee of <strong>LKR 300</strong>.
-                        </p>
-                      </div>
-                    </div>
 
-                    <button
-                      onClick={() => {
-                        const plate = selectedVehicleForModal.numberPlate;
-                        setSelectedVehicleForModal(null);
-                        handleOpenThirdPartyForVehicle(plate);
-                      }}
-                      className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white transition-all cursor-pointer border-none shadow-sm self-start sm:self-auto whitespace-nowrap"
-                    >
-                      <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
-                      <span>+ Add Driver (LKR 300)</span>
-                    </button>
-                  </div>
-                )}
+                      {modalDrivers.length === 0 ? (
+                        <div className="bg-white border border-dashed border-slate-300 rounded-xl p-4 text-center">
+                          <p className="text-xs font-semibold text-slate-700">Self-Driven (No Authorized Drivers)</p>
+                          <p className="text-[11px] text-slate-500 mt-1 max-w-sm mx-auto">
+                            Authorize external drivers (family, employees, chauffeurs) to legally operate this vehicle under your existing policy.
+                          </p>
+                          <button
+                            onClick={() => {
+                              const plate = selectedVehicleForModal.numberPlate;
+                              setSelectedVehicleForModal(null);
+                              handleOpenThirdPartyForVehicle(plate);
+                            }}
+                            className="mt-2.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 cursor-pointer"
+                          >
+                            <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+                            <span>Authorize a Driver (LKR 300)</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {modalDrivers.map((driver) => {
+                            const req = driver.req;
+                            const isApproved = driver.status === "Approved";
+                            const isPendingTerm = driver.status === "Pending Termination Approval";
+                            const isTerminated = driver.status === "Terminated";
+                            const isPendingApp = driver.status === "Pending Branch Approval";
+
+                            return (
+                              <div
+                                key={req?._id || driver.ref}
+                                className="bg-white border border-slate-200/90 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs"
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                                    {driver.driverName.charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-xs font-bold text-slate-900 truncate">{driver.driverName}</span>
+                                      <span
+                                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                          isApproved
+                                            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                            : isPendingTerm
+                                            ? "bg-rose-50 text-rose-800 border-rose-200"
+                                            : isPendingApp
+                                            ? "bg-amber-50 text-amber-800 border-amber-200"
+                                            : "bg-slate-100 text-slate-700 border-slate-300"
+                                        }`}
+                                      >
+                                        {isApproved ? "Active Driver" : driver.status}
+                                      </span>
+                                    </div>
+                                    <p className="text-[11px] text-slate-500 mt-0.5 font-mono truncate">
+                                      Ref: {driver.ref}
+                                      {req?.driverDetails?.phoneNumber ? ` • Tel: ${req.driverDetails.phoneNumber}` : ""}
+                                      {req?.driverDetails?.nicNumber ? ` • NIC: ${req.driverDetails.nicNumber}` : ""}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 flex-shrink-0 self-end sm:self-auto">
+                                  {req && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedVehicleForModal(null);
+                                        setSelectedDriverForManage(req);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 cursor-pointer"
+                                    >
+                                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-slate-600" />
+                                      <span>View Pass</span>
+                                    </button>
+                                  )}
+
+                                  {isApproved && req && (
+                                    <button
+                                      onClick={() => {
+                                        setSelectedVehicleForModal(null);
+                                        handleOpenTerminate(req);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 cursor-pointer"
+                                    >
+                                      <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5 text-rose-600" />
+                                      <span>Terminate</span>
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 {/* Technical Specifications Grid */}
                 <div className="space-y-2">
