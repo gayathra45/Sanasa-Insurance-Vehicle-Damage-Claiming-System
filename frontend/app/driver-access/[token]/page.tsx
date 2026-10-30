@@ -1489,7 +1489,7 @@ export default function ThirdPartyDriverPortalPage() {
     );
   }, [branchSearchQuery]);
 
-  const navLinks = [
+  const navLinks: { id: string; label: string; count?: number }[] = [
     { id: "home", label: "Overview" },
     { id: "digital_pass", label: "Digital Pass" },
     { id: "my_claims", label: "My Claims" },
