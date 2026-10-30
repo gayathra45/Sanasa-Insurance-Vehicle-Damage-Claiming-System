@@ -1461,6 +1461,45 @@ export default function ThirdPartyDriverPortalPage() {
     return claims.filter((c) => c.status === "Approved" || c.status === "Settled").length;
   }, [claims]);
 
+  const t = driverAccessTranslations[lang] || driverAccessTranslations.en;
+
+  const currentBranchName = selectedBranchOverride || profile?.branch || "Galle";
+  const matchedBranch = useMemo(() => {
+    const cleanCurrent = currentBranchName.toLowerCase().replace(/\s+branch$/i, "").trim();
+    return (
+      SANASA_BRANCHES.find(
+        (b) =>
+          b.city.toLowerCase() === cleanCurrent ||
+          b.name.en.toLowerCase().includes(cleanCurrent) ||
+          cleanCurrent.includes(b.city.toLowerCase())
+      ) || SANASA_BRANCHES[1]
+    );
+  }, [currentBranchName]);
+
+  const filteredBranches = useMemo(() => {
+    const q = branchSearchQuery.toLowerCase().trim();
+    if (!q) return SANASA_BRANCHES;
+    return SANASA_BRANCHES.filter(
+      (b) =>
+        b.city.toLowerCase().includes(q) ||
+        b.name.en.toLowerCase().includes(q) ||
+        b.name.si.toLowerCase().includes(q) ||
+        b.name.ta.toLowerCase().includes(q) ||
+        b.phone.includes(q) ||
+        b.address.toLowerCase().includes(q)
+    );
+  }, [branchSearchQuery]);
+
+  const navLinks = [
+    { id: "home", label: t.home },
+    { id: "notifications", label: t.notifications, count: unreadCount },
+    { id: "my_claims", label: t.myClaims },
+    { id: "vehicles", label: t.vehicles },
+    { id: "chat", label: t.liveChat },
+    { id: "documents", label: t.documents },
+    { id: "digital_pass", label: t.digitalPass },
+  ];
+
   // Loading Screen
   if (loading) {
     return (
@@ -1540,45 +1579,6 @@ export default function ThirdPartyDriverPortalPage() {
       </div>
     );
   }
-
-  const t = driverAccessTranslations[lang] || driverAccessTranslations.en;
-
-  const currentBranchName = selectedBranchOverride || profile?.branch || "Galle";
-  const matchedBranch = useMemo(() => {
-    const cleanCurrent = currentBranchName.toLowerCase().replace(/\s+branch$/i, "").trim();
-    return (
-      SANASA_BRANCHES.find(
-        (b) =>
-          b.city.toLowerCase() === cleanCurrent ||
-          b.name.en.toLowerCase().includes(cleanCurrent) ||
-          cleanCurrent.includes(b.city.toLowerCase())
-      ) || SANASA_BRANCHES[1]
-    );
-  }, [currentBranchName]);
-
-  const filteredBranches = useMemo(() => {
-    const q = branchSearchQuery.toLowerCase().trim();
-    if (!q) return SANASA_BRANCHES;
-    return SANASA_BRANCHES.filter(
-      (b) =>
-        b.city.toLowerCase().includes(q) ||
-        b.name.en.toLowerCase().includes(q) ||
-        b.name.si.toLowerCase().includes(q) ||
-        b.name.ta.toLowerCase().includes(q) ||
-        b.phone.includes(q) ||
-        b.address.toLowerCase().includes(q)
-    );
-  }, [branchSearchQuery]);
-
-  const navLinks = [
-    { id: "home", label: t.home },
-    { id: "notifications", label: t.notifications, count: unreadCount },
-    { id: "my_claims", label: t.myClaims },
-    { id: "vehicles", label: t.vehicles },
-    { id: "chat", label: t.liveChat },
-    { id: "documents", label: t.documents },
-    { id: "digital_pass", label: t.digitalPass },
-  ];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative select-none">
