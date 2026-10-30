@@ -336,36 +336,37 @@ export default function OfficeStaffRenewalsPage() {
   const totalVehiclesCount = vehicles.length;
 
   return (
-    <div className="flex h-screen bg-[#F0F4F8] font-sans antialiased text-slate-800 overflow-hidden">
-      {/* Office Staff Navbar */}
-      <OfficeStaffNavbar />
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans antialiased text-slate-800">
+      <div className="flex flex-1 flex-row min-h-0">
+        {/* Office Staff Navbar */}
+        <OfficeStaffNavbar />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Top Navbar */}
-        <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
-              className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
-            >
-              <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
-            </button>
-            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-              <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
-                {branch || "Galle"} Branch
-              </span>
-              <span className="hidden md:inline text-slate-400 font-medium">— Policy Renewals</span>
-            </h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <HeaderNotificationBell href="/Office_Staff/Notifications" />
-            <UserAvatarDropdown userType="office_staff" />
-          </div>
-        </header>
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+          {/* Top Navbar */}
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
+                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
+              >
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
+              </button>
+              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
+                  {branch || "Galle"} Branch
+                </span>
+                <span className="hidden md:inline text-slate-400 font-medium">— Policy Renewals</span>
+              </h1>
+            </div>
+            <div className="flex items-center gap-5">
+              <HeaderNotificationBell href="/Office_Staff/Notifications" />
+              <UserAvatarDropdown userType="office_staff" />
+            </div>
+          </header>
 
-        {/* Content Body */}
-        <main className="flex-1 overflow-y-auto p-6 sm:p-8">
+          {/* Content Body */}
+          <main className="flex-1 overflow-y-scroll [scrollbar-gutter:stable] p-6 sm:p-8">
           <div className="max-w-7xl mx-auto space-y-6">
             
             {/* Summary Statistics Display Section */}
@@ -738,6 +739,7 @@ export default function OfficeStaffRenewalsPage() {
           </div>
         </main>
       </div>
+    </div>
 
       {/* POPUP MODAL: Vehicle & Owner Full Details with Calculation Dropdown */}
       {selectedItem && (

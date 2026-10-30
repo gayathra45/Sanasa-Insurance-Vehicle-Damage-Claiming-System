@@ -494,70 +494,72 @@ export default function OfficeStaffThirdPartyPage() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
-      {/* Sidebar Navigation */}
-      <OfficeStaffNavbar />
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+      <div className="flex flex-1 flex-row min-h-0">
+        {/* Sidebar Navigation */}
+        <OfficeStaffNavbar />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
-        {/* Top Header */}
-        <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                if (typeof window !== "undefined") {
-                  window.dispatchEvent(new CustomEvent("open-mobile-menu"));
-                }
-              }}
-              className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
-            >
-              <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
-            </button>
-            <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-              <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
-                {branch || "Galle"} Branch
-              </span>
-              <span className="hidden md:inline text-slate-400 font-medium">— Third-Party Drivers</span>
-            </h1>
-          </div>
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
+          {/* Top Header */}
+          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(new CustomEvent("open-mobile-menu"));
+                  }
+                }}
+                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
+              >
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
+              </button>
+              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
+                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
+                  {branch || "Galle"} Branch
+                </span>
+                <span className="hidden md:inline text-slate-400 font-medium">— Third-Party Drivers</span>
+              </h1>
+            </div>
 
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => staffInfo?._id && loadRequests(staffInfo._id, branch)}
-              disabled={refreshing}
-              className="hidden sm:inline-flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50"
-              title="Refresh requests"
+            <div className="flex items-center gap-5">
+              <button
+                onClick={() => staffInfo?._id && loadRequests(staffInfo._id, branch)}
+                disabled={refreshing}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors cursor-pointer focus:outline-none flex items-center justify-center text-slate-500 hover:text-slate-800 disabled:opacity-50"
+                title="Refresh requests"
+              >
+                <HugeiconsIcon
+                  icon={RefreshIcon}
+                  className={`w-5 h-5 ${refreshing ? "animate-spin text-blue-600" : ""}`}
+                  strokeWidth={2}
+                />
+              </button>
+              <HeaderNotificationBell href="/Office_Staff/Notifications" />
+              <UserAvatarDropdown userType="office_staff" />
+            </div>
+          </header>
+
+          {/* Feedback Toast */}
+          {toastMessage && (
+            <div
+              className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium flex items-center gap-2 animate-bounce ${
+                toastMessage.type === "success"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : "bg-rose-50 text-rose-800 border-rose-200"
+              }`}
             >
               <HugeiconsIcon
-                icon={RefreshIcon}
-                className={`w-4 h-4 ${refreshing ? "animate-spin text-blue-600" : ""}`}
+                icon={toastMessage.type === "success" ? CheckmarkCircle01Icon : Alert02Icon}
+                className="w-5 h-5 flex-shrink-0"
               />
-              <span>Refresh</span>
-            </button>
-            <HeaderNotificationBell href="/Office_Staff/Notifications" />
-            <UserAvatarDropdown userType="office_staff" />
-          </div>
-        </header>
+              <span>{toastMessage.text}</span>
+            </div>
+          )}
 
-        {/* Feedback Toast */}
-        {toastMessage && (
-          <div
-            className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg border text-sm font-medium flex items-center gap-2 animate-bounce ${
-              toastMessage.type === "success"
-                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                : "bg-rose-50 text-rose-800 border-rose-200"
-            }`}
-          >
-            <HugeiconsIcon
-              icon={toastMessage.type === "success" ? CheckmarkCircle01Icon : Alert02Icon}
-              className="w-5 h-5 flex-shrink-0"
-            />
-            <span>{toastMessage.text}</span>
-          </div>
-        )}
-
-        {/* Body Content */}
-        <div className="p-6 max-w-7xl mx-auto w-full space-y-6">
+          {/* Body Content */}
+          <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-scroll [scrollbar-gutter:stable]">
+            <div className="max-w-7xl mx-auto w-full space-y-6">
           {/* Subtitle / Context Bar */}
           <div className="-mt-1 mb-1">
             <p className="text-xs text-slate-500 font-normal">
@@ -849,7 +851,9 @@ export default function OfficeStaffThirdPartyPage() {
             )}
           </div>
         </div>
-      </div>
+      </main>
+    </div>
+  </div>
 
       {/* Detail / Review Modal */}
       {selectedReq && (

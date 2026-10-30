@@ -155,11 +155,11 @@ export default function OfficeStaffNavbar() {
         </div>
 
         {/* Menu Navigation Links */}
-        <nav className="flex-1 mt-6 flex flex-col overflow-y-auto">
+        <nav className="flex-1 mt-6 flex flex-col overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {menuItems.map((item) => {
             const isChat = item.isChatAction;
             const isActive = !isChat && (pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href)));
-            const hasChevron = ["policy holders", "policy renewals", "renewals", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+            const hasChevron = ["policy holders", "policy renewals", "renewals", "agents", "staff", "analytics & reports", "claims", "registrations", "reports", "third-party drivers"].includes(item.name.toLowerCase());
 
             const badgeCount =
               item.name === "Claim Chat"
@@ -249,11 +249,11 @@ export default function OfficeStaffNavbar() {
             </div>
 
             {/* Menu Links */}
-            <nav className="flex-1 flex flex-col gap-1 overflow-y-auto">
+            <nav className="flex-1 flex flex-col gap-1 overflow-y-auto scrollbar-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {menuItems.map((item) => {
                 const isChat = item.isChatAction;
                 const isActive = !isChat && (pathname === item.href || (item.href !== "/Office_Staff/Dashboard" && pathname?.startsWith(item.href)));
-                const hasChevron = ["policy holders", "agents", "staff", "analytics & reports", "claims", "registrations", "reports"].includes(item.name.toLowerCase());
+                const hasChevron = ["policy holders", "policy renewals", "renewals", "agents", "staff", "analytics & reports", "claims", "registrations", "reports", "third-party drivers"].includes(item.name.toLowerCase());
 
                 const badgeCount =
                   item.name === "Claim Chat"
