@@ -136,6 +136,12 @@ export default function MobileClaimChatModal({
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
   const scrollRef = useRef<ScrollView>(null);
+  const onUnreadCountChangeRef = useRef(onUnreadCountChange);
+  const lastUnreadCountRef = useRef<number>(-1);
+
+  useEffect(() => {
+    onUnreadCountChangeRef.current = onUnreadCountChange;
+  }, [onUnreadCountChange]);
 
   // 1. Fetch logged in session
   useEffect(() => {
@@ -172,33 +178,35 @@ export default function MobileClaimChatModal({
   }, [userRole]);
 
   // 2. Load conversations, claims, directory
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isInitial = false) => {
     if (!userSession.userId) return;
-    setLoadingList(true);
+    if (isInitial || recentConversations.length === 0) {
+      setLoadingList(true);
+    }
     try {
-      // Recent conversations
-      const convRes = await fetch(
-        `${API_BASE_URL}/api/claim-chat/conversations?userId=${encodeURIComponent(userSession.userId)}&userType=${encodeURIComponent(userSession.userType)}`
-      );
+      // Fetch recent conversations, claims, directory in parallel
+      const [convRes, claimRes, dirRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/claim-chat/conversations?userId=${encodeURIComponent(userSession.userId)}&userType=${encodeURIComponent(userSession.userType)}`),
+        fetch(`${API_BASE_URL}/api/claim-chat/claims?userId=${encodeURIComponent(userSession.userId)}&userType=${encodeURIComponent(userSession.userType)}`),
+        fetch(`${API_BASE_URL}/api/claim-chat/directory`),
+      ]);
+
       if (convRes.ok) {
         const d = await convRes.json();
         const convs = d.conversations || [];
         setRecentConversations(convs);
         const totalUnread = convs.reduce((sum: number, c: any) => sum + (c.unreadCount || 0), 0);
-        onUnreadCountChange?.(totalUnread);
+        if (lastUnreadCountRef.current !== totalUnread) {
+          lastUnreadCountRef.current = totalUnread;
+          onUnreadCountChangeRef.current?.(totalUnread);
+        }
       }
 
-      // Claims
-      const claimRes = await fetch(
-        `${API_BASE_URL}/api/claim-chat/claims?userId=${encodeURIComponent(userSession.userId)}&userType=${encodeURIComponent(userSession.userType)}`
-      );
       if (claimRes.ok) {
         const cd = await claimRes.json();
         setClaims(cd.claims || []);
       }
 
-      // Directory (branches & agents)
-      const dirRes = await fetch(`${API_BASE_URL}/api/claim-chat/directory`);
       if (dirRes.ok) {
         const dd = await dirRes.json();
         setBranches(dd.branches || []);
@@ -209,16 +217,16 @@ export default function MobileClaimChatModal({
     } finally {
       setLoadingList(false);
     }
-  }, [userSession, onUnreadCountChange]);
+  }, [userSession.userId, userSession.userType]);
 
   useEffect(() => {
-    if (visible) {
-      loadData();
+    if (visible && userSession.userId) {
+      loadData(true);
       if (initialClaimNumber) {
         setActiveCategory("claims");
       }
     }
-  }, [visible, loadData, initialClaimNumber]);
+  }, [visible, userSession.userId, initialClaimNumber, loadData]);
 
   // 3. Load active conversation messages and setup polling
   useEffect(() => {
@@ -232,17 +240,25 @@ export default function MobileClaimChatModal({
           const d = await res.json();
           const serverMsgs: any[] = d.messages || [];
           if (isSubscribed) {
-            const formatted: ChatMessage[] = serverMsgs.map((m) => ({
-              id: m._id,
-              sender: String(m.senderId) === String(userSession.userId) ? "user" : "other",
-              text: m.text || "",
-              senderName: m.senderName,
-              senderPhoto: m.senderPhoto,
-              senderRole: m.senderRole,
-              attachments: m.attachments,
-              timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            }));
-            setMessages(formatted);
+            setMessages((prev) => {
+              if (
+                prev.length === serverMsgs.length &&
+                prev.length > 0 &&
+                prev[prev.length - 1].id === serverMsgs[serverMsgs.length - 1]._id
+              ) {
+                return prev;
+              }
+              return serverMsgs.map((m) => ({
+                id: m._id,
+                sender: String(m.senderId) === String(userSession.userId) ? "user" : "other",
+                text: m.text || "",
+                senderName: m.senderName,
+                senderPhoto: m.senderPhoto,
+                senderRole: m.senderRole,
+                attachments: m.attachments,
+                timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              }));
+            });
           }
         }
 
@@ -258,13 +274,13 @@ export default function MobileClaimChatModal({
     };
 
     fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
+    const interval = setInterval(fetchMessages, 4000);
 
     return () => {
       isSubscribed = false;
       clearInterval(interval);
     };
-  }, [visible, activeView, activeConversation?._id, userSession]);
+  }, [visible, activeView, activeConversation?._id, userSession.userId]);
 
   // 4. Start or open conversation
   const openDirectChat = async (recipient: {

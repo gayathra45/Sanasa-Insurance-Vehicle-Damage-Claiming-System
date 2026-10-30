@@ -261,70 +261,10 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
     };
   }, [currentUserSession.userId, currentUserSession.userType]);
 
-  // Load and poll support conversation while modal is open
-  useEffect(() => {
-    if (!supportModalVisible || !currentUserSession.userId) return;
-    let isSubscribed = true;
-
-    const syncMessages = async () => {
-      try {
-        let convId = supportConversationId;
-        const res = await fetch(
-          `${API_BASE_URL}/api/claim-chat/conversations?userId=${encodeURIComponent(currentUserSession.userId)}&userType=${currentUserSession.userType}`
-        );
-        if (res.ok) {
-          const d = await res.json();
-          const list = d.conversations || [];
-          if (isSubscribed) setUserConversations(list);
-          if (!convId && list.length > 0) {
-            convId = list[0]._id;
-            if (isSubscribed) setSupportConversationId(list[0]._id);
-          }
-        }
-
-        if (convId) {
-          const msgRes = await fetch(`${API_BASE_URL}/api/claim-chat/conversations/${convId}/messages`);
-          if (msgRes.ok) {
-            const data = await msgRes.json();
-            const serverMsgs: any[] = data.messages || [];
-            if (isSubscribed && serverMsgs.length > 0) {
-              const formatted: ChatMessage[] = serverMsgs.map((m) => ({
-                id: m._id,
-                sender: String(m.senderId) === String(currentUserSession.userId) ? "user" : "ai",
-                text: m.text || "",
-                senderName: m.senderName,
-                senderPhoto: m.senderPhoto,
-                attachments: m.attachments,
-                timestamp: new Date(m.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-              }));
-              setSupportMessages(formatted);
-            }
-          }
-
-          fetch(`${API_BASE_URL}/api/claim-chat/conversations/${convId}/read`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userId: currentUserSession.userId,
-              userType: currentUserSession.userType
-            })
-          }).then(() => {
-            if (isSubscribed) setUnreadChatCount(0);
-          }).catch(() => {});
-        }
-      } catch (err) {
-        console.warn("syncMessages error:", err);
-      }
-    };
-
-    syncMessages();
-    const pollInterval = setInterval(syncMessages, 3500);
-
-    return () => {
-      isSubscribed = false;
-      clearInterval(pollInterval);
-    };
-  }, [supportModalVisible, currentUserSession.userId, supportConversationId]);
+  // Memoized unread chat count handler to avoid re-render loops
+  const handleUnreadCountChange = React.useCallback((count: number) => {
+    setUnreadChatCount((prev) => (prev !== count ? count : prev));
+  }, []);
 
   // Pulse animation for online indicator
   useEffect(() => {
@@ -908,7 +848,7 @@ export default function AIChatBot({ userRole = "policy_holder", bottomOffset = 9
         visible={supportModalVisible}
         onClose={() => setSupportModalVisible(false)}
         userRole={userRole}
-        onUnreadCountChange={(count) => setUnreadChatCount(count)}
+        onUnreadCountChange={handleUnreadCountChange}
       />
     </>
   );

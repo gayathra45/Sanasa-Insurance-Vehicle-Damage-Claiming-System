@@ -1163,28 +1163,25 @@ export default function MyVehicles() {
                         </View>
                       </View>
 
-                      {/* ── LICENSE PLATE & DRIVER DELEGATION RIBBON ── */}
-                      <View style={styles.plateAndDriverRow}>
-                        {/* Sri Lankan Plate */}
-                        <View style={styles.cleanPlateContainer}>
-                          <View style={styles.cleanPlateStripe}>
-                            <Text style={styles.cleanPlateStripeText}>SL</Text>
-                          </View>
-                          <Text style={styles.cleanPlateNumber}>{formatPlate(v.numberPlate)}</Text>
+                      {/* ── SIMPLE VEHICLE NUMBER & DRIVER ROW ── */}
+                      <View style={styles.simplePlateRow}>
+                        {/* Simple Clean Plate Number Badge */}
+                        <View style={styles.simplePlateBadge}>
+                          <Text style={styles.simplePlateNumber}>{formatPlate(v.numberPlate)}</Text>
                         </View>
 
                         {/* Driver Indicator */}
                         {assignedDriver ? (
-                          <View style={styles.cleanAssignedDriverTag}>
+                          <View style={styles.simpleDriverTag}>
                             <MaterialCommunityIcons name="account-check" size={13} color="#059669" />
-                            <Text style={styles.cleanAssignedDriverText} numberOfLines={1}>
+                            <Text style={styles.simpleDriverText} numberOfLines={1}>
                               {assignedDriver}
                             </Text>
                           </View>
                         ) : (
-                          <View style={styles.cleanSelfDrivenTag}>
-                            <MaterialCommunityIcons name="shield-check-outline" size={13} color="#64748b" />
-                            <Text style={styles.cleanSelfDrivenText}>Self-Driven</Text>
+                          <View style={styles.simpleSelfDrivenTag}>
+                            <MaterialCommunityIcons name="shield-check-outline" size={12} color="#64748b" />
+                            <Text style={styles.simpleSelfDrivenText}>Self-Driven</Text>
                           </View>
                         )}
                       </View>
@@ -3676,86 +3673,55 @@ const styles: any = StyleSheet.create({
   statusBadgeWrapper: {
     alignItems: "flex-end",
   },
-  plateAndDriverRow: {
+  simplePlateRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 10,
+    marginBottom: 10,
+    marginTop: 2,
+  },
+  simplePlateBadge: {
     backgroundColor: "#f8fafc",
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
-    marginBottom: 12,
-  },
-  cleanPlateContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#0B192C",
-    borderRadius: 8,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#1e293b",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  cleanPlateStripe: {
-    backgroundColor: "#0284c7",
-    paddingHorizontal: 6,
-    paddingVertical: 5,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cleanPlateStripeText: {
-    color: "#ffffff",
-    fontSize: 9,
-    fontWeight: "900",
-    letterSpacing: 0.5,
-  },
-  cleanPlateNumber: {
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    color: "#ffffff",
-    fontSize: 13.5,
-    fontWeight: "800",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    letterSpacing: 1,
-  },
-  cleanAssignedDriverTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
-    backgroundColor: "#ecfdf5",
     paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#a7f3d0",
-    maxWidth: "52%",
-  },
-  cleanAssignedDriverText: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#065f46",
-  },
-  cleanSelfDrivenTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#ffffff",
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingVertical: 3.5,
+    borderRadius: 6,
     borderWidth: 1,
     borderColor: "#e2e8f0",
   },
-  cleanSelfDrivenText: {
+  simplePlateNumber: {
+    fontSize: 13.5,
+    fontWeight: "700",
+    color: "#0f172a",
+    letterSpacing: 0.5,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+  simpleDriverTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+    maxWidth: "55%",
+  },
+  simpleDriverText: {
     fontSize: 11,
     fontWeight: "600",
+    color: "#065f46",
+  },
+  simpleSelfDrivenTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  simpleSelfDrivenText: {
+    fontSize: 11,
+    fontWeight: "500",
     color: "#64748b",
   },
   cleanSpecsCard: {
