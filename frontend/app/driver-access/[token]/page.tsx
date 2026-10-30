@@ -31,7 +31,6 @@ import {
   Notification01Icon,
   Globe02Icon,
   ArrowDown01Icon,
-  BubbleChatIcon,
   SecurityCheckIcon,
   Location01Icon,
   MapIcon,
@@ -43,7 +42,6 @@ import {
   Loading03Icon
 } from "@hugeicons/core-free-icons";
 import { getVehicleIconSvg, getVehicleIconContainer, getVehicleTheme } from "@/app/Components/VehicleIcon";
-import DriverClaimChat from "@/app/Components/ClaimChat/DriverClaimChat";
 import { compressImage } from "@/app/utils/imageCompressor";
 
 function cleanCountry(country?: string): string {
@@ -1493,7 +1491,6 @@ export default function ThirdPartyDriverPortalPage() {
     { id: "home", label: "Home" },
     { id: "my_claims", label: "My Claims" },
     { id: "vehicles", label: "My Vehicles" },
-    { id: "chat", label: "Live Support" },
     { id: "digital_pass", label: "Digital Pass" },
   ];
 
@@ -2008,7 +2005,7 @@ export default function ThirdPartyDriverPortalPage() {
                       </li>
                       <li className="flex items-start gap-1.5">
                         <span className="text-emerald-600 font-bold">✓</span>
-                        <span>Live support chat with Sanasa Branch claims officers.</span>
+                        <span>24/7 Sanasa Customer & Emergency Hotline support (+94 112 003 000).</span>
                       </li>
                     </ul>
                   </div>
@@ -3392,43 +3389,7 @@ export default function ThirdPartyDriverPortalPage() {
           </section>
         )}
 
-        {/* ========================================================================= */}
-        {/* TAB 5: LIVE CHAT (Communicate with Policyholder, Agent, Branch) */}
-        {/* ========================================================================= */}
-        {activeTab === "chat" && profile && (
-          <section className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Direct Claims & Operations Chat</h2>
-                <p className="text-xs text-slate-500 mt-1">
-                  Real-time communication with Vehicle Owner ({profile.policyHolderName}), Claims Agents, and {profile.branch} Branch Office
-                </p>
-              </div>
-              <span className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Live Active Channel</span>
-              </span>
-            </div>
 
-            <DriverClaimChat
-              apiUrl={API_URL}
-              driverSessionToken={sessionToken || ""}
-              driverProfile={{
-                driverName: profile.driverName,
-                driverNicRaw: profile.driverNicRaw,
-                driverNicMasked: profile.driverNicMasked,
-                driverPhone: profile.driverPhone,
-                policyHolderName: profile.policyHolderName,
-                policyHolderNicRaw: profile.policyHolderNicRaw,
-                policyHolderEmail: profile.policyHolderEmail,
-                policyHolderPhone: profile.policyHolderPhone,
-                branch: profile.branch,
-                reference: profile.reference
-              }}
-              claims={claims}
-            />
-          </section>
-        )}
 
         {/* ========================================================================= */}
         {/* TAB 6: DIGITAL PASS (Official Sanasa Digital Pass) */}
@@ -3597,18 +3558,7 @@ export default function ThirdPartyDriverPortalPage() {
               )}
             </div>
 
-            <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
-              <button
-                onClick={() => {
-                  setSelectedClaim(null);
-                  setActiveTab("chat");
-                }}
-                className="px-4 py-2 bg-[#0284c7] hover:bg-[#0369a1] text-white rounded-xl text-xs font-semibold cursor-pointer border-none shadow-2xs flex items-center gap-1.5 transition-all"
-              >
-                <HugeiconsIcon icon={BubbleChatIcon} className="w-4 h-4" />
-                <span>Chat on this Claim</span>
-              </button>
-
+            <div className="pt-4 border-t border-slate-100 flex items-center justify-end">
               <button
                 onClick={() => setSelectedClaim(null)}
                 className="px-5 py-2 bg-[#0d2a3a] hover:bg-slate-800 text-white rounded-xl text-xs font-semibold cursor-pointer border-none shadow-2xs"
@@ -3619,16 +3569,6 @@ export default function ThirdPartyDriverPortalPage() {
           </div>
         </div>
       )}
-
-      {/* Floating Live Chat Action Button */}
-      <button
-        onClick={() => setActiveTab("chat")}
-        className="fixed bottom-6 right-6 z-40 bg-[#0284c7] hover:bg-[#0369a1] text-white p-4 rounded-full shadow-[0_10px_25px_rgba(2,132,199,0.5)] flex items-center gap-2.5 transition-all hover:scale-105 active:scale-95 border-none cursor-pointer"
-        title="Open Live Chat"
-      >
-        <HugeiconsIcon icon={BubbleChatIcon} className="w-6 h-6" strokeWidth={2} />
-        <span className="font-bold text-xs pr-1 hidden sm:inline">Live Chat</span>
-      </button>
 
 
 
