@@ -1796,12 +1796,12 @@ export default function ThirdPartyDriverPortalPage() {
       {/* ========================================================================= */}
       {/* 2. SIGNATURE CURVED HEADER BANNER (Policyholder Signature Design for Third-Party User) */}
       {/* ========================================================================= */}
-      <header className="relative w-full h-[470px] md:h-[430px] rounded-b-[60px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
+      <header className="relative w-full h-[450px] md:h-[420px] rounded-b-[60px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
         {/* Horizontal gradient overlay to darken left text area but keep the right image fold bright and clear */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
 
         {/* Content Container */}
-        <div className="relative z-10 max-w-7xl mx-auto h-full px-6 md:px-16 pt-10 pb-14 flex flex-col justify-between">
+        <div className="relative z-10 max-w-7xl mx-auto h-full px-6 md:px-16 pt-10 pb-12 flex flex-col justify-between">
           
           {/* Welcome Greeting Row */}
           <div>
@@ -1817,37 +1817,25 @@ export default function ThirdPartyDriverPortalPage() {
             </p>
           </div>
 
-          {/* Third-Party User Authorization Scope & Limitations Pill Row */}
-          <div className="flex flex-wrap items-center gap-2.5 my-auto">
-            <span className="px-3.5 py-1 rounded-full text-xs font-bold bg-[#00ddff]/20 text-[#00ddff] border border-[#00ddff]/40 flex items-center gap-1.5">
-              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
-              <span>Authorized Scope: Assigned Vehicle Operation & Damage Claims Only</span>
-            </span>
-            <span className="px-3.5 py-1 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1.5">
-              <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
-              <span>Limitations: Policy Alteration & Renewal Restricted to Vehicle Owner</span>
-            </span>
-          </div>
-
-          {/* Central Statement */}
-          <div className="mb-4 max-w-4xl text-left">
-            <h1 className="text-sm md:text-base font-medium text-slate-100/90 leading-relaxed tracking-normal">
+          {/* Central Statement - Perfectly centered matching Policyholder Home */}
+          <div className="my-auto max-w-4xl mx-auto text-center px-4">
+            <h1 className="text-base md:text-xl font-medium text-slate-100/90 leading-relaxed tracking-normal">
               An authorized third-party driver claim with Sanasa General Insurance Company Limited enables fast-track vehicle inspection and settlement for authorized vehicles.
             </h1>
           </div>
 
-          {/* Signature Action Buttons with Glowing Drop Shadows */}
-          <div className="flex flex-row justify-start gap-4 sm:gap-6">
+          {/* Signature Action Buttons - Centered with glowing drop shadows */}
+          <div className="flex flex-wrap sm:flex-nowrap justify-center gap-3 sm:gap-6 mt-2 w-full max-w-md mx-auto">
             <button
               onClick={() => setActiveTab("new_claim")}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold text-sm md:text-base px-8 py-3.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none cursor-pointer"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-sm sm:text-base md:text-lg px-6 sm:px-10 py-3.5 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none flex-1 sm:flex-none text-center cursor-pointer"
               style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
             >
               New Claim
             </button>
             <button
               onClick={() => setActiveTab("digital_pass")}
-              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-bold text-sm md:text-base px-8 py-3.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none cursor-pointer"
+              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-bold text-sm sm:text-base md:text-lg px-6 sm:px-10 py-3.5 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none flex-1 sm:flex-none text-center cursor-pointer"
               style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
             >
               Digital Pass
