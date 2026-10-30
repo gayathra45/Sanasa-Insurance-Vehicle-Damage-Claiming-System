@@ -25,7 +25,12 @@ import {
   Building01Icon,
   Link01Icon,
   AlertCircleIcon,
-  Clock01Icon
+  Clock01Icon,
+  LayoutListIcon,
+  LayoutGridIcon,
+  Calendar01Icon,
+  SmartPhone01Icon,
+  UserIcon
 } from "@hugeicons/core-free-icons";
 
 interface Vehicle {
@@ -129,8 +134,8 @@ export default function OfficeStaffThirdPartyPage() {
     | "Pending Payment"
   >("all");
 
-  // View Mode: Grid (Cards) vs Table
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  // View Mode: Grid (Cards) vs Table (Default to table/list as requested)
+  const [viewMode, setViewMode] = useState<"grid" | "table">("table");
 
   // Selected request for details modal
   const [selectedReq, setSelectedReq] = useState<ThirdPartyRequest | null>(null);
@@ -562,7 +567,7 @@ export default function OfficeStaffThirdPartyPage() {
           )}
 
           {/* Body Content */}
-          <main className="flex-1 p-4 lg:p-8 bg-slate-50 overflow-y-scroll [scrollbar-gutter:stable]">
+          <main className="flex-1 p-4 lg:p-8 pb-36 bg-slate-50 overflow-y-scroll [scrollbar-gutter:stable]">
             <div className="max-w-7xl mx-auto w-full space-y-6">
           {/* Subtitle / Context Bar */}
           <div className="-mt-1 mb-1">
@@ -570,43 +575,60 @@ export default function OfficeStaffThirdPartyPage() {
               Review driver registration requests, verify KYC documents, and issue secure digital NFC passes.
             </p>
           </div>
-          {/* Quick Metrics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total</span>
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+          {/* Quick Metrics Cards (Interactive Quick Filters) */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("all")}
+              className={`p-4 rounded-xl border text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
+                statusFilter === "all"
+                  ? "bg-white border-[#102A43] ring-2 ring-[#102A43]/20 shadow-sm"
+                  : "bg-white border-slate-200/90 hover:border-slate-300"
+              }`}
+            >
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">All Requests</span>
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center flex-shrink-0">
                   <HugeiconsIcon icon={Car01Icon} className="w-4 h-4" />
                 </div>
               </div>
               <div className="text-2xl font-bold text-[#102A43] mt-2">{stats.total}</div>
-              <p className="text-xs text-slate-400 mt-1">Branch registrations</p>
-            </div>
+              <p className="text-[11px] text-slate-400 mt-0.5">Total submissions</p>
+            </button>
 
-            <div className="bg-white p-5 rounded-xl border border-amber-200/80 bg-gradient-to-br from-white to-amber-50/30 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Pending Review</span>
-                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Pending Branch Approval")}
+              className={`p-4 rounded-xl border text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
+                statusFilter === "Pending Branch Approval"
+                  ? "bg-amber-50/60 border-amber-500 ring-2 ring-amber-400/30 shadow-sm"
+                  : "bg-white border-amber-200/80 hover:border-amber-300"
+              }`}
+            >
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[11px] font-bold text-amber-700 uppercase tracking-wider">Pending Review</span>
+                <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
                   <span className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
                 </div>
               </div>
               <div className="text-2xl font-bold text-amber-800 mt-2">{stats.pending}</div>
-              <p className="text-xs text-amber-600 mt-1">Paid, awaiting approval</p>
-            </div>
+              <p className="text-[11px] text-amber-600 mt-0.5">Awaiting staff review</p>
+            </button>
 
-            <div
+            <button
+              type="button"
               onClick={() => setStatusFilter("Pending Termination Approval")}
-              className={`bg-white p-5 rounded-xl border transition-all cursor-pointer shadow-sm ${
-                stats.pendingTermination > 0
-                  ? "border-rose-300 bg-gradient-to-br from-white to-rose-50/40 ring-2 ring-rose-400/20"
-                  : "border-slate-200 hover:border-slate-300"
+              className={`p-4 rounded-xl border text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
+                statusFilter === "Pending Termination Approval"
+                  ? "bg-rose-50/60 border-rose-500 ring-2 ring-rose-400/30 shadow-sm"
+                  : stats.pendingTermination > 0
+                  ? "bg-white border-rose-300 hover:border-rose-400"
+                  : "bg-white border-slate-200/90 hover:border-slate-300"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">
-                  Terminations
-                </span>
-                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center">
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[11px] font-bold text-rose-700 uppercase tracking-wider">Terminations</span>
+                <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center flex-shrink-0">
                   {stats.pendingTermination > 0 ? (
                     <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping" />
                   ) : (
@@ -615,30 +637,46 @@ export default function OfficeStaffThirdPartyPage() {
                 </div>
               </div>
               <div className="text-2xl font-bold text-rose-800 mt-2">{stats.pendingTermination}</div>
-              <p className="text-xs text-rose-600 mt-1">Policyholder termination requests</p>
-            </div>
+              <p className="text-[11px] text-rose-600 mt-0.5">Revoke requests</p>
+            </button>
 
-            <div className="bg-white p-5 rounded-xl border border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50/30 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Approved</span>
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Approved")}
+              className={`p-4 rounded-xl border text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
+                statusFilter === "Approved"
+                  ? "bg-emerald-50/60 border-emerald-500 ring-2 ring-emerald-400/30 shadow-sm"
+                  : "bg-white border-emerald-200/80 hover:border-emerald-300"
+              }`}
+            >
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">Approved</span>
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
                   <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" />
                 </div>
               </div>
               <div className="text-2xl font-bold text-emerald-800 mt-2">{stats.approved}</div>
-              <p className="text-xs text-emerald-600 mt-1">Active driver authorizations</p>
-            </div>
+              <p className="text-[11px] text-emerald-600 mt-0.5">Active passes</p>
+            </button>
 
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Terminated</span>
-                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center">
+            <button
+              type="button"
+              onClick={() => setStatusFilter("Terminated")}
+              className={`p-4 rounded-xl border text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
+                statusFilter === "Terminated"
+                  ? "bg-slate-100 border-slate-700 ring-2 ring-slate-400/30 shadow-sm"
+                  : "bg-white border-slate-200/90 hover:border-slate-300"
+              }`}
+            >
+              <div className="flex items-center justify-between w-full">
+                <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Terminated</span>
+                <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
                   <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4" />
                 </div>
               </div>
               <div className="text-2xl font-bold text-slate-800 mt-2">{stats.terminated}</div>
-              <p className="text-xs text-slate-500 mt-1">Revoked authorizations</p>
-            </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">Revoked passes</p>
+            </button>
           </div>          {/* Filtering and Search Controls */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Status Tabs */}
