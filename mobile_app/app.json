@@ -28,6 +28,11 @@
           "data": [
             {
               "scheme": "https",
+              "host": "sanasa-insurance-vehicle-damage-cla.vercel.app",
+              "pathPrefix": "/driver-access"
+            },
+            {
+              "scheme": "https",
               "host": "sanasainsurance.lk",
               "pathPrefix": "/driver-access"
             },
