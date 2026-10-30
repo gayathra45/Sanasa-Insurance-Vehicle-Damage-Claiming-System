@@ -10,11 +10,13 @@ export default function FloatingClaimChatButton() {
   const { openChat, chatUnreadCount, isChatOpen } = useChatNotification();
   const pathname = usePathname();
 
-  // Exclude login and new claim creation steps
+  // Exclude login, new claim creation steps, and driver access portal
   if (
     pathname === "/Login" ||
     pathname?.toLowerCase().startsWith("/login") ||
-    pathname?.includes("/Policy_Holder/New_Claim")
+    pathname?.includes("/Policy_Holder/New_Claim") ||
+    pathname?.startsWith("/driver-access") ||
+    pathname?.includes("/driver-access")
   ) {
     return null;
   }
