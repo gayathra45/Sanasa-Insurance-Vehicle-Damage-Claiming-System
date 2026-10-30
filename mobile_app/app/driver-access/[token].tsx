@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TextInput,
   Image,
+  ImageBackground,
   Alert,
   SafeAreaView,
   Platform,
@@ -486,51 +487,165 @@ export default function MobileDriverPortalScreen() {
       {/* ========================================================================= */}
       {/* EXACT POLICYHOLDER MOBILE HEADER (Gradient, Welcome, User Avatar) */}
       {/* ========================================================================= */}
-      <LinearGradient colors={["#0f172a", "#1e293b"]} style={styles.headerGradient}>
-        
-        {/* Top bar with greeting & user initial */}
-        <View style={styles.topBar}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.welcomeLabel}>Welcome back,</Text>
-            <Text style={styles.welcomeName}>{profile?.driverName} 👋</Text>
-          </View>
-
-          <View style={styles.headerRightActions}>
-            <View style={styles.badgeBranch}>
-              <Ionicons name="business-outline" size={12} color="#38bdf8" />
-              <Text style={styles.badgeBranchText}>{profile?.branch || "Galle"}</Text>
+      {/* TAB-SPECIFIC HEADERS (Matching Policyholder Mobile Screens) */}
+      {/* ========================================================================= */}
+      
+      {/* DASHBOARD TAB: Greeting & Stat Summary Cards */}
+      {activeTab === "dashboard" && (
+        <LinearGradient colors={["#0f172a", "#1e293b"]} style={styles.headerGradient}>
+          <View style={styles.topBar}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.welcomeLabel}>Welcome back,</Text>
+              <Text style={styles.welcomeName}>{profile?.driverName} 👋</Text>
             </View>
 
-            <TouchableOpacity style={styles.avatarButton} onPress={handleLogout} activeOpacity={0.85}>
-              <Text style={styles.avatarText}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+            <View style={styles.headerRightActions}>
+              <View style={styles.badgeBranch}>
+                <Ionicons name="business-outline" size={12} color="#38bdf8" />
+                <Text style={styles.badgeBranchText}>{profile?.branch || "Galle"}</Text>
+              </View>
+
+              <TouchableOpacity style={styles.avatarButton} onPress={handleLogout} activeOpacity={0.85}>
+                <Text style={styles.avatarText}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          <View style={styles.subtitleBanner}>
+            <View style={styles.dotIndicator} />
+            <Text style={styles.subtitleText} numberOfLines={2}>
+              Authorized by {profile?.policyHolderName} • All vehicles active
+            </Text>
+          </View>
+
+          <View style={styles.statsContainer}>
+            <View style={styles.statCard}>
+              <Text style={styles.statNumber}>{claims.length}</Text>
+              <Text style={styles.statLabel}>Total Claims</Text>
+            </View>
+            <View style={[styles.statCard, styles.statCardMiddle]}>
+              <Text style={[styles.statNumber, { color: "#38bdf8" }]}>{pendingCount}</Text>
+              <Text style={styles.statLabel}>In Progress</Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={[styles.statNumber, { color: "#4ade80" }]}>{approvedCount}</Text>
+              <Text style={styles.statLabel}>Approved</Text>
+            </View>
+          </View>
+        </LinearGradient>
+      )}
+
+      {/* VEHICLES TAB: Policyholder MyVehicles Signature Header */}
+      {activeTab === "vehicles" && (
+        <ImageBackground
+          source={require("../../assets/images/policy1.jpg")}
+          style={styles.headerBackground}
+          imageStyle={styles.headerImageStyle}
+        >
+          <LinearGradient
+            colors={["rgba(15, 23, 42, 0.95)", "rgba(15, 23, 42, 0.82)", "rgba(15, 23, 42, 0.5)"]}
+            style={styles.headerGradientInner}
+          >
+            <View style={styles.mobileTabHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.mobileTabHeaderTitle}>My Vehicles</Text>
+                <Text style={styles.mobileTabHeaderSubtitle}>
+                  Authorized vehicles under policyholder {profile?.policyHolderName || "Policy Holder"}
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </ImageBackground>
+      )}
+
+      {/* CLAIMS TAB: Policyholder My_claims Signature Header */}
+      {activeTab === "claims" && (
+        <ImageBackground
+          source={require("../../assets/images/myclaim.png")}
+          style={styles.headerBackground}
+          imageStyle={styles.headerImageStyle}
+        >
+          <LinearGradient
+            colors={["rgba(13, 42, 58, 0.95)", "rgba(13, 42, 58, 0.82)", "rgba(15, 23, 42, 0.5)"]}
+            style={styles.headerGradientInner}
+          >
+            <View style={styles.mobileTabHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.mobileTabHeaderTitle}>My Claims</Text>
+                <Text style={styles.mobileTabHeaderSubtitle}>
+                  All authorized driver insurance claims in one place
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+              </TouchableOpacity>
+            </View>
+          </LinearGradient>
+        </ImageBackground>
+      )}
+
+      {/* NEW CLAIM TAB: Policyholder New_Claim Signature Header */}
+      {activeTab === "submit" && (
+        <LinearGradient
+          colors={["#0f172a", "#1e293b"]}
+          style={styles.headerGradientInner}
+        >
+          <View style={styles.mobileTabHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.mobileTabHeaderTitle}>File New Claim</Text>
+              <Text style={styles.mobileTabHeaderSubtitle}>
+                Report an accident or damage incident for authorized vehicles
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+              <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </LinearGradient>
+      )}
 
-        {/* Status banner */}
-        <View style={styles.subtitleBanner}>
-          <View style={styles.dotIndicator} />
-          <Text style={styles.subtitleText} numberOfLines={2}>
-            Authorized by {profile?.policyHolderName} • All vehicles active
-          </Text>
-        </View>
+      {/* LIVE CHAT TAB: Communication Header */}
+      {activeTab === "chat" && (
+        <LinearGradient
+          colors={["#0f172a", "#1e293b"]}
+          style={styles.headerGradientInner}
+        >
+          <View style={styles.mobileTabHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.mobileTabHeaderTitle}>Claim Support Chat</Text>
+              <Text style={styles.mobileTabHeaderSubtitle}>
+                Direct live chat with assigned adjuster & branch staff
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+              <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+            </TouchableOpacity>
+          </View>
+        </LinearGradient>
+      )}
 
-        {/* 3 Stat Cards (Identical to PolicyHolder mobile dashboard) */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{claims.length}</Text>
-            <Text style={styles.statLabel}>Total Claims</Text>
+      {/* DIGITAL PASS TAB: Digital Pass Signature Header */}
+      {activeTab === "pass" && (
+        <LinearGradient
+          colors={["#0c4a6e", "#075985", "#0369a1"]}
+          style={styles.headerGradientInner}
+        >
+          <View style={styles.mobileTabHeaderRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.mobileTabHeaderTitle}>Digital Driver Pass</Text>
+              <Text style={styles.mobileTabHeaderSubtitle}>
+                Official credentials verified by Sanasa General Insurance
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+              <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+            </TouchableOpacity>
           </View>
-          <View style={[styles.statCard, styles.statCardMiddle]}>
-            <Text style={[styles.statNumber, { color: "#38bdf8" }]}>{pendingCount}</Text>
-            <Text style={styles.statLabel}>In Progress</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={[styles.statNumber, { color: "#4ade80" }]}>{approvedCount}</Text>
-            <Text style={styles.statLabel}>Approved</Text>
-          </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
+      )}
 
       {/* Clean Quick Action / Tab Selector */}
       <View style={styles.tabBar}>
@@ -1736,4 +1851,55 @@ const styles = StyleSheet.create({
     fontSize: 10,
     textAlign: "center"
   }
-});
+  headerBackground: {
+    width: "100%",
+    minHeight: 125,
+    backgroundColor: "#0F172A",
+    overflow: "hidden"
+  },
+  headerImageStyle: {
+    resizeMode: "cover",
+    opacity: 0.35
+  },
+  headerGradientInner: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 18,
+    minHeight: 110,
+    justifyContent: "center"
+  },
+  mobileTabHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12
+  },
+  mobileTabHeaderTitle: {
+    color: "#ffffff",
+    fontSize: 22,
+    fontWeight: "bold",
+    letterSpacing: -0.5
+  },
+  mobileTabHeaderSubtitle: {
+    color: "#94a3b8",
+    fontSize: 12,
+    fontWeight: "500",
+    marginTop: 3
+  },
+  avatarButtonSmall: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#0284c7",
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 1.5,
+    borderColor: "#38bdf8"
+  },
+  avatarTextSmall: {
+    color: "#ffffff",
+    fontSize: 15,
+    fontWeight: "bold"
+  }
+};
+);

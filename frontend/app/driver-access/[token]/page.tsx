@@ -1933,108 +1933,157 @@ export default function ThirdPartyDriverPortalPage() {
       {/* ========================================================================= */}
       {/* 2. SIGNATURE CURVED HEADER BANNER (Policyholder Signature Design for Third-Party User) */}
       {/* ========================================================================= */}
-      <header className="relative w-full h-[450px] md:h-[420px] rounded-b-[60px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
-        {/* Horizontal gradient overlay to darken left text area but keep the right image fold bright and clear */}
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
-
-        {/* Content Container */}
-        <div className="relative z-10 max-w-7xl mx-auto h-full px-6 md:px-16 pt-10 pb-12 flex flex-col justify-between">
-          
-          {/* Welcome Greeting Row */}
-          <div>
-            <div className="inline-block border-b-3 border-[#00ddff] pb-1.5 mb-2">
-              <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight">
-                Welcome back, {profile?.driverName} !
-              </h2>
+      {/* ========================================================================= */}
+      {/* 2. TAB-SPECIFIC SIGNATURE HEADERS (Each Tab Matches Its Policy Holder Screen) */}
+      {/* ========================================================================= */}
+      
+      {/* HOME TAB: Full Hero Banner with Policyholder Association */}
+      {activeTab === "home" && (
+        <header className="relative w-full h-[450px] md:h-[420px] rounded-b-[60px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-transparent" />
+          <div className="relative z-10 max-w-7xl mx-auto h-full px-6 md:px-16 pt-10 pb-12 flex flex-col justify-between">
+            <div>
+              <div className="inline-block border-b-3 border-[#00ddff] pb-1.5 mb-2">
+                <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight">
+                  Welcome back, {profile?.driverName} !
+                </h2>
+              </div>
+              <p className="text-slate-200 text-[13px] md:text-sm font-normal tracking-wide mt-1">
+                Your driver authorization is active under policyholder{" "}
+                <strong className="text-white">{profile?.policyHolderName}</strong> for Sanasa{" "}
+                <strong className="text-white">{profile?.branch}</strong> Branch.
+              </p>
             </div>
-            <p className="text-slate-200 text-[13px] md:text-sm font-normal tracking-wide mt-1">
-              Your driver authorization is active under policyholder{" "}
-              <strong className="text-white">{profile?.policyHolderName}</strong> for Sanasa{" "}
-              <strong className="text-white">{profile?.branch}</strong> Branch.
-            </p>
-          </div>
 
-          {/* Central Statement - Perfectly centered matching Policyholder Home */}
-          <div className="my-auto max-w-4xl mx-auto text-center px-4">
-            <h1 className="text-base md:text-xl font-medium text-slate-100/90 leading-relaxed tracking-normal">
-              An authorized third-party driver claim with Sanasa General Insurance Company Limited enables fast-track vehicle inspection and settlement for authorized vehicles.
+            <div className="my-auto max-w-4xl mx-auto text-center px-4">
+              <h1 className="text-base md:text-xl font-medium text-slate-100/90 leading-relaxed tracking-normal">
+                An authorized third-party driver claim with Sanasa General Insurance Company Limited enables fast-track vehicle inspection and settlement for authorized vehicles.
+              </h1>
+            </div>
+
+            <div className="flex flex-wrap sm:flex-nowrap justify-center gap-3 sm:gap-6 mt-2 w-full max-w-md mx-auto">
+              <button
+                onClick={() => setActiveTab("new_claim")}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold text-sm sm:text-base md:text-lg px-6 sm:px-10 py-3.5 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none flex-1 sm:flex-none text-center cursor-pointer"
+                style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
+              >
+                New Claim
+              </button>
+              <button
+                onClick={() => setActiveTab("digital_pass")}
+                className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-bold text-sm sm:text-base md:text-lg px-6 sm:px-10 py-3.5 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none flex-1 sm:flex-none text-center cursor-pointer"
+                style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
+              >
+                Digital Pass
+              </button>
+            </div>
+          </div>
+        </header>
+      )}
+
+      {/* MY VEHICLES TAB: Policy Holder MyVehicles Authentic Header */}
+      {activeTab === "vehicles" && (
+        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
+          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+            <div className="absolute inset-0 bg-slate-900/35" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+          </div>
+          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+              My Vehicles
             </h1>
-          </div>
-
-          {/* Signature Action Buttons - Centered with glowing drop shadows */}
-          <div className="flex flex-wrap sm:flex-nowrap justify-center gap-3 sm:gap-6 mt-2 w-full max-w-md mx-auto">
-            <button
-              onClick={() => setActiveTab("new_claim")}
-              className="bg-red-600 hover:bg-red-700 text-white font-bold text-sm sm:text-base md:text-lg px-6 sm:px-10 py-3.5 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none flex-1 sm:flex-none text-center cursor-pointer"
-              style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
-            >
-              New Claim
-            </button>
-            <button
-              onClick={() => setActiveTab("digital_pass")}
-              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-bold text-sm sm:text-base md:text-lg px-6 sm:px-10 py-3.5 sm:py-5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none flex-1 sm:flex-none text-center cursor-pointer"
-              style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
-            >
-              Digital Pass
-            </button>
-          </div>
-
+            <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+              Authorized vehicles under policyholder {profile?.policyHolderName || "Policy Holder"}
+            </p>
+          </header>
         </div>
-      </header>
+      )}
+
+      {/* MY CLAIMS TAB: Policy Holder My_claims Authentic Header */}
+      {activeTab === "my_claims" && (
+        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
+          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/myclaim.png')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+            <div className="absolute inset-0 bg-slate-900/35" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+          </div>
+          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+              My Claims
+            </h1>
+            <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
+              Track and manage all third-party insurance claims in one place
+            </p>
+          </header>
+        </div>
+      )}
+
+      {/* DIGITAL PASS TAB: Policy Holder Style Digital Pass Header */}
+      {activeTab === "digital_pass" && (
+        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
+          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-gradient-to-r from-[#0d2a3a] via-[#103a52] to-[#0d2a3a] rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+            <div className="absolute inset-0 bg-slate-900/40" />
+            <div className="absolute inset-0 bg-[radial-gradient(#00ddff_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
+          </div>
+          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+              Official Digital Driver Pass
+            </h1>
+            <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+              Authorized credentials verified by Sanasa General Insurance ({profile?.branch} Branch)
+            </p>
+          </header>
+        </div>
+      )}
 
       {/* ========================================================================= */}
-      {/* 3. THREE STAT CARDS OVERLAPPING HEADER (Policyholder Style Stat Cards) */}
+      {/* 3. MAIN CONTAINER & HOME STAT CARDS */}
       {/* ========================================================================= */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 relative z-20">
-        <section className="-mt-[60px] md:-mt-[50px] grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          
-          {/* Total Claims */}
-          <button
-            onClick={() => setActiveTab("my_claims")}
-            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
-          >
-            <div className="text-slate-400 flex-shrink-0">
-              <HugeiconsIcon icon={Analytics01Icon} className="w-11 h-11 text-orange-500" strokeWidth={2} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{claims.length}</h3>
-              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Total Claims</p>
-            </div>
-          </button>
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-8 md:py-10 relative z-20">
+        
+        {/* Three Stat Cards - ONLY DISPLAYED ON HOME TAB */}
+        {activeTab === "home" && (
+          <section className="-mt-[60px] md:-mt-[50px] grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <button
+              onClick={() => setActiveTab("my_claims")}
+              className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
+            >
+              <div className="text-slate-400 flex-shrink-0">
+                <HugeiconsIcon icon={Analytics01Icon} className="w-11 h-11 text-orange-500" strokeWidth={2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{claims.length}</h3>
+                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Total Claims</p>
+              </div>
+            </button>
 
-          {/* In Progress */}
-          <button
-            onClick={() => setActiveTab("my_claims")}
-            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
-          >
-            <div className="text-slate-400 flex-shrink-0">
-              <HugeiconsIcon icon={Clock01Icon} className="w-11 h-11 text-cyan-500" strokeWidth={2} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
-              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">In Progress</p>
-            </div>
-          </button>
+            <button
+              onClick={() => setActiveTab("my_claims")}
+              className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
+            >
+              <div className="text-slate-400 flex-shrink-0">
+                <HugeiconsIcon icon={Clock01Icon} className="w-11 h-11 text-cyan-500" strokeWidth={2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
+                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">In Progress</p>
+              </div>
+            </button>
 
-          {/* Approved */}
-          <button
-            onClick={() => setActiveTab("my_claims")}
-            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
-          >
-            <div className="text-slate-400 flex-shrink-0">
-              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-11 h-11 text-emerald-500" strokeWidth={2} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
-              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Approved Claims</p>
-            </div>
-          </button>
-
-        </section>
-
-        {/* ========================================================================= */}
-        {/* TAB 1: HOME (Exact Policyholder Home Grid: Notifications + Registered Vehicles) */}
-        {/* ========================================================================= */}
+            <button
+              onClick={() => setActiveTab("my_claims")}
+              className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
+            >
+              <div className="text-slate-400 flex-shrink-0">
+                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-11 h-11 text-emerald-500" strokeWidth={2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
+                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Approved Claims</p>
+              </div>
+            </button>
+          </section>
+        )}
+        
         {activeTab === "home" && (
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
