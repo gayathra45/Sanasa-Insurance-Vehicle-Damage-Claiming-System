@@ -1490,10 +1490,11 @@ export default function ThirdPartyDriverPortalPage() {
   }, [branchSearchQuery]);
 
   const navLinks: { id: string; label: string; count?: number }[] = [
-    { id: "home", label: "Overview" },
-    { id: "digital_pass", label: "Digital Pass" },
+    { id: "home", label: "Home" },
     { id: "my_claims", label: "My Claims" },
+    { id: "vehicles", label: "My Vehicles" },
     { id: "chat", label: "Live Support" },
+    { id: "digital_pass", label: "Digital Pass" },
   ];
 
   // Loading Screen
@@ -1796,49 +1797,118 @@ export default function ThirdPartyDriverPortalPage() {
       </nav>
 
       {/* ========================================================================= */}
-      {/* 2. COMPACT DEDICATED DRIVER AUTHORIZATION HEADER */}
+      {/* 2. SIGNATURE CURVED HEADER BANNER (Policyholder Signature Design for Third-Party User) */}
       {/* ========================================================================= */}
-      <div className="bg-[#0B1E32] text-white py-6 px-6 md:px-16 border-b border-slate-800 shadow-sm">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-5">
+      <header className="relative w-full h-[470px] md:h-[430px] rounded-b-[60px] md:rounded-b-[90px] overflow-hidden shadow-[0_15px_30px_rgba(0,0,0,0.08)] bg-[url('/policy1.jpg')] bg-cover bg-center">
+        {/* Horizontal gradient overlay to darken left text area but keep the right image fold bright and clear */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-transparent" />
+
+        {/* Content Container */}
+        <div className="relative z-10 max-w-7xl mx-auto h-full px-6 md:px-16 pt-10 pb-14 flex flex-col justify-between">
+          
+          {/* Welcome Greeting Row */}
           <div>
-            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-[#00ddff]/20 text-[#00ddff] border border-[#00ddff]/40">
-                AUTHORIZED THIRD-PARTY DRIVER
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-400/30">
-                SEALED & VERIFIED PASS
-              </span>
+            <div className="inline-block border-b-3 border-[#00ddff] pb-1.5 mb-2">
+              <h2 className="text-white text-xl md:text-2xl font-bold tracking-tight">
+                Welcome back, {profile?.driverName} !
+              </h2>
             </div>
-            <h1 className="text-xl md:text-2xl font-extrabold text-white tracking-tight">
-              {profile?.driverName}
-            </h1>
-            <p className="text-slate-300 text-xs md:text-sm mt-0.5">
-              Authorized to drive for vehicle owner <strong className="text-white">{profile?.policyHolderName}</strong> • Sanasa <strong className="text-white">{profile?.branch}</strong> Branch
+            <p className="text-slate-200 text-[13px] md:text-sm font-normal tracking-wide mt-1">
+              Your driver authorization is active under policyholder{" "}
+              <strong className="text-white">{profile?.policyHolderName}</strong> for Sanasa{" "}
+              <strong className="text-white">{profile?.branch}</strong> Branch.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 w-full md:w-auto">
+          {/* Third-Party User Authorization Scope & Limitations Pill Row */}
+          <div className="flex flex-wrap items-center gap-2.5 my-auto">
+            <span className="px-3.5 py-1 rounded-full text-xs font-bold bg-[#00ddff]/20 text-[#00ddff] border border-[#00ddff]/40 flex items-center gap-1.5">
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+              <span>Authorized Scope: Assigned Vehicle Operation & Damage Claims Only</span>
+            </span>
+            <span className="px-3.5 py-1 rounded-full text-xs font-bold bg-amber-400/20 text-amber-300 border border-amber-400/40 flex items-center gap-1.5">
+              <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+              <span>Limitations: Policy Alteration & Renewal Restricted to Vehicle Owner</span>
+            </span>
+          </div>
+
+          {/* Central Statement */}
+          <div className="mb-4 max-w-4xl text-left">
+            <h1 className="text-sm md:text-base font-medium text-slate-100/90 leading-relaxed tracking-normal">
+              An authorized third-party driver claim with Sanasa General Insurance Company Limited enables fast-track vehicle inspection and settlement for authorized vehicles.
+            </h1>
+          </div>
+
+          {/* Signature Action Buttons with Glowing Drop Shadows */}
+          <div className="flex flex-row justify-start gap-4 sm:gap-6">
             <button
               onClick={() => setActiveTab("new_claim")}
-              className="flex-1 md:flex-none px-6 py-2.5 bg-[#ff9800] hover:bg-[#ff8f00] text-white font-bold text-xs md:text-sm rounded-xl transition-all shadow-md hover:scale-105 active:scale-95 border-none cursor-pointer flex items-center justify-center gap-2"
+              className="bg-red-600 hover:bg-red-700 text-white font-bold text-sm md:text-base px-8 py-3.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none cursor-pointer"
+              style={{ boxShadow: "0 8px 25px rgba(220, 38, 38, 0.65)" }}
             >
-              <span>+ File Accident Claim</span>
+              New Claim
             </button>
             <button
               onClick={() => setActiveTab("digital_pass")}
-              className={`flex-1 md:flex-none px-5 py-2.5 font-semibold text-xs md:text-sm rounded-xl transition-all border cursor-pointer ${
-                activeTab === "digital_pass"
-                  ? "bg-white text-slate-900 border-white"
-                  : "bg-white/10 hover:bg-white/20 text-white border-white/20"
-              }`}
+              className="bg-[#1fcbf2] hover:bg-[#00b2d6] text-white font-bold text-sm md:text-base px-8 py-3.5 rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.97] border-none cursor-pointer"
+              style={{ boxShadow: "0 8px 25px rgba(31, 203, 242, 0.65)" }}
             >
               Digital Pass
             </button>
           </div>
-        </div>
-      </div>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-8 relative z-20">
+        </div>
+      </header>
+
+      {/* ========================================================================= */}
+      {/* 3. THREE STAT CARDS OVERLAPPING HEADER (Policyholder Style Stat Cards) */}
+      {/* ========================================================================= */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-6 md:px-16 py-10 relative z-20">
+        <section className="-mt-[60px] md:-mt-[50px] grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          
+          {/* Total Claims */}
+          <button
+            onClick={() => setActiveTab("my_claims")}
+            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
+          >
+            <div className="text-slate-400 flex-shrink-0">
+              <HugeiconsIcon icon={Analytics01Icon} className="w-11 h-11 text-orange-500" strokeWidth={2} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{claims.length}</h3>
+              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Total Claims</p>
+            </div>
+          </button>
+
+          {/* In Progress */}
+          <button
+            onClick={() => setActiveTab("my_claims")}
+            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
+          >
+            <div className="text-slate-400 flex-shrink-0">
+              <HugeiconsIcon icon={Clock01Icon} className="w-11 h-11 text-cyan-500" strokeWidth={2} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
+              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">In Progress</p>
+            </div>
+          </button>
+
+          {/* Approved */}
+          <button
+            onClick={() => setActiveTab("my_claims")}
+            className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
+          >
+            <div className="text-slate-400 flex-shrink-0">
+              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-11 h-11 text-emerald-500" strokeWidth={2} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
+              <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Approved Claims</p>
+            </div>
+          </button>
+
+        </section>
 
         {/* ========================================================================= */}
         {/* TAB 1: HOME (Exact Policyholder Home Grid: Notifications + Registered Vehicles) */}
@@ -1898,6 +1968,77 @@ export default function ThirdPartyDriverPortalPage() {
                     <p className="text-xs text-slate-400 mt-1">All authorized vehicle claims are up to date.</p>
                   </div>
                 )}
+              </div>
+
+              {/* Third-Party Driver Scope & Limitations Card */}
+              <div className="mt-8 bg-white border border-slate-200/80 rounded-[28px] p-6 shadow-sm">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center flex-shrink-0">
+                    <HugeiconsIcon icon={SecurityCheckIcon} className="w-5 h-5" strokeWidth={2} />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">
+                      Driver Authorization Scope & Limitations
+                    </h3>
+                    <p className="text-xs text-slate-500">
+                      Underwriter rules established under Policyholder <strong className="text-slate-700">{profile?.policyHolderName}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs mt-3">
+                  {/* Authorized Rights */}
+                  <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/70 space-y-2">
+                    <div className="flex items-center gap-1.5 font-bold text-emerald-800 uppercase tracking-wide text-[11px]">
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600" />
+                      <span>Authorized Scope (Allowed)</span>
+                    </div>
+                    <ul className="space-y-1.5 text-emerald-950/85">
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span>Drive assigned vehicle(s) on public roads across Sri Lanka.</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span>File accident & vehicle damage claims directly with photos.</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span>Present live cryptographic QR Digital Pass to traffic authorities.</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-emerald-600 font-bold">✓</span>
+                        <span>Live support chat with Sanasa Branch claims officers.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Policyholder Limitations */}
+                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                    <div className="flex items-center gap-1.5 font-bold text-slate-700 uppercase tracking-wide text-[11px]">
+                      <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4 text-rose-500" />
+                      <span>Access Limitations (Restricted)</span>
+                    </div>
+                    <ul className="space-y-1.5 text-slate-600">
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-rose-500 font-bold">✕</span>
+                        <span>Cannot alter insurance policy terms, coverages, or premiums.</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-rose-500 font-bold">✕</span>
+                        <span>Cannot renew or transfer vehicle insurance policies.</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-rose-500 font-bold">✕</span>
+                        <span>Cannot register additional drivers or revoke passes.</span>
+                      </li>
+                      <li className="flex items-start gap-1.5">
+                        <span className="text-rose-500 font-bold">✕</span>
+                        <span>Cannot access policyholder's private financial data.</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
               </div>
             </div>
 

@@ -1764,6 +1764,21 @@ export default function MyVehicles() {
                     </div>
                   </div>
 
+                  {/* Third-Party Driver Scope & Limitations Card */}
+                  <div className="pt-1">
+                    <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 text-[11px] space-y-1">
+                      <div className="flex items-center gap-1.5 text-slate-800 font-bold">
+                        <HugeiconsIcon icon={SecurityCheckIcon} className="w-3.5 h-3.5 text-indigo-600" />
+                        <span>Driver Scope & Limitations:</span>
+                      </div>
+                      <p className="text-slate-500 leading-tight">
+                        • <strong className="text-emerald-700">Permitted:</strong> Drive authorized vehicle(s) & file accident claims.
+                        <br />
+                        • <strong className="text-slate-700">Restricted:</strong> No access to policy renewals, coverage changes, or policyholder account data.
+                      </p>
+                    </div>
+                  </div>
+
                   {/* Rejection Notice if applicable */}
                   {req.status === "Rejected" && req.branchReview?.rejectionReason && (
                     <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
