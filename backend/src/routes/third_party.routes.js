@@ -125,7 +125,14 @@ router.post("/request", async (req, res) => {
     }
 
     // Vehicles validation
-    if (!selectedVehiclePlates || !Array.isArray(selectedVehiclePlates) || selectedVehiclePlates.length === 0) {
+    const effectivePlates =
+      (Array.isArray(selectedVehiclePlates) && selectedVehiclePlates.length > 0)
+        ? selectedVehiclePlates
+        : (Array.isArray(req.body.selectedVehicles)
+            ? req.body.selectedVehicles.map((v) => (typeof v === "string" ? v : v.numberPlate)).filter(Boolean)
+            : []);
+
+    if (effectivePlates.length === 0) {
       return res.status(400).json({ error: "At least one eligible vehicle must be selected." });
     }
 
@@ -138,7 +145,7 @@ router.post("/request", async (req, res) => {
 
     // 3. Ownership and Eligibility Verification
     const userVehicles = user.vehicles || [];
-    const normalizedPlates = selectedVehiclePlates.map((p) => p.trim().toUpperCase());
+    const normalizedPlates = effectivePlates.map((p) => p.trim().toUpperCase());
     const matchedVehicles = [];
 
     for (const plate of normalizedPlates) {
@@ -314,6 +321,189 @@ router.post("/checkout-session", async (req, res) => {
   } catch (err) {
     console.error("Stripe session creation error:", err);
     return res.status(500).json({ error: err.message || "Failed to create Stripe payment session." });
+  }
+});
+
+/**
+ * POST /api/third-party/register
+ * Mobile App / Unified endpoint that handles both registration creation and Stripe checkout generation
+ */
+router.post("/register", async (req, res) => {
+  try {
+    const {
+      policyHolderNic,
+      driverDetails,
+      selectedVehiclePlates,
+      selectedVehicles,
+      idempotencyKey
+    } = req.body;
+
+    if (!policyHolderNic) {
+      return res.status(400).json({ error: "Policyholder NIC is required." });
+    }
+    if (!driverDetails || typeof driverDetails !== "object") {
+      return res.status(400).json({ error: "Driver details are required." });
+    }
+    const { fullName, residentialAddress, phoneNumber, nicNumber, documents } = driverDetails;
+    if (!fullName || !residentialAddress || !phoneNumber) {
+      return res.status(400).json({ error: "Full name, address, and phone number are required." });
+    }
+    if (
+      !documents ||
+      !documents.nicFront ||
+      !documents.nicBack ||
+      !documents.drivingLicenceFront ||
+      !documents.drivingLicenceBack
+    ) {
+      return res.status(400).json({
+        error: "All 4 identity document photographs (NIC Front, NIC Back, Licence Front, Licence Back) are required."
+      });
+    }
+
+    const phoneCheck = normalizeSriLankanPhone(phoneNumber);
+    if (!phoneCheck.isValid) {
+      return res.status(400).json({ error: phoneCheck.error });
+    }
+
+    const effectivePlates =
+      (Array.isArray(selectedVehiclePlates) && selectedVehiclePlates.length > 0)
+        ? selectedVehiclePlates
+        : (Array.isArray(selectedVehicles)
+            ? selectedVehicles.map((v) => (typeof v === "string" ? v : v.numberPlate)).filter(Boolean)
+            : []);
+
+    if (effectivePlates.length === 0) {
+      return res.status(400).json({ error: "At least one eligible vehicle must be selected." });
+    }
+
+    const cleanNic = policyHolderNic.trim().toUpperCase();
+    const user = await User.findOne({ nic: cleanNic });
+    if (!user) {
+      return res.status(404).json({ error: "Policyholder record not found." });
+    }
+
+    const userVehicles = user.vehicles || [];
+    const normalizedPlates = effectivePlates.map((p) => p.trim().toUpperCase());
+    const matchedVehicles = [];
+
+    for (const plate of normalizedPlates) {
+      const owned = userVehicles.find(
+        (v) => v.numberPlate.trim().toUpperCase() === plate
+      );
+      if (!owned) {
+        return res.status(403).json({
+          error: `Unauthorized: Vehicle plate "${plate}" does not belong to your account.`
+        });
+      }
+      if (owned.status !== "Approved") {
+        return res.status(400).json({
+          error: `Vehicle "${plate}" is not eligible because its insurance policy status is "${owned.status}".`
+        });
+      }
+      matchedVehicles.push({
+        numberPlate: owned.numberPlate,
+        vehicleType: owned.vehicleType,
+        model: owned.model,
+        company: owned.company,
+        year: owned.year,
+        policyNumber: owned.policyNumber
+      });
+    }
+
+    const currentYear = new Date().getFullYear();
+    const count = await ThirdPartyRegistration.countDocuments();
+    const requestReference = `TPR-${currentYear}-${String(count + 1).padStart(4, "0")}`;
+
+    const [uploadedNicFront, uploadedNicBack, uploadedDlFront, uploadedDlBack] = await Promise.all([
+      uploadToCloudinary(documents.nicFront, "third_party_docs/nic"),
+      uploadToCloudinary(documents.nicBack, "third_party_docs/nic"),
+      uploadToCloudinary(documents.drivingLicenceFront, "third_party_docs/licence"),
+      uploadToCloudinary(documents.drivingLicenceBack, "third_party_docs/licence")
+    ]);
+
+    const newRegistration = new ThirdPartyRegistration({
+      requestReference,
+      policyHolderNic: cleanNic,
+      policyHolderName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+      policyHolderEmail: user.email,
+      policyHolderPhone: user.mobile || "",
+      branch: user.branch || "Galle",
+      driverDetails: {
+        fullName: fullName.trim(),
+        residentialAddress: residentialAddress.trim(),
+        phoneNumber: phoneCheck.normalized,
+        nicNumber: (nicNumber || "").trim(),
+        documents: {
+          nicFront: uploadedNicFront,
+          nicBack: uploadedNicBack,
+          drivingLicenceFront: uploadedDlFront,
+          drivingLicenceBack: uploadedDlBack
+        }
+      },
+      selectedVehicles: matchedVehicles,
+      fee: 300,
+      currency: "LKR",
+      status: "Pending Payment",
+      payment: {
+        status: "Pending Payment",
+        amountPaid: 0,
+        currency: "LKR"
+      },
+      idempotencyKey: idempotencyKey || null
+    });
+
+    await newRegistration.save();
+
+    const stripe = getStripe();
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const fixedFeeLkr = 300;
+    const unitAmountSubunits = Math.round(fixedFeeLkr * 100);
+    const vehicleSummary = newRegistration.selectedVehicles.map((v) => v.numberPlate).join(", ");
+
+    const session = await stripe.checkout.sessions.create({
+      line_items: [
+        {
+          price_data: {
+            currency: "lkr",
+            product_data: {
+              name: `Third-Party Driver Registration (${newRegistration.requestReference})`,
+              description: `Coverage for Driver: ${newRegistration.driverDetails.fullName} on Vehicles: ${vehicleSummary}`
+            },
+            unit_amount: unitAmountSubunits
+          },
+          quantity: 1
+        }
+      ],
+      mode: "payment",
+      success_url: `${frontendUrl}/Policy_Holder/MyVehicles?third_party_payment=success&session_id={CHECKOUT_SESSION_ID}&ref=${encodeURIComponent(
+        newRegistration.requestReference
+      )}`,
+      cancel_url: `${frontendUrl}/Policy_Holder/MyVehicles?third_party_payment=cancelled&ref=${encodeURIComponent(
+        newRegistration.requestReference
+      )}`,
+      metadata: {
+        type: "third_party_registration",
+        requestId: newRegistration._id.toString(),
+        requestReference: newRegistration.requestReference,
+        policyHolderNic: newRegistration.policyHolderNic,
+        branch: newRegistration.branch
+      }
+    });
+
+    newRegistration.payment.stripeSessionId = session.id;
+    await newRegistration.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Registration request created and payment session ready.",
+      registration: newRegistration,
+      checkoutUrl: session.url,
+      sessionId: session.id,
+      requestReference: newRegistration.requestReference
+    });
+  } catch (err) {
+    console.error("POST /api/third-party/register error:", err);
+    return res.status(500).json({ error: err.message || "Failed to submit third-party registration." });
   }
 });
 

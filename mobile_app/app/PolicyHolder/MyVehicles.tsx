@@ -186,7 +186,10 @@ export default function MyVehicles() {
   const [tpNicNumber, setTpNicNumber] = useState("");
   const [tpPhoneNumber, setTpPhoneNumber] = useState("");
   const [tpResidentialAddress, setTpResidentialAddress] = useState("");
-  const [tpLicensePhoto, setTpLicensePhoto] = useState<string | null>(null);
+  const [tpNicFront, setTpNicFront] = useState<string | null>(null);
+  const [tpNicBack, setTpNicBack] = useState<string | null>(null);
+  const [tpDlFront, setTpDlFront] = useState<string | null>(null);
+  const [tpDlBack, setTpDlBack] = useState<string | null>(null);
   const [tpSelectedPlates, setTpSelectedPlates] = useState<string[]>([]);
   const [tpSubmitting, setTpSubmitting] = useState(false);
   const [tpError, setTpError] = useState<string | null>(null);
@@ -289,7 +292,10 @@ export default function MyVehicles() {
     setTpNicNumber("");
     setTpPhoneNumber("");
     setTpResidentialAddress("");
-    setTpLicensePhoto(null);
+    setTpNicFront(null);
+    setTpNicBack(null);
+    setTpDlFront(null);
+    setTpDlBack(null);
     if (plate) {
       setTpSelectedPlates([plate]);
     } else if (vehicles.length > 0) {
@@ -306,11 +312,13 @@ export default function MyVehicles() {
     );
   };
 
-  const handlePickLicensePhoto = async () => {
+  type TpDocType = "nicFront" | "nicBack" | "dlFront" | "dlBack";
+
+  const handlePickDocument = async (docType: TpDocType) => {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Required", "Please allow photo library access to upload driver license photo.");
+        Alert.alert("Permission Required", "Please allow photo library access to upload driver verification documents.");
         return;
       }
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -320,12 +328,22 @@ export default function MyVehicles() {
       });
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const compressed = await compressImageMobile(result.assets[0].uri, 1000, 0.7);
-        setTpLicensePhoto(compressed);
+        if (docType === "nicFront") setTpNicFront(compressed);
+        else if (docType === "nicBack") setTpNicBack(compressed);
+        else if (docType === "dlFront") setTpDlFront(compressed);
+        else if (docType === "dlBack") setTpDlBack(compressed);
       }
     } catch (err) {
       console.error("Image pick error:", err);
-      Alert.alert("Error", "Failed to select driver license photo.");
+      Alert.alert("Error", "Failed to select document photo.");
     }
+  };
+
+  const handleRemoveDocument = (docType: TpDocType) => {
+    if (docType === "nicFront") setTpNicFront(null);
+    else if (docType === "nicBack") setTpNicBack(null);
+    else if (docType === "dlFront") setTpDlFront(null);
+    else if (docType === "dlBack") setTpDlBack(null);
   };
 
   const handleSubmitThirdParty = async () => {
@@ -347,6 +365,10 @@ export default function MyVehicles() {
       setTpError("Please enter residential address.");
       return;
     }
+    if (!tpNicFront || !tpNicBack || !tpDlFront || !tpDlBack) {
+      setTpError("Please attach all 4 required document photographs (NIC Front & Back, Driving Licence Front & Back).");
+      return;
+    }
     if (tpSelectedPlates.length === 0) {
       setTpError("Please select at least one vehicle to cover.");
       return;
@@ -361,9 +383,16 @@ export default function MyVehicles() {
           nicNumber: tpNicNumber.trim().toUpperCase(),
           phoneNumber: cleanPhone,
           residentialAddress: tpResidentialAddress.trim(),
-          drivingLicensePhoto: tpLicensePhoto || undefined,
+          documents: {
+            nicFront: tpNicFront,
+            nicBack: tpNicBack,
+            drivingLicenceFront: tpDlFront,
+            drivingLicenceBack: tpDlBack,
+          },
         },
+        selectedVehiclePlates: tpSelectedPlates,
         selectedVehicles: tpSelectedPlates.map((plate) => ({ numberPlate: plate })),
+        idempotencyKey: `tpr_${userNic}_${tpFullName.trim().replace(/\s+/g, "")}_${Date.now()}`
       };
 
       const res = await fetch(`${API_BASE_URL}/api/third-party/register`, {
@@ -1069,88 +1098,93 @@ export default function MyVehicles() {
                       key={idx}
                       style={[
                         styles.vehicleCard,
-                        hasAlert && { borderColor: "#fecaca", shadowColor: "#ef4444", shadowOpacity: 0.08 }
+                        hasAlert && styles.vehicleCardAlert
                       ]}
                     >
-                      {/* Top Header Row with Plate and Status */}
-                      <View style={styles.cardHeader}>
-                        {/* Sri Lankan Monospace Plate Badge */}
-                        <View style={styles.modernPlateBadge}>
-                          <View style={styles.plateStripe}>
-                            <Text style={styles.plateStripeText}>SL</Text>
+                      {/* ── CARD TOP HEADER: MODEL & STATUS ── */}
+                      <View style={styles.cardTopRow}>
+                        <View style={styles.vehicleTitleBlock}>
+                          <Text style={styles.vehicleMakeModel} numberOfLines={1}>
+                            {[v.company, v.model].filter(Boolean).join(" ") || "Registered Vehicle"}
+                          </Text>
+                          <View style={styles.vehicleSubMetaRow}>
+                            <View
+                              style={[
+                                styles.vehicleTypeTag,
+                                {
+                                  backgroundColor: getVehicleTheme(v.vehicleType).bg,
+                                  borderColor: getVehicleTheme(v.vehicleType).border,
+                                },
+                              ]}
+                            >
+                              <MaterialCommunityIcons
+                                name={getVehicleTheme(v.vehicleType).icon as any}
+                                size={12}
+                                color={getVehicleTheme(v.vehicleType).color}
+                              />
+                              <Text style={[styles.vehicleTypeTagText, { color: getVehicleTheme(v.vehicleType).color }]}>
+                                {v.vehicleType || "Vehicle"}
+                              </Text>
+                            </View>
+                            {v.year ? <Text style={styles.vehicleYearText}>• {v.year}</Text> : null}
                           </View>
-                          <Text style={styles.modernPlateText}>{formatPlate(v.numberPlate)}</Text>
                         </View>
 
                         {/* Real-time Status Badge */}
-                        {isQuoteReady ? (
-                          <View style={[styles.statusBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
-                            <View style={[styles.dot, { backgroundColor: "#ef4444" }]} />
-                            <Text style={[styles.badgeLabel, { color: "#dc2626" }]}>Quote Ready</Text>
-                          </View>
-                        ) : isInstallmentDue ? (
-                          <View style={[styles.statusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
-                            <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
-                            <Text style={[styles.badgeLabel, { color: "#b45309" }]}>Due Installment</Text>
-                          </View>
-                        ) : isRenewalReaching ? (
-                          <View style={[styles.statusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
-                            <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
-                            <Text style={[styles.badgeLabel, { color: "#b45309" }]}>
-                              {daysRemaining !== null && daysRemaining !== undefined ? `Expires ${daysRemaining}d` : "Renewal Due"}
-                            </Text>
-                          </View>
-                        ) : isRenewed ? (
-                          <View style={[styles.statusBadge, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
-                            <View style={[styles.dot, { backgroundColor: "#22c55e" }]} />
-                            <Text style={[styles.badgeLabel, { color: "#16a34a" }]}>Renewed</Text>
-                          </View>
-                        ) : (
-                          <View style={styles.statusBadge}>
-                            <View style={styles.dot} />
-                            <Text style={styles.badgeLabel}>Active</Text>
-                          </View>
-                        )}
-                      </View>
-
-                      {/* Vehicle Identity Subtitle Row */}
-                      <View style={styles.vehicleIdentityRow}>
-                        <View
-                          style={[
-                            styles.smallTypeBox,
-                            {
-                              backgroundColor: getVehicleTheme(v.vehicleType).bg,
-                              borderColor: getVehicleTheme(v.vehicleType).border,
-                            },
-                          ]}
-                        >
-                          <MaterialCommunityIcons
-                            name={getVehicleTheme(v.vehicleType).icon as any}
-                            size={18}
-                            color={getVehicleTheme(v.vehicleType).color}
-                          />
-                          <Text style={[styles.smallTypeBoxText, { color: getVehicleTheme(v.vehicleType).color }]}>
-                            {v.vehicleType || "Vehicle"}
-                          </Text>
+                        <View style={styles.statusBadgeWrapper}>
+                          {isQuoteReady ? (
+                            <View style={[styles.statusBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+                              <View style={[styles.dot, { backgroundColor: "#ef4444" }]} />
+                              <Text style={[styles.badgeLabel, { color: "#dc2626" }]}>Quote Ready</Text>
+                            </View>
+                          ) : isInstallmentDue ? (
+                            <View style={[styles.statusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
+                              <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
+                              <Text style={[styles.badgeLabel, { color: "#b45309" }]}>Due Installment</Text>
+                            </View>
+                          ) : isRenewalReaching ? (
+                            <View style={[styles.statusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
+                              <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
+                              <Text style={[styles.badgeLabel, { color: "#b45309" }]}>
+                                {daysRemaining !== null && daysRemaining !== undefined ? `Expires ${daysRemaining}d` : "Renewal Due"}
+                              </Text>
+                            </View>
+                          ) : isRenewed ? (
+                            <View style={[styles.statusBadge, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
+                              <View style={[styles.dot, { backgroundColor: "#22c55e" }]} />
+                              <Text style={[styles.badgeLabel, { color: "#16a34a" }]}>Renewed</Text>
+                            </View>
+                          ) : (
+                            <View style={styles.statusBadge}>
+                              <View style={styles.dot} />
+                              <Text style={styles.badgeLabel}>Active</Text>
+                            </View>
+                          )}
                         </View>
-                        <Text style={styles.companyModelText}>
-                          {[v.company, v.model].filter(Boolean).join(" ")} ({v.year})
-                        </Text>
                       </View>
 
-                      {/* Third-Party Driver Assignment Indicator */}
-                      <View style={styles.driverIndicatorRow}>
+                      {/* ── LICENSE PLATE & DRIVER DELEGATION RIBBON ── */}
+                      <View style={styles.plateAndDriverRow}>
+                        {/* Sri Lankan Plate */}
+                        <View style={styles.cleanPlateContainer}>
+                          <View style={styles.cleanPlateStripe}>
+                            <Text style={styles.cleanPlateStripeText}>SL</Text>
+                          </View>
+                          <Text style={styles.cleanPlateNumber}>{formatPlate(v.numberPlate)}</Text>
+                        </View>
+
+                        {/* Driver Indicator */}
                         {assignedDriver ? (
-                          <View style={styles.assignedDriverBadge}>
+                          <View style={styles.cleanAssignedDriverTag}>
                             <MaterialCommunityIcons name="account-check" size={13} color="#059669" />
-                            <Text style={styles.assignedDriverText} numberOfLines={1}>
-                              Authorized Driver: <Text style={{ fontWeight: "700" }}>{assignedDriver}</Text>
+                            <Text style={styles.cleanAssignedDriverText} numberOfLines={1}>
+                              {assignedDriver}
                             </Text>
                           </View>
                         ) : (
-                          <View style={styles.unassignedDriverBadge}>
-                            <MaterialCommunityIcons name="account-outline" size={13} color="#94a3b8" />
-                            <Text style={styles.unassignedDriverText}>Self-Driven (Policyholder Only)</Text>
+                          <View style={styles.cleanSelfDrivenTag}>
+                            <MaterialCommunityIcons name="shield-check-outline" size={13} color="#64748b" />
+                            <Text style={styles.cleanSelfDrivenText}>Self-Driven</Text>
                           </View>
                         )}
                       </View>
@@ -1202,61 +1236,65 @@ export default function MyVehicles() {
                         </View>
                       )}
 
-                      <View style={styles.cardDivider} />
-
-                      {/* Technical specs list */}
-                      <View style={styles.specsList}>
-                        <View style={styles.specItem}>
-                          <Text style={styles.specLabel}>Policy Number</Text>
-                          <Text style={styles.specVal}>{v.policyNumber || "SGI-88942-019"}</Text>
+                      {/* ── TECHNICAL SPECS OVERVIEW (COMPACT & CLEAN) ── */}
+                      <View style={styles.cleanSpecsCard}>
+                        <View style={styles.cleanSpecRow}>
+                          <Text style={styles.cleanSpecKey}>Policy Number</Text>
+                          <Text style={styles.cleanSpecValue} numberOfLines={1}>{v.policyNumber || "SGI-88942-019"}</Text>
                         </View>
-                        <View style={styles.specItem}>
-                          <Text style={styles.specLabel}>Engine Number</Text>
-                          <Text style={styles.specVal}>{v.engineNumber || "1NZ-FE-778122"}</Text>
+                        <View style={styles.cleanSpecDivider} />
+                        <View style={styles.cleanSpecRow}>
+                          <Text style={styles.cleanSpecKey}>Engine Number</Text>
+                          <Text style={styles.cleanSpecValue} numberOfLines={1}>{v.engineNumber || "1NZ-FE-778122"}</Text>
                         </View>
-                        <View style={styles.specItemNoBorder}>
-                          <Text style={styles.specLabel}>Chassis Number</Text>
-                          <Text style={styles.specVal}>{v.chassisNumber || "NZE141-8890204"}</Text>
+                        <View style={styles.cleanSpecDivider} />
+                        <View style={styles.cleanSpecRow}>
+                          <Text style={styles.cleanSpecKey}>Chassis Number</Text>
+                          <Text style={styles.cleanSpecValue} numberOfLines={1}>{v.chassisNumber || "NZE141-8890204"}</Text>
                         </View>
                       </View>
 
-                      {/* Quick actions row */}
-                      <View style={styles.cardActions}>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: "#e0f2fe" }]}
-                          onPress={() => handleOpenVehicleModal(v)}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons name="eye-outline" size={14} color="#0284c7" />
-                          <Text style={[styles.actionBtnText, { color: "#0284c7" }]}>Details</Text>
-                        </TouchableOpacity>
+                      {/* ── ACTION BUTTONS: BALANCED 2x2 ERGONOMIC GRID ── */}
+                      <View style={styles.cleanActionGrid}>
+                        <View style={styles.cleanActionRow}>
+                          <TouchableOpacity
+                            style={[styles.cleanActionBtn, styles.cleanDetailsBtn]}
+                            onPress={() => handleOpenVehicleModal(v)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="document-text-outline" size={14} color="#1e293b" />
+                            <Text style={styles.cleanDetailsBtnText}>Details</Text>
+                          </TouchableOpacity>
 
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: "#eef2ff" }]}
-                          onPress={() => handleOpenThirdPartyForPlate(v.numberPlate)}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons name="person-add-outline" size={14} color="#4f46e5" />
-                          <Text style={[styles.actionBtnText, { color: "#4f46e5" }]}>Assign Driver</Text>
-                        </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.cleanActionBtn, styles.cleanDriverBtn]}
+                            onPress={() => handleOpenThirdPartyForPlate(v.numberPlate)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="person-add-outline" size={14} color="#4338ca" />
+                            <Text style={styles.cleanDriverBtnText}>Assign Driver</Text>
+                          </TouchableOpacity>
+                        </View>
 
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: "#f0fdf4" }]}
-                          onPress={() => handleOpenCoverNote(v)}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons name="document-text-outline" size={14} color="#16a34a" />
-                          <Text style={[styles.actionBtnText, { color: "#16a34a" }]}>Cover Note</Text>
-                        </TouchableOpacity>
+                        <View style={styles.cleanActionRow}>
+                          <TouchableOpacity
+                            style={[styles.cleanActionBtn, styles.cleanCoverBtn]}
+                            onPress={() => handleOpenCoverNote(v)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="shield-checkmark-outline" size={14} color="#059669" />
+                            <Text style={styles.cleanCoverBtnText}>Cover Note</Text>
+                          </TouchableOpacity>
 
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: "#fee2e2" }]}
-                          onPress={() => handleFileClaim(v)}
-                          activeOpacity={0.7}
-                        >
-                          <Ionicons name="alert-circle-outline" size={14} color="#dc2626" />
-                          <Text style={[styles.actionBtnText, { color: "#dc2626" }]}>Claim</Text>
-                        </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.cleanActionBtn, styles.cleanClaimBtn]}
+                            onPress={() => handleFileClaim(v)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="alert-circle-outline" size={14} color="#dc2626" />
+                            <Text style={styles.cleanClaimBtnText}>Claim</Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
                   );
@@ -1639,32 +1677,199 @@ export default function MyVehicles() {
                 />
               </View>
 
-              {/* Driving License Copy Upload */}
+              {/* Driver KYC & Identity Documents Section (4 Required Docs matching website) */}
               <View style={styles.tpFormGroup}>
-                <Text style={styles.tpFieldLabel}>Driving License Photo (Optional / Recommended)</Text>
-                <TouchableOpacity
-                  style={styles.tpUploadBox}
-                  onPress={handlePickLicensePhoto}
-                  disabled={tpSubmitting}
-                  activeOpacity={0.7}
-                >
-                  {tpLicensePhoto ? (
-                    <View style={styles.tpPhotoPreviewRow}>
-                      <Image source={{ uri: tpLicensePhoto }} style={styles.tpPhotoPreviewThumb} />
-                      <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text style={styles.tpPhotoSelectedText}>License Photo Selected</Text>
-                        <Text style={styles.tpPhotoChangeText}>Tap to change</Text>
-                      </View>
-                      <Ionicons name="checkmark-circle" size={20} color="#16a34a" />
-                    </View>
-                  ) : (
-                    <View style={styles.tpUploadPlaceholder}>
-                      <Ionicons name="camera-outline" size={24} color="#6366f1" />
-                      <Text style={styles.tpUploadText}>Upload Driving License Copy</Text>
-                      <Text style={styles.tpUploadSubText}>PNG or JPG (Processed safely)</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
+                <View style={styles.tpDocSectionHeader}>
+                  <View style={{ flex: 1, paddingRight: 8 }}>
+                    <Text style={styles.tpFieldLabel}>Required Identity & Driving Documents *</Text>
+                    <Text style={styles.tpFieldSubLabel}>
+                      Upload clear photos of driver's NIC and valid Driving Licence (Front & Back).
+                    </Text>
+                  </View>
+                  <View
+                    style={[
+                      styles.tpDocCountPill,
+                      [tpNicFront, tpNicBack, tpDlFront, tpDlBack].filter(Boolean).length === 4 && {
+                        backgroundColor: "#dcfce7",
+                        borderColor: "#86efac",
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={
+                        [tpNicFront, tpNicBack, tpDlFront, tpDlBack].filter(Boolean).length === 4
+                          ? "checkmark-circle"
+                          : "document-text-outline"
+                      }
+                      size={13}
+                      color={
+                        [tpNicFront, tpNicBack, tpDlFront, tpDlBack].filter(Boolean).length === 4
+                          ? "#16a34a"
+                          : "#0284c7"
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.tpDocCountText,
+                        [tpNicFront, tpNicBack, tpDlFront, tpDlBack].filter(Boolean).length === 4 && {
+                          color: "#16a34a",
+                        },
+                      ]}
+                    >
+                      {[tpNicFront, tpNicBack, tpDlFront, tpDlBack].filter(Boolean).length}/4 Attached
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.tpDocGrid}>
+                  {/* 1. NIC Front */}
+                  <View style={styles.tpDocGridItem}>
+                    <Text style={styles.tpDocItemTitle}>NIC Front *</Text>
+                    <TouchableOpacity
+                      style={[styles.tpDocCard, tpNicFront ? styles.tpDocCardUploaded : null]}
+                      onPress={() => handlePickDocument("nicFront")}
+                      disabled={tpSubmitting}
+                      activeOpacity={0.75}
+                    >
+                      {tpNicFront ? (
+                        <View style={styles.tpDocPreviewContainer}>
+                          <Image source={{ uri: tpNicFront }} style={styles.tpDocPreviewImage} />
+                          <TouchableOpacity
+                            style={styles.tpDocDeleteBtn}
+                            onPress={() => handleRemoveDocument("nicFront")}
+                            disabled={tpSubmitting}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="close" size={13} color="#ffffff" />
+                          </TouchableOpacity>
+                          <View style={styles.tpDocStatusBadge}>
+                            <Ionicons name="checkmark-circle" size={11} color="#ffffff" />
+                            <Text style={styles.tpDocStatusBadgeText}>Attached</Text>
+                          </View>
+                        </View>
+                      ) : (
+                        <View style={styles.tpDocEmptyPlaceholder}>
+                          <View style={styles.tpDocIconCircle}>
+                            <MaterialCommunityIcons name="card-account-details-outline" size={22} color="#0284c7" />
+                          </View>
+                          <Text style={styles.tpDocUploadLabel}>Upload NIC Front</Text>
+                          <Text style={styles.tpDocUploadSub}>National ID Front</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* 2. NIC Back */}
+                  <View style={styles.tpDocGridItem}>
+                    <Text style={styles.tpDocItemTitle}>NIC Back *</Text>
+                    <TouchableOpacity
+                      style={[styles.tpDocCard, tpNicBack ? styles.tpDocCardUploaded : null]}
+                      onPress={() => handlePickDocument("nicBack")}
+                      disabled={tpSubmitting}
+                      activeOpacity={0.75}
+                    >
+                      {tpNicBack ? (
+                        <View style={styles.tpDocPreviewContainer}>
+                          <Image source={{ uri: tpNicBack }} style={styles.tpDocPreviewImage} />
+                          <TouchableOpacity
+                            style={styles.tpDocDeleteBtn}
+                            onPress={() => handleRemoveDocument("nicBack")}
+                            disabled={tpSubmitting}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="close" size={13} color="#ffffff" />
+                          </TouchableOpacity>
+                          <View style={styles.tpDocStatusBadge}>
+                            <Ionicons name="checkmark-circle" size={11} color="#ffffff" />
+                            <Text style={styles.tpDocStatusBadgeText}>Attached</Text>
+                          </View>
+                        </View>
+                      ) : (
+                        <View style={styles.tpDocEmptyPlaceholder}>
+                          <View style={styles.tpDocIconCircle}>
+                            <MaterialCommunityIcons name="card-account-details-outline" size={22} color="#0284c7" />
+                          </View>
+                          <Text style={styles.tpDocUploadLabel}>Upload NIC Back</Text>
+                          <Text style={styles.tpDocUploadSub}>National ID Back</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* 3. Driving Licence Front */}
+                  <View style={styles.tpDocGridItem}>
+                    <Text style={styles.tpDocItemTitle}>Licence Front *</Text>
+                    <TouchableOpacity
+                      style={[styles.tpDocCard, tpDlFront ? styles.tpDocCardUploaded : null]}
+                      onPress={() => handlePickDocument("dlFront")}
+                      disabled={tpSubmitting}
+                      activeOpacity={0.75}
+                    >
+                      {tpDlFront ? (
+                        <View style={styles.tpDocPreviewContainer}>
+                          <Image source={{ uri: tpDlFront }} style={styles.tpDocPreviewImage} />
+                          <TouchableOpacity
+                            style={styles.tpDocDeleteBtn}
+                            onPress={() => handleRemoveDocument("dlFront")}
+                            disabled={tpSubmitting}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="close" size={13} color="#ffffff" />
+                          </TouchableOpacity>
+                          <View style={styles.tpDocStatusBadge}>
+                            <Ionicons name="checkmark-circle" size={11} color="#ffffff" />
+                            <Text style={styles.tpDocStatusBadgeText}>Attached</Text>
+                          </View>
+                        </View>
+                      ) : (
+                        <View style={styles.tpDocEmptyPlaceholder}>
+                          <View style={[styles.tpDocIconCircle, { backgroundColor: "#e0e7ff" }]}>
+                            <MaterialCommunityIcons name="card-bulleted-outline" size={22} color="#4f46e5" />
+                          </View>
+                          <Text style={styles.tpDocUploadLabel}>Upload Licence Front</Text>
+                          <Text style={styles.tpDocUploadSub}>Driving Licence</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* 4. Driving Licence Back */}
+                  <View style={styles.tpDocGridItem}>
+                    <Text style={styles.tpDocItemTitle}>Licence Back *</Text>
+                    <TouchableOpacity
+                      style={[styles.tpDocCard, tpDlBack ? styles.tpDocCardUploaded : null]}
+                      onPress={() => handlePickDocument("dlBack")}
+                      disabled={tpSubmitting}
+                      activeOpacity={0.75}
+                    >
+                      {tpDlBack ? (
+                        <View style={styles.tpDocPreviewContainer}>
+                          <Image source={{ uri: tpDlBack }} style={styles.tpDocPreviewImage} />
+                          <TouchableOpacity
+                            style={styles.tpDocDeleteBtn}
+                            onPress={() => handleRemoveDocument("dlBack")}
+                            disabled={tpSubmitting}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="close" size={13} color="#ffffff" />
+                          </TouchableOpacity>
+                          <View style={styles.tpDocStatusBadge}>
+                            <Ionicons name="checkmark-circle" size={11} color="#ffffff" />
+                            <Text style={styles.tpDocStatusBadgeText}>Attached</Text>
+                          </View>
+                        </View>
+                      ) : (
+                        <View style={styles.tpDocEmptyPlaceholder}>
+                          <View style={[styles.tpDocIconCircle, { backgroundColor: "#e0e7ff" }]}>
+                            <MaterialCommunityIcons name="card-bulleted-outline" size={22} color="#4f46e5" />
+                          </View>
+                          <Text style={styles.tpDocUploadLabel}>Upload Licence Back</Text>
+                          <Text style={styles.tpDocUploadSub}>Driving Licence</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
 
               {/* Vehicle Selection Checkboxes */}
@@ -2067,6 +2272,173 @@ export default function MyVehicles() {
                       </Text>
                     </View>
                   </View>
+                </View>
+
+                {/* ── AUTHORIZED THIRD-PARTY DRIVERS & PERMITS SECTION ── */}
+                <View style={styles.modalTpSection}>
+                  <View style={styles.modalTpSectionHeader}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 7, flex: 1 }}>
+                      <MaterialCommunityIcons name="account-group-outline" size={20} color="#4f46e5" />
+                      <Text style={styles.modalTpSectionTitle}>Authorized Drivers & Permits</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.modalTpAddBtn}
+                      onPress={() => {
+                        handleOpenThirdPartyForPlate(selectedVehicleForModal.numberPlate);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="person-add" size={13} color="#ffffff" />
+                      <Text style={styles.modalTpAddBtnText}>+ Assign Driver</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {(() => {
+                    const vehicleDrivers = thirdPartyRequests.filter((r: any) =>
+                      r.selectedVehicles?.some((sv: any) => sv.numberPlate === selectedVehicleForModal.numberPlate)
+                    );
+
+                    if (vehicleDrivers.length === 0) {
+                      return (
+                        <View style={styles.modalTpEmptyCard}>
+                          <MaterialCommunityIcons name="account-outline" size={28} color="#94a3b8" />
+                          <Text style={styles.modalTpEmptyTitle}>Self-Driven (No Authorized Drivers)</Text>
+                          <Text style={styles.modalTpEmptyDesc}>
+                            Authorize external drivers (family, employees, chauffeurs) to legally operate {formatPlate(selectedVehicleForModal.numberPlate)} under your insurance policy for a fixed fee of LKR 300.
+                          </Text>
+                          <TouchableOpacity
+                            style={styles.modalTpEmptyActionBtn}
+                            onPress={() => handleOpenThirdPartyForPlate(selectedVehicleForModal.numberPlate)}
+                            activeOpacity={0.85}
+                          >
+                            <Ionicons name="person-add-outline" size={14} color="#4338ca" />
+                            <Text style={styles.modalTpEmptyActionBtnText}>Authorize a Driver for this Vehicle</Text>
+                          </TouchableOpacity>
+                        </View>
+                      );
+                    }
+
+                    return (
+                      <View style={{ gap: 10 }}>
+                        {vehicleDrivers.map((req: any) => {
+                          const isApproved = req.status === "Approved";
+                          const isPendingTerm = req.status === "Pending Termination Approval";
+                          const isTerminated = req.status === "Terminated";
+                          const isPendingApproval = req.status === "Pending Branch Approval";
+                          const isRejected = req.status === "Rejected";
+
+                          return (
+                            <View key={req._id} style={styles.modalTpDriverCard}>
+                              {/* Top row: Ref and Status Pill */}
+                              <View style={styles.modalTpCardTop}>
+                                <View style={styles.modalTpRefBadge}>
+                                  <Text style={styles.modalTpRefText}>{req.requestReference || "REF"}</Text>
+                                </View>
+
+                                {isApproved ? (
+                                  <View style={[styles.modalTpStatusBadge, { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" }]}>
+                                    <MaterialCommunityIcons name="check-circle" size={12} color="#16a34a" />
+                                    <Text style={[styles.modalTpStatusText, { color: "#16a34a" }]}>Active Pass</Text>
+                                  </View>
+                                ) : isPendingTerm ? (
+                                  <View style={[styles.modalTpStatusBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+                                    <View style={[styles.dot, { backgroundColor: "#ef4444" }]} />
+                                    <Text style={[styles.modalTpStatusText, { color: "#dc2626" }]}>Termination Requested</Text>
+                                  </View>
+                                ) : isTerminated ? (
+                                  <View style={[styles.modalTpStatusBadge, { backgroundColor: "#f1f5f9", borderColor: "#cbd5e1" }]}>
+                                    <MaterialCommunityIcons name="cancel" size={12} color="#64748b" />
+                                    <Text style={[styles.modalTpStatusText, { color: "#475569" }]}>Terminated</Text>
+                                  </View>
+                                ) : isPendingApproval ? (
+                                  <View style={[styles.modalTpStatusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
+                                    <View style={[styles.dot, { backgroundColor: "#f59e0b" }]} />
+                                    <Text style={[styles.modalTpStatusText, { color: "#b45309" }]}>Pending Review</Text>
+                                  </View>
+                                ) : isRejected ? (
+                                  <View style={[styles.modalTpStatusBadge, { backgroundColor: "#fef2f2", borderColor: "#fecaca" }]}>
+                                    <MaterialCommunityIcons name="close-circle" size={12} color="#dc2626" />
+                                    <Text style={[styles.modalTpStatusText, { color: "#dc2626" }]}>Rejected</Text>
+                                  </View>
+                                ) : (
+                                  <View style={[styles.modalTpStatusBadge, { backgroundColor: "#fffbeb", borderColor: "#fde68a" }]}>
+                                    <MaterialCommunityIcons name="credit-card-outline" size={12} color="#d97706" />
+                                    <Text style={[styles.modalTpStatusText, { color: "#d97706" }]}>Pending Payment</Text>
+                                  </View>
+                                )}
+                              </View>
+
+                              {/* Driver info row */}
+                              <View style={styles.modalTpDriverRow}>
+                                <View style={styles.modalTpAvatar}>
+                                  <MaterialCommunityIcons name="account" size={22} color="#4f46e5" />
+                                </View>
+                                <View style={{ flex: 1, marginLeft: 10 }}>
+                                  <Text style={styles.modalTpDriverName}>{req.driverDetails?.fullName}</Text>
+                                  <Text style={styles.modalTpDriverMeta}>
+                                    NIC: {req.driverDetails?.nicNumber || "—"} · Tel: {req.driverDetails?.phoneNumber}
+                                  </Text>
+                                  {req.driverDetails?.residentialAddress ? (
+                                    <Text style={styles.modalTpDriverAddress} numberOfLines={1}>
+                                      {req.driverDetails.residentialAddress}
+                                    </Text>
+                                  ) : null}
+                                </View>
+                              </View>
+
+                              {/* Action / Termination Notice */}
+                              {isApproved && (
+                                <View style={styles.modalTpActionRow}>
+                                  <View style={{ flex: 1 }}>
+                                    <Text style={styles.modalTpPassNote}>
+                                      ✓ Digital pass active & mobile access granted.
+                                    </Text>
+                                  </View>
+                                  <TouchableOpacity
+                                    style={styles.modalTpTerminateBtn}
+                                    onPress={() => handleOpenTerminateModal(req)}
+                                    activeOpacity={0.8}
+                                  >
+                                    <MaterialCommunityIcons name="account-remove-outline" size={14} color="#dc2626" />
+                                    <Text style={styles.modalTpTerminateBtnText}>Terminate Driver</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              )}
+
+                              {isPendingTerm && (
+                                <View style={styles.modalTpPendingTermNotice}>
+                                  <MaterialCommunityIcons name="clock-alert-outline" size={14} color="#e11d48" />
+                                  <Text style={styles.modalTpPendingTermText}>
+                                    Termination request submitted to branch. Reason: "{req.terminationRequest?.reason || "Owner request"}"
+                                  </Text>
+                                </View>
+                              )}
+
+                              {isTerminated && (
+                                <View style={styles.modalTpTerminatedNotice}>
+                                  <MaterialCommunityIcons name="shield-lock-outline" size={14} color="#64748b" />
+                                  <Text style={styles.modalTpTerminatedText}>
+                                    Driver access permanently revoked by branch office.
+                                  </Text>
+                                </View>
+                              )}
+
+                              {req.status === "Pending Payment" && (
+                                <TouchableOpacity
+                                  style={styles.modalTpPayBtn}
+                                  onPress={() => handleResumeThirdPartyPayment(req._id, req.requestReference)}
+                                  activeOpacity={0.85}
+                                >
+                                  <MaterialCommunityIcons name="credit-card-outline" size={14} color="#ffffff" />
+                                  <Text style={styles.modalTpPayBtnText}>Complete LKR 300 Registration Payment</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })()}
                 </View>
 
                 {/* ── REAL-TIME POLICY RENEWAL SECTION ── */}
@@ -3040,7 +3412,440 @@ const styles: any = StyleSheet.create({
   statNum: { fontSize: 20, fontWeight: "900", color: "#0f172a", lineHeight: 22 },
   statLabel: { fontSize: 10, color: "#94a3b8", fontWeight: "700", textTransform: "uppercase" },
 
+  /* ── MODAL THIRD PARTY DRIVER SECTION STYLES ── */
+  modalTpSection: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    marginBottom: 16,
+  },
+  modalTpSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  modalTpSectionTitle: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  modalTpAddBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#4f46e5",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  modalTpAddBtnText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "800",
+  },
+  modalTpEmptyCard: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
+    borderStyle: "dashed",
+  },
+  modalTpEmptyTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#334155",
+    marginTop: 6,
+  },
+  modalTpEmptyDesc: {
+    fontSize: 11,
+    color: "#64748b",
+    textAlign: "center",
+    lineHeight: 16,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  modalTpEmptyActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#eef2ff",
+    borderWidth: 1,
+    borderColor: "#c7d2fe",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  modalTpEmptyActionBtnText: {
+    color: "#4338ca",
+    fontSize: 11.5,
+    fontWeight: "700",
+  },
+  modalTpDriverCard: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  modalTpCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  modalTpRefBadge: {
+    backgroundColor: "#e2e8f0",
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  modalTpRefText: {
+    fontSize: 10,
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    color: "#475569",
+    fontWeight: "700",
+  },
+  modalTpStatusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 2.5,
+    borderRadius: 99,
+    borderWidth: 1,
+  },
+  modalTpStatusText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+  },
+  modalTpDriverRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  modalTpAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#eef2ff",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalTpDriverName: {
+    fontSize: 13.5,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  modalTpDriverMeta: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 1,
+  },
+  modalTpDriverAddress: {
+    fontSize: 10.5,
+    color: "#94a3b8",
+    marginTop: 1,
+  },
+  modalTpActionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingTop: 8,
+    marginTop: 4,
+    gap: 8,
+  },
+  modalTpPassNote: {
+    fontSize: 10.5,
+    color: "#059669",
+    fontWeight: "600",
+  },
+  modalTpTerminateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  modalTpTerminateBtnText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#dc2626",
+  },
+  modalTpPendingTermNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#fff1f2",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#fecdd3",
+    padding: 8,
+    marginTop: 6,
+  },
+  modalTpPendingTermText: {
+    flex: 1,
+    fontSize: 10.5,
+    color: "#e11d48",
+    lineHeight: 14,
+  },
+  modalTpTerminatedNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#f1f5f9",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 8,
+    marginTop: 6,
+  },
+  modalTpTerminatedText: {
+    flex: 1,
+    fontSize: 10.5,
+    color: "#64748b",
+    lineHeight: 14,
+  },
+  modalTpPayBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#d97706",
+    paddingVertical: 7,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  modalTpPayBtnText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "800",
+  },
   /* Vehicle Cards */
+  /* ── REDESIGNED CLEAN VEHICLE CARD STYLES ── */
+  cardTopRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  vehicleTitleBlock: {
+    flex: 1,
+    marginRight: 8,
+  },
+  vehicleMakeModel: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#0f172a",
+    letterSpacing: -0.2,
+  },
+  vehicleSubMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
+  },
+  vehicleTypeTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
+  vehicleTypeTagText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+  },
+  vehicleYearText: {
+    fontSize: 12,
+    color: "#64748b",
+    fontWeight: "600",
+  },
+  statusBadgeWrapper: {
+    alignItems: "flex-end",
+  },
+  plateAndDriverRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    backgroundColor: "#f8fafc",
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
+    marginBottom: 12,
+  },
+  cleanPlateContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#0B192C",
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#1e293b",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  cleanPlateStripe: {
+    backgroundColor: "#0284c7",
+    paddingHorizontal: 6,
+    paddingVertical: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cleanPlateStripeText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.5,
+  },
+  cleanPlateNumber: {
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    color: "#ffffff",
+    fontSize: 13.5,
+    fontWeight: "800",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    letterSpacing: 1,
+  },
+  cleanAssignedDriverTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#ecfdf5",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#a7f3d0",
+    maxWidth: "52%",
+  },
+  cleanAssignedDriverText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#065f46",
+  },
+  cleanSelfDrivenTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#ffffff",
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+  cleanSelfDrivenText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#64748b",
+  },
+  cleanSpecsCard: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "#f1f5f9",
+    marginBottom: 12,
+  },
+  cleanSpecRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 7,
+  },
+  cleanSpecDivider: {
+    height: 1,
+    backgroundColor: "#edf2f7",
+  },
+  cleanSpecKey: {
+    fontSize: 11.5,
+    color: "#64748b",
+    fontWeight: "600",
+  },
+  cleanSpecValue: {
+    fontSize: 12,
+    color: "#0f172a",
+    fontWeight: "800",
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+  },
+  cleanActionGrid: {
+    gap: 8,
+  },
+  cleanActionRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  cleanActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    height: 40,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 6,
+  },
+  cleanDetailsBtn: {
+    backgroundColor: "#f8fafc",
+    borderColor: "#e2e8f0",
+  },
+  cleanDetailsBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#334155",
+  },
+  cleanDriverBtn: {
+    backgroundColor: "#eef2ff",
+    borderColor: "#e0e7ff",
+  },
+  cleanDriverBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#4338ca",
+  },
+  cleanCoverBtn: {
+    backgroundColor: "#ecfdf5",
+    borderColor: "#d1fae5",
+  },
+  cleanCoverBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#047857",
+  },
+  cleanClaimBtn: {
+    backgroundColor: "#fef2f2",
+    borderColor: "#fecaca",
+  },
+  cleanClaimBtnText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#dc2626",
+  },
+  vehicleCardAlert: {
+    borderColor: "#fecaca",
+    shadowColor: "#ef4444",
+    shadowOpacity: 0.08,
+  },
   vehicleCard: {
     backgroundColor: "#ffffff",
     borderRadius: 24,
@@ -4553,6 +5358,126 @@ const styles: any = StyleSheet.create({
     fontSize: 13.5,
     color: "#0f172a",
     fontWeight: "600",
+  },
+
+  tpDocSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  tpDocCountPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: "#f0f9ff",
+    borderWidth: 1,
+    borderColor: "#bae6fd",
+  },
+  tpDocCountText: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#0369a1",
+  },
+  tpDocGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    rowGap: 12,
+  },
+  tpDocGridItem: {
+    width: "48%",
+  },
+  tpDocItemTitle: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    color: "#334155",
+    marginBottom: 6,
+  },
+  tpDocCard: {
+    height: 124,
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderColor: "#cbd5e1",
+    borderRadius: 14,
+    backgroundColor: "#f8fafc",
+    overflow: "hidden",
+    position: "relative",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tpDocCardUploaded: {
+    borderStyle: "solid",
+    borderColor: "#0284c7",
+    backgroundColor: "#0f172a",
+  },
+  tpDocPreviewContainer: {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+  },
+  tpDocPreviewImage: {
+    width: "100%",
+    height: "100%",
+    resizeMode: "cover",
+  },
+  tpDocDeleteBtn: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: "rgba(220, 38, 38, 0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 10,
+  },
+  tpDocStatusBadge: {
+    position: "absolute",
+    bottom: 6,
+    left: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 6,
+    backgroundColor: "rgba(16, 185, 129, 0.95)",
+  },
+  tpDocStatusBadgeText: {
+    fontSize: 9.5,
+    fontWeight: "700",
+    color: "#ffffff",
+  },
+  tpDocEmptyPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 6,
+  },
+  tpDocIconCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#e0f2fe",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6,
+  },
+  tpDocUploadLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#0f172a",
+    textAlign: "center",
+  },
+  tpDocUploadSub: {
+    fontSize: 9.5,
+    color: "#94a3b8",
+    marginTop: 1,
+    textAlign: "center",
   },
 
   tpUploadBox: {
