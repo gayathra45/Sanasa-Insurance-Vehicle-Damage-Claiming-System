@@ -14,10 +14,6 @@
   <a href="https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/9159f4c0-c72a-47eb-8221-48521d8c8de5" target="_blank">
     <img src="https://img.shields.io/badge/📲_DOWNLOAD_ANDROID_APK-10b981?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
   </a>
-  &nbsp;
-  <a href="tel:0725575575">
-    <img src="https://img.shields.io/badge/📞_24%2F7_HOTLINE-0725_575_575-3b82f6?style=for-the-badge" alt="24/7 Hotline" />
-  </a>
 </p>
 
 <!-- Live Status & Standards Strip -->
