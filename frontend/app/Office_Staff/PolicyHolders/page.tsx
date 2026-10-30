@@ -25,7 +25,13 @@ import {
   ViewIcon,
   Loading03Icon,
   Add01Icon,
-  Edit02Icon
+  Edit02Icon,
+  Copy01Icon,
+  CreditCardIcon,
+  UserCheck01Icon,
+  UserGroupIcon,
+  AlertCircleIcon,
+  Download01Icon
 } from "@hugeicons/core-free-icons";
 
 interface Vehicle {
@@ -189,11 +195,32 @@ export default function OfficeStaffPolicyHolders() {
   const [searchScope, setSearchScope] = useState<"branch" | "islandwide">("branch");
   const [statusFilter, setStatusFilter] = useState<"all" | "Approved" | "Pending">("all");
 
+  // Staff user info
+  const [staffInfo, setStaffInfo] = useState<any>(null);
+
   // View Details Modal state
   const [selectedHolder, setSelectedHolder] = useState<PolicyHolder | null>(null);
   const [holderClaims, setHolderClaims] = useState<ClaimRecord[]>([]);
   const [loadingClaims, setLoadingClaims] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "vehicles" | "bank" | "documents" | "claims">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "vehicles" | "bank" | "documents" | "claims" | "thirdparty">("overview");
+
+  // Third-party drivers state for selected policyholder
+  const [holderThirdParty, setHolderThirdParty] = useState<any[]>([]);
+  const [loadingThirdParty, setLoadingThirdParty] = useState(false);
+  const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  // Third-party action dialog states
+  const [actionThirdPartyReq, setActionThirdPartyReq] = useState<any | null>(null);
+  const [showApproveConfirmModal, setShowApproveConfirmModal] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [showRevokeConfirmModal, setShowRevokeConfirmModal] = useState(false);
+  const [showApproveTerminationModal, setShowApproveTerminationModal] = useState(false);
+  const [terminationApproveNotes, setTerminationApproveNotes] = useState("");
+  const [showRejectTerminationModal, setShowRejectTerminationModal] = useState(false);
+  const [terminationRejectReason, setTerminationRejectReason] = useState("");
+  const [submittingAction, setSubmittingAction] = useState(false);
+  const [viewingDossierReq, setViewingDossierReq] = useState<any | null>(null);
 
   // Add New Vehicle Modal state
   const [showAddVehicleModal, setShowAddVehicleModal] = useState(false);
@@ -372,12 +399,245 @@ export default function OfficeStaffPolicyHolders() {
   // Document Lightbox Preview state (string URL or title + url object)
   const [previewImage, setPreviewImage] = useState<{ url: string; title: string } | null>(null);
 
+  // Load third-party drivers for selected policyholder
+  const loadHolderThirdParty = async (nic: string) => {
+    if (!nic) return;
+    try {
+      setLoadingThirdParty(true);
+      const res = await fetch(`${API_URL}/third-party/my-requests?nic=${encodeURIComponent(nic)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setHolderThirdParty(data.requests || data.registrations || []);
+      }
+    } catch (err) {
+      console.error("Error loading third party requests:", err);
+    } finally {
+      setLoadingThirdParty(false);
+    }
+  };
+
   // Open details popup
   const handleOpenDetails = (holder: PolicyHolder) => {
     setSelectedHolder(holder);
     setActiveTab("overview");
     setHolderClaims([]);
+    setHolderThirdParty([]);
     loadHolderClaims(holder.nic);
+    loadHolderThirdParty(holder.nic);
+  };
+
+  // Execute approve driver
+  const handleApproveThirdParty = async () => {
+    if (!actionThirdPartyReq) return;
+    if (actionThirdPartyReq.payment?.status !== "Paid") {
+      setCustomPopup({
+        show: true,
+        title: "Payment Required",
+        message: "Cannot approve driver authorization because the registration fee is unpaid. The policyholder must complete payment before branch sign-off.",
+        type: "error"
+      });
+      setShowApproveConfirmModal(false);
+      return;
+    }
+    try {
+      setSubmittingAction(true);
+      const res = await fetch(`${API_URL}/third-party/branch/approve/${actionThirdPartyReq._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffInfo?._id || "",
+          "x-branch": branch || staffInfo?.branch || ""
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to approve driver");
+      setCustomPopup({
+        show: true,
+        title: "Driver Approved",
+        message: data.message || "Third-party driver has been approved and issued an active digital NFC pass.",
+        type: "success"
+      });
+      setShowApproveConfirmModal(false);
+      setActionThirdPartyReq(null);
+      if (selectedHolder) loadHolderThirdParty(selectedHolder.nic);
+    } catch (err: any) {
+      setCustomPopup({
+        show: true,
+        title: "Approval Error",
+        message: err.message || "Could not approve driver.",
+        type: "error"
+      });
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
+  // Execute reject driver
+  const handleRejectThirdParty = async () => {
+    if (!actionThirdPartyReq) return;
+    if (!rejectReason.trim()) {
+      setCustomPopup({
+        show: true,
+        title: "Reason Required",
+        message: "Please enter a valid reason for rejecting this authorization request.",
+        type: "error"
+      });
+      return;
+    }
+    try {
+      setSubmittingAction(true);
+      const res = await fetch(`${API_URL}/third-party/branch/reject/${actionThirdPartyReq._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffInfo?._id || "",
+          "x-branch": branch || staffInfo?.branch || ""
+        },
+        body: JSON.stringify({ rejectionReason: rejectReason.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reject driver");
+      setCustomPopup({
+        show: true,
+        title: "Request Rejected",
+        message: "Third-party driver authorization request has been rejected.",
+        type: "success"
+      });
+      setShowRejectModal(false);
+      setRejectReason("");
+      setActionThirdPartyReq(null);
+      if (selectedHolder) loadHolderThirdParty(selectedHolder.nic);
+    } catch (err: any) {
+      setCustomPopup({
+        show: true,
+        title: "Rejection Error",
+        message: err.message || "Could not reject driver.",
+        type: "error"
+      });
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
+  // Execute revoke driver
+  const handleRevokeThirdParty = async () => {
+    if (!actionThirdPartyReq) return;
+    try {
+      setSubmittingAction(true);
+      const res = await fetch(`${API_URL}/third-party/branch/revoke-token/${actionThirdPartyReq._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffInfo?._id || "",
+          "x-branch": branch || staffInfo?.branch || ""
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to revoke token");
+      setCustomPopup({
+        show: true,
+        title: "Pass Revoked",
+        message: "Driver pass has been revoked immediately. Driver access is now blocked.",
+        type: "success"
+      });
+      setShowRevokeConfirmModal(false);
+      setActionThirdPartyReq(null);
+      if (selectedHolder) loadHolderThirdParty(selectedHolder.nic);
+    } catch (err: any) {
+      setCustomPopup({
+        show: true,
+        title: "Revoke Error",
+        message: err.message || "Could not revoke driver pass.",
+        type: "error"
+      });
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
+  // Execute approve termination
+  const handleApproveTermination = async () => {
+    if (!actionThirdPartyReq) return;
+    try {
+      setSubmittingAction(true);
+      const res = await fetch(`${API_URL}/third-party/branch/approve-termination/${actionThirdPartyReq._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffInfo?._id || "",
+          "x-branch": branch || staffInfo?.branch || ""
+        },
+        body: JSON.stringify({ notes: terminationApproveNotes.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to approve termination");
+      setCustomPopup({
+        show: true,
+        title: "Termination Approved",
+        message: data.message || "Third-party driver authorization has been permanently terminated.",
+        type: "success"
+      });
+      setShowApproveTerminationModal(false);
+      setTerminationApproveNotes("");
+      setActionThirdPartyReq(null);
+      if (selectedHolder) loadHolderThirdParty(selectedHolder.nic);
+    } catch (err: any) {
+      setCustomPopup({
+        show: true,
+        title: "Termination Error",
+        message: err.message || "Could not approve termination.",
+        type: "error"
+      });
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
+  // Execute reject termination
+  const handleRejectTermination = async () => {
+    if (!actionThirdPartyReq) return;
+    if (!terminationRejectReason.trim()) {
+      setCustomPopup({
+        show: true,
+        title: "Reason Required",
+        message: "Please enter a reason for declining the policyholder's termination request.",
+        type: "error"
+      });
+      return;
+    }
+    try {
+      setSubmittingAction(true);
+      const res = await fetch(`${API_URL}/third-party/branch/reject-termination/${actionThirdPartyReq._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-staff-id": staffInfo?._id || "",
+          "x-branch": branch || staffInfo?.branch || ""
+        },
+        body: JSON.stringify({ reason: terminationRejectReason.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to reject termination");
+      setCustomPopup({
+        show: true,
+        title: "Termination Declined",
+        message: "The termination request has been rejected. Driver remains authorized.",
+        type: "success"
+      });
+      setShowRejectTerminationModal(false);
+      setTerminationRejectReason("");
+      setActionThirdPartyReq(null);
+      if (selectedHolder) loadHolderThirdParty(selectedHolder.nic);
+    } catch (err: any) {
+      setCustomPopup({
+        show: true,
+        title: "Error",
+        message: err.message || "Could not process termination rejection.",
+        type: "error"
+      });
+    } finally {
+      setSubmittingAction(false);
+    }
   };
 
   // Handle Add Vehicle Submit
@@ -733,6 +993,7 @@ export default function OfficeStaffPolicyHolders() {
         if (staffObj && staffObj.branch) {
           currentBranch = staffObj.branch;
           setBranch(currentBranch);
+          setStaffInfo(staffObj);
         } else {
           router.push("/Login");
           return;
@@ -1215,7 +1476,8 @@ export default function OfficeStaffPolicyHolders() {
                     ? Object.values(selectedHolder.documents).filter(Boolean).length
                     : 0
                 },
-                { id: "claims", label: "Claims History", count: holderClaims.length }
+                { id: "claims", label: "Claims History", count: holderClaims.length },
+                { id: "thirdparty", label: "Third-Party Drivers", count: holderThirdParty.length }
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -1638,6 +1900,325 @@ export default function OfficeStaffPolicyHolders() {
                           </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* TAB 6: THIRD-PARTY SECONDARY DRIVERS & OPERATIONAL FUNCTIONS */}
+              {activeTab === "thirdparty" && (
+                <div className="space-y-4 select-none">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-100 flex-wrap gap-2">
+                    <div>
+                      <h3 className="font-semibold text-slate-800 text-xs tracking-wide uppercase text-amber-500">
+                        Authorized Third-Party Secondary Drivers ({holderThirdParty.length})
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
+                        External drivers authorized by this policyholder to operate insured vehicles with digital NFC passes.
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                      Branch: {selectedHolder.branch || branch}
+                    </span>
+                  </div>
+
+                  {loadingThirdParty ? (
+                    <div className="py-12 text-center">
+                      <HugeiconsIcon icon={Loading03Icon} className="w-6 h-6 animate-spin mx-auto text-blue-600 mb-2" strokeWidth={2} />
+                      <p className="text-xs text-slate-500 font-semibold">Loading third-party drivers...</p>
+                    </div>
+                  ) : holderThirdParty.length === 0 ? (
+                    <div className="border border-slate-200 border-dashed rounded-2xl p-10 text-center text-slate-400 italic text-sm bg-slate-50/50">
+                      <HugeiconsIcon icon={UserCheck01Icon} className="w-10 h-10 mx-auto text-slate-300 mb-2" strokeWidth={1.5} />
+                      <p className="font-semibold text-slate-600 text-xs">No Third-Party Users Registered</p>
+                      <p className="text-xs text-slate-400 mt-1">
+                        This policyholder has not delegated any vehicle operation permissions to secondary drivers.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {holderThirdParty.map((tp, tpIdx) => {
+                        const isApproved = tp.status === "Approved";
+                        const isPaid = tp.payment?.status === "Paid";
+                        const isPending = tp.status === "Pending Branch Approval";
+                        const isPendingTerm = tp.status === "Pending Termination Approval";
+                        const isTerminated = tp.status === "Terminated";
+                        const isRejected = tp.status === "Rejected";
+                        const docs = tp.driverDetails?.documents || {};
+
+                        return (
+                          <div
+                            key={tp._id || tpIdx}
+                            className={`p-5 rounded-2xl border bg-white shadow-xs space-y-3.5 border-l-[6px] transition-all ${
+                              isApproved
+                                ? "border-l-emerald-500 border-slate-200"
+                                : isPending
+                                ? "border-l-amber-500 border-amber-200 bg-amber-50/10"
+                                : isPendingTerm
+                                ? "border-l-purple-500 border-purple-200 bg-purple-50/10"
+                                : isTerminated
+                                ? "border-l-slate-400 border-slate-200 opacity-90"
+                                : isRejected
+                                ? "border-l-red-500 border-red-200"
+                                : "border-l-blue-500 border-slate-200"
+                            }`}
+                          >
+                            {/* Header row */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                              <div>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h4 className="font-bold text-slate-900 text-sm">
+                                    {tp.driverDetails?.fullName || "Authorized Driver"}
+                                  </h4>
+                                  <span className="font-mono text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                                    {tp.requestReference || `TPR-${String(tpIdx + 1).padStart(4, "0")}`}
+                                  </span>
+                                </div>
+                                <span className="text-[11px] text-slate-500 font-medium mt-0.5 block">
+                                  Branch: <strong className="text-slate-700">{tp.branch || selectedHolder.branch}</strong> • Requested: {tp.createdAt ? formatDate(tp.createdAt) : "-"}
+                                </span>
+                              </div>
+
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span
+                                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                                    isPaid ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"
+                                  }`}
+                                >
+                                  LKR {tp.fee || 300} ({isPaid ? "Paid" : "Unpaid"})
+                                </span>
+                                <span
+                                  className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                                    isApproved
+                                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                      : isPending
+                                      ? "bg-amber-50 text-amber-700 border-amber-200"
+                                      : isPendingTerm
+                                      ? "bg-purple-50 text-purple-700 border-purple-200"
+                                      : isTerminated
+                                      ? "bg-slate-100 text-slate-600 border-slate-200"
+                                      : isRejected
+                                      ? "bg-red-50 text-red-700 border-red-200"
+                                      : "bg-blue-50 text-blue-700 border-blue-200"
+                                  }`}
+                                >
+                                  {tp.status}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Driver Profile Info */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                              <div>
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block">NIC / Identity</span>
+                                <span className="font-mono font-semibold text-slate-800">{tp.driverDetails?.nicNumber || "Not Provided"}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Phone Number</span>
+                                <span className="font-mono font-semibold text-slate-800">{tp.driverDetails?.phoneNumber || "-"}</span>
+                              </div>
+                              <div>
+                                <span className="text-[10px] uppercase font-bold text-slate-400 block">Residential Address</span>
+                                <span className="text-slate-700 font-medium truncate block">{tp.driverDetails?.residentialAddress || "-"}</span>
+                              </div>
+                            </div>
+
+                            {/* Authorized Vehicles */}
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+                                Permitted Vehicles ({(tp.selectedVehicles || []).length})
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {(tp.selectedVehicles || []).map((v: any, vIdx: number) => (
+                                  <span
+                                    key={vIdx}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-800 font-mono text-xs font-bold"
+                                  >
+                                    <HugeiconsIcon icon={Car01Icon} className="w-3.5 h-3.5 text-blue-600" />
+                                    <span>{v.numberPlate}</span>
+                                    {v.model && <span className="text-[10px] text-slate-400 font-sans font-normal">({v.model})</span>}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Digital NFC Pass & KYC Verification */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                              {tp.secureAccess?.accessUrl ? (
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => {
+                                      if (typeof navigator !== "undefined" && tp.secureAccess?.accessUrl) {
+                                        navigator.clipboard.writeText(tp.secureAccess.accessUrl);
+                                        setCopiedToken(tp._id);
+                                        setTimeout(() => setCopiedToken(null), 3000);
+                                      }
+                                    }}
+                                    className="px-3 py-1.5 bg-[#000080] hover:bg-[#102A43] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer border-none shadow-2xs"
+                                  >
+                                    <HugeiconsIcon icon={copiedToken === tp._id ? CheckmarkCircle01Icon : Copy01Icon} className="w-3.5 h-3.5" />
+                                    <span>{copiedToken === tp._id ? "Copied Link!" : "Copy NFC Pass Link"}</span>
+                                  </button>
+                                  <span className="text-[10px] font-mono text-slate-400 truncate max-w-[200px]">
+                                    {tp.secureAccess.accessUrl}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-slate-400 italic">
+                                  NFC pass generated upon branch approval.
+                                </span>
+                              )}
+
+                              {/* KYC Documents Lightbox Previews */}
+                              {(docs.nicFront || docs.nicBack || docs.drivingLicenceFront) && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">KYC:</span>
+                                  {docs.nicFront && (
+                                    <button
+                                      onClick={() => setPreviewImage({ url: getFullImageUrl(docs.nicFront), title: `${tp.driverDetails?.fullName || "Driver"} - NIC Front` })}
+                                      className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer transition-colors border border-slate-200"
+                                    >
+                                      NIC Front
+                                    </button>
+                                  )}
+                                  {docs.nicBack && (
+                                    <button
+                                      onClick={() => setPreviewImage({ url: getFullImageUrl(docs.nicBack), title: `${tp.driverDetails?.fullName || "Driver"} - NIC Back` })}
+                                      className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer transition-colors border border-slate-200"
+                                    >
+                                      NIC Back
+                                    </button>
+                                  )}
+                                  {docs.drivingLicenceFront && (
+                                    <button
+                                      onClick={() => setPreviewImage({ url: getFullImageUrl(docs.drivingLicenceFront), title: `${tp.driverDetails?.fullName || "Driver"} - Driving License` })}
+                                      className="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[10px] font-bold cursor-pointer transition-colors border border-blue-200"
+                                    >
+                                      Driving License
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Termination / Rejection Notes Display */}
+                            {tp.terminationRequest?.reason && (
+                              <div className="p-3 bg-purple-50/70 rounded-xl border border-purple-200 text-xs">
+                                <span className="font-bold text-purple-900 block mb-0.5">Policyholder Termination Request:</span>
+                                <span className="text-purple-800">{tp.terminationRequest.reason}</span>
+                                {tp.terminationRequest.branchNotes && (
+                                  <div className="mt-1 pt-1 border-t border-purple-200 text-purple-700 font-medium">
+                                    Branch Review: {tp.terminationRequest.branchNotes}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {tp.branchReview?.rejectionReason && (
+                              <div className="p-3 bg-red-50 rounded-xl border border-red-200 text-xs">
+                                <span className="font-bold text-red-900 block mb-0.5">Branch Rejection Reason:</span>
+                                <span className="text-red-800">{tp.branchReview.rejectionReason}</span>
+                                {tp.branchReview.reviewedBy && (
+                                  <span className="text-[10px] text-red-500 block mt-1">
+                                    Reviewed by: {tp.branchReview.reviewedBy} ({formatDate(tp.branchReview.reviewedAt)})
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
+                            {/* OPERATIONAL ACTION BUTTONS FOR BRANCH / OFFICE STAFF */}
+                            <div className="pt-3 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setViewingDossierReq(tp)}
+                                  className="px-3 py-1.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-2xs"
+                                >
+                                  <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-500" />
+                                  <span>Driver Dossier</span>
+                                </button>
+                              </div>
+
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {/* PENDING BRANCH APPROVAL ACTIONS */}
+                                {isPending && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActionThirdPartyReq(tp);
+                                        setRejectReason("");
+                                        setShowRejectModal(true);
+                                      }}
+                                      className="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5"
+                                    >
+                                      <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                                      <span>Reject</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActionThirdPartyReq(tp);
+                                        setShowApproveConfirmModal(true);
+                                      }}
+                                      className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-xs"
+                                    >
+                                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+                                      <span>Approve Driver</span>
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* PENDING TERMINATION APPROVAL ACTIONS */}
+                                {isPendingTerm && (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActionThirdPartyReq(tp);
+                                        setTerminationRejectReason("");
+                                        setShowRejectTerminationModal(true);
+                                      }}
+                                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold cursor-pointer transition-all"
+                                    >
+                                      Reject Termination
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setActionThirdPartyReq(tp);
+                                        setTerminationApproveNotes("");
+                                        setShowApproveTerminationModal(true);
+                                      }}
+                                      className="px-4 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5 shadow-xs"
+                                    >
+                                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+                                      <span>Confirm Termination</span>
+                                    </button>
+                                  </>
+                                )}
+
+                                {/* APPROVED ACTIVE DRIVER ACTIONS */}
+                                {isApproved && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setActionThirdPartyReq(tp);
+                                      setShowRevokeConfirmModal(true);
+                                    }}
+                                    className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded-xl text-xs font-bold cursor-pointer transition-all flex items-center gap-1.5"
+                                  >
+                                    <HugeiconsIcon icon={Alert02Icon} className="w-3.5 h-3.5" />
+                                    <span>Revoke Pass</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -2703,6 +3284,429 @@ export default function OfficeStaffPolicyHolders() {
                 className="px-6 py-2 bg-[#000080] hover:bg-[#000066] active:scale-95 text-white rounded-full text-xs font-semibold shadow-md transition-all cursor-pointer border-none"
               >
                 OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* Third Party Action Modals                                */}
+      {/* ======================================================== */}
+
+      {/* 1. Approve Driver Confirmation Modal */}
+      {showApproveConfirmModal && actionThirdPartyReq && (
+        <div className="fixed inset-0 z-999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 p-6 space-y-4 text-left">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Approve Third-Party Driver</h3>
+                <p className="text-xs text-slate-500">Sign off and issue active digital NFC credentials.</p>
+              </div>
+            </div>
+
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100 text-xs space-y-1.5">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Driver Name:</span>
+                <strong className="text-slate-800">{actionThirdPartyReq.driverDetails?.fullName}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">NIC Number:</span>
+                <strong className="font-mono text-slate-800">{actionThirdPartyReq.driverDetails?.nicNumber}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Policyholder:</span>
+                <strong className="text-slate-800">{actionThirdPartyReq.policyHolderName}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Payment Status:</span>
+                <span className={`font-bold ${actionThirdPartyReq.payment?.status === "Paid" ? "text-emerald-600" : "text-amber-600"}`}>
+                  {actionThirdPartyReq.payment?.status} (LKR {actionThirdPartyReq.fee || 300})
+                </span>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Upon approval, the system will generate a secure cryptographically verified token and send SMS notifications with digital pass access link to both the driver and vehicle owner.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowApproveConfirmModal(false);
+                  setActionThirdPartyReq(null);
+                }}
+                disabled={submittingAction}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer border-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveThirdParty}
+                disabled={submittingAction}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+              >
+                {submittingAction && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                <span>Confirm & Approve</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Reject Driver Request Modal */}
+      {showRejectModal && actionThirdPartyReq && (
+        <div className="fixed inset-0 z-999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 p-6 space-y-4 text-left">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Reject Driver Request</h3>
+                <p className="text-xs text-slate-500">Provide official branch reason for declining authorization.</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                Rejection Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="e.g. KYC documentation unreadable, invalid driver license class for commercial vehicle..."
+                rows={3}
+                className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-red-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setActionThirdPartyReq(null);
+                }}
+                disabled={submittingAction}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer border-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRejectThirdParty}
+                disabled={submittingAction}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+              >
+                {submittingAction && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                <span>Confirm Rejection</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 3. Revoke Pass Confirmation Modal */}
+      {showRevokeConfirmModal && actionThirdPartyReq && (
+        <div className="fixed inset-0 z-999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 p-6 space-y-4 text-left">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                <HugeiconsIcon icon={Alert02Icon} className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Revoke Driver Pass</h3>
+                <p className="text-xs text-slate-500">Block driver access immediately.</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to revoke the digital NFC driver pass for <strong>{actionThirdPartyReq.driverDetails?.fullName}</strong>?
+              The token will be immediately invalidated and vehicle access will be disabled.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRevokeConfirmModal(false);
+                  setActionThirdPartyReq(null);
+                }}
+                disabled={submittingAction}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer border-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRevokeThirdParty}
+                disabled={submittingAction}
+                className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+              >
+                {submittingAction && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                <span>Revoke Pass</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. Approve Termination Modal */}
+      {showApproveTerminationModal && actionThirdPartyReq && (
+        <div className="fixed inset-0 z-999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 p-6 space-y-4 text-left">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Approve Driver Termination</h3>
+                <p className="text-xs text-slate-500">Confirm owner termination request and permanently cancel pass.</p>
+              </div>
+            </div>
+
+            <div className="bg-purple-50/70 p-3 rounded-2xl border border-purple-200 text-xs">
+              <span className="font-bold text-purple-900 block mb-1">Owner Reason:</span>
+              <p className="text-purple-800">{actionThirdPartyReq.terminationRequest?.reason || "Owner requested removal of authorized driver."}</p>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                Branch Notes (Optional)
+              </label>
+              <input
+                type="text"
+                value={terminationApproveNotes}
+                onChange={(e) => setTerminationApproveNotes(e.target.value)}
+                placeholder="e.g. Verified with policyholder via phone call..."
+                className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-purple-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowApproveTerminationModal(false);
+                  setActionThirdPartyReq(null);
+                }}
+                disabled={submittingAction}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer border-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveTermination}
+                disabled={submittingAction}
+                className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+              >
+                {submittingAction && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                <span>Approve Termination</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. Reject Termination Modal */}
+      {showRejectTerminationModal && actionThirdPartyReq && (
+        <div className="fixed inset-0 z-999 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl border border-slate-200 p-6 space-y-4 text-left">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center shrink-0">
+                <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Decline Termination</h3>
+                <p className="text-xs text-slate-500">Keep driver authorization active.</p>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                Decline Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={terminationRejectReason}
+                onChange={(e) => setTerminationRejectReason(e.target.value)}
+                placeholder="Reason for keeping driver authorized..."
+                rows={3}
+                className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:outline-none focus:border-slate-500"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRejectTerminationModal(false);
+                  setActionThirdPartyReq(null);
+                }}
+                disabled={submittingAction}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer border-none"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRejectTermination}
+                disabled={submittingAction}
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold cursor-pointer border-none shadow-xs flex items-center gap-1.5"
+              >
+                {submittingAction && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                <span>Decline Termination</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 6. Full Third-Party Driver Case Dossier Modal */}
+      {viewingDossierReq && (
+        <div className="fixed inset-0 z-999 flex items-center justify-center p-3 sm:p-5 bg-slate-950/70 backdrop-blur-md">
+          <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh] text-left">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/80">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                  <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">
+                    Driver Authorization Dossier
+                  </h3>
+                  <p className="text-[11px] font-mono text-slate-500">
+                    Ref: {viewingDossierReq.requestReference || viewingDossierReq._id}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setViewingDossierReq(null)}
+                className="w-8 h-8 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center border-none cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-4 text-xs">
+              {/* Driver Identity */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
+                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Driver Profile</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Full Legal Name:</span>
+                    <strong className="text-slate-800 text-sm">{viewingDossierReq.driverDetails?.fullName}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">National Identity Card (NIC):</span>
+                    <strong className="font-mono text-slate-800">{viewingDossierReq.driverDetails?.nicNumber}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Mobile Telephone:</span>
+                    <strong className="font-mono text-slate-800">{viewingDossierReq.driverDetails?.phoneNumber}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Residential Address:</span>
+                    <span className="text-slate-700">{viewingDossierReq.driverDetails?.residentialAddress || "-"}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Policyholder & Branch */}
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
+                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Policyholder Delegation</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Insured Owner:</span>
+                    <strong className="text-slate-800">{viewingDossierReq.policyHolderName}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Owner NIC:</span>
+                    <strong className="font-mono text-slate-800">{viewingDossierReq.policyHolderNic}</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Servicing Branch:</span>
+                    <strong className="text-slate-800">{viewingDossierReq.branch} Branch</strong>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Status:</span>
+                    <span className="font-bold text-blue-700">{viewingDossierReq.status}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Permitted Vehicles */}
+              <div>
+                <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Authorized Vehicles</h4>
+                <div className="flex flex-wrap gap-2">
+                  {(viewingDossierReq.selectedVehicles || []).map((v: any, vIdx: number) => (
+                    <div key={vIdx} className="p-3 bg-white border border-slate-200 rounded-xl flex items-center gap-3 shadow-2xs">
+                      <HugeiconsIcon icon={Car01Icon} className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <span className="font-mono font-bold text-slate-900 block">{v.numberPlate}</span>
+                        <span className="text-[10px] text-slate-500">{v.model || v.company || "Insured Vehicle"}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Digital Pass Details */}
+              {viewingDossierReq.secureAccess?.accessUrl && (
+                <div className="p-4 bg-blue-50/70 rounded-2xl border border-blue-200 space-y-2">
+                  <h4 className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Active Digital Pass URL</h4>
+                  <div className="flex items-center gap-2">
+                    <input
+                      readOnly
+                      value={viewingDossierReq.secureAccess.accessUrl}
+                      className="w-full text-xs font-mono p-2.5 bg-white border border-blue-200 rounded-xl text-slate-700"
+                    />
+                    <button
+                      onClick={() => {
+                        if (typeof navigator !== "undefined") {
+                          navigator.clipboard.writeText(viewingDossierReq.secureAccess.accessUrl);
+                          setCustomPopup({
+                            show: true,
+                            title: "Link Copied",
+                            message: "NFC digital pass link copied to clipboard.",
+                            type: "success"
+                          });
+                        }
+                      }}
+                      className="px-3 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold cursor-pointer border-none shadow-2xs shrink-0"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50 flex justify-between items-center">
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.print();
+                  }
+                }}
+                className="px-4 py-2 border border-slate-300 rounded-xl text-xs font-bold text-slate-700 hover:bg-slate-100 cursor-pointer flex items-center gap-1.5"
+              >
+                <HugeiconsIcon icon={Download01Icon} className="w-4 h-4" />
+                <span>Print Dossier</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewingDossierReq(null)}
+                className="px-6 py-2 bg-[#000080] hover:bg-[#102A43] text-white rounded-xl text-xs font-bold cursor-pointer border-none"
+              >
+                Close
               </button>
             </div>
           </div>

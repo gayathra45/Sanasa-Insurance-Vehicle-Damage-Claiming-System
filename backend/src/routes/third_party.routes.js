@@ -33,7 +33,7 @@ const getStripe = () => {
 
 // Helper: build branch regex condition for flexible matching ("Galle" vs "Galle Branch")
 const getBranchCondition = (branchName) => {
-  if (!branchName) return "Galle";
+  if (!branchName || branchName.toLowerCase() === "all") return null;
   const base = branchName.replace(/\s+Branch$/i, "").trim();
   return {
     $in: [
@@ -554,6 +554,13 @@ router.post("/request-termination/:requestId", async (req, res) => {
  */
 const verifyStaffBranch = async (req, res) => {
   const staffId = req.headers["x-staff-id"] || req.query.staffId || req.body?.staffId;
+  const userRole = req.headers["x-user-role"] || req.query.userRole;
+  const branchHeader = req.headers["x-branch"] || req.query.branch;
+
+  if (userRole === "Admin" || (branchHeader && String(branchHeader).toLowerCase() === "all")) {
+    return { _id: "admin", branch: "All", name: "Administrator", role: "Admin" };
+  }
+
   if (staffId) {
     try {
       const staff = await OfficeStaff.findById(staffId).lean();
@@ -565,12 +572,19 @@ const verifyStaffBranch = async (req, res) => {
 
   const branchParam = req.query.branch || req.headers["x-branch"];
   if (branchParam && typeof branchParam === "string" && branchParam.trim()) {
-    return { branch: branchParam.trim(), name: "Branch Staff", role: "Office Staff" };
+    const isAll = branchParam.trim().toLowerCase() === "all";
+    return {
+      _id: isAll ? "admin" : "staff",
+      branch: branchParam.trim(),
+      name: isAll ? "Administrator" : "Branch Staff",
+      role: isAll ? "Admin" : "Office Staff"
+    };
   }
 
   res.status(401).json({ error: "Staff identification or branch required." });
   return null;
 };
+
 
 /**
  * GET /api/third-party/branch/requests
@@ -582,11 +596,11 @@ router.get("/branch/requests", async (req, res) => {
     if (!staff) return;
 
     const { status, search, page = 1, limit = 20, all } = req.query;
-    const branchQuery = getBranchCondition(staff.branch);
+    const branchQuery = getBranchCondition(req.query.branch || staff.branch);
 
-    const query = { branch: branchQuery };
+    const query = branchQuery ? { branch: branchQuery } : {};
 
-    if (status && status !== "all") {
+    if (status && status !== "all" && status !== "All") {
       query.status = status;
     }
 
@@ -596,6 +610,7 @@ router.get("/branch/requests", async (req, res) => {
         { requestReference: new RegExp(q, "i") },
         { "driverDetails.fullName": new RegExp(q, "i") },
         { "driverDetails.phoneNumber": new RegExp(q, "i") },
+        { "driverDetails.nicNumber": new RegExp(q, "i") },
         { policyHolderName: new RegExp(q, "i") },
         { policyHolderNic: new RegExp(q, "i") },
         { "selectedVehicles.numberPlate": new RegExp(q, "i") }
@@ -603,7 +618,7 @@ router.get("/branch/requests", async (req, res) => {
     }
 
     const isAll = all === "true" || limit === "all" || Number(limit) >= 1000;
-    const effectiveLimit = isAll ? 2000 : Number(limit);
+    const effectiveLimit = isAll ? 5000 : Number(limit);
     const skip = isAll ? 0 : (Number(page) - 1) * Number(limit);
 
     const [requests, total] = await Promise.all([
@@ -631,6 +646,64 @@ router.get("/branch/requests", async (req, res) => {
 });
 
 /**
+ * GET /api/third-party/admin/all-requests
+ * Retrieve all third-party registrations across all branches for Admin portal
+ */
+router.get("/admin/all-requests", async (req, res) => {
+  try {
+    const { status, search, branch, page = 1, limit = 50, all } = req.query;
+    const query = {};
+
+    if (branch && branch !== "All" && branch !== "all") {
+      const bCond = getBranchCondition(branch);
+      if (bCond) query.branch = bCond;
+    }
+
+    if (status && status !== "all" && status !== "All") {
+      query.status = status;
+    }
+
+    if (search && search.trim()) {
+      const q = search.trim();
+      query.$or = [
+        { requestReference: new RegExp(q, "i") },
+        { "driverDetails.fullName": new RegExp(q, "i") },
+        { "driverDetails.phoneNumber": new RegExp(q, "i") },
+        { "driverDetails.nicNumber": new RegExp(q, "i") },
+        { policyHolderName: new RegExp(q, "i") },
+        { policyHolderNic: new RegExp(q, "i") },
+        { "selectedVehicles.numberPlate": new RegExp(q, "i") }
+      ];
+    }
+
+    const isAll = all === "true" || limit === "all" || Number(limit) >= 1000;
+    const effectiveLimit = isAll ? 5000 : Number(limit);
+    const skip = isAll ? 0 : (Number(page) - 1) * Number(limit);
+
+    const [requests, total] = await Promise.all([
+      ThirdPartyRegistration.find(query)
+        .select("-secureAccess.tokenHash")
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(effectiveLimit)
+        .lean(),
+      ThirdPartyRegistration.countDocuments(query)
+    ]);
+
+    return res.json({
+      success: true,
+      requests,
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / (isAll ? 1 : Number(limit)))
+    });
+  } catch (err) {
+    console.error("GET /admin/all-requests error:", err);
+    return res.status(500).json({ error: "Failed to fetch third-party registrations." });
+  }
+});
+
+/**
  * GET /api/third-party/branch/request/:requestId
  * Get single request details for branch review
  */
@@ -649,7 +722,7 @@ router.get("/branch/request/:requestId", async (req, res) => {
     const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
     const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
 
-    if (baseStaffBranch !== baseReqBranch) {
+    if (baseStaffBranch !== "all" && baseStaffBranch !== baseReqBranch) {
       return res.status(403).json({
         error: "Forbidden: You are not authorized to view requests from another branch."
       });
@@ -687,7 +760,7 @@ router.get("/branch/driver-activities/:requestId", async (req, res) => {
     // Strict Branch Isolation check
     const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
     const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
-    if (baseStaffBranch !== baseReqBranch) {
+    if (baseStaffBranch !== "all" && baseStaffBranch !== baseReqBranch) {
       return res.status(403).json({
         error: "Forbidden: You are not authorized to view activities from another branch."
       });
@@ -883,7 +956,7 @@ router.post("/branch/approve/:requestId", async (req, res) => {
     // Branch Isolation
     const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
     const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
-    if (baseStaffBranch !== baseReqBranch) {
+    if (baseStaffBranch !== "all" && baseStaffBranch !== baseReqBranch) {
       return res.status(403).json({ error: "Forbidden: Branch mismatch." });
     }
 
@@ -993,7 +1066,7 @@ router.post("/branch/reject/:requestId", async (req, res) => {
     // Branch Isolation
     const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
     const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
-    if (baseStaffBranch !== baseReqBranch) {
+    if (baseStaffBranch !== "all" && baseStaffBranch !== baseReqBranch) {
       return res.status(403).json({ error: "Forbidden: Branch mismatch." });
     }
 
@@ -1075,7 +1148,7 @@ router.post("/branch/revoke-token/:requestId", async (req, res) => {
     // Branch Isolation
     const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
     const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
-    if (baseStaffBranch !== baseReqBranch) {
+    if (baseStaffBranch !== "all" && baseStaffBranch !== baseReqBranch) {
       return res.status(403).json({ error: "Forbidden: Branch mismatch." });
     }
 
@@ -1116,7 +1189,7 @@ router.post("/branch/approve-termination/:requestId", async (req, res) => {
     // Branch Isolation
     const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
     const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
-    if (baseStaffBranch !== baseReqBranch) {
+    if (baseStaffBranch !== "all" && baseStaffBranch !== baseReqBranch) {
       return res.status(403).json({ error: "Forbidden: Branch mismatch." });
     }
 
@@ -1201,7 +1274,7 @@ router.post("/branch/reject-termination/:requestId", async (req, res) => {
     // Branch Isolation
     const baseStaffBranch = (staff.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
     const baseReqBranch = (request.branch || "").replace(/\s+Branch$/i, "").toLowerCase();
-    if (baseStaffBranch !== baseReqBranch) {
+    if (baseStaffBranch !== "all" && baseStaffBranch !== baseReqBranch) {
       return res.status(403).json({ error: "Forbidden: Branch mismatch." });
     }
 
