@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { API_URL } from "@/app/config";
 import OfficeStaffNavbar from "@/app/Components/Office_Staff/Navbar";
@@ -21,42 +21,108 @@ import {
   Cancel01Icon,
   LockIcon,
   Loading03Icon,
-  UserCheck01Icon
+  UserCheck01Icon,
+  Car01Icon,
+  Shield01Icon,
+  RefreshIcon,
+  Search01Icon,
+  ViewIcon,
+  UserGroupIcon,
+  ArrowRight01Icon,
+  Location01Icon,
+  Call02Icon,
+  Mail01Icon,
+  CreditCardIcon,
+  Copy01Icon
 } from "@hugeicons/core-free-icons";
 import { formatSriLankaDateTime } from "@/app/utils/dateFormatter";
 import { getViewedClaims, markClaimAsRead, isClaimUnread, UnreadDot } from "@/app/utils/unreadClaims";
 
 interface RegistrationItem {
+  _id?: string;
   name: string;
+  nic?: string;
+  mobile?: string;
   vehiclesCount: number;
   date: string;
+}
+
+interface ThirdPartyItem {
+  _id: string;
+  requestReference: string;
+  driverName: string;
+  driverNic?: string;
+  policyHolderName: string;
+  plate: string;
+  status: string;
+  paymentStatus: string;
+  fee: number;
+  date: string;
+}
+
+interface AgentItem {
+  _id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  agentId?: string;
+  availability?: string;
+  activeClaimsCount?: number;
 }
 
 // Returns true if the claim has attributes indicating urgent attention is required.
 const checkUrgent = (claim: any) => {
   return (
-    claim.damageType?.toLowerCase().includes("severe") ||
-    claim.description?.toLowerCase().includes("urgent") ||
-    claim.priority?.toLowerCase() === "high" ||
-    claim.priority?.toLowerCase() === "urgent"
+    claim?.damageType?.toLowerCase().includes("severe") ||
+    claim?.damageType?.toLowerCase().includes("major") ||
+    claim?.description?.toLowerCase().includes("urgent") ||
+    claim?.priority?.toLowerCase() === "high" ||
+    claim?.priority?.toLowerCase() === "urgent"
   );
 };
 
 export default function OfficeStaffDashboard() {
   const [branch, setBranch] = useState("Galle");
+  const [staffInfo, setStaffInfo] = useState<any>(null);
   const [stats, setStats] = useState({
     unassignedClaims: 0,
     newRegistrations: 0,
     activeClaims: 0,
     pendingClaims: 0,
+    totalPolicyHolders: 0,
+    totalAgents: 0,
+    pendingVehicleVerifications: 0,
+    thirdParty: {
+      pendingApproval: 0,
+      pendingTermination: 0,
+      approved: 0,
+      total: 0
+    }
   });
-  const [newClaims, setNewClaims] = useState<any[]>([]);
+
+  const [rawClaimsList, setRawClaimsList] = useState<any[]>([]);
   const [newRegistrations, setNewRegistrations] = useState<RegistrationItem[]>([]);
+  const [recentThirdParty, setRecentThirdParty] = useState<ThirdPartyItem[]>([]);
+  const [branchAgents, setBranchAgents] = useState<AgentItem[]>([]);
+
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
-  const [detailedClaim, setDetailedClaim] = useState<any | null>(null);
   const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
+
+  // Filtering & Search
+  const [claimsFilter, setClaimsFilter] = useState<"all" | "unassigned" | "urgent" | "active">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Live time ticker
+  const [currentTime, setCurrentTime] = useState<string>("");
+
+  // Quick Agent Assignment Modal
+  const [claimToAssign, setClaimToAssign] = useState<any | null>(null);
+  const [selectedAgentEmail, setSelectedAgentEmail] = useState("");
+  const [assigningAgent, setAssigningAgent] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   // --- Password Modal States ---
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -69,6 +135,33 @@ export default function OfficeStaffDashboard() {
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
+  const showToast = (text: string, type: "success" | "error" = "success") => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Clock ticker
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(
+        now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) +
+        " • " +
+        now.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })
+      );
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  };
 
   const getPasswordStrength = (pwd: string) => {
     if (!pwd) return { label: "None", color: "bg-slate-200", width: "w-0" };
@@ -119,7 +212,6 @@ export default function OfficeStaffDashboard() {
 
       setPasswordSuccess("Password updated successfully!");
       
-      // Update sessionStorage
       const staffData = sessionStorage.getItem("logged_in_staff");
       if (staffData) {
         const parsed = JSON.parse(staffData);
@@ -139,30 +231,9 @@ export default function OfficeStaffDashboard() {
     }
   };
 
+  // Lock background scroll when modal is open
   useEffect(() => {
-    if (selectedClaim) {
-      const fetchFullClaim = async () => {
-        try {
-          const res = await fetch(`${API_URL}/policy-holder/track-claim?claimNumber=${encodeURIComponent(selectedClaim.claimNumber)}`);
-          if (res.ok) {
-            const data = await res.json();
-            if (data.claim) {
-              setDetailedClaim(data.claim);
-            }
-          }
-        } catch (err) {
-          console.error("Error fetching full claim details for office staff", err);
-        }
-      };
-      fetchFullClaim();
-    } else {
-      setDetailedClaim(null);
-    }
-  }, [selectedClaim]);
-
-  // Lock background scroll when password modal is open
-  useEffect(() => {
-    if (showPasswordModal) {
+    if (showPasswordModal || claimToAssign || selectedClaim) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -170,9 +241,95 @@ export default function OfficeStaffDashboard() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [showPasswordModal]);
+  }, [showPasswordModal, claimToAssign, selectedClaim]);
 
-  // --- Side Effects & API Calls ---
+  // Main fetch function
+  const fetchDashboardData = async (silent = false) => {
+    try {
+      if (!silent) setLoading(true);
+      setRefreshing(true);
+
+      const targetBranch = branch || "Galle";
+      const res = await fetch(`${API_URL}/office-staff/dashboard-stats?branch=${encodeURIComponent(targetBranch)}`);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => null);
+        throw new Error(errData?.error || errData?.message || `Failed to load dashboard metrics (Status: ${res.status})`);
+      }
+      const data = await res.json();
+      if (data.stats) {
+        setStats(data.stats);
+      }
+
+      // Format claims
+      const claimsList = (data.newClaims || []).map((claim: any) => {
+        const isUrgent = checkUrgent(claim);
+        const isThirdParty = !!(claim.submittedByDriver?.isThirdParty && claim.submittedByDriver?.driverName);
+        const applicantName = isThirdParty
+          ? claim.submittedByDriver.driverName
+          : (claim.policyHolderName || "Policyholder");
+        return {
+          id: claim.claimNumber,
+          urgency: isUrgent ? "Urgent" : "Normal",
+          vehicleNo: claim.vehiclePlate,
+          type: claim.damageType,
+          location: claim.location,
+          time: formatSriLankaDateTime(claim.createdAt),
+          isThirdParty,
+          applicantName,
+          status: claim.status,
+          assignedAgent: claim.assignedAgent || "",
+          amount: claim.amount,
+          rawClaim: claim,
+        };
+      });
+      setRawClaimsList(claimsList);
+
+      // Format registrations
+      const formattedRegs = (data.newRegistrations || []).map((user: any) => ({
+        _id: user._id,
+        name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Applicant",
+        nic: user.nic || "",
+        mobile: user.mobile || "",
+        vehiclesCount: Array.isArray(user.vehicles) ? user.vehicles.length : 0,
+        date: user.createdAt
+          ? new Date(user.createdAt).toLocaleDateString("en-GB", { month: "short", day: "numeric" })
+          : "Recently",
+      }));
+      setNewRegistrations(formattedRegs);
+
+      // Format third-party requests
+      if (Array.isArray(data.recentThirdPartyRequests)) {
+        const tpFormatted: ThirdPartyItem[] = data.recentThirdPartyRequests.map((r: any) => ({
+          _id: r._id,
+          requestReference: r.requestReference || `TPR-${r._id.slice(-4)}`,
+          driverName: r.driverDetails?.fullName || "Driver",
+          driverNic: r.driverDetails?.nicNumber || "",
+          policyHolderName: r.policyHolderName || "Policyholder",
+          plate: r.selectedVehicles?.[0]?.numberPlate || "Assigned Vehicle",
+          status: r.status,
+          paymentStatus: r.payment?.status || "Pending Payment",
+          fee: r.fee || 300,
+          date: r.createdAt ? new Date(r.createdAt).toLocaleDateString("en-GB", { month: "short", day: "numeric" }) : ""
+        }));
+        setRecentThirdParty(tpFormatted);
+      }
+
+      // Branch agents
+      if (Array.isArray(data.branchAgents)) {
+        setBranchAgents(data.branchAgents);
+      }
+
+      setError("");
+    } catch (err: any) {
+      console.error("Dashboard stats error:", err);
+      if (!silent) setError(err.message || "Failed to load branch statistics");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Side Effects & Session
   useEffect(() => {
     let currentBranch = "Galle";
     let email = "";
@@ -184,15 +341,10 @@ export default function OfficeStaffDashboard() {
           if (staffObj) {
             if (staffObj.branch) currentBranch = staffObj.branch;
             if (staffObj.email) email = staffObj.email;
+            setStaffInfo(staffObj);
             if (staffObj.mustChangePassword) {
               setShowPasswordModal(true);
             }
-          }
-          if (staffObj && staffObj.email) {
-            setStaffEmail(staffObj.email);
-          }
-          if (staffObj && staffObj.mustChangePassword) {
-            setShowPasswordModal(true);
           }
         } catch (e) {
           console.error("Error parsing logged_in_staff", e);
@@ -203,532 +355,856 @@ export default function OfficeStaffDashboard() {
     setStaffEmail(email);
     setViewedClaims(getViewedClaims("office_staff"));
 
-    async function fetchStats() {
-      try {
-        const res = await fetch(`${API_URL}/office-staff/dashboard-stats?branch=${encodeURIComponent(currentBranch)}`);
-        if (!res.ok) {
-          const errData = await res.json().catch(() => null);
-          throw new Error(errData?.error || errData?.message || `Failed to load dashboard metrics (Status: ${res.status})`);
-        }
-        const data = await res.json();
-        if (data.stats) {
-          setStats(data.stats);
-        }
-
-        // Filter: Hide claims that already have an assigned agent
-        const unassignedClaims = (data.newClaims || []).filter(
-          (c: any) => !c.assignedAgent || c.assignedAgent.trim() === ""
-        );
-
-        // Sort: Urgent claims first, then latest first
-        const sortedClaims = [...unassignedClaims].sort((a: any, b: any) => {
-          const aUrgent = checkUrgent(a);
-          const bUrgent = checkUrgent(b);
-          if (aUrgent && !bUrgent) return -1;
-          if (!aUrgent && bUrgent) return 1;
-          return 0;
-        });
-
-        // Limit to latest 5 claims
-        const latest5Claims = sortedClaims.slice(0, 5);
-
-        const formattedClaims = latest5Claims.map((claim: any) => {
-          const isUrgent = checkUrgent(claim);
-          const isThirdParty = !!(claim.submittedByDriver?.isThirdParty && claim.submittedByDriver?.driverName);
-          const applicantName = isThirdParty
-            ? claim.submittedByDriver.driverName
-            : (claim.policyHolderName || "Policy Holder");
-          return {
-            id: claim.claimNumber,
-            urgency: isUrgent ? "Urgent" : "Normal",
-            vehicleNo: claim.vehiclePlate,
-            vehicleModel: claim.vehiclePlate?.substring(0, 3),
-            type: claim.damageType,
-            location: claim.location,
-            time: formatSriLankaDateTime(claim.createdAt),
-            isThirdParty,
-            applicantName,
-            rawClaim: claim,
-          };
-        });
-        setNewClaims(formattedClaims);
-
-        // Format registrations list from DB
-        const formattedRegs = (data.newRegistrations || []).map((user: any) => ({
-          name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || "Applicant",
-          vehiclesCount: Array.isArray(user.vehicles) ? user.vehicles.length : 0,
-          date: user.createdAt
-            ? new Date(user.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-              })
-            : "Recently",
-        }));
-        setNewRegistrations(formattedRegs);
-        setError(""); // Clear error on successful fetch
-      } catch (err: any) {
-        console.error("Dashboard stats error:", err);
-        setError(err.message || "Failed to load branch statistics");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchStats();
-    const interval = setInterval(fetchStats, 7000);
+    fetchDashboardData();
+    const interval = setInterval(() => fetchDashboardData(true), 8000);
     return () => clearInterval(interval);
-  }, []);
+  }, [branch]);
+
+  // Handle Quick Agent Assignment
+  const handleAssignAgentSubmit = async () => {
+    if (!claimToAssign || !selectedAgentEmail) {
+      showToast("Please choose an agent to assign.", "error");
+      return;
+    }
+    try {
+      setAssigningAgent(true);
+      const res = await fetch(`${API_URL}/office-staff/claims/${encodeURIComponent(claimToAssign.id || claimToAssign.claimNumber)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assignedAgent: selectedAgentEmail,
+          status: "In Progress"
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to assign agent");
+
+      showToast(`Agent assigned successfully to claim #${claimToAssign.id || claimToAssign.claimNumber}!`, "success");
+      setClaimToAssign(null);
+      setSelectedAgentEmail("");
+      fetchDashboardData(true);
+    } catch (err: any) {
+      showToast(err.message || "Failed to assign agent.", "error");
+    } finally {
+      setAssigningAgent(false);
+    }
+  };
+
+  // Filtered Claims Queue
+  const filteredClaims = useMemo(() => {
+    return rawClaimsList.filter((claim) => {
+      // Tab filter
+      if (claimsFilter === "unassigned" && claim.assignedAgent && claim.assignedAgent.trim() !== "") {
+        return false;
+      }
+      if (claimsFilter === "urgent" && claim.urgency !== "Urgent") {
+        return false;
+      }
+      if (claimsFilter === "active" && (claim.status !== "In Progress" && claim.status !== "Investigating")) {
+        return false;
+      }
+
+      // Search query
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      return (
+        claim.id.toLowerCase().includes(q) ||
+        claim.vehicleNo.toLowerCase().includes(q) ||
+        claim.applicantName.toLowerCase().includes(q) ||
+        claim.location.toLowerCase().includes(q) ||
+        claim.type.toLowerCase().includes(q)
+      );
+    });
+  }, [rawClaimsList, claimsFilter, searchQuery]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white font-sans">
-      {/* Sidebar + Main Content Row */}
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
       <div className="flex flex-1 flex-row min-h-0">
-        {/* Left Sidebar */}
+        {/* Sidebar */}
         <OfficeStaffNavbar />
 
-        {/* Right Main Container */}
+        {/* Main Content */}
         <div className="flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden">
           {/* Top Header Bar */}
-          <header className="bg-white border-b border-slate-100 text-slate-800 px-8 py-4 flex justify-between items-center select-none shadow-sm flex-shrink-0 h-[80px] sticky top-0 z-30">
+          <header className="bg-white border-b border-slate-200/80 px-6 lg:px-8 py-3.5 flex justify-between items-center select-none shadow-xs sticky top-0 z-30">
             <div className="flex items-center gap-3">
               <button
                 onClick={() => window.dispatchEvent(new CustomEvent("open-mobile-menu"))}
-                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 active:scale-95 transition-all cursor-pointer focus:outline-none"
+                className="lg:hidden p-2 -ml-2 text-slate-500 hover:text-slate-800 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
               >
-                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2.5} />
+                <HugeiconsIcon icon={Menu01Icon} className="w-6 h-6" strokeWidth={2} />
               </button>
-              <h1 className="text-xl font-semibold text-slate-800 flex items-center gap-2 pl-2 lg:pl-0">
-                <span className="hidden lg:inline">Welcome back, </span>
-                <span className="bg-[#102A43] text-white text-base px-4 py-2 rounded-xl font-semibold shadow-sm tracking-wide">
-                  {branch} Branch
-                </span>
-              </h1>
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <span className="bg-[#0B192C] text-white text-xs px-3 py-1 rounded-xl font-bold tracking-wide shadow-xs flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>{branch} Branch</span>
+                  </span>
+                  <span className="text-xs text-slate-400 hidden sm:inline">•</span>
+                  <span className="text-xs font-semibold text-slate-600 hidden sm:inline">
+                    Operations Command Center
+                  </span>
+                </div>
+                <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight mt-0.5">
+                  {getGreeting()},{" "}
+                  <span className="text-blue-700">
+                    {staffInfo?.name || staffInfo?.firstName || "Branch Officer"}
+                  </span>
+                </h1>
+              </div>
             </div>
-            
-            <div className="flex items-center gap-5">
-              {/* Notification Bell Icon */}
+
+            <div className="flex items-center gap-3 sm:gap-4">
+              {/* Live Clock / Calendar Pill */}
+              <div className="hidden xl:flex items-center gap-2 bg-slate-100/80 px-3.5 py-1.5 rounded-xl border border-slate-200/60 text-xs font-mono font-medium text-slate-600">
+                <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 text-blue-600" />
+                <span>{currentTime || "Live Operations"}</span>
+              </div>
+
+              {/* Refresh Action */}
+              <button
+                onClick={() => fetchDashboardData()}
+                disabled={refreshing}
+                className="p-2 hover:bg-slate-100 text-slate-600 hover:text-slate-900 rounded-xl transition-all border border-slate-200 cursor-pointer disabled:opacity-50 shadow-2xs"
+                title="Refresh Branch Data"
+              >
+                <HugeiconsIcon
+                  icon={RefreshIcon}
+                  className={`w-4 h-4 ${refreshing ? "animate-spin text-blue-600" : ""}`}
+                />
+              </button>
+
               <HeaderNotificationBell href="/Office_Staff/Notifications" />
-              {/* User Avatar Icon & Live Claim Chat Button */}
               <UserAvatarDropdown userType="office_staff" />
             </div>
           </header>
 
-          {/* Page Content Dashboard */}
-          <main className="flex-1 p-4 lg:p-8 bg-white overflow-y-auto">
-            {loading ? (
-              <div className="w-full animate-pulse select-none">
-                {/* 4 Stat Cards Skeleton */}
-                <div className="hidden lg:grid grid-cols-4 gap-6 mb-12">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div
-                      key={i}
-                      className="bg-white rounded-[20px] border border-slate-200 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm gap-2"
-                    >
-                      <div className="h-8 w-12 bg-slate-200 rounded-md"></div>
-                      <div className="h-4 w-28 bg-slate-100 rounded"></div>
-                    </div>
-                  ))}
-                </div>
+          {/* Toast Notification */}
+          {toastMessage && (
+            <div
+              className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border text-xs font-bold flex items-center gap-2 transition-all ${
+                toastMessage.type === "success"
+                  ? "bg-emerald-600 text-white border-emerald-700"
+                  : "bg-red-600 text-white border-red-700"
+              }`}
+            >
+              <HugeiconsIcon
+                icon={toastMessage.type === "success" ? CheckmarkCircle01Icon : Alert02Icon}
+                className="w-4 h-4"
+              />
+              <span>{toastMessage.text}</span>
+            </div>
+          )}
 
-                {/* Lower Grid (New Claims & New Registrations) Skeleton */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-                  {/* Left Col: New Claims Queue Skeleton */}
-                  <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm min-h-[460px]">
-                    <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <div className="h-5 w-32 bg-slate-200 rounded-md"></div>
-                        <div className="h-5 w-8 bg-slate-100 rounded-full"></div>
-                      </div>
-                      <div className="h-4 w-16 bg-slate-100 rounded"></div>
-                    </div>
+          {/* Operations Quick Navigation Ribbon */}
+          <section className="bg-white border-b border-slate-200 px-6 lg:px-8 py-2.5 overflow-x-auto flex items-center gap-2 text-xs">
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">
+              Direct Portals:
+            </span>
+            <Link
+              href="/Office_Staff/Claims"
+              className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
+              <span>Claims Portal ({stats.unassignedClaims} Unassigned)</span>
+            </Link>
+            <Link
+              href="/Office_Staff/Registrations"
+              className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+              <span>Signups ({stats.newRegistrations})</span>
+            </Link>
+            <Link
+              href="/Office_Staff/ThirdParty"
+              className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <HugeiconsIcon icon={Car01Icon} className="w-3.5 h-3.5" />
+              <span>
+                Third-Party Drivers ({stats.thirdParty.pendingApproval + stats.thirdParty.pendingTermination} Requests)
+              </span>
+            </Link>
+            <Link
+              href="/Office_Staff/PolicyHolders"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <HugeiconsIcon icon={UserMultiple02Icon} className="w-3.5 h-3.5" />
+              <span>Policyholders ({stats.totalPolicyHolders})</span>
+            </Link>
+            <Link
+              href="/Office_Staff/Agents"
+              className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold transition-colors flex items-center gap-1.5 shrink-0"
+            >
+              <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5" />
+              <span>Branch Agents ({stats.totalAgents})</span>
+            </Link>
+            <Link
+              href="/Office_Staff/Reports"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors flex items-center gap-1.5 shrink-0 ml-auto"
+            >
+              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+              <span>Analytics & Reports</span>
+            </Link>
+          </section>
 
-                    <div className="space-y-3 py-4 flex-1">
-                      {[1, 2, 3, 4].map((idx) => (
-                        <div
-                          key={idx}
-                          className="bg-slate-50/70 border border-slate-100 rounded-2xl p-4 flex items-center justify-between gap-4"
-                        >
-                          <div className="space-y-1.5 flex-1">
-                            <div className="flex items-center gap-2">
-                              <div className="h-4 w-24 bg-slate-200 rounded"></div>
-                              <div className="h-4 w-14 bg-slate-200 rounded-full"></div>
-                            </div>
-                            <div className="h-3 w-36 bg-slate-200 rounded"></div>
-                          </div>
-                          <div className="h-8 w-20 bg-slate-200 rounded-full"></div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
-                      <div className="h-3 w-28 bg-slate-200 rounded"></div>
-                      <div className="h-3 w-16 bg-slate-200 rounded"></div>
-                    </div>
-                  </div>
-
-                  {/* Right Col: New Registrations Skeleton */}
-                  <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col justify-between shadow-sm min-h-[460px]">
-                    <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <div className="h-5 w-36 bg-slate-200 rounded-md"></div>
-                        <div className="h-5 w-8 bg-slate-100 rounded-full"></div>
-                      </div>
-                      <div className="h-4 w-16 bg-slate-100 rounded"></div>
-                    </div>
-
-                    <div className="space-y-3 py-4 flex-1">
-                      {[1, 2, 3, 4].map((idx) => (
-                        <div
-                          key={idx}
-                          className="bg-slate-50/70 border border-slate-100 rounded-2xl p-4 flex items-center justify-between gap-4"
-                        >
-                          <div className="space-y-1.5 flex-1">
-                            <div className="flex items-center gap-2">
-                              <div className="h-4 w-28 bg-slate-200 rounded"></div>
-                              <div className="h-3.5 w-20 bg-slate-200 rounded"></div>
-                            </div>
-                            <div className="h-3 w-32 bg-slate-200 rounded"></div>
-                          </div>
-                          <div className="h-8 w-20 bg-slate-200 rounded-full"></div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="pt-3 border-t border-slate-100 flex justify-between items-center">
-                      <div className="h-3 w-28 bg-slate-200 rounded"></div>
-                      <div className="h-3 w-16 bg-slate-200 rounded"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : error ? (
-              <div className="w-full h-full flex flex-col items-center justify-center min-h-[300px] text-red-500 font-semibold bg-red-50 rounded-2xl p-8 border border-red-200">
-                <HugeiconsIcon icon={AlertCircleIcon} className="w-10 h-10 mb-2 text-red-500" strokeWidth={2} />
-                <span>{error}</span>
-              </div>
-            ) : (
-              <>
-                {/* 4 Cards Grid - Desktop view */}
-                <div className="hidden lg:grid grid-cols-4 gap-6 mb-12">
-                  {/* Unassigned Claims Card (Red themed) */}
-                  <div className="bg-white rounded-[20px] border border-red-500 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-semibold text-red-500 tracking-tight">
-                      {stats.unassignedClaims}
-                    </span>
-                    <span className="text-red-500 font-semibold text-sm mt-1">Unassigned Claims</span>
-                  </div>
-
-                  {/* New Registrations Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">
-                      {stats.newRegistrations}
-                    </span>
-                    <span className="text-slate-500 font-medium text-sm mt-1">New Registrations</span>
-                  </div>
-
-                  {/* Active Claims Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">
-                      {stats.activeClaims}
-                    </span>
-                    <span className="text-slate-500 font-medium text-sm mt-1">Active Claims</span>
-                  </div>
-
-                  {/* Pending Claims Card */}
-                  <div className="bg-white rounded-[20px] border border-slate-700/80 p-6 flex flex-col items-center justify-center text-center h-[120px] shadow-sm select-none">
-                    <span className="text-3xl font-semibold text-slate-800 tracking-tight">
-                      {stats.pendingClaims}
-                    </span>
-                    <span className="text-slate-500 font-medium text-sm mt-1">Pending Claims</span>
-                  </div>
-                </div>
-
-                {/* 4 Cards Grid - Mobile view */}
-                <div className="grid lg:hidden grid-cols-1 gap-4 mb-8">
-                  {/* Unassigned Claims Card */}
-                  <div className="bg-gradient-to-br from-red-50/50 to-white rounded-[20px] border border-red-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-red-100/60 rounded-xl text-red-600 flex-shrink-0">
-                        <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-600" strokeWidth={2.5} />
-                      </div>
-                      <span className="text-slate-600 font-medium text-xs">Unassigned Claims</span>
-                    </div>
-                    <span className="text-xl font-semibold text-red-600 tracking-tight pr-1 flex-shrink-0">
-                      {stats.unassignedClaims}
-                    </span>
-                  </div>
-
-                  {/* New Registrations Card */}
-                  <div className="bg-gradient-to-br from-blue-50/50 to-white rounded-[20px] border border-blue-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100/60 rounded-xl text-blue-900 flex-shrink-0">
-                        <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 text-blue-900" strokeWidth={2.5} />
-                      </div>
-                      <span className="text-slate-600 font-medium text-xs">New Registrations</span>
-                    </div>
-                    <span className="text-xl font-semibold text-blue-900 tracking-tight pr-1 flex-shrink-0">
-                      {stats.newRegistrations}
-                    </span>
-                  </div>
-
-                  {/* Active Claims Card */}
-                  <div className="bg-gradient-to-br from-emerald-50/50 to-white rounded-[20px] border border-emerald-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-emerald-100/60 rounded-xl text-emerald-800 flex-shrink-0">
-                        <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-800" strokeWidth={2.5} />
-                      </div>
-                      <span className="text-slate-600 font-medium text-xs">Active Claims</span>
-                    </div>
-                    <span className="text-xl font-semibold text-emerald-800 tracking-tight pr-1 flex-shrink-0">
-                      {stats.activeClaims}
-                    </span>
-                  </div>
-
-                  {/* Pending Claims Card */}
-                  <div className="bg-gradient-to-br from-amber-50/50 to-white rounded-[20px] border border-amber-100/70 p-4 flex items-center justify-between shadow-xs select-none hover:scale-[1.01] transition-all h-[80px]">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-amber-100/60 rounded-xl text-amber-800 flex-shrink-0">
-                        <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-amber-800" strokeWidth={2.5} />
-                      </div>
-                      <span className="text-slate-600 font-medium text-xs">Pending Claims</span>
-                    </div>
-                    <span className="text-xl font-semibold text-amber-800 tracking-tight pr-1 flex-shrink-0">
-                      {stats.pendingClaims}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Columns split: New Claims & New Registration */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-                  
-                  {/* Left Column: New Claims (8 cols) */}
-                  <div className="lg:col-span-8 flex flex-col select-none">
-                    <div className="flex items-center gap-2 mb-6">
-                      <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                      <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
-                        New Claims
-                      </h2>
-                    </div>
-
-                    {newClaims.length === 0 ? (
-                      <div className="border border-slate-200 rounded-[24px] p-8 text-center text-slate-400 font-medium">
-                        No new claims for this branch
-                      </div>
+          {/* Main Dashboard Body */}
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6">
+            {/* HERO KPI CARDS GRID */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
+              {/* 1. Unassigned Claims */}
+              <div
+                onClick={() => setClaimsFilter("unassigned")}
+                className={`p-4 rounded-2xl border transition-all cursor-pointer shadow-xs select-none ${
+                  stats.unassignedClaims > 0
+                    ? "bg-red-50/70 border-red-200 ring-2 ring-red-400/20 hover:bg-red-100/70"
+                    : "bg-white border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Unassigned</span>
+                  <div className="w-7 h-7 rounded-lg bg-red-100 text-red-700 flex items-center justify-center">
+                    {stats.unassignedClaims > 0 ? (
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />
                     ) : (
-                      <div className="flex flex-col gap-6">
-                        {newClaims.map((claim, index) => {
-                          const isUrgent = claim.urgency === "Urgent";
-                          const cardBorderClass = isUrgent ? "border-red-500" : "border-blue-500";
-                          const headerTextClass = isUrgent ? "text-red-500" : "text-blue-500";
-
-                          return (
-                            <div
-                              key={index}
-                              className={`bg-white border-2 ${cardBorderClass} rounded-[20px] px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-6 w-full max-w-full`}
-                            >
-                              {/* Left / Info Group */}
-                              <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 flex-1 min-w-0">
-                                {/* Title / Urgency */}
-                                <div className="flex-shrink-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className={`font-semibold text-base ${headerTextClass} block`}>
-                                      {claim.urgency}
-                                    </span>
-                                    {isClaimUnread(claim.rawClaim || claim, viewedClaims) && (
-                                      <UnreadDot />
-                                    )}
-                                  </div>
-                                  <span className="text-[11px] font-semibold text-slate-400 block tracking-wider uppercase">
-                                    {claim.id}
-                                  </span>
-                                </div>
-
-                                {/* Specifications Row */}
-                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 gap-y-2 text-slate-600 text-xs font-semibold flex-1">
-                                  <div className="flex flex-col gap-0.5">
-                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold select-none">Vehicle No</span>
-                                    <span className="text-slate-800">{claim.vehicleNo}</span>
-                                  </div>
-                                  <div className="flex flex-col gap-0.5">
-                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold select-none">Applicant</span>
-                                    {claim.isThirdParty ? (
-                                      <span className="text-indigo-700 font-bold flex items-center gap-1 truncate" title={`Authorized Driver: ${claim.applicantName}`}>
-                                        <HugeiconsIcon icon={UserCheck01Icon} className="w-3 h-3 text-indigo-600 flex-shrink-0" />
-                                        <span className="truncate">{claim.applicantName}</span>
-                                      </span>
-                                    ) : (
-                                      <span className="text-slate-800 truncate" title={`Policyholder: ${claim.applicantName}`}>{claim.applicantName}</span>
-                                    )}
-                                  </div>
-                                  <div className="flex flex-col gap-0.5">
-                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold select-none">Type</span>
-                                    <span className="text-slate-800">{claim.type}</span>
-                                  </div>
-                                  <div className="flex flex-col gap-0.5 col-span-2 sm:col-span-1">
-                                    <span className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold select-none">Location</span>
-                                    <span className="text-slate-800 truncate" title={claim.location}>{claim.location}</span>
-                                  </div>
-                                </div>
-                              </div>
-
-                              {/* Right / Buttons & Time */}
-                              <div className="flex items-center gap-5 flex-shrink-0">
-                                <span className="text-[11px] text-slate-400 font-medium select-none">
-                                  {claim.time}
-                                </span>
-                                <button
-                                  onClick={() => {
-                                    markClaimAsRead(claim.rawClaim || claim.id, viewedClaims, setViewedClaims, "office_staff");
-                                    setSelectedClaim(claim.rawClaim);
-                                  }}
-                                  className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-semibold text-[13px] px-6 py-3 rounded-full transition-all tracking-wide cursor-pointer focus:outline-none shadow-sm shadow-slate-500/20 whitespace-nowrap text-center border-none"
-                                >
-                                  Details
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+                      <HugeiconsIcon icon={Alert02Icon} className="w-3.5 h-3.5" />
                     )}
                   </div>
+                </div>
+                <div className="text-2xl font-black text-red-700 mt-2">{stats.unassignedClaims}</div>
+                <p className="text-[10px] text-red-600/80 font-medium mt-0.5 truncate">Needs quick dispatch</p>
+              </div>
 
-                  {/* Right Column: New Registration (4 cols) */}
-                  <div className="lg:col-span-4 flex flex-col select-none">
-                    <div className="flex items-center gap-2 mb-6">
-                      <HugeiconsIcon icon={UserMultiple02Icon} className="w-5 h-5 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                      <h2 className="text-lg font-semibold text-slate-800 tracking-wide">
-                        New Registration
-                      </h2>
+              {/* 2. Active Claims */}
+              <div
+                onClick={() => setClaimsFilter("active")}
+                className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer shadow-xs select-none"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Active Claims</span>
+                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-2">{stats.activeClaims}</div>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">Under assessment</p>
+              </div>
+
+              {/* 3. New Registrations */}
+              <Link
+                href="/Office_Staff/Registrations"
+                className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer shadow-xs select-none block"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Signups</span>
+                  <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-2">{stats.newRegistrations}</div>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">Pending approval</p>
+              </Link>
+
+              {/* 4. Third-Party Driver Requests */}
+              <Link
+                href="/Office_Staff/ThirdParty"
+                className={`p-4 rounded-2xl border transition-all cursor-pointer shadow-xs select-none block ${
+                  stats.thirdParty.pendingApproval + stats.thirdParty.pendingTermination > 0
+                    ? "bg-purple-50/50 border-purple-200 hover:bg-purple-100/50"
+                    : "bg-white border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">Third-Party</span>
+                  <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
+                    <HugeiconsIcon icon={Car01Icon} className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-purple-900 mt-2">
+                  {stats.thirdParty.pendingApproval + stats.thirdParty.pendingTermination}
+                </div>
+                <p className="text-[10px] text-purple-600 font-medium mt-0.5 truncate">
+                  {stats.thirdParty.approved} active passes
+                </p>
+              </Link>
+
+              {/* 5. Branch Agents */}
+              <Link
+                href="/Office_Staff/Agents"
+                className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer shadow-xs select-none block"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Field Agents</span>
+                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                    <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-2">{stats.totalAgents}</div>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">On-duty in branch</p>
+              </Link>
+
+              {/* 6. Total Policyholders */}
+              <Link
+                href="/Office_Staff/PolicyHolders"
+                className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer shadow-xs select-none block"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Policyholders</span>
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
+                    <HugeiconsIcon icon={UserMultiple02Icon} className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <div className="text-2xl font-black text-slate-900 mt-2">{stats.totalPolicyHolders}</div>
+                <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">Active insured members</p>
+              </Link>
+            </div>
+
+            {/* MAIN TWO-COLUMN DASHBOARD HUB */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* LEFT 8-COLS: LIVE CLAIMS DISPATCH QUEUE */}
+              <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col gap-4">
+                {/* Header & Controls */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                      <HugeiconsIcon icon={File01Icon} className="w-5 h-5" />
                     </div>
+                    <div>
+                      <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+                        Live Claims Dispatch Hub
+                      </h2>
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        Real-time incoming vehicle accident claims for {branch} Branch
+                      </p>
+                    </div>
+                  </div>
 
-                    {newRegistrations.length === 0 ? (
-                      <div className="border border-slate-200 rounded-[24px] p-8 text-center text-slate-400 font-medium">
-                        No new registrations for this branch
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-4">
-                        {newRegistrations.map((reg, index) => (
-                          <div
-                            key={index}
-                            className="bg-slate-50 rounded-2xl p-5 flex flex-col shadow-sm"
+                  <Link
+                    href="/Office_Staff/Claims"
+                    className="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 self-start sm:self-auto"
+                  >
+                    <span>Full Claims Console</span>
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+                {/* Filter Tabs & Search */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                    {[
+                      { key: "all", label: "All Claims", count: rawClaimsList.length },
+                      {
+                        key: "unassigned",
+                        label: "Unassigned",
+                        count: stats.unassignedClaims,
+                        alert: stats.unassignedClaims > 0
+                      },
+                      {
+                        key: "urgent",
+                        label: "Urgent",
+                        count: rawClaimsList.filter((c) => c.urgency === "Urgent").length
+                      },
+                      {
+                        key: "active",
+                        label: "In Progress",
+                        count: stats.activeClaims
+                      }
+                    ].map((tab) => (
+                      <button
+                        key={tab.key}
+                        onClick={() => setClaimsFilter(tab.key as any)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5 ${
+                          claimsFilter === tab.key
+                            ? "bg-[#0B192C] text-white border-[#0B192C] shadow-2xs"
+                            : tab.alert
+                            ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                        }`}
+                      >
+                        <span>{tab.label}</span>
+                        {tab.count !== undefined && (
+                          <span
+                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                              claimsFilter === tab.key
+                                ? "bg-white/20 text-white"
+                                : tab.alert
+                                ? "bg-red-600 text-white"
+                                : "bg-slate-200 text-slate-700"
+                            }`}
                           >
-                            <span className="font-semibold text-slate-800 text-[15px] mb-1">
-                              {reg.name}
-                            </span>
-                            <span className="text-[12px] text-slate-400 font-medium">
-                              {reg.vehiclesCount} {reg.vehiclesCount === 1 ? "Vehicle" : "Vehicles"} · {reg.date}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                            {tab.count}
+                          </span>
+                        )}
+                      </button>
+                    ))}
                   </div>
 
+                  {/* Search box */}
+                  <div className="relative w-full sm:w-56 shrink-0">
+                    <HugeiconsIcon
+                      icon={Search01Icon}
+                      className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
+                    />
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search plate, claim, driver..."
+                      className="w-full text-xs pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
+                    />
+                  </div>
                 </div>
-              </>
-            )}
+
+                {/* Claims Cards Queue */}
+                {loading ? (
+                  <div className="py-16 flex flex-col items-center justify-center">
+                    <HugeiconsIcon icon={Loading03Icon} className="w-6 h-6 animate-spin text-blue-600" />
+                    <span className="text-xs font-semibold text-slate-400 mt-2">Loading live claims queue...</span>
+                  </div>
+                ) : filteredClaims.length === 0 ? (
+                  <div className="py-12 px-4 rounded-2xl border border-dashed border-slate-200 text-center bg-slate-50/50">
+                    <HugeiconsIcon icon={Shield01Icon} className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-slate-600">No Claims in this Queue View</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      All claims for this filter category have been attended to.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {filteredClaims.slice(0, 7).map((claim) => {
+                      const isUrgent = claim.urgency === "Urgent";
+                      const isUnassigned = !claim.assignedAgent || claim.assignedAgent.trim() === "";
+
+                      return (
+                        <div
+                          key={claim.id}
+                          className={`p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 hover:shadow-2xs ${
+                            isUrgent
+                              ? "bg-red-50/20 border-red-200"
+                              : isUnassigned
+                              ? "bg-amber-50/15 border-amber-200"
+                              : "bg-white border-slate-200"
+                          }`}
+                        >
+                          {/* Left: Claim info */}
+                          <div className="flex items-start sm:items-center gap-3 min-w-0">
+                            <div
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold ${
+                                isUrgent
+                                  ? "bg-red-100 text-red-700"
+                                  : isUnassigned
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-blue-50 text-blue-700"
+                              }`}
+                            >
+                              <HugeiconsIcon icon={Car01Icon} className="w-5 h-5" />
+                            </div>
+
+                            <div className="min-w-0 space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-mono text-xs font-bold text-slate-900">
+                                  #{claim.id}
+                                </span>
+                                <span className="font-mono text-[11px] font-bold px-2 py-0.5 bg-slate-100 text-slate-800 rounded border border-slate-200">
+                                  {claim.vehicleNo}
+                                </span>
+                                {isUrgent && (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 bg-red-600 text-white rounded-full">
+                                    URGENT
+                                  </span>
+                                )}
+                                {isUnassigned ? (
+                                  <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 text-amber-800 rounded border border-amber-200">
+                                    Unassigned
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-semibold text-slate-500">
+                                    Agent: <strong className="text-slate-700">{claim.assignedAgent}</strong>
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="flex items-center gap-3 text-[11px] text-slate-500 flex-wrap">
+                                {/* Applicant */}
+                                <span className="flex items-center gap-1 font-medium">
+                                  {claim.isThirdParty ? (
+                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 font-bold text-[10px]">
+                                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3 h-3 text-purple-700" />
+                                      <span>Driver: {claim.applicantName}</span>
+                                    </span>
+                                  ) : (
+                                    <span className="text-slate-700">Owner: {claim.applicantName}</span>
+                                  )}
+                                </span>
+                                <span>•</span>
+                                <span className="text-slate-600">{claim.type}</span>
+                                <span>•</span>
+                                <span className="flex items-center gap-1 truncate max-w-[150px]">
+                                  <HugeiconsIcon icon={Location01Icon} className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <span className="truncate">{claim.location}</span>
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right: Actions */}
+                          <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
+                            <span className="text-[10px] text-slate-400 font-mono hidden sm:inline mr-1">
+                              {claim.time}
+                            </span>
+
+                            {/* Quick Agent Assign button */}
+                            {isUnassigned && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setClaimToAssign(claim);
+                                  setSelectedAgentEmail(branchAgents[0]?.email || "");
+                                }}
+                                className="px-3 py-1.5 bg-[#0B192C] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all cursor-pointer border-none shadow-2xs flex items-center gap-1.5"
+                              >
+                                <span>Assign Agent</span>
+                              </button>
+                            )}
+
+                            {/* Details modal trigger */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                markClaimAsRead(claim.rawClaim || claim.id, viewedClaims, setViewedClaims, "office_staff");
+                                setSelectedClaim(claim.rawClaim || claim);
+                              }}
+                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer border border-slate-200 flex items-center gap-1"
+                            >
+                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-500" />
+                              <span>Details</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT 4-COLS: OPERATIONAL MODULES (REGISTRATIONS, THIRD-PARTY, AGENTS) */}
+              <div className="lg:col-span-4 space-y-6">
+                {/* MODULE 1: NEW POLICYHOLDER REGISTRATIONS */}
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                        <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-900">New Signups</h3>
+                        <p className="text-[10px] text-slate-400">Policyholders pending review</p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/Office_Staff/Registrations"
+                      className="text-[11px] font-bold text-blue-700 hover:text-blue-900"
+                    >
+                      View All ({newRegistrations.length})
+                    </Link>
+                  </div>
+
+                  {newRegistrations.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-6">No new registrations pending.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {newRegistrations.slice(0, 4).map((reg, idx) => (
+                        <div
+                          key={reg._id || idx}
+                          className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 transition-colors border border-slate-100 flex items-center justify-between text-xs"
+                        >
+                          <div>
+                            <span className="font-bold text-slate-800 block truncate max-w-[160px]">{reg.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">
+                              {reg.nic || `${reg.vehiclesCount} vehicle(s)`} • {reg.date}
+                            </span>
+                          </div>
+                          <Link
+                            href="/Office_Staff/Registrations"
+                            className="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 font-bold rounded-lg border border-slate-200 text-[10px]"
+                          >
+                            Verify
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* MODULE 2: THIRD-PARTY DRIVER REQUESTS & TERMINATIONS */}
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+                        <HugeiconsIcon icon={Car01Icon} className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-900">Third-Party Drivers</h3>
+                        <p className="text-[10px] text-slate-400">Permits & termination requests</p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/Office_Staff/ThirdParty"
+                      className="text-[11px] font-bold text-purple-700 hover:text-purple-900"
+                    >
+                      Manage ({recentThirdParty.length})
+                    </Link>
+                  </div>
+
+                  {recentThirdParty.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-6">No third-party requests on file.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {recentThirdParty.slice(0, 4).map((tp) => (
+                        <div
+                          key={tp._id}
+                          className="p-2.5 rounded-xl bg-slate-50 hover:bg-purple-50/40 transition-colors border border-slate-100 flex items-center justify-between text-xs"
+                        >
+                          <div className="min-w-0 pr-2">
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-slate-900 truncate">{tp.driverName}</span>
+                              <span
+                                className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
+                                  tp.status === "Approved"
+                                    ? "bg-emerald-100 text-emerald-800"
+                                    : tp.status === "Pending Branch Approval"
+                                    ? "bg-amber-100 text-amber-800"
+                                    : "bg-purple-100 text-purple-800"
+                                }`}
+                              >
+                                {tp.status === "Pending Branch Approval" ? "Pending" : tp.status}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 block truncate font-mono">
+                              {tp.plate} • Owner: {tp.policyHolderName}
+                            </span>
+                          </div>
+                          <Link
+                            href="/Office_Staff/ThirdParty"
+                            className="px-2.5 py-1 bg-white hover:bg-purple-600 hover:text-white text-purple-700 font-bold rounded-lg border border-purple-200 text-[10px] shrink-0 transition-colors"
+                          >
+                            Review
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* MODULE 3: BRANCH FIELD AGENTS ROSTER */}
+                <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-3.5">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                        <HugeiconsIcon icon={UserCheck01Icon} className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-xs font-bold text-slate-900">Branch Field Surveyors</h3>
+                        <p className="text-[10px] text-slate-400">On-duty agents roster</p>
+                      </div>
+                    </div>
+                    <Link
+                      href="/Office_Staff/Agents"
+                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900"
+                    >
+                      Manage ({branchAgents.length})
+                    </Link>
+                  </div>
+
+                  {branchAgents.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-6">No agents registered in this branch.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {branchAgents.slice(0, 4).map((agent) => (
+                        <div
+                          key={agent._id}
+                          className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
+                        >
+                          <div>
+                            <span className="font-bold text-slate-800 block">{agent.name}</span>
+                            <span className="text-[10px] text-slate-400 block font-mono">
+                              {agent.phone || agent.email}
+                            </span>
+                          </div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                            {agent.activeClaimsCount || 0} active claims
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </main>
         </div>
       </div>
 
-      {/* Floating Action Chat Button */}
-      <button className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center" aria-label="Chat support">
-        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
-      </button>
-
-      {selectedClaim && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-[24px] border border-slate-150 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden text-slate-800 text-left">
-            {/* Header */}
-            <div className="px-6 pt-6 pb-4 flex justify-between items-center border-b border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-800 tracking-tight">
-                Claim Details: {selectedClaim.claimNumber}
-              </h3>
+      {/* QUICK AGENT ASSIGNMENT MODAL */}
+      {claimToAssign && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 w-full max-w-md shadow-2xl p-6 text-left space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                  <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Assign Field Agent</h3>
+                  <p className="text-[10px] text-slate-400">Claim #{claimToAssign.id || claimToAssign.claimNumber}</p>
+                </div>
+              </div>
               <button
-                onClick={() => setSelectedClaim(null)}
-                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1 hover:bg-slate-50 rounded-full transition-all"
+                onClick={() => setClaimToAssign(null)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
               >
-                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Body */}
-            <div className="p-6 overflow-y-auto space-y-4 text-sm font-semibold text-slate-700">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold select-none">Status</span>
-                  <span className="text-slate-800">{selectedClaim.status}</span>
+            <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs space-y-1">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Vehicle:</span>
+                <strong className="font-mono text-slate-800">{claimToAssign.vehicleNo}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Applicant:</span>
+                <strong className="text-slate-800">{claimToAssign.applicantName}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Damage:</span>
+                <span className="text-slate-700 font-semibold">{claimToAssign.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Location:</span>
+                <span className="text-slate-700 truncate max-w-[200px]">{claimToAssign.location}</span>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1.5">
+                Select Branch Surveyor / Agent <span className="text-red-500">*</span>
+              </label>
+              {branchAgents.length === 0 ? (
+                <p className="text-xs text-red-500 font-semibold">
+                  No active agents found in {branch} Branch. Please add agents first.
+                </p>
+              ) : (
+                <select
+                  value={selectedAgentEmail}
+                  onChange={(e) => setSelectedAgentEmail(e.target.value)}
+                  className="w-full p-3 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:border-blue-600 bg-white"
+                >
+                  {branchAgents.map((agent) => (
+                    <option key={agent._id} value={agent.email}>
+                      {agent.name} ({agent.activeClaimsCount || 0} active claims)
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setClaimToAssign(null)}
+                disabled={assigningAgent}
+                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100 border-none cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAssignAgentSubmit}
+                disabled={assigningAgent || branchAgents.length === 0}
+                className="px-5 py-2 bg-[#0B192C] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all border-none cursor-pointer shadow-xs flex items-center gap-1.5"
+              >
+                {assigningAgent && <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />}
+                <span>Assign & Dispatch</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CLAIM DETAILS MODAL */}
+      {selectedClaim && (
+        <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl border border-slate-200 w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] overflow-hidden text-slate-800 text-left">
+            <div className="px-6 pt-5 pb-4 flex justify-between items-center border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900 tracking-tight">
+                Claim Overview: #{selectedClaim.claimNumber}
+              </h3>
+              <button
+                onClick={() => setSelectedClaim(null)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer p-1"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-3.5 text-xs">
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Status</span>
+                  <span className="font-bold text-slate-800">{selectedClaim.status}</span>
                 </div>
-                <div className="flex flex-col gap-0.5">
-                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold select-none">Urgency</span>
-                  <span className={checkUrgent(selectedClaim) ? "text-red-600 font-semibold" : "text-slate-800"}>
-                    {checkUrgent(selectedClaim) ? "Urgent" : "Normal"}
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Severity</span>
+                  <span className={checkUrgent(selectedClaim) ? "text-red-600 font-bold" : "text-slate-800 font-bold"}>
+                    {checkUrgent(selectedClaim) ? "URGENT ACCIDENT" : "Standard"}
                   </span>
                 </div>
               </div>
 
-              <div className="border-t border-slate-100 my-3" />
-
-              <div className="space-y-3">
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Claim Lodged By</span>
-                  {selectedClaim.submittedByDriver?.isThirdParty && selectedClaim.submittedByDriver?.driverName ? (
-                    <span className="text-indigo-700 font-bold flex items-center gap-1.5 text-right">
-                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>{selectedClaim.submittedByDriver.driverName} <span className="text-[10px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded ml-1">Driver</span></span>
-                    </span>
-                  ) : (
-                    <span className="text-slate-800 font-semibold">{selectedClaim.policyHolderName || "Policyholder"}</span>
-                  )}
+              <div className="space-y-2 divide-y divide-slate-100">
+                <div className="flex justify-between pt-2">
+                  <span className="text-slate-400">Applicant:</span>
+                  <strong className="text-slate-800">
+                    {selectedClaim.submittedByDriver?.isThirdParty
+                      ? `${selectedClaim.submittedByDriver.driverName} (Authorized Driver)`
+                      : selectedClaim.policyHolderName || "Policyholder"}
+                  </strong>
                 </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Vehicle Number</span>
-                  <span className="text-slate-800 font-semibold">{selectedClaim.vehiclePlate}</span>
+                <div className="flex justify-between pt-2">
+                  <span className="text-slate-400">Vehicle Number:</span>
+                  <strong className="font-mono text-slate-800">{selectedClaim.vehiclePlate}</strong>
                 </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Damage Type</span>
-                  <span className="text-slate-800 font-semibold">{selectedClaim.damageType}</span>
+                <div className="flex justify-between pt-2">
+                  <span className="text-slate-400">Damage Classification:</span>
+                  <span className="text-slate-700 font-bold">{selectedClaim.damageType}</span>
                 </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Location</span>
-                  <span className="text-slate-800 font-semibold">{selectedClaim.location}</span>
+                <div className="flex justify-between pt-2">
+                  <span className="text-slate-400">Incident Location:</span>
+                  <span className="text-slate-700 font-semibold">{selectedClaim.location}</span>
                 </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Incident Date</span>
-                  <span className="text-slate-800 font-semibold">{new Date(selectedClaim.incidentDate).toLocaleDateString()}</span>
+                <div className="flex justify-between pt-2">
+                  <span className="text-slate-400">Assigned Agent:</span>
+                  <span className="text-blue-700 font-bold">{selectedClaim.assignedAgent || "Unassigned"}</span>
                 </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Incident Time</span>
-                  <span className="text-slate-800 font-semibold">{selectedClaim.incidentTime}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Submitted At</span>
-                  <span className="text-slate-800 font-semibold">{formatSriLankaDateTime(selectedClaim.createdAt)}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Assigned Agent</span>
-                  <span className="text-slate-800 font-semibold">{selectedClaim.assignedAgent || "None assigned"}</span>
-                </div>
-                <div className="flex justify-between border-b border-slate-50 pb-2">
-                  <span className="text-slate-400 font-medium">Claim Amount</span>
-                  <span className="text-slate-800 font-semibold">{selectedClaim.amount ? `Rs. ${selectedClaim.amount}` : "Pending Evaluation"}</span>
+                <div className="flex justify-between pt-2">
+                  <span className="text-slate-400">Claim Amount:</span>
+                  <strong className="text-slate-900">{selectedClaim.amount ? `Rs. ${selectedClaim.amount}` : "Pending Evaluation"}</strong>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1 mt-2">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold select-none">Description</span>
-                <p className="text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 text-xs leading-relaxed whitespace-pre-wrap">
-                  {selectedClaim.description || "No description provided."}
-                </p>
-              </div>
+              {selectedClaim.description && (
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Description</span>
+                  <p className="text-slate-600 leading-relaxed">{selectedClaim.description}</p>
+                </div>
+              )}
             </div>
 
-            {/* Footer */}
-            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-2">
               <button
+                type="button"
                 onClick={() => setSelectedClaim(null)}
-                className="bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer shadow-sm"
+                className="px-5 py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs rounded-xl cursor-pointer border-none"
               >
                 Close
               </button>
@@ -737,140 +1213,93 @@ export default function OfficeStaffDashboard() {
         </div>
       )}
 
+      {/* PASSWORD CHANGE MODAL */}
       {showPasswordModal && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-[9999] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-md bg-white border border-slate-100 rounded-[32px] shadow-[0_20px_50px_rgba(15,23,42,0.08)] flex flex-col my-auto overflow-hidden max-h-[95vh] transition-all duration-300">
-            <div className="overflow-y-auto flex-1 flex flex-col">
-              {/* Header */}
-              <div className="px-8 pt-8 pb-5 select-none relative flex-shrink-0 border-b border-slate-100/60 bg-slate-50/55">
-                <h2 className="font-semibold text-xl text-slate-800 tracking-tight flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center">
-                    <HugeiconsIcon icon={LockIcon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
-                  </div>
-                  Update Password
-                </h2>
-                <p className="text-slate-600 text-xs font-semibold mt-2 leading-relaxed">
-                  You are logged in with a temporary password. Please set a new secure password.
-                </p>
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white border border-slate-200 rounded-3xl shadow-2xl p-6 text-left space-y-4">
+            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                <HugeiconsIcon icon={LockIcon} className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-900 text-base">Update Password</h3>
+                <p className="text-xs text-slate-500">Please change your temporary login credentials.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handlePasswordChange} className="space-y-3.5 text-xs">
+              {passwordError && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-xl border border-red-200 font-bold">
+                  {passwordError}
+                </div>
+              )}
+              {passwordSuccess && (
+                <div className="bg-emerald-50 text-emerald-600 p-3 rounded-xl border border-emerald-200 font-bold">
+                  {passwordSuccess}
+                </div>
+              )}
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                  Current Temporary Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                  placeholder="Enter current password"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-medium text-xs focus:outline-none focus:border-blue-600"
+                />
               </div>
 
-              {/* Form Content */}
-              <form onSubmit={handlePasswordChange} className="p-8 flex flex-col gap-5">
-                {passwordError && (
-                  <div className="bg-red-50 text-red-600 text-xs font-semibold p-4 rounded-2xl border border-red-100 flex items-center gap-3">
-                    <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 text-red-500 flex-shrink-0" strokeWidth={2.5} />
-                    <span>{passwordError}</span>
-                  </div>
-                )}
-                {passwordSuccess && (
-                  <div className="bg-emerald-50 text-emerald-600 text-xs font-semibold p-4 rounded-2xl border border-emerald-100 flex items-center gap-3">
-                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-500 flex-shrink-0" strokeWidth={2.5} />
-                    <span>{passwordSuccess}</span>
-                  </div>
-                )}
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                  New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                  placeholder="6-12 characters with numbers"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-medium text-xs focus:outline-none focus:border-blue-600"
+                />
+              </div>
 
-                {/* Current Password Field */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
-                    Current Temporary Password <span className="text-red-500 font-semibold">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={passwordForm.currentPassword}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                    placeholder="Enter current temp password"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
-                  />
-                </div>
+              <div>
+                <label className="text-[10px] font-bold text-slate-600 uppercase block mb-1">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                  placeholder="Re-enter new password"
+                  className="w-full p-2.5 rounded-xl border border-slate-300 font-medium text-xs focus:outline-none focus:border-blue-600"
+                />
+              </div>
 
-                {/* New Password Field */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
-                    New Password <span className="text-red-500 font-semibold">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={passwordForm.newPassword}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                    placeholder="Create your new password"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
-                  />
-
-                  {/* Password Strength Section */}
-                  {passwordForm.newPassword && (
-                    <div className="mt-1.5 flex flex-col gap-2.5 p-4 rounded-2xl bg-slate-50/90 border border-slate-200 select-none">
-                      <div className="flex justify-between items-center text-xs text-slate-800">
-                        <span className="font-semibold">Password Strength:</span>
-                        <span className="font-semibold uppercase tracking-wider text-slate-900">{strength.label}</span>
-                      </div>
-                      <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                        <div className={`h-full ${strength.color} ${strength.width} transition-all duration-350 rounded-full`} />
-                      </div>
-                      <div className="flex flex-col gap-1.5 text-[11px] font-semibold mt-1.5">
-                        <div className="flex items-center gap-1.5">
-                          {passwordForm.newPassword.length >= 6 && passwordForm.newPassword.length <= 12 ? (
-                            <span className="text-emerald-600 flex items-center gap-1.5">✓ 6 to 12 characters</span>
-                          ) : (
-                            <span className="text-red-600 flex items-center gap-1.5">✗ 6 to 12 characters</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {/[0-9]/.test(passwordForm.newPassword) || /[^A-Za-z0-9]/.test(passwordForm.newPassword) ? (
-                            <span className="text-emerald-600 flex items-center gap-1.5">✓ Min. 1 number or special character</span>
-                          ) : (
-                            <span className="text-red-600 flex items-center gap-1.5">✗ Min. 1 number or special character</span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          {passwordForm.confirmPassword && passwordForm.newPassword === passwordForm.confirmPassword ? (
-                            <span className="text-emerald-600 flex items-center gap-1.5">✓ Passwords match</span>
-                          ) : (
-                            <span className="text-red-600 flex items-center gap-1.5">✗ Passwords match</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Confirm Password Field */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-semibold text-slate-700 ml-1 uppercase tracking-wider">
-                    Confirm New Password <span className="text-red-500 font-semibold">*</span>
-                  </label>
-                  <input
-                    type="password"
-                    required
-                    value={passwordForm.confirmPassword}
-                    onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                    placeholder="Verify your new password"
-                    className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-slate-100 focus:border-slate-400 transition-all duration-200 font-semibold bg-slate-50/30 hover:bg-slate-50 focus:bg-white"
-                  />
-                </div>
-
-                {/* Action Button */}
-                <button
-                  type="submit"
-                  disabled={isUpdatingPassword}
-                  className="w-full mt-2 bg-[#000080] hover:bg-[#000066] active:scale-[0.98] text-white font-semibold text-sm py-4 rounded-2xl shadow-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 select-none"
-                >
-                  {isUpdatingPassword ? (
-                    <span className="flex items-center gap-2">
-                      <HugeiconsIcon icon={Loading03Icon} className="animate-spin h-5 w-5 text-white" strokeWidth={2} />
-                      Updating...
-                    </span>
-                  ) : (
-                    "Set New Password"
-                  )}
-                </button>
-              </form>
-            </div>
+              <button
+                type="submit"
+                disabled={isUpdatingPassword}
+                className="w-full py-3 bg-[#0B192C] hover:bg-blue-900 text-white rounded-xl font-bold cursor-pointer transition-all border-none mt-2"
+              >
+                {isUpdatingPassword ? "Updating Password..." : "Save Password"}
+              </button>
+            </form>
           </div>
         </div>
       )}
 
+      {/* Floating Action Chat Button */}
+      <button
+        className="fixed bottom-8 right-8 z-40 bg-[#00ddff] hover:bg-[#00c8e6] text-white p-5 rounded-full shadow-2xl transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-none flex items-center justify-center"
+        aria-label="Chat support"
+      >
+        <HugeiconsIcon icon={BubbleChatIcon} className="w-7 h-7 text-white" strokeWidth={2} />
+      </button>
     </div>
   );
 }

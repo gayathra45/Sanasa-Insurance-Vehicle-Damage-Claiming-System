@@ -832,6 +832,20 @@ export default function OfficeStaffThirdPartyPage() {
                               <span>{req.status === "Pending Branch Approval" ? "Review" : "View"}</span>
                             </button>
 
+                            {req.status === "Approved" && (
+                              <button
+                                onClick={() => {
+                                  setSelectedReq(req);
+                                  setTerminationNotes("Terminated directly by branch office");
+                                  setShowApproveTerminationModal(true);
+                                }}
+                                className="p-1.5 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition-colors"
+                                title="Direct Terminate Driver"
+                              >
+                                <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+
                             {req.status === "Approved" && req.secureAccess?.accessUrl && (
                               <button
                                 onClick={() => handleCopyUrl(req.secureAccess!.accessUrl!)}
@@ -1290,15 +1304,33 @@ export default function OfficeStaffThirdPartyPage() {
                   </>
                 )}
 
-                {selectedReq.status === "Approved" && selectedReq.secureAccess?.accessUrl && (
-                  <button
-                    type="button"
-                    onClick={() => handleCopyUrl(selectedReq.secureAccess!.accessUrl!)}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
-                  >
-                    <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
-                    <span>{copiedToken ? "Copied!" : "Copy Driver URL"}</span>
-                  </button>
+                {selectedReq.status === "Approved" && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTerminationNotes("Terminated directly by branch office");
+                        setShowApproveTerminationModal(true);
+                      }}
+                      disabled={actionLoading}
+                      className="px-4 py-2 bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                      title="Directly terminate driver authorization and revoke all system access"
+                    >
+                      <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                      <span>Direct Terminate Driver</span>
+                    </button>
+
+                    {selectedReq.secureAccess?.accessUrl && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopyUrl(selectedReq.secureAccess!.accessUrl!)}
+                        className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors"
+                      >
+                        <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
+                        <span>{copiedToken ? "Copied!" : "Copy Driver URL"}</span>
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -1426,9 +1458,11 @@ export default function OfficeStaffThirdPartyPage() {
             </div>
 
             <div className="text-center">
-              <h3 className="text-base font-bold text-slate-900">Approve Driver Termination</h3>
+              <h3 className="text-base font-bold text-slate-900">
+                {selectedReq.status === "Approved" ? "Direct Driver Termination" : "Approve Driver Termination"}
+              </h3>
               <p className="text-xs text-slate-500 mt-1">
-                You are approving the termination of driver{" "}
+                You are {selectedReq.status === "Approved" ? "directly terminating authorization and access for" : "approving the termination of"} driver{" "}
                 <span className="font-semibold text-slate-800">{selectedReq.driverDetails?.fullName}</span>.
               </p>
             </div>
@@ -1437,18 +1471,22 @@ export default function OfficeStaffThirdPartyPage() {
               <p className="font-semibold">Security Action:</p>
               <ul className="list-disc list-inside text-[11px] space-y-0.5 text-rose-800">
                 <li>Digital driver pass will be permanently invalidated.</li>
-                <li>Driver web portal & mobile app logins will be blocked.</li>
+                <li>Driver web portal & mobile app logins will be blocked immediately.</li>
                 <li>SMS notices will be dispatched to both policyholder & driver.</li>
               </ul>
             </div>
 
             <div>
               <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Branch Notes (Optional)
+                Branch Termination Notes / Remarks (Optional)
               </label>
               <input
                 type="text"
-                placeholder="e.g. Confirmed with policyholder via phone"
+                placeholder={
+                  selectedReq.status === "Approved"
+                    ? "e.g. In-person request by vehicle owner at branch"
+                    : "e.g. Confirmed with policyholder via phone"
+                }
                 value={terminationNotes}
                 onChange={(e) => setTerminationNotes(e.target.value)}
                 className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
@@ -1473,7 +1511,7 @@ export default function OfficeStaffThirdPartyPage() {
                 disabled={actionLoading}
                 className="flex-1 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
               >
-                {actionLoading ? "Terminating..." : "Confirm Termination"}
+                {actionLoading ? "Terminating..." : selectedReq.status === "Approved" ? "Confirm Direct Termination" : "Confirm Termination"}
               </button>
             </div>
           </div>

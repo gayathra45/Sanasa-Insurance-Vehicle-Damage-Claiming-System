@@ -12,6 +12,7 @@ import Admin from "../models/admin.model.js";
 import ProfileUpdateRequest from "../models/profile_update_request.model.js";
 import AgentProfileUpdateRequest from "../models/agent_profile_update_request.model.js";
 import BranchProfileUpdateRequest from "../models/branch_profile_update_request.model.js";
+import ThirdPartyRegistration from "../models/third_party_registration.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate, sendProfileUpdateStatusEmail, sendAgentProfileUpdateStatusEmail } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
@@ -217,15 +218,77 @@ router.get("/dashboard-stats", async (req, res) => {
         return [];
       });
 
+    // 4. Extended Branch Metrics (Policyholders, Agents, Third-Party, Pending Vehicles)
+    const totalPolicyHolders = await User.countDocuments({
+      branch: branchCondition,
+      status: "Approved"
+    }).catch(() => 0);
+
+    const totalAgents = await Agent.countDocuments({
+      branch: branchCondition
+    }).catch(() => 0);
+
+    const [tpPendingApproval, tpPendingTermination, tpApproved, tpTotal] = await Promise.all([
+      ThirdPartyRegistration.countDocuments({ branch: branchCondition, status: "Pending Branch Approval" }).catch(() => 0),
+      ThirdPartyRegistration.countDocuments({ branch: branchCondition, status: "Pending Termination Approval" }).catch(() => 0),
+      ThirdPartyRegistration.countDocuments({ branch: branchCondition, status: "Approved" }).catch(() => 0),
+      ThirdPartyRegistration.countDocuments({ branch: branchCondition }).catch(() => 0)
+    ]);
+
+    const pendingVehiclesAgg = await User.aggregate([
+      { $match: { branch: branchCondition } },
+      { $unwind: "$vehicles" },
+      { $match: { "vehicles.status": "Pending Verification" } },
+      { $count: "count" }
+    ]).catch(() => []);
+    const pendingVehicleVerifications = pendingVehiclesAgg[0]?.count || 0;
+
+    const recentThirdPartyRequests = await ThirdPartyRegistration.find({ branch: branchCondition })
+      .sort({ createdAt: -1 })
+      .limit(6)
+      .lean()
+      .catch(() => []);
+
+    const branchAgentsRaw = await Agent.find(
+      { branch: branchCondition },
+      { name: 1, email: 1, phone: 1, agentId: 1, availability: 1 }
+    )
+      .limit(10)
+      .lean()
+      .catch(() => []);
+
+    const agentEmails = branchAgentsRaw.map(a => a.email).filter(Boolean);
+    const agentClaimsCounts = await Claim.aggregate([
+      { $match: { assignedAgent: { $in: agentEmails }, status: { $in: ["In Progress", "Investigating", "Approved"] } } },
+      { $group: { _id: "$assignedAgent", count: { $sum: 1 } } }
+    ]).catch(() => []);
+    const agentClaimMap = new Map(agentClaimsCounts.map(item => [item._id, item.count]));
+
+    const branchAgents = branchAgentsRaw.map(a => ({
+      ...a,
+      activeClaimsCount: agentClaimMap.get(a.email) || 0
+    }));
+
     res.json({
       stats: {
         unassignedClaims,
         newRegistrations: newRegistrationsCount,
         activeClaims,
-        pendingClaims
+        pendingClaims,
+        totalPolicyHolders,
+        totalAgents,
+        pendingVehicleVerifications,
+        thirdParty: {
+          pendingApproval: tpPendingApproval,
+          pendingTermination: tpPendingTermination,
+          approved: tpApproved,
+          total: tpTotal
+        }
       },
       newClaims,
-      newRegistrations
+      newRegistrations,
+      recentThirdPartyRequests,
+      branchAgents
     });
   } catch (err) {
     console.error("Office staff dashboard stats API error:", err);
