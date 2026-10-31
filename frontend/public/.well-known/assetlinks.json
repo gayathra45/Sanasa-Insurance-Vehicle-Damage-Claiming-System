@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.sanasainsurance.mobileapp",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7D:0C:52:97:1D:AC:7B:60:E6:CA:A2:41:A4:85:2B:54:17:F8:2D:2A:1E:0E:2E:80:71:02:7D:89:16"
+      ]
+    }
+  }
+]

@@ -997,140 +997,203 @@ export default function OfficeStaffThirdPartyPage() {
             </div>
           ) : (
             /* VIEW MODE: TABLE */
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/80 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      <th className="py-4 px-5">Reference</th>
-                      <th className="py-4 px-5">Third-Party Driver</th>
-                      <th className="py-4 px-5">Policyholder</th>
-                      <th className="py-4 px-5">Vehicles</th>
-                      <th className="py-4 px-5">Payment</th>
-                      <th className="py-4 px-5">Status</th>
-                      <th className="py-4 px-5">Date</th>
-                      <th className="py-4 px-5 text-right">Actions</th>
+                    <tr className="bg-slate-50/90 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      <th className="py-3.5 px-5 whitespace-nowrap">Reference</th>
+                      <th className="py-3.5 px-5 min-w-[220px]">Third-Party Driver</th>
+                      <th className="py-3.5 px-5 min-w-[190px]">Policyholder</th>
+                      <th className="py-3.5 px-5 min-w-[180px]">Authorized Vehicle(s)</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Payment</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Status</th>
+                      <th className="py-3.5 px-5 whitespace-nowrap">Submitted</th>
+                      <th className="py-3.5 px-5 text-right whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {filteredRequests.map((req) => (
-                      <tr
-                        key={req._id}
-                        className={`hover:bg-slate-50/80 transition-colors ${
-                          req.status === "Pending Branch Approval" ? "bg-amber-50/20" : ""
-                        }`}
-                      >
-                        {/* Reference */}
-                        <td className="py-4 px-5 text-xs font-bold text-[#102A43]">
-                          <span className="bg-slate-100 border border-slate-200/80 px-2.5 py-1 rounded-md text-slate-800 font-semibold">
-                            {req.requestReference}
-                          </span>
-                        </td>
+                    {filteredRequests.map((req) => {
+                      const isPending = req.status === "Pending Branch Approval";
+                      const isPendingTerm = req.status === "Pending Termination Approval";
+                      const isApproved = req.status === "Approved";
+                      const isPaid = req.payment?.status === "Paid";
+                      const initials = (req.driverDetails?.fullName || "TP")
+                        .split(" ")
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map((s) => s[0].toUpperCase())
+                        .join("");
 
-                        {/* Driver */}
-                        <td className="py-4 px-5">
-                          <div className="font-semibold text-slate-900 text-sm">{req.driverDetails?.fullName || "—"}</div>
-                          <div className="text-xs text-slate-500 font-medium mt-0.5">
-                            {req.driverDetails?.nicNumber ? `NIC: ${req.driverDetails.nicNumber}` : req.driverDetails?.phoneNumber}
-                          </div>
-                        </td>
+                      return (
+                        <tr
+                          key={req._id}
+                          className={`transition-colors hover:bg-slate-50/70 ${
+                            isPending
+                              ? "border-l-4 border-l-amber-500 bg-amber-50/15"
+                              : isPendingTerm
+                              ? "border-l-4 border-l-rose-500 bg-rose-50/20"
+                              : isApproved
+                              ? "border-l-4 border-l-emerald-500"
+                              : "border-l-4 border-l-transparent"
+                          }`}
+                        >
+                          {/* Reference */}
+                          <td className="py-4 px-5 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-[#102A43] bg-slate-100/90 border border-slate-200/90 px-2.5 py-1 rounded-lg">
+                              {req.requestReference}
+                            </span>
+                          </td>
 
-                        {/* Policyholder */}
-                        <td className="py-4 px-5">
-                          <div className="text-slate-800 font-semibold text-xs">{req.policyHolderName || "—"}</div>
-                          <div className="text-xs text-slate-500 mt-0.5">{req.policyHolderNic}</div>
-                        </td>
+                          {/* Driver */}
+                          <td className="py-4 px-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center font-bold text-xs shadow-2xs flex-shrink-0">
+                                {initials}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="font-bold text-slate-900 text-sm truncate max-w-[180px]">
+                                  {req.driverDetails?.fullName || "—"}
+                                </div>
+                                <div className="text-[11px] text-slate-500 font-medium flex items-center gap-2 mt-0.5">
+                                  {req.driverDetails?.nicNumber && (
+                                    <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">
+                                      NIC: {req.driverDetails.nicNumber}
+                                    </span>
+                                  )}
+                                  {req.driverDetails?.phoneNumber && (
+                                    <span>{req.driverDetails.phoneNumber}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
 
-                        {/* Vehicles */}
-                        <td className="py-4 px-5">
-                          <div className="flex flex-wrap gap-1 max-w-xs">
-                            {req.selectedVehicles?.map((v) => (
-                              <span
-                                key={v.numberPlate}
-                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-800 text-xs font-semibold border border-slate-200"
-                              >
-                                <HugeiconsIcon icon={Car01Icon} className="w-3 3 text-slate-500" />
-                                {v.numberPlate}
+                          {/* Policyholder */}
+                          <td className="py-4 px-5">
+                            <div className="text-slate-800 font-bold text-xs truncate max-w-[170px]">
+                              {req.policyHolderName || "—"}
+                            </div>
+                            <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                              {req.policyHolderNic || "—"}
+                            </div>
+                          </td>
+
+                          {/* Vehicles */}
+                          <td className="py-4 px-5">
+                            <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                              {req.selectedVehicles?.map((v) => (
+                                <span
+                                  key={v.numberPlate}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#FFF9E6] text-[#2D2A26] border border-[#E5C77A] font-mono font-bold text-xs shadow-2xs"
+                                >
+                                  <HugeiconsIcon icon={Car01Icon} className="w-3 h-3 text-amber-700" />
+                                  <span>{v.numberPlate}</span>
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+
+                          {/* Payment */}
+                          <td className="py-4 px-5 whitespace-nowrap">
+                            {isPaid ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>LKR 300 (Paid)</span>
                               </span>
-                            ))}
-                          </div>
-                        </td>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                                <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Pending Payment</span>
+                              </span>
+                            )}
+                          </td>
 
-                        {/* Payment */}
-                        <td className="py-4 px-5">
-                          {req.payment?.status === "Paid" ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
-                              LKR 300 (Paid)
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
-                              <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5" />
-                              Pending Payment
-                            </span>
-                          )}
-                        </td>
+                          {/* Status */}
+                          <td className="py-4 px-5 whitespace-nowrap">{getStatusBadge(req.status)}</td>
 
-                        {/* Status */}
-                        <td className="py-4 px-5">{getStatusBadge(req.status)}</td>
+                          {/* Date */}
+                          <td className="py-4 px-5 whitespace-nowrap text-slate-600 text-xs font-medium">
+                            <div>
+                              {new Date(req.createdAt).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric"
+                              })}
+                            </div>
+                            <div className="text-[10px] text-slate-400">
+                              {new Date(req.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                            </div>
+                          </td>
 
-                        {/* Date */}
-                        <td className="py-4 px-5 text-slate-600 text-xs font-medium">
-                          {new Date(req.createdAt).toLocaleDateString("en-GB", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric"
-                          })}
-                        </td>
-
-                        {/* Actions */}
-                        <td className="py-4 px-5 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => {
-                                setSelectedReq(req);
-                                setApprovalNotes("");
-                                setRejectionReason("");
-                              }}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-                                req.status === "Pending Branch Approval"
-                                  ? "bg-[#102A43] text-white hover:bg-[#102A43]/90 shadow-sm"
-                                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                              }`}
-                            >
-                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
-                              <span>{req.status === "Pending Branch Approval" ? "Review" : "View"}</span>
-                            </button>
-
-                            {req.status === "Approved" && (
+                          {/* Actions */}
+                          <td className="py-4 px-5 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => {
                                   setSelectedReq(req);
-                                  setTerminationNotes("Terminated directly by branch office");
-                                  setShowApproveTerminationModal(true);
+                                  setApprovalNotes("");
+                                  setRejectionReason("");
                                 }}
-                                className="p-1.5 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition-colors"
-                                title="Direct Terminate Driver"
+                                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
+                                  isPending || isPendingTerm
+                                    ? "bg-[#102A43] text-white hover:bg-[#1B365D]"
+                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                                }`}
                               >
-                                <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                                <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+                                <span>{isPending ? "Review" : isPendingTerm ? "Review Term." : "View"}</span>
                               </button>
-                            )}
 
-                            {req.status === "Approved" && req.secureAccess?.accessUrl && (
-                              <button
-                                onClick={() => handleCopyUrl(req.secureAccess!.accessUrl!)}
-                                className="p-1.5 rounded-lg text-slate-600 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition-colors"
-                                title="Copy driver access link"
-                              >
-                                <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                              {isApproved && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedReq(req);
+                                    setTerminationNotes("Terminated directly by branch office");
+                                    setShowApproveTerminationModal(true);
+                                  }}
+                                  className="p-1.5 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                                  title="Direct Terminate Driver"
+                                >
+                                  <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+
+                              {isApproved && req.secureAccess?.accessUrl && (
+                                <button
+                                  onClick={() => handleCopyUrl(req.secureAccess!.accessUrl!)}
+                                  className="p-1.5 rounded-lg text-slate-600 hover:text-[#102A43] hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                                  title="Copy driver access link"
+                                >
+                                  <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Table Footer / Summary Bar */}
+              <div className="px-5 py-3 bg-slate-50/90 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+                <div>
+                  Showing <span className="font-bold text-slate-700">{filteredRequests.length}</span> of{" "}
+                  <span className="font-bold text-slate-700">{requests.length}</span> registrations
+                </div>
+                {(statusFilter !== "all" || searchQuery) && (
+                  <button
+                    onClick={() => {
+                      setStatusFilter("all");
+                      setSearchQuery("");
+                    }}
+                    className="text-[#102A43] font-semibold hover:underline cursor-pointer"
+                  >
+                    Reset filters
+                  </button>
+                )}
               </div>
             </div>
           )}
