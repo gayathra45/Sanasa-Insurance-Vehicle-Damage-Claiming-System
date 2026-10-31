@@ -2324,7 +2324,44 @@ export default function ThirdPartyDriverPortalPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{claims.length}</h3>
-                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">        {activeTab === "home" && (
+                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Total Claims</p>
+              </div>
+            </button>
+
+            {/* In Progress */}
+            <button
+              onClick={() => setActiveTab("my_claims")}
+              className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
+            >
+              <div className="text-slate-400 flex-shrink-0">
+                <HugeiconsIcon icon={Clock01Icon} className="w-11 h-11 text-cyan-500" strokeWidth={2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
+                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">In Progress</p>
+              </div>
+            </button>
+
+            {/* Approved */}
+            <button
+              onClick={() => setActiveTab("my_claims")}
+              className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
+            >
+              <div className="text-slate-400 flex-shrink-0">
+                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-11 h-11 text-emerald-500" strokeWidth={2} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
+                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Approved Claims</p>
+              </div>
+            </button>
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 1: HOME (Exact Policyholder Home Grid: Notifications + Registered Vehicles) */}
+        {/* ========================================================================= */}
+        {activeTab === "home" && (
           <div className="space-y-10">
             {/* Top Row: Recent Notifications (7 cols) & Authorized Vehicles (5 cols) */}
             <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
@@ -2643,7 +2680,7 @@ export default function ThirdPartyDriverPortalPage() {
                       <span className="font-mono text-slate-700 font-bold">24/7 Hotline: +94 112 003 000</span>
                     </div>
                     <span className="text-slate-300">•</span>
-                    <span className="text-slate-400">Driver Reference: {profile?.driverDetails?.nicNumber || "VERIFIED"}</span>
+                    <span className="text-slate-400">Driver Reference: {profile?.driverNicMasked || profile?.reference || "VERIFIED"}</span>
                   </div>
                 </div>
               </div>
