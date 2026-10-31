@@ -53,6 +53,7 @@ const userSchema = new mongoose.Schema({
   loginCount: { type: Number, default: 0 },
   forceLogoutAt: { type: Date, default: null },
   sessionRevokedAt: { type: Date, default: null },
+  pushTokens: [{ type: String }],
   createdAt: { type: Date, default: Date.now }
 });
 

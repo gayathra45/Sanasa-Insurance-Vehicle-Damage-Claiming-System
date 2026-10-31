@@ -39,6 +39,7 @@ const agentSchema = new mongoose.Schema({
   lastSeenAt: { type: Date, default: Date.now },
   forceLogoutAt: { type: Date, default: null },
   sessionRevokedAt: { type: Date, default: null },
+  pushTokens: [{ type: String }],
   createdAt: { type: Date, default: Date.now }
 });
 

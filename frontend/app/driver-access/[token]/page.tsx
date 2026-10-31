@@ -2324,302 +2324,331 @@ export default function ThirdPartyDriverPortalPage() {
               </div>
               <div className="min-w-0 flex-1">
                 <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{claims.length}</h3>
-                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Total Claims</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("my_claims")}
-              className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
-            >
-              <div className="text-slate-400 flex-shrink-0">
-                <HugeiconsIcon icon={Clock01Icon} className="w-11 h-11 text-cyan-500" strokeWidth={2} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{pendingClaimsCount}</h3>
-                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">In Progress</p>
-              </div>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("my_claims")}
-              className="bg-white px-5 py-6 rounded-[24px] border border-slate-100 shadow-[0_12px_32px_rgba(0,0,0,0.06)] flex items-center justify-start gap-4 hover:shadow-[0_12px_32px_rgba(0,0,0,0.1)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 text-left border-none cursor-pointer"
-            >
-              <div className="text-slate-400 flex-shrink-0">
-                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-11 h-11 text-emerald-500" strokeWidth={2} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-3xl font-bold text-slate-800 tracking-tight leading-none mb-1">{approvedClaimsCount}</h3>
-                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">Approved Claims</p>
-              </div>
-            </button>
-          </section>
-        )}
-        
-        {activeTab === "home" && (
-          <section className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            
-            {/* Left Column (7 cols): Notifications & Claim Updates */}
-            <div className="lg:col-span-7">
-              <div className="flex items-center justify-between mb-6 select-none">
-                <div className="flex items-center gap-2.5">
-                  <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                  <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
-                    Recent Notifications & Requests
-                  </h2>
+                <p className="text-slate-500 font-semibold text-[10px] md:text-xs uppercase tracking-wider leading-tight">        {activeTab === "home" && (
+          <div className="space-y-10">
+            {/* Top Row: Recent Notifications (7 cols) & Authorized Vehicles (5 cols) */}
+            <section className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
+              
+              {/* Left Column (7 cols): Notifications & Claim Updates */}
+              <div className="lg:col-span-7">
+                <div className="flex items-center justify-between mb-6 select-none">
+                  <div className="flex items-center gap-2.5">
+                    <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+                    <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
+                      Recent Notifications & Requests
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("notifications")}
+                    className="text-xs font-semibold text-sky-600 hover:text-sky-800 flex items-center gap-1 border-none bg-transparent cursor-pointer"
+                  >
+                    View All ({notifications.length}) &rarr;
+                  </button>
                 </div>
-                <button
-                  onClick={() => setActiveTab("notifications")}
-                  className="text-xs font-semibold text-sky-600 hover:text-sky-800 flex items-center gap-1 border-none bg-transparent cursor-pointer"
-                >
-                  View All ({notifications.length}) &rarr;
-                </button>
-              </div>
 
-              <div className="flex flex-col gap-6">
-                {claims.length > 0 ? (
-                  claims.slice(0, 3).map((claim) => (
-                    <div
-                      key={claim.claimNumber}
-                      className="bg-white border-2 border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]"
-                    >
-                      <div className="flex items-start gap-3.5">
-                        <div className="p-2 bg-blue-100 rounded-xl text-blue-600 flex-shrink-0 mt-0.5">
-                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-6 h-6" strokeWidth={2} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-slate-900 font-semibold text-base leading-none">
-                              Claim {claim.claimNumber} Status: {claim.status}
-                            </h4>
-                            <span className="text-[11px] text-slate-400 font-medium">
-                              {claim.incidentDate}
-                            </span>
+                <div className="flex flex-col gap-6">
+                  {claims.length > 0 ? (
+                    claims.slice(0, 3).map((claim) => (
+                      <div
+                        key={claim.claimNumber}
+                        className="bg-white border-2 border-slate-100 rounded-[24px] p-6 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between min-h-[140px]"
+                      >
+                        <div className="flex items-start gap-3.5">
+                          <div className="p-2 bg-blue-100 rounded-xl text-blue-600 flex-shrink-0 mt-0.5">
+                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-6 h-6" strokeWidth={2} />
                           </div>
-                          <p className="text-slate-600 text-xs md:text-sm mt-2 leading-relaxed">
-                            Vehicle {claim.vehiclePlate} • {claim.damageType} lodged for {claim.location}. Branch reviewing inspection details.
-                          </p>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <h4 className="text-slate-900 font-semibold text-base leading-none">
+                                Claim {claim.claimNumber} Status: {claim.status}
+                              </h4>
+                              <span className="text-[11px] text-slate-400 font-medium">
+                                {claim.incidentDate}
+                              </span>
+                            </div>
+                            <p className="text-slate-600 text-xs md:text-sm mt-2 leading-relaxed">
+                              Vehicle {claim.vehiclePlate} • {claim.damageType} lodged for {claim.location}. Branch reviewing inspection details.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-slate-100">
+                          <button
+                            onClick={() => handleOpenClaimDetails(claim.claimNumber)}
+                            className="px-4 py-1.5 bg-[#0d2a3a] text-white text-xs font-semibold rounded-xl hover:bg-slate-800 transition-all cursor-pointer border-none"
+                          >
+                            View Details
+                          </button>
                         </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="bg-white border border-slate-100 rounded-[24px] p-8 text-center text-slate-400 shadow-sm">
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-8 h-8 mx-auto mb-2 text-emerald-500" />
+                      <p className="text-sm font-semibold text-slate-700">No pending notifications</p>
+                      <p className="text-xs text-slate-400 mt-1">All authorized vehicle claims are up to date.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
-                      <div className="flex justify-end gap-3 mt-4 pt-3 border-t border-slate-100">
+              {/* Right Column (5 cols): Permitted Registered Vehicles */}
+              <div className="lg:col-span-5">
+                <div className="flex items-center justify-between mb-6 select-none">
+                  <div className="flex items-center gap-2.5">
+                    <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+                    <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
+                      Authorized Vehicles
+                    </h2>
+                  </div>
+                  <button
+                    onClick={() => setActiveTab("vehicles")}
+                    className="text-xs font-semibold text-[#0284c7] hover:underline bg-transparent border-none cursor-pointer"
+                  >
+                    View All ({vehicles.length})
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  {vehicles.map((v) => {
+                    const theme = getVehicleTheme(v.vehicleType || "Car");
+                    return (
+                      <div
+                        key={v.numberPlate}
+                        className="bg-white rounded-[24px] border border-slate-100 p-5 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex items-center justify-between gap-4 hover:shadow-md transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${theme.bg} ${theme.border} border`}>
+                            {getVehicleIconSvg(v.vehicleType || "Car", `w-6 h-6 ${theme.text}`)}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
+                                {formatPlate(v.numberPlate)}
+                              </span>
+                              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                Active
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-slate-800 text-sm mt-1">{v.company} {v.model}</h4>
+                            <p className="text-[11px] text-slate-400">{v.vehicleType} • {v.year}</p>
+                          </div>
+                        </div>
+
                         <button
-                          onClick={() => handleOpenClaimDetails(claim.claimNumber)}
-                          className="px-4 py-1.5 bg-[#0d2a3a] text-white text-xs font-semibold rounded-xl hover:bg-slate-800 transition-all cursor-pointer border-none"
+                          onClick={() => {
+                            setClaimPlate(v.numberPlate);
+                            setActiveTab("new_claim");
+                          }}
+                          className="px-3.5 py-2 bg-[#ff9800] hover:bg-[#ff8f00] text-white text-xs font-bold rounded-xl border-none cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-all"
                         >
-                          View Details
+                          Claim
                         </button>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="bg-white border border-slate-100 rounded-[24px] p-8 text-center text-slate-400 shadow-sm">
-                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-8 h-8 mx-auto mb-2 text-emerald-500" />
-                    <p className="text-sm font-semibold text-slate-700">No pending notifications</p>
-                    <p className="text-xs text-slate-400 mt-1">All authorized vehicle claims are up to date.</p>
-                  </div>
-                )}
+                    );
+                  })}
+                </div>
               </div>
 
-              {/* Third-Party Driver Scope & Limitations Card (Redesigned with Premium Elevation) */}
-              <div className="mt-8 bg-white border border-slate-200/90 rounded-[32px] p-6 sm:p-7 shadow-[0_10px_35px_rgba(0,0,0,0.03)] relative overflow-hidden select-none">
-                {/* Subtle Ambient Decorative Gradients */}
-                <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-sky-100/40 via-indigo-50/20 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-                <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-tr from-emerald-100/30 via-slate-50/20 to-transparent rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+            </section>
 
-                {/* Card Header */}
-                <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-slate-100">
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#0d2a3a] via-[#103a52] to-[#0284c7] text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-sky-900/20">
+            {/* Full-Width Redesigned Driver Authorization Scope & Limitations Section */}
+            <section className="w-full">
+              <div className="bg-white border border-slate-200/90 rounded-[32px] p-7 sm:p-9 shadow-[0_12px_40px_rgba(0,0,0,0.03)] relative overflow-hidden select-none">
+                {/* Ambient Decorative Backdrops */}
+                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-sky-100/40 via-indigo-50/20 to-transparent rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-emerald-100/30 via-slate-50/20 to-transparent rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+
+                {/* Card Header (Full Width) */}
+                <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-5 pb-6 border-b border-slate-100">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0d2a3a] via-[#103a52] to-[#0284c7] text-white flex items-center justify-center flex-shrink-0 shadow-lg shadow-sky-900/20">
                       <HugeiconsIcon icon={SecurityCheckIcon} className="w-6 h-6 text-cyan-300" strokeWidth={2.2} />
                     </div>
                     <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight leading-snug">
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-snug">
                           Driver Authorization Scope & Limitations
                         </h3>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-900 text-white shadow-2xs">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold bg-slate-900 text-white shadow-2xs">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           <span>Underwriter Verified</span>
                         </span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                          Authorized Third-Party Driver
+                        </span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs sm:text-sm text-slate-500 mt-1">
                         Established under Policyholder <strong className="text-slate-800 font-semibold">{profile?.policyHolderName}</strong> • {profile?.branch} Branch
                       </p>
                     </div>
                   </div>
 
-                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-slate-600 font-medium">
-                    <HugeiconsIcon icon={ShieldCheckIcon} className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Sri Lanka Motor Traffic Act Compliant</span>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-700 font-medium">
+                      <HugeiconsIcon icon={ShieldCheckIcon} className="w-4 h-4 text-emerald-600" />
+                      <span>Sri Lanka Motor Traffic Act Compliant</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200/80 text-xs text-emerald-700 font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      <span>Live Pass Active</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Scope & Limitations 2-Column Grid */}
-                <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
+                {/* Scope & Limitations 2-Column Grid (Now with full width and generous space) */}
+                <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mt-7">
                   
                   {/* Left Column: Authorized Scope (Allowed) */}
-                  <div className="bg-gradient-to-b from-emerald-50/70 via-emerald-50/20 to-white border border-emerald-200/80 rounded-[26px] p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+                  <div className="bg-gradient-to-b from-emerald-50/70 via-emerald-50/25 to-white border border-emerald-200/90 rounded-[26px] p-6 sm:p-7 shadow-xs flex flex-col justify-between">
                     <div>
                       {/* Section Title */}
-                      <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-emerald-200/60">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold tracking-wide uppercase shadow-xs shadow-emerald-600/25">
-                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      <div className="flex items-center justify-between pb-4 mb-5 border-b border-emerald-200/70">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-600 text-white text-xs font-bold tracking-wide uppercase shadow-sm shadow-emerald-600/30">
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" strokeWidth={2.5} />
                           <span>Authorized Scope (Allowed)</span>
                         </div>
-                        <span className="text-[11px] font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-bold text-emerald-800 bg-emerald-100/90 px-3 py-1 rounded-full border border-emerald-300/60">
                           5 Active Rights
                         </span>
                       </div>
 
                       {/* Items List */}
-                      <div className="space-y-3">
+                      <div className="space-y-3.5">
                         {[
-                          "Drive assigned vehicle(s) on public roads across Sri Lanka.",
-                          "File accident & vehicle damage claims directly with photos.",
-                          "Present live cryptographic QR Digital Pass to traffic authorities.",
-                          "Chat directly with Vehicle Owner (Policyholder), Branch Officers & Field Agents.",
-                          "24/7 Sanasa Customer & Emergency Hotline support (+94 112 003 000)."
+                          {
+                            title: "Drive Assigned Vehicles Legally",
+                            desc: "Authorized to operate assigned vehicle(s) on public highways and roads across Sri Lanka."
+                          },
+                          {
+                            title: "Instant Accident & Damage Reporting",
+                            desc: "Direct authority to lodge motor accident claims and upload physical damage photos immediately."
+                          },
+                          {
+                            title: "Cryptographic QR Digital Pass",
+                            desc: "Present live encrypted QR credential to police and road safety officials for proof of authorization."
+                          },
+                          {
+                            title: "Multi-Party Claim Chat Access",
+                            desc: "Direct communication with Vehicle Owner (Policyholder), Branch Underwriters & Field Claims Officers."
+                          },
+                          {
+                            title: "24/7 Sanasa Emergency Assistance",
+                            desc: "Priority access to 24/7 roadside assistance, towing hotline (+94 112 003 000), and branch desks."
+                          }
                         ].map((item, idx) => (
                           <div
                             key={idx}
-                            className="flex items-start gap-3 p-2 rounded-xl hover:bg-emerald-100/30 transition-colors"
+                            className="flex items-start gap-3.5 p-3 rounded-2xl bg-white/70 border border-emerald-100 hover:bg-emerald-100/40 hover:border-emerald-200 transition-all shadow-2xs"
                           >
-                            <div className="w-5 h-5 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs shadow-emerald-500/30">
-                              <HugeiconsIcon icon={Tick01Icon} className="w-3 h-3" strokeWidth={3} />
+                            <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs shadow-emerald-500/30">
+                              <HugeiconsIcon icon={Tick01Icon} className="w-3.5 h-3.5" strokeWidth={3} />
                             </div>
-                            <span className="text-slate-800 text-xs sm:text-[13px] font-medium leading-relaxed">
-                              {item}
-                            </span>
+                            <div className="min-w-0 flex-1">
+                              <h5 className="text-slate-900 text-[13px] sm:text-sm font-bold leading-snug">
+                                {item.title}
+                              </h5>
+                              <p className="text-slate-600 text-xs sm:text-[12.5px] font-normal leading-relaxed mt-0.5">
+                                {item.desc}
+                              </p>
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-emerald-100 flex items-center gap-1.5 text-[11px] text-emerald-700 font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      <span>Full legal coverage applies while driving assigned vehicles</span>
+                    <div className="mt-5 pt-3.5 border-t border-emerald-100 flex items-center justify-between text-xs text-emerald-800 font-semibold">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Comprehensive underwritten third-party coverage active</span>
+                      </div>
+                      <span className="hidden sm:inline text-emerald-600 text-[11px] font-normal">Section 99 MTR Act</span>
                     </div>
                   </div>
 
                   {/* Right Column: Access Limitations (Restricted) */}
-                  <div className="bg-gradient-to-b from-rose-50/70 via-rose-50/20 to-white border border-rose-200/80 rounded-[26px] p-5 sm:p-6 shadow-2xs flex flex-col justify-between">
+                  <div className="bg-gradient-to-b from-rose-50/70 via-rose-50/25 to-white border border-rose-200/90 rounded-[26px] p-6 sm:p-7 shadow-xs flex flex-col justify-between">
                     <div>
                       {/* Section Title */}
-                      <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-rose-200/60">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500 text-white text-[11px] font-bold tracking-wide uppercase shadow-xs shadow-rose-500/25">
-                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
+                      <div className="flex items-center justify-between pb-4 mb-5 border-b border-rose-200/70">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-rose-500 text-white text-xs font-bold tracking-wide uppercase shadow-sm shadow-rose-500/30">
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
                           <span>Access Limitations (Restricted)</span>
                         </div>
-                        <span className="text-[11px] font-bold text-rose-700 bg-rose-100/70 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-bold text-rose-800 bg-rose-100/90 px-3 py-1 rounded-full border border-rose-300/60">
                           4 Restrictions
                         </span>
                       </div>
 
                       {/* Items List */}
-                      <div className="space-y-3">
+                      <div className="space-y-3.5">
                         {[
-                          "Cannot alter insurance policy terms, coverages, or premiums.",
-                          "Cannot renew or transfer vehicle insurance policies.",
-                          "Cannot register additional drivers or revoke passes.",
-                          "Cannot access policyholder's private financial data."
+                          {
+                            title: "No Policy Term Alterations",
+                            desc: "Cannot modify insurance terms, policy endorsement conditions, coverage tiers, or deductibles."
+                          },
+                          {
+                            title: "No Policy Renewal or Transfer",
+                            desc: "Only the verified vehicle owner / policyholder holds authority to renew, cancel, or transfer policies."
+                          },
+                          {
+                            title: "No Driver Delegation Rights",
+                            desc: "Cannot delegate vehicle driving permission to unauthorized third parties or revoke driver passes."
+                          },
+                          {
+                            title: "Restricted Financial & Account Privacy",
+                            desc: "Personal bank details, settlement payouts, and owner billing data are strictly isolated."
+                          }
                         ].map((item, idx) => (
                           <div
                             key={idx}
-                            className="flex items-start gap-3 p-2 rounded-xl hover:bg-rose-100/30 transition-colors"
+                            className="flex items-start gap-3.5 p-3 rounded-2xl bg-white/70 border border-rose-100 hover:bg-rose-100/40 hover:border-rose-200 transition-all shadow-2xs"
                           >
-                            <div className="w-5 h-5 rounded-full bg-rose-100 text-rose-600 border border-rose-300 flex items-center justify-center shrink-0 mt-0.5">
-                              <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" strokeWidth={2.5} />
+                            <div className="w-6 h-6 rounded-full bg-rose-100 text-rose-600 border border-rose-300 flex items-center justify-center shrink-0 mt-0.5">
+                              <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" strokeWidth={2.5} />
                             </div>
-                            <span className="text-slate-700 text-xs sm:text-[13px] font-medium leading-relaxed">
-                              {item}
-                            </span>
+                            <div className="min-w-0 flex-1">
+                              <h5 className="text-slate-900 text-[13px] sm:text-sm font-bold leading-snug">
+                                {item.title}
+                              </h5>
+                              <p className="text-slate-600 text-xs sm:text-[12.5px] font-normal leading-relaxed mt-0.5">
+                                {item.desc}
+                              </p>
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-rose-100 flex items-center gap-1.5 text-[11px] text-rose-600 font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-                      <span>Security isolation protects policyholder account privacy</span>
+                    <div className="mt-5 pt-3.5 border-t border-rose-100 flex items-center justify-between text-xs text-rose-700 font-semibold">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-rose-400" />
+                        <span>Cryptographic sandbox guards owner privacy and financial records</span>
+                      </div>
+                      <span className="hidden sm:inline text-rose-500 text-[11px] font-normal">ISO 27001 Compliant</span>
                     </div>
                   </div>
 
                 </div>
 
                 {/* Bottom Trust Seal Footer */}
-                <div className="relative z-10 mt-5 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400">
+                <div className="relative z-10 mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs text-slate-500">
                   <div className="flex items-center gap-2">
                     <HugeiconsIcon icon={ShieldCheckIcon} className="w-4 h-4 text-cyan-600" />
                     <span>Verified under Sanasa General Insurance Company Limited Policy Framework</span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <HugeiconsIcon icon={Call02Icon} className="w-3.5 h-3.5 text-slate-500" />
-                    <span className="font-mono text-slate-600 font-semibold">Hotline: +94 112 003 000</span>
+                  <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <HugeiconsIcon icon={Call02Icon} className="w-4 h-4 text-slate-500" />
+                      <span className="font-mono text-slate-700 font-bold">24/7 Hotline: +94 112 003 000</span>
+                    </div>
+                    <span className="text-slate-300">•</span>
+                    <span className="text-slate-400">Driver Reference: {profile?.driverDetails?.nicNumber || "VERIFIED"}</span>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Right Column (5 cols): Permitted Registered Vehicles */}
-            <div className="lg:col-span-5">
-              <div className="flex items-center justify-between mb-6 select-none">
-                <div className="flex items-center gap-2.5">
-                  <HugeiconsIcon icon={Car01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                  <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
-                    Authorized Vehicles
-                  </h2>
-                </div>
-                <button
-                  onClick={() => setActiveTab("vehicles")}
-                  className="text-xs font-semibold text-[#0284c7] hover:underline bg-transparent border-none cursor-pointer"
-                >
-                  View All ({vehicles.length})
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-4">
-                {vehicles.map((v) => {
-                  const theme = getVehicleTheme(v.vehicleType || "Car");
-                  return (
-                    <div
-                      key={v.numberPlate}
-                      className="bg-white rounded-[24px] border border-slate-100 p-5 shadow-[0_8px_30px_rgba(0,0,0,0.02)] flex items-center justify-between gap-4 hover:shadow-md transition-all duration-200"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${theme.bg} ${theme.border} border`}>
-                          {getVehicleIconSvg(v.vehicleType || "Car", `w-6 h-6 ${theme.text}`)}
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-mono font-bold text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
-                              {formatPlate(v.numberPlate)}
-                            </span>
-                            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                              Active
-                            </span>
-                          </div>
-                          <h4 className="font-bold text-slate-800 text-sm mt-1">{v.company} {v.model}</h4>
-                          <p className="text-[11px] text-slate-400">{v.vehicleType} • {v.year}</p>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          setClaimPlate(v.numberPlate);
-                          setActiveTab("new_claim");
-                        }}
-                        className="px-3.5 py-2 bg-[#ff9800] hover:bg-[#ff8f00] text-white text-xs font-bold rounded-xl border-none cursor-pointer shadow-sm hover:scale-105 active:scale-95 transition-all"
-                      >
-                        Claim
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-          </section>
+            </section>
+          </div>
         )}
 
         {/* ========================================================================= */}
