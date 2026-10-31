@@ -307,6 +307,18 @@ function formatPlate(plate: string): string {
   return cleaned.toUpperCase();
 }
 
+function formatDate(dateStr?: string): string {
+  if (!dateStr) return "Today";
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+  } catch {
+    return dateStr;
+  }
+}
+
 const driverAccessTranslations = {
   en: {
     hotline: "24H Customer Hotline: +94 112 003 000",
@@ -539,6 +551,12 @@ export default function ThirdPartyDriverPortalPage() {
     const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
     setIsMobileDevice(isMobile);
 
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab") as TabType;
+    if (tabParam && ["home", "notifications", "vehicles", "new_claim", "my_claims", "chat", "documents", "digital_pass"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
     const alreadyChosen = sessionStorage.getItem("sanasa_driver_preferred_view");
     // If opened on a mobile device and user hasn't explicitly chosen yet, prompt them
     if (isMobile && !alreadyChosen) {
@@ -613,7 +631,8 @@ export default function ThirdPartyDriverPortalPage() {
   // Notifications State
   const [notifications, setNotifications] = useState<DriverNotification[]>([]);
   const [readNotifIds, setReadNotifIds] = useState<string[]>([]);
-  const [notifFilter, setNotifFilter] = useState<"all" | "unread" | "urgent">("all");
+  const [notifFilter, setNotifFilter] = useState<"all" | "unread" | "read" | "urgent" | "approved" | "status">("all");
+  const [notifSearchQuery, setNotifSearchQuery] = useState("");
   const [loadingNotifs, setLoadingNotifs] = useState(false);
 
   // Claim Details Modal
@@ -845,6 +864,21 @@ export default function ThirdPartyDriverPortalPage() {
     }
   };
 
+  const toggleReadStatus = (id: string) => {
+    let updatedReadIds = [...readNotifIds];
+    if (readNotifIds.includes(id)) {
+      updatedReadIds = updatedReadIds.filter((item) => item !== id);
+    } else {
+      updatedReadIds.push(id);
+    }
+    setReadNotifIds(updatedReadIds);
+    if (typeof window !== "undefined" && token) {
+      try {
+        localStorage.setItem(`sanasa_tp_read_notifs_${token}`, JSON.stringify(updatedReadIds));
+      } catch (_) {}
+    }
+  };
+
   const markAllAsRead = () => {
     const allIds = notifications.map((n) => n.id);
     setReadNotifIds(allIds);
@@ -857,6 +891,7 @@ export default function ThirdPartyDriverPortalPage() {
   };
 
   const handleNotificationAction = (notif: DriverNotification) => {
+    markAsRead(notif.id);
     if (notif.actionType === "pass") {
       setActiveTab("digital_pass");
     } else if (notif.actionType === "view_claim") {
@@ -868,16 +903,13 @@ export default function ThirdPartyDriverPortalPage() {
     } else if (notif.actionType === "upload_doc") {
       if (notif.claimNumber) {
         setUploadTargetClaim(notif.claimNumber);
-        setActiveTab("documents");
-      } else {
-        setActiveTab("documents");
       }
+      setActiveTab("documents");
     } else if (notif.actionType === "chat") {
       if (notif.claimNumber) {
-        handleOpenClaimDetails(notif.claimNumber);
-      } else {
-        setActiveTab("my_claims");
+        setChatTargetClaim(notif.claimNumber);
       }
+      setChatModalOpen(true);
     }
   };
 
@@ -886,18 +918,49 @@ export default function ThirdPartyDriverPortalPage() {
   }, [notifications, readNotifIds]);
 
   const urgentCount = useMemo(() => {
-    return notifications.filter((n) => n.isUrgent).length;
+    return notifications.filter((n) => n.isUrgent || n.category === "urgent").length;
   }, [notifications]);
 
+  const approvedCount = useMemo(() => {
+    return notifications.filter((n) => n.category === "approved").length;
+  }, [notifications]);
+
+  const statusCount = useMemo(() => {
+    return notifications.filter((n) => n.category === "status" || n.category === "message").length;
+  }, [notifications]);
+
+  const readCount = useMemo(() => {
+    return notifications.filter((n) => readNotifIds.includes(n.id)).length;
+  }, [notifications, readNotifIds]);
+
   const filteredNotifications = useMemo(() => {
+    let result = notifications;
+
     if (notifFilter === "unread") {
-      return notifications.filter((n) => !readNotifIds.includes(n.id));
+      result = notifications.filter((n) => !readNotifIds.includes(n.id));
+    } else if (notifFilter === "read") {
+      result = notifications.filter((n) => readNotifIds.includes(n.id));
+    } else if (notifFilter === "urgent") {
+      result = notifications.filter((n) => n.isUrgent || n.category === "urgent");
+    } else if (notifFilter === "approved") {
+      result = notifications.filter((n) => n.category === "approved");
+    } else if (notifFilter === "status") {
+      result = notifications.filter((n) => n.category === "status" || n.category === "message");
     }
-    if (notifFilter === "urgent") {
-      return notifications.filter((n) => n.isUrgent);
+
+    if (notifSearchQuery.trim() !== "") {
+      const q = notifSearchQuery.toLowerCase().trim();
+      result = result.filter(
+        (n) =>
+          n.title.toLowerCase().includes(q) ||
+          n.message.toLowerCase().includes(q) ||
+          (n.subText && n.subText.toLowerCase().includes(q)) ||
+          (n.claimNumber && n.claimNumber.toLowerCase().includes(q))
+      );
     }
-    return notifications;
-  }, [notifications, readNotifIds, notifFilter]);
+
+    return result;
+  }, [notifications, readNotifIds, notifFilter, notifSearchQuery]);
 
 
   const refreshClaims = async () => {
@@ -1664,6 +1727,7 @@ export default function ThirdPartyDriverPortalPage() {
 
   const navLinks: { id: string; label: string; count?: number }[] = [
     { id: "home", label: "Home" },
+    { id: "notifications", label: "Notifications", count: unreadCount },
     { id: "my_claims", label: "My Claims" },
     { id: "vehicles", label: "My Vehicles" },
     { id: "digital_pass", label: "Digital Pass" },
@@ -2153,6 +2217,29 @@ export default function ThirdPartyDriverPortalPage() {
         </div>
       )}
 
+      {/* NOTIFICATIONS TAB: Authentic Policy Holder Styled Curved Header */}
+      {activeTab === "notifications" && (
+        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
+          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/contact_border.jpeg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+            <div className="absolute inset-0 bg-slate-900/35" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+          </div>
+
+          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+              Notifications
+            </h1>
+            <p className="text-slate-200 text-xs md:text-sm font-normal mt-3.5 tracking-wide opacity-95">
+              {loadingNotifs
+                ? "Loading updates..."
+                : notifications.length > 0
+                ? `You have ${unreadCount} unread update${unreadCount === 1 ? "" : "s"}`
+                : "All caught up with claim and authorization updates"}
+            </p>
+          </header>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* 3. MAIN CONTAINER & HOME STAT CARDS */}
       {/* ========================================================================= */}
@@ -2207,11 +2294,19 @@ export default function ThirdPartyDriverPortalPage() {
             
             {/* Left Column (7 cols): Notifications & Claim Updates */}
             <div className="lg:col-span-7">
-              <div className="flex items-center gap-2.5 mb-6 select-none">
-                <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
-                <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
-                  Recent Notifications & Requests
-                </h2>
+              <div className="flex items-center justify-between mb-6 select-none">
+                <div className="flex items-center gap-2.5">
+                  <HugeiconsIcon icon={Notification01Icon} className="w-6 h-6 text-slate-700 flex-shrink-0" strokeWidth={2.5} />
+                  <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-tight">
+                    Recent Notifications & Requests
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setActiveTab("notifications")}
+                  className="text-xs font-semibold text-sky-600 hover:text-sky-800 flex items-center gap-1 border-none bg-transparent cursor-pointer"
+                >
+                  View All ({notifications.length}) &rarr;
+                </button>
               </div>
 
               <div className="flex flex-col gap-6">
@@ -2393,6 +2488,281 @@ export default function ThirdPartyDriverPortalPage() {
               </div>
             </div>
 
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: NOTIFICATIONS (Full Policy Holder Notifications Parity Design) */}
+        {/* ========================================================================= */}
+        {activeTab === "notifications" && (
+          <section className="space-y-8 select-none">
+            {/* Top Controls Row */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              
+              {/* Search Input matching Policyholder design */}
+              <div className="relative w-full max-w-[420px] bg-slate-50 hover:bg-white focus-within:bg-white border border-slate-200 rounded-full pl-5 pr-2.5 py-2 flex items-center gap-3 transition-all duration-200 shadow-2xs focus-within:shadow-md focus-within:border-[#0284c7] focus-within:ring-4 focus-within:ring-[#0284c7]/10">
+                <span className="text-slate-400 flex items-center justify-center">
+                  <HugeiconsIcon icon={Search01Icon} className="w-5 h-5" strokeWidth={2.5} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search notifications, claims, or plates..."
+                  value={notifSearchQuery}
+                  onChange={(e) => setNotifSearchQuery(e.target.value)}
+                  className="flex-1 bg-transparent text-slate-800 text-[15px] placeholder-slate-400 focus:outline-none font-normal"
+                />
+                {notifSearchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setNotifSearchQuery("")}
+                    className="text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer p-1"
+                    title="Clear search"
+                  >
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" strokeWidth={2.5} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="bg-[#0284c7] hover:bg-[#0275a1] active:scale-95 text-white py-2 px-5 rounded-full text-xs font-semibold transition-all duration-150 border-none cursor-pointer flex items-center justify-center shadow-md shadow-[#0284c7]/20"
+                >
+                  Search
+                </button>
+              </div>
+
+              {/* Mark All As Read Button */}
+              {notifications.some((n) => !readNotifIds.includes(n.id)) && (
+                <button
+                  onClick={markAllAsRead}
+                  className="bg-slate-100 hover:bg-slate-200 border-none text-slate-700 font-semibold text-xs px-6 py-3 rounded-full transition-all cursor-pointer flex items-center gap-1.5 self-start md:self-center active:scale-95"
+                >
+                  <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-slate-600" strokeWidth={2.5} />
+                  Mark All as Read
+                </button>
+              )}
+            </div>
+
+            {/* Tab Filters row matching Policy Holder */}
+            <div className="flex flex-wrap gap-2.5 border-b border-slate-100 pb-5">
+              <button
+                onClick={() => setNotifFilter("all")}
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                  notifFilter === "all"
+                    ? "bg-[#000080] border-[#000080] text-white shadow-xs font-semibold"
+                    : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                }`}
+              >
+                All Alerts ({notifications.length})
+              </button>
+
+              <button
+                onClick={() => setNotifFilter("unread")}
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                  notifFilter === "unread"
+                    ? "bg-sky-500 border-sky-500 text-white shadow-xs font-semibold"
+                    : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                }`}
+              >
+                Unread
+                <span
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    notifFilter === "unread" ? "bg-white/20 text-white" : "bg-red-500 text-white"
+                  }`}
+                >
+                  {unreadCount}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setNotifFilter("read")}
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                  notifFilter === "read"
+                    ? "bg-slate-600 border-slate-600 text-white shadow-xs font-semibold"
+                    : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                }`}
+              >
+                Read
+                <span
+                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                    notifFilter === "read" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                  }`}
+                >
+                  {readCount}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setNotifFilter("urgent")}
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                  notifFilter === "urgent"
+                    ? "bg-red-500 border-red-500 text-white shadow-xs font-semibold"
+                    : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                }`}
+              >
+                Urgent ({urgentCount})
+              </button>
+
+              <button
+                onClick={() => setNotifFilter("approved")}
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                  notifFilter === "approved"
+                    ? "bg-emerald-600 border-emerald-600 text-white shadow-xs font-semibold"
+                    : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                }`}
+              >
+                Approvals ({approvedCount})
+              </button>
+
+              <button
+                onClick={() => setNotifFilter("status")}
+                className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                  notifFilter === "status"
+                    ? "bg-amber-500 border-amber-500 text-white shadow-xs font-semibold"
+                    : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                }`}
+              >
+                Status Updates ({statusCount})
+              </button>
+            </div>
+
+            {/* Notifications List Container */}
+            <div className="flex flex-col gap-3.5 mb-10">
+              {loadingNotifs ? (
+                <div className="py-16 text-center">
+                  <SimpleLoader message="Fetching notifications..." theme="blue" />
+                </div>
+              ) : filteredNotifications.length > 0 ? (
+                <div className="flex flex-col gap-3">
+                  {filteredNotifications.map((n) => {
+                    const isUrgent = n.isUrgent || n.category === "urgent";
+                    const isApproved = n.category === "approved";
+                    const isChat = n.type === "chat_message";
+                    const isRead = readNotifIds.includes(n.id);
+
+                    let borderLeft = "border-l-4 border-l-sky-400";
+                    let iconStyle = "bg-sky-50 text-sky-600";
+                    let iconSvg = <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" strokeWidth={2} />;
+
+                    if (isUrgent) {
+                      borderLeft = "border-l-4 border-l-rose-500";
+                      iconStyle = "bg-rose-50 text-rose-600";
+                      iconSvg = <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5" strokeWidth={2} />;
+                    } else if (isApproved) {
+                      borderLeft = "border-l-4 border-l-emerald-500";
+                      iconStyle = "bg-emerald-50 text-emerald-600";
+                      iconSvg = <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5" strokeWidth={2} />;
+                    } else if (isChat) {
+                      borderLeft = "border-l-4 border-l-cyan-400";
+                      iconStyle = "bg-cyan-50 text-cyan-600";
+                      iconSvg = <HugeiconsIcon icon={BubbleChatIcon} className="w-5 h-5" strokeWidth={2} />;
+                    }
+
+                    if (isRead) {
+                      borderLeft = "border-l-4 border-l-slate-200";
+                    }
+
+                    return (
+                      <div
+                        key={n.id}
+                        onClick={() => handleNotificationAction(n)}
+                        className={`rounded-2xl border border-slate-200/80 p-3.5 md:py-3.5 md:px-5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer ${borderLeft} ${
+                          isRead ? "bg-slate-50/50 hover:bg-slate-100/60" : "bg-white hover:bg-slate-50/50"
+                        }`}
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5 md:gap-4">
+                          
+                          {/* Left Info Area: Centered Icon + Title & Description */}
+                          <div className="flex items-center gap-3.5 flex-1 min-w-0">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${iconStyle}`}>
+                              {iconSvg}
+                            </div>
+
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4
+                                  className={`font-semibold text-sm md:text-[15px] leading-snug ${
+                                    isRead ? "text-slate-600" : "text-slate-800"
+                                  }`}
+                                >
+                                  {n.title}
+                                </h4>
+
+                                {!isRead && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 border border-sky-200/60">
+                                    New
+                                  </span>
+                                )}
+                              </div>
+
+                              <p className="text-slate-600 text-xs md:text-sm font-normal leading-relaxed mt-0.5">
+                                {n.message}
+                              </p>
+
+                              {n.subText && (
+                                <p className="text-[11px] text-slate-400 font-normal italic mt-0.5">
+                                  * {n.subText}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Right Action Area: Fixed-width Buttons + Aligned Date */}
+                          <div
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center justify-between md:justify-end gap-2.5 md:gap-3 shrink-0 pt-2.5 md:pt-0 border-t md:border-t-0 border-slate-100"
+                          >
+                            <div className="flex items-center gap-2 order-2 md:order-1">
+                              <button
+                                onClick={() => handleNotificationAction(n)}
+                                className={`w-[136px] md:w-[140px] h-[34px] flex items-center justify-center font-semibold text-xs rounded-full transition-all duration-150 active:scale-[0.98] cursor-pointer border-none shadow-xs whitespace-nowrap shrink-0 ${
+                                  isUrgent
+                                    ? "bg-red-500 hover:bg-red-600 text-white"
+                                    : isApproved
+                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                    : isChat
+                                    ? "bg-[#00ddff] hover:bg-[#00c8e6] text-white"
+                                    : "bg-[#000080] hover:bg-[#000066] text-white"
+                                }`}
+                              >
+                                {n.actionLabel || "View"}
+                              </button>
+
+                              {/* Read/Unread toggler button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleReadStatus(n.id);
+                                }}
+                                className="w-[136px] md:w-[140px] h-[34px] flex items-center justify-center bg-slate-50 hover:bg-slate-100 border border-solid border-slate-200 hover:border-slate-300 text-slate-600 font-medium text-xs rounded-full cursor-pointer transition-all duration-150 active:scale-[0.98] text-center whitespace-nowrap shrink-0"
+                              >
+                                {isRead ? "Mark as Unread" : "Mark as Read"}
+                              </button>
+                            </div>
+
+                            <span className="w-[84px] text-xs text-slate-400 font-normal whitespace-nowrap text-left md:text-right order-1 md:order-2">
+                              {formatDate(n.createdAt)}
+                            </span>
+                          </div>
+
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* Empty state block matching Policy Holder style */
+                <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-[30px] gap-6 text-center px-8 shadow-2xs">
+                  <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center text-slate-400">
+                    <HugeiconsIcon icon={Notification01Icon} className="w-10 h-10" strokeWidth={1.5} />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-slate-800 text-lg">No Notifications Found</h4>
+                    <p className="text-slate-500 font-normal text-sm max-w-sm mt-2 leading-relaxed">
+                      We couldn't find any notifications matching the selected tab criteria or search keywords.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
           </section>
         )}
 
