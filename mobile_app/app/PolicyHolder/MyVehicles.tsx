@@ -26,6 +26,7 @@ import * as ImagePicker from "expo-image-picker";
 import { compressImageMobile } from "../../utils/imageCompressor";
 import PolicyHolderNavbar from "../Components/PolicyHolder/page";
 import AIChatBot from "../Components/AIChatBot";
+import ThirdPartyNfcSection from "./ThirdPartyNfcSection";
 import { API_BASE_URL } from "../_config";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -1351,6 +1352,20 @@ export default function MyVehicles() {
 
           {/* ── TAB 2: THIRD-PARTY DRIVERS MANAGEMENT ── */}
           {activeMainTab === "third_party" && (
+            <ThirdPartyNfcSection
+              userInfo={userInfo}
+              vehicles={vehicles}
+              onOpenPermanentRegistration={handleOpenThirdPartyForPlate}
+              showCustomAlert={showCustomAlert}
+              permanentRequests={thirdPartyRequests}
+              loadingPermanent={loadingThirdParty}
+              onRefreshPermanent={() => userInfo?.nic && fetchThirdPartyRequests(userInfo.nic, true)}
+              onOpenTerminateModal={handleOpenTerminateModal}
+              onResumePayment={handleResumeThirdPartyPayment}
+              resumingPaymentId={resumingPaymentId}
+            />
+          )}
+          {false && (
             <View style={styles.thirdPartyViewContainer}>
               {/* Header Info Banner */}
               <LinearGradient
