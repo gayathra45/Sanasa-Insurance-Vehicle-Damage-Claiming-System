@@ -313,6 +313,21 @@ export default function WebAIChatBot() {
     } else if (pathname?.includes("/Admin/")) {
       setCurrentRole("admin");
       setUserInfo({ name: "Administrator", nic: "", email: "", branch: "" });
+    } else if (pathname?.includes("/driver-access")) {
+      let dName = "Authorized Driver";
+      try {
+        const dStr = sessionStorage.getItem("sanasa_tp_driver_profile");
+        if (dStr) {
+          const d = JSON.parse(dStr);
+          dName = d.driverName || "Authorized Driver";
+        }
+      } catch {}
+      setCurrentRole("policy_holder");
+      setUserInfo({ name: dName, nic: "", email: "", branch: "" });
+      setThreads((prev) => ({
+        ...prev,
+        policy_holder: prev.policy_holder.length > 0 ? prev.policy_holder : getInitialWelcome("policy_holder", dName),
+      }));
     } else {
       // Home page, About, Services, etc. (Public / Guest)
       setCurrentRole("guest");
@@ -330,16 +345,15 @@ export default function WebAIChatBot() {
     pathname?.includes("/Agent/") ||
     pathname?.includes("/Policy_Holder/") ||
     pathname?.includes("/Office_Staff/") ||
-    pathname?.includes("/Admin/")
+    pathname?.includes("/Admin/") ||
+    pathname?.includes("/driver-access")
   );
 
-  // User instructions: exclude claim apply process, login pages, and driver access portal
+  // User instructions: exclude claim apply process and login pages
   const isExcluded = Boolean(
     pathname?.includes("/Policy_Holder/New_Claim") ||
     pathname === "/Login" ||
-    pathname?.toLowerCase().startsWith("/login") ||
-    pathname?.startsWith("/driver-access") ||
-    pathname?.includes("/driver-access")
+    pathname?.toLowerCase().startsWith("/login")
   );
 
   // Aligned cleanly above the floating claim chat button (bottom-8 right-8)

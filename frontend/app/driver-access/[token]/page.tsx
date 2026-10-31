@@ -622,6 +622,20 @@ export default function ThirdPartyDriverPortalPage() {
 
   // Operations Chat Modal (Direct chat with Policyholder, Branch Office & Field Agents)
   const [chatModalOpen, setChatModalOpen] = useState(false);
+
+  // Synchronize driver claim chat with bottom-right floating chat buttons
+  useEffect(() => {
+    const handleOpenDriverChat = () => {
+      setChatTargetClaim(claims[0]?.claimNumber || profile?.reference || "");
+      setChatModalOpen(true);
+    };
+    window.addEventListener("open-driver-chat", handleOpenDriverChat);
+    return () => window.removeEventListener("open-driver-chat", handleOpenDriverChat);
+  }, [claims, profile]);
+
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("driver-chat-modal-state", { detail: { isOpen: chatModalOpen } }));
+  }, [chatModalOpen]);
   const [chatTargetClaim, setChatTargetClaim] = useState<string>("");
 
   // Claim Submission Form States (Full PolicyHolder New_Claim Parity)
@@ -783,6 +797,11 @@ export default function ThirdPartyDriverPortalPage() {
       if (meRes.ok) {
         const meData = await meRes.json();
         setProfile(meData.profile);
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("sanasa_tp_driver_profile", JSON.stringify(meData.profile));
+          } catch (_) {}
+        }
       }
       if (vehRes.ok) {
         const vehData = await vehRes.json();
@@ -1959,19 +1978,6 @@ export default function ThirdPartyDriverPortalPage() {
 
           {/* Right Action Icons & Driver Profile */}
           <div className="flex items-center gap-2 sm:gap-2.5">
-            {/* Direct Chat with Policyholder, Branch & Agent */}
-            <button
-              onClick={() => {
-                setChatTargetClaim(claims[0]?.claimNumber || profile?.reference || "");
-                setChatModalOpen(true);
-              }}
-              className="relative p-2 rounded-xl transition-all border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 cursor-pointer flex items-center gap-1.5"
-              title="Chat with Policyholder, Branch & Agent"
-            >
-              <HugeiconsIcon icon={BubbleChatIcon} className="w-4 h-4 text-[#0284c7]" />
-              <span className="hidden lg:inline text-xs font-bold text-slate-700">Chat</span>
-            </button>
-
             {/* Direct Notification Bell Quick Access */}
             <button
               onClick={() => setActiveTab("notifications")}
@@ -2033,16 +2039,6 @@ export default function ThirdPartyDriverPortalPage() {
               )}
             </button>
           ))}
-          <button
-            onClick={() => {
-              setChatTargetClaim(claims[0]?.claimNumber || profile?.reference || "");
-              setChatModalOpen(true);
-            }}
-            className="px-3 py-1 rounded-full text-xs font-semibold bg-sky-50 text-[#0284c7] border border-sky-200 whitespace-nowrap flex items-center gap-1"
-          >
-            <HugeiconsIcon icon={BubbleChatIcon} className="w-3.5 h-3.5" />
-            <span>Chat</span>
-          </button>
           <button
             onClick={() => setActiveTab("new_claim")}
             className="px-3 py-1 rounded-full text-xs font-semibold bg-[#ff9800] text-white whitespace-nowrap border-none"

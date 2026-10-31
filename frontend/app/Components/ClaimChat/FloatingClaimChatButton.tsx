@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { BubbleChatIcon } from "@hugeicons/core-free-icons";
 import { useChatNotification } from "../../context/ChatNotificationContext";
@@ -8,21 +8,37 @@ import { usePathname } from "next/navigation";
 
 export default function FloatingClaimChatButton() {
   const { openChat, chatUnreadCount, isChatOpen } = useChatNotification();
+  const [isDriverChatOpen, setIsDriverChatOpen] = useState(false);
   const pathname = usePathname();
 
-  // Exclude login, new claim creation steps, and driver access portal
+  // Listen to driver portal modal state so button hides when modal is open
+  useEffect(() => {
+    const handleDriverChatModal = (e: any) => {
+      setIsDriverChatOpen(Boolean(e?.detail?.isOpen));
+    };
+    window.addEventListener("driver-chat-modal-state", handleDriverChatModal);
+    return () => window.removeEventListener("driver-chat-modal-state", handleDriverChatModal);
+  }, []);
+
+  // Exclude login and new claim creation steps
   if (
     pathname === "/Login" ||
     pathname?.toLowerCase().startsWith("/login") ||
-    pathname?.includes("/Policy_Holder/New_Claim") ||
-    pathname?.startsWith("/driver-access") ||
-    pathname?.includes("/driver-access")
+    pathname?.includes("/Policy_Holder/New_Claim")
   ) {
     return null;
   }
 
   // Don't show button if modal is open
-  if (isChatOpen) return null;
+  if (isChatOpen || isDriverChatOpen) return null;
+
+  const handleButtonClick = () => {
+    if (pathname?.includes("/driver-access")) {
+      window.dispatchEvent(new CustomEvent("open-driver-chat"));
+    } else {
+      openChat();
+    }
+  };
 
   return (
     <div className="fixed bottom-8 right-8 z-40">
@@ -38,7 +54,7 @@ export default function FloatingClaimChatButton() {
         {/* Floating circular chat button */}
         <button
           type="button"
-          onClick={() => openChat()}
+          onClick={handleButtonClick}
           aria-label="Open Claim Real-Time Chat"
           title="Claim Communication Desk"
           className="bg-gradient-to-tr from-[#0284c7] to-[#00ddff] hover:from-[#0369a1] hover:to-[#00c4e2] text-white p-5 rounded-full shadow-[0_10px_25px_-5px_rgba(2,132,199,0.5)] transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer focus:outline-none border-2 border-white flex items-center justify-center relative"
