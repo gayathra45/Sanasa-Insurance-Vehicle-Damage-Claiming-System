@@ -481,58 +481,98 @@ export default function MobileDriverPortalScreen() {
   const approvedCount = claims.filter(c => c.status === "Approved" || c.status === "Settled").length;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" {...({ backgroundColor: "#0f172a" } as any)} />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" {...({ translucent: true, backgroundColor: "#0f172a" } as any)} />
 
       {/* ========================================================================= */}
-      {/* EXACT POLICYHOLDER MOBILE HEADER (Gradient, Welcome, User Avatar) */}
+      {/* EXACT POLICYHOLDER MOBILE HERO HEADER */}
       {/* ========================================================================= */}
-      {/* TAB-SPECIFIC HEADERS (Matching Policyholder Mobile Screens) */}
-      {/* ========================================================================= */}
-      
-      {/* DASHBOARD TAB: Greeting & Stat Summary Cards */}
       {activeTab === "dashboard" && (
-        <LinearGradient colors={["#0f172a", "#1e293b"]} style={styles.headerGradient}>
-          <View style={styles.topBar}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.welcomeLabel}>Welcome back,</Text>
-              <Text style={styles.welcomeName}>{profile?.driverName} 👋</Text>
-            </View>
-
-            <View style={styles.headerRightActions}>
-              <View style={styles.badgeBranch}>
-                <Ionicons name="business-outline" size={12} color="#38bdf8" />
-                <Text style={styles.badgeBranchText}>{profile?.branch || "Galle"}</Text>
+        <ImageBackground
+          source={require("../../assets/images/policy1.jpg")}
+          style={styles.heroBackground}
+          imageStyle={styles.heroImageStyle}
+        >
+          <LinearGradient
+            colors={["rgba(15,23,42,0.96)", "rgba(15,23,42,0.82)", "rgba(15,23,42,0.6)"]}
+            style={styles.heroGradient}
+          >
+            {/* Top Bar */}
+            <View style={styles.topBar}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.welcomeLabel}>Welcome back,</Text>
+                <Text style={styles.welcomeName}>{profile?.driverName} 👋</Text>
               </View>
 
-              <TouchableOpacity style={styles.avatarButton} onPress={handleLogout} activeOpacity={0.85}>
-                <Text style={styles.avatarText}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+              <View style={styles.headerRightActions}>
+                {/* Branch Badge */}
+                <View style={styles.badgeBranch}>
+                  <Ionicons name="business-outline" size={13} color="#38bdf8" />
+                  <Text style={styles.badgeBranchText}>{profile?.branch || "Galle"}</Text>
+                </View>
+
+                {/* Notification Bell */}
+                <TouchableOpacity
+                  style={[styles.headerIconBtn, claims.length > 0 && styles.headerIconBtnAlert]}
+                  onPress={() => setActiveTab("claims")}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name={claims.length > 0 ? "notifications" : "notifications-outline"}
+                    size={20}
+                    color={claims.length > 0 ? "#fbbf24" : "#ffffff"}
+                  />
+                  {claims.length > 0 && (
+                    <View style={styles.notifBadge}>
+                      <Text style={styles.notifBadgeText}>{claims.length > 9 ? "9+" : claims.length}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+
+                {/* Avatar Button */}
+                <TouchableOpacity style={styles.avatarButton} onPress={handleLogout} activeOpacity={0.85}>
+                  <Text style={styles.avatarText}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Subtitle Banner */}
+            <View style={styles.subtitleBanner}>
+              <View style={styles.dotIndicator} />
+              <Text style={styles.subtitleText} numberOfLines={2}>
+                Authorized by <Text style={{ color: "#ffffff", fontWeight: "700" }}>{profile?.policyHolderName}</Text> • All vehicles active
+              </Text>
+            </View>
+
+            {/* Compensation / Notice Callout */}
+            <View style={styles.compensationCallout}>
+              <Text style={styles.calloutTitle}>
+                In an event of accident: Claim up to 75,000 without police report
+              </Text>
+            </View>
+
+            {/* Neon Action Buttons */}
+            <View style={styles.neonButtonsContainer}>
+              <TouchableOpacity
+                style={[styles.neonButton, styles.neonButtonRed]}
+                onPress={() => setActiveTab("submit")}
+                activeOpacity={0.9}
+              >
+                <Ionicons name="add" size={20} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={styles.neonButtonText}>New Claim</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.neonButton, styles.neonButtonCyan]}
+                onPress={() => setActiveTab("claims")}
+                activeOpacity={0.9}
+              >
+                <Ionicons name="search" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={styles.neonButtonText}>Track Claim</Text>
               </TouchableOpacity>
             </View>
-          </View>
-
-          <View style={styles.subtitleBanner}>
-            <View style={styles.dotIndicator} />
-            <Text style={styles.subtitleText} numberOfLines={2}>
-              Authorized by {profile?.policyHolderName} • All vehicles active
-            </Text>
-          </View>
-
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statNumber}>{claims.length}</Text>
-              <Text style={styles.statLabel}>Total Claims</Text>
-            </View>
-            <View style={[styles.statCard, styles.statCardMiddle]}>
-              <Text style={[styles.statNumber, { color: "#38bdf8" }]}>{pendingCount}</Text>
-              <Text style={styles.statLabel}>In Progress</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={[styles.statNumber, { color: "#4ade80" }]}>{approvedCount}</Text>
-              <Text style={styles.statLabel}>Approved</Text>
-            </View>
-          </View>
-        </LinearGradient>
+          </LinearGradient>
+        </ImageBackground>
       )}
 
       {/* VEHICLES TAB: Policyholder MyVehicles Signature Header */}
@@ -653,138 +693,276 @@ export default function MobileDriverPortalScreen() {
         </ImageBackground>
       )}
 
-      {/* Clean Quick Action / Tab Selector */}
-      <View style={styles.tabBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
-          {[
-            { id: "dashboard", label: "Dashboard", icon: "grid-outline" },
-            { id: "vehicles", label: `Vehicles (${vehicles.length})`, icon: "car-outline" },
-            { id: "submit", label: "New Claim", icon: "add-circle-outline" },
-            { id: "claims", label: `Claims (${claims.length})`, icon: "document-text-outline" },
-            { id: "chat", label: "Live Chat", icon: "chatbubbles-outline" },
-            { id: "pass", label: "Digital Pass", icon: "shield-checkmark-outline" }
-          ].map((t) => {
-            const isActive = activeTab === t.id;
-            return (
-              <TouchableOpacity
-                key={t.id}
-                onPress={() => setActiveTab(t.id as TabType)}
-                style={[styles.tabItem, isActive && styles.tabItemActive]}
-              >
-                <Ionicons
-                  name={t.icon as any}
-                  size={15}
-                  color={isActive ? "#ffffff" : "#64748B"}
-                />
-                <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-                  {t.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
       {/* Main Scroll Content */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* ========================================================================= */}
-        {/* TAB 1: DASHBOARD */}
+        {/* TAB 1: DASHBOARD (Exact Policyholder Home Layout) */}
         {/* ========================================================================= */}
         {activeTab === "dashboard" && (
-          <View style={styles.section}>
-            
-            {/* Quick Actions Grid (Exact Policyholder Mobile Quick Action Style) */}
-            <View style={styles.quickGrid}>
-              <TouchableOpacity style={styles.quickActionBox} onPress={() => setActiveTab("submit")}>
-                <View style={[styles.quickActionIconCircle, { backgroundColor: "#ff9800" }]}>
-                  <Ionicons name="add" size={24} color="#ffffff" />
+          <View>
+            {/* ── STAT CARDS ROW (Overlapping White Card) ── */}
+            <View style={styles.statsCardRow}>
+              <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => setActiveTab("claims")}>
+                <View style={[styles.statIconWrap, { backgroundColor: "#fff7ed" }]}>
+                  <Ionicons name="stats-chart" size={20} color="#f97316" />
                 </View>
-                <Text style={styles.quickActionText}>New Claim</Text>
+                <Text style={styles.statNumber}>{claims.length}</Text>
+                <Text style={styles.statLabel}>Total Claims</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.quickActionBox} onPress={() => setActiveTab("vehicles")}>
-                <View style={[styles.quickActionIconCircle, { backgroundColor: "#0284c7" }]}>
-                  <Ionicons name="car" size={22} color="#ffffff" />
+              <View style={styles.divider} />
+
+              <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => setActiveTab("claims")}>
+                <View style={[styles.statIconWrap, { backgroundColor: "#ecfeff" }]}>
+                  <Ionicons name="time" size={20} color="#06b6d4" />
                 </View>
-                <Text style={styles.quickActionText}>My Vehicles</Text>
+                <Text style={styles.statNumber}>{pendingCount}</Text>
+                <Text style={styles.statLabel}>In Progress</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.quickActionBox} onPress={() => setActiveTab("claims")}>
-                <View style={[styles.quickActionIconCircle, { backgroundColor: "#10b981" }]}>
-                  <Ionicons name="document-text" size={22} color="#ffffff" />
-                </View>
-                <Text style={styles.quickActionText}>My Claims</Text>
-              </TouchableOpacity>
+              <View style={styles.divider} />
 
-              <TouchableOpacity style={styles.quickActionBox} onPress={() => setActiveTab("pass")}>
-                <View style={[styles.quickActionIconCircle, { backgroundColor: "#6366f1" }]}>
-                  <Ionicons name="shield-checkmark" size={22} color="#ffffff" />
+              <TouchableOpacity style={styles.statItem} activeOpacity={0.7} onPress={() => setActiveTab("claims")}>
+                <View style={[styles.statIconWrap, { backgroundColor: "#f0fdf4" }]}>
+                  <Ionicons name="checkmark-circle" size={20} color="#22c55e" />
                 </View>
-                <Text style={styles.quickActionText}>Digital Pass</Text>
+                <Text style={styles.statNumber}>{approvedCount}</Text>
+                <Text style={styles.statLabel}>Approved</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Recent Notifications Card */}
-            <View style={styles.contentCard}>
-              <View style={styles.contentCardHeader}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Ionicons name="notifications-outline" size={18} color="#0f172a" />
-                  <Text style={styles.contentCardTitle}>Recent Updates</Text>
-                </View>
-                <TouchableOpacity onPress={() => setActiveTab("claims")}>
-                  <Text style={styles.linkText}>View All</Text>
-                </TouchableOpacity>
-              </View>
-
-              {claims.length === 0 ? (
-                <Text style={styles.emptyNotice}>No pending claims or requests for your vehicles.</Text>
-              ) : (
-                claims.slice(0, 3).map((c) => (
-                  <View key={c.claimNumber} style={styles.claimListItem}>
-                    <View style={styles.plateBadgeSmall}>
-                      <Text style={styles.plateBadgeSmallText}>{formatPlate(c.vehiclePlate)}</Text>
+            {/* ── DIGITAL DRIVER PASS CARD (Exact Policyholder MyDocs Gradient Card) ── */}
+            <View style={{ paddingHorizontal: 16, marginTop: 22 }}>
+              <TouchableOpacity
+                style={styles.myDocsCard}
+                onPress={() => setActiveTab("pass")}
+                activeOpacity={0.88}
+              >
+                <LinearGradient
+                  colors={["#1e3a8a", "#2563eb"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.myDocsGradient}
+                >
+                  <View style={styles.myDocsLeft}>
+                    <View style={styles.myDocsIconWrap}>
+                      <Ionicons name="shield-checkmark" size={26} color="#ffffff" />
                     </View>
-                    <View style={{ flex: 1, marginLeft: 10 }}>
-                      <Text style={styles.claimListNum}>{c.claimNumber}</Text>
-                      <Text style={styles.claimListSub}>{c.damageType} • {c.incidentDate}</Text>
-                    </View>
-                    <View style={styles.statusBadgeSoft}>
-                      <Text style={styles.statusBadgeSoftText}>{c.status}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.myDocsLabel}>Official Digital Driver Pass</Text>
+                      <Text style={styles.myDocsSub}>Verified credentials • Sanasa ({profile?.branch || "Galle"} Branch)</Text>
                     </View>
                   </View>
-                ))
+                  <View style={styles.myDocsArrow}>
+                    <Ionicons name="arrow-forward" size={16} color="#ffffff" />
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+            </View>
+
+            {/* ── RECENT NOTIFICATIONS & REQUESTS ── */}
+            <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+              <TouchableOpacity
+                style={styles.sectionHeader}
+                onPress={() => setActiveTab("claims")}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sectionTitle}>Notifications & Reminders</Text>
+                <Ionicons name="chevron-forward" size={18} color="#64748b" />
+              </TouchableOpacity>
+
+              {claims.length > 0 ? (
+                <View style={styles.compactNotifCard}>
+                  {claims.slice(0, 3).map((c, idx) => {
+                    const isApproved = c.status === "Approved" || c.status === "Settled";
+                    let iconBgColor = "#eff6ff";
+                    let iconColor = "#2563eb";
+                    let iconName: "time" | "alert-circle" | "checkmark-circle" = "time";
+
+                    if (isApproved) {
+                      iconBgColor = "#f0fdf4";
+                      iconColor = "#16a34a";
+                      iconName = "checkmark-circle";
+                    } else if (c.status === "Rejected") {
+                      iconBgColor = "#fef2f2";
+                      iconColor = "#dc2626";
+                      iconName = "alert-circle";
+                    }
+
+                    return (
+                      <React.Fragment key={c.claimNumber}>
+                        {idx > 0 && <View style={styles.compactSeparator} />}
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          onPress={() => setActiveTab("claims")}
+                          style={styles.compactNotifItem}
+                        >
+                          <View style={[styles.compactIconCircle, { backgroundColor: iconBgColor }]}>
+                            <Ionicons name={iconName} size={16} color={iconColor} />
+                          </View>
+
+                          <View style={styles.compactTextContainer}>
+                            <View style={styles.compactRowHeader}>
+                              <Text style={styles.compactTitle} numberOfLines={1}>
+                                Claim {c.claimNumber} • {formatPlate(c.vehiclePlate)}
+                              </Text>
+                              <View style={styles.compactUnreadDot} />
+                            </View>
+                            <Text style={styles.compactDesc} numberOfLines={1}>
+                              {c.damageType} at {c.location}
+                            </Text>
+                            <Text style={styles.compactDate}>Date: {c.incidentDate} • Status: {c.status}</Text>
+                          </View>
+
+                          <Ionicons name="chevron-forward" size={14} color="#94a3b8" style={{ marginLeft: 8 }} />
+                        </TouchableOpacity>
+                      </React.Fragment>
+                    );
+                  })}
+                </View>
+              ) : (
+                <View style={styles.emptyCard}>
+                  <Ionicons name="notifications-off-outline" size={32} color="#cbd5e1" />
+                  <Text style={styles.emptyText}>No pending claims or requests for your vehicles.</Text>
+                </View>
               )}
             </View>
 
-            {/* Live Chat with Policyholder & Agent Card */}
-            <TouchableOpacity
-              style={[styles.contentCard, { backgroundColor: "#0B1E32", borderColor: "#0B1E32" }]}
-              onPress={() => {
-                const initialRef = claims[0]?.claimNumber || profile?.reference || "";
-                setSelectedChatRef(initialRef);
-                fetchChatRecipients(initialRef).then((recs) => {
-                  if (recs && recs[0]) loadConversation(initialRef, recs[0]);
-                });
-                setActiveTab("chat");
-              }}
-              activeOpacity={0.9}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: "#0284c7", alignItems: "center", justifyContent: "center" }}>
-                    <Ionicons name="chatbubbles" size={22} color="#ffffff" />
+            {/* ── MY VEHICLES ── */}
+            <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+              <TouchableOpacity
+                style={styles.sectionHeader}
+                onPress={() => setActiveTab("vehicles")}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.sectionTitle}>Authorized Vehicles</Text>
+                <Ionicons name="chevron-forward" size={18} color="#64748b" />
+              </TouchableOpacity>
+
+              {vehicles.length > 0 ? (
+                <View style={styles.vehiclesList}>
+                  {vehicles.map((v, idx) => {
+                    const theme = getVehicleTheme(v.vehicleType || "Car");
+                    return (
+                      <View key={idx} style={styles.vehicleRow}>
+                        <View style={[styles.vehicleIconContainer, { backgroundColor: theme.bg, borderColor: theme.border }]}>
+                          <MaterialCommunityIcons name={theme.icon as any} size={24} color={theme.color} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.vehiclePlate}>{formatPlate(v.numberPlate)}</Text>
+                          <Text style={styles.vehicleDetails}>{[v.company, v.model, v.year].filter(Boolean).join(" · ")}</Text>
+                        </View>
+                        <TouchableOpacity
+                          style={styles.vehicleViewBtn}
+                          onPress={() => {
+                            setClaimPlate(v.numberPlate);
+                            setActiveTab("submit");
+                          }}
+                        >
+                          <Text style={styles.vehicleViewBtnText}>Claim</Text>
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : (
+                <View style={styles.emptyCard}>
+                  <Ionicons name="car-outline" size={32} color="#cbd5e1" />
+                  <Text style={styles.emptyText}>No vehicles authorized under this pass.</Text>
+                </View>
+              )}
+            </View>
+
+            {/* ── LIVE CHAT HIGHLIGHT CARD ── */}
+            <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+              <TouchableOpacity
+                style={styles.chatHighlightCard}
+                onPress={() => {
+                  const initialRef = claims[0]?.claimNumber || profile?.reference || "";
+                  setSelectedChatRef(initialRef);
+                  fetchChatRecipients(initialRef).then((recs) => {
+                    if (recs && recs[0]) loadConversation(initialRef, recs[0]);
+                  });
+                  setActiveTab("chat");
+                }}
+                activeOpacity={0.9}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                    <View style={styles.chatHighlightIconCircle}>
+                      <Ionicons name="chatbubbles" size={22} color="#ffffff" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "bold" }}>Live Claims & Operations Chat</Text>
+                      <Text style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>
+                        Chat directly with {profile?.policyHolderName || "Vehicle Owner"}, Claims Agent & Branch
+                      </Text>
+                    </View>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: "#ffffff", fontSize: 14, fontWeight: "bold" }}>Live Claims & Operations Chat</Text>
-                    <Text style={{ color: "#94a3b8", fontSize: 11, marginTop: 2 }}>
-                      Chat directly with {profile?.policyHolderName || "Vehicle Owner"}, Claims Agent & Branch
-                    </Text>
+                  <Ionicons name="chevron-forward" size={18} color="#38bdf8" />
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {/* ── CONTACT SUPPORT ── */}
+            <View style={{ paddingHorizontal: 16, marginTop: 24 }}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Contact Support</Text>
+              </View>
+              <View style={styles.supportCard}>
+                <View style={styles.supportContent}>
+                  <Ionicons name="headset-outline" size={24} color="#0f172a" />
+                  <View style={{ marginLeft: 12 }}>
+                    <Text style={styles.supportLabel}>Sanasa 24/7 Hotline</Text>
+                    <Text style={styles.supportSub}>Phone: +94 112 003 000{"\n"}Email: claims@sanasainsurance.lk</Text>
                   </View>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color="#38bdf8" />
               </View>
-            </TouchableOpacity>
+            </View>
+
+            {/* ── QUICK ACTIONS (Exact Policyholder 6-Grid) ── */}
+            <View style={{ paddingHorizontal: 16, marginTop: 28 }}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Quick Actions</Text>
+              </View>
+
+              <View style={styles.quickGrid}>
+                {[
+                  { label: "New Claim", icon: "add-circle-outline", action: () => setActiveTab("submit") },
+                  { label: "My Claims", icon: "document-text-outline", action: () => setActiveTab("claims") },
+                  { label: "Track Claim", icon: "locate-outline", action: () => setActiveTab("claims") },
+                  { label: "My Vehicles", icon: "car-outline", action: () => setActiveTab("vehicles") },
+                  { label: "Digital Pass", icon: "shield-checkmark-outline", action: () => setActiveTab("pass") },
+                  {
+                    label: "Live Chat",
+                    icon: "chatbubbles-outline",
+                    action: () => {
+                      const initialRef = claims[0]?.claimNumber || profile?.reference || "";
+                      setSelectedChatRef(initialRef);
+                      fetchChatRecipients(initialRef).then((recs) => {
+                        if (recs && recs[0]) loadConversation(initialRef, recs[0]);
+                      });
+                      setActiveTab("chat");
+                    }
+                  },
+                ].map((action, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.quickItem}
+                    onPress={action.action}
+                    activeOpacity={0.75}
+                  >
+                    <View style={styles.quickIconBox}>
+                      <Ionicons name={action.icon as any} size={22} color="#0f172a" />
+                    </View>
+                    <Text style={styles.quickLabel}>{action.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
           </View>
         )}
 
@@ -1294,7 +1472,88 @@ export default function MobileDriverPortalScreen() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+
+      {/* ── FLOATING BOTTOM NAVBAR (PolicyHolder Navbar Parity) ── */}
+      <View style={styles.bottomNavContainer}>
+        <View style={styles.bottomNavShell}>
+          {/* Home */}
+          <TouchableOpacity
+            style={styles.navItem}
+            activeOpacity={0.7}
+            onPress={() => setActiveTab("dashboard")}
+          >
+            <Ionicons
+              name={activeTab === "dashboard" ? "home" : "home-outline"}
+              size={22}
+              color={activeTab === "dashboard" ? "#0f766e" : "#94a3b8"}
+            />
+            <Text style={[styles.navLabel, activeTab === "dashboard" && styles.navLabelActive]}>
+              Home
+            </Text>
+          </TouchableOpacity>
+
+          {/* Claims */}
+          <TouchableOpacity
+            style={styles.navItem}
+            activeOpacity={0.7}
+            onPress={() => setActiveTab("claims")}
+          >
+            <Ionicons
+              name={activeTab === "claims" ? "document-text" : "document-text-outline"}
+              size={22}
+              color={activeTab === "claims" ? "#0f766e" : "#94a3b8"}
+            />
+            <Text style={[styles.navLabel, activeTab === "claims" && styles.navLabelActive]}>
+              Claims
+            </Text>
+          </TouchableOpacity>
+
+          {/* Center + New Claim */}
+          <TouchableOpacity
+            style={styles.centerWrap}
+            activeOpacity={0.85}
+            onPress={() => setActiveTab("submit")}
+          >
+            <View style={styles.centerBtn}>
+              <Ionicons name="add" size={28} color="#ffffff" />
+            </View>
+            <Text style={styles.centerLabel}>New</Text>
+          </TouchableOpacity>
+
+          {/* Vehicles */}
+          <TouchableOpacity
+            style={styles.navItem}
+            activeOpacity={0.7}
+            onPress={() => setActiveTab("vehicles")}
+          >
+            <Ionicons
+              name={activeTab === "vehicles" ? "car" : "car-outline"}
+              size={22}
+              color={activeTab === "vehicles" ? "#0f766e" : "#94a3b8"}
+            />
+            <Text style={[styles.navLabel, activeTab === "vehicles" && styles.navLabelActive]}>
+              Vehicles
+            </Text>
+          </TouchableOpacity>
+
+          {/* Digital Pass */}
+          <TouchableOpacity
+            style={styles.navItem}
+            activeOpacity={0.7}
+            onPress={() => setActiveTab("pass")}
+          >
+            <Ionicons
+              name={activeTab === "pass" ? "shield-checkmark" : "shield-checkmark-outline"}
+              size={22}
+              color={activeTab === "pass" ? "#0f766e" : "#94a3b8"}
+            />
+            <Text style={[styles.navLabel, activeTab === "pass" && styles.navLabelActive]}>
+              Pass
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -1337,29 +1596,43 @@ const styles = StyleSheet.create({
     marginTop: 6,
     marginBottom: 20
   },
-  headerGradient: {
+  section: {
+    marginBottom: 20
+  },
+  /* ── PolicyHolder Hero Design System ── */
+  heroBackground: {
+    width: "100%",
+    minHeight: 390
+  },
+  heroImageStyle: {
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40
+  },
+  heroGradient: {
+    flex: 1,
+    paddingTop: Platform.OS === "ios" ? 58 : (StatusBar.currentHeight ? StatusBar.currentHeight + 14 : 50),
+    paddingBottom: 40,
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === "android" ? 20 : 10,
-    paddingBottom: 24,
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    justifyContent: "space-between",
   },
   topBar: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12
+    alignItems: "center",
+    marginBottom: 10
   },
   welcomeLabel: {
-    color: "#94A3B8",
-    fontSize: 12,
-    fontWeight: "500"
+    fontSize: 14,
+    color: "#94a3b8",
+    fontWeight: "600"
   },
   welcomeName: {
+    fontSize: 24,
     color: "#ffffff",
-    fontSize: 20,
     fontWeight: "800",
-    letterSpacing: -0.3
+    marginTop: 2
   },
   headerRightActions: {
     flexDirection: "row",
@@ -1371,8 +1644,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 4,
     backgroundColor: "rgba(255, 255, 255, 0.1)",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: 12
   },
   badgeBranchText: {
@@ -1380,129 +1653,540 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "bold"
   },
-  avatarButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#0284c7",
+  headerIconBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.2)",
     alignItems: "center",
-    justifyContent: "center"
+    justifyContent: "center",
+  },
+  headerIconBtnAlert: {
+    borderColor: "rgba(251,191,36,0.5)",
+    backgroundColor: "rgba(251,191,36,0.15)",
+  },
+  notifBadge: {
+    position: "absolute",
+    top: -4,
+    right: -4,
+    backgroundColor: "#dc2626",
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "#0f172a",
+  },
+  notifBadgeText: {
+    color: "#ffffff",
+    fontSize: 9,
+    fontWeight: "800"
+  },
+  avatarButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.3)",
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden"
   },
   avatarText: {
     color: "#ffffff",
-    fontSize: 15,
+    fontSize: 18,
     fontWeight: "800"
   },
   subtitleBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "rgba(255,255,255,0.08)",
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 14,
-    marginBottom: 16
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+    marginVertical: 10,
   },
   dotIndicator: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: "#4ade80",
-    marginRight: 8
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#22c55e",
+    marginRight: 10
   },
   subtitleText: {
-    color: "#E2E8F0",
-    fontSize: 11,
-    fontWeight: "500"
-  },
-  statsContainer: {
-    flexDirection: "row",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 8
-  },
-  statCard: {
     flex: 1,
-    alignItems: "center"
+    fontSize: 12,
+    color: "#e2e8f0",
+    fontWeight: "400",
+    lineHeight: 18
   },
-  statCardMiddle: {
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.12)"
+  compensationCallout: {
+    backgroundColor: "rgba(15,23,42,0.45)",
+    borderLeftWidth: 3,
+    borderLeftColor: "#38bdf8",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginVertical: 12,
   },
-  statNumber: {
+  calloutTitle: {
+    fontSize: 12.5,
+    color: "#cbd5e1",
+    fontWeight: "500",
+    lineHeight: 18
+  },
+  neonButtonsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 16,
+    marginTop: 8
+  },
+  neonButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 22,
+    borderRadius: 99,
+    minWidth: 140,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  neonButtonText: {
     color: "#ffffff",
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: "800"
   },
+  neonButtonRed: {
+    backgroundColor: "#dc2626",
+    shadowColor: "rgba(220,38,38,0.6)"
+  },
+  neonButtonCyan: {
+    backgroundColor: "#0ea5e9",
+    shadowColor: "rgba(14,165,233,0.6)"
+  },
+
+  /* ── Overlapping Stats Row ── */
+  statsCardRow: {
+    flexDirection: "row",
+    backgroundColor: "#ffffff",
+    marginHorizontal: 16,
+    marginTop: -26,
+    borderRadius: 24,
+    paddingVertical: 18,
+    paddingHorizontal: 10,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+    zIndex: 20,
+    alignItems: "center",
+  },
+  statItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  statIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 6
+  },
+  statNumber: {
+    fontSize: 22,
+    fontWeight: "900",
+    color: "#0f172a"
+  },
   statLabel: {
-    color: "#94A3B8",
-    fontSize: 10,
+    fontSize: 10.5,
+    color: "#64748b",
+    fontWeight: "700",
+    marginTop: 2,
+    textTransform: "uppercase",
+    letterSpacing: 0.3
+  },
+  divider: {
+    width: 1,
+    height: 40,
+    backgroundColor: "#f1f5f9"
+  },
+
+  /* ── Digital Driver Pass Card (PolicyHolder MyDocs Parity) ── */
+  myDocsCard: {
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#1e3a8a",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  myDocsGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 18,
+    paddingHorizontal: 20,
+  },
+  myDocsLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    flex: 1
+  },
+  myDocsIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.18)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  myDocsLabel: {
+    fontSize: 16,
+    fontWeight: "800",
+    color: "#ffffff"
+  },
+  myDocsSub: {
+    fontSize: 11.5,
+    color: "rgba(255,255,255,0.75)",
     fontWeight: "600",
     marginTop: 2
   },
-  tabBar: {
-    backgroundColor: "#ffffff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0"
-  },
-  tabScroll: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 8
-  },
-  tabItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 7,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    backgroundColor: "#F1F5F9",
-    gap: 6
-  },
-  tabItemActive: {
-    backgroundColor: "#0d2a3a"
-  },
-  tabLabel: {
-    color: "#64748B",
-    fontSize: 12,
-    fontWeight: "600"
-  },
-  tabLabelActive: {
-    color: "#ffffff"
-  },
-  scrollContent: {
-    padding: 16
-  },
-  section: {
-    marginBottom: 20
-  },
-  quickGrid: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16
-  },
-  quickActionBox: {
-    alignItems: "center",
-    width: (SCREEN_W - 56) / 4
-  },
-  quickActionIconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+  myDocsArrow: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(255,255,255,0.18)",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-    marginBottom: 6
   },
-  quickActionText: {
-    color: "#334155",
-    fontSize: 11,
+
+  /* ── Section Titles ── */
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 17,
+    fontWeight: "800",
+    color: "#0f172a",
+    letterSpacing: -0.2
+  },
+
+  /* ── Compact Notifications Card ── */
+  compactNotifCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  compactNotifItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  compactSeparator: {
+    height: 1,
+    backgroundColor: "#f1f5f9",
+  },
+  compactIconCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+  compactTextContainer: {
+    flex: 1,
+  },
+  compactRowHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 2,
+  },
+  compactTitle: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#0f172a",
+    flex: 1,
+  },
+  compactUnreadDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#2563eb",
+    marginLeft: 6,
+  },
+  compactDesc: {
+    fontSize: 11.5,
+    color: "#64748b",
+  },
+  compactDate: {
+    fontSize: 10,
+    color: "#94a3b8",
+    marginTop: 2,
+  },
+
+  /* ── Vehicles List ── */
+  vehiclesList: {
+    gap: 10
+  },
+  vehicleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 18,
+    padding: 14,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.01,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  vehicleIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "#f0f9ff",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  vehiclePlate: {
+    fontSize: 14.5,
+    fontWeight: "800",
+    color: "#0f172a",
+    letterSpacing: 0.3
+  },
+  vehicleDetails: {
+    fontSize: 11.5,
+    color: "#64748b",
     fontWeight: "600",
+    marginTop: 2
+  },
+  vehicleViewBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    borderRadius: 99,
+    borderWidth: 1.5,
+    borderColor: "#cbd5e1"
+  },
+  vehicleViewBtnText: {
+    fontSize: 11.5,
+    color: "#475569",
+    fontWeight: "800"
+  },
+
+  /* ── Chat Highlight Card ── */
+  chatHighlightCard: {
+    backgroundColor: "#0d2a3a",
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: "#0d2a3a",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  chatHighlightIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  /* ── Support Card ── */
+  supportCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  supportContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  supportLabel: {
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#0f172a",
+  },
+  supportSub: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 2,
+    lineHeight: 16,
+  },
+
+  /* ── Quick Actions Grid ── */
+  quickGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 12,
+  },
+  quickItem: {
+    width: (SCREEN_W - 32 - 24) / 3,
+    alignItems: "center",
+    paddingVertical: 16,
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 1,
+    gap: 8,
+  },
+  quickIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: "#f1f5f9",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quickLabel: {
+    fontSize: 11.5,
+    fontWeight: "700",
+    color: "#334155",
     textAlign: "center"
+  },
+
+  /* ── Empty State ── */
+  emptyCard: {
+    backgroundColor: "#ffffff",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingVertical: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.01,
+    shadowRadius: 6,
+    elevation: 1,
+  },
+  emptyText: {
+    fontSize: 12.5,
+    color: "#64748b",
+    fontWeight: "700"
+  },
+
+  /* ── Floating Bottom Navigation Bar ── */
+  bottomNavContainer: {
+    position: "absolute",
+    left: 14,
+    right: 14,
+    bottom: Platform.OS === "ios" ? 20 : 10,
+    zIndex: 999,
+  },
+  bottomNavShell: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-around",
+    backgroundColor: "#ffffff",
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: "#e5e7eb",
+    paddingTop: 8,
+    paddingBottom: Platform.OS === "ios" ? 18 : 10,
+    paddingHorizontal: 8,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    elevation: 8,
+  },
+  navItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: 2,
+    position: "relative",
+  },
+  navLabel: {
+    fontSize: 10.5,
+    fontWeight: "600",
+    color: "#6b7280",
+  },
+  navLabelActive: {
+    color: "#0f172a",
+    fontWeight: "700",
+  },
+  centerWrap: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    marginTop: -18,
+  },
+  centerBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#0f766e",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0f766e",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 3,
+    borderColor: "#ffffff",
+  },
+  centerLabel: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    color: "#0f766e",
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 110,
   },
   contentCard: {
     backgroundColor: "#ffffff",
