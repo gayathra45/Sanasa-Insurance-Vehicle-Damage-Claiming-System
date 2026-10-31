@@ -495,56 +495,7 @@ export default function OfficeStaffDashboard() {
             </div>
           )}
 
-          {/* Operations Quick Navigation Ribbon */}
-          <section className="bg-white border-b border-slate-200 px-6 lg:px-8 py-2.5 overflow-x-auto flex items-center gap-2 text-xs">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">
-              Direct Portals:
-            </span>
-            <Link
-              href="/Office_Staff/Claims"
-              className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold transition-colors flex items-center gap-1.5 shrink-0"
-            >
-              <HugeiconsIcon icon={File01Icon} className="w-3.5 h-3.5" />
-              <span>Claims Portal ({stats.unassignedClaims} Unassigned)</span>
-            </Link>
-            <Link
-              href="/Office_Staff/Registrations"
-              className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold transition-colors flex items-center gap-1.5 shrink-0"
-            >
-              <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
-              <span>Signups ({stats.newRegistrations})</span>
-            </Link>
-            <Link
-              href="/Office_Staff/ThirdParty"
-              className="px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold transition-colors flex items-center gap-1.5 shrink-0"
-            >
-              <HugeiconsIcon icon={Car01Icon} className="w-3.5 h-3.5" />
-              <span>
-                Third-Party Drivers ({stats.thirdParty.pendingApproval + stats.thirdParty.pendingTermination} Requests)
-              </span>
-            </Link>
-            <Link
-              href="/Office_Staff/PolicyHolders"
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors flex items-center gap-1.5 shrink-0"
-            >
-              <HugeiconsIcon icon={UserMultiple02Icon} className="w-3.5 h-3.5" />
-              <span>Policyholders ({stats.totalPolicyHolders})</span>
-            </Link>
-            <Link
-              href="/Office_Staff/Agents"
-              className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold transition-colors flex items-center gap-1.5 shrink-0"
-            >
-              <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5" />
-              <span>Branch Agents ({stats.totalAgents})</span>
-            </Link>
-            <Link
-              href="/Office_Staff/Reports"
-              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-colors flex items-center gap-1.5 shrink-0 ml-auto"
-            >
-              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
-              <span>Analytics & Reports</span>
-            </Link>
-          </section>
+          
 
           {/* Main Dashboard Body */}
           <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6">
