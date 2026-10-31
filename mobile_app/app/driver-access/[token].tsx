@@ -482,7 +482,7 @@ export default function MobileDriverPortalScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+      <StatusBar barStyle="light-content" {...({ backgroundColor: "#0f172a" } as any)} />
 
       {/* ========================================================================= */}
       {/* EXACT POLICYHOLDER MOBILE HEADER (Gradient, Welcome, User Avatar) */}
@@ -629,22 +629,28 @@ export default function MobileDriverPortalScreen() {
 
       {/* DIGITAL PASS TAB: Digital Pass Signature Header */}
       {activeTab === "pass" && (
-        <LinearGradient
-          colors={["#0c4a6e", "#075985", "#0369a1"]}
-          style={styles.headerGradientInner}
+        <ImageBackground
+          source={require("../../assets/images/policy1.jpg")}
+          style={styles.headerBackground}
+          imageStyle={styles.headerImageStyle}
         >
-          <View style={styles.mobileTabHeaderRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.mobileTabHeaderTitle}>Digital Driver Pass</Text>
-              <Text style={styles.mobileTabHeaderSubtitle}>
-                Official credentials verified by Sanasa General Insurance
-              </Text>
+          <LinearGradient
+            colors={["rgba(12, 74, 110, 0.95)", "rgba(7, 89, 133, 0.82)", "rgba(3, 105, 161, 0.5)"]}
+            style={styles.headerGradientInner}
+          >
+            <View style={styles.mobileTabHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.mobileTabHeaderTitle}>Digital Driver Pass</Text>
+                <Text style={styles.mobileTabHeaderSubtitle}>
+                  Official credentials verified by Sanasa General Insurance
+                </Text>
+              </View>
+              <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
+                <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.avatarButtonSmall} onPress={handleLogout} activeOpacity={0.85}>
-              <Text style={styles.avatarTextSmall}>{profile?.driverName?.charAt(0).toUpperCase() || "D"}</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+          </LinearGradient>
+        </ImageBackground>
       )}
 
       {/* Clean Quick Action / Tab Selector */}
