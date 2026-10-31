@@ -202,7 +202,15 @@ export default function ThirdPartyNfcSection({
   useEffect(() => {
     fetchCards();
     fetchOrders();
-  }, [fetchCards, fetchOrders]);
+
+    const interval = setInterval(() => {
+      fetchCards(true);
+      fetchOrders(true);
+      if (onRefreshPermanent) onRefreshPermanent();
+    }, 3500);
+
+    return () => clearInterval(interval);
+  }, [fetchCards, fetchOrders, onRefreshPermanent]);
 
   // Duration Preset Change Helper
   const handleDurationChange = (preset: string) => {

@@ -21,6 +21,7 @@ import {
   sendThirdPartyDriverRejectionEmail,
   sendThirdPartyDriverActivityEmail
 } from "../utils/email.js";
+import { emitThirdPartyRequestUpdated } from "../utils/socket.js";
 
 const router = express.Router();
 
@@ -249,6 +250,7 @@ router.post("/request", async (req, res) => {
     });
 
     await newRegistration.save();
+    emitThirdPartyRequestUpdated(newRegistration);
 
     return res.status(201).json({
       success: true,
@@ -561,6 +563,7 @@ router.post("/verify-payment", async (req, res) => {
           typeof session.payment_intent === "string" ? session.payment_intent : "";
         registration.status = "Pending Branch Approval";
         await registration.save();
+        emitThirdPartyRequestUpdated(registration);
       }
 
       return res.json({
@@ -859,6 +862,7 @@ router.post("/permanent/block/:requestId", async (req, res) => {
     });
 
     await request.save();
+    emitThirdPartyRequestUpdated(request);
 
     return res.json({
       success: true,
@@ -930,6 +934,7 @@ router.post("/permanent/unblock/:requestId", async (req, res) => {
     });
 
     await request.save();
+    emitThirdPartyRequestUpdated(request);
 
     return res.json({
       success: true,
@@ -989,6 +994,7 @@ router.post("/permanent/terminate/:requestId", async (req, res) => {
     });
 
     await request.save();
+    emitThirdPartyRequestUpdated(request);
 
     return res.json({
       success: true,
@@ -1080,6 +1086,7 @@ router.post("/permanent/renew/:requestId", async (req, res) => {
     });
 
     await request.save();
+    emitThirdPartyRequestUpdated(request);
 
     return res.json({
       success: true,
@@ -1544,6 +1551,7 @@ router.post("/branch/approve/:requestId", async (req, res) => {
     };
 
     await request.save();
+    emitThirdPartyRequestUpdated(request);
 
     const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
 
@@ -1633,6 +1641,7 @@ router.post("/branch/reject/:requestId", async (req, res) => {
     }
 
     await request.save();
+    emitThirdPartyRequestUpdated(request);
 
     const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
     const reasonText = rejectionReason.trim();

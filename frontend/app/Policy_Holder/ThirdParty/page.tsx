@@ -6,6 +6,7 @@ import PolicyHolderNavbar from "@/app/Components/Policy_Holder/Navbar";
 import PolicyHolderFooter from "@/app/Components/Policy_Holder/footer";
 import SimpleLoader from "@/app/Components/SimpleLoader";
 import { API_URL } from "@/app/config";
+import { getSocket } from "@/app/utils/socket";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   UserAdd01Icon,
@@ -327,6 +328,132 @@ export default function ThirdPartyPage() {
       router.push("/Login");
     }
   }, [router]);
+
+  // Real-time synchronization for Card Orders, Cards Inventory & Permanent Driver Requests
+  useEffect(() => {
+    if (!currentUser?.nic) return;
+
+    // 1. Socket.IO Real-Time Listener
+    const socket = getSocket();
+
+    const handleOrderUpdated = (updatedOrder: any) => {
+      if (!updatedOrder) return;
+      setNfcOrders((prevOrders) => {
+        const idx = prevOrders.findIndex(
+          (o) => o._id === updatedOrder._id || o.orderNumber === updatedOrder.orderNumber
+        );
+        if (idx !== -1) {
+          const updated = [...prevOrders];
+          updated[idx] = { ...updated[idx], ...updatedOrder };
+          return updated;
+        } else if (updatedOrder.policyHolderNic === currentUser.nic) {
+          return [updatedOrder, ...prevOrders];
+        }
+        return prevOrders;
+      });
+
+      // Show real-time alert banner
+      setBannerAlert({
+        type: updatedOrder.status === "Rejected" ? "error" : "success",
+        message: `Order ${updatedOrder.orderNumber} status updated to "${updatedOrder.status}"`
+      });
+
+      // If status changed to Ready for Collection, Approved, or Collected, refresh cards inventory
+      if (
+        updatedOrder.status === "Ready for Collection" ||
+        updatedOrder.status === "Approved" ||
+        updatedOrder.status === "Collected"
+      ) {
+        fetch(`${API_URL}/nfc-card/inventory?nic=${encodeURIComponent(currentUser.nic)}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data?.cards) setNfcCards(data.cards);
+          })
+          .catch(() => {});
+      }
+    };
+
+    const handleRequestUpdated = (updatedReq: any) => {
+      if (!updatedReq) return;
+      setRequests((prev) => {
+        const idx = prev.findIndex(
+          (r) => r._id === updatedReq._id || r.requestReference === updatedReq.requestReference
+        );
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], ...updatedReq };
+          return updated;
+        } else if (updatedReq.policyHolderNic === currentUser.nic) {
+          return [updatedReq, ...prev];
+        }
+        return prev;
+      });
+
+      setBannerAlert({
+        type: updatedReq.status === "Rejected" ? "error" : "success",
+        message: `Driver authorization ${updatedReq.requestReference} updated to "${updatedReq.status}"`
+      });
+    };
+
+    const handleCardUpdated = (updatedCard: any) => {
+      if (!updatedCard) return;
+      setNfcCards((prev) => {
+        const idx = prev.findIndex(
+          (c) => c._id === updatedCard._id || c.cardId === updatedCard.cardId
+        );
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], ...updatedCard };
+          return updated;
+        } else if (updatedCard.policyHolderNic === currentUser.nic) {
+          return [updatedCard, ...prev];
+        }
+        return prev;
+      });
+    };
+
+    if (socket) {
+      socket.on("nfc:order-updated", handleOrderUpdated);
+      socket.on("third-party:request-updated", handleRequestUpdated);
+      socket.on("nfc:card-updated", handleCardUpdated);
+    }
+
+    // 2. Continuous Background Heartbeat (polling every 3.5 seconds)
+    // Silently refreshes active tracking without unmounting or full-page spinner
+    const heartbeatId = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetch(`${API_URL}/nfc-card/orders?nic=${encodeURIComponent(currentUser.nic)}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data?.orders) setNfcOrders(data.orders);
+          })
+          .catch(() => {});
+
+        fetch(`${API_URL}/third-party/my-requests?nic=${encodeURIComponent(currentUser.nic)}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data?.requests) setRequests(data.requests);
+          })
+          .catch(() => {});
+
+        fetch(`${API_URL}/nfc-card/inventory?nic=${encodeURIComponent(currentUser.nic)}`)
+          .then((res) => (res.ok ? res.json() : null))
+          .then((data) => {
+            if (data?.cards) setNfcCards(data.cards);
+          })
+          .catch(() => {});
+      }
+    }, 3500);
+
+    return () => {
+      if (socket) {
+        socket.off("nfc:order-updated", handleOrderUpdated);
+        socket.off("third-party:request-updated", handleRequestUpdated);
+        socket.off("nfc:card-updated", handleCardUpdated);
+      }
+      clearInterval(heartbeatId);
+    };
+  }, [currentUser?.nic]);
 
   // Handle Permanent Duration calculation
   const handlePermDurationTypeChange = (type: string) => {

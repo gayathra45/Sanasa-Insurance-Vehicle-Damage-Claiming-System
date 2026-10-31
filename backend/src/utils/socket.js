@@ -178,3 +178,61 @@ export function emitNotificationUnreadCount(userType, userId, unreadCount) {
   if (!io) return;
   emitToUser(userType, userId, "notification:unread-count", { unreadCount });
 }
+
+/**
+ * Emit NFC Order status update in real-time
+ */
+export function emitNfcOrderUpdated(order) {
+  if (!io || !order) return;
+  try {
+    const payload = typeof order.toObject === "function" ? order.toObject() : order;
+    if (payload.policyHolderNic) {
+      emitToUser("PolicyHolder", payload.policyHolderNic, "nfc:order-updated", payload);
+    }
+    if (payload.branch) {
+      io.to(`branch:${payload.branch}`).emit("nfc:order-updated", payload);
+    }
+    io.emit("nfc:order-updated", payload);
+  } catch (err) {
+    console.warn("[Socket.IO] emitNfcOrderUpdated error:", err.message);
+  }
+}
+
+/**
+ * Emit NFC Card update in real-time
+ */
+export function emitNfcCardUpdated(card) {
+  if (!io || !card) return;
+  try {
+    const payload = typeof card.toObject === "function" ? card.toObject() : card;
+    if (payload.policyHolderNic) {
+      emitToUser("PolicyHolder", payload.policyHolderNic, "nfc:card-updated", payload);
+    }
+    if (payload.branch) {
+      io.to(`branch:${payload.branch}`).emit("nfc:card-updated", payload);
+    }
+    io.emit("nfc:card-updated", payload);
+  } catch (err) {
+    console.warn("[Socket.IO] emitNfcCardUpdated error:", err.message);
+  }
+}
+
+/**
+ * Emit Third-Party Driver Request update in real-time
+ */
+export function emitThirdPartyRequestUpdated(request) {
+  if (!io || !request) return;
+  try {
+    const payload = typeof request.toObject === "function" ? request.toObject() : request;
+    if (payload.policyHolderNic) {
+      emitToUser("PolicyHolder", payload.policyHolderNic, "third-party:request-updated", payload);
+    }
+    if (payload.branch) {
+      io.to(`branch:${payload.branch}`).emit("third-party:request-updated", payload);
+    }
+    io.emit("third-party:request-updated", payload);
+  } catch (err) {
+    console.warn("[Socket.IO] emitThirdPartyRequestUpdated error:", err.message);
+  }
+}
+

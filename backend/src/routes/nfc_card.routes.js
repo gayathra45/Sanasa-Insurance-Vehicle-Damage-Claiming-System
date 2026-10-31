@@ -8,6 +8,7 @@ import User from "../models/user.model.js";
 import Claim from "../models/claim.model.js";
 import { sendSms, normalizeSriLankanPhone } from "../services/smsService.js";
 import { uploadToCloudinary } from "../utils/upload.js";
+import { emitNfcOrderUpdated, emitNfcCardUpdated } from "../utils/socket.js";
 
 const router = express.Router();
 
@@ -136,6 +137,7 @@ router.post("/order", async (req, res) => {
     });
 
     await order.save();
+    emitNfcOrderUpdated(order);
 
     return res.status(201).json({
       success: true,
@@ -247,6 +249,7 @@ router.post("/checkout-session", async (req, res) => {
 
     order.payment.stripeSessionId = session.id;
     await order.save();
+    emitNfcOrderUpdated(order);
 
     return res.json({
       success: true,
@@ -323,6 +326,7 @@ router.post("/verify-payment", async (req, res) => {
     });
 
     await order.save();
+    emitNfcOrderUpdated(order);
 
     // Send SMS notification to Policyholder about received payment and submission to Branch
     if (order.policyHolderPhone) {
@@ -528,6 +532,7 @@ router.post("/branch/approve/:orderId", async (req, res) => {
     });
 
     await order.save();
+    emitNfcOrderUpdated(order);
 
     // SMS to policyholder
     if (order.policyHolderPhone) {
@@ -593,6 +598,7 @@ router.post("/branch/reject/:orderId", async (req, res) => {
     });
 
     await order.save();
+    emitNfcOrderUpdated(order);
 
     // SMS to policyholder
     if (order.policyHolderPhone) {
@@ -645,6 +651,7 @@ router.post("/branch/processing/:orderId", async (req, res) => {
     });
 
     await order.save();
+    emitNfcOrderUpdated(order);
 
     return res.json({
       success: true,
@@ -703,6 +710,7 @@ router.post("/branch/ready/:orderId", async (req, res) => {
     });
 
     await order.save();
+    emitNfcOrderUpdated(order);
 
     // Send SMS notifying Policyholder to collect cards
     if (order.policyHolderPhone) {
@@ -761,6 +769,7 @@ router.post("/branch/collect/:orderId", async (req, res) => {
     });
 
     await order.save();
+    emitNfcOrderUpdated(order);
 
     return res.json({
       success: true,
@@ -805,6 +814,7 @@ router.post("/branch/revoke-card/:cardId", async (req, res) => {
     }
 
     await card.save();
+    emitNfcCardUpdated(card);
 
     return res.json({
       success: true,
@@ -1193,6 +1203,7 @@ router.post("/assign-driver", async (req, res) => {
 
     card.lastActivity = now;
     await card.save();
+    emitNfcCardUpdated(card);
 
     // 9. Send Confirmation SMS to Policyholder
     if (user.phone) {
@@ -1262,6 +1273,7 @@ router.post("/block-assignment/:cardId", async (req, res) => {
     card.currentAssignment.status = "Temporarily Blocked";
 
     await card.save();
+    emitNfcCardUpdated(card);
 
     return res.json({
       success: true,
@@ -1313,6 +1325,7 @@ router.post("/unblock-assignment/:cardId", async (req, res) => {
     card.currentAssignment.status = newStatus;
 
     await card.save();
+    emitNfcCardUpdated(card);
 
     return res.json({
       success: true,
@@ -1408,6 +1421,7 @@ router.post("/terminate-assignment/:cardId", async (req, res) => {
     };
 
     await card.save();
+    emitNfcCardUpdated(card);
 
     return res.json({
       success: true,
