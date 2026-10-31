@@ -2959,14 +2959,14 @@ export default function ThirdPartyPage() {
                               Renewal #{idx + 1} — {ren.durationType}
                             </span>
                             <span className="text-[11px] text-slate-500 font-mono mt-0.5 block">
-                              Previous End: {new Date(ren.previousEndDate).toLocaleDateString("en-GB")} → Extended To: {new Date(ren.newEndDate).toLocaleDateString("en-GB")}
+                              Previous End: {ren.previousEndDate ? new Date(ren.previousEndDate).toLocaleDateString("en-GB") : "—"} → Extended To: {ren.newEndDate ? new Date(ren.newEndDate).toLocaleDateString("en-GB") : "—"}
                             </span>
                             {ren.note && (
                               <p className="text-[11px] text-slate-600 mt-1 italic">"{ren.note}"</p>
                             )}
                           </div>
                           <span className="font-mono text-slate-400 text-[11px] shrink-0">
-                            Renewed on {new Date(ren.renewedAt).toLocaleDateString("en-GB")}
+                            Renewed on {ren.renewedAt ? new Date(ren.renewedAt).toLocaleDateString("en-GB") : "—"}
                           </span>
                         </div>
                       ))}
@@ -3718,7 +3718,7 @@ export default function ThirdPartyPage() {
       {/* ========================================================================= */}
       {reviewModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl sm:max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl max-w-2xl sm:max-w-3xl w-full max-h-[88vh] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
               <div className="flex items-center gap-2">
                 <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-sky-600" />
@@ -3805,7 +3805,7 @@ export default function ThirdPartyPage() {
       {/* ========================================================================= */}
       {renewReq && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl sm:max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+          <div className="bg-white rounded-3xl max-w-2xl sm:max-w-3xl w-full max-h-[88vh] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <div className="flex items-center gap-2">
                 <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-sky-600" />
@@ -3912,10 +3912,11 @@ export default function ThirdPartyPage() {
       {/* NFC ASSIGN DRIVER MODAL (+ POLICYHOLDER OTP) */}
       {/* ========================================================================= */}
       {assignModalOpen && selectedCardForAssign && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-3xl max-w-3xl sm:max-w-4xl w-full p-6 sm:p-10 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150 my-8">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
-              <div className="flex items-center gap-2">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-hidden">
+          <div className="bg-white rounded-3xl sm:rounded-[32px] max-w-2xl sm:max-w-3xl w-full max-h-[88vh] shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150 flex flex-col overflow-hidden">
+            {/* Modal Header - Fixed */}
+            <div className="px-6 sm:px-8 py-4 sm:py-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+              <div className="flex items-center gap-2.5">
                 <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold text-xs">
                   NFC
                 </span>
@@ -3927,25 +3928,27 @@ export default function ThirdPartyPage() {
                 </div>
               </div>
               <button
+                type="button"
                 onClick={() => setAssignModalOpen(false)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer border-none bg-transparent transition-colors"
               >
                 <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
               </button>
             </div>
 
-            {/* OTP Security Notice */}
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-start gap-2.5 mb-4">
-              <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-              <div>
-                <span className="font-bold">Policyholder Verified Authorization:</span>
-                <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
-                  To authorize this temporary driver, an OTP is sent to <strong>YOUR verified policyholder phone</strong> ({currentUser?.mobile}). Once verified, the driver pass is active immediately without branch review.
-                </p>
+            {/* Modal Scrollable Body */}
+            <div className="px-6 sm:px-8 py-5 overflow-y-auto flex-1 space-y-4 text-xs">
+              {/* OTP Security Notice */}
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-start gap-2.5">
+                <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold">Policyholder Verified Authorization:</span>
+                  <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                    To authorize this temporary driver, an OTP is sent to <strong>YOUR verified policyholder phone</strong> ({currentUser?.mobile}). Once verified, the driver pass is active immediately without branch review.
+                  </p>
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-4 text-xs">
               {/* Select Physical NFC Card */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
@@ -4152,11 +4155,12 @@ export default function ThirdPartyPage() {
               )}
             </div>
 
-            <div className="mt-6 flex gap-3">
+            {/* Modal Footer - Fixed */}
+            <div className="px-6 sm:px-8 py-4 border-t border-slate-100 flex items-center gap-3 shrink-0 bg-slate-50/90">
               <button
                 type="button"
                 onClick={() => setAssignModalOpen(false)}
-                className="flex-1 py-3 border border-slate-200 rounded-xl font-bold text-slate-600 hover:bg-slate-50 text-xs cursor-pointer"
+                className="flex-1 py-3 border border-slate-300 rounded-xl font-bold text-slate-700 hover:bg-slate-100 text-xs cursor-pointer bg-white transition-colors"
               >
                 Cancel
               </button>
@@ -4164,7 +4168,7 @@ export default function ThirdPartyPage() {
                 type="button"
                 onClick={handleConfirmAssignDriver}
                 disabled={assignSubmitting || !otpSent || otpCode.length !== 6}
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs cursor-pointer border-none disabled:opacity-50 shadow-xs"
+                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs cursor-pointer border-none disabled:opacity-50 shadow-xs transition-colors"
               >
                 {assignSubmitting ? "Activating..." : "Verify & Activate Driver"}
               </button>
@@ -4263,9 +4267,9 @@ export default function ThirdPartyPage() {
       {/* TERMINATE DRIVER MODAL */}
       {/* ========================================================================= */}
       {terminateReq && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-[28px] shadow-2xl max-w-2xl sm:max-w-3xl w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 my-8">
-            <div className="p-6 bg-gradient-to-r from-rose-600 to-rose-700 text-white flex items-center justify-between">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-hidden">
+          <div className="bg-white rounded-[28px] shadow-2xl max-w-2xl sm:max-w-3xl w-full max-h-[88vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95">
+            <div className="p-6 bg-gradient-to-r from-rose-600 to-rose-700 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                   <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6 text-white" />
@@ -4284,7 +4288,7 @@ export default function ThirdPartyPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center shrink-0">
                   <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5" />
@@ -4373,7 +4377,7 @@ export default function ThirdPartyPage() {
               )}
             </div>
 
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setTerminateReq(null)}
@@ -4402,7 +4406,7 @@ export default function ThirdPartyPage() {
       {/* ========================================================================= */}
       {registerChoiceModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-3xl sm:max-w-4xl w-full p-6 sm:p-10 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150 relative">
+          <div className="bg-white rounded-3xl max-w-3xl sm:max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 sm:p-10 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150 relative">
             <button
               onClick={() => setRegisterChoiceModalOpen(false)}
               className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"

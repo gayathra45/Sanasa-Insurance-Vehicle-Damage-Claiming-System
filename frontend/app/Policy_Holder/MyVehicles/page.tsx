@@ -3853,10 +3853,10 @@ export default function MyVehicles() {
 
       {/* Terminate Driver Modal */}
       {terminateTargetReq && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-[28px] shadow-2xl max-w-2xl sm:max-w-3xl w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 my-8">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 overflow-hidden">
+          <div className="bg-white rounded-[28px] shadow-2xl max-w-2xl sm:max-w-3xl w-full max-h-[88vh] flex flex-col overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95">
             {/* Header */}
-            <div className="p-6 bg-gradient-to-r from-rose-600 to-rose-700 text-white flex items-center justify-between">
+            <div className="p-6 bg-gradient-to-r from-rose-600 to-rose-700 text-white flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center">
                   <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6 text-white" />
@@ -3876,7 +3876,7 @@ export default function MyVehicles() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+            <div className="p-6 space-y-4 overflow-y-auto flex-1">
               {/* Driver Summary Card */}
               <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-start gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center flex-shrink-0">
@@ -3974,7 +3974,7 @@ export default function MyVehicles() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setTerminateTargetReq(null)}
