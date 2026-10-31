@@ -574,6 +574,81 @@ export default function ThirdPartyNfcSection({
                   </View>
                 </View>
 
+                {/* ── Status Stepper for Permanent Driver ── */}
+                {(() => {
+                  const isPaid = req.payment?.status === "Paid" || req.status === "Approved" || req.status === "Scheduled" || req.status === "Pending Branch Approval";
+                  const isBranchReview = req.status === "Pending Branch Approval";
+                  const isApprovedOrActive = req.status === "Approved" || req.status === "Scheduled" || req.status === "Temporarily Blocked" || req.status === "Pending Termination Approval";
+                  const isRejected = req.status === "Rejected";
+
+                  const steps = ["Submitted", "Fee Paid", "Review", "Active"];
+                  let curIdx = 0;
+                  if (isApprovedOrActive) curIdx = 3;
+                  else if (isBranchReview || isPaid) curIdx = 2;
+                  else if (req.status === "Pending Payment") curIdx = 1;
+
+                  if (isRejected) {
+                    return (
+                      <View style={styles.tpRejectBox}>
+                        <Ionicons name="close-circle" size={15} color="#dc2626" />
+                        <Text style={styles.tpRejectText}>
+                          Rejected: {req.branchReview?.rejectionReason || "Verification criteria not met"}
+                        </Text>
+                      </View>
+                    );
+                  }
+
+                  return (
+                    <View style={styles.tpStepperContainer}>
+                      <View style={styles.tpStepperLineBg} />
+                      <View
+                        style={[
+                          styles.tpStepperLineProgress,
+                          { width: `${(Math.min(curIdx, 3) / 3) * 78}%` }
+                        ]}
+                      />
+                      <View style={styles.tpStepperRow}>
+                        {steps.map((st, i) => {
+                          const passed = curIdx >= i;
+                          const isCurrent = curIdx === i;
+                          return (
+                            <View key={st} style={styles.tpStepCol}>
+                              <View
+                                style={[
+                                  styles.tpStepCircle,
+                                  passed
+                                    ? styles.tpStepCirclePassed
+                                    : isCurrent
+                                    ? styles.tpStepCircleCurrent
+                                    : styles.tpStepCirclePending
+                                ]}
+                              >
+                                {passed ? (
+                                  <Ionicons name="checkmark" size={12} color="#ffffff" />
+                                ) : (
+                                  <Text style={[styles.tpStepNumText, isCurrent && { color: "#ffffff" }]}>
+                                    {i + 1}
+                                  </Text>
+                                )}
+                              </View>
+                              <Text
+                                style={[
+                                  styles.tpStepLabel,
+                                  isCurrent && styles.tpStepLabelCurrent,
+                                  passed && styles.tpStepLabelPassed
+                                ]}
+                                numberOfLines={1}
+                              >
+                                {st}
+                              </Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  );
+                })()}
+
                 {/* Driver Info */}
                 <View style={styles.driverRow}>
                   <View style={styles.driverAvatar}>
@@ -1884,5 +1959,90 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
     paddingVertical: 8
+  },
+  tpStepperContainer: {
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    marginVertical: 10,
+    position: "relative"
+  },
+  tpStepperLineBg: {
+    position: "absolute",
+    top: 20,
+    left: 28,
+    right: 28,
+    height: 2,
+    backgroundColor: "#e2e8f0"
+  },
+  tpStepperLineProgress: {
+    position: "absolute",
+    top: 20,
+    left: 28,
+    height: 2,
+    backgroundColor: "#16a34a"
+  },
+  tpStepperRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  tpStepCol: {
+    flex: 1,
+    alignItems: "center"
+  },
+  tpStepCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4
+  },
+  tpStepCirclePassed: {
+    backgroundColor: "#16a34a"
+  },
+  tpStepCircleCurrent: {
+    backgroundColor: "#4f46e5"
+  },
+  tpStepCirclePending: {
+    backgroundColor: "#cbd5e1"
+  },
+  tpStepNumText: {
+    fontSize: 9,
+    fontWeight: "bold",
+    color: "#64748b"
+  },
+  tpStepLabel: {
+    fontSize: 9,
+    color: "#94a3b8",
+    textAlign: "center"
+  },
+  tpStepLabelCurrent: {
+    color: "#4f46e5",
+    fontWeight: "bold"
+  },
+  tpStepLabelPassed: {
+    color: "#0f172a",
+    fontWeight: "600"
+  },
+  tpRejectBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#fef2f2",
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    borderRadius: 10,
+    padding: 8,
+    marginVertical: 8
+  },
+  tpRejectText: {
+    fontSize: 11,
+    color: "#dc2626",
+    flex: 1
   }
 });

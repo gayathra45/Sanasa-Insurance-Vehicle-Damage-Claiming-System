@@ -960,6 +960,133 @@ export default function ThirdPartyPage() {
     }
   };
 
+  const renderPermanentTrackingStepper = (req: RegistrationRequest) => {
+    const isPaid = req.payment?.status === "Paid" || req.status === "Approved" || req.status === "Scheduled" || req.status === "Pending Branch Approval";
+    const isBranchReview = req.status === "Pending Branch Approval";
+    const isApprovedOrActive = req.status === "Approved" || req.status === "Scheduled" || req.status === "Temporarily Blocked" || req.status === "Pending Termination Approval";
+    const isRejected = req.status === "Rejected";
+
+    const steps = [
+      { name: "Request Submitted", detail: "KYC Documents Uploaded" },
+      { name: "Fee Paid", detail: isPaid ? "LKR 300 via Stripe" : "LKR 300 Pending" },
+      { name: "Branch Review", detail: isApprovedOrActive ? `Approved by ${req.branch}` : isBranchReview ? `Reviewing by ${req.branch}` : "Pending Review" },
+      { name: "Approved & Active", detail: isApprovedOrActive ? "Digital Pass Issued" : "Pass Activation" }
+    ];
+
+    let currentIdx = 0;
+    if (isApprovedOrActive) {
+      currentIdx = 3;
+    } else if (isBranchReview) {
+      currentIdx = 2;
+    } else if (isPaid) {
+      currentIdx = 2;
+    } else if (req.status === "Pending Payment") {
+      currentIdx = 1;
+    } else {
+      currentIdx = 0;
+    }
+
+    if (isRejected) {
+      return (
+        <div className="my-3 p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-800 flex items-start gap-3">
+          <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" strokeWidth={2} />
+          <div>
+            <strong className="block font-bold text-rose-900 text-sm">Application Rejected by Branch</strong>
+            <p className="text-rose-700 mt-0.5 leading-relaxed">
+              <strong>Reason:</strong> {req.branchReview?.rejectionReason || "Identity or driving licence verification requirements were not met."}
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="my-4 p-3.5 sm:p-4 bg-slate-50/80 border border-slate-200/80 rounded-2xl">
+        <div className="flex items-center justify-between mb-3 px-1">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+            <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 text-indigo-600" strokeWidth={2} />
+            <span>Authorization Progress Tracker</span>
+          </span>
+          <span className="text-[11px] font-semibold text-slate-500">
+            Current Stage: <span className="font-bold text-slate-800">{steps[currentIdx]?.name}</span>
+          </span>
+        </div>
+
+        <div className="pt-2 pb-1 relative">
+          <div className="flex items-center justify-between relative">
+            {/* Background connecting bar */}
+            <div className="absolute top-3.5 left-8 right-8 h-0.5 bg-slate-200 z-0" />
+            <div
+              className="absolute top-3.5 left-8 h-0.5 bg-emerald-500 z-0 transition-all duration-300"
+              style={{
+                width: `${(Math.min(currentIdx, 3) / 3) * 85}%`
+              }}
+            />
+
+            {steps.map((st, i) => {
+              const passed = currentIdx >= i;
+              const isCurrent = currentIdx === i;
+
+              return (
+                <div key={st.name} className="flex flex-col items-center flex-1 text-center relative z-10 px-1">
+                  <div
+                    className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      passed
+                        ? "bg-emerald-600 text-white shadow-xs"
+                        : isCurrent
+                        ? "bg-indigo-600 text-white ring-4 ring-indigo-100 shadow-xs"
+                        : "bg-white border border-slate-300 text-slate-400"
+                    }`}
+                  >
+                    {passed ? "✓" : i + 1}
+                  </div>
+                  <span
+                    className={`text-[11px] mt-1.5 font-bold leading-tight ${
+                      isCurrent
+                        ? "text-indigo-700 font-extrabold"
+                        : passed
+                        ? "text-slate-800"
+                        : "text-slate-400"
+                    }`}
+                  >
+                    {st.name}
+                  </span>
+                  <span className="text-[10px] text-slate-400 hidden sm:block mt-0.5 max-w-[100px] leading-tight">
+                    {st.detail}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Helpful alert if pending payment or branch review */}
+        {req.status === "Pending Payment" && (
+          <div className="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Payment of LKR 300 is required before your branch can verify this driver.</span>
+            </div>
+            <button
+              onClick={() => handleResumePayment(req)}
+              disabled={submitting}
+              className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg text-xs whitespace-nowrap cursor-pointer border-none"
+            >
+              Pay LKR 300
+            </button>
+          </div>
+        )}
+
+        {isBranchReview && (
+          <div className="mt-3 p-2.5 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-900 flex items-center gap-2">
+            <HugeiconsIcon icon={InformationCircleIcon} className="w-4 h-4 text-sky-600 shrink-0" />
+            <span>Payment received! {req.branch} Branch staff are currently verifying the uploaded NIC and Licence KYC documents.</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6">
@@ -974,10 +1101,29 @@ export default function ThirdPartyPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative">
       <PolicyHolderNavbar />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Styled curved header matching other policy holder pages */}
+      <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
+        <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+          {/* Mockup dark slate overlay */}
+          <div className="absolute inset-0 bg-slate-900/35" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+        </div>
+
+        {/* Text content aligned automatically with the page container */}
+        <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+          <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+            Third-Party Drivers & NFC
+          </h1>
+          <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+            Manage permanent authorizations, temporary drivers & physical NFC cards
+          </p>
+        </header>
+      </div>
+
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-16 py-8 sm:py-10 relative z-20">
         {/* Banner Alert */}
         {bannerAlert && (
           <div
@@ -1695,6 +1841,9 @@ export default function ThirdPartyPage() {
                           </div>
                         </div>
 
+                        {/* Permanent Driver Authorization Progress Stepper */}
+                        {renderPermanentTrackingStepper(req)}
+
                         {/* Details Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 text-xs">
                           <div>
@@ -1931,6 +2080,9 @@ export default function ThirdPartyPage() {
                           )}
                         </div>
                       </div>
+
+                      {/* Permanent Driver Authorization Progress Stepper */}
+                      {renderPermanentTrackingStepper(req)}
 
                       {/* Details Grid */}
                       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 text-xs">

@@ -377,7 +377,7 @@ export default function PolicyHolderNavbar() {
           </div>
 
           {/* Desktop Navigation Links — Matching Homepage Style */}
-          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-4 lg:gap-7 text-sm lg:text-base" : "gap-3.5 lg:gap-5 text-xs md:text-sm lg:text-[15px]"}`}>
+          <div className={`hidden md:flex items-center ${lang === "en" ? "gap-3 lg:gap-5 xl:gap-6 text-xs lg:text-sm xl:text-[15px]" : "gap-2.5 lg:gap-4 text-xs md:text-sm"}`}>
             {navLinks.map((link) => {
               const active = isActive(link.href);
               return (
