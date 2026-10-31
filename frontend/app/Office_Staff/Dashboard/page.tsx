@@ -499,77 +499,69 @@ export default function OfficeStaffDashboard() {
 
           {/* Main Dashboard Body */}
           <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6">
-            {/* HERO KPI CARDS GRID */}
+            {/* HERO KPI CARDS GRID (Elevated Card Design) */}
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
               {/* 1. Unassigned Claims */}
               <div
                 onClick={() => setClaimsFilter("unassigned")}
-                className={`p-4 rounded-2xl border transition-all cursor-pointer shadow-xs select-none ${
-                  stats.unassignedClaims > 0
-                    ? "bg-red-50/70 border-red-200 ring-2 ring-red-400/20 hover:bg-red-100/70"
-                    : "bg-white border-slate-200 hover:border-slate-300"
-                }`}
+                className={`bg-white border-l-[5px] border-l-rose-500 bg-gradient-to-r from-rose-50/30 via-white to-white p-4 rounded-2xl border border-slate-200/90 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 select-none group`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-red-600 uppercase tracking-wider">Unassigned</span>
-                  <div className="w-7 h-7 rounded-lg bg-red-100 text-red-700 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Unassigned</span>
+                  <div className="w-8 h-8 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
                     {stats.unassignedClaims > 0 ? (
-                      <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping" />
                     ) : (
-                      <HugeiconsIcon icon={Alert02Icon} className="w-3.5 h-3.5" />
+                      <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4" />
                     )}
                   </div>
                 </div>
-                <div className="text-2xl font-black text-red-700 mt-2">{stats.unassignedClaims}</div>
-                <p className="text-[10px] text-red-600/80 font-medium mt-0.5 truncate">Needs quick dispatch</p>
+                <div className="text-2xl font-black text-rose-700 mt-2 group-hover:scale-105 transition-transform origin-left">{stats.unassignedClaims}</div>
+                <p className="text-[10px] text-rose-600/90 font-semibold mt-0.5 truncate">Needs quick dispatch</p>
               </div>
 
               {/* 2. Active Claims */}
               <div
                 onClick={() => setClaimsFilter("active")}
-                className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer shadow-xs select-none"
+                className="bg-white border-l-[5px] border-l-emerald-500 bg-gradient-to-r from-emerald-50/20 via-white to-white p-4 rounded-2xl border border-slate-200/90 hover:border-slate-300 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 select-none group"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider">Active Claims</span>
-                  <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+                  <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-black text-slate-900 mt-2">{stats.activeClaims}</div>
+                <div className="text-2xl font-black text-slate-900 mt-2 group-hover:scale-105 transition-transform origin-left">{stats.activeClaims}</div>
                 <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">Under assessment</p>
               </div>
 
               {/* 3. New Registrations */}
               <Link
                 href="/Office_Staff/Registrations"
-                className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-300 transition-all cursor-pointer shadow-xs select-none block"
+                className="bg-white border-l-[5px] border-l-amber-500 bg-gradient-to-r from-amber-50/20 via-white to-white p-4 rounded-2xl border border-slate-200/90 hover:border-amber-300 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 select-none block group"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Signups</span>
-                  <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-                    <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+                  <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-black text-slate-900 mt-2">{stats.newRegistrations}</div>
+                <div className="text-2xl font-black text-slate-900 mt-2 group-hover:scale-105 transition-transform origin-left">{stats.newRegistrations}</div>
                 <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">Pending approval</p>
               </Link>
 
               {/* 4. Third-Party Driver Requests */}
               <Link
                 href="/Office_Staff/ThirdParty"
-                className={`p-4 rounded-2xl border transition-all cursor-pointer shadow-xs select-none block ${
-                  stats.thirdParty.pendingApproval + stats.thirdParty.pendingTermination > 0
-                    ? "bg-purple-50/50 border-purple-200 hover:bg-purple-100/50"
-                    : "bg-white border-slate-200 hover:border-slate-300"
-                }`}
+                className="bg-white border-l-[5px] border-l-purple-500 bg-gradient-to-r from-purple-50/20 via-white to-white p-4 rounded-2xl border border-slate-200/90 hover:border-purple-300 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 select-none block group"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">Third-Party</span>
-                  <div className="w-7 h-7 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center">
-                    <HugeiconsIcon icon={Car01Icon} className="w-3.5 h-3.5" />
+                  <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={Car01Icon} className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-black text-purple-900 mt-2">
+                <div className="text-2xl font-black text-purple-900 mt-2 group-hover:scale-105 transition-transform origin-left">
                   {stats.thirdParty.pendingApproval + stats.thirdParty.pendingTermination}
                 </div>
                 <p className="text-[10px] text-purple-600 font-medium mt-0.5 truncate">
@@ -580,49 +572,49 @@ export default function OfficeStaffDashboard() {
               {/* 5. Branch Agents */}
               <Link
                 href="/Office_Staff/Agents"
-                className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer shadow-xs select-none block"
+                className="bg-white border-l-[5px] border-l-blue-500 bg-gradient-to-r from-blue-50/20 via-white to-white p-4 rounded-2xl border border-slate-200/90 hover:border-blue-300 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 select-none block group"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider">Field Agents</span>
-                  <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5" />
+                  <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={UserCheck01Icon} className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-black text-slate-900 mt-2">{stats.totalAgents}</div>
+                <div className="text-2xl font-black text-slate-900 mt-2 group-hover:scale-105 transition-transform origin-left">{stats.totalAgents}</div>
                 <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">On-duty in branch</p>
               </Link>
 
               {/* 6. Total Policyholders */}
               <Link
                 href="/Office_Staff/PolicyHolders"
-                className="bg-white p-4 rounded-2xl border border-slate-200 hover:border-slate-300 transition-all cursor-pointer shadow-xs select-none block"
+                className="bg-white border-l-[5px] border-l-indigo-500 bg-gradient-to-r from-indigo-50/20 via-white to-white p-4 rounded-2xl border border-slate-200/90 hover:border-indigo-300 transition-all duration-200 cursor-pointer shadow-2xs hover:shadow-md hover:-translate-y-0.5 select-none block group"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Policyholders</span>
-                  <div className="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center">
-                    <HugeiconsIcon icon={UserMultiple02Icon} className="w-3.5 h-3.5" />
+                  <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-600 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                    <HugeiconsIcon icon={UserMultiple02Icon} className="w-4 h-4" />
                   </div>
                 </div>
-                <div className="text-2xl font-black text-slate-900 mt-2">{stats.totalPolicyHolders}</div>
+                <div className="text-2xl font-black text-slate-900 mt-2 group-hover:scale-105 transition-transform origin-left">{stats.totalPolicyHolders}</div>
                 <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">Active insured members</p>
               </Link>
             </div>
 
-            {/* MAIN TWO-COLUMN DASHBOARD HUB */}
+            {/* MAIN TWO-COLUMN DASHBOARD HUB (Redesigned with Accent Cards & Rich Tokens) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* LEFT 8-COLS: LIVE CLAIMS DISPATCH QUEUE */}
-              <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col gap-4">
+              <div className="lg:col-span-8 bg-white rounded-3xl border border-slate-200/90 p-5 sm:p-6 shadow-xs flex flex-col gap-5">
                 {/* Header & Controls */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center font-bold shadow-2xs shrink-0">
                       <HugeiconsIcon icon={File01Icon} className="w-5 h-5" />
                     </div>
                     <div>
-                      <h2 className="text-sm font-bold text-slate-900 tracking-tight">
+                      <h2 className="text-base font-bold text-slate-900 tracking-tight">
                         Live Claims Dispatch Hub
                       </h2>
-                      <p className="text-[11px] text-slate-400 font-medium">
+                      <p className="text-xs text-slate-500 font-medium mt-0.5">
                         Real-time incoming vehicle accident claims for {branch} Branch
                       </p>
                     </div>
@@ -630,7 +622,7 @@ export default function OfficeStaffDashboard() {
 
                   <Link
                     href="/Office_Staff/Claims"
-                    className="text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 self-start sm:self-auto"
+                    className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-[#102A43] font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto transition-all shadow-2xs hover:shadow-xs active:scale-95 border border-slate-200/70"
                   >
                     <span>Full Claims Console</span>
                     <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
@@ -662,22 +654,22 @@ export default function OfficeStaffDashboard() {
                       <button
                         key={tab.key}
                         onClick={() => setClaimsFilter(tab.key as any)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5 ${
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5 ${
                           claimsFilter === tab.key
-                            ? "bg-[#0B192C] text-white border-[#0B192C] shadow-2xs"
+                            ? "bg-[#102A43] text-white border-[#102A43] shadow-xs"
                             : tab.alert
-                            ? "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"
+                            ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
                             : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
                         }`}
                       >
                         <span>{tab.label}</span>
                         {tab.count !== undefined && (
                           <span
-                            className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
                               claimsFilter === tab.key
                                 ? "bg-white/20 text-white"
                                 : tab.alert
-                                ? "bg-red-600 text-white"
+                                ? "bg-rose-600 text-white"
                                 : "bg-slate-200 text-slate-700"
                             }`}
                           >
@@ -689,17 +681,17 @@ export default function OfficeStaffDashboard() {
                   </div>
 
                   {/* Search box */}
-                  <div className="relative w-full sm:w-56 shrink-0">
+                  <div className="relative w-full sm:w-64 shrink-0">
                     <HugeiconsIcon
                       icon={Search01Icon}
-                      className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
+                      className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
                     />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search plate, claim, driver..."
-                      className="w-full text-xs pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-500 font-medium"
+                      className="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#102A43]/20 focus:border-[#102A43] font-medium"
                     />
                   </div>
                 </div>
@@ -711,9 +703,9 @@ export default function OfficeStaffDashboard() {
                     <span className="text-xs font-semibold text-slate-400 mt-2">Loading live claims queue...</span>
                   </div>
                 ) : filteredClaims.length === 0 ? (
-                  <div className="py-12 px-4 rounded-2xl border border-dashed border-slate-200 text-center bg-slate-50/50">
-                    <HugeiconsIcon icon={Shield01Icon} className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                    <p className="text-xs font-bold text-slate-600">No Claims in this Queue View</p>
+                  <div className="py-14 px-4 rounded-2xl border border-dashed border-slate-200 text-center bg-slate-50/50">
+                    <HugeiconsIcon icon={Shield01Icon} className="w-9 h-9 text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs font-bold text-slate-700">No Claims in this Queue View</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       All claims for this filter category have been attended to.
                     </p>
@@ -724,81 +716,89 @@ export default function OfficeStaffDashboard() {
                       const isUrgent = claim.urgency === "Urgent";
                       const isUnassigned = !claim.assignedAgent || claim.assignedAgent.trim() === "";
 
+                      let borderAccentClass = "border-l-blue-500";
+                      let gradientBgClass = "from-blue-50/15 via-transparent to-transparent";
+
+                      if (isUrgent) {
+                        borderAccentClass = "border-l-rose-500";
+                        gradientBgClass = "from-rose-50/20 via-transparent to-transparent";
+                      } else if (isUnassigned) {
+                        borderAccentClass = "border-l-amber-500";
+                        gradientBgClass = "from-amber-50/20 via-transparent to-transparent";
+                      }
+
                       return (
                         <div
                           key={claim.id}
-                          className={`p-4 rounded-2xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 hover:shadow-2xs ${
-                            isUrgent
-                              ? "bg-red-50/20 border-red-200"
-                              : isUnassigned
-                              ? "bg-amber-50/15 border-amber-200"
-                              : "bg-white border-slate-200"
-                          }`}
+                          className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200/90 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3.5 transition-all duration-200 shadow-2xs hover:shadow-md group relative overflow-hidden`}
                         >
-                          {/* Left: Claim info */}
-                          <div className="flex items-start sm:items-center gap-3 min-w-0">
+                          {/* Left: Vehicle Icon & Claim Info */}
+                          <div className="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
                             <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold ${
+                              className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 font-bold transition-all shadow-2xs ${
                                 isUrgent
-                                  ? "bg-red-100 text-red-700"
+                                  ? "bg-rose-50 text-rose-700 border border-rose-200"
                                   : isUnassigned
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-blue-50 text-blue-700"
+                                  ? "bg-amber-50 text-amber-700 border border-amber-200"
+                                  : "bg-slate-100 text-[#102A43] border border-slate-200 group-hover:bg-[#102A43] group-hover:text-white"
                               }`}
                             >
                               <HugeiconsIcon icon={Car01Icon} className="w-5 h-5" />
                             </div>
 
-                            <div className="min-w-0 space-y-1">
+                            <div className="min-w-0 flex-1 space-y-1">
+                              {/* Top Tag Row: Claim Ref, Plate, Status */}
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-mono text-xs font-bold text-slate-900">
+                                <span className="font-mono text-xs font-bold text-[#102A43] bg-slate-100 px-2.5 py-0.5 rounded-md border border-slate-200/80">
                                   #{claim.id}
                                 </span>
-                                <span className="font-mono text-[11px] font-bold px-2 py-0.5 bg-slate-100 text-slate-800 rounded border border-slate-200">
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#FFF9E6] text-[#2D2A26] border border-[#E5C77A] font-mono font-bold text-xs shadow-2xs">
                                   {claim.vehicleNo}
                                 </span>
                                 {isUrgent && (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 bg-red-600 text-white rounded-full">
-                                    URGENT
+                                  <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                                    <span>URGENT</span>
                                   </span>
                                 )}
                                 {isUnassigned ? (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 text-amber-800 rounded border border-amber-200">
-                                    Unassigned
+                                  <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2.5 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-full">
+                                    <HugeiconsIcon icon={Alert02Icon} className="w-3 h-3 text-amber-600" />
+                                    <span>Awaiting Agent</span>
                                   </span>
                                 ) : (
-                                  <span className="text-[10px] font-semibold text-slate-500">
-                                    Agent: <strong className="text-slate-700">{claim.assignedAgent}</strong>
+                                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-500 font-medium bg-slate-50 px-2.5 py-0.5 rounded-md border border-slate-200/70">
+                                    Agent: <strong className="text-slate-800 font-semibold">{claim.assignedAgent}</strong>
                                   </span>
                                 )}
                               </div>
 
-                              <div className="flex items-center gap-3 text-[11px] text-slate-500 flex-wrap">
-                                {/* Applicant */}
-                                <span className="flex items-center gap-1 font-medium">
+                              {/* Middle Line: Applicant & Details */}
+                              <div className="flex items-center gap-2.5 text-xs text-slate-500 flex-wrap">
+                                <span className="font-semibold text-slate-800">
                                   {claim.isThirdParty ? (
-                                    <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-purple-100 text-purple-800 font-bold text-[10px]">
-                                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3 h-3 text-purple-700" />
+                                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200 font-bold text-xs">
+                                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3 h-3 text-purple-600" />
                                       <span>Driver: {claim.applicantName}</span>
                                     </span>
                                   ) : (
-                                    <span className="text-slate-700">Owner: {claim.applicantName}</span>
+                                    <span>Owner: {claim.applicantName}</span>
                                   )}
                                 </span>
                                 <span>•</span>
-                                <span className="text-slate-600">{claim.type}</span>
+                                <span className="text-slate-700 font-medium">{claim.type}</span>
                                 <span>•</span>
-                                <span className="flex items-center gap-1 truncate max-w-[150px]">
-                                  <HugeiconsIcon icon={Location01Icon} className="w-3 h-3 text-slate-400 shrink-0" />
+                                <span className="flex items-center gap-1 text-slate-500 truncate max-w-[200px]" title={claim.location}>
+                                  <HugeiconsIcon icon={Location01Icon} className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                                   <span className="truncate">{claim.location}</span>
                                 </span>
                               </div>
                             </div>
                           </div>
 
-                          {/* Right: Actions */}
+                          {/* Right: Timestamp & Actions */}
                           <div className="flex items-center gap-2 shrink-0 self-end md:self-auto">
-                            <span className="text-[10px] text-slate-400 font-mono hidden sm:inline mr-1">
+                            <span className="text-[11px] text-slate-400 font-mono hidden sm:inline mr-1">
                               {claim.time}
                             </span>
 
@@ -810,7 +810,7 @@ export default function OfficeStaffDashboard() {
                                   setClaimToAssign(claim);
                                   setSelectedAgentEmail(branchAgents[0]?.email || "");
                                 }}
-                                className="px-3 py-1.5 bg-[#0B192C] hover:bg-blue-900 text-white rounded-xl text-xs font-bold transition-all cursor-pointer border-none shadow-2xs flex items-center gap-1.5"
+                                className="px-3.5 py-1.5 bg-[#102A43] hover:bg-[#1B365D] text-white rounded-xl text-xs font-bold transition-all cursor-pointer border-none shadow-2xs hover:shadow-xs active:scale-95 flex items-center gap-1.5"
                               >
                                 <span>Assign Agent</span>
                               </button>
@@ -823,9 +823,9 @@ export default function OfficeStaffDashboard() {
                                 markClaimAsRead(claim.rawClaim || claim.id, viewedClaims, setViewedClaims, "office_staff");
                                 setSelectedClaim(claim.rawClaim || claim);
                               }}
-                              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer border border-slate-200 flex items-center gap-1"
+                              className="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer border border-slate-200 shadow-2xs hover:shadow-xs active:scale-95 flex items-center gap-1.5"
                             >
-                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-500" />
+                              <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-slate-600" />
                               <span>Details</span>
                             </button>
                           </div>
@@ -840,9 +840,9 @@ export default function OfficeStaffDashboard() {
               <div className="lg:col-span-4 space-y-6">
                 {/* MODULE 1: NEW POLICYHOLDER REGISTRATIONS */}
                 <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-3.5">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center font-bold shadow-2xs">
                         <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" />
                       </div>
                       <div>
@@ -852,7 +852,7 @@ export default function OfficeStaffDashboard() {
                     </div>
                     <Link
                       href="/Office_Staff/Registrations"
-                      className="text-[11px] font-bold text-blue-700 hover:text-blue-900"
+                      className="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-[11px] border border-amber-200/70 transition-all shadow-2xs"
                     >
                       View All ({newRegistrations.length})
                     </Link>
@@ -861,21 +861,23 @@ export default function OfficeStaffDashboard() {
                   {newRegistrations.length === 0 ? (
                     <p className="text-xs text-slate-400 text-center py-6">No new registrations pending.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {newRegistrations.slice(0, 4).map((reg, idx) => (
                         <div
                           key={reg._id || idx}
-                          className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100/80 transition-colors border border-slate-100 flex items-center justify-between text-xs"
+                          className="p-3 rounded-xl bg-white hover:bg-slate-50/80 transition-all border border-slate-200/80 border-l-[4px] border-l-amber-500 flex items-center justify-between gap-3 shadow-2xs hover:shadow-xs group"
                         >
-                          <div>
-                            <span className="font-bold text-slate-800 block truncate max-w-[160px]">{reg.name}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">
+                          <div className="min-w-0 flex-1">
+                            <span className="font-bold text-slate-900 text-xs block truncate" title={reg.name}>
+                              {reg.name}
+                            </span>
+                            <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
                               {reg.nic || `${reg.vehiclesCount} vehicle(s)`} • {reg.date}
                             </span>
                           </div>
                           <Link
                             href="/Office_Staff/Registrations"
-                            className="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 font-bold rounded-lg border border-slate-200 text-[10px]"
+                            className="px-3 py-1 bg-[#102A43] hover:bg-[#1B365D] text-white font-bold rounded-lg text-xs shadow-2xs transition-all active:scale-95 shrink-0"
                           >
                             Verify
                           </Link>
@@ -887,9 +889,9 @@ export default function OfficeStaffDashboard() {
 
                 {/* MODULE 2: THIRD-PARTY DRIVER REQUESTS & TERMINATIONS */}
                 <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-3.5">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center font-bold">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 flex items-center justify-center font-bold shadow-2xs">
                         <HugeiconsIcon icon={Car01Icon} className="w-4 h-4" />
                       </div>
                       <div>
@@ -899,7 +901,7 @@ export default function OfficeStaffDashboard() {
                     </div>
                     <Link
                       href="/Office_Staff/ThirdParty"
-                      className="text-[11px] font-bold text-purple-700 hover:text-purple-900"
+                      className="px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-800 font-bold text-[11px] border border-purple-200/70 transition-all shadow-2xs"
                     >
                       Manage ({recentThirdParty.length})
                     </Link>
@@ -908,48 +910,66 @@ export default function OfficeStaffDashboard() {
                   {recentThirdParty.length === 0 ? (
                     <p className="text-xs text-slate-400 text-center py-6">No third-party requests on file.</p>
                   ) : (
-                    <div className="space-y-2">
-                      {recentThirdParty.slice(0, 4).map((tp) => (
-                        <div
-                          key={tp._id}
-                          className="p-2.5 rounded-xl bg-slate-50 hover:bg-purple-50/40 transition-colors border border-slate-100 flex items-center justify-between text-xs"
-                        >
-                          <div className="min-w-0 pr-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-bold text-slate-900 truncate">{tp.driverName}</span>
-                              <span
-                                className={`text-[9px] font-bold px-1.5 py-0.2 rounded-full ${
-                                  tp.status === "Approved"
-                                    ? "bg-emerald-100 text-emerald-800"
-                                    : tp.status === "Pending Branch Approval"
-                                    ? "bg-amber-100 text-amber-800"
-                                    : "bg-purple-100 text-purple-800"
-                                }`}
-                              >
-                                {tp.status === "Pending Branch Approval" ? "Pending" : tp.status}
-                              </span>
-                            </div>
-                            <span className="text-[10px] text-slate-400 block truncate font-mono">
-                              {tp.plate} • Owner: {tp.policyHolderName}
-                            </span>
-                          </div>
-                          <Link
-                            href="/Office_Staff/ThirdParty"
-                            className="px-2.5 py-1 bg-white hover:bg-purple-600 hover:text-white text-purple-700 font-bold rounded-lg border border-purple-200 text-[10px] shrink-0 transition-colors"
+                    <div className="space-y-2.5">
+                      {recentThirdParty.slice(0, 4).map((tp) => {
+                        const isApproved = tp.status === "Approved";
+                        const isPending = tp.status === "Pending Branch Approval";
+                        const isPendingTerm = tp.status === "Pending Termination Approval";
+
+                        let borderClass = "border-l-purple-500";
+                        if (isApproved) borderClass = "border-l-emerald-500";
+                        else if (isPending) borderClass = "border-l-amber-500";
+                        else if (isPendingTerm) borderClass = "border-l-rose-500";
+
+                        return (
+                          <div
+                            key={tp._id}
+                            className={`p-3 rounded-xl bg-white hover:bg-slate-50/80 transition-all border border-slate-200/80 border-l-[4px] ${borderClass} flex items-center justify-between gap-3 shadow-2xs hover:shadow-xs group`}
                           >
-                            Review
-                          </Link>
-                        </div>
-                      ))}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="font-bold text-slate-900 text-xs truncate" title={tp.driverName}>
+                                  {tp.driverName}
+                                </span>
+                                <span
+                                  className={`text-[9.5px] font-bold px-1.5 py-0.2 rounded-full ${
+                                    isApproved
+                                      ? "bg-emerald-100 text-emerald-800"
+                                      : isPending
+                                      ? "bg-amber-100 text-amber-800"
+                                      : "bg-purple-100 text-purple-800"
+                                  }`}
+                                >
+                                  {isPending ? "Pending" : isPendingTerm ? "Termination" : tp.status}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <span className="inline-flex items-center px-1.5 py-0.2 rounded bg-[#FFF9E6] text-[#2D2A26] border border-[#E5C77A] font-mono text-[10px] font-bold">
+                                  {tp.plate}
+                                </span>
+                                <span className="text-[10px] text-slate-500 truncate" title={tp.policyHolderName}>
+                                  Owner: {tp.policyHolderName}
+                                </span>
+                              </div>
+                            </div>
+                            <Link
+                              href="/Office_Staff/ThirdParty"
+                              className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-lg text-xs border border-slate-200 shadow-2xs transition-all active:scale-95 shrink-0"
+                            >
+                              Review
+                            </Link>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
 
                 {/* MODULE 3: BRANCH FIELD AGENTS ROSTER */}
                 <div className="bg-white rounded-3xl border border-slate-200/90 p-5 shadow-xs space-y-3.5">
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center font-bold shadow-2xs">
                         <HugeiconsIcon icon={UserCheck01Icon} className="w-4 h-4" />
                       </div>
                       <div>
@@ -959,7 +979,7 @@ export default function OfficeStaffDashboard() {
                     </div>
                     <Link
                       href="/Office_Staff/Agents"
-                      className="text-[11px] font-bold text-emerald-700 hover:text-emerald-900"
+                      className="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-[11px] border border-emerald-200/70 transition-all shadow-2xs"
                     >
                       Manage ({branchAgents.length})
                     </Link>
@@ -968,20 +988,25 @@ export default function OfficeStaffDashboard() {
                   {branchAgents.length === 0 ? (
                     <p className="text-xs text-slate-400 text-center py-6">No agents registered in this branch.</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {branchAgents.slice(0, 4).map((agent) => (
                         <div
                           key={agent._id}
-                          className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs"
+                          className="p-3 rounded-xl bg-white hover:bg-slate-50/80 transition-all border border-slate-200/80 border-l-[4px] border-l-emerald-500 flex items-center justify-between gap-3 shadow-2xs hover:shadow-xs group"
                         >
-                          <div>
-                            <span className="font-bold text-slate-800 block">{agent.name}</span>
-                            <span className="text-[10px] text-slate-400 block font-mono">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                              <span className="font-bold text-slate-900 text-xs truncate" title={agent.name}>
+                                {agent.name}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 block font-mono mt-0.5 truncate">
                               {agent.phone || agent.email}
                             </span>
                           </div>
                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
-                            {agent.activeClaimsCount || 0} active claims
+                            {agent.activeClaimsCount || 0} active
                           </span>
                         </div>
                       ))}
@@ -994,7 +1019,7 @@ export default function OfficeStaffDashboard() {
         </div>
       </div>
 
-      {/* QUICK AGENT ASSIGNMENT MODAL */}
+{/* QUICK AGENT ASSIGNMENT MODAL */}
       {claimToAssign && (
         <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl border border-slate-200 w-full max-w-md shadow-2xl p-6 text-left space-y-4">
