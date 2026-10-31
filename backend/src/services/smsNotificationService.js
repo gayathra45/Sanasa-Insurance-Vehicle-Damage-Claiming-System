@@ -501,3 +501,235 @@ export async function notifyAgentSettlementChanged(claimData, amount = null, age
     console.error("notifyAgentSettlementChanged error:", err.message);
   }
 }
+
+// ==========================================
+// AUTHENTICATION & SECURITY NOTIFICATIONS
+// ==========================================
+
+/**
+ * 16. Password Reset Verification OTP via SMS
+ */
+export async function notifyPasswordResetOtp(phone, otp, userName = "Customer", recipientType = "PolicyHolder") {
+  try {
+    if (!phone || !otp) return;
+
+    const displayName = userName ? `Dear ${userName}, ` : "";
+    const message = `[SANASA INSURANCE]\n${displayName}Your password reset verification code is: ${otp}\n\nThis OTP is valid for 10 minutes. For security reasons, do not share this code with anyone.\n24/7 Hotline: 0725 575 575 | www.sanasainsurance.lk`;
+
+    sendSmsSafe({
+      phone,
+      message,
+      eventType: "otp_reset_password",
+      categoryKey: "security",
+      recipientType,
+      recipientName: userName || "User",
+      idempotencyKey: `otp_${phone}_${Date.now()}`
+    });
+  } catch (err) {
+    console.error("notifyPasswordResetOtp error:", err.message);
+  }
+}
+
+/**
+ * 17. Policyholder: Web or Mobile App Login Alert / Reminder
+ */
+export async function notifyPolicyholderLogin(user, deviceType = "Web Portal") {
+  try {
+    if (!user || !user.mobile) return;
+
+    const timeStr = new Date().toLocaleString("en-LK", { timeZone: "Asia/Colombo", hour: "2-digit", minute: "2-digit", hour12: true, day: "2-digit", month: "short" });
+    const name = user.firstName ? `Dear ${user.firstName}, ` : "";
+    const branch = user.branch ? ` (${user.branch} Branch)` : "";
+
+    const message = `[SANASA SECURITY ALERT]\n${name}Your policyholder account was accessed via ${deviceType}.\n• Login Time: ${timeStr} SLT${branch}\n\nIf this was not you, please notify our hotline immediately: 0725 575 575`;
+
+    sendSmsSafe({
+      phone: user.mobile,
+      message,
+      eventType: "policyholder_login",
+      categoryKey: "security",
+      recipientType: "PolicyHolder",
+      recipientName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+      idempotencyKey: `login_ph_${user.nic}_${Date.now()}`
+    });
+  } catch (err) {
+    console.error("notifyPolicyholderLogin error:", err.message);
+  }
+}
+
+/**
+ * 18. Insurance Agent: Mobile App or Web Login Alert / Reminder
+ */
+export async function notifyAgentLogin(agent, deviceType = "Mobile App") {
+  try {
+    const agentPhone = agent?.phone || agent?.mobile;
+    if (!agent || !agentPhone) return;
+
+    const timeStr = new Date().toLocaleString("en-LK", { timeZone: "Asia/Colombo", hour: "2-digit", minute: "2-digit", hour12: true, day: "2-digit", month: "short" });
+    const name = agent.name ? `Dear ${agent.name}, ` : "";
+    const idSnippet = agent.agentId ? ` [${agent.agentId}]` : "";
+
+    const message = `[SANASA AGENT SECURITY ALERT]\n${name}Your Sanasa Agent account${idSnippet} was logged in via ${deviceType}.\n• Login Time: ${timeStr} SLT\n\nIf unauthorized, secure your credentials and notify IT security at 0725 575 575.`;
+
+    sendSmsSafe({
+      phone: agentPhone,
+      message,
+      eventType: "agent_login",
+      categoryKey: "security",
+      recipientType: "Agent",
+      recipientName: agent.name || "Agent",
+      idempotencyKey: `login_agent_${agent.email}_${Date.now()}`
+    });
+  } catch (err) {
+    console.error("notifyAgentLogin error:", err.message);
+  }
+}
+
+/**
+ * 19. Policyholder: Profile Information Edited or Profile Update Approved
+ */
+export async function notifyPolicyholderProfileUpdated(user, updateSummary = "Profile Details") {
+  try {
+    if (!user || !user.mobile) return;
+
+    const name = user.firstName ? `Dear ${user.firstName}, ` : "";
+    const dateStr = new Date().toLocaleDateString("en-LK");
+
+    const message = `[SANASA SECURITY ALERT]\n${name}Your policyholder profile details were updated.\n• Updated Scope: ${updateSummary}\n• Date: ${dateStr}\n\nIf you did not authorize this change, please contact our fraud prevention desk immediately at 0725 575 575.`;
+
+    sendSmsSafe({
+      phone: user.mobile,
+      message,
+      eventType: "profile_updated",
+      categoryKey: "security",
+      recipientType: "PolicyHolder",
+      recipientName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+      idempotencyKey: `profile_edit_${user.nic}_${Date.now()}`
+    });
+  } catch (err) {
+    console.error("notifyPolicyholderProfileUpdated error:", err.message);
+  }
+}
+
+/**
+ * 20. Policyholder: Document Upload Confirmed
+ */
+export async function notifyPolicyholderDocumentUploaded(claimData, docName = "Document", userData = null) {
+  try {
+    const { claim, user } = await resolveClaimParties(claimData);
+    const resolvedUser = userData || user;
+    if (!claim || !resolvedUser?.mobile) return;
+
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA GENERAL INSURANCE]\n${recipientName}Document upload confirmed.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Uploaded: ${docName}\n• Status: Submitted & Pending Review\n\nOur claims assessment department will evaluate the uploaded file.\n24/7 Hotline: 0725 575 575`;
+
+    sendSmsSafe({
+      phone: resolvedUser.mobile,
+      message,
+      claimNumber: claim.claimNumber,
+      eventType: "policyholder_document_uploaded",
+      categoryKey: "documentRequests",
+      recipientType: "PolicyHolder",
+      recipientName: `${resolvedUser.firstName || ""} ${resolvedUser.lastName || ""}`.trim(),
+      idempotencyKey: `${claim.claimNumber}_user_upload_${Date.now()}`
+    });
+  } catch (err) {
+    console.error("notifyPolicyholderDocumentUploaded error:", err.message);
+  }
+}
+
+/**
+ * 21. Insurance Agent: Claim Details Updated
+ */
+export async function notifyAgentClaimUpdate(claimData, updateDetails = "Claim status updated", agentData = null) {
+  try {
+    const { claim, agent } = await resolveClaimParties(claimData);
+    const targetAgent = agentData || agent;
+    const agentPhone = targetAgent?.phone || targetAgent?.mobile;
+    if (!claim || !agentPhone) return;
+
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+
+    const message = `[SANASA AGENT ALERT]\nClaim update for assigned file.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Update: ${updateDetails}\n• Current Status: ${claim.status || "In Progress"}\n\nPlease check your Sanasa Agent Mobile App for the latest file notes.`;
+
+    sendSmsSafe({
+      phone: agentPhone,
+      message,
+      claimNumber: claim.claimNumber,
+      eventType: "agent_claim_update",
+      categoryKey: "statusUpdates",
+      recipientType: "Agent",
+      recipientName: targetAgent.name || "Agent",
+      idempotencyKey: `${claim.claimNumber}_agent_update_${Date.now()}`
+    });
+  } catch (err) {
+    console.error("notifyAgentClaimUpdate error:", err.message);
+  }
+}
+
+/**
+ * 22. Insurance Agent: Documents Pending Reminder
+ */
+export async function notifyAgentDocumentsReminder(claimData, requestedDocs = [], agentData = null) {
+  try {
+    const { claim, agent } = await resolveClaimParties(claimData);
+    const targetAgent = agentData || agent;
+    const agentPhone = targetAgent?.phone || targetAgent?.mobile;
+    if (!claim || !agentPhone) return;
+
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+    const docList = Array.isArray(requestedDocs) && requestedDocs.length > 0
+      ? requestedDocs.join(", ")
+      : "Accident / Estimate Documents";
+
+    const message = `[SANASA AGENT REMINDER]\nDocument submission pending for assigned claim.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Required: ${docList}\n\nPlease coordinate with policyholder or upload necessary inspection files to expedite processing.`;
+
+    sendSmsSafe({
+      phone: agentPhone,
+      message,
+      claimNumber: claim.claimNumber,
+      eventType: "agent_document_reminder",
+      categoryKey: "documentRequests",
+      recipientType: "Agent",
+      recipientName: targetAgent.name || "Agent",
+      idempotencyKey: `${claim.claimNumber}_agent_doc_remind_${Date.now()}`
+    });
+  } catch (err) {
+    console.error("notifyAgentDocumentsReminder error:", err.message);
+  }
+}
+
+/**
+ * 23. Policyholder: Documents Pending Reminder
+ */
+export async function notifyPolicyholderDocumentsReminder(claimData, requestedDocs = [], userData = null) {
+  try {
+    const { claim, user } = await resolveClaimParties(claimData);
+    const resolvedUser = userData || user;
+    if (!claim || !resolvedUser?.mobile) return;
+
+    const recipientName = resolvedUser.firstName ? `Dear ${resolvedUser.firstName}, ` : "";
+    const vehicle = claim.vehiclePlate ? ` [${claim.vehiclePlate}]` : "";
+    const docList = Array.isArray(requestedDocs) && requestedDocs.length > 0
+      ? requestedDocs.join(", ")
+      : "Pending Claim Documents";
+
+    const message = `[SANASA CLAIM REMINDER]\n${recipientName}Reminder: Documents are pending for your claim.\n\n• Claim No: #${claim.claimNumber}${vehicle}\n• Required: ${docList}\n\nPlease upload them on your Sanasa customer portal to avoid delays.\n24/7 Hotline: 0725 575 575`;
+
+    sendSmsSafe({
+      phone: resolvedUser.mobile,
+      message,
+      claimNumber: claim.claimNumber,
+      eventType: "documents_reminder",
+      categoryKey: "documentRequests",
+      recipientType: "PolicyHolder",
+      recipientName: `${resolvedUser.firstName || ""} ${resolvedUser.lastName || ""}`.trim(),
+      idempotencyKey: `${claim.claimNumber}_docs_remind_${Date.now()}`
+    });
+  } catch (err) {
+    console.error("notifyPolicyholderDocumentsReminder error:", err.message);
+  }
+}
+

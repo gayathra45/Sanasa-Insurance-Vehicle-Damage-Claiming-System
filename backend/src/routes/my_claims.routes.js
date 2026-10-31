@@ -8,7 +8,13 @@ import { uploadToCloudinary } from "../utils/upload.js";
 import { logAgentActivity } from "../utils/activity.js";
 import { sendAgentActivityEmail, sendEmail } from "../utils/email.js";
 import { compareGarageEstimateWithPhotosAndAI } from "../utils/aiAnalyzer.js";
-import { notifyDocumentsVerified, notifyAgentDocumentsUploaded } from "../services/smsNotificationService.js";
+import {
+  notifyDocumentsVerified,
+  notifyAgentDocumentsUploaded,
+  notifyPolicyholderLogin,
+  notifyPolicyholderProfileUpdated,
+  notifyPolicyholderDocumentUploaded
+} from "../services/smsNotificationService.js";
 
 const router = express.Router();
 
@@ -42,6 +48,16 @@ router.post("/login", async (req, res) => {
     // Filter out unapproved vehicles from policy holder session
     if (userObj.vehicles && Array.isArray(userObj.vehicles)) {
       userObj.vehicles = userObj.vehicles.filter(v => !v.status || v.status === "Approved");
+    }
+
+    const userAgent = req.headers["user-agent"] || "";
+    const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+    const deviceType = isMobile ? "Mobile App" : "Web Portal";
+
+    try {
+      notifyPolicyholderLogin(user, deviceType);
+    } catch (smsErr) {
+      console.warn("Policyholder login SMS warning:", smsErr.message);
     }
 
     res.json({ message: "Login successful", user: userObj });
@@ -209,6 +225,7 @@ router.post("/upload-garage-estimate/:claimNumber", async (req, res) => {
 
     // Trigger non-blocking SMS notifications for Policyholder and Agent
     try {
+      notifyPolicyholderDocumentUploaded(claim, "Garage Estimate Report");
       notifyDocumentsVerified(claim, "Garage Estimate Report");
       notifyAgentDocumentsUploaded(claim, "Garage Estimate Report");
     } catch (smsErr) {
@@ -421,6 +438,7 @@ router.patch("/update-claim/:claimNumber", async (req, res) => {
     try {
       if (uploadedDocuments && Array.isArray(uploadedDocuments) && uploadedDocuments.length > 0) {
         const docSummary = uploadedDocuments.map(d => d.documentName).join(", ");
+        notifyPolicyholderDocumentUploaded(claim, docSummary);
         notifyDocumentsVerified(claim, docSummary);
         notifyAgentDocumentsUploaded(claim, docSummary);
       }
@@ -618,6 +636,13 @@ router.put("/profile", async (req, res) => {
 
     await user.save();
 
+    // Trigger SMS notification for profile edit
+    try {
+      notifyPolicyholderProfileUpdated(user, newPassword ? "Security & Personal Info" : "Personal Information");
+    } catch (smsErr) {
+      console.warn("Profile update SMS warning:", smsErr.message);
+    }
+
     const userObj = user.toObject();
     delete userObj.password;
 
@@ -710,6 +735,13 @@ router.post("/profile-update-request", async (req, res) => {
     });
 
     await newRequest.save();
+
+    // Trigger SMS notification for profile update request submission
+    try {
+      notifyPolicyholderProfileUpdated(user, `${finalType} Update Request Submitted`);
+    } catch (smsErr) {
+      console.warn("Profile update request SMS warning:", smsErr.message);
+    }
 
     res.status(201).json({
       message: "Your profile update request has been submitted to your branch for review.",

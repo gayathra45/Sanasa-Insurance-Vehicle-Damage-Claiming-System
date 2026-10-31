@@ -13,6 +13,16 @@ import LoginActivity from "../models/login_activity.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { sendEmail, getBaseTemplate, sendBranchProfileUpdateStatusEmail } from "../utils/email.js";
 import { logLoginActivity } from "../utils/activity.js";
+import {
+  notifyClaimAssigned,
+  notifyAgentNewClaimAssigned,
+  notifyClaimStatusChanged,
+  notifyClaimApproved,
+  notifyClaimRejected,
+  notifyAgentClaimDecision,
+  notifyAgentClaimUpdate,
+  notifyPasswordResetOtp
+} from "../services/smsNotificationService.js";
 
 const router = express.Router();
 
@@ -641,8 +651,16 @@ router.post("/staff/password-requests/approve", async (req, res) => {
       emailError = sendErr.message;
     }
 
+    if (staff.mobile) {
+      try {
+        notifyPasswordResetOtp(staff.mobile, otp, staff.name, "Staff");
+      } catch (smsErr) {
+        console.warn("Could not dispatch staff OTP SMS:", smsErr.message);
+      }
+    }
+
     res.json({
-      message: emailSent ? "Password request approved. OTP sent to branch email." : "Dev Mode: Request approved, OTP generated (email not sent).",
+      message: emailSent ? "Password request approved. OTP sent to branch email and mobile SMS." : "Dev Mode: Request approved, OTP generated (email not sent).",
       emailSent,
       emailError,
       devOtp: emailSent ? undefined : otp
@@ -1659,6 +1677,9 @@ router.put("/claims/:id", async (req, res) => {
       return res.status(404).json({ error: "Claim record not found." });
     }
 
+    const previousAgent = claim.assignedAgent || "";
+    const previousStatus = claim.status || "";
+
     if (status !== undefined) claim.status = status.trim();
     if (amount !== undefined) claim.amount = amount === "" ? null : Number(amount);
     if (priority !== undefined) claim.priority = priority.trim();
@@ -1686,6 +1707,28 @@ router.put("/claims/:id", async (req, res) => {
     claim.manualUpdateBy = "System Admin";
 
     await claim.save();
+
+    // Trigger non-blocking SMS notifications for Admin claim updates
+    try {
+      if (assignedAgent !== undefined && claim.assignedAgent && claim.assignedAgent !== previousAgent) {
+        notifyClaimAssigned(claim);
+        notifyAgentNewClaimAssigned(claim);
+      } else if (status !== undefined && status.trim() !== previousStatus) {
+        notifyClaimStatusChanged(claim, status.trim());
+        notifyAgentClaimUpdate(claim, `Status updated to ${status.trim()} by Admin`);
+      }
+
+      if (status && status.trim().toLowerCase() === "approved") {
+        notifyClaimApproved(claim, claim.amount);
+        notifyAgentClaimDecision(claim, "Approved", claim.amount);
+      } else if (status && status.trim().toLowerCase() === "rejected") {
+        notifyClaimRejected(claim, claim.rejectionReason);
+        notifyAgentClaimDecision(claim, "Rejected");
+      }
+    } catch (smsErr) {
+      console.warn("Admin update claim SMS warning:", smsErr.message);
+    }
+
     res.json({ message: "Claim record updated successfully.", claim });
   } catch (err) {
     console.error("Admin update claim error:", err);

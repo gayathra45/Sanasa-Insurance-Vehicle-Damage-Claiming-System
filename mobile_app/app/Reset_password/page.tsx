@@ -285,7 +285,7 @@ export default function MobileResetPassword() {
                     <Ionicons name="mail-open-outline" size={32} color="#ff9800" />
                   </View>
                   <Text style={[styles.label, { fontSize: 17, fontWeight: "bold", textAlign: "center" }]}>Enter Verification Code</Text>
-                  <Text style={styles.subtitleSmall}>Check your email inbox for the 6-digit code</Text>
+                  <Text style={styles.subtitleSmall}>Check your email and mobile SMS for the 6-digit code</Text>
                 </View>
 
                 {/* 6 OTP boxes */}

@@ -8,8 +8,14 @@ import { logAgentActivity } from "../utils/activity.js";
 import AgentActivity from "../models/agent_activity.model.js";
 import { sendAgentActivityEmail } from "../utils/email.js";
 import { uploadToCloudinary } from "../utils/upload.js";
-import { notifyInspectionUpdate, notifyClaimStatusChanged } from "../services/smsNotificationService.js";
 import mongoose from "mongoose";
+import {
+  notifyInspectionUpdate,
+  notifyClaimStatusChanged,
+  notifyAgentLogin,
+  notifyAgentClaimUpdate,
+  notifyAgentDocumentsReminder
+} from "../services/smsNotificationService.js";
 
 const router = express.Router();
 
@@ -47,6 +53,12 @@ router.post("/login", async (req, res) => {
     const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
     const deviceType = isMobile ? "Mobile App" : "Web";
     await logAgentActivity(cleanEmail, "Login", deviceType, `Logged in successfully via ${deviceType}`);
+
+    try {
+      notifyAgentLogin(agent, deviceType);
+    } catch (smsErr) {
+      console.warn("Agent login SMS warning:", smsErr.message);
+    }
 
     res.json({ message: "Agent login successful", agent: agentObj });
   } catch (err) {

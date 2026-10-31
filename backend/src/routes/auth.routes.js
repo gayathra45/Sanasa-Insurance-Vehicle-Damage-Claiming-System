@@ -5,6 +5,7 @@ import OfficeStaff from "../models/office_staff.model.js";
 import Admin from "../models/admin.model.js";
 import { hashPassword } from "../utils/crypto.js";
 import { logAgentActivity, logLoginActivity } from "../utils/activity.js";
+import { notifyPolicyholderLogin, notifyAgentLogin } from "../services/smsNotificationService.js";
 
 const router = express.Router();
 
@@ -59,6 +60,17 @@ router.post("/login", async (req, res) => {
         details: "Policyholder portal login successful."
       });
 
+      const userAgent = req.headers["user-agent"] || "";
+      const isMobile = userAgent.includes("okhttp") || userAgent.includes("Expo") || userAgent.includes("Mobile") || req.body.device === "Mobile App";
+      const deviceType = isMobile ? "Mobile App" : "Web Portal";
+
+      // Trigger login reminder SMS to policyholder
+      try {
+        notifyPolicyholderLogin(user, deviceType);
+      } catch (smsErr) {
+        console.warn("Policyholder login SMS warning:", smsErr.message);
+      }
+
       const userObj = user.toObject();
       delete userObj.password;
 
@@ -97,6 +109,13 @@ router.post("/login", async (req, res) => {
         status: "Success",
         details: `Insurance Agent logged in via ${deviceType}`
       });
+
+      // Trigger login reminder SMS to agent
+      try {
+        notifyAgentLogin(agent, deviceType);
+      } catch (smsErr) {
+        console.warn("Agent login SMS warning:", smsErr.message);
+      }
 
       const agentObj = agent.toObject();
       delete agentObj.password;

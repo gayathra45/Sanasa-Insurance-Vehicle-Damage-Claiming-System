@@ -289,8 +289,8 @@ export default function ResetPassword() {
                 Reset Password
               </h1>
               <p className="mt-2 text-white/70 text-sm max-w-xs sm:max-w-sm leading-relaxed">
-                {stage === "request" && "Enter your details and we'll send a verification code to your email."}
-                {stage === "otp" && <>Check your email for the code sent to <span className="text-orange-400 font-semibold">{sentEmail}</span></>}
+                {stage === "request" && "Enter your details and we'll send a verification code to your registered email and mobile SMS."}
+                {stage === "otp" && <>Check your email and mobile SMS for the code sent to <span className="text-orange-400 font-semibold">{sentEmail}</span></>}
                 {stage === "set-password" && "Identity verified. Set your new password below."}
                 {stage === "success" && "Password updated! Redirecting you to login..."}
               </p>

@@ -14,7 +14,8 @@ const smsSettingSchema = new mongoose.Schema(
       inspection: { type: Boolean, default: true },
       decision: { type: Boolean, default: true },
       settlement: { type: Boolean, default: true },
-      reminders: { type: Boolean, default: true }
+      reminders: { type: Boolean, default: true },
+      security: { type: Boolean, default: true }
     },
     defaultDeviceId: {
       type: String,

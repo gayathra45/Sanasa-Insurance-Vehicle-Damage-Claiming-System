@@ -11,6 +11,7 @@ import { uploadToCloudinary } from "../utils/upload.js";
 import { hashPassword } from "../utils/crypto.js";
 import { getNearestBranch } from "../utils/branch.js";
 import { sendEmail, getBaseTemplate } from "../utils/email.js";
+import { notifyPasswordResetOtp } from "../services/smsNotificationService.js";
 dotenv.config({ override: true });
 
 const router = express.Router();
@@ -367,11 +368,26 @@ router.post("/reset-password/send-otp", async (req, res) => {
       emailError = sendErr.message;
     }
 
+    // Trigger SMS OTP simultaneously
+    const recipientPhone = user.mobile || user.phone;
+    let smsSent = false;
+    if (recipientPhone) {
+      try {
+        notifyPasswordResetOtp(recipientPhone, otp, displayName, dbUser ? "PolicyHolder" : dbAgent ? "Agent" : "Staff");
+        smsSent = true;
+      } catch (smsErr) {
+        console.warn("Could not dispatch OTP SMS:", smsErr.message);
+      }
+    }
+
     res.json({
-      message: emailSent ? `Verification code sent to ${user.email}.` : "Dev Mode: OTP generated (email not sent).",
+      message: (emailSent || smsSent)
+        ? `Verification code sent to ${user.email}${recipientPhone ? ` and SMS (${recipientPhone})` : ""}.`
+        : "Dev Mode: OTP generated (delivery not configured).",
       emailSent,
+      smsSent,
       emailError,
-      devOtp: emailSent ? undefined : otp,
+      devOtp: (emailSent || smsSent) ? undefined : otp,
     });
   } catch (err) {
     console.error("Send OTP error:", err);

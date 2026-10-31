@@ -33,7 +33,11 @@ import {
   notifyClaimRejected,
   notifyAgentClaimDecision,
   notifyPaymentSettled,
-  notifyAgentSettlementChanged
+  notifyAgentSettlementChanged,
+  notifyPolicyholderProfileUpdated,
+  notifyAgentClaimUpdate,
+  notifyAgentDocumentsReminder,
+  notifyPolicyholderDocumentsReminder
 } from "../services/smsNotificationService.js";
 
 const router = express.Router();
@@ -1020,6 +1024,13 @@ router.patch("/profile-update-requests/:id/review", async (req, res) => {
         user.branch || request.branch || "Galle"
       );
 
+      // Trigger SMS notification for profile update approval
+      try {
+        notifyPolicyholderProfileUpdated(user, `${request.requestType} (Approved by Branch)`);
+      } catch (smsErr) {
+        console.warn("Profile update approved SMS warning:", smsErr.message);
+      }
+
       res.json({
         message: "Profile update request approved successfully. User data has been updated in database.",
         request,
@@ -1043,6 +1054,13 @@ router.patch("/profile-update-requests/:id/review", async (req, res) => {
         reviewNote || "Your profile update request could not be approved.",
         user.branch || request.branch || "Galle"
       );
+
+      // Trigger SMS notification for profile update rejection
+      try {
+        notifyPolicyholderProfileUpdated(user, `${request.requestType} (Declined by Branch)`);
+      } catch (smsErr) {
+        console.warn("Profile update rejected SMS warning:", smsErr.message);
+      }
 
       res.json({
         message: "Profile update request rejected.",
@@ -1131,10 +1149,16 @@ router.patch("/claims/:claimNumber", async (req, res) => {
         notifyAgentNewClaimAssigned(claim);
       } else if (status !== undefined && status !== previousStatus) {
         notifyClaimStatusChanged(claim, status);
+        notifyAgentClaimUpdate(claim, `Status updated to ${status}`);
       }
 
       if (documentsRequested && requestedDocuments && Array.isArray(requestedDocuments) && requestedDocuments.length > 0) {
-        notifyDocumentsRequested(claim, requestedDocuments);
+        if (claim.documentRequestTo === "Agent") {
+          notifyAgentDocumentsReminder(claim, requestedDocuments);
+        } else {
+          notifyDocumentsRequested(claim, requestedDocuments);
+          notifyPolicyholderDocumentsReminder(claim, requestedDocuments);
+        }
       }
     } catch (smsErr) {
       console.warn("SMS notification dispatch warning in office-staff claim update:", smsErr.message);
@@ -1251,6 +1275,13 @@ router.post("/claims/:claimNumber/analyze-ai", async (req, res) => {
 
     claim.updatedAt = new Date();
     await claim.save();
+
+    // Trigger SMS document request to Policyholder
+    try {
+      notifyDocumentsRequested(claim, ["Garage Estimate Report"]);
+    } catch (smsErr) {
+      console.warn("AI garage estimate request SMS warning:", smsErr.message);
+    }
 
     res.json({
       message: "AI Damage Assessment completed and Garage Estimate Report automatically requested from Policy Holder.",
@@ -1393,6 +1424,8 @@ router.post("/claims/:claimNumber/approve-inspection", async (req, res) => {
     // Trigger SMS notification
     try {
       notifyInspectionUpdate(claim, "approved");
+      notifyDocumentsRequested(claim, ["Garage Estimate Report"]);
+      notifyAgentClaimUpdate(claim, "Physical inspection report approved by branch office");
     } catch (smsErr) {
       console.warn("Inspection approval SMS warning:", smsErr.message);
     }
