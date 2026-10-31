@@ -21,7 +21,8 @@ import {
   sendThirdPartyDriverRejectionEmail,
   sendThirdPartyDriverActivityEmail
 } from "../utils/email.js";
-import { emitThirdPartyRequestUpdated } from "../utils/socket.js";
+import Notification from "../models/notification.model.js";
+import { emitThirdPartyRequestUpdated, emitNotification, emitToUser } from "../utils/socket.js";
 
 const router = express.Router();
 
@@ -1871,6 +1872,94 @@ router.post("/branch/reject-termination/:requestId", async (req, res) => {
 });
 
 /**
+ * POST /api/third-party/resolve-pass
+ * Accepts a raw token, pass reference (e.g. TPD-...), or physical NFC card ID (e.g. SAN-NFC-...)
+ * and resolves to the active portal token for seamless navigation to /driver-access/:token
+ */
+router.post("/resolve-pass", async (req, res) => {
+  try {
+    const { query } = req.body;
+    if (!query || typeof query !== "string") {
+      return res.status(400).json({ error: "Access token, pass reference, or card ID is required." });
+    }
+
+    const clean = query.trim();
+    const tokenHash = crypto.createHash("sha256").update(clean).digest("hex");
+
+    // 1. Check Permanent Driver Registrations
+    const reg = await ThirdPartyRegistration.findOne({
+      $or: [
+        { "secureAccess.rawToken": clean },
+        { "secureAccess.tokenHash": tokenHash },
+        { requestReference: clean.toUpperCase() }
+      ]
+    });
+
+    if (reg) {
+      if (reg.status === "Terminated" || reg.secureAccess?.isRevoked) {
+        return res.status(403).json({ error: "This driver pass has been terminated." });
+      }
+      if (reg.status === "Temporarily Blocked" || reg.accessControl?.isBlocked) {
+        return res.status(403).json({ error: "This driver pass is temporarily blocked by the policyholder." });
+      }
+      if (reg.status !== "Approved" && reg.status !== "Scheduled") {
+        return res.status(403).json({ error: `Driver pass is not active. Current status: ${reg.status}` });
+      }
+
+      const rawToken = reg.secureAccess?.rawToken || clean;
+      return res.json({
+        success: true,
+        driverType: "Permanent",
+        token: rawToken,
+        driverName: reg.driverDetails?.fullName,
+        reference: reg.requestReference,
+        vehiclePlates: (reg.selectedVehicles || []).map((v) => v.numberPlate)
+      });
+    }
+
+    // 2. Check Optional NFC Cards
+    const card = await NfcCard.findOne({
+      $or: [
+        { cardId: clean.toUpperCase() },
+        { "currentAssignment.rawToken": clean },
+        { "currentAssignment.tokenHash": tokenHash },
+        { "currentAssignment.assignmentId": clean.toUpperCase() }
+      ]
+    });
+
+    if (card) {
+      const asg = card.currentAssignment;
+      if (!asg || !asg.assignmentId || card.status === "Available") {
+        return res.status(404).json({ error: "This NFC card currently has no active driver assignment." });
+      }
+      if (card.status === "Terminated" || asg.status === "Terminated") {
+        return res.status(403).json({ error: "This temporary driver assignment has ended." });
+      }
+      if (card.status === "Temporarily Blocked" || asg.isBlocked) {
+        return res.status(403).json({ error: "This NFC card assignment is temporarily blocked." });
+      }
+
+      const rawToken = asg.rawToken || clean;
+      return res.json({
+        success: true,
+        driverType: "OptionalCard",
+        token: rawToken,
+        driverName: asg.driverName,
+        cardId: card.cardId,
+        vehiclePlates: [asg.vehiclePlate]
+      });
+    }
+
+    return res.status(404).json({
+      error: "No active driver access pass found matching the provided code, card ID, or token."
+    });
+  } catch (err) {
+    console.error("POST /resolve-pass error:", err);
+    return res.status(500).json({ error: "Failed to resolve driver access pass." });
+  }
+});
+
+/**
  * GET /api/third-party/driver-pass/:token
  * Public verified access to Digital Driver Authorization Pass
  * Notifies policyholder and driver of activity
@@ -2900,6 +2989,36 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
     });
 
     await newClaim.save();
+
+    // Real-time In-App Notification & Socket Event for Policyholder & Branch
+    try {
+      const notif = new Notification({
+        userId: request.policyHolderNic,
+        userType: "PolicyHolder",
+        title: `Claim #${nextClaimNum} Lodged by Driver`,
+        body: `Authorized driver ${request.driverDetails?.fullName || "Driver"} has filed accident claim #${nextClaimNum} for vehicle ${targetPlate}.`,
+        type: "claim_update",
+        claimNumber: nextClaimNum,
+        actionUrl: `/Policy_Holder/My_claims?claim=${nextClaimNum}`,
+        metadata: {
+          driverName: request.driverDetails?.fullName,
+          vehiclePlate: targetPlate,
+          branch: assignedBranch,
+          claimNumber: nextClaimNum
+        }
+      });
+      await notif.save();
+
+      emitNotification("PolicyHolder", request.policyHolderNic, notif);
+      emitToUser("PolicyHolder", request.policyHolderNic, "claim:created", {
+        claimNumber: nextClaimNum,
+        vehiclePlate: targetPlate,
+        branch: assignedBranch,
+        claim: newClaim
+      });
+    } catch (notifErr) {
+      console.warn("Real-time notification dispatch warning:", notifErr.message);
+    }
 
     // SMS Notifications
     if (request.driverDetails?.phoneNumber) {
