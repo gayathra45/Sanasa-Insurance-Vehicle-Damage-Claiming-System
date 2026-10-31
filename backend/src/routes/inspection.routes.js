@@ -557,4 +557,64 @@ router.get("/branch/:branch/reports", async (req, res) => {
   }
 });
 
+/**
+ * POST /api/inspection/verify-driver-at-scene
+ * Allows an on-site field surveyor to physically verify the authorized driver present at the scene
+ */
+router.post("/verify-driver-at-scene", async (req, res) => {
+  try {
+    const { claimNumber, agentId, notes } = req.body;
+    if (!claimNumber) {
+      return res.status(400).json({ error: "claimNumber is required." });
+    }
+
+    const claim = await Claim.findOne({ claimNumber: claimNumber.trim() });
+    if (!claim) {
+      return res.status(404).json({ error: "Claim record not found." });
+    }
+
+    if (!claim.submittedByDriver || !claim.submittedByDriver.isThirdParty) {
+      return res.status(400).json({ error: "This claim was not submitted by a third-party driver." });
+    }
+
+    const now = new Date();
+    claim.inspectionData = claim.inspectionData || {};
+    claim.inspectionData.driverVerifiedAtScene = true;
+    claim.inspectionData.driverVerifiedAt = now;
+    claim.inspectionData.driverVerifiedByAgent = agentId || "Field Surveyor";
+    claim.inspectionData.driverVerificationNotes = notes || "Driver identity verified at accident scene against authorization pass.";
+
+    claim.messages = claim.messages || [];
+    claim.messages.push({
+      sender: "Field Surveyor",
+      message: `[ON-SITE VERIFICATION] Surveyor physically inspected and confirmed authorized driver ${claim.submittedByDriver.driverName} (NIC: ${claim.submittedByDriver.driverNic || "N/A"}) at the accident scene.${notes ? ` Note: ${notes}` : ""}`,
+      sentAt: now,
+      recipient: "All"
+    });
+
+    await claim.save();
+
+    const io = getIO();
+    if (io) {
+      io.to(`claim:${claim.claimNumber}`).emit("claim:updated", { claim });
+      io.emit("claim:updated", { claim });
+    }
+
+    return res.json({
+      success: true,
+      message: "Driver successfully verified at accident scene.",
+      verifiedDriver: {
+        driverName: claim.submittedByDriver.driverName,
+        driverNic: claim.submittedByDriver.driverNic,
+        driverPhone: claim.submittedByDriver.driverPhone,
+        driverType: claim.submittedByDriver.driverType,
+        verifiedAt: now
+      }
+    });
+  } catch (err) {
+    console.error("POST /verify-driver-at-scene error:", err);
+    return res.status(500).json({ error: "Failed to verify driver at scene." });
+  }
+});
+
 export default router;

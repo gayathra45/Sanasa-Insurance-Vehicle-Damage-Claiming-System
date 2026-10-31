@@ -84,6 +84,20 @@ interface Claim {
   bankBranch?: string;
   bankAccount?: string;
   rejectionReason?: string;
+  submittedByDriver?: {
+    isThirdParty?: boolean;
+    driverName?: string;
+    driverNic?: string;
+    driverPhone?: string;
+    driverType?: string;
+    cardId?: string;
+  };
+  inspectionData?: {
+    driverVerifiedAtScene?: boolean;
+    driverVerifiedAt?: string;
+    driverVerifiedByAgent?: string;
+    driverVerificationNotes?: string;
+  };
 }
 
 const parseInspectionReport = (reportText: string) => {
@@ -425,6 +439,44 @@ export default function AgentMyClaims() {
   // Chat panel state (within modal)
   const [chatMessage, setChatMessage] = useState("");
   const [chatLogs, setChatLogs] = useState<{ sender: string; text: string }[]>([]);
+  const [verifyingDriver, setVerifyingDriver] = useState(false);
+
+  const handleVerifyDriverAtScene = async () => {
+    if (!selectedClaim) return;
+    try {
+      setVerifyingDriver(true);
+      const res = await fetch(`${API_URL}/inspection/verify-driver-at-scene`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          claimNumber: selectedClaim.claimNumber,
+          agentId: agentName || "Assigned Surveyor",
+          notes: "Driver verified physically at accident scene."
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to verify driver.");
+
+      setSelectedClaim((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          inspectionData: {
+            ...prev.inspectionData,
+            driverVerifiedAtScene: true,
+            driverVerifiedAt: new Date().toISOString(),
+            driverVerifiedByAgent: agentName
+          }
+        };
+      });
+      alert("Authorized driver successfully verified at accident scene!");
+    } catch (err: any) {
+      alert(err.message || "Failed to verify driver.");
+    } finally {
+      setVerifyingDriver(false);
+    }
+  };
 
   // Fetch claims from API
   const fetchClaims = async (email: string, showLoading: boolean = true) => {
@@ -1455,6 +1507,64 @@ export default function AgentMyClaims() {
                     </div>
                   </div>
                 </div>
+
+                {/* Third-Party Driver at Scene Section */}
+                {selectedClaim.submittedByDriver?.isThirdParty && (
+                  <div className="col-span-1 md:col-span-2 space-y-3.5 bg-emerald-50/70 border border-emerald-200 p-5 rounded-2xl">
+                    <div className="flex items-center justify-between border-b border-emerald-200 pb-2 flex-wrap gap-2">
+                      <h3 className="text-emerald-950 font-bold uppercase tracking-wider text-[11px] flex items-center gap-2">
+                        <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-[#185a37]" strokeWidth={2.5} />
+                        <span>Authorized Third-Party Driver at Scene</span>
+                      </h3>
+                      {selectedClaim.inspectionData?.driverVerifiedAtScene ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} size={13} />
+                          Verified On-Site by Surveyor
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                          <HugeiconsIcon icon={Alert02Icon} size={13} />
+                          Pending On-Site Driver Verification
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+                      <div>
+                        <span className="text-emerald-800/80 font-bold uppercase tracking-wider text-[10px] block">Driver Full Name</span>
+                        <span className="text-slate-900 font-bold text-sm block mt-0.5">{selectedClaim.submittedByDriver.driverName}</span>
+                      </div>
+                      <div>
+                        <span className="text-emerald-800/80 font-bold uppercase tracking-wider text-[10px] block">Driver NIC</span>
+                        <span className="text-slate-800 font-mono font-semibold block mt-0.5">{selectedClaim.submittedByDriver.driverNic || "N/A"}</span>
+                      </div>
+                      <div>
+                        <span className="text-emerald-800/80 font-bold uppercase tracking-wider text-[10px] block">Driver Phone</span>
+                        <a href={`tel:${selectedClaim.submittedByDriver.driverPhone}`} className="text-emerald-700 hover:underline font-semibold block mt-0.5">
+                          {selectedClaim.submittedByDriver.driverPhone || "N/A"}
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Surveyor On-Site Action */}
+                    {!selectedClaim.inspectionData?.driverVerifiedAtScene && (
+                      <div className="pt-2 border-t border-emerald-200/80 flex items-center justify-between flex-wrap gap-2">
+                        <span className="text-[11px] text-emerald-900">
+                          Verify that the driver at the scene matches the authorized credentials before concluding assessment.
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleVerifyDriverAtScene}
+                          disabled={verifyingDriver}
+                          className="px-4 py-2 rounded-xl bg-[#185a37] hover:bg-[#13492c] text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        >
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} size={15} />
+                          <span>{verifyingDriver ? "Verifying..." : "Confirm Driver Verified at Scene"}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Large Dedicated Section: Incident Details */}
                 <div className="col-span-1 md:col-span-2 space-y-4 bg-slate-50 border border-slate-200 p-6 rounded-2xl">

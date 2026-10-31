@@ -30,6 +30,7 @@ import inspectionRouter from "./src/routes/inspection.routes.js";
 import nfcCardRouter from "./src/routes/nfc_card.routes.js";
 import { initBackupScheduler } from "./src/services/backup.service.js";
 import { initSocketServer } from "./src/utils/socket.js";
+import { initExpirationWorker } from "./src/services/expirationWorker.js";
 
 
 
@@ -109,6 +110,13 @@ const startServer = async () => {
       initBackupScheduler();
     } catch (schedErr) {
       console.warn("Backup scheduler initialization error:", schedErr.message);
+    }
+
+    // Initialize auto-expiration background worker for NFC cards and driver authorizations
+    try {
+      initExpirationWorker();
+    } catch (expErr) {
+      console.warn("Expiration worker initialization error:", expErr.message);
     }
 
     // Index historical photos in background once DB is connected

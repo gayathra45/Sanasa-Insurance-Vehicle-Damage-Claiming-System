@@ -22,7 +22,8 @@ import {
   Building04Icon,
   InformationCircleIcon,
   Shield01Icon,
-  UserCheck01Icon
+  UserCheck01Icon,
+  Download01Icon
 } from "@hugeicons/core-free-icons";
 
 interface Vehicle {
@@ -1214,18 +1215,6 @@ export default function ThirdPartyPage() {
     );
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-6">
-        <SimpleLoader
-          message="Loading Third-Party Management Portal..."
-          subMessage="Fetching your insured vehicles and policy records"
-          theme="slate"
-          size="lg"
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans relative">
@@ -1496,7 +1485,7 @@ export default function ThirdPartyPage() {
                     placeholder="e.g. Sunil Shantha Perera"
                     value={driverName}
                     onChange={(e) => setDriverName(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs"
                   />
                 </div>
 
@@ -1510,7 +1499,7 @@ export default function ThirdPartyPage() {
                     placeholder="e.g. 0771234567 or +94771234567"
                     value={driverPhone}
                     onChange={(e) => setDriverPhone(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs"
                   />
                 </div>
 
@@ -1523,7 +1512,7 @@ export default function ThirdPartyPage() {
                     placeholder="e.g. 198512345678 or 851234567V"
                     value={driverNic}
                     onChange={(e) => setDriverNic(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs"
                   />
                 </div>
 
@@ -1537,7 +1526,7 @@ export default function ThirdPartyPage() {
                     placeholder="e.g. No. 45, Temple Road, Galle"
                     value={driverAddress}
                     onChange={(e) => setDriverAddress(e.target.value)}
-                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-900 placeholder:text-slate-400 font-medium text-sm focus:outline-none focus:ring-2 focus:ring-sky-500 shadow-xs"
                   />
                 </div>
               </div>
@@ -2144,6 +2133,20 @@ export default function ThirdPartyPage() {
                         <div className="flex flex-wrap items-center gap-2">
                           {req.payment.status === "Paid" ? (
                             <div className="flex flex-wrap items-center gap-2">
+                              {/* Official Certificate PDF Button */}
+                              {isApproved && (
+                                <a
+                                  href={`${API_URL}/third-party/authorization-certificate/${req.requestReference}?print=true`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                                  title="Download / Print Official Police & Garage Certificate"
+                                >
+                                  <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5" />
+                                  <span>Official Certificate</span>
+                                </a>
+                              )}
+
                               {/* Renew Button */}
                               {(isApproved || isExpired || isBlocked || isScheduled) && (
                                 <button
@@ -2544,6 +2547,17 @@ export default function ThirdPartyPage() {
                                   Block
                                 </button>
                               )}
+
+                              <a
+                                href={`${API_URL}/third-party/authorization-certificate/${card.cardId}?print=true`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex-1 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs rounded-xl flex items-center justify-center gap-1 transition-colors cursor-pointer text-center"
+                                title="Download / Print Official Police & Garage Certificate"
+                              >
+                                <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5" />
+                                <span>Certificate</span>
+                              </a>
 
                               <button
                                 type="button"
@@ -2946,9 +2960,40 @@ export default function ThirdPartyPage() {
             </div>
 
             <div className="space-y-4 text-xs">
+              {/* Select Physical NFC Card */}
+              <div>
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
+                  Select NFC Card <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedCardForAssign.cardId}
+                    onChange={(e) => {
+                      const found = nfcCards.find((c) => c.cardId === e.target.value);
+                      if (found) setSelectedCardForAssign(found);
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono font-bold bg-white text-slate-900 focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer appearance-none"
+                  >
+                    {nfcCards
+                      .filter((c) => c.status === "Available" || c.cardId === selectedCardForAssign.cardId)
+                      .map((c) => (
+                        <option key={c._id} value={c.cardId} className="text-slate-900 bg-white font-mono font-bold">
+                          {c.cardId} {c.status === "Available" ? "• Available" : `• (${c.status})`}
+                        </option>
+                      ))}
+                  </select>
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">
+                    ▼
+                  </div>
+                </div>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  Choose which physical NFC card from your inventory to encode for this temporary driver.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
                     Driver Full Name <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -2957,12 +3002,12 @@ export default function ThirdPartyPage() {
                     placeholder="e.g. Ruwan Jayawardena"
                     value={assignDriverName}
                     onChange={(e) => setAssignDriverName(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 font-medium focus:ring-2 focus:ring-emerald-500 shadow-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
                     Driver Phone Number <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -2971,12 +3016,12 @@ export default function ThirdPartyPage() {
                     placeholder="e.g. 0712345678"
                     value={assignDriverPhone}
                     onChange={(e) => setAssignDriverPhone(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 font-medium focus:ring-2 focus:ring-emerald-500 shadow-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
                     NIC / ID (Optional)
                   </label>
                   <input
@@ -2984,12 +3029,12 @@ export default function ThirdPartyPage() {
                     placeholder="e.g. 911234567V"
                     value={assignDriverNic}
                     onChange={(e) => setAssignDriverNic(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 font-medium focus:ring-2 focus:ring-emerald-500 shadow-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
                     Residential Address
                   </label>
                   <input
@@ -2997,31 +3042,36 @@ export default function ThirdPartyPage() {
                     placeholder="e.g. Matara, Sri Lanka"
                     value={assignDriverAddress}
                     onChange={(e) => setAssignDriverAddress(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-emerald-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 font-medium focus:ring-2 focus:ring-emerald-500 shadow-xs"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
                   Covered Vehicle <span className="text-rose-500">*</span>
                 </label>
-                <select
-                  value={assignPlate}
-                  onChange={(e) => setAssignPlate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono bg-white focus:ring-2 focus:ring-emerald-500"
-                >
-                  {eligibleVehicles.map((v) => (
-                    <option key={v._id} value={v.numberPlate}>
-                      {v.numberPlate} — {v.company} {v.model} ({v.policyNumber})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={assignPlate}
+                    onChange={(e) => setAssignPlate(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-mono font-bold bg-white text-slate-900 focus:ring-2 focus:ring-emerald-500 shadow-xs cursor-pointer appearance-none"
+                  >
+                    {eligibleVehicles.map((v) => (
+                      <option key={v._id} value={v.numberPlate} className="text-slate-900 bg-white font-medium">
+                        {v.numberPlate} — {v.company} {v.model} ({v.policyNumber})
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500 text-xs">
+                    ▼
+                  </div>
+                </div>
               </div>
 
               {/* Assignment Duration */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1.5">
                   Temporary Duration
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -3033,13 +3083,40 @@ export default function ThirdPartyPage() {
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
                         assignDurationPreset === type
                           ? "bg-emerald-600 text-white border-emerald-600"
-                          : "bg-slate-50 text-slate-700 border-slate-200"
+                          : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                       }`}
                     >
                       {type}
                     </button>
                   ))}
                 </div>
+
+                {assignDurationPreset === "Custom" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-100">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
+                        Start Date & Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={assignStartDate}
+                        onChange={(e) => setAssignStartDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 shadow-xs"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-800 mb-1">
+                        End Date & Time
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={assignEndDate}
+                        onChange={(e) => setAssignEndDate(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 shadow-xs"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Policyholder OTP Section */}
@@ -3062,7 +3139,7 @@ export default function ThirdPartyPage() {
 
                 {otpSent && (
                   <div>
-                    <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                    <label className="block text-[11px] font-bold text-slate-800 mb-1">
                       Enter 6-Digit OTP Code
                     </label>
                     <input
@@ -3071,7 +3148,7 @@ export default function ThirdPartyPage() {
                       placeholder="e.g. 123456"
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
-                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-lg tracking-widest font-extrabold focus:ring-2 focus:ring-emerald-500"
+                      className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-center font-mono text-lg tracking-widest font-extrabold bg-white text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-emerald-500 shadow-xs"
                     />
                   </div>
                 )}

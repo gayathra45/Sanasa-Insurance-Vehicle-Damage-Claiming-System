@@ -1960,6 +1960,270 @@ router.post("/resolve-pass", async (req, res) => {
 });
 
 /**
+ * GET /api/third-party/authorization-certificate/:identifier
+ * Generates an official, printable Certificate of Authorized Third-Party Driver
+ * formatted for Sri Lanka Police Traffic Division & Collision Garages (supports window.print() / PDF export)
+ */
+router.get("/authorization-certificate/:identifier", async (req, res) => {
+  try {
+    const { identifier } = req.params;
+    const shouldAutoPrint = req.query.print === "true";
+    if (!identifier) {
+      return res.status(400).send("Identifier is required.");
+    }
+
+    const clean = identifier.trim();
+    const tokenHash = crypto.createHash("sha256").update(clean).digest("hex");
+
+    // 1. Check Permanent Driver Registrations
+    let reg = await ThirdPartyRegistration.findOne({
+      $or: [
+        { "secureAccess.rawToken": clean },
+        { "secureAccess.tokenHash": tokenHash },
+        { requestReference: clean.toUpperCase() }
+      ]
+    });
+
+    let passData = null;
+
+    if (reg) {
+      const rawToken = reg.secureAccess?.rawToken || clean;
+      const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+      const passUrl = `${frontendUrl}/driver-access/${rawToken}`;
+
+      passData = {
+        certNumber: `SAN-CERT-${reg.requestReference || reg._id.toString().substring(0, 8).toUpperCase()}`,
+        reference: reg.requestReference,
+        driverType: "Permanent Authorized Driver",
+        policyHolderName: reg.policyHolderName || "Policyholder",
+        policyHolderNic: reg.policyHolderNic,
+        policyHolderPhone: reg.policyHolderPhone || "N/A",
+        driverName: reg.driverDetails.fullName,
+        driverNic: reg.driverDetails.nicNumber || "Verified at Branch",
+        driverPhone: reg.driverDetails.phoneNumber,
+        driverAddress: reg.driverDetails.residentialAddress || "Sri Lanka",
+        branch: reg.branch || "Galle",
+        issuedDate: reg.branchReview?.reviewedAt || reg.createdAt,
+        expiryDate: reg.accessDuration?.endDate || "Ongoing (Annual Policy)",
+        status: reg.status,
+        vehicles: reg.selectedVehicles || [],
+        tokenHashShort: tokenHash.substring(0, 16).toUpperCase(),
+        passUrl
+      };
+    } else {
+      // 2. Check Optional NFC Card
+      let card = await NfcCard.findOne({
+        $or: [
+          { cardId: clean.toUpperCase() },
+          { "currentAssignment.rawToken": clean },
+          { "currentAssignment.tokenHash": tokenHash },
+          { "currentAssignment.assignmentId": clean.toUpperCase() }
+        ]
+      });
+
+      if (card && card.currentAssignment && card.currentAssignment.assignmentId) {
+        const asg = card.currentAssignment;
+        const rawToken = asg.rawToken || clean;
+        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+        const passUrl = `${frontendUrl}/driver-access/${rawToken}`;
+
+        passData = {
+          certNumber: `SAN-NFC-${card.cardId}`,
+          reference: asg.assignmentId,
+          driverType: "Temporary Authorized Driver (Digital NFC)",
+          policyHolderName: "Authorized Policyholder",
+          policyHolderNic: card.policyHolderNic,
+          policyHolderPhone: "On File",
+          driverName: asg.driverName,
+          driverNic: asg.driverNic || "Verified via OTP",
+          driverPhone: asg.driverPhone,
+          driverAddress: asg.driverAddress || "Sri Lanka",
+          branch: "Sanasa Network",
+          issuedDate: asg.assignedAt || asg.startDate || card.updatedAt,
+          expiryDate: asg.endDate || "Expiry on File",
+          status: card.status,
+          vehicles: [
+            {
+              numberPlate: asg.vehiclePlate,
+              vehicleType: asg.vehicleType,
+              model: asg.vehicleModel
+            }
+          ],
+          tokenHashShort: tokenHash.substring(0, 16).toUpperCase(),
+          passUrl
+        };
+      }
+    }
+
+    if (!passData) {
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+          <head><title>Certificate Not Found - Sanasa Insurance</title></head>
+          <body style="font-family:sans-serif;text-align:center;padding:50px;">
+            <h2>Authorization Certificate Not Found</h2>
+            <p>The code or token provided does not correspond to an active driver authorization.</p>
+          </body>
+        </html>
+      `);
+    }
+
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(passData.passUrl)}`;
+
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sanasa Insurance - Certificate of Authorized Driver - ${passData.reference}</title>
+  <style>
+    @page { size: A4 portrait; margin: 15mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; color: #1e293b; background: #f8fafc; padding: 20px; line-height: 1.4; }
+    .page-container { max-width: 800px; margin: 0 auto; background: #ffffff; border: 2px solid #185a37; border-radius: 12px; padding: 35px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); position: relative; }
+    .header-table { width: 100%; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 25px; }
+    .company-title { font-size: 24px; font-weight: 800; color: #185a37; letter-spacing: -0.5px; }
+    .company-sub { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .doc-badge { display: inline-block; background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; font-size: 10px; font-weight: 700; padding: 4px 10px; rounded: 20px; border-radius: 20px; }
+    .cert-title { text-align: center; margin: 20px 0 5px 0; }
+    .cert-title h1 { font-size: 20px; font-weight: 800; color: #0f172a; letter-spacing: 0.5px; text-transform: uppercase; }
+    .cert-title p { font-size: 12px; color: #64748b; font-weight: 500; }
+    .status-pill { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #185a37; color: #ffffff; margin-top: 6px; }
+    .section-grid { display: flex; gap: 20px; margin: 25px 0; }
+    .info-card { flex: 1; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; background: #f8fafc; }
+    .card-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px; }
+    .card-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+    .card-row .lbl { color: #64748b; font-weight: 500; }
+    .card-row .val { color: #0f172a; font-weight: 700; text-align: right; }
+    .vehicles-table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 12px; }
+    .vehicles-table th { background: #185a37; color: #ffffff; padding: 10px 12px; font-weight: 700; text-align: left; font-size: 11px; text-transform: uppercase; }
+    .vehicles-table td { padding: 10px 12px; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #1e293b; }
+    .vehicles-table tr:nth-child(even) { background: #f8fafc; }
+    .plate-badge { font-family: monospace; font-size: 13px; font-weight: 800; background: #0f172a; color: #ffffff; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+    .legal-box { border-left: 3px solid #185a37; background: #f0fdf4; padding: 12px 16px; margin: 20px 0; font-size: 11px; color: #166534; line-height: 1.5; }
+    .footer-grid { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+    .qr-block { text-align: center; }
+    .qr-block img { width: 110px; height: 110px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 4px; background: #fff; }
+    .qr-block p { font-size: 10px; color: #64748b; font-weight: 600; margin-top: 4px; }
+    .stamp-block { text-align: right; }
+    .stamp-seal { display: inline-block; border: 2px dashed #185a37; color: #185a37; padding: 8px 16px; border-radius: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+    .btn-print { display: block; margin: 20px auto; padding: 10px 24px; font-size: 13px; font-weight: 700; background: #185a37; color: #ffffff; border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 12px rgba(24,90,55,0.25); }
+    @media print {
+      body { background: #ffffff; padding: 0; }
+      .page-container { border: none; box-shadow: none; padding: 0; }
+      .btn-print { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <table class="header-table">
+      <tr>
+        <td style="vertical-align: middle;">
+          <div class="company-title">SANASA GENERAL INSURANCE PLC</div>
+          <div class="company-sub">Reg. No: PQ 1234 • Registered Insurer Under Insurance Regulatory Commission of Sri Lanka (IRCSL)</div>
+          <div style="font-size: 10px; color: #475569; margin-top: 2px;">Head Office: No. 340, T.B. Jayah Mawatha, Colombo 10, Sri Lanka • 24/7 Hotline: +94 112 003 000</div>
+        </td>
+        <td style="text-align: right; vertical-align: middle;">
+          <div class="doc-badge">OFFICIAL AUTHORIZATION PASS</div>
+          <div style="font-size: 10px; color: #64748b; margin-top: 4px; font-weight: bold;">Cert No: ${passData.certNumber}</div>
+        </td>
+      </tr>
+    </table>
+
+    <div class="cert-title">
+      <h1>Certificate of Authorized Motor Driver</h1>
+      <p>Issued pursuant to Motor Traffic Act of Sri Lanka and Comprehensive Sanasa Policy Terms</p>
+      <div class="status-pill">STATUS: ${passData.status.toUpperCase()}</div>
+    </div>
+
+    <div class="section-grid">
+      <!-- Policyholder Info -->
+      <div class="info-card">
+        <div class="card-label">Registered Vehicle Owner / Policyholder</div>
+        <div class="card-row"><span class="lbl">Full Name:</span><span class="val">${passData.policyHolderName}</span></div>
+        <div class="card-row"><span class="lbl">NIC Number:</span><span class="val">${passData.policyHolderNic}</span></div>
+        <div class="card-row"><span class="lbl">Contact Phone:</span><span class="val">${passData.policyHolderPhone}</span></div>
+        <div class="card-row"><span class="lbl">Supervising Branch:</span><span class="val">${passData.branch} Branch</span></div>
+      </div>
+
+      <!-- Authorized Driver Info -->
+      <div class="info-card">
+        <div class="card-label">Authorized Third-Party Driver</div>
+        <div class="card-row"><span class="lbl">Driver Name:</span><span class="val">${passData.driverName}</span></div>
+        <div class="card-row"><span class="lbl">NIC Number:</span><span class="val">${passData.driverNic}</span></div>
+        <div class="card-row"><span class="lbl">Contact Phone:</span><span class="val">${passData.driverPhone}</span></div>
+        <div class="card-row"><span class="lbl">Driver Classification:</span><span class="val">${passData.driverType}</span></div>
+      </div>
+    </div>
+
+    <!-- Vehicles Table -->
+    <div style="margin-top: 15px;">
+      <div style="font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase; margin-bottom: 6px;">
+        Permitted Insured Vehicle(s) Covered Under This Pass
+      </div>
+      <table class="vehicles-table">
+        <thead>
+          <tr>
+            <th>Registration No (Plate)</th>
+            <th>Vehicle Category</th>
+            <th>Make / Model</th>
+            <th>Policy Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(passData.vehicles || []).map((v) => `
+            <tr>
+              <td><span class="plate-badge">${v.numberPlate}</span></td>
+              <td>${v.vehicleType || "Motor Car"}</td>
+              <td>${v.model || "Approved Insured Vehicle"}</td>
+              <td style="color: #185a37; font-weight: bold;">Comprehensive Coverage Active</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="legal-box">
+      <strong>OFFICIAL DECLARATION FOR SRI LANKA TRAFFIC POLICE & REPAIR GARAGES:</strong><br/>
+      This certifies that the named driver has been duly vetted and designated by the registered policyholder to operate the vehicle(s) listed above under full policy cover. In case of an accident or roadway inquiry, this pass authorizes the driver to interact with attending surveyors and lodge insurance claims on behalf of the vehicle owner.
+    </div>
+
+    <div class="footer-grid">
+      <div class="qr-block">
+        <img src="${qrUrl}" alt="Verification QR Code" />
+        <p>Scan to verify live security pass</p>
+      </div>
+
+      <div style="font-size: 10px; color: #64748b; line-height: 1.6; max-width: 320px;">
+        <div><strong>Digital Pass Ref:</strong> ${passData.reference}</div>
+        <div><strong>Valid From:</strong> ${new Date(passData.issuedDate).toLocaleDateString("en-LK")}</div>
+        <div><strong>Valid Until:</strong> ${passData.expiryDate}</div>
+        <div><strong>Security Hash:</strong> ${passData.tokenHashShort}</div>
+      </div>
+
+      <div class="stamp-block">
+        <div class="stamp-seal">SANASA LIFE & GENERAL<br/>VERIFIED & ENDORSED</div>
+        <div style="font-size: 9px; color: #94a3b8; margin-top: 4px;">Digitally signed by Sanasa General Insurance PLC</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-print" onclick="window.print()">Print Official Certificate / Save as PDF</button>
+
+  ${shouldAutoPrint ? `<script>window.onload = function() { window.print(); };</script>` : ""}
+</body>
+</html>`;
+
+    res.setHeader("Content-Type", "text/html");
+    return res.send(html);
+  } catch (err) {
+    console.error("GET /authorization-certificate error:", err);
+    return res.status(500).send("Failed to generate authorization certificate.");
+  }
+});
+
+/**
  * GET /api/third-party/driver-pass/:token
  * Public verified access to Digital Driver Authorization Pass
  * Notifies policyholder and driver of activity
