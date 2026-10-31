@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/🚀_LAUNCH_WEB_PORTAL-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Launch Web Portal" />
   </a>
   &nbsp;
-  <a href="https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/9159f4c0-c72a-47eb-8221-48521d8c8de5" target="_blank">
+  <a href="https://expo.dev/accounts/gayathra45/projects/sclaim-go/builds/5fef7f9d-cecd-46d3-9191-3e6ccf35841d" target="_blank">
     <img src="https://img.shields.io/badge/📲_DOWNLOAD_ANDROID_APK-10b981?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
   </a>
 </p>
