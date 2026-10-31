@@ -7,6 +7,7 @@ import { API_URL } from "@/app/config";
 import UserAvatarDropdown from "@/app/Components/UserAvatarDropdown";
 import HeaderNotificationBell from "@/app/Components/HeaderNotificationBell";
 import SimpleLoader from "@/app/Components/SimpleLoader";
+import OptionalCardRequestsTab from "./OptionalCardRequestsTab";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Menu01Icon,
@@ -119,6 +120,7 @@ export default function OfficeStaffThirdPartyPage() {
   const router = useRouter();
   const [branch, setBranch] = useState("");
   const [staffInfo, setStaffInfo] = useState<any>(null);
+  const [activeCategory, setActiveCategory] = useState<"permanent" | "optional-cards">("permanent");
 
   const [requests, setRequests] = useState<ThirdPartyRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -569,17 +571,54 @@ export default function OfficeStaffThirdPartyPage() {
           {/* Body Content */}
           <main className="flex-1 p-4 lg:p-8 pb-36 bg-slate-50 overflow-y-scroll [scrollbar-gutter:stable]">
             <div className="max-w-7xl mx-auto w-full space-y-6">
-          {/* Subtitle / Context Bar */}
-          <div className="-mt-1 mb-1">
-            <p className="text-xs text-slate-500 font-normal">
-              Review driver registration requests, verify KYC documents, and issue secure digital NFC passes.
-            </p>
-          </div>
-          {/* Quick Metrics Cards (Interactive Quick Filters) */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-            <button
-              type="button"
-              onClick={() => setStatusFilter("all")}
+              {/* Branch Third Party Category Switcher */}
+              <div className="flex items-center gap-2 border-b border-slate-200 pb-3">
+                <button
+                  type="button"
+                  onClick={() => setActiveCategory("permanent")}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    activeCategory === "permanent"
+                      ? "bg-[#102A43] text-white shadow-sm"
+                      : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                  }`}
+                >
+                  <HugeiconsIcon icon={UserCheck01Icon} className="w-4 h-4" />
+                  <span>Permanent Drivers ({stats.total})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveCategory("optional-cards")}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2 ${
+                    activeCategory === "optional-cards"
+                      ? "bg-[#102A43] text-white shadow-sm"
+                      : "bg-white text-slate-600 hover:bg-slate-100 border border-slate-200"
+                  }`}
+                >
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                  <span>Optional Card Requests</span>
+                </button>
+              </div>
+
+              {activeCategory === "optional-cards" ? (
+                <OptionalCardRequestsTab
+                  branch={branch}
+                  staffInfo={staffInfo}
+                  showToast={showToast}
+                />
+              ) : (
+                <>
+                  {/* Subtitle / Context Bar */}
+                  <div className="-mt-1 mb-1">
+                    <p className="text-xs text-slate-500 font-normal">
+                      Review driver registration requests, verify KYC documents, and issue secure digital NFC passes.
+                    </p>
+                  </div>
+                  {/* Quick Metrics Cards (Interactive Quick Filters) */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                    <button
+                      type="button"
+                      onClick={() => setStatusFilter("all")}
               className={`p-4 rounded-xl border text-left transition-all duration-150 cursor-pointer shadow-2xs hover:shadow-xs flex flex-col justify-between ${
                 statusFilter === "all"
                   ? "bg-white border-[#102A43] ring-2 ring-[#102A43]/20 shadow-sm"
@@ -1222,8 +1261,10 @@ export default function OfficeStaffThirdPartyPage() {
               </div>
             </div>
           )}
-        </div>
-      </main>
+                </>
+              )}
+            </div>
+          </main>
     </div>
   </div>
 

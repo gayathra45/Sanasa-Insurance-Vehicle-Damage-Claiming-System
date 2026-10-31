@@ -20,7 +20,8 @@ import {
   Notification01Icon,
   RefreshIcon,
   BubbleChatIcon,
-  DatabaseIcon
+  DatabaseIcon,
+  UserCheck01Icon
 } from "@hugeicons/core-free-icons";
 import { useChatNotification } from "@/app/context/ChatNotificationContext";
 
@@ -45,6 +46,7 @@ export default function AdminNavbar() {
     { name: "Dashboard", href: "/Admin/Dashboard" },
     { name: "Staff", href: "/Admin/Staff" },
     { name: "Policy Holders", href: "/Admin/PolicyHolders" },
+    { name: "Third Party", href: "/Admin/ThirdParty" },
     { name: "Renewals", href: "/Admin/Renewals" },
     { name: "Admins", href: "/Admin/Admins" },
     { name: "Claims", href: "/Admin/Claims" },
@@ -65,8 +67,9 @@ export default function AdminNavbar() {
         return <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "policy holders":
         return <HugeiconsIcon icon={Folder01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
+      case "third party":
+        return <HugeiconsIcon icon={UserCheck01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "renewals":
-      case "policy renewals":
         return <HugeiconsIcon icon={RefreshIcon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;
       case "agents":
         return <HugeiconsIcon icon={Briefcase01Icon} className="w-5 h-5 flex-shrink-0" strokeWidth={2} />;

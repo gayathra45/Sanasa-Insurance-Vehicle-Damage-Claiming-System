@@ -41,6 +41,8 @@ const nfcCardSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
+        "Pending Preparation",
+        "Ready for Collection",
         "Available",
         "Scheduled",
         "Active",

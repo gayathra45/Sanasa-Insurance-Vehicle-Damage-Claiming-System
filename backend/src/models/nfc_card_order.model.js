@@ -59,9 +59,43 @@ const nfcCardOrderSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["Pending Payment", "Paid", "Approved", "Fulfilled", "Cancelled"],
-      default: "Pending Payment",
+      enum: [
+        "Request Submitted",
+        "Approved",
+        "Processing",
+        "Ready for Collection",
+        "Collected",
+        "Rejected",
+        "Pending Payment",
+        "Paid",
+        "Fulfilled",
+        "Cancelled"
+      ],
+      default: "Request Submitted",
       index: true
+    },
+    rejectionReason: {
+      type: String,
+      default: ""
+    },
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+        updatedBy: { type: String, default: "System" },
+        note: { type: String, default: "" }
+      }
+    ],
+    branchReview: {
+      reviewedByStaffId: { type: String, default: "" },
+      reviewedByStaffName: { type: String, default: "" },
+      reviewedAt: { type: Date, default: null },
+      notes: { type: String, default: "" }
+    },
+    collectionInfo: {
+      collectedAt: { type: Date, default: null },
+      collectedBy: { type: String, default: "" },
+      notes: { type: String, default: "" }
     },
     payment: {
       status: {
@@ -95,6 +129,12 @@ const nfcCardOrderSchema = new mongoose.Schema(
     issuedCards: [
       {
         cardId: { type: String, required: true },
+        cardUrl: { type: String, default: "" },
+        rawToken: { type: String, default: "" },
+        tokenHash: { type: String, default: "" },
+        isPrepared: { type: Boolean, default: false },
+        preparedAt: { type: Date, default: null },
+        status: { type: String, default: "Pending Preparation" },
         issuedAt: { type: Date, default: Date.now }
       }
     ],

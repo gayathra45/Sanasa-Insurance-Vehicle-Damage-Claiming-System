@@ -308,72 +308,37 @@ router.post("/verify-payment", async (req, res) => {
     order.payment.status = "Paid";
     order.payment.paidAt = new Date();
     order.payment.amountPaid = order.totalAmount;
-    order.status = "Fulfilled";
-
-    // Issue distinct physical card records in NfcCard model!
-    const issuedList = [];
-    for (let i = 0; i < order.quantity; i++) {
-      const randomSuffix = crypto.randomBytes(3).toString("hex").toUpperCase();
-      const cardId = `SANASA-NFC-${Date.now().toString().slice(-4)}${randomSuffix}`;
-
-      const card = new NfcCard({
-        cardId,
-        policyHolderNic: order.policyHolderNic,
-        policyHolderName: order.policyHolderName,
-        policyHolderPhone: order.policyHolderPhone,
-        branch: order.branch,
-        orderId: order._id,
-        status: "Available",
-        currentAssignment: {
-          assignmentId: "",
-          driverName: "",
-          driverPhone: "",
-          driverNic: "",
-          driverAddress: "",
-          driverPhoto: "",
-          vehiclePlate: "",
-          vehicleType: "",
-          vehicleModel: "",
-          startDate: null,
-          endDate: null,
-          durationType: "",
-          reason: "",
-          status: "None",
-          isBlocked: false,
-          blockedAt: null,
-          blockedReason: "",
-          tokenHash: "",
-          rawToken: "",
-          accessUrl: "",
-          assignedAt: null,
-          assignedBy: ""
-        },
-        assignmentHistory: []
-      });
-
-      await card.save();
-      issuedList.push({ cardId, issuedAt: new Date() });
+    
+    // Maintain workflow status: do not bypass branch review!
+    if (order.status === "Pending Payment" || !order.status) {
+      order.status = "Request Submitted";
     }
 
-    order.issuedCards = issuedList;
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: order.status,
+      timestamp: new Date(),
+      updatedBy: "Payment Gateway",
+      note: `Payment of LKR ${order.totalAmount} confirmed via Stripe. Awaiting Branch review and issuance.`
+    });
+
     await order.save();
 
-    // Send SMS notification to Policyholder about newly issued physical NFC cards
+    // Send SMS notification to Policyholder about received payment and submission to Branch
     if (order.policyHolderPhone) {
       sendSms({
         phone: order.policyHolderPhone,
-        message: `[SANASA GENERAL INSURANCE]\nDear ${order.policyHolderName},\nYour payment of LKR ${order.totalAmount} for ${order.quantity} Optional NFC Cards was successful.\n${order.quantity} card records have been issued and are Available in your portal.\nHotline: 0725 575 575`,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${order.policyHolderName},\nYour payment of LKR ${order.totalAmount} for ${order.quantity} Optional NFC Cards was successful.\nYour request (${order.orderNumber}) has been submitted to the ${order.branch} branch for review and card preparation.\nHotline: 0725 575 575`,
         recipientType: "PolicyHolder",
         recipientName: order.policyHolderName,
-        eventType: "nfc_cards_issued"
-      }).catch((e) => console.warn("Card issue SMS error:", e.message));
+        eventType: "nfc_payment_received"
+      }).catch((e) => console.warn("Card payment SMS error:", e.message));
     }
 
     return res.json({
       success: true,
-      message: `Payment verified. ${order.quantity} Optional NFC Cards issued successfully.`,
-      order,
-      issuedCards: issuedList
+      message: `Payment verified. Request ${order.orderNumber} submitted to ${order.branch} branch for review.`,
+      order
     });
   } catch (err) {
     console.error("POST /api/nfc-card/verify-payment error:", err);
@@ -403,12 +368,499 @@ router.get("/orders", async (req, res) => {
 });
 
 // ==========================================
+// 1.5 BRANCH & ADMIN NFC CARD ORDER WORKFLOW
+// ==========================================
+
+/**
+ * GET /api/nfc-card/branch/orders
+ * List card requests strictly isolated to staff member's branch
+ */
+router.get("/branch/orders", async (req, res) => {
+  try {
+    const branch = req.query.branch || req.headers["x-staff-branch"];
+    if (!branch) {
+      return res.status(400).json({ error: "Branch is required to access branch card requests." });
+    }
+
+    const cleanBranch = String(branch).trim();
+    const filter = { branch: new RegExp(`^${cleanBranch}$`, "i") };
+
+    if (req.query.status && req.query.status !== "all") {
+      filter.status = req.query.status;
+    }
+
+    if (req.query.paymentStatus && req.query.paymentStatus !== "all") {
+      filter["payment.status"] = req.query.paymentStatus;
+    }
+
+    const orders = await NfcCardOrder.find(filter).sort({ createdAt: -1 });
+    return res.json({ success: true, orders });
+  } catch (err) {
+    console.error("GET /api/nfc-card/branch/orders error:", err);
+    return res.status(500).json({ error: "Failed to fetch branch card orders." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/branch/approve/:orderId
+ * Branch approves request and generates exactly N distinct card records with unique URLs
+ */
+router.post("/branch/approve/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { staffId, staffName, notes, branch } = req.body;
+
+    const order = await NfcCardOrder.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Card order not found." });
+    }
+
+    if (branch && order.branch.toLowerCase() !== String(branch).trim().toLowerCase()) {
+      return res.status(403).json({ error: "Unauthorized: Request belongs to another branch." });
+    }
+
+    if (order.status === "Approved" || order.status === "Processing" || order.status === "Ready for Collection" || order.status === "Collected") {
+      return res.status(400).json({ error: `Order is already ${order.status}.` });
+    }
+
+    if (order.status === "Rejected") {
+      return res.status(400).json({ error: "Rejected orders cannot be approved directly." });
+    }
+
+    // Require payment to be paid before approval
+    if (order.payment?.status !== "Paid") {
+      return res.status(400).json({
+        error: "Cannot approve request: Payment status is not Paid."
+      });
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const now = new Date();
+    const issuedList = [];
+
+    // Idempotent: generate cards only if not already generated
+    const existingCards = await NfcCard.find({ orderId: order._id });
+    if (existingCards.length >= order.quantity) {
+      for (const c of existingCards) {
+        issuedList.push({
+          cardId: c.cardId,
+          cardUrl: c.currentAssignment?.accessUrl || `${frontendUrl}/driver-access/${c.currentAssignment?.rawToken || ""}`,
+          rawToken: c.currentAssignment?.rawToken || "",
+          tokenHash: c.currentAssignment?.tokenHash || "",
+          isPrepared: false,
+          status: "Pending Preparation",
+          issuedAt: c.createdAt || now
+        });
+      }
+    } else {
+      // Generate exactly N distinct card records and distinct secure tokens
+      for (let i = 0; i < order.quantity; i++) {
+        const randomSuffix = crypto.randomBytes(3).toString("hex").toUpperCase();
+        const cardId = `SANASA-NFC-${Date.now().toString().slice(-4)}${randomSuffix}`;
+
+        const rawToken = crypto.randomBytes(32).toString("hex");
+        const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+        const cardUrl = `${frontendUrl}/driver-access/${rawToken}`;
+
+        const card = new NfcCard({
+          cardId,
+          policyHolderNic: order.policyHolderNic,
+          policyHolderName: order.policyHolderName,
+          policyHolderPhone: order.policyHolderPhone,
+          branch: order.branch,
+          orderId: order._id,
+          status: "Pending Preparation",
+          currentAssignment: {
+            assignmentId: "",
+            driverName: "",
+            driverPhone: "",
+            driverNic: "",
+            driverAddress: "",
+            driverPhoto: "",
+            vehiclePlate: "",
+            vehicleType: "",
+            vehicleModel: "",
+            startDate: null,
+            endDate: null,
+            durationType: "",
+            reason: "",
+            status: "None",
+            isBlocked: false,
+            blockedAt: null,
+            blockedReason: "",
+            tokenHash,
+            rawToken,
+            accessUrl: cardUrl,
+            assignedAt: null,
+            assignedBy: ""
+          },
+          assignmentHistory: []
+        });
+
+        await card.save();
+        issuedList.push({
+          cardId,
+          cardUrl,
+          rawToken,
+          tokenHash,
+          isPrepared: false,
+          status: "Pending Preparation",
+          issuedAt: now
+        });
+      }
+    }
+
+    order.status = "Approved";
+    order.issuedCards = issuedList;
+    order.branchReview = {
+      reviewedByStaffId: staffId || "",
+      reviewedByStaffName: staffName || "Branch Staff",
+      reviewedAt: now,
+      notes: notes || "Approved by branch"
+    };
+
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "Approved",
+      timestamp: now,
+      updatedBy: staffName || "Branch Staff",
+      note: notes || `Approved request for ${order.quantity} Optional NFC Cards. ${issuedList.length} card records generated.`
+    });
+
+    await order.save();
+
+    // SMS to policyholder
+    if (order.policyHolderPhone) {
+      sendSms({
+        phone: order.policyHolderPhone,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${order.policyHolderName},\nYour request for ${order.quantity} Optional NFC Cards (${order.orderNumber}) has been APPROVED by the ${order.branch} branch and is moving to physical preparation.\nHotline: 0725 575 575`,
+        recipientType: "PolicyHolder",
+        recipientName: order.policyHolderName,
+        eventType: "nfc_order_approved"
+      }).catch((e) => console.warn("Order approved SMS error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      message: `Request ${order.orderNumber} approved. ${issuedList.length} card records generated successfully.`,
+      order,
+      issuedCards: issuedList
+    });
+  } catch (err) {
+    console.error("POST /api/nfc-card/branch/approve error:", err);
+    return res.status(500).json({ error: err.message || "Failed to approve card order." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/branch/reject/:orderId
+ * Branch rejects request with recorded reason
+ */
+router.post("/branch/reject/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { staffId, staffName, reason, branch } = req.body;
+
+    if (!reason || !String(reason).trim()) {
+      return res.status(400).json({ error: "Rejection reason is required." });
+    }
+
+    const order = await NfcCardOrder.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Card order not found." });
+    }
+
+    if (branch && order.branch.toLowerCase() !== String(branch).trim().toLowerCase()) {
+      return res.status(403).json({ error: "Unauthorized: Request belongs to another branch." });
+    }
+
+    const now = new Date();
+    order.status = "Rejected";
+    order.rejectionReason = String(reason).trim();
+    order.branchReview = {
+      reviewedByStaffId: staffId || "",
+      reviewedByStaffName: staffName || "Branch Staff",
+      reviewedAt: now,
+      notes: String(reason).trim()
+    };
+
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "Rejected",
+      timestamp: now,
+      updatedBy: staffName || "Branch Staff",
+      note: `Rejected by branch: ${reason}`
+    });
+
+    await order.save();
+
+    // SMS to policyholder
+    if (order.policyHolderPhone) {
+      sendSms({
+        phone: order.policyHolderPhone,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${order.policyHolderName},\nYour request for Optional NFC Cards (${order.orderNumber}) was not approved by ${order.branch} branch.\nReason: ${reason}\nPlease contact your branch for assistance: 0725 575 575`,
+        recipientType: "PolicyHolder",
+        recipientName: order.policyHolderName,
+        eventType: "nfc_order_rejected"
+      }).catch((e) => console.warn("Order rejected SMS error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      message: `Request ${order.orderNumber} has been rejected.`,
+      order
+    });
+  } catch (err) {
+    console.error("POST /api/nfc-card/branch/reject error:", err);
+    return res.status(500).json({ error: err.message || "Failed to reject card order." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/branch/processing/:orderId
+ * Branch begins physical NFC card preparation, printing, writing, and testing
+ */
+router.post("/branch/processing/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { staffId, staffName, notes, branch } = req.body;
+
+    const order = await NfcCardOrder.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Card order not found." });
+    }
+
+    if (branch && order.branch.toLowerCase() !== String(branch).trim().toLowerCase()) {
+      return res.status(403).json({ error: "Unauthorized: Request belongs to another branch." });
+    }
+
+    const now = new Date();
+    order.status = "Processing";
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "Processing",
+      timestamp: now,
+      updatedBy: staffName || "Branch Staff",
+      note: notes || "Physical NFC cards are being prepared, written, and tested by branch staff."
+    });
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: `Order ${order.orderNumber} status updated to Processing.`,
+      order
+    });
+  } catch (err) {
+    console.error("POST /api/nfc-card/branch/processing error:", err);
+    return res.status(500).json({ error: err.message || "Failed to update order to processing." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/branch/ready/:orderId
+ * Branch confirms physical preparation and verification is complete.
+ * Cards now become Available for assignment by the Policyholder!
+ */
+router.post("/branch/ready/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { staffId, staffName, notes, branch } = req.body;
+
+    const order = await NfcCardOrder.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Card order not found." });
+    }
+
+    if (branch && order.branch.toLowerCase() !== String(branch).trim().toLowerCase()) {
+      return res.status(403).json({ error: "Unauthorized: Request belongs to another branch." });
+    }
+
+    const now = new Date();
+    order.status = "Ready for Collection";
+
+    // Mark all cards in NfcCard model as Available!
+    await NfcCard.updateMany(
+      { orderId: order._id, status: "Pending Preparation" },
+      { $set: { status: "Available" } }
+    );
+
+    // Update issuedCards subdocuments
+    if (order.issuedCards && order.issuedCards.length > 0) {
+      order.issuedCards.forEach((c) => {
+        c.isPrepared = true;
+        c.preparedAt = now;
+        c.status = "Ready for Collection";
+      });
+    }
+
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "Ready for Collection",
+      timestamp: now,
+      updatedBy: staffName || "Branch Staff",
+      note: notes || "Physical cards prepared, verified, and confirmed ready for collection."
+    });
+
+    await order.save();
+
+    // Send SMS notifying Policyholder to collect cards
+    if (order.policyHolderPhone) {
+      sendSms({
+        phone: order.policyHolderPhone,
+        message: `[SANASA GENERAL INSURANCE]\nDear ${order.policyHolderName},\nYour ${order.quantity} Optional NFC Cards (${order.orderNumber}) are now READY FOR COLLECTION at the ${order.branch} branch.\nYou can collect them during branch business hours.\nHotline: 0725 575 575`,
+        recipientType: "PolicyHolder",
+        recipientName: order.policyHolderName,
+        eventType: "nfc_cards_ready"
+      }).catch((e) => console.warn("Cards ready SMS error:", e.message));
+    }
+
+    return res.json({
+      success: true,
+      message: `Order ${order.orderNumber} marked Ready for Collection. Cards are now Available.`,
+      order
+    });
+  } catch (err) {
+    console.error("POST /api/nfc-card/branch/ready error:", err);
+    return res.status(500).json({ error: err.message || "Failed to mark order ready for collection." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/branch/collect/:orderId
+ * Branch records physical collection of the cards by Policyholder
+ */
+router.post("/branch/collect/:orderId", async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { staffId, staffName, collectedBy, notes, branch } = req.body;
+
+    const order = await NfcCardOrder.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ error: "Card order not found." });
+    }
+
+    if (branch && order.branch.toLowerCase() !== String(branch).trim().toLowerCase()) {
+      return res.status(403).json({ error: "Unauthorized: Request belongs to another branch." });
+    }
+
+    const now = new Date();
+    order.status = "Collected";
+    order.collectionInfo = {
+      collectedAt: now,
+      collectedBy: collectedBy || order.policyHolderName || "Policy Holder",
+      notes: notes || "Cards handed over at branch"
+    };
+
+    order.statusHistory = order.statusHistory || [];
+    order.statusHistory.push({
+      status: "Collected",
+      timestamp: now,
+      updatedBy: staffName || "Branch Staff",
+      note: `Cards collected by ${collectedBy || order.policyHolderName}. Handover verified by ${staffName || "Branch Staff"}.`
+    });
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: `Card collection successfully recorded for order ${order.orderNumber}.`,
+      order
+    });
+  } catch (err) {
+    console.error("POST /api/nfc-card/branch/collect error:", err);
+    return res.status(500).json({ error: err.message || "Failed to record card collection." });
+  }
+});
+
+/**
+ * POST /api/nfc-card/branch/revoke-card/:cardId
+ * Authorized Branch or Admin staff revokes an individual card or its URL immediately
+ */
+router.post("/branch/revoke-card/:cardId", async (req, res) => {
+  try {
+    const { cardId } = req.params;
+    const { staffId, staffName, reason, branch } = req.body;
+
+    const card = await NfcCard.findOne({ cardId: cardId.trim() });
+    if (!card) {
+      return res.status(404).json({ error: "Card not found." });
+    }
+
+    if (branch && card.branch.toLowerCase() !== String(branch).trim().toLowerCase()) {
+      return res.status(403).json({ error: "Unauthorized: Card belongs to another branch." });
+    }
+
+    const now = new Date();
+    card.status = "Revoked";
+
+    // Invalidate access url and tokens
+    if (card.currentAssignment) {
+      card.currentAssignment.rawToken = "";
+      card.currentAssignment.tokenHash = "";
+      card.currentAssignment.accessUrl = "";
+      card.currentAssignment.status = "Terminated";
+      card.currentAssignment.isBlocked = true;
+      card.currentAssignment.blockedReason = reason || "Card revoked by branch";
+    }
+
+    await card.save();
+
+    return res.json({
+      success: true,
+      message: `Card ${card.cardId} has been revoked server-side immediately.`,
+      card
+    });
+  } catch (err) {
+    console.error("POST /api/nfc-card/branch/revoke-card error:", err);
+    return res.status(500).json({ error: err.message || "Failed to revoke card." });
+  }
+});
+
+/**
+ * GET /api/nfc-card/admin/orders
+ * Admin view across all branches with filters
+ */
+router.get("/admin/orders", async (req, res) => {
+  try {
+    const filter = {};
+
+    if (req.query.branch && req.query.branch !== "all") {
+      filter.branch = new RegExp(`^${req.query.branch.trim()}$`, "i");
+    }
+
+    if (req.query.status && req.query.status !== "all") {
+      filter.status = req.query.status;
+    }
+
+    if (req.query.paymentStatus && req.query.paymentStatus !== "all") {
+      filter["payment.status"] = req.query.paymentStatus;
+    }
+
+    if (req.query.search) {
+      const q = String(req.query.search).trim();
+      filter.$or = [
+        { orderNumber: new RegExp(q, "i") },
+        { policyHolderNic: new RegExp(q, "i") },
+        { policyHolderName: new RegExp(q, "i") }
+      ];
+    }
+
+    const orders = await NfcCardOrder.find(filter).sort({ createdAt: -1 });
+    return res.json({ success: true, orders });
+  } catch (err) {
+    console.error("GET /api/nfc-card/admin/orders error:", err);
+    return res.status(500).json({ error: "Failed to fetch admin card orders." });
+  }
+});
+
+// ==========================================
 // 2. INVENTORY & CARD DETAILS
 // ==========================================
 
 /**
  * GET /api/nfc-card/inventory
- * List all issued physical cards for the policyholder
+ * List all issued physical cards eligible for assignment by policyholder
  */
 router.get("/inventory", async (req, res) => {
   try {
@@ -418,7 +870,12 @@ router.get("/inventory", async (req, res) => {
     }
 
     const cleanNic = String(nic).trim().toUpperCase();
-    const cards = await NfcCard.find({ policyHolderNic: cleanNic }).sort({ createdAt: -1 });
+    // Only return cards that have completed issuance (Available, Scheduled, Active, Temporarily Blocked, Expired)
+    // Exclude cards still in "Pending Preparation"
+    const cards = await NfcCard.find({
+      policyHolderNic: cleanNic,
+      status: { $in: ["Available", "Scheduled", "Active", "Temporarily Blocked", "Expired", "Revoked"] }
+    }).sort({ createdAt: -1 });
 
     // Check each card for auto-expiry and update in-memory response
     const updatedCards = await Promise.all(

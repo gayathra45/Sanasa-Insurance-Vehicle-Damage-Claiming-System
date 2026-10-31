@@ -174,9 +174,30 @@ interface NfcOrder {
   quantity: number;
   totalAmount: number;
   currency: string;
-  paymentStatus: "Pending Payment" | "Paid" | "Failed";
-  orderStatus: "Processing" | "Cards Created" | "Dispatched" | "Delivered";
-  cardsIssued: string[];
+  branch?: string;
+  status: string;
+  rejectionReason?: string;
+  statusHistory?: Array<{
+    status: string;
+    timestamp: string;
+    updatedBy: string;
+    note?: string;
+  }>;
+  collectionInfo?: {
+    collectedAt?: string;
+    collectedBy?: string;
+    notes?: string;
+  };
+  payment?: {
+    status: string;
+    amountPaid?: number;
+    paidAt?: string;
+  };
+  issuedCards?: Array<{
+    cardId: string;
+    status?: string;
+    isPrepared?: boolean;
+  }>;
   createdAt: string;
 }
 
@@ -1742,6 +1763,115 @@ export default function ThirdPartyPage() {
                 </button>
               </div>
             </div>
+
+            {/* Request Tracking Section */}
+            {nfcOrders.length > 0 && (
+              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-sky-600" />
+                      <span>Your NFC Card Requests & Issuance Tracking ({nfcOrders.length})</span>
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Track your physical card request status from branch review to physical collection.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => currentUser?.nic && loadNfcOrders(currentUser.nic)}
+                    className="px-3.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer border-none"
+                  >
+                    Refresh Requests
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  {nfcOrders.map((order) => {
+                    const isRejected = order.status === "Rejected";
+                    const isReady = order.status === "Ready for Collection";
+                    const isCollected = order.status === "Collected";
+                    const isPaid = order.payment?.status === "Paid";
+
+                    const steps = ["Request Submitted", "Approved", "Processing", "Ready for Collection", "Collected"];
+                    const currentIdx = steps.indexOf(order.status);
+
+                    return (
+                      <div
+                        key={order._id}
+                        className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-all space-y-4"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <span className="font-mono text-sm font-black text-[#102A43]">
+                              {order.orderNumber}
+                            </span>
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#102A43]/10 text-[#102A43]">
+                              {order.quantity} {order.quantity === 1 ? "Card" : "Cards"} (LKR {order.totalAmount?.toLocaleString()})
+                            </span>
+                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                              isPaid ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                            }`}>
+                              {isPaid ? "Paid" : "Pending Payment"}
+                            </span>
+                          </div>
+
+                          <span className="text-xs text-slate-400">
+                            Submitted on {new Date(order.createdAt).toLocaleDateString("en-LK", { timeZone: "Asia/Colombo", month: "short", day: "numeric", year: "numeric" })}
+                          </span>
+                        </div>
+
+                        {/* Status Stepper */}
+                        {!isRejected ? (
+                          <div className="pt-2 pb-1">
+                            <div className="flex items-center justify-between relative">
+                              {steps.map((st, i) => {
+                                const passed = currentIdx >= i;
+                                const isCurrent = order.status === st;
+
+                                return (
+                                  <div key={st} className="flex flex-col items-center flex-1 text-center relative z-10">
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                                      passed ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-500"
+                                    }`}>
+                                      {passed ? "✓" : i + 1}
+                                    </div>
+                                    <span className={`text-[10px] mt-1 font-medium ${
+                                      isCurrent ? "text-blue-700 font-bold" : passed ? "text-slate-800" : "text-slate-400"
+                                    }`}>
+                                      {st}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+                            <strong>Request Rejected by Branch:</strong> {order.rejectionReason || "Requirements not met."}
+                          </div>
+                        )}
+
+                        {/* Collection Alert if Ready */}
+                        {isReady && (
+                          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center gap-2">
+                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600 shrink-0" />
+                            <span>
+                              <strong>Ready for Collection!</strong> Your cards have been prepared and tested. You can collect them at the <strong>{order.branch || "assigned"} branch</strong>.
+                            </span>
+                          </div>
+                        )}
+
+                        {isCollected && order.collectionInfo?.collectedAt && (
+                          <div className="text-[11px] text-slate-500">
+                            Collected on {new Date(order.collectionInfo.collectedAt).toLocaleDateString("en-LK", { timeZone: "Asia/Colombo" })} by {order.collectionInfo.collectedBy || "Policyholder"}.
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Inventory List */}
             <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs">
