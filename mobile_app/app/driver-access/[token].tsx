@@ -1850,7 +1850,7 @@ const styles = StyleSheet.create({
     color: "#94A3B8",
     fontSize: 10,
     textAlign: "center"
-  }
+  },
   headerBackground: {
     width: "100%",
     minHeight: 125,
@@ -1901,5 +1901,4 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "bold"
   }
-};
-);
+});

@@ -1776,7 +1776,6 @@ export default function ThirdPartyDriverPortalPage() {
 
   const navLinks: { id: string; label: string; count?: number }[] = [
     { id: "home", label: "Home" },
-    { id: "notifications", label: "Notifications", count: unreadCount },
     { id: "my_claims", label: "My Claims" },
     { id: "vehicles", label: "My Vehicles" },
     { id: "documents", label: "Documents" },
@@ -2252,9 +2251,9 @@ export default function ThirdPartyDriverPortalPage() {
       {/* DIGITAL PASS TAB: Policy Holder Style Digital Pass Header */}
       {activeTab === "digital_pass" && (
         <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
-          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-gradient-to-r from-[#0d2a3a] via-[#103a52] to-[#0d2a3a] rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
-            <div className="absolute inset-0 bg-slate-900/40" />
-            <div className="absolute inset-0 bg-[radial-gradient(#00ddff_1px,transparent_1px)] [background-size:16px_16px] opacity-15" />
+          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+            <div className="absolute inset-0 bg-slate-900/35" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
           </div>
           <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
             <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">

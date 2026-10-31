@@ -2116,7 +2116,7 @@ ${inspectionReportText.trim()}
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <StatusBar barStyle="light-content" {...({ translucent: true, backgroundColor: "transparent" } as any)} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
