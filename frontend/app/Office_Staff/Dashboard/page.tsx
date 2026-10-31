@@ -111,9 +111,8 @@ export default function OfficeStaffDashboard() {
   const [selectedClaim, setSelectedClaim] = useState<any | null>(null);
   const [viewedClaims, setViewedClaims] = useState<Record<string, number>>({});
 
-  // Filtering & Search
+  // Filtering
   const [claimsFilter, setClaimsFilter] = useState<"all" | "unassigned" | "urgent" | "active">("all");
-  const [searchQuery, setSearchQuery] = useState("");
 
   
 
@@ -406,19 +405,9 @@ export default function OfficeStaffDashboard() {
       if (claimsFilter === "active" && (claim.status !== "In Progress" && claim.status !== "Investigating")) {
         return false;
       }
-
-      // Search query
-      if (!searchQuery.trim()) return true;
-      const q = searchQuery.toLowerCase().trim();
-      return (
-        claim.id.toLowerCase().includes(q) ||
-        claim.vehicleNo.toLowerCase().includes(q) ||
-        claim.applicantName.toLowerCase().includes(q) ||
-        claim.location.toLowerCase().includes(q) ||
-        claim.type.toLowerCase().includes(q)
-      );
+      return true;
     });
-  }, [rawClaimsList, claimsFilter, searchQuery]);
+  }, [rawClaimsList, claimsFilter]);
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
@@ -629,9 +618,9 @@ export default function OfficeStaffDashboard() {
                   </Link>
                 </div>
 
-                {/* Filter Tabs & Search */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                {/* Filter Tabs & Live Status (Redesigned: No Scrollbar & No Search Bar) */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50/80 p-1.5 rounded-2xl border border-slate-200/70">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {[
                       { key: "all", label: "All Claims", count: rawClaimsList.length },
                       {
@@ -654,12 +643,12 @@ export default function OfficeStaffDashboard() {
                       <button
                         key={tab.key}
                         onClick={() => setClaimsFilter(tab.key as any)}
-                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-1.5 ${
+                        className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer border flex items-center gap-2 ${
                           claimsFilter === tab.key
                             ? "bg-[#102A43] text-white border-[#102A43] shadow-xs"
                             : tab.alert
                             ? "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100"
-                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                            : "bg-white text-slate-600 border-slate-200/90 hover:bg-slate-50 hover:text-slate-900 shadow-2xs"
                         }`}
                       >
                         <span>{tab.label}</span>
@@ -670,7 +659,7 @@ export default function OfficeStaffDashboard() {
                                 ? "bg-white/20 text-white"
                                 : tab.alert
                                 ? "bg-rose-600 text-white"
-                                : "bg-slate-200 text-slate-700"
+                                : "bg-slate-100 text-slate-700"
                             }`}
                           >
                             {tab.count}
@@ -680,19 +669,9 @@ export default function OfficeStaffDashboard() {
                     ))}
                   </div>
 
-                  {/* Search box */}
-                  <div className="relative w-full sm:w-64 shrink-0">
-                    <HugeiconsIcon
-                      icon={Search01Icon}
-                      className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"
-                    />
-                    <input
-                      type="text"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Search plate, claim, driver..."
-                      className="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#102A43]/20 focus:border-[#102A43] font-medium"
-                    />
+                  <div className="hidden sm:flex items-center gap-2 px-3 text-xs text-slate-500 font-medium">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Real-time Dispatch Queue</span>
                   </div>
                 </div>
 

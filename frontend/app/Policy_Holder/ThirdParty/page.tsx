@@ -219,6 +219,12 @@ export default function ThirdPartyPage() {
   const [userBranch, setUserBranch] = useState("Galle");
   const [requests, setRequests] = useState<RegistrationRequest[]>([]);
 
+  // Permanent Drivers View & Table Redesign
+  const [selectedDriverDetail, setSelectedDriverDetail] = useState<RegistrationRequest | null>(null);
+  const [driverTableSearch, setDriverTableSearch] = useState("");
+  const [driverStatusFilter, setDriverStatusFilter] = useState("ALL");
+  const [previewDocModal, setPreviewDocModal] = useState<{ url: string; title: string } | null>(null);
+
   // Termination modal states
   const [terminateReq, setTerminateReq] = useState<RegistrationRequest | null>(null);
   const [terminateReason, setTerminateReason] = useState("Driver resigned / employment ended");
@@ -390,6 +396,13 @@ export default function ThirdPartyPage() {
         return prev;
       });
 
+      setSelectedDriverDetail((prev) => {
+        if (prev && (prev._id === updatedReq._id || prev.requestReference === updatedReq.requestReference)) {
+          return { ...prev, ...updatedReq };
+        }
+        return prev;
+      });
+
       setBannerAlert({
         type: updatedReq.status === "Rejected" ? "error" : "success",
         message: `Driver authorization ${updatedReq.requestReference} updated to "${updatedReq.status}"`
@@ -433,7 +446,14 @@ export default function ThirdPartyPage() {
         fetch(`${API_URL}/third-party/my-requests?nic=${encodeURIComponent(currentUser.nic)}`)
           .then((res) => (res.ok ? res.json() : null))
           .then((data) => {
-            if (data?.requests) setRequests(data.requests);
+            if (data?.requests) {
+              setRequests(data.requests);
+              setSelectedDriverDetail((prev) => {
+                if (!prev) return null;
+                const fresh = data.requests.find((r: any) => r._id === prev._id || r.requestReference === prev.requestReference);
+                return fresh ? { ...prev, ...fresh } : prev;
+              });
+            }
           })
           .catch(() => {});
 
@@ -1300,7 +1320,7 @@ export default function ThirdPartyPage() {
         <div className="flex flex-wrap items-center gap-2 bg-slate-200/80 p-1.5 rounded-2xl mb-8 border border-slate-300/60 shadow-xs">
           <button
             type="button"
-            onClick={() => { setActiveTab("permanent"); setShowPermanentForm(false); }}
+            onClick={() => { setActiveTab("permanent"); setShowPermanentForm(false); setSelectedDriverDetail(null); }}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border-none ${
               activeTab === "permanent"
                 ? "bg-white text-indigo-700 shadow-xs"
@@ -1781,262 +1801,723 @@ export default function ThirdPartyPage() {
         {/* ========================================================================= */}
         {/* TAB 1: ACTIVE PERMANENT DRIVERS LIST */}
         {/* ========================================================================= */}
+        {/* ========================================================================= */}
+        {/* TAB 1: PERMANENT DRIVERS (TABLE DIRECTORY OR DEDICATED DETAIL VIEW) */}
+        {/* ========================================================================= */}
         {activeTab === "permanent" && !showPermanentForm && (
           <div className="space-y-6 animate-in fade-in duration-200">
-            {/* Header / Intro Card */}
-            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-slate-800">
-              <div className="space-y-1.5 max-w-xl">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 text-indigo-300 text-xs font-bold rounded-full border border-indigo-400/30">
-                  <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5" />
-                  <span>Authorized Permanent Drivers</span>
-                </div>
-                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-                  Long-Term Driver Authorizations
-                </h2>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  Active and approved permanent drivers authorized to operate your insured vehicles. Reviewed and verified by your regional branch office.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowPermanentForm(true)}
-                className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer border-none flex-shrink-0"
-              >
-                <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4 text-white" />
-                <span>+ Add Permanent Driver</span>
-              </button>
-            </div>
-
-            {/* Permanent Drivers List */}
-            {requests.filter((r) => r.status !== "Terminated" && r.status !== "Rejected").length === 0 ? (
-              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
-                <HugeiconsIcon icon={UserCheck01Icon} className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                <h3 className="text-base font-bold text-slate-800">No Permanent Drivers Registered Yet</h3>
-                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
-                  You haven't authorized any long-term third-party drivers. Register a driver to grant official driving and claim filing authorization.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowPermanentForm(true)}
-                  className="mt-5 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer border-none inline-flex items-center gap-2"
-                >
-                  <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" />
-                  <span>Register First Permanent Driver (LKR 300)</span>
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {requests
-                  .filter((r) => r.status !== "Terminated" && r.status !== "Rejected")
-                  .map((req) => {
-                    const isBlocked = req.status === "Temporarily Blocked" || req.accessControl?.isBlocked;
-                    const isExpired = req.status === "Expired" || req.accessDuration?.isExpired;
-                    const isScheduled = req.status === "Scheduled";
-                    const isApproved = req.status === "Approved";
-
-                    return (
-                      <div
-                        key={req._id}
-                        className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs hover:border-slate-300 transition-colors"
+            {selectedDriverDetail ? (
+              /* ======================================================================= */
+              /* DEDICATED DRIVER DOSSIER & FULL DETAILS SUBPAGE VIEW */
+              /* ======================================================================= */
+              <div className="space-y-6 animate-in fade-in zoom-in-95 duration-150">
+                {/* Header Card & Navigation Bar */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDriverDetail(null)}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer border-none shadow-xs"
                       >
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                        ← Back to Permanent Drivers List
+                      </button>
+                      <span className="font-mono text-xs font-extrabold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
+                        {selectedDriverDetail.requestReference}
+                      </span>
+                      {(() => {
+                        const isBlocked = selectedDriverDetail.status === "Temporarily Blocked" || selectedDriverDetail.accessControl?.isBlocked;
+                        const isExpired = selectedDriverDetail.status === "Expired" || selectedDriverDetail.accessDuration?.isExpired;
+                        const isScheduled = selectedDriverDetail.status === "Scheduled";
+                        const isApproved = selectedDriverDetail.status === "Approved";
+
+                        if (isBlocked) {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                              Temporarily Blocked
+                            </span>
+                          );
+                        }
+                        if (isExpired) {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                              Expired
+                            </span>
+                          );
+                        }
+                        if (isApproved) {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              Approved & Active
+                            </span>
+                          );
+                        }
+                        if (isScheduled) {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                              Scheduled
+                            </span>
+                          );
+                        }
+                        if (selectedDriverDetail.status === "Pending Termination Approval") {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                              Termination Under Review
+                            </span>
+                          );
+                        }
+                        if (selectedDriverDetail.status === "Pending Branch Approval") {
+                          return (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                              <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+                              Under Branch Review
+                            </span>
+                          );
+                        }
+                        return (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                            {selectedDriverDetail.status}
+                          </span>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {selectedDriverDetail.payment.status === "Paid" ? (
+                        <>
+                          {selectedDriverDetail.status === "Approved" && (
+                            <a
+                              href={`${API_URL}/third-party/authorization-certificate/${selectedDriverDetail.requestReference}?print=true`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
+                              title="Download or Print Official Certificate"
+                            >
+                              <HugeiconsIcon icon={Download01Icon} className="w-4 h-4" />
+                              <span>Official Certificate</span>
+                            </a>
+                          )}
+
+                          {(selectedDriverDetail.status === "Approved" || selectedDriverDetail.status === "Expired" || selectedDriverDetail.status === "Temporarily Blocked" || selectedDriverDetail.status === "Scheduled") && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenRenewPermanent(selectedDriverDetail)}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
+                              title="Renew authorization duration"
+                            >
+                              <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4" />
+                              <span>Renew Duration</span>
+                            </button>
+                          )}
+
+                          {selectedDriverDetail.status === "Temporarily Blocked" ? (
+                            <button
+                              type="button"
+                              onClick={() => handleUnblockPermanent(selectedDriverDetail)}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
+                              title="Restore driver access"
+                            >
+                              <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4" />
+                              <span>Unblock Access</span>
+                            </button>
+                          ) : (selectedDriverDetail.status === "Approved" || selectedDriverDetail.status === "Scheduled") ? (
+                            <button
+                              type="button"
+                              onClick={() => handleBlockPermanent(selectedDriverDetail)}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
+                              title="Temporarily suspend access"
+                            >
+                              <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4" />
+                              <span>Temporary Block</span>
+                            </button>
+                          ) : null}
+
+                          {(selectedDriverDetail.status === "Approved" || selectedDriverDetail.status === "Scheduled" || selectedDriverDetail.status === "Temporarily Blocked") && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setTerminateReq(selectedDriverDetail);
+                                setTerminateReason("Driver resigned / employment ended");
+                                setCustomReason("");
+                                setTermErr("");
+                                setTermMsg("");
+                              }}
+                              className="inline-flex items-center gap-1.5 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3.5 py-2 rounded-xl transition-all cursor-pointer shadow-xs"
+                              title="Permanently terminate driver access"
+                            >
+                              <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
+                              <span>Terminate</span>
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleResumePayment(selectedDriverDetail)}
+                          disabled={submitting}
+                          className="inline-flex items-center gap-2 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 px-5 py-2 rounded-xl transition-all shadow-xs cursor-pointer border-none"
+                        >
+                          <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                          <span>Pay LKR 300 Now</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Driver Dossier Overview */}
+                  <div className="pt-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-700 flex items-center justify-center font-black text-xl shrink-0 shadow-xs">
+                        {selectedDriverDetail.driverDetails.fullName
+                          .split(" ")
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map((n) => n[0].toUpperCase())
+                          .join("") || "DR"}
+                      </div>
+                      <div>
+                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                          {selectedDriverDetail.driverDetails.fullName}
+                        </h1>
+                        <div className="flex flex-wrap items-center gap-y-1 gap-x-4 text-xs text-slate-500 mt-1.5">
+                          <span>Phone: <strong className="text-slate-800 font-mono">{selectedDriverDetail.driverDetails.phoneNumber}</strong></span>
+                          <span>NIC: <strong className="text-slate-800 font-mono">{selectedDriverDetail.driverDetails.nicNumber || "—"}</strong></span>
+                          <span>Branch: <strong className="text-slate-800">{selectedDriverDetail.branch}</strong></span>
+                        </div>
+                        {selectedDriverDetail.driverDetails.residentialAddress && (
+                          <p className="text-xs text-slate-500 mt-1">
+                            Address: <span className="text-slate-700">{selectedDriverDetail.driverDetails.residentialAddress}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-xs space-y-1.5 sm:min-w-[260px]">
+                      <div className="flex justify-between text-slate-500">
+                        <span>Submitted Date:</span>
+                        <span className="font-mono font-semibold text-slate-700">
+                          {new Date(selectedDriverDetail.createdAt).toLocaleDateString("en-GB")} at {new Date(selectedDriverDetail.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-500">
+                        <span>Registration Fee:</span>
+                        <span className="font-bold text-emerald-700 font-mono">
+                          {selectedDriverDetail.payment.status === "Paid" ? "LKR 300.00 (Paid)" : "LKR 300.00 (Unpaid)"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-500">
+                        <span>Verification Branch:</span>
+                        <span className="font-semibold text-slate-800">{selectedDriverDetail.branch} Branch Office</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4-Stage Stepper */}
+                  <div className="mt-8 pt-6 border-t border-slate-100">
+                    {renderPermanentTrackingStepper(selectedDriverDetail)}
+                  </div>
+                </div>
+
+                {/* Dossier Detail Grids */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* 1. Covered Vehicles */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+                    <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                      <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center">
+                        <HugeiconsIcon icon={Car01Icon} className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm text-slate-900">Covered Insured Vehicles</h3>
+                        <span className="text-[11px] text-slate-400">Permitted vehicle registrations</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {selectedDriverDetail.selectedVehicles.map((v, i) => (
+                        <div key={i} className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/60 flex items-center justify-between">
                           <div>
-                            <div className="flex flex-wrap items-center gap-3">
-                              <span className="font-mono text-sm font-extrabold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg">
-                                {req.requestReference}
-                              </span>
-
-                              {/* Status Badge */}
-                              <span
-                                className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                                  isBlocked
-                                    ? "bg-amber-50 text-amber-900 border-amber-300"
-                                    : isExpired
-                                    ? "bg-rose-50 text-rose-800 border-rose-300"
-                                    : isScheduled
-                                    ? "bg-indigo-50 text-indigo-800 border-indigo-200"
-                                    : isApproved
-                                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                                    : req.status === "Pending Termination Approval"
-                                    ? "bg-rose-50 text-rose-800 border-rose-200"
-                                    : req.status === "Pending Branch Approval"
-                                    ? "bg-sky-50 text-sky-800 border-sky-200"
-                                    : "bg-amber-50 text-amber-800 border-amber-200"
-                                }`}
-                              >
-                                {isBlocked
-                                  ? "Temporarily Blocked"
-                                  : isExpired
-                                  ? "Expired"
-                                  : req.status === "Pending Termination Approval"
-                                  ? "Termination Under Review"
-                                  : req.status}
-                              </span>
-
-                              {/* Duration Badge */}
-                              {req.accessDuration && (
-                                <span className="px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200 flex items-center gap-1">
-                                  <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5" />
-                                  <span>{req.accessDuration.durationType || "Duration Configured"}</span>
-                                </span>
-                              )}
-                            </div>
-
-                            <p className="text-xs text-slate-400 mt-1.5">
-                              Submitted on {new Date(req.createdAt).toLocaleDateString("en-GB")} at{" "}
-                              {new Date(req.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • Branch: {req.branch}
+                            <span className="px-2.5 py-1 bg-slate-900 text-white font-mono font-bold text-xs rounded-lg tracking-wider">
+                              {v.numberPlate}
+                            </span>
+                            <p className="text-xs text-slate-700 mt-1.5 font-medium">
+                              {v.company || "Sanasa Insured"} {v.model || ""}
                             </p>
-                          </div>
-
-                          {/* Top Right Actions */}
-                          <div className="flex flex-wrap items-center gap-2">
-                            {req.payment.status === "Paid" ? (
-                              <div className="flex flex-wrap items-center gap-2">
-                                {/* Renew Button */}
-                                {(isApproved || isExpired || isBlocked || isScheduled) && (
-                                  <button
-                                    onClick={() => handleOpenRenewPermanent(req)}
-                                    className="flex items-center gap-1 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
-                                    title="Renew driver authorized duration"
-                                  >
-                                    <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5" />
-                                    <span>Renew Duration</span>
-                                  </button>
-                                )}
-
-                                {/* Temporary Block / Unblock */}
-                                {isBlocked ? (
-                                  <button
-                                    onClick={() => handleUnblockPermanent(req)}
-                                    className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
-                                    title="Restore driver access"
-                                  >
-                                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
-                                    <span>Unblock Access</span>
-                                  </button>
-                                ) : (isApproved || isScheduled) ? (
-                                  <button
-                                    onClick={() => handleBlockPermanent(req)}
-                                    className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
-                                    title="Temporarily suspend access"
-                                  >
-                                    <HugeiconsIcon icon={Alert02Icon} className="w-3.5 h-3.5" />
-                                    <span>Temporary Block</span>
-                                  </button>
-                                ) : null}
-
-                                {/* Terminate Driver */}
-                                {(isApproved || isScheduled || isBlocked) && (
-                                  <button
-                                    onClick={() => {
-                                      setTerminateReq(req);
-                                      setTerminateReason("Driver resigned / employment ended");
-                                      setCustomReason("");
-                                      setTermErr("");
-                                      setTermMsg("");
-                                    }}
-                                    className="flex items-center gap-1 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
-                                    title="Permanently terminate driver access"
-                                  >
-                                    <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
-                                    <span>Terminate</span>
-                                  </button>
-                                )}
-                              </div>
-                            ) : (
-                              <button
-                                onClick={() => handleResumePayment(req)}
-                                disabled={submitting}
-                                className="flex items-center gap-1.5 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 px-4 py-2 rounded-xl transition-all shadow-xs cursor-pointer border-none"
-                              >
-                                <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
-                                <span>Pay LKR 300 Now</span>
-                              </button>
+                            {v.policyNumber && (
+                              <p className="text-[11px] text-slate-400 font-mono">Policy: {v.policyNumber}</p>
                             )}
+                          </div>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Active Cover
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 2. Validity Window & Duration */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+                    <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                      <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                        <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm text-slate-900">Authorization Duration</h3>
+                        <span className="text-[11px] text-slate-400">Valid operation window</span>
+                      </div>
+                    </div>
+
+                    {selectedDriverDetail.accessDuration ? (
+                      <div className="space-y-3 text-xs">
+                        <div className="p-3.5 bg-indigo-50/60 border border-indigo-100 rounded-2xl flex items-center justify-between">
+                          <div>
+                            <span className="text-[10px] uppercase font-bold text-indigo-800 tracking-wider">Configured Duration</span>
+                            <span className="text-sm font-black text-indigo-950 block mt-0.5">
+                              {selectedDriverDetail.accessDuration.durationType || "12 Months"}
+                            </span>
+                          </div>
+                          <span className="px-2.5 py-1 bg-white text-indigo-700 font-bold text-xs rounded-lg border border-indigo-200 shadow-2xs">
+                            Active Pass
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 text-slate-600">
+                          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Valid From</span>
+                            <span className="font-mono font-bold text-slate-800 text-xs block mt-0.5">
+                              {new Date(selectedDriverDetail.accessDuration.startDate).toLocaleDateString("en-GB")}
+                            </span>
+                          </div>
+                          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/60">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Valid Until</span>
+                            <span className="font-mono font-bold text-slate-800 text-xs block mt-0.5">
+                              {new Date(selectedDriverDetail.accessDuration.endDate).toLocaleDateString("en-GB")}
+                            </span>
                           </div>
                         </div>
 
-                        {/* Permanent Driver Authorization Progress Stepper */}
-                        {renderPermanentTrackingStepper(req)}
-
-                        {/* Details Grid */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 text-xs">
-                          <div>
-                            <span className="text-slate-400 font-semibold block uppercase">Driver Details</span>
-                            <span className="text-slate-800 font-bold mt-0.5 block">{req.driverDetails.fullName}</span>
-                            <span className="text-slate-500 block">{req.driverDetails.phoneNumber}</span>
-                            <span className="text-slate-500 block font-mono">NIC: {req.driverDetails.nicNumber || "—"}</span>
-                          </div>
-
-                          <div>
-                            <span className="text-slate-400 font-semibold block uppercase">Covered Vehicles</span>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                              {req.selectedVehicles.map((v, i) => (
-                                <span
-                                  key={i}
-                                  className="px-2 py-0.5 bg-slate-100 text-slate-700 font-mono font-bold rounded-md text-[11px]"
-                                >
-                                  {v.numberPlate}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div>
-                            <span className="text-slate-400 font-semibold block uppercase">Validity Window</span>
-                            {req.accessDuration ? (
-                              <div className="mt-1 space-y-0.5">
-                                <span className="font-mono text-slate-800 font-semibold block">
-                                  {new Date(req.accessDuration.startDate).toLocaleDateString("en-GB")} →{" "}
-                                  {new Date(req.accessDuration.endDate).toLocaleDateString("en-GB")}
-                                </span>
-                                <span className="text-[11px] text-slate-500 block">
-                                  {req.accessDuration.durationType} duration
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-slate-500 block mt-1">Standard Policy Duration</span>
-                            )}
-                          </div>
-
-                          <div>
-                            <span className="text-slate-400 font-semibold block uppercase">Branch Sign-Off</span>
-                            {req.status === "Approved" ? (
-                              <span className="text-emerald-700 font-bold block mt-0.5">
-                                Approved by {req.branchReview?.reviewedBy || "Branch Staff"}
-                              </span>
-                            ) : req.status === "Pending Termination Approval" ? (
-                              <div className="mt-1 p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-800">
-                                <span className="font-bold block">Termination Pending:</span>
-                                <span className="text-[11px]">{req.terminationRequest?.reason || "Policyholder termination request"}</span>
-                              </div>
-                            ) : req.status === "Rejected" ? (
-                              <div className="mt-1 p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-800">
-                                <span className="font-bold block">Rejection Reason:</span>
-                                <span>{req.branchReview?.rejectionReason || "Requirements not met."}</span>
-                              </div>
-                            ) : (
-                              <span className="text-sky-700 font-semibold block mt-0.5">
-                                Under review by {req.branch} branch
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Renewal Timeline Notice if exists */}
-                        {req.renewalHistory && req.renewalHistory.length > 0 && (
-                          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
+                        {selectedDriverDetail.renewalHistory && selectedDriverDetail.renewalHistory.length > 0 && (
+                          <div className="pt-2 text-[11px] text-slate-500 border-t border-slate-100 flex items-center gap-1.5">
                             <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>
-                              Renewed {req.renewalHistory.length} time(s). Last renewed on{" "}
-                              {new Date(req.renewalHistory[req.renewalHistory.length - 1].renewedAt).toLocaleDateString("en-GB")}.
+                            <span>Renewed {selectedDriverDetail.renewalHistory.length} time(s).</span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-600">
+                        <span className="font-bold block text-slate-800">Standard Policy Duration</span>
+                        <p className="text-[11px] text-slate-500 mt-1">
+                          Duration defaults to active vehicle insurance policy coverage lifetime.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 3. Branch Verification & Review */}
+                  <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
+                    <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                        <HugeiconsIcon icon={Building04Icon} className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-sm text-slate-900">Branch Office Review</h3>
+                        <span className="text-[11px] text-slate-400">Compliance & sign-off</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3 text-xs">
+                      <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Branch:</span>
+                          <span className="font-bold text-slate-900">{selectedDriverDetail.branch} Office</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-slate-500">Review Status:</span>
+                          <span className="font-semibold text-slate-800">{selectedDriverDetail.status}</span>
+                        </div>
+                        {selectedDriverDetail.branchReview?.reviewedBy && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Reviewed By:</span>
+                            <span className="font-bold text-emerald-800">{selectedDriverDetail.branchReview.reviewedBy}</span>
+                          </div>
+                        )}
+                        {selectedDriverDetail.branchReview?.reviewedAt && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-500">Review Date:</span>
+                            <span className="font-mono text-slate-700">
+                              {new Date(selectedDriverDetail.branchReview.reviewedAt).toLocaleDateString("en-GB")}
                             </span>
                           </div>
                         )}
                       </div>
-                    );
-                  })}
+
+                      {selectedDriverDetail.branchReview?.rejectionReason && (
+                        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs">
+                          <span className="font-bold block">Rejection Feedback:</span>
+                          <p className="mt-0.5">{selectedDriverDetail.branchReview.rejectionReason}</p>
+                        </div>
+                      )}
+
+                      {selectedDriverDetail.terminationRequest?.reason && (
+                        <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs">
+                          <span className="font-bold block">Termination Request:</span>
+                          <p className="mt-0.5">{selectedDriverDetail.terminationRequest.reason}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 4. KYC Identity & Licence Documents */}
+                <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs">
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <HugeiconsIcon icon={File01Icon} className="w-5 h-5 text-indigo-600" />
+                        Uploaded KYC Identity & Licence Documents
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Driver verification files submitted for branch staff verification. Click any document to view in high resolution.
+                      </p>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+                      NIC: {selectedDriverDetail.driverDetails.nicNumber || "—"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { label: "NIC Front", doc: selectedDriverDetail.driverDetails.documents?.nicFront },
+                      { label: "NIC Back", doc: selectedDriverDetail.driverDetails.documents?.nicBack },
+                      { label: "Driving Licence Front", doc: selectedDriverDetail.driverDetails.documents?.drivingLicenceFront },
+                      { label: "Driving Licence Back", doc: selectedDriverDetail.driverDetails.documents?.drivingLicenceBack }
+                    ].map((item, idx) => (
+                      <div key={idx} className="border border-slate-200 rounded-2xl p-3 bg-slate-50 text-center">
+                        <span className="text-xs font-bold text-slate-700 block mb-2">{item.label}</span>
+                        {item.doc ? (
+                          <div
+                            onClick={() => setPreviewDocModal({ url: item.doc!, title: `${selectedDriverDetail.driverDetails.fullName} — ${item.label}` })}
+                            className="relative h-44 rounded-xl overflow-hidden border border-slate-300 bg-white group cursor-pointer shadow-2xs"
+                          >
+                            <img src={item.doc} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                            <div className="absolute inset-0 bg-slate-900/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold gap-1">
+                              <span>Click to Enlarge</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="h-44 rounded-xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-400 text-xs">
+                            <HugeiconsIcon icon={File01Icon} className="w-8 h-8 mb-1 text-slate-300" />
+                            <span>Not Uploaded</span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* ======================================================================= */
+              /* LIST TYPE TABLE VIEW (DIRECTORY) */
+              /* ======================================================================= */
+              <div className="space-y-6 animate-in fade-in duration-150">
+                {/* Header / Intro Banner */}
+                <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-slate-800">
+                  <div className="space-y-1.5 max-w-xl">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 text-indigo-300 text-xs font-bold rounded-full border border-indigo-400/30">
+                      <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5" />
+                      <span>Authorized Permanent Drivers</span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                      Permanent Third-Party Drivers
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                      Approved long-term drivers authorized across your insured vehicles. Click <strong>View Details</strong> on any driver to inspect full authorization timeline, KYC documents, and policy permissions.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowPermanentForm(true)}
+                    className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer border-none flex-shrink-0"
+                  >
+                    <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4 text-white" />
+                    <span>+ Add Permanent Driver</span>
+                  </button>
+                </div>
+
+                {/* Table Directory Card */}
+                {requests.filter((r) => r.status !== "Terminated" && r.status !== "Rejected").length === 0 ? (
+                  <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+                    <HugeiconsIcon icon={UserCheck01Icon} className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                    <h3 className="text-base font-bold text-slate-800">No Permanent Drivers Registered Yet</h3>
+                    <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                      You haven't authorized any long-term third-party drivers. Register a driver to grant official driving and claim filing authorization.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowPermanentForm(true)}
+                      className="mt-5 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer border-none inline-flex items-center gap-2"
+                    >
+                      <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" />
+                      <span>Register First Permanent Driver (LKR 300)</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Search & Filter Bar */}
+                    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      {/* Search Box */}
+                      <div className="relative flex-1 max-w-md">
+                        <input
+                          type="text"
+                          value={driverTableSearch}
+                          onChange={(e) => setDriverTableSearch(e.target.value)}
+                          placeholder="Search by name, NIC, phone, plate..."
+                          className="w-full pl-3.5 pr-8 py-2.5 rounded-xl border border-slate-300 text-xs bg-white text-slate-900 placeholder:text-slate-400 font-medium focus:ring-2 focus:ring-indigo-500 shadow-xs"
+                        />
+                        {driverTableSearch && (
+                          <button
+                            type="button"
+                            onClick={() => setDriverTableSearch("")}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 border-none bg-transparent cursor-pointer text-xs"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Status Filter Buttons */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {["ALL", "Approved", "Pending Review", "Pending Payment", "Blocked"].map((status) => (
+                          <button
+                            key={status}
+                            type="button"
+                            onClick={() => setDriverStatusFilter(status)}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                              driverStatusFilter === status
+                                ? "bg-slate-900 text-white border-slate-900 shadow-2xs"
+                                : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100"
+                            }`}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Table View */}
+                    {(() => {
+                      const allPermanent = requests.filter((r) => r.status !== "Terminated" && r.status !== "Rejected");
+                      const filtered = allPermanent.filter((req) => {
+                        const q = driverTableSearch.trim().toLowerCase();
+                        const matchSearch =
+                          !q ||
+                          req.driverDetails.fullName.toLowerCase().includes(q) ||
+                          (req.driverDetails.nicNumber && req.driverDetails.nicNumber.toLowerCase().includes(q)) ||
+                          req.driverDetails.phoneNumber.toLowerCase().includes(q) ||
+                          req.requestReference.toLowerCase().includes(q) ||
+                          req.selectedVehicles.some((v) => v.numberPlate.toLowerCase().includes(q));
+
+                        if (!matchSearch) return false;
+                        if (driverStatusFilter === "ALL") return true;
+                        if (driverStatusFilter === "Approved") return req.status === "Approved";
+                        if (driverStatusFilter === "Pending Review") return req.status === "Pending Branch Approval";
+                        if (driverStatusFilter === "Pending Payment") return req.status === "Pending Payment";
+                        if (driverStatusFilter === "Blocked") return req.status === "Temporarily Blocked" || req.accessControl?.isBlocked;
+                        return true;
+                      });
+
+                      if (filtered.length === 0) {
+                        return (
+                          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+                            <HugeiconsIcon icon={UserCheck01Icon} className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                            <h3 className="text-base font-bold text-slate-800">No Matching Drivers</h3>
+                            <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                              No permanent drivers matched your search criteria or filter.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => { setDriverTableSearch(""); setDriverStatusFilter("ALL"); }}
+                              className="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors cursor-pointer border-none"
+                            >
+                              Reset Filters
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                              <thead>
+                                <tr className="bg-slate-50/90 border-b border-slate-200/80 text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                                  <th className="py-4 px-5">Driver Details</th>
+                                  <th className="py-4 px-4">NIC / ID</th>
+                                  <th className="py-4 px-4">Covered Vehicles</th>
+                                  <th className="py-4 px-4">Validity</th>
+                                  <th className="py-4 px-4">Branch</th>
+                                  <th className="py-4 px-4">Status</th>
+                                  <th className="py-4 px-5 text-right">Action</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100 text-xs">
+                                {filtered.map((req) => {
+                                  const isBlocked = req.status === "Temporarily Blocked" || req.accessControl?.isBlocked;
+                                  const isExpired = req.status === "Expired" || req.accessDuration?.isExpired;
+                                  const isScheduled = req.status === "Scheduled";
+                                  const isApproved = req.status === "Approved";
+
+                                  return (
+                                    <tr
+                                      key={req._id}
+                                      onClick={() => setSelectedDriverDetail(req)}
+                                      className="hover:bg-indigo-50/40 transition-colors cursor-pointer group"
+                                    >
+                                      {/* Driver info */}
+                                      <td className="py-4 px-5">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 text-indigo-700 font-extrabold flex items-center justify-center text-xs shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                                            {req.driverDetails.fullName
+                                              .split(" ")
+                                              .filter(Boolean)
+                                              .slice(0, 2)
+                                              .map((n) => n[0].toUpperCase())
+                                              .join("") || "DR"}
+                                          </div>
+                                          <div>
+                                            <span className="font-bold text-slate-900 block text-sm group-hover:text-indigo-700 transition-colors">
+                                              {req.driverDetails.fullName}
+                                            </span>
+                                            <span className="text-slate-500 text-[11px] font-mono mt-0.5 block">
+                                              {req.driverDetails.phoneNumber}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      </td>
+
+                                      {/* NIC */}
+                                      <td className="py-4 px-4 font-mono font-semibold text-slate-700">
+                                        {req.driverDetails.nicNumber ? (
+                                          <span className="bg-slate-50 px-2 py-1 rounded-md border border-slate-200/60">
+                                            {req.driverDetails.nicNumber}
+                                          </span>
+                                        ) : (
+                                          <span className="text-slate-400">—</span>
+                                        )}
+                                      </td>
+
+                                      {/* Covered Vehicles */}
+                                      <td className="py-4 px-4">
+                                        <div className="flex flex-wrap gap-1.5 max-w-[200px]">
+                                          {req.selectedVehicles.slice(0, 2).map((v, i) => (
+                                            <span
+                                              key={i}
+                                              className="px-2 py-0.5 bg-slate-900 text-white font-mono font-bold rounded-md text-[11px] tracking-wider"
+                                            >
+                                              {v.numberPlate}
+                                            </span>
+                                          ))}
+                                          {req.selectedVehicles.length > 2 && (
+                                            <span className="px-1.5 py-0.5 bg-slate-100 text-slate-600 font-bold rounded-md text-[10px]">
+                                              +{req.selectedVehicles.length - 2}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </td>
+
+                                      {/* Validity */}
+                                      <td className="py-4 px-4 text-slate-600">
+                                        {req.accessDuration ? (
+                                          <div>
+                                            <span className="font-bold text-slate-900 block text-xs">
+                                              {req.accessDuration.durationType || "Configured"}
+                                            </span>
+                                            <span className="text-[10px] text-slate-400 font-mono block">
+                                              Until {new Date(req.accessDuration.endDate).toLocaleDateString("en-GB")}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <span className="text-slate-500">Standard Policy</span>
+                                        )}
+                                      </td>
+
+                                      {/* Branch */}
+                                      <td className="py-4 px-4 text-slate-700 font-medium">
+                                        {req.branch}
+                                      </td>
+
+                                      {/* Status Badge */}
+                                      <td className="py-4 px-4">
+                                        {isBlocked ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-300">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                            Blocked
+                                          </span>
+                                        ) : isExpired ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-300">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                            Expired
+                                          </span>
+                                        ) : isApproved ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                            Approved
+                                          </span>
+                                        ) : isScheduled ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-800 border border-indigo-200">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                                            Scheduled
+                                          </span>
+                                        ) : req.status === "Pending Termination Approval" ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                                            Termination
+                                          </span>
+                                        ) : req.status === "Pending Branch Approval" ? (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-sky-50 text-sky-800 border border-sky-200">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+                                            Under Review
+                                          </span>
+                                        ) : (
+                                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                            {req.status}
+                                          </span>
+                                        )}
+                                      </td>
+
+                                      {/* View Button */}
+                                      <td className="py-4 px-5 text-right">
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedDriverDetail(req);
+                                          }}
+                                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-indigo-50 hover:bg-indigo-600 text-indigo-700 hover:text-white transition-all cursor-pointer border border-indigo-200 shadow-2xs group-hover:border-indigo-600"
+                                        >
+                                          <span>View</span>
+                                          <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5" />
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -3643,6 +4124,27 @@ export default function ThirdPartyPage() {
                   <span>{orderingNfc ? "Connecting..." : "Pay via Stripe"}</span>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox / Document Preview Modal */}
+      {previewDocModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-4 sm:p-6 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h3 className="font-bold text-slate-900 text-sm">{previewDocModal.title}</h3>
+              <button
+                type="button"
+                onClick={() => setPreviewDocModal(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer border-none bg-transparent"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="max-h-[75vh] overflow-auto flex items-center justify-center bg-slate-100 rounded-2xl p-2">
+              <img src={previewDocModal.url} alt={previewDocModal.title} className="max-w-full max-h-[70vh] object-contain rounded-xl" />
             </div>
           </div>
         </div>
