@@ -88,7 +88,11 @@ const thirdPartyRegistrationSchema = new mongoose.Schema(
         "Rejected",
         "Cancelled",
         "Pending Termination Approval",
-        "Terminated"
+        "Terminated",
+        "Scheduled",
+        "Temporarily Blocked",
+        "Expired",
+        "Revoked"
       ],
       default: "Pending Payment",
       index: true
@@ -159,6 +163,45 @@ const thirdPartyRegistrationSchema = new mongoose.Schema(
         accessedAt: { type: Date, default: Date.now },
         ipAddress: { type: String, default: "" },
         userAgent: { type: String, default: "" }
+      }
+    ],
+    accessDuration: {
+      durationType: {
+        type: String,
+        enum: ["1 Month", "3 Months", "6 Months", "12 Months", "Custom", ""],
+        default: "12 Months"
+      },
+      startDate: { type: Date, default: null },
+      endDate: { type: Date, default: null },
+      isExpired: { type: Boolean, default: false },
+      expiredAt: { type: Date, default: null }
+    },
+    accessControl: {
+      isBlocked: { type: Boolean, default: false },
+      blockedAt: { type: Date, default: null },
+      blockedReason: { type: String, default: "" },
+      unblockedAt: { type: Date, default: null },
+      terminatedAt: { type: Date, default: null },
+      terminatedReason: { type: String, default: "" }
+    },
+    renewalHistory: [
+      {
+        renewedAt: { type: Date, default: Date.now },
+        renewedBy: { type: String, default: "" },
+        previousStartDate: { type: Date, default: null },
+        previousEndDate: { type: Date, default: null },
+        newStartDate: { type: Date, default: null },
+        newEndDate: { type: Date, default: null },
+        durationType: { type: String, default: "" },
+        note: { type: String, default: "" }
+      }
+    ],
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        changedAt: { type: Date, default: Date.now },
+        changedBy: { type: String, default: "" },
+        reason: { type: String, default: "" }
       }
     ],
     idempotencyKey: {

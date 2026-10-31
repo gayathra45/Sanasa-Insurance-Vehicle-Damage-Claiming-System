@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import User from "../models/user.model.js";
 import OfficeStaff from "../models/office_staff.model.js";
 import ThirdPartyRegistration from "../models/third_party_registration.model.js";
+import NfcCard from "../models/nfc_card.model.js";
 import { uploadToCloudinary } from "../utils/upload.js";
 import { normalizeSriLankanPhone, sendSms } from "../services/smsService.js";
 import Claim from "../models/claim.model.js";
@@ -197,7 +198,24 @@ router.post("/request", async (req, res) => {
       uploadToCloudinary(documents.drivingLicenceBack, "third_party_docs/licence")
     ]);
 
-    // 7. Save ThirdPartyRegistration record (Fixed fee LKR 300)
+    // 7. Calculate access duration
+    let calculatedAccessDuration = {
+      durationType: "12 Months",
+      startDate: new Date(),
+      endDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+      isExpired: false
+    };
+    if (req.body.accessDuration) {
+      const { durationType, startDate, endDate } = req.body.accessDuration;
+      calculatedAccessDuration = {
+        durationType: durationType || "12 Months",
+        startDate: startDate ? new Date(startDate) : new Date(),
+        endDate: endDate ? new Date(endDate) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+        isExpired: false
+      };
+    }
+
+    // 8. Save ThirdPartyRegistration record (Fixed fee LKR 300)
     const newRegistration = new ThirdPartyRegistration({
       requestReference,
       policyHolderNic: cleanNic,
@@ -218,6 +236,7 @@ router.post("/request", async (req, res) => {
         }
       },
       selectedVehicles: matchedVehicles,
+      accessDuration: calculatedAccessDuration,
       fee: 300,
       currency: "LKR",
       status: "Pending Payment",
@@ -732,6 +751,344 @@ router.post("/request-termination/:requestId", async (req, res) => {
   } catch (err) {
     console.error("POST /request-termination error:", err);
     return res.status(500).json({ error: "Failed to submit driver termination request." });
+  }
+});
+
+// ==========================================
+// 1.5. PERMANENT DRIVER DURATION & ACCESS CONTROLS
+// ==========================================
+
+/**
+ * POST /api/third-party/permanent/set-duration/:requestId
+ * Set or update duration for an existing permanent third-party driver
+ */
+router.post("/permanent/set-duration/:requestId", async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { policyHolderNic, durationType, startDate, endDate } = req.body;
+
+    if (!policyHolderNic || !startDate || !endDate) {
+      return res.status(400).json({ error: "policyHolderNic, startDate, and endDate are required." });
+    }
+
+    const cleanNic = String(policyHolderNic).trim().toUpperCase();
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Driver registration not found." });
+    }
+
+    if (request.policyHolderNic.trim().toUpperCase() !== cleanNic) {
+      return res.status(403).json({ error: "Unauthorized access to this registration." });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+      return res.status(400).json({ error: "End date must be later than start date." });
+    }
+
+    request.accessDuration = {
+      durationType: durationType || "Custom",
+      startDate: start,
+      endDate: end,
+      isExpired: false,
+      expiredAt: null
+    };
+
+    // If currently approved and start is in future, status can be Scheduled
+    const now = new Date();
+    if (request.status === "Approved" && now < start) {
+      request.status = "Scheduled";
+    } else if (request.status === "Scheduled" && now >= start && now <= end) {
+      request.status = "Approved";
+    }
+
+    await request.save();
+
+    return res.json({
+      success: true,
+      message: `Access duration set successfully (${request.accessDuration.durationType}): valid until ${end.toLocaleDateString("en-LK")}.`,
+      request
+    });
+  } catch (err) {
+    console.error("POST /permanent/set-duration error:", err);
+    return res.status(500).json({ error: "Failed to set driver duration." });
+  }
+});
+
+/**
+ * POST /api/third-party/permanent/block/:requestId
+ * Temporarily block driver access without removing assignment or shortening duration
+ */
+router.post("/permanent/block/:requestId", async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { policyHolderNic, reason } = req.body;
+
+    if (!policyHolderNic) {
+      return res.status(400).json({ error: "policyHolderNic is required." });
+    }
+
+    const cleanNic = String(policyHolderNic).trim().toUpperCase();
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Driver registration not found." });
+    }
+
+    if (request.policyHolderNic.trim().toUpperCase() !== cleanNic) {
+      return res.status(403).json({ error: "Unauthorized access to this registration." });
+    }
+
+    if (request.status === "Terminated") {
+      return res.status(400).json({ error: "Cannot block a terminated driver registration." });
+    }
+
+    const now = new Date();
+    request.status = "Temporarily Blocked";
+    request.accessControl = request.accessControl || {};
+    request.accessControl.isBlocked = true;
+    request.accessControl.blockedAt = now;
+    request.accessControl.blockedReason = reason || "Temporarily blocked by policyholder";
+
+    request.statusHistory = request.statusHistory || [];
+    request.statusHistory.push({
+      status: "Temporarily Blocked",
+      changedAt: now,
+      changedBy: cleanNic,
+      reason: reason || "Temporarily blocked by policyholder"
+    });
+
+    await request.save();
+
+    return res.json({
+      success: true,
+      message: `Driver ${request.driverDetails.fullName} has been temporarily blocked. Access to portal and features suspended.`,
+      request
+    });
+  } catch (err) {
+    console.error("POST /permanent/block error:", err);
+    return res.status(500).json({ error: "Failed to temporarily block driver." });
+  }
+});
+
+/**
+ * POST /api/third-party/permanent/unblock/:requestId
+ * Restore access only if assignment is still valid, approved, within authorized time window, not terminated
+ */
+router.post("/permanent/unblock/:requestId", async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { policyHolderNic } = req.body;
+
+    if (!policyHolderNic) {
+      return res.status(400).json({ error: "policyHolderNic is required." });
+    }
+
+    const cleanNic = String(policyHolderNic).trim().toUpperCase();
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Driver registration not found." });
+    }
+
+    if (request.policyHolderNic.trim().toUpperCase() !== cleanNic) {
+      return res.status(403).json({ error: "Unauthorized access to this registration." });
+    }
+
+    if (request.status === "Terminated" || request.secureAccess?.isRevoked) {
+      return res.status(400).json({
+        error: "Cannot unblock: This driver authorization has been permanently terminated."
+      });
+    }
+
+    // Check expiry
+    const now = new Date();
+    if (request.accessDuration?.endDate && now > new Date(request.accessDuration.endDate)) {
+      request.status = "Expired";
+      request.accessDuration.isExpired = true;
+      await request.save();
+      return res.status(400).json({
+        error: "Cannot unblock: The driver access duration has expired. Please use the Renew option to grant a new duration."
+      });
+    }
+
+    const restoredStatus = (request.accessDuration?.startDate && now < new Date(request.accessDuration.startDate))
+      ? "Scheduled"
+      : "Approved";
+
+    request.status = restoredStatus;
+    request.accessControl = request.accessControl || {};
+    request.accessControl.isBlocked = false;
+    request.accessControl.unblockedAt = now;
+    request.accessControl.blockedReason = "";
+
+    request.statusHistory = request.statusHistory || [];
+    request.statusHistory.push({
+      status: restoredStatus,
+      changedAt: now,
+      changedBy: cleanNic,
+      reason: "Unblocked by policyholder"
+    });
+
+    await request.save();
+
+    return res.json({
+      success: true,
+      message: `Driver ${request.driverDetails.fullName} unblocked successfully. Access restored to ${restoredStatus}.`,
+      request
+    });
+  } catch (err) {
+    console.error("POST /permanent/unblock error:", err);
+    return res.status(500).json({ error: "Failed to unblock driver." });
+  }
+});
+
+/**
+ * POST /api/third-party/permanent/terminate/:requestId
+ * Immediately and permanently terminate permanent driver access
+ */
+router.post("/permanent/terminate/:requestId", async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { policyHolderNic, reason } = req.body;
+
+    if (!policyHolderNic) {
+      return res.status(400).json({ error: "policyHolderNic is required." });
+    }
+
+    const cleanNic = String(policyHolderNic).trim().toUpperCase();
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Driver registration not found." });
+    }
+
+    if (request.policyHolderNic.trim().toUpperCase() !== cleanNic) {
+      return res.status(403).json({ error: "Unauthorized access to this registration." });
+    }
+
+    if (request.status === "Terminated") {
+      return res.status(400).json({ error: "This driver authorization is already terminated." });
+    }
+
+    const now = new Date();
+    request.status = "Terminated";
+    request.secureAccess = request.secureAccess || {};
+    request.secureAccess.isRevoked = true;
+    request.secureAccess.revokedAt = now;
+    request.secureAccess.revokedBy = cleanNic;
+
+    request.accessControl = request.accessControl || {};
+    request.accessControl.terminatedAt = now;
+    request.accessControl.terminatedReason = reason || "Terminated permanently by policyholder";
+
+    request.statusHistory = request.statusHistory || [];
+    request.statusHistory.push({
+      status: "Terminated",
+      changedAt: now,
+      changedBy: cleanNic,
+      reason: reason || "Terminated permanently by policyholder"
+    });
+
+    await request.save();
+
+    return res.json({
+      success: true,
+      message: `Driver authorization for ${request.driverDetails.fullName} has been permanently terminated. Access revoked immediately.`,
+      request
+    });
+  } catch (err) {
+    console.error("POST /permanent/terminate error:", err);
+    return res.status(500).json({ error: "Failed to terminate driver registration." });
+  }
+});
+
+/**
+ * POST /api/third-party/permanent/renew/:requestId
+ * Renew an expired or existing permanent driver assignment with a new duration
+ */
+router.post("/permanent/renew/:requestId", async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const { policyHolderNic, durationType, startDate, endDate, note } = req.body;
+
+    if (!policyHolderNic || !startDate || !endDate) {
+      return res.status(400).json({ error: "policyHolderNic, startDate, and endDate are required for renewal." });
+    }
+
+    const cleanNic = String(policyHolderNic).trim().toUpperCase();
+    const request = await ThirdPartyRegistration.findById(requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Driver registration not found." });
+    }
+
+    if (request.policyHolderNic.trim().toUpperCase() !== cleanNic) {
+      return res.status(403).json({ error: "Unauthorized access to this registration." });
+    }
+
+    if (request.status === "Terminated") {
+      return res.status(400).json({
+        error: "Cannot renew a terminated driver authorization. A new registration is required."
+      });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+      return res.status(400).json({ error: "New end date must be later than new start date." });
+    }
+
+    const now = new Date();
+    const prevStart = request.accessDuration?.startDate || null;
+    const prevEnd = request.accessDuration?.endDate || null;
+
+    // Archive previous duration in renewalHistory
+    request.renewalHistory = request.renewalHistory || [];
+    request.renewalHistory.push({
+      renewedAt: now,
+      renewedBy: cleanNic,
+      previousStartDate: prevStart,
+      previousEndDate: prevEnd,
+      newStartDate: start,
+      newEndDate: end,
+      durationType: durationType || "Custom",
+      note: note || "Renewed by policyholder"
+    });
+
+    // Update duration
+    request.accessDuration = {
+      durationType: durationType || "Custom",
+      startDate: start,
+      endDate: end,
+      isExpired: false,
+      expiredAt: null
+    };
+
+    // If driver was blocked, keep blocked. If expired or approved, determine new status
+    if (request.status !== "Temporarily Blocked") {
+      if (now < start) {
+        request.status = "Scheduled";
+      } else {
+        request.status = "Approved";
+      }
+    }
+
+    request.statusHistory = request.statusHistory || [];
+    request.statusHistory.push({
+      status: request.status,
+      changedAt: now,
+      changedBy: cleanNic,
+      reason: `Renewed duration: ${durationType || "Custom"} (until ${end.toLocaleDateString("en-LK")})`
+    });
+
+    await request.save();
+
+    return res.json({
+      success: true,
+      message: `Driver ${request.driverDetails.fullName} renewed successfully until ${end.toLocaleDateString("en-LK")}.`,
+      request
+    });
+  } catch (err) {
+    console.error("POST /permanent/renew error:", err);
+    return res.status(500).json({ error: "Failed to renew driver duration." });
   }
 });
 
@@ -1517,89 +1874,170 @@ router.get("/driver-pass/:token", async (req, res) => {
     }
 
     const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    const request = await ThirdPartyRegistration.findOne({
+    const now = new Date();
+
+    // 1. Check Permanent Driver Registrations
+    let request = await ThirdPartyRegistration.findOne({
       "secureAccess.tokenHash": tokenHash
     });
 
-    if (!request) {
-      return res.status(404).json({ error: "Digital pass not found or invalid token." });
-    }
-
-    if (request.secureAccess?.isRevoked) {
-      return res.status(403).json({
-        error: "This digital driver pass has been revoked by the policyholder or branch administration."
-      });
-    }
-
-    if (request.status !== "Approved") {
-      return res.status(403).json({
-        error: `Digital pass is not active. Current status: ${request.status}`
-      });
-    }
-
-    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
-    const userAgent = req.headers["user-agent"] || "";
-
-    // Record activity log
-    request.accessLogs = request.accessLogs || [];
-    request.accessLogs.push({
-      accessedAt: new Date(),
-      ipAddress: String(clientIp).split(",")[0].trim(),
-      userAgent
-    });
-    await request.save();
-
-    const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
-
-    // 1. Send SMS to Policyholder (Owner) about driver activity
-    if (request.policyHolderPhone) {
-      sendSms({
-        phone: request.policyHolderPhone,
-        message: `[SANASA SECURITY ALERT]\nDear ${request.policyHolderName},\n\nActivity Notice: Your authorized driver ${request.driverDetails.fullName} has accessed the Digital Driver Pass for vehicle(s) ${plates}.\n• Access Date: ${new Date().toLocaleDateString("en-LK")}\n• Verified by: Sanasa Digital Pass Gateway\n\nIf this was not authorized by you, please contact ${request.branch} Branch or call Hotline: 0725 575 575.`,
-        recipientType: "PolicyHolder",
-        recipientName: request.policyHolderName,
-        eventType: "third_party_pass_accessed"
-      }).catch((e) => console.warn("Policyholder access SMS error:", e.message));
-    }
-
-    // 2. Send SMS to Third-Party Driver
-    if (request.driverDetails?.phoneNumber) {
-      sendSms({
-        phone: request.driverDetails.phoneNumber,
-        message: `[SANASA GENERAL INSURANCE]\nDear ${request.driverDetails.fullName},\n\nDigital Driver Pass verification active for vehicle(s) ${plates}.\n• Authorizing Owner: ${request.policyHolderName}\n• Coverage: Underwritten by Sanasa General Insurance\n• Status: Valid & Active\n\n24/7 Hotline: 0725 575 575`,
-        recipientType: "ThirdPartyDriver",
-        recipientName: request.driverDetails.fullName,
-        eventType: "third_party_driver_activity"
-      }).catch((e) => console.warn("Driver access SMS error:", e.message));
-    }
-
-    // 3. Send Email to Policyholder (Owner)
-    if (request.policyHolderEmail) {
-      sendThirdPartyDriverActivityEmail({
-        request,
-        activityType: "Digital Driver Pass Verification Accessed",
-        accessMeta: { ipAddress: String(clientIp).split(",")[0].trim(), userAgent }
-      }).catch((e) => console.warn("Policyholder activity Email error:", e.message));
-    }
-
-    return res.json({
-      success: true,
-      pass: {
-        reference: request.requestReference,
-        policyHolderName: request.policyHolderName,
-        policyHolderNic: request.policyHolderNic,
-        branch: request.branch,
-        driverName: request.driverDetails.fullName,
-        driverNic: request.driverDetails.nicNumber,
-        driverPhone: request.driverDetails.phoneNumber,
-        driverAddress: request.driverDetails.residentialAddress,
-        authorizedVehicles: request.selectedVehicles,
-        approvalDate: request.branchReview?.reviewedAt || request.updatedAt,
-        status: request.status,
-        verificationToken: token.substring(0, 12).toUpperCase(),
-        totalAccessCount: request.accessLogs.length
+    if (request) {
+      if (request.secureAccess?.isRevoked || request.status === "Terminated") {
+        return res.status(403).json({
+          error: "This digital driver pass has been permanently terminated or revoked."
+        });
       }
-    });
+
+      if (request.status === "Temporarily Blocked" || request.accessControl?.isBlocked) {
+        return res.status(403).json({
+          error: "This digital driver pass has been temporarily blocked by the policyholder."
+        });
+      }
+
+      if (request.accessDuration?.endDate && now > new Date(request.accessDuration.endDate)) {
+        if (request.status !== "Expired") {
+          request.status = "Expired";
+          request.accessDuration.isExpired = true;
+          await request.save();
+        }
+        return res.status(403).json({
+          error: "This digital driver pass has expired. Please contact the vehicle owner to renew."
+        });
+      }
+
+      if (request.accessDuration?.startDate && now < new Date(request.accessDuration.startDate)) {
+        return res.status(403).json({
+          error: `This digital driver pass is scheduled and will become active on ${new Date(request.accessDuration.startDate).toLocaleString("en-LK")}.`
+        });
+      }
+
+      if (request.status !== "Approved" && request.status !== "Scheduled") {
+        return res.status(403).json({
+          error: `Digital pass is not active. Current status: ${request.status}`
+        });
+      }
+
+      const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+      const userAgent = req.headers["user-agent"] || "";
+
+      request.accessLogs = request.accessLogs || [];
+      request.accessLogs.push({
+        accessedAt: now,
+        ipAddress: String(clientIp).split(",")[0].trim(),
+        userAgent
+      });
+      await request.save();
+
+      const plates = (request.selectedVehicles || []).map((v) => v.numberPlate).join(", ");
+
+      if (request.policyHolderPhone) {
+        sendSms({
+          phone: request.policyHolderPhone,
+          message: `[SANASA SECURITY ALERT]\nDear ${request.policyHolderName},\n\nActivity Notice: Your authorized driver ${request.driverDetails.fullName} has accessed the Digital Driver Pass for vehicle(s) ${plates}.\n• Access Date: ${now.toLocaleDateString("en-LK")}\n• Verified by: Sanasa Digital Pass Gateway\nHotline: 0725 575 575`,
+          recipientType: "PolicyHolder",
+          recipientName: request.policyHolderName,
+          eventType: "third_party_pass_accessed"
+        }).catch((e) => console.warn("Policyholder access SMS error:", e.message));
+      }
+
+      return res.json({
+        success: true,
+        driverType: "Permanent",
+        pass: {
+          reference: request.requestReference,
+          policyHolderName: request.policyHolderName,
+          policyHolderNic: request.policyHolderNic,
+          branch: request.branch,
+          driverName: request.driverDetails.fullName,
+          driverNic: request.driverDetails.nicNumber,
+          driverPhone: request.driverDetails.phoneNumber,
+          driverAddress: request.driverDetails.residentialAddress,
+          authorizedVehicles: request.selectedVehicles,
+          approvalDate: request.branchReview?.reviewedAt || request.updatedAt,
+          status: request.status,
+          duration: request.accessDuration,
+          verificationToken: token.substring(0, 12).toUpperCase(),
+          totalAccessCount: request.accessLogs.length
+        }
+      });
+    }
+
+    // 2. Check Optional NFC Cards
+    const card = await NfcCard.findOne({ "currentAssignment.tokenHash": tokenHash });
+    if (card) {
+      const asg = card.currentAssignment;
+      if (!asg || !asg.assignmentId || card.status === "Available") {
+        return res.status(404).json({ error: "No active driver assignment found on this card." });
+      }
+
+      if (card.status === "Terminated" || asg.status === "Terminated") {
+        return res.status(403).json({
+          error: "This temporary driver assignment has been terminated. Pass is revoked."
+        });
+      }
+
+      if (card.status === "Temporarily Blocked" || asg.isBlocked) {
+        return res.status(403).json({
+          error: "This driver assignment has been temporarily blocked by the policyholder."
+        });
+      }
+
+      if (asg.endDate && now > new Date(asg.endDate)) {
+        return res.status(403).json({
+          error: "This temporary driver assignment duration has expired."
+        });
+      }
+
+      if (asg.startDate && now < new Date(asg.startDate)) {
+        return res.status(403).json({
+          error: `Driver access is scheduled and will activate on ${new Date(asg.startDate).toLocaleString("en-LK")}.`
+        });
+      }
+
+      const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+      const userAgent = req.headers["user-agent"] || "";
+
+      card.accessLogs = card.accessLogs || [];
+      card.accessLogs.push({
+        accessedAt: now,
+        ipAddress: String(clientIp).split(",")[0].trim(),
+        userAgent,
+        assignmentId: asg.assignmentId
+      });
+      card.lastActivity = now;
+      await card.save();
+
+      return res.json({
+        success: true,
+        driverType: "TemporaryOptionalCard",
+        pass: {
+          reference: card.cardId,
+          assignmentId: asg.assignmentId,
+          policyHolderName: card.policyHolderName,
+          policyHolderNic: card.policyHolderNic,
+          branch: card.branch,
+          driverName: asg.driverName,
+          driverNic: asg.driverNic || "",
+          driverPhone: asg.driverPhone,
+          driverAddress: asg.driverAddress,
+          driverPhoto: asg.driverPhoto,
+          authorizedVehicles: [
+            {
+              numberPlate: asg.vehiclePlate,
+              vehicleType: asg.vehicleType,
+              model: asg.vehicleModel
+            }
+          ],
+          startDate: asg.startDate,
+          endDate: asg.endDate,
+          status: card.status,
+          verificationToken: token.substring(0, 12).toUpperCase(),
+          totalAccessCount: card.accessLogs.length
+        }
+      });
+    }
+
+    return res.status(404).json({ error: "Digital pass not found or invalid token." });
   } catch (err) {
     console.error("GET driver-pass error:", err);
     return res.status(500).json({ error: "Failed to load digital driver pass." });
@@ -1655,8 +2093,8 @@ function verifyDriverSessionString(tokenStr) {
 }
 
 /**
- * Middleware: Verifies the restricted Third-Party Driver session.
- * Protects every portal endpoint against unauthorized access and direct ID tampering.
+ * Middleware: Verifies restricted driver session token (Permanent OR Temporary Optional Card)
+ * Protects every portal endpoint against unauthorized access, expiration, and blocking.
  */
 async function requireDriverSession(req, res, next) {
   try {
@@ -1671,11 +2109,89 @@ async function requireDriverSession(req, res, next) {
     }
 
     const payload = verifyDriverSessionString(tokenStr);
-    if (!payload || payload.role !== "ThirdPartyDriver" || !payload.registrationId) {
+    if (!payload || payload.role !== "ThirdPartyDriver") {
       return res.status(401).json({ error: "Unauthorized: Invalid or expired driver session." });
     }
 
-    // Always re-verify active registration in database to handle immediate revocation
+    const now = new Date();
+
+    // 1. Handle Temporary Optional NFC Card Drivers
+    if (payload.driverType === "TemporaryOptionalCard") {
+      const card = await NfcCard.findOne({ cardId: payload.cardId });
+      if (!card) {
+        return res.status(404).json({ error: "NFC Card record not found." });
+      }
+
+      if (!card.currentAssignment?.assignmentId || card.currentAssignment.assignmentId !== payload.assignmentId) {
+        return res.status(403).json({
+          error: "This temporary driver assignment has ended or been replaced by a new assignment."
+        });
+      }
+
+      if (card.currentAssignment.isBlocked || card.status === "Temporarily Blocked") {
+        return res.status(403).json({
+          error: "This driver assignment has been temporarily blocked by the policyholder."
+        });
+      }
+
+      if (card.status === "Terminated" || card.currentAssignment.status === "Terminated") {
+        return res.status(403).json({
+          error: "This temporary driver assignment has been terminated. Access is revoked."
+        });
+      }
+
+      if (card.currentAssignment.endDate && now > new Date(card.currentAssignment.endDate)) {
+        return res.status(403).json({
+          error: "This temporary driver assignment duration has expired."
+        });
+      }
+
+      if (card.currentAssignment.startDate && now < new Date(card.currentAssignment.startDate)) {
+        return res.status(403).json({
+          error: `Driver access is scheduled and will activate on ${new Date(card.currentAssignment.startDate).toLocaleString("en-LK")}.`
+        });
+      }
+
+      req.driverSession = payload;
+      req.thirdPartyRequest = {
+        _id: card._id,
+        isTemporaryCard: true,
+        cardId: card.cardId,
+        assignmentId: card.currentAssignment.assignmentId,
+        requestReference: card.cardId,
+        policyHolderNic: card.policyHolderNic,
+        policyHolderName: card.policyHolderName,
+        policyHolderPhone: card.policyHolderPhone,
+        branch: card.branch,
+        driverDetails: {
+          fullName: card.currentAssignment.driverName,
+          phoneNumber: card.currentAssignment.driverPhone,
+          nicNumber: card.currentAssignment.driverNic,
+          residentialAddress: card.currentAssignment.driverAddress
+        },
+        selectedVehicles: [
+          {
+            numberPlate: card.currentAssignment.vehiclePlate,
+            vehicleType: card.currentAssignment.vehicleType,
+            model: card.currentAssignment.vehicleModel
+          }
+        ],
+        accessDuration: {
+          startDate: card.currentAssignment.startDate,
+          endDate: card.currentAssignment.endDate,
+          durationType: card.currentAssignment.durationType
+        },
+        status: card.status,
+        updatedAt: card.updatedAt
+      };
+      return next();
+    }
+
+    // 2. Handle Permanent Third-Party Drivers
+    if (!payload.registrationId) {
+      return res.status(401).json({ error: "Unauthorized: Invalid driver session." });
+    }
+
     const request = await ThirdPartyRegistration.findById(payload.registrationId);
     if (!request) {
       return res.status(404).json({ error: "Driver authorization record not found." });
@@ -1683,11 +2199,35 @@ async function requireDriverSession(req, res, next) {
 
     if (request.status === "Terminated" || request.secureAccess?.isRevoked) {
       return res.status(403).json({
-        error: "This driver authorization has been officially terminated. Access to the web portal and mobile app is permanently revoked."
+        error: "This driver authorization has been officially terminated. Access is permanently revoked."
       });
     }
 
-    if (request.status !== "Approved") {
+    if (request.accessControl?.isBlocked || request.status === "Temporarily Blocked") {
+      return res.status(403).json({
+        error: "Driver authorization has been temporarily blocked by the policyholder."
+      });
+    }
+
+    // Check expiry
+    if (request.accessDuration?.endDate && now > new Date(request.accessDuration.endDate)) {
+      if (request.status !== "Expired") {
+        request.status = "Expired";
+        request.accessDuration.isExpired = true;
+        await request.save();
+      }
+      return res.status(403).json({
+        error: "Driver authorization duration has expired. Please contact the policyholder to renew."
+      });
+    }
+
+    if (request.accessDuration?.startDate && now < new Date(request.accessDuration.startDate)) {
+      return res.status(403).json({
+        error: `Driver access is scheduled and will activate on ${new Date(request.accessDuration.startDate).toLocaleString("en-LK")}.`
+      });
+    }
+
+    if (request.status !== "Approved" && request.status !== "Scheduled") {
       return res.status(403).json({
         error: `Driver access is not active. Authorization status is: ${request.status}`
       });
@@ -1704,7 +2244,7 @@ async function requireDriverSession(req, res, next) {
 
 /**
  * POST /api/third-party/driver-session
- * Exchanges the URL's cryptographic rawToken for a secure restricted driver session token.
+ * Exchanges rawToken for secure restricted session token (supports Permanent and Optional Card drivers)
  */
 router.post("/driver-session", async (req, res) => {
   try {
@@ -1714,62 +2254,140 @@ router.post("/driver-session", async (req, res) => {
     }
 
     const tokenHash = crypto.createHash("sha256").update(token.trim()).digest("hex");
+    const now = new Date();
+
+    // 1. Check Permanent Driver Registration
     const request = await ThirdPartyRegistration.findOne({
       "secureAccess.tokenHash": tokenHash
     });
 
-    if (!request) {
-      return res.status(404).json({ error: "Invalid access link or token." });
-    }
-
-    if (request.status === "Terminated" || request.secureAccess?.isRevoked) {
-      return res.status(403).json({
-        error: "This driver access authorization has been officially terminated. Access to the web and mobile application is permanently revoked."
-      });
-    }
-
-    if (request.status !== "Approved") {
-      return res.status(403).json({
-        error: `Authorization is not active. Current status: ${request.status}`
-      });
-    }
-
-    // Record session creation in access logs
-    const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
-    const userAgent = req.headers["user-agent"] || "";
-    request.accessLogs = request.accessLogs || [];
-    request.accessLogs.push({
-      accessedAt: new Date(),
-      ipAddress: String(clientIp).split(",")[0].trim(),
-      userAgent
-    });
-    await request.save();
-
-    // 24-hour restricted session token
-    const sessionToken = signDriverSession({
-      role: "ThirdPartyDriver",
-      registrationId: String(request._id),
-      driverNic: request.driverDetails.nicNumber,
-      driverName: request.driverDetails.fullName,
-      policyHolderNic: request.policyHolderNic,
-      authorizedPlates: (request.selectedVehicles || []).map((v) => v.numberPlate),
-      exp: Date.now() + 24 * 60 * 60 * 1000
-    });
-
-    return res.json({
-      success: true,
-      sessionToken,
-      driver: {
-        fullName: request.driverDetails.fullName,
-        maskedNic: maskNic(request.driverDetails.nicNumber),
-        phoneNumber: request.driverDetails.phoneNumber,
-        reference: request.requestReference,
-        branch: request.branch,
-        policyHolderName: request.policyHolderName,
-        authorizedVehiclesCount: (request.selectedVehicles || []).length,
-        approvalDate: request.branchReview?.reviewedAt || request.updatedAt
+    if (request) {
+      if (request.status === "Terminated" || request.secureAccess?.isRevoked) {
+        return res.status(403).json({
+          error: "This driver access authorization has been officially terminated."
+        });
       }
-    });
+
+      if (request.accessControl?.isBlocked || request.status === "Temporarily Blocked") {
+        return res.status(403).json({
+          error: "Driver access is temporarily blocked by the policyholder."
+        });
+      }
+
+      if (request.accessDuration?.endDate && now > new Date(request.accessDuration.endDate)) {
+        return res.status(403).json({
+          error: "Driver authorization duration has expired. Please contact the vehicle owner."
+        });
+      }
+
+      if (request.status !== "Approved" && request.status !== "Scheduled") {
+        return res.status(403).json({
+          error: `Authorization is not active. Current status: ${request.status}`
+        });
+      }
+
+      const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+      const userAgent = req.headers["user-agent"] || "";
+      request.accessLogs = request.accessLogs || [];
+      request.accessLogs.push({
+        accessedAt: now,
+        ipAddress: String(clientIp).split(",")[0].trim(),
+        userAgent
+      });
+      await request.save();
+
+      const sessionToken = signDriverSession({
+        role: "ThirdPartyDriver",
+        driverType: "Permanent",
+        registrationId: String(request._id),
+        driverNic: request.driverDetails.nicNumber,
+        driverName: request.driverDetails.fullName,
+        driverPhone: request.driverDetails.phoneNumber,
+        policyHolderNic: request.policyHolderNic,
+        authorizedPlates: (request.selectedVehicles || []).map((v) => v.numberPlate),
+        exp: Date.now() + 24 * 60 * 60 * 1000
+      });
+
+      return res.json({
+        success: true,
+        sessionToken,
+        driverType: "Permanent",
+        driver: {
+          fullName: request.driverDetails.fullName,
+          maskedNic: maskNic(request.driverDetails.nicNumber),
+          phoneNumber: request.driverDetails.phoneNumber,
+          reference: request.requestReference,
+          branch: request.branch,
+          policyHolderName: request.policyHolderName,
+          authorizedVehiclesCount: (request.selectedVehicles || []).length,
+          approvalDate: request.branchReview?.reviewedAt || request.updatedAt
+        }
+      });
+    }
+
+    // 2. Check Optional NFC Card
+    const card = await NfcCard.findOne({ "currentAssignment.tokenHash": tokenHash });
+    if (card) {
+      const asg = card.currentAssignment;
+      if (!asg || !asg.assignmentId || card.status === "Available") {
+        return res.status(404).json({ error: "No active driver assignment found on this card." });
+      }
+
+      if (card.status === "Terminated" || asg.status === "Terminated") {
+        return res.status(403).json({ error: "This temporary driver assignment has been terminated." });
+      }
+
+      if (card.status === "Temporarily Blocked" || asg.isBlocked) {
+        return res.status(403).json({ error: "Driver access is temporarily blocked by policyholder." });
+      }
+
+      if (asg.endDate && now > new Date(asg.endDate)) {
+        return res.status(403).json({ error: "Driver assignment duration has expired." });
+      }
+
+      const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "";
+      const userAgent = req.headers["user-agent"] || "";
+      card.accessLogs = card.accessLogs || [];
+      card.accessLogs.push({
+        accessedAt: now,
+        ipAddress: String(clientIp).split(",")[0].trim(),
+        userAgent,
+        assignmentId: asg.assignmentId
+      });
+      card.lastActivity = now;
+      await card.save();
+
+      const sessionToken = signDriverSession({
+        role: "ThirdPartyDriver",
+        driverType: "TemporaryOptionalCard",
+        cardId: card.cardId,
+        assignmentId: asg.assignmentId,
+        driverNic: asg.driverNic || "",
+        driverName: asg.driverName,
+        driverPhone: asg.driverPhone,
+        policyHolderNic: card.policyHolderNic,
+        authorizedPlates: [asg.vehiclePlate],
+        exp: Math.min(Date.now() + 24 * 60 * 60 * 1000, new Date(asg.endDate).getTime())
+      });
+
+      return res.json({
+        success: true,
+        sessionToken,
+        driverType: "TemporaryOptionalCard",
+        driver: {
+          fullName: asg.driverName,
+          maskedNic: maskNic(asg.driverNic || card.cardId),
+          phoneNumber: asg.driverPhone,
+          reference: card.cardId,
+          branch: card.branch,
+          policyHolderName: card.policyHolderName,
+          authorizedVehiclesCount: 1,
+          approvalDate: asg.assignedAt
+        }
+      });
+    }
+
+    return res.status(404).json({ error: "Invalid access link or token." });
   } catch (err) {
     console.error("POST /driver-session error:", err);
     return res.status(500).json({ error: "Failed to establish driver session." });
@@ -1869,14 +2487,19 @@ router.get("/portal/claims", requireDriverSession, async (req, res) => {
     const request = req.thirdPartyRequest;
     const authorizedPlates = (request.selectedVehicles || []).map((v) => v.numberPlate);
 
-    const claims = await Claim.find({
-      vehiclePlate: { $in: authorizedPlates },
-      $or: [
+    let claimsQuery = { vehiclePlate: { $in: authorizedPlates } };
+    if (req.driverSession?.driverType === "TemporaryOptionalCard" && req.driverSession?.assignmentId) {
+      // Strict assignment-level claims isolation: Temporary driver only accesses claims from their active assignment!
+      claimsQuery["submittedByDriver.assignmentId"] = req.driverSession.assignmentId;
+    } else {
+      claimsQuery["$or"] = [
         { "submittedByDriver.registrationId": request._id },
         { "submittedByDriver.driverNic": request.driverDetails.nicNumber },
         { description: new RegExp(request.driverDetails.fullName, "i") }
-      ]
-    }).sort({ createdAt: -1 });
+      ];
+    }
+
+    const claims = await Claim.find(claimsQuery).sort({ createdAt: -1 });
 
     const safeClaims = claims.map((c) => ({
       claimNumber: c.claimNumber,
@@ -2047,10 +2670,15 @@ router.get("/portal/claims/:claimNumber", requireDriverSession, async (req, res)
     const { claimNumber } = req.params;
     const authorizedPlates = (request.selectedVehicles || []).map((v) => v.numberPlate);
 
-    const claim = await Claim.findOne({
+    let claimQuery = {
       claimNumber: claimNumber.trim().toUpperCase(),
       vehiclePlate: { $in: authorizedPlates }
-    });
+    };
+    if (req.driverSession?.driverType === "TemporaryOptionalCard" && req.driverSession?.assignmentId) {
+      claimQuery["submittedByDriver.assignmentId"] = req.driverSession.assignmentId;
+    }
+
+    const claim = await Claim.findOne(claimQuery);
 
     if (!claim) {
       return res.status(404).json({ error: "Claim not found or you are not authorized to view it." });
@@ -2228,10 +2856,13 @@ router.post("/portal/submit-claim", requireDriverSession, async (req, res) => {
       },
       submittedByDriver: {
         isThirdParty: true,
-        driverName: request.driverDetails.fullName,
-        driverNic: request.driverDetails.nicNumber,
-        driverPhone: request.driverDetails.phoneNumber,
-        registrationId: request._id
+        driverName: req.driverSession?.driverName || request.driverDetails?.fullName || "Driver",
+        driverNic: req.driverSession?.driverNic || request.driverDetails?.nicNumber || "",
+        driverPhone: req.driverSession?.driverPhone || request.driverDetails?.phoneNumber || "",
+        registrationId: req.driverSession?.registrationId ? req.driverSession.registrationId : null,
+        assignmentId: req.driverSession?.assignmentId || "",
+        cardId: req.driverSession?.cardId || "",
+        driverType: req.driverSession?.driverType || "Permanent"
       },
       messages: [
         {

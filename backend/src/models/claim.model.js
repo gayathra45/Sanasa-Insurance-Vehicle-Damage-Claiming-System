@@ -100,7 +100,14 @@ const claimSchema = new mongoose.Schema({
     driverName: { type: String, default: "" },
     driverNic: { type: String, default: "" },
     driverPhone: { type: String, default: "" },
-    registrationId: { type: mongoose.Schema.Types.ObjectId, ref: "ThirdPartyRegistration", default: null }
+    registrationId: { type: mongoose.Schema.Types.ObjectId, ref: "ThirdPartyRegistration", default: null },
+    assignmentId: { type: String, default: "", index: true },
+    cardId: { type: String, default: "", index: true },
+    driverType: {
+      type: String,
+      enum: ["Permanent", "TemporaryOptionalCard", "Owner"],
+      default: "Permanent"
+    }
   },
   createdAt: { type: Date, default: Date.now },
   aiAnalysis: {

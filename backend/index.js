@@ -27,6 +27,7 @@ import smsRouter from "./src/routes/sms.routes.js";
 import thirdPartyRouter from "./src/routes/third_party.routes.js";
 import backupRouter from "./src/routes/backup.routes.js";
 import inspectionRouter from "./src/routes/inspection.routes.js";
+import nfcCardRouter from "./src/routes/nfc_card.routes.js";
 import { initBackupScheduler } from "./src/services/backup.service.js";
 import { initSocketServer } from "./src/utils/socket.js";
 
@@ -87,6 +88,7 @@ app.use("/api/sms", smsRouter);
 app.use("/api/third-party", thirdPartyRouter);
 app.use("/api/admin/backups", backupRouter);
 app.use("/api/inspection", inspectionRouter);
+app.use("/api/nfc-card", nfcCardRouter);
 
 
 
