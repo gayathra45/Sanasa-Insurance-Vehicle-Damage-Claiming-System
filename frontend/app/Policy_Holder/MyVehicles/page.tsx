@@ -2532,7 +2532,7 @@ export default function MyVehicles() {
       {/* RENEWAL CHECKOUT WIZARD MODAL (Steps 1, 2, 3) */}
       {renewalWizardOpen && selectedVehicleForModal && renewalInfo?.renewalQuote && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center z-60 p-4 transition-all">
-          <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="bg-white rounded-3xl w-full max-w-3xl sm:max-w-4xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
             
             {/* Wizard Header */}
             <div className="px-6 py-4.5 bg-gradient-to-r from-[#102A43] to-[#204060] text-white flex items-center justify-between flex-shrink-0">
@@ -3854,7 +3854,7 @@ export default function MyVehicles() {
       {/* Terminate Driver Modal */}
       {terminateTargetReq && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-[28px] shadow-2xl max-w-lg w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 my-8">
+          <div className="bg-white rounded-[28px] shadow-2xl max-w-2xl sm:max-w-3xl w-full overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 my-8">
             {/* Header */}
             <div className="p-6 bg-gradient-to-r from-rose-600 to-rose-700 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">

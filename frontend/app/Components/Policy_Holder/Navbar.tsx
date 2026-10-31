@@ -277,7 +277,6 @@ export default function PolicyHolderNavbar() {
     { href: "/Policy_Holder/Home", label: t.home },
     { href: "/Policy_Holder/My_claims", label: t.myClaims },
     { href: "/Policy_Holder/MyVehicles", label: t.myVehicles },
-    { href: "/Policy_Holder/ThirdParty", label: t.thirdParty },
     { href: "/Policy_Holder/Documents", label: t.documents },
     { href: "/Policy_Holder/Contact", label: t.contact }
   ];
