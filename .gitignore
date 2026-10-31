@@ -47,3 +47,11 @@ Thumbs.db
 *.mobileprovision
 .vercel
 *.tsbuildinfo
+
+# Credentials & Passwords (Never commit to git)
+CREDENTIALS.txt
+CREDENTIALS.md
+credentials.txt
+*credentials*
+*passwords*
+*.secret*
