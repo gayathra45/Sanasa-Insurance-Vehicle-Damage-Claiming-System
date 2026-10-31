@@ -18,6 +18,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "versionCode": 2,
       "predictiveBackGestureEnabled": false,
       "intentFilters": [
         {
@@ -33,7 +34,16 @@
               "scheme": "https",
               "host": "sanasainsurance.lk",
               "pathPrefix": "/driver-access"
-            },
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        },
+        {
+          "action": "VIEW",
+          "data": [
             {
               "scheme": "mobileapp",
               "host": "driver-access"
