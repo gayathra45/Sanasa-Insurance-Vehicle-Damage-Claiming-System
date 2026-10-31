@@ -934,7 +934,7 @@ export default function ThirdPartyNfcSection({
                 <Text style={styles.choiceCardTitle}>Optional Driver (Reusable NFC Tag)</Text>
                 <Text style={styles.choiceCardDesc}>
                   Instant on-demand temporary authorization (1-10 days) verified with YOUR OTP. Available cards:{" "}
-                  <strong>{availableCards.length}</strong>.
+                  <Text style={{ fontWeight: "700" }}>{availableCards.length}</Text>.
                 </Text>
               </View>
             </TouchableOpacity>

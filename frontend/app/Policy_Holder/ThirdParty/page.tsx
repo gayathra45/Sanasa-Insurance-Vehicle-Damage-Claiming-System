@@ -205,7 +205,12 @@ export default function ThirdPartyPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<"register" | "history" | "nfc-cards">("register");
+  type TabType = "permanent" | "nfc-cards" | "orders" | "history";
+  const [activeTab, setActiveTab] = useState<TabType>("permanent");
+  const [showPermanentForm, setShowPermanentForm] = useState(false);
+  const [registerChoiceModalOpen, setRegisterChoiceModalOpen] = useState(false);
+  const [noCardsAlertModalOpen, setNoCardsAlertModalOpen] = useState(false);
+  const [orderNfcModalOpen, setOrderNfcModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [eligibleVehicles, setEligibleVehicles] = useState<Vehicle[]>([]);
@@ -385,15 +390,27 @@ export default function ThirdPartyPage() {
     const nfcSuccess = searchParams.get("nfc_payment_success");
     const nfcOrderId = searchParams.get("order_id");
 
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "nfc-cards") setActiveTab("nfc-cards");
+    else if (tabParam === "orders") setActiveTab("orders");
+    else if (tabParam === "history") setActiveTab("history");
+    else if (tabParam === "register") {
+      setActiveTab("permanent");
+      setShowPermanentForm(true);
+    } else if (tabParam === "permanent") {
+      setActiveTab("permanent");
+    }
+
     if (paymentSuccess === "true" && sessionId) {
-      setActiveTab("history");
+      setActiveTab("permanent");
+      setShowPermanentForm(false);
       setBannerAlert({
         type: "success",
         message: "Verifying your Stripe payment confirmation..."
       });
       verifyStripeSession(sessionId, ref || "");
     } else if (nfcSuccess === "true" && sessionId) {
-      setActiveTab("nfc-cards");
+      setActiveTab("orders");
       setBannerAlert({
         type: "success",
         message: "Verifying your NFC Card purchase payment..."
@@ -989,7 +1006,7 @@ export default function ThirdPartyPage() {
           </div>
         )}
 
-        {/* Page Header with 3 Tabs */}
+        {/* Page Header with Action Button */}
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-sky-50 text-sky-700 text-xs font-bold rounded-full mb-3 border border-sky-100">
@@ -1004,60 +1021,105 @@ export default function ThirdPartyPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 bg-slate-100 p-1.5 rounded-2xl shrink-0 self-start lg:self-center">
+          <div className="flex items-center gap-3 shrink-0 self-start lg:self-center">
+            {/* Prominent + Register New Driver 3-Choice Button */}
             <button
-              onClick={() => setActiveTab("register")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 cursor-pointer border-none ${
-                activeTab === "register"
-                  ? "bg-white text-sky-600 shadow-xs"
-                  : "bg-transparent text-slate-600 hover:text-slate-900"
-              }`}
+              type="button"
+              onClick={() => setRegisterChoiceModalOpen(true)}
+              className="flex items-center gap-2 px-6 py-3.5 bg-gradient-to-r from-sky-600 via-indigo-600 to-indigo-700 hover:from-sky-700 hover:to-indigo-800 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md hover:shadow-lg transition-all cursor-pointer border-none"
             >
-              <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" strokeWidth={2} />
-              <span>Add Permanent Driver</span>
-            </button>
-
-            <button
-              onClick={() => setActiveTab("history")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 cursor-pointer border-none ${
-                activeTab === "history"
-                  ? "bg-white text-sky-600 shadow-xs"
-                  : "bg-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4" strokeWidth={2} />
-              <span>Driver History</span>
-              {requests.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-[11px] bg-slate-200 text-slate-700 font-bold rounded-full">
-                  {requests.length}
-                </span>
-              )}
-            </button>
-
-            <button
-              onClick={() => setActiveTab("nfc-cards")}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-xs sm:text-sm transition-all duration-200 cursor-pointer border-none ${
-                activeTab === "nfc-cards"
-                  ? "bg-white text-emerald-600 shadow-xs"
-                  : "bg-transparent text-slate-600 hover:text-slate-900"
-              }`}
-            >
-              <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" strokeWidth={2} />
-              <span>Optional NFC Cards</span>
-              {nfcCards.length > 0 && (
-                <span className="ml-1 px-1.5 py-0.5 text-[11px] bg-emerald-100 text-emerald-800 font-bold rounded-full">
-                  {nfcCards.length}
-                </span>
-              )}
+              <HugeiconsIcon icon={UserAdd01Icon} className="w-5 h-5 text-white" strokeWidth={2.5} />
+              <span>+ Register New Driver</span>
             </button>
           </div>
+        </div>
+
+        {/* 4 Navigation Sub-Tabs */}
+        <div className="flex flex-wrap items-center gap-2 bg-slate-200/80 p-1.5 rounded-2xl mb-8 border border-slate-300/60 shadow-xs">
+          <button
+            type="button"
+            onClick={() => { setActiveTab("permanent"); setShowPermanentForm(false); }}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border-none ${
+              activeTab === "permanent"
+                ? "bg-white text-indigo-700 shadow-xs"
+                : "bg-transparent text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <HugeiconsIcon icon={UserCheck01Icon} className="w-4 h-4" strokeWidth={2} />
+            <span>Permanent Drivers</span>
+            {requests.filter((r) => r.status !== "Terminated" && r.status !== "Rejected").length > 0 && (
+              <span className="ml-1 px-2 py-0.5 text-[11px] bg-indigo-100 text-indigo-800 font-bold rounded-full">
+                {requests.filter((r) => r.status !== "Terminated" && r.status !== "Rejected").length}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("nfc-cards")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border-none ${
+              activeTab === "nfc-cards"
+                ? "bg-white text-emerald-700 shadow-xs"
+                : "bg-transparent text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" strokeWidth={2} />
+            <span>Optional NFC Cards</span>
+            {nfcCards.length > 0 && (
+              <span className="ml-1 px-2 py-0.5 text-[11px] bg-emerald-100 text-emerald-800 font-bold rounded-full">
+                {nfcCards.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("orders")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border-none ${
+              activeTab === "orders"
+                ? "bg-white text-amber-700 shadow-xs"
+                : "bg-transparent text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <HugeiconsIcon icon={Clock01Icon} className="w-4 h-4" strokeWidth={2} />
+            <span>Card Orders & Tracking</span>
+            {nfcOrders.length > 0 && (
+              <span className="ml-1 px-2 py-0.5 text-[11px] bg-amber-100 text-amber-800 font-bold rounded-full">
+                {nfcOrders.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("history")}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer border-none ${
+              activeTab === "history"
+                ? "bg-white text-slate-800 shadow-xs"
+                : "bg-transparent text-slate-600 hover:text-slate-900"
+            }`}
+          >
+            <HugeiconsIcon icon={File01Icon} className="w-4 h-4" strokeWidth={2} />
+            <span>Driver History & Logs</span>
+          </button>
         </div>
 
         {/* ========================================================================= */}
         {/* TAB 1: PERMANENT DRIVER REGISTRATION FORM */}
         {/* ========================================================================= */}
-        {activeTab === "register" && (
+        {activeTab === "permanent" && showPermanentForm && (
           <form onSubmit={handleOpenReview} className="space-y-8 animate-in fade-in duration-200">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200">
+              <button
+                type="button"
+                onClick={() => setShowPermanentForm(false)}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-slate-700 bg-white border border-slate-300 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+              >
+                ← Back to Permanent Drivers List
+              </button>
+              <span className="text-xs text-slate-500 font-semibold">Step-by-Step Permanent Driver Onboarding</span>
+            </div>
+
             {errorMessage && (
               <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-sm font-medium flex items-center gap-2">
                 <HugeiconsIcon icon={Alert02Icon} className="w-5 h-5 shrink-0" />
@@ -1455,7 +1517,268 @@ export default function ThirdPartyPage() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 2: REQUEST & DRIVER HISTORY */}
+        {/* TAB 1: ACTIVE PERMANENT DRIVERS LIST */}
+        {/* ========================================================================= */}
+        {activeTab === "permanent" && !showPermanentForm && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Header / Intro Card */}
+            <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-slate-800">
+              <div className="space-y-1.5 max-w-xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-500/20 text-indigo-300 text-xs font-bold rounded-full border border-indigo-400/30">
+                  <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5" />
+                  <span>Authorized Permanent Drivers</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                  Long-Term Driver Authorizations
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Active and approved permanent drivers authorized to operate your insured vehicles. Reviewed and verified by your regional branch office.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowPermanentForm(true)}
+                className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg transition-all flex items-center gap-2 self-start sm:self-auto cursor-pointer border-none flex-shrink-0"
+              >
+                <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4 text-white" />
+                <span>+ Add Permanent Driver</span>
+              </button>
+            </div>
+
+            {/* Permanent Drivers List */}
+            {requests.filter((r) => r.status !== "Terminated" && r.status !== "Rejected").length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200">
+                <HugeiconsIcon icon={UserCheck01Icon} className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-slate-800">No Permanent Drivers Registered Yet</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  You haven't authorized any long-term third-party drivers. Register a driver to grant official driving and claim filing authorization.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowPermanentForm(true)}
+                  className="mt-5 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer border-none inline-flex items-center gap-2"
+                >
+                  <HugeiconsIcon icon={UserAdd01Icon} className="w-4 h-4" />
+                  <span>Register First Permanent Driver (LKR 300)</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {requests
+                  .filter((r) => r.status !== "Terminated" && r.status !== "Rejected")
+                  .map((req) => {
+                    const isBlocked = req.status === "Temporarily Blocked" || req.accessControl?.isBlocked;
+                    const isExpired = req.status === "Expired" || req.accessDuration?.isExpired;
+                    const isScheduled = req.status === "Scheduled";
+                    const isApproved = req.status === "Approved";
+
+                    return (
+                      <div
+                        key={req._id}
+                        className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs hover:border-slate-300 transition-colors"
+                      >
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                          <div>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="font-mono text-sm font-extrabold text-slate-900 bg-slate-100 px-3 py-1 rounded-lg">
+                                {req.requestReference}
+                              </span>
+
+                              {/* Status Badge */}
+                              <span
+                                className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                                  isBlocked
+                                    ? "bg-amber-50 text-amber-900 border-amber-300"
+                                    : isExpired
+                                    ? "bg-rose-50 text-rose-800 border-rose-300"
+                                    : isScheduled
+                                    ? "bg-indigo-50 text-indigo-800 border-indigo-200"
+                                    : isApproved
+                                    ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                                    : req.status === "Pending Termination Approval"
+                                    ? "bg-rose-50 text-rose-800 border-rose-200"
+                                    : req.status === "Pending Branch Approval"
+                                    ? "bg-sky-50 text-sky-800 border-sky-200"
+                                    : "bg-amber-50 text-amber-800 border-amber-200"
+                                }`}
+                              >
+                                {isBlocked
+                                  ? "Temporarily Blocked"
+                                  : isExpired
+                                  ? "Expired"
+                                  : req.status === "Pending Termination Approval"
+                                  ? "Termination Under Review"
+                                  : req.status}
+                              </span>
+
+                              {/* Duration Badge */}
+                              {req.accessDuration && (
+                                <span className="px-2.5 py-0.5 rounded-lg text-xs font-semibold bg-sky-50 text-sky-800 border border-sky-200 flex items-center gap-1">
+                                  <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5" />
+                                  <span>{req.accessDuration.durationType || "Duration Configured"}</span>
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-xs text-slate-400 mt-1.5">
+                              Submitted on {new Date(req.createdAt).toLocaleDateString("en-GB")} at{" "}
+                              {new Date(req.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })} • Branch: {req.branch}
+                            </p>
+                          </div>
+
+                          {/* Top Right Actions */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            {req.payment.status === "Paid" ? (
+                              <div className="flex flex-wrap items-center gap-2">
+                                {/* Renew Button */}
+                                {(isApproved || isExpired || isBlocked || isScheduled) && (
+                                  <button
+                                    onClick={() => handleOpenRenewPermanent(req)}
+                                    className="flex items-center gap-1 text-xs font-bold text-sky-700 bg-sky-50 hover:bg-sky-100 border border-sky-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                                    title="Renew driver authorized duration"
+                                  >
+                                    <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5" />
+                                    <span>Renew Duration</span>
+                                  </button>
+                                )}
+
+                                {/* Temporary Block / Unblock */}
+                                {isBlocked ? (
+                                  <button
+                                    onClick={() => handleUnblockPermanent(req)}
+                                    className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                                    title="Restore driver access"
+                                  >
+                                    <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5" />
+                                    <span>Unblock Access</span>
+                                  </button>
+                                ) : (isApproved || isScheduled) ? (
+                                  <button
+                                    onClick={() => handleBlockPermanent(req)}
+                                    className="flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                                    title="Temporarily suspend access"
+                                  >
+                                    <HugeiconsIcon icon={Alert02Icon} className="w-3.5 h-3.5" />
+                                    <span>Temporary Block</span>
+                                  </button>
+                                ) : null}
+
+                                {/* Terminate Driver */}
+                                {(isApproved || isScheduled || isBlocked) && (
+                                  <button
+                                    onClick={() => {
+                                      setTerminateReq(req);
+                                      setTerminateReason("Driver resigned / employment ended");
+                                      setCustomReason("");
+                                      setTermErr("");
+                                      setTermMsg("");
+                                    }}
+                                    className="flex items-center gap-1 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-3 py-1.5 rounded-xl transition-all cursor-pointer"
+                                    title="Permanently terminate driver access"
+                                  >
+                                    <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                                    <span>Terminate</span>
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleResumePayment(req)}
+                                disabled={submitting}
+                                className="flex items-center gap-1.5 text-xs font-bold text-white bg-amber-500 hover:bg-amber-600 px-4 py-2 rounded-xl transition-all shadow-xs cursor-pointer border-none"
+                              >
+                                <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                                <span>Pay LKR 300 Now</span>
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Details Grid */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 pt-4 text-xs">
+                          <div>
+                            <span className="text-slate-400 font-semibold block uppercase">Driver Details</span>
+                            <span className="text-slate-800 font-bold mt-0.5 block">{req.driverDetails.fullName}</span>
+                            <span className="text-slate-500 block">{req.driverDetails.phoneNumber}</span>
+                            <span className="text-slate-500 block font-mono">NIC: {req.driverDetails.nicNumber || "—"}</span>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-400 font-semibold block uppercase">Covered Vehicles</span>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {req.selectedVehicles.map((v, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2 py-0.5 bg-slate-100 text-slate-700 font-mono font-bold rounded-md text-[11px]"
+                                >
+                                  {v.numberPlate}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span className="text-slate-400 font-semibold block uppercase">Validity Window</span>
+                            {req.accessDuration ? (
+                              <div className="mt-1 space-y-0.5">
+                                <span className="font-mono text-slate-800 font-semibold block">
+                                  {new Date(req.accessDuration.startDate).toLocaleDateString("en-GB")} →{" "}
+                                  {new Date(req.accessDuration.endDate).toLocaleDateString("en-GB")}
+                                </span>
+                                <span className="text-[11px] text-slate-500 block">
+                                  {req.accessDuration.durationType} duration
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-500 block mt-1">Standard Policy Duration</span>
+                            )}
+                          </div>
+
+                          <div>
+                            <span className="text-slate-400 font-semibold block uppercase">Branch Sign-Off</span>
+                            {req.status === "Approved" ? (
+                              <span className="text-emerald-700 font-bold block mt-0.5">
+                                Approved by {req.branchReview?.reviewedBy || "Branch Staff"}
+                              </span>
+                            ) : req.status === "Pending Termination Approval" ? (
+                              <div className="mt-1 p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-800">
+                                <span className="font-bold block">Termination Pending:</span>
+                                <span className="text-[11px]">{req.terminationRequest?.reason || "Policyholder termination request"}</span>
+                              </div>
+                            ) : req.status === "Rejected" ? (
+                              <div className="mt-1 p-2 bg-rose-50 border border-rose-200 rounded-lg text-rose-800">
+                                <span className="font-bold block">Rejection Reason:</span>
+                                <span>{req.branchReview?.rejectionReason || "Requirements not met."}</span>
+                              </div>
+                            ) : (
+                              <span className="text-sky-700 font-semibold block mt-0.5">
+                                Under review by {req.branch} branch
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Renewal Timeline Notice if exists */}
+                        {req.renewalHistory && req.renewalHistory.length > 0 && (
+                          <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2 text-[11px] text-slate-500">
+                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>
+                              Renewed {req.renewalHistory.length} time(s). Last renewed on{" "}
+                              {new Date(req.renewalHistory[req.renewalHistory.length - 1].renewedAt).toLocaleDateString("en-GB")}.
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 4: REQUEST & DRIVER HISTORY & AUDIT LOGS */}
         {/* ========================================================================= */}
         {activeTab === "history" && (
           <div className="space-y-6 animate-in fade-in duration-200">
@@ -1467,7 +1790,8 @@ export default function ThirdPartyPage() {
                   You haven't submitted any third-party driver registration requests yet.
                 </p>
                 <button
-                  onClick={() => setActiveTab("register")}
+                  type="button"
+                  onClick={() => { setActiveTab("permanent"); setShowPermanentForm(true); }}
                   className="mt-4 px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer border-none"
                 >
                   Create Your First Request
@@ -1764,112 +2088,27 @@ export default function ThirdPartyPage() {
               </div>
             </div>
 
-            {/* Request Tracking Section */}
+            {/* Quick Link to Orders Tab if orders exist */}
             {nfcOrders.length > 0 && (
-              <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-xs space-y-4">
-                <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-                  <div>
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                      <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5 text-sky-600" />
-                      <span>Your NFC Card Requests & Issuance Tracking ({nfcOrders.length})</span>
-                    </h3>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      Track your physical card request status from branch review to physical collection.
-                    </p>
+              <div className="p-4 bg-sky-50 border border-sky-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center font-bold">
+                    <HugeiconsIcon icon={Clock01Icon} className="w-5 h-5" />
                   </div>
-                  <button
-                    onClick={() => currentUser?.nic && loadNfcOrders(currentUser.nic)}
-                    className="px-3.5 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors cursor-pointer border-none"
-                  >
-                    Refresh Requests
-                  </button>
+                  <div>
+                    <span className="font-bold text-xs text-slate-900 block">NFC Card Orders & Branch Tracking</span>
+                    <span className="text-[11px] text-slate-500">
+                      You have {nfcOrders.length} order(s) under review, encoding, or ready for pickup.
+                    </span>
+                  </div>
                 </div>
-
-                <div className="space-y-4">
-                  {nfcOrders.map((order) => {
-                    const isRejected = order.status === "Rejected";
-                    const isReady = order.status === "Ready for Collection";
-                    const isCollected = order.status === "Collected";
-                    const isPaid = order.payment?.status === "Paid";
-
-                    const steps = ["Request Submitted", "Approved", "Processing", "Ready for Collection", "Collected"];
-                    const currentIdx = steps.indexOf(order.status);
-
-                    return (
-                      <div
-                        key={order._id}
-                        className="p-5 rounded-2xl border border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-all space-y-4"
-                      >
-                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div className="flex items-center gap-2.5">
-                            <span className="font-mono text-sm font-black text-[#102A43]">
-                              {order.orderNumber}
-                            </span>
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#102A43]/10 text-[#102A43]">
-                              {order.quantity} {order.quantity === 1 ? "Card" : "Cards"} (LKR {order.totalAmount?.toLocaleString()})
-                            </span>
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                              isPaid ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
-                            }`}>
-                              {isPaid ? "Paid" : "Pending Payment"}
-                            </span>
-                          </div>
-
-                          <span className="text-xs text-slate-400">
-                            Submitted on {new Date(order.createdAt).toLocaleDateString("en-LK", { timeZone: "Asia/Colombo", month: "short", day: "numeric", year: "numeric" })}
-                          </span>
-                        </div>
-
-                        {/* Status Stepper */}
-                        {!isRejected ? (
-                          <div className="pt-2 pb-1">
-                            <div className="flex items-center justify-between relative">
-                              {steps.map((st, i) => {
-                                const passed = currentIdx >= i;
-                                const isCurrent = order.status === st;
-
-                                return (
-                                  <div key={st} className="flex flex-col items-center flex-1 text-center relative z-10">
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
-                                      passed ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-500"
-                                    }`}>
-                                      {passed ? "✓" : i + 1}
-                                    </div>
-                                    <span className={`text-[10px] mt-1 font-medium ${
-                                      isCurrent ? "text-blue-700 font-bold" : passed ? "text-slate-800" : "text-slate-400"
-                                    }`}>
-                                      {st}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
-                            <strong>Request Rejected by Branch:</strong> {order.rejectionReason || "Requirements not met."}
-                          </div>
-                        )}
-
-                        {/* Collection Alert if Ready */}
-                        {isReady && (
-                          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex items-center gap-2">
-                            <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600 shrink-0" />
-                            <span>
-                              <strong>Ready for Collection!</strong> Your cards have been prepared and tested. You can collect them at the <strong>{order.branch || "assigned"} branch</strong>.
-                            </span>
-                          </div>
-                        )}
-
-                        {isCollected && order.collectionInfo?.collectedAt && (
-                          <div className="text-[11px] text-slate-500">
-                            Collected on {new Date(order.collectionInfo.collectedAt).toLocaleDateString("en-LK", { timeZone: "Asia/Colombo" })} by {order.collectionInfo.collectedBy || "Policyholder"}.
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("orders")}
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer border-none shrink-0"
+                >
+                  View Order Tracking →
+                </button>
               </div>
             )}
 
@@ -2051,6 +2290,146 @@ export default function ThirdPartyPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 3: CARD ORDERS & BRANCH ISSUANCE TRACKING */}
+        {/* ========================================================================= */}
+        {activeTab === "orders" && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            <div className="bg-gradient-to-r from-slate-900 via-amber-950 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-6 border border-slate-800">
+              <div className="space-y-1.5 max-w-xl">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 text-amber-300 text-xs font-bold rounded-full border border-amber-400/30">
+                  <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5" />
+                  <span>Physical NFC Card Issuance Tracking</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                  Card Orders & Collection Status
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Track your card requests across all stages: initial payment, branch review, NFC tag encoding, and pickup readiness at {userBranch} Branch.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOrderNfcModalOpen(true)}
+                  className="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs sm:text-sm rounded-2xl shadow-lg transition-all flex items-center gap-2 cursor-pointer border-none"
+                >
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4 text-slate-950" />
+                  <span>+ Order NFC Cards</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Orders List */}
+            {nfcOrders.length === 0 ? (
+              <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-xs">
+                <HugeiconsIcon icon={CreditCardIcon} className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                <h3 className="text-base font-bold text-slate-800">No NFC Card Orders Found</h3>
+                <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                  You haven't ordered any physical NFC cards yet. Place an order to receive reusable cards for temporary drivers.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setOrderNfcModalOpen(true)}
+                  className="mt-5 px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-bold transition-colors cursor-pointer border-none inline-flex items-center gap-2"
+                >
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                  <span>Order Physical Cards (LKR 500 each)</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {nfcOrders.map((order) => {
+                  const isRejected = order.status === "Rejected";
+                  const isReady = order.status === "Ready for Collection";
+                  const isCollected = order.status === "Collected";
+                  const isPaid = order.payment?.status === "Paid";
+                  const steps = ["Request Submitted", "Approved", "Processing", "Ready for Collection", "Collected"];
+                  const currentIdx = steps.indexOf(order.status);
+
+                  return (
+                    <div
+                      key={order._id}
+                      className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs space-y-4"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-mono text-sm font-black text-[#102A43]">
+                            {order.orderNumber}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#102A43]/10 text-[#102A43]">
+                            {order.quantity} {order.quantity === 1 ? "Card" : "Cards"} (LKR {order.totalAmount?.toLocaleString()})
+                          </span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                            isPaid ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-amber-50 text-amber-700 border border-amber-200"
+                          }`}>
+                            {isPaid ? "Paid" : "Pending Payment"}
+                          </span>
+                        </div>
+
+                        <span className="text-xs text-slate-400">
+                          Submitted on {new Date(order.createdAt).toLocaleDateString("en-LK", { timeZone: "Asia/Colombo", month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      </div>
+
+                      {/* Status Stepper */}
+                      {!isRejected ? (
+                        <div className="pt-2 pb-1">
+                          <div className="flex items-center justify-between relative">
+                            {steps.map((st, i) => {
+                              const passed = currentIdx >= i;
+                              const isCurrent = order.status === st;
+
+                              return (
+                                <div key={st} className="flex flex-col items-center flex-1 text-center relative z-10">
+                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                                    passed ? "bg-emerald-600 text-white" : "bg-slate-200 text-slate-500"
+                                  }`}>
+                                    {passed ? "✓" : i + 1}
+                                  </div>
+                                  <span className={`text-[10px] mt-1 font-medium ${
+                                    isCurrent ? "text-blue-700 font-bold" : passed ? "text-slate-800" : "text-slate-400"
+                                  }`}>
+                                    {st}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800">
+                          <strong>Request Rejected by Branch:</strong> {order.rejectionReason || "Requirements not met."}
+                        </div>
+                      )}
+
+                      {/* Collection Alert if Ready */}
+                      {isReady && (
+                        <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-900 flex items-center gap-3">
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-5 h-5 text-emerald-600 shrink-0" />
+                          <div>
+                            <strong className="block text-sm">Ready for Collection!</strong>
+                            <span className="text-emerald-800 text-[11px]">
+                              Your {order.quantity} card(s) have been verified and encoded. You can collect them at the <strong>{order.branch || "Galle"} Branch</strong>.
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {isCollected && order.collectionInfo?.collectedAt && (
+                        <div className="text-[11px] text-slate-500">
+                          Collected on {new Date(order.collectionInfo.collectedAt).toLocaleDateString("en-LK", { timeZone: "Asia/Colombo" })} by {order.collectionInfo.collectedBy || "Policyholder"}.
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -2671,6 +3050,243 @@ export default function ThirdPartyPage() {
                 <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
                 <span>{terminating ? "Revoking..." : "Confirm Termination"}</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 1. REGISTER THIRD-PARTY DRIVER: 3-CHOICE MODAL */}
+      {/* ========================================================================= */}
+      {registerChoiceModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150 relative">
+            <button
+              onClick={() => setRegisterChoiceModalOpen(false)}
+              className="absolute top-5 right-5 p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mx-auto mb-3">
+                <HugeiconsIcon icon={UserAdd01Icon} className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">
+                Register Third-Party Driver
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
+                Select the driver authorization type to proceed with your registration
+              </p>
+            </div>
+
+            <div className="space-y-3.5">
+              {/* Option A: Permanent Driver */}
+              <div
+                onClick={() => {
+                  setRegisterChoiceModalOpen(false);
+                  setActiveTab("permanent");
+                  setShowPermanentForm(true);
+                }}
+                className="p-4 sm:p-5 rounded-2xl border-2 border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/30 transition-all cursor-pointer group flex items-start gap-4"
+              >
+                <div className="w-11 h-11 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                  <HugeiconsIcon icon={UserCheck01Icon} className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-indigo-700 transition-colors">
+                      Permanent Third-Party Driver
+                    </h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
+                      LKR 300 Fee
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Long-term authorization across your vehicles (1M to 12M). Upload KYC identity documents for branch review and digital pass issuance.
+                  </p>
+                </div>
+              </div>
+
+              {/* Option B: Optional Driver (Reusable NFC Tag) */}
+              <div
+                onClick={() => {
+                  setRegisterChoiceModalOpen(false);
+                  const availableCards = nfcCards.filter((c) => c.status === "Available");
+                  if (availableCards.length === 0) {
+                    setNoCardsAlertModalOpen(true);
+                  } else {
+                    handleOpenAssignModal(availableCards[0]);
+                  }
+                }}
+                className="p-4 sm:p-5 rounded-2xl border-2 border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/30 transition-all cursor-pointer group flex items-start gap-4"
+              >
+                <div className="w-11 h-11 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-emerald-700 transition-colors">
+                      Optional Driver (NFC Card)
+                    </h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Instant • No Review
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Assign a temporary driver (1 to 10 days) to an available physical NFC card. Verified via Policyholder SMS OTP for instant activation.
+                  </p>
+                </div>
+              </div>
+
+              {/* Option C: Order NFC Cards */}
+              <div
+                onClick={() => {
+                  setRegisterChoiceModalOpen(false);
+                  setOrderNfcModalOpen(true);
+                }}
+                className="p-4 sm:p-5 rounded-2xl border-2 border-slate-200 hover:border-amber-500 hover:bg-amber-50/30 transition-all cursor-pointer group flex items-start gap-4"
+              >
+                <div className="w-11 h-11 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 group-hover:bg-amber-600 group-hover:text-white transition-colors">
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-6 h-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h4 className="font-bold text-slate-900 text-sm group-hover:text-amber-700 transition-colors">
+                      Order Physical NFC Cards
+                    </h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      LKR 500 / Card
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Purchase reusable physical NFC cards encoded by branch staff. Reusable unlimited times for on-demand driver assignment.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 2. NO AVAILABLE CARDS ALERT MODAL */}
+      {/* ========================================================================= */}
+      {noCardsAlertModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto mb-4">
+              <HugeiconsIcon icon={Alert02Icon} className="w-8 h-8" strokeWidth={2} />
+            </div>
+
+            <h3 className="text-lg font-black text-slate-900 tracking-tight">
+              No Available NFC Cards
+            </h3>
+            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+              You must have at least one physical NFC card in <strong>"Available"</strong> status to assign an optional temporary driver. Your inventory currently has <strong>0 available cards</strong>.
+            </p>
+
+            <div className="mt-6 space-y-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setNoCardsAlertModalOpen(false);
+                  setOrderNfcModalOpen(true);
+                }}
+                className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer border-none flex items-center justify-center gap-2"
+              >
+                <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                <span>Order Physical NFC Cards (LKR 500)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setNoCardsAlertModalOpen(false)}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-colors cursor-pointer border-none"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 3. ORDER PHYSICAL NFC CARDS POPUP MODAL */}
+      {/* ========================================================================= */}
+      {orderNfcModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center font-bold">
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">Order Physical NFC Cards</h3>
+                  <p className="text-[11px] text-slate-500">Fixed Price: LKR 500 per card</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setOrderNfcModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-colors border-none bg-transparent cursor-pointer"
+              >
+                <HugeiconsIcon icon={Cancel01Icon} className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700">Select Quantity:</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setNfcQuantity((prev) => Math.max(1, prev - 1))}
+                    className="w-8 h-8 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold flex items-center justify-center cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <span className="w-6 text-center font-black text-base text-slate-900">{nfcQuantity}</span>
+                  <button
+                    type="button"
+                    onClick={() => setNfcQuantity((prev) => Math.min(10, prev + 1))}
+                    className="w-8 h-8 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold flex items-center justify-center cursor-pointer"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-amber-50/60 border border-amber-200 text-xs text-amber-900 space-y-1">
+                <div className="flex justify-between font-bold">
+                  <span>Total Payment:</span>
+                  <span className="text-base font-black text-amber-950 font-mono">
+                    LKR {(nfcQuantity * 500).toLocaleString()}.00
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-800 leading-tight">
+                  Cards will be prepared and encoded by <strong>{userBranch} Branch</strong> staff and made ready for collection.
+                </p>
+              </div>
+
+              <div className="pt-2 flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setOrderNfcModalOpen(false)}
+                  className="flex-1 py-3 rounded-xl border border-slate-300 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer bg-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOrderNfcCards}
+                  disabled={orderingNfc}
+                  className="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer border-none"
+                >
+                  <HugeiconsIcon icon={CreditCardIcon} className="w-4 h-4" />
+                  <span>{orderingNfc ? "Connecting..." : "Pay via Stripe"}</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
