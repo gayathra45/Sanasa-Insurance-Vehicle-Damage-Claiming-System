@@ -60,6 +60,8 @@ interface RegistrationRequest {
     vehicleType?: string;
     model?: string;
     company?: string;
+    year?: string;
+    policyNumber?: string;
   }[];
   accessDuration?: {
     durationType: string;

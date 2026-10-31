@@ -894,12 +894,12 @@ export default function ThirdPartyDriverPortalPage() {
     }
   };
 
-  // Periodic notifications & claims refresh
+  // Periodic notifications, claims & authorized vehicles refresh
   useEffect(() => {
     if (!sessionToken) return;
     const interval = setInterval(() => {
-      fetchDriverNotifications();
-    }, 12000);
+      loadInitialData(sessionToken);
+    }, 10000);
     return () => clearInterval(interval);
   }, [sessionToken]);
 

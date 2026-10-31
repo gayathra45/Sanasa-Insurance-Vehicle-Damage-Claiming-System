@@ -353,7 +353,7 @@ export default function MobileDriverPortalScreen() {
         const v = await vehRes.json();
         setVehicles(v.vehicles || []);
         if (v.vehicles?.length > 0) {
-          setClaimPlate(v.vehicles[0].numberPlate);
+          setClaimPlate((prev) => prev || v.vehicles[0].numberPlate);
         }
       }
       if (claimsRes.ok) {
@@ -364,6 +364,15 @@ export default function MobileDriverPortalScreen() {
       console.warn("Load data error:", e);
     }
   };
+
+  // Periodic auto-sync to reflect web changes in real time
+  useEffect(() => {
+    if (!sessionToken) return;
+    const interval = setInterval(() => {
+      loadData(sessionToken);
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [sessionToken]);
 
   const handlePickPhoto = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
