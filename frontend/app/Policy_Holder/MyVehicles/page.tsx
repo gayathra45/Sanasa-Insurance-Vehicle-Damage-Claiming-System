@@ -72,6 +72,7 @@ import {
   Money01Icon,
   UserAdd01Icon,
   UserCheck01Icon,
+  UserIcon,
   File01Icon,
   Upload01Icon,
   Shield01Icon,
@@ -1491,14 +1492,14 @@ export default function MyVehicles() {
                 {/* VIEW MODE 2: CLEAN MODERN COMPACT LIST WITH FIXED GRID ALIGNMENT */}
                 {vehicleViewMode === "list" && filteredVehicles.length > 0 && (
                   <div className="bg-white border border-slate-200/90 rounded-2xl divide-y divide-slate-100 overflow-hidden shadow-xs">
-                    {/* Structured Grid Table Header */}
-                    <div className="hidden lg:grid lg:grid-cols-[130px_minmax(180px,1.4fr)_110px_160px_110px_230px] items-center gap-4 px-6 py-3 bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-bold uppercase tracking-wider text-slate-400 select-none">
+                    {/* Structured Grid Table Header - Re-arranged & Aligned */}
+                    <div className="hidden lg:grid lg:grid-cols-[130px_minmax(180px,1.4fr)_115px_140px_minmax(150px,1.1fr)_240px] items-center gap-4 px-6 py-3.5 bg-slate-50/90 border-b border-slate-200/80 text-[10px] font-bold uppercase tracking-wider text-slate-400 select-none">
                       <div>Plate Number</div>
                       <div>Vehicle Details</div>
                       <div>Policy Expiry</div>
-                      <div>Authorized Driver</div>
                       <div>Coverage Status</div>
-                      <div className="text-right">Actions</div>
+                      <div>Authorized Driver</div>
+                      <div className="text-right pr-1">Actions</div>
                     </div>
 
                     {filteredVehicles.map((vehicle) => {
@@ -1512,7 +1513,7 @@ export default function MyVehicles() {
                       return (
                         <div
                           key={vehicle.numberPlate}
-                          className="p-4 sm:px-6 flex flex-col lg:grid lg:grid-cols-[130px_minmax(180px,1.4fr)_110px_160px_110px_230px] items-start lg:items-center gap-3 lg:gap-4 hover:bg-slate-50/70 transition-colors"
+                          className="p-4 sm:px-6 flex flex-col lg:grid lg:grid-cols-[130px_minmax(180px,1.4fr)_115px_140px_minmax(150px,1.1fr)_240px] items-start lg:items-center gap-3 lg:gap-4 hover:bg-slate-50/70 transition-colors"
                         >
                           {/* Col 1: Plate */}
                           <div className="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 hover:bg-slate-100/90 text-slate-800 rounded-lg border border-slate-200/90 font-mono font-bold text-xs tracking-wider shadow-2xs select-all flex-shrink-0 transition-colors">
@@ -1543,47 +1544,10 @@ export default function MyVehicles() {
                             </span>
                           </div>
 
-                          {/* Col 4: Authorized Driver */}
-                          <div className="min-w-0 w-full lg:w-auto flex items-center justify-between lg:block">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block lg:hidden">
-                              {(vehicleDriversMap[vehicle.numberPlate] || []).length > 1
-                                ? `Drivers (${(vehicleDriversMap[vehicle.numberPlate] || []).length})`
-                                : "Driver"}
-                            </span>
-                            {(() => {
-                              const drivers = vehicleDriversMap[vehicle.numberPlate] || [];
-                              if (drivers.length === 0) {
-                                return <span className="text-slate-400 italic text-xs block truncate">None Assigned</span>;
-                              }
-                              if (drivers.length === 1) {
-                                return (
-                                  <span
-                                    onClick={() => setSelectedVehicleForModal(vehicle)}
-                                    className="font-semibold text-indigo-700 flex items-center gap-1.5 text-xs cursor-pointer hover:underline truncate"
-                                    title={drivers[0].driverName}
-                                  >
-                                    <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                                    <span className="truncate">{drivers[0].driverName}</span>
-                                  </span>
-                                );
-                              }
-                              return (
-                                <span
-                                  onClick={() => setSelectedVehicleForModal(vehicle)}
-                                  className="font-bold text-indigo-700 flex items-center gap-1.5 text-xs cursor-pointer hover:underline truncate"
-                                  title={drivers.map((d) => d.driverName).join(", ")}
-                                >
-                                  <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
-                                  <span className="truncate">{drivers.length} Drivers</span>
-                                </span>
-                              );
-                            })()}
-                          </div>
-
-                          {/* Col 5: Coverage Status */}
+                          {/* Col 4: Coverage Status (No wrapping, uniform height) */}
                           <div className="flex items-center justify-between lg:justify-start gap-1.5 w-full lg:w-auto">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 block lg:hidden">Status</span>
-                            <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block lg:hidden">Coverage</span>
+                            <div className="flex items-center gap-1.5 whitespace-nowrap">
                               <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/70 rounded-full px-2.5 py-0.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                                 <span>Active</span>
@@ -1595,7 +1559,56 @@ export default function MyVehicles() {
                                   <span>Due</span>
                                 </span>
                               )}
+
+                              {isQuoteReady && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-sky-800 bg-sky-50 border border-sky-200/70 rounded-full px-2 py-0.5">
+                                  <HugeiconsIcon icon={CreditCardIcon} className="w-3 h-3 text-sky-600" />
+                                  <span>Quote</span>
+                                </span>
+                              )}
                             </div>
+                          </div>
+
+                          {/* Col 5: Authorized Third-Party Driver */}
+                          <div className="min-w-0 w-full lg:w-auto flex items-center justify-between lg:block">
+                            <span className="text-[10px] uppercase font-bold text-slate-400 block lg:hidden">
+                              {(vehicleDriversMap[vehicle.numberPlate] || []).length > 1
+                                ? `Drivers (${(vehicleDriversMap[vehicle.numberPlate] || []).length})`
+                                : "Driver"}
+                            </span>
+                            {(() => {
+                              const drivers = vehicleDriversMap[vehicle.numberPlate] || [];
+                              if (drivers.length === 0) {
+                                return (
+                                  <span className="inline-flex items-center gap-1.5 text-xs text-slate-400 font-medium bg-slate-50 border border-slate-200/80 px-2.5 py-1 rounded-lg select-none">
+                                    <HugeiconsIcon icon={UserIcon} className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                    <span>None Assigned</span>
+                                  </span>
+                                );
+                              }
+                              if (drivers.length === 1) {
+                                return (
+                                  <button
+                                    onClick={() => setSelectedVehicleForModal(vehicle)}
+                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-bold text-xs transition-colors cursor-pointer max-w-full truncate shadow-2xs"
+                                    title={drivers[0].driverName}
+                                  >
+                                    <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                                    <span className="truncate">{drivers[0].driverName}</span>
+                                  </button>
+                                );
+                              }
+                              return (
+                                <button
+                                  onClick={() => setSelectedVehicleForModal(vehicle)}
+                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-50/90 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 font-bold text-xs transition-colors cursor-pointer shadow-2xs"
+                                  title={drivers.map((d) => d.driverName).join(", ")}
+                                >
+                                  <HugeiconsIcon icon={UserCheck01Icon} className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                                  <span>{drivers.length} Drivers</span>
+                                </button>
+                              );
+                            })()}
                           </div>
 
                           {/* Col 6: Actions */}
@@ -1613,7 +1626,7 @@ export default function MyVehicles() {
                               className="flex-1 lg:flex-none justify-center font-semibold text-xs py-2 px-3 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 shadow-2xs whitespace-nowrap active:scale-[0.98]"
                               title="Assign or manage drivers"
                             >
-                              <HugeiconsIcon icon={UserAdd01Icon} className="w-3.5 h-3.5" />
+                              <HugeiconsIcon icon={(vehicleDriversMap[vehicle.numberPlate] || []).length > 0 ? UserCheck01Icon : UserAdd01Icon} className="w-3.5 h-3.5" />
                               <span>{(vehicleDriversMap[vehicle.numberPlate] || []).length > 0 ? "Manage Driver" : "Assign Driver"}</span>
                             </button>
                           </div>
@@ -1624,10 +1637,10 @@ export default function MyVehicles() {
                 )}
               </div>
             )}
-      </>
-    )}
+          </>
+        )}
 
-    {/* TAB 2: THIRD-PARTY DRIVERS MANAGEMENT */}
+{/* TAB 2: THIRD-PARTY DRIVERS MANAGEMENT */}
     {activeMainTab === "third_party" && (
       <div className="space-y-6">
         {/* Header / Intro Card */}
@@ -1757,7 +1770,7 @@ export default function MyVehicles() {
                           key={v.numberPlate}
                           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-700 font-mono font-medium text-xs border border-slate-200"
                         >
-                          <HugeiconsIcon icon={Car01Icon} className="w-3 3 text-slate-500" />
+                          <HugeiconsIcon icon={Car01Icon} className="w-3 h-3 text-slate-500" />
                           {v.numberPlate}
                         </span>
                       ))}

@@ -737,6 +737,7 @@ export default function OfficeStaffThirdPartyPage() {
                   }`}
                   title="Grid Card View"
                 >
+                  <HugeiconsIcon icon={LayoutGridIcon} className="w-3.5 h-3.5" />
                   <span>Grid</span>
                 </button>
                 <button
@@ -746,9 +747,10 @@ export default function OfficeStaffThirdPartyPage() {
                       ? "bg-white text-[#102A43] shadow-xs font-bold"
                       : "text-slate-500 hover:text-slate-800 bg-transparent"
                   }`}
-                  title="Table View"
+                  title="Card Row List View"
                 >
-                  <span>Table</span>
+                  <HugeiconsIcon icon={LayoutListIcon} className="w-3.5 h-3.5" />
+                  <span>List</span>
                 </button>
               </div>
 
@@ -996,189 +998,212 @@ export default function OfficeStaffThirdPartyPage() {
               })}
             </div>
           ) : (
-            /* VIEW MODE: TABLE */
-            <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50/90 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                      <th className="py-3.5 px-5 whitespace-nowrap">Reference</th>
-                      <th className="py-3.5 px-5 min-w-[220px]">Third-Party Driver</th>
-                      <th className="py-3.5 px-5 min-w-[190px]">Policyholder</th>
-                      <th className="py-3.5 px-5 min-w-[180px]">Authorized Vehicle(s)</th>
-                      <th className="py-3.5 px-5 whitespace-nowrap">Payment</th>
-                      <th className="py-3.5 px-5 whitespace-nowrap">Status</th>
-                      <th className="py-3.5 px-5 whitespace-nowrap">Submitted</th>
-                      <th className="py-3.5 px-5 text-right whitespace-nowrap">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700">
-                    {filteredRequests.map((req) => {
-                      const isPending = req.status === "Pending Branch Approval";
-                      const isPendingTerm = req.status === "Pending Termination Approval";
-                      const isApproved = req.status === "Approved";
-                      const isPaid = req.payment?.status === "Paid";
-                      const initials = (req.driverDetails?.fullName || "TP")
-                        .split(" ")
-                        .filter(Boolean)
-                        .slice(0, 2)
-                        .map((s) => s[0].toUpperCase())
-                        .join("");
-
-                      return (
-                        <tr
-                          key={req._id}
-                          className={`transition-colors hover:bg-slate-50/70 ${
-                            isPending
-                              ? "border-l-4 border-l-amber-500 bg-amber-50/15"
-                              : isPendingTerm
-                              ? "border-l-4 border-l-rose-500 bg-rose-50/20"
-                              : isApproved
-                              ? "border-l-4 border-l-emerald-500"
-                              : "border-l-4 border-l-transparent"
-                          }`}
-                        >
-                          {/* Reference */}
-                          <td className="py-4 px-5 whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-[#102A43] bg-slate-100/90 border border-slate-200/90 px-2.5 py-1 rounded-lg">
-                              {req.requestReference}
-                            </span>
-                          </td>
-
-                          {/* Driver */}
-                          <td className="py-4 px-5">
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center font-bold text-xs shadow-2xs flex-shrink-0">
-                                {initials}
-                              </div>
-                              <div className="min-w-0">
-                                <div className="font-bold text-slate-900 text-sm truncate max-w-[180px]">
-                                  {req.driverDetails?.fullName || "—"}
-                                </div>
-                                <div className="text-[11px] text-slate-500 font-medium flex items-center gap-2 mt-0.5">
-                                  {req.driverDetails?.nicNumber && (
-                                    <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">
-                                      NIC: {req.driverDetails.nicNumber}
-                                    </span>
-                                  )}
-                                  {req.driverDetails?.phoneNumber && (
-                                    <span>{req.driverDetails.phoneNumber}</span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Policyholder */}
-                          <td className="py-4 px-5">
-                            <div className="text-slate-800 font-bold text-xs truncate max-w-[170px]">
-                              {req.policyHolderName || "—"}
-                            </div>
-                            <div className="text-[11px] text-slate-500 font-mono mt-0.5">
-                              {req.policyHolderNic || "—"}
-                            </div>
-                          </td>
-
-                          {/* Vehicles */}
-                          <td className="py-4 px-5">
-                            <div className="flex flex-wrap gap-1.5 max-w-[200px]">
-                              {req.selectedVehicles?.map((v) => (
-                                <span
-                                  key={v.numberPlate}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-[#FFF9E6] text-[#2D2A26] border border-[#E5C77A] font-mono font-bold text-xs shadow-2xs"
-                                >
-                                  <HugeiconsIcon icon={Car01Icon} className="w-3 h-3 text-amber-700" />
-                                  <span>{v.numberPlate}</span>
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-
-                          {/* Payment */}
-                          <td className="py-4 px-5 whitespace-nowrap">
-                            {isPaid ? (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>LKR 300 (Paid)</span>
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
-                                <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5 text-amber-600" />
-                                <span>Pending Payment</span>
-                              </span>
-                            )}
-                          </td>
-
-                          {/* Status */}
-                          <td className="py-4 px-5 whitespace-nowrap">{getStatusBadge(req.status)}</td>
-
-                          {/* Date */}
-                          <td className="py-4 px-5 whitespace-nowrap text-slate-600 text-xs font-medium">
-                            <div>
-                              {new Date(req.createdAt).toLocaleDateString("en-GB", {
-                                day: "2-digit",
-                                month: "short",
-                                year: "numeric"
-                              })}
-                            </div>
-                            <div className="text-[10px] text-slate-400">
-                              {new Date(req.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                            </div>
-                          </td>
-
-                          {/* Actions */}
-                          <td className="py-4 px-5 text-right whitespace-nowrap">
-                            <div className="flex items-center justify-end gap-2">
-                              <button
-                                onClick={() => {
-                                  setSelectedReq(req);
-                                  setApprovalNotes("");
-                                  setRejectionReason("");
-                                }}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
-                                  isPending || isPendingTerm
-                                    ? "bg-[#102A43] text-white hover:bg-[#1B365D]"
-                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
-                                }`}
-                              >
-                                <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
-                                <span>{isPending ? "Review" : isPendingTerm ? "Review Term." : "View"}</span>
-                              </button>
-
-                              {isApproved && (
-                                <button
-                                  onClick={() => {
-                                    setSelectedReq(req);
-                                    setTerminationNotes("Terminated directly by branch office");
-                                    setShowApproveTerminationModal(true);
-                                  }}
-                                  className="p-1.5 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
-                                  title="Direct Terminate Driver"
-                                >
-                                  <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-
-                              {isApproved && req.secureAccess?.accessUrl && (
-                                <button
-                                  onClick={() => handleCopyUrl(req.secureAccess!.accessUrl!)}
-                                  className="p-1.5 rounded-lg text-slate-600 hover:text-[#102A43] hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
-                                  title="Copy driver access link"
-                                >
-                                  <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+            /* VIEW MODE: LIST CARD ROWS (MATCHING ADMIN RENEWALS & POLICYHOLDERS) */
+            <div className="flex flex-col gap-3">
+              {/* Proportional Grid Header - No Horizontal Scroll */}
+              <div className="hidden md:grid md:grid-cols-[minmax(0,1.9fr)_minmax(0,1.4fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1.2fr)] gap-4 px-5 py-3 text-slate-500 font-medium text-[10px] uppercase tracking-wider select-none bg-slate-50 rounded-xl border border-slate-200/60 mb-1 items-center">
+                <div>Driver & Reference</div>
+                <div>Policyholder</div>
+                <div>Authorized Vehicle(s)</div>
+                <div>Fee & Payment</div>
+                <div>Status & Timeline</div>
+                <div className="text-right">Actions</div>
               </div>
 
+              {/* Card Rows with Colored Left Accent */}
+              {filteredRequests.map((req) => {
+                const isPending = req.status === "Pending Branch Approval";
+                const isPendingTerm = req.status === "Pending Termination Approval";
+                const isApproved = req.status === "Approved";
+                const isTerminated = req.status === "Terminated";
+                const isRejected = req.status === "Rejected";
+                const isPaid = req.payment?.status === "Paid";
+                const initials = (req.driverDetails?.fullName || "TP")
+                  .split(" ")
+                  .filter(Boolean)
+                  .slice(0, 2)
+                  .map((s) => s[0].toUpperCase())
+                  .join("");
+
+                let borderAccentClass = "border-l-slate-300";
+                let gradientBgClass = "from-slate-50/20 via-transparent to-transparent";
+
+                if (isApproved) {
+                  borderAccentClass = "border-l-emerald-500";
+                  gradientBgClass = "from-emerald-50/30 via-transparent to-transparent";
+                } else if (isPending) {
+                  borderAccentClass = "border-l-amber-500";
+                  gradientBgClass = "from-amber-50/30 via-transparent to-transparent";
+                } else if (isPendingTerm) {
+                  borderAccentClass = "border-l-rose-500";
+                  gradientBgClass = "from-rose-50/30 via-transparent to-transparent";
+                } else if (isTerminated) {
+                  borderAccentClass = "border-l-slate-400";
+                  gradientBgClass = "from-slate-50/30 via-transparent to-transparent";
+                } else if (isRejected) {
+                  borderAccentClass = "border-l-red-500";
+                  gradientBgClass = "from-red-50/30 via-transparent to-transparent";
+                } else {
+                  borderAccentClass = "border-l-blue-400";
+                  gradientBgClass = "from-blue-50/20 via-transparent to-transparent";
+                }
+
+                return (
+                  <div
+                    key={req._id}
+                    className={`bg-white border-l-[6px] ${borderAccentClass} bg-gradient-to-r ${gradientBgClass} border border-slate-200 rounded-xl px-5 py-3.5 flex flex-col md:grid md:grid-cols-[minmax(0,1.9fr)_minmax(0,1.4fr)_minmax(0,1.3fr)_minmax(0,1.2fr)_minmax(0,1.3fr)_minmax(0,1.2fr)] md:items-center gap-4 transition-all duration-200 shadow-2xs hover:shadow-md relative overflow-hidden group`}
+                  >
+                    {/* Col 1: Driver Identity & Reference */}
+                    <div className="flex items-center gap-3 min-w-0 select-none">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#102A43] to-[#1B365D] text-white flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 group-hover:scale-105 transition-transform">
+                        {initials}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-mono text-[11px] font-bold text-[#102A43] bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80">
+                            {req.requestReference}
+                          </span>
+                        </div>
+                        <div
+                          className="font-bold text-slate-900 text-sm truncate mt-0.5"
+                          title={req.driverDetails?.fullName}
+                        >
+                          {req.driverDetails?.fullName || "—"}
+                        </div>
+                        <div className="text-[11px] text-slate-500 font-medium truncate flex items-center gap-1.5 mt-0.5">
+                          {req.driverDetails?.nicNumber && (
+                            <span className="font-mono bg-slate-100/80 px-1.5 py-0.5 rounded text-slate-600">
+                              NIC: {req.driverDetails.nicNumber}
+                            </span>
+                          )}
+                          {req.driverDetails?.phoneNumber && (
+                            <span>{req.driverDetails.phoneNumber}</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Col 2: Policyholder & Contact */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                        Policyholder
+                      </span>
+                      <h4 className="font-semibold text-xs text-slate-800 truncate" title={req.policyHolderName}>
+                        {req.policyHolderName || "—"}
+                      </h4>
+                      <span className="text-[11px] text-slate-500 font-mono mt-0.5 truncate">
+                        NIC: {req.policyHolderNic || "—"}
+                      </span>
+                    </div>
+
+                    {/* Col 3: Authorized Vehicle(s) */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                        Authorized Vehicles
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {req.selectedVehicles?.map((v) => (
+                          <span
+                            key={v.numberPlate}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#FFF9E6] text-[#2D2A26] border border-[#E5C77A] font-mono font-bold text-xs shadow-2xs"
+                          >
+                            <HugeiconsIcon icon={Car01Icon} className="w-3 h-3 text-amber-700" />
+                            <span>{v.numberPlate}</span>
+                          </span>
+                        ))}
+                        {(!req.selectedVehicles || req.selectedVehicles.length === 0) && (
+                          <span className="text-xs text-slate-400 italic">No vehicles</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Col 4: Fee & Payment */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                        Payment
+                      </span>
+                      {isPaid ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 w-fit">
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>LKR 300 (Paid)</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 w-fit">
+                          <HugeiconsIcon icon={CreditCardIcon} className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Pending Payment</span>
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Col 5: Status & Timeline */}
+                    <div className="flex flex-col min-w-0 select-none">
+                      <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider block mb-1 md:hidden">
+                        Status & Timeline
+                      </span>
+                      <div className="w-fit">{getStatusBadge(req.status)}</div>
+                      <div className="text-[11px] text-slate-500 font-medium flex items-center gap-1.5 mt-1 truncate">
+                        <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-slate-400 shrink-0" />
+                        <span>
+                          {new Date(req.createdAt).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric"
+                          })}
+                        </span>
+                        <span className="text-slate-400 text-[10px]">
+                          {new Date(req.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Col 6: Actions */}
+                    <div className="flex items-center md:justify-end gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedReq(req);
+                          setApprovalNotes("");
+                          setRejectionReason("");
+                        }}
+                        className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 ${
+                          isPending || isPendingTerm
+                            ? "bg-[#102A43] text-white hover:bg-[#1B365D]"
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200"
+                        }`}
+                      >
+                        <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5" />
+                        <span>{isPending ? "Review" : isPendingTerm ? "Review Term." : "View"}</span>
+                      </button>
+
+                      {isApproved && (
+                        <button
+                          onClick={() => {
+                            setSelectedReq(req);
+                            setTerminationNotes("Terminated directly by branch office");
+                            setShowApproveTerminationModal(true);
+                          }}
+                          className="p-1.5 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 border border-rose-200 transition-colors cursor-pointer"
+                          title="Direct Terminate Driver"
+                        >
+                          <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      {isApproved && req.secureAccess?.accessUrl && (
+                        <button
+                          onClick={() => handleCopyUrl(req.secureAccess!.accessUrl!)}
+                          className="p-1.5 rounded-lg text-slate-600 hover:text-[#102A43] hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer"
+                          title="Copy driver access link"
+                        >
+                          <HugeiconsIcon icon={Copy01Icon} className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
               {/* Table Footer / Summary Bar */}
-              <div className="px-5 py-3 bg-slate-50/90 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
+              <div className="px-5 py-3.5 bg-slate-50/90 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs text-slate-500 mt-1">
                 <div>
                   Showing <span className="font-bold text-slate-700">{filteredRequests.length}</span> of{" "}
                   <span className="font-bold text-slate-700">{requests.length}</span> registrations
