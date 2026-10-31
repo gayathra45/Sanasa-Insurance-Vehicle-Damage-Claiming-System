@@ -115,8 +115,7 @@ export default function OfficeStaffDashboard() {
   const [claimsFilter, setClaimsFilter] = useState<"all" | "unassigned" | "urgent" | "active">("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Live time ticker
-  const [currentTime, setCurrentTime] = useState<string>("");
+  
 
   // Quick Agent Assignment Modal
   const [claimToAssign, setClaimToAssign] = useState<any | null>(null);
@@ -141,20 +140,24 @@ export default function OfficeStaffDashboard() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Clock ticker
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTime(
-        now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" }) +
-        " • " +
-        now.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })
-      );
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
+    // Clean greeting display name so branch name is not duplicated twice
+  const staffDisplayName = useMemo(() => {
+    const rawName = staffInfo?.name || staffInfo?.firstName || "Office Staff";
+    if (!rawName) return "Office Staff";
+    if (branch) {
+      const branchPattern = new RegExp(`^${branch}\\s*Branch\\s*`, "i");
+      if (branchPattern.test(rawName)) {
+        const stripped = rawName.replace(branchPattern, "").trim();
+        return stripped || "Office Staff";
+      }
+      const simpleBranchPattern = new RegExp(`^${branch}\\s*`, "i");
+      if (simpleBranchPattern.test(rawName)) {
+        const stripped = rawName.replace(simpleBranchPattern, "").trim();
+        return stripped || "Office Staff";
+      }
+    }
+    return rawName;
+  }, [staffInfo, branch]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -448,18 +451,14 @@ export default function OfficeStaffDashboard() {
                 <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight mt-0.5">
                   {getGreeting()},{" "}
                   <span className="text-blue-700">
-                    {staffInfo?.name || staffInfo?.firstName || "Branch Officer"}
+                    {staffDisplayName}
                   </span>
                 </h1>
               </div>
             </div>
 
             <div className="flex items-center gap-3 sm:gap-4">
-              {/* Live Clock / Calendar Pill */}
-              <div className="hidden xl:flex items-center gap-2 bg-slate-100/80 px-3.5 py-1.5 rounded-xl border border-slate-200/60 text-xs font-mono font-medium text-slate-600">
-                <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 text-blue-600" />
-                <span>{currentTime || "Live Operations"}</span>
-              </div>
+              
 
               {/* Refresh Action */}
               <button
