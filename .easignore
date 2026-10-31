@@ -1,0 +1,10 @@
+.git/**
+.git
+frontend/**
+backend/**
+temp_archive/**
+.idea/**
+.next/**
+scratch/**
+node_modules/**
+**/node_modules/**
