@@ -16,6 +16,7 @@ import {
   UserCheck01Icon,
   Alert02Icon,
   ViewIcon,
+  ArrowLeft01Icon,
   ArrowRight01Icon,
   CheckmarkCircle01Icon,
   Cancel01Icon,
@@ -248,6 +249,28 @@ interface ClaimRecord {
   description?: string;
   documentsCount?: number;
   hasInspectionReport?: boolean;
+  documentsRequested?: boolean;
+  requestedDocuments?: string[];
+  accidentPhotos?: {
+    front?: string[];
+    rear?: string[];
+    side?: string[];
+  };
+  drivingLicense?: {
+    front?: string[];
+    rear?: string[];
+  };
+  additionalDocuments?: {
+    name: string;
+    url: string;
+    uploadedAt: string;
+    uploadedBy?: string;
+  }[];
+  messages?: {
+    sender: string;
+    message: string;
+    sentAt: string;
+  }[];
 }
 
 interface ClaimDetail extends ClaimRecord {
@@ -627,6 +650,32 @@ export default function ThirdPartyDriverPortalPage() {
   const [vehicles, setVehicles] = useState<AuthorizedVehicle[]>([]);
   const [claims, setClaims] = useState<ClaimRecord[]>([]);
   const [loadingClaims, setLoadingClaims] = useState(false);
+
+  // Documents Filter Tab & Viewer Modal State
+  const [docFilterTab, setDocFilterTab] = useState<"all" | "vehicles" | "claims" | "upload">("all");
+  const [viewDocModalOpen, setViewDocModalOpen] = useState(false);
+  const [viewDocTitle, setViewDocTitle] = useState("");
+  const [viewDocSubtitle, setViewDocSubtitle] = useState("");
+  const [viewDocFiles, setViewDocFiles] = useState<string[]>([]);
+  const [viewDocIndex, setViewDocIndex] = useState(0);
+  const [viewDocUploadedBy, setViewDocUploadedBy] = useState("");
+  const [viewDocUploadedAt, setViewDocUploadedAt] = useState("");
+
+  const handleOpenDocViewer = (
+    title: string,
+    files: string[],
+    subtitle?: string,
+    uploadedBy?: string,
+    uploadedAt?: string
+  ) => {
+    setViewDocTitle(title);
+    setViewDocSubtitle(subtitle || "");
+    setViewDocFiles(files);
+    setViewDocIndex(0);
+    setViewDocUploadedBy(uploadedBy || "");
+    setViewDocUploadedAt(uploadedAt || "");
+    setViewDocModalOpen(true);
+  };
 
   // Notifications State
   const [notifications, setNotifications] = useState<DriverNotification[]>([]);
@@ -1730,6 +1779,7 @@ export default function ThirdPartyDriverPortalPage() {
     { id: "notifications", label: "Notifications", count: unreadCount },
     { id: "my_claims", label: "My Claims" },
     { id: "vehicles", label: "My Vehicles" },
+    { id: "documents", label: "Documents" },
     { id: "digital_pass", label: "Digital Pass" },
   ];
 
@@ -2212,6 +2262,24 @@ export default function ThirdPartyDriverPortalPage() {
             </h1>
             <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
               Authorized credentials verified by Sanasa General Insurance ({profile?.branch} Branch)
+            </p>
+          </header>
+        </div>
+      )}
+
+      {/* DOCUMENTS TAB: Policy Holder Style Curved Header */}
+      {activeTab === "documents" && (
+        <div className="max-w-7xl w-full mx-auto px-6 md:px-16 mt-8 relative">
+          <div className="absolute top-0 bottom-0 left-[calc(50%-50vw)] right-6 md:right-12 bg-[url('/policy1.jpg')] bg-cover bg-center rounded-r-[75px] md:rounded-r-[95px] overflow-hidden shadow-md">
+            <div className="absolute inset-0 bg-slate-900/35" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#0d2a3a]/90 via-[#0d2a3a]/75 to-transparent" />
+          </div>
+          <header className="relative z-10 h-[210px] flex flex-col justify-center pl-4 md:pl-8 select-none">
+            <h1 className="text-white text-3xl md:text-[40px] font-bold tracking-tight leading-none">
+              My Documents
+            </h1>
+            <p className="text-slate-200 text-xs md:text-sm font-semibold mt-3.5 tracking-wide opacity-95">
+              Assigned vehicles insurance policies and claim verification evidence
             </p>
           </header>
         </div>
@@ -3699,100 +3767,582 @@ export default function ThirdPartyDriverPortalPage() {
         )}
 
         {/* ========================================================================= */}
-        {/* TAB 5: DOCUMENTS (Exact PolicyHolder Documents vault) */}
+        {/* TAB 5: DOCUMENTS (Assigned Vehicles & Claims Documents Only) */}
         {/* ========================================================================= */}
-        {activeTab === "documents" && (
-          <section className="max-w-4xl mx-auto space-y-6">
-            <div className="pb-4 border-b border-slate-200/80">
-              <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Claim Documents & Evidence</h2>
-              <p className="text-xs text-slate-500 mt-1">
-                Attach repair estimates, police reports, or additional accident evidence
-              </p>
-            </div>
+        {activeTab === "documents" && (() => {
+          // Calculate requested claims documents
+          const requestedClaims = claims.filter(
+            (c) => c.documentsRequested || (c.requestedDocuments && c.requestedDocuments.length > 0)
+          );
 
-            <div className="bg-white border border-slate-200/90 rounded-[28px] p-6 sm:p-8 shadow-xs space-y-4">
-              <h3 className="font-bold text-slate-900 text-sm">Upload Supporting Document</h3>
+          // Calculate claims with uploaded documents
+          const claimsWithDocs = claims.filter((c) => {
+            const hasAccidentPhotos =
+              (c.accidentPhotos?.front?.length || 0) > 0 ||
+              (c.accidentPhotos?.rear?.length || 0) > 0 ||
+              (c.accidentPhotos?.side?.length || 0) > 0;
+            const hasLicensePhotos =
+              (c.drivingLicense?.front?.length || 0) > 0 ||
+              (c.drivingLicense?.rear?.length || 0) > 0;
+            const hasAdditionalDocs = (c.additionalDocuments?.length || 0) > 0;
+            return hasAccidentPhotos || hasLicensePhotos || hasAdditionalDocs;
+          });
 
-              {docUploadSuccess && (
-                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs">
-                  {docUploadSuccess}
-                </div>
-              )}
-              {docUploadError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs">
-                  {docUploadError}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">Select Claim</label>
-                  <select
-                    value={uploadTargetClaim}
-                    onChange={(e) => setUploadTargetClaim(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
+          return (
+            <section className="space-y-8 select-none">
+              {/* Filter Tabs Header matching Policy Holder */}
+              <div className="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+                <div className="flex flex-wrap gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setDocFilterTab("all")}
+                    className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer ${
+                      docFilterTab === "all"
+                        ? "bg-[#000080] border-[#000080] text-white shadow-xs font-semibold"
+                        : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                    }`}
                   >
-                    <option value="">-- Choose Claim --</option>
-                    {claims.map((c) => (
-                      <option key={c.claimNumber} value={c.claimNumber}>
-                        {c.claimNumber} ({c.vehiclePlate} - {c.damageType})
-                      </option>
-                    ))}
-                  </select>
+                    All Documents ({vehicles.length + claimsWithDocs.length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDocFilterTab("vehicles")}
+                    className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                      docFilterTab === "vehicles"
+                        ? "bg-[#0284c7] border-[#0284c7] text-white shadow-xs font-semibold"
+                        : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    <HugeiconsIcon icon={Car01Icon} className="w-4 h-4" />
+                    <span>Assigned Vehicles Documents ({vehicles.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDocFilterTab("claims")}
+                    className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                      docFilterTab === "claims"
+                        ? "bg-emerald-600 border-emerald-600 text-white shadow-xs font-semibold"
+                        : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    <HugeiconsIcon icon={File01Icon} className="w-4 h-4" />
+                    <span>Claims Documents ({claimsWithDocs.length})</span>
+                    {requestedClaims.length > 0 && (
+                      <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.2 rounded-full animate-pulse">
+                        {requestedClaims.length} Action
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setDocFilterTab("upload")}
+                    className={`font-medium text-xs md:text-sm px-5 py-2.5 rounded-full border border-solid transition-all cursor-pointer flex items-center gap-1.5 ${
+                      docFilterTab === "upload"
+                        ? "bg-[#ff9800] border-[#ff9800] text-white shadow-xs font-semibold"
+                        : "bg-white hover:bg-slate-50 border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    <HugeiconsIcon icon={Upload01Icon} className="w-4 h-4" />
+                    <span>Upload Document</span>
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-slate-700 font-bold mb-1">Document Title / Type</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Police Report, Repair Estimate, Receipt"
-                    value={docName}
-                    onChange={(e) => setDocName(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
-                  />
-                </div>
+                <span className="text-xs text-slate-400 font-medium">
+                  Third-Party Authorized Driver: <strong className="text-slate-700">{profile?.driverName}</strong>
+                </span>
               </div>
 
-              <div>
-                <label className="block text-slate-700 font-bold text-xs mb-1">Select File</label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="file"
-                    accept="image/*,application/pdf"
-                    onChange={(e) => handleImageFile(e, setDocFileBase64)}
-                    className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"
-                  />
-                  {docFileBase64 && (
-                    <span className="text-xs text-emerald-600 font-semibold">File Attached</span>
-                  )}
-                </div>
-              </div>
+              {/* ================================================================= */}
+              {/* SECTION 1: ASSIGNED VEHICLES DOCUMENTS */}
+              {/* ================================================================= */}
+              {(docFilterTab === "all" || docFilterTab === "vehicles") && (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 bg-sky-100 rounded-xl text-[#0284c7]">
+                        <HugeiconsIcon icon={Car01Icon} className="w-5 h-5" strokeWidth={2.2} />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight leading-tight">
+                          Assigned Vehicles Insurance Documents
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Official policy schedules and operating authorization records for vehicles assigned to you
+                        </p>
+                      </div>
+                    </div>
 
-              <div className="pt-2 flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleUploadDocument}
-                  disabled={uploadingDoc || !uploadTargetClaim || !docName || !docFileBase64}
-                  className="px-6 py-2.5 bg-[#0d2a3a] hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2 border-none"
-                >
-                  {uploadingDoc ? (
-                    <>
-                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Uploading...</span>
-                    </>
+                    <span className="px-3 py-1 bg-sky-50 border border-sky-200 text-sky-700 rounded-full text-xs font-bold">
+                      {vehicles.length} Assigned {vehicles.length === 1 ? "Vehicle" : "Vehicles"}
+                    </span>
+                  </div>
+
+                  {vehicles.length === 0 ? (
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-8 text-center shadow-xs">
+                      <HugeiconsIcon icon={Car01Icon} className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-slate-600 font-semibold text-sm">No vehicles assigned</p>
+                      <p className="text-slate-400 text-xs mt-1">There are currently no vehicles permitted to this driver pass.</p>
+                    </div>
                   ) : (
-                    <>
-                      <HugeiconsIcon icon={Upload01Icon} className="w-3.5 h-3.5 text-white" />
-                      <span>Attach to Claim</span>
-                    </>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {vehicles.map((v) => {
+                        const theme = getVehicleTheme(v.vehicleType || "Car");
+                        return (
+                          <div
+                            key={v.numberPlate}
+                            className="bg-white border border-slate-200/90 rounded-[28px] p-6 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between"
+                          >
+                            <div>
+                              {/* Header Card: Plate & Active Badge */}
+                              <div className="flex items-center justify-between gap-2 mb-4">
+                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-lg font-mono font-bold text-xs tracking-wider">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                  <span>{formatPlate(v.numberPlate)}</span>
+                                </div>
+                                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Active Policy
+                                </span>
+                              </div>
+
+                              {/* Vehicle Make/Model */}
+                              <div className="flex items-center gap-3.5 mb-4">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${theme.bg} ${theme.border} border`}>
+                                  {getVehicleIconSvg(v.vehicleType || "Car", `w-6 h-6 ${theme.text}`)}
+                                </div>
+                                <div>
+                                  <h3 className="text-base font-bold text-slate-900 leading-tight">
+                                    {v.company} {v.model}
+                                  </h3>
+                                  <p className="text-xs text-slate-400 mt-0.5">{v.vehicleType} • {v.year}</p>
+                                </div>
+                              </div>
+
+                              {/* Policy Document Details Box */}
+                              <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2 text-xs">
+                                <div className="flex justify-between items-center text-slate-500">
+                                  <span>Policy Schedule:</span>
+                                  <span className="font-mono font-bold text-slate-800">{v.policyNumber || "SANASA-COMPREHENSIVE"}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-slate-500">
+                                  <span>Registered Policyholder:</span>
+                                  <span className="font-semibold text-slate-800">{profile?.policyHolderName}</span>
+                                </div>
+                                <div className="flex justify-between items-center text-slate-500">
+                                  <span>Regional Branch:</span>
+                                  <span className="text-slate-800">{profile?.branch || "Galle"} Branch</span>
+                                </div>
+                                <div className="flex justify-between items-center text-slate-500">
+                                  <span>Driver Operating Status:</span>
+                                  <span className="font-semibold text-emerald-600">Authorized Third-Party Driver</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Action Buttons for Vehicle Document */}
+                            <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
+                              <button
+                                type="button"
+                                onClick={() => setActiveTab("digital_pass")}
+                                className="flex-1 py-2.5 px-4 bg-[#0d2a3a] hover:bg-slate-800 text-white font-semibold text-xs rounded-xl transition-all cursor-pointer border-none flex items-center justify-center gap-2 shadow-xs active:scale-95"
+                              >
+                                <HugeiconsIcon icon={ShieldCheckIcon} className="w-4 h-4 text-cyan-400" />
+                                <span>Official Driver Pass</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setClaimPlate(v.numberPlate);
+                                  setActiveTab("new_claim");
+                                }}
+                                className="py-2.5 px-4 bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 font-semibold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                              >
+                                <span>Lodge Claim</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
+                </div>
+              )}
 
+              {/* ================================================================= */}
+              {/* SECTION 2: CLAIMS DOCUMENTS (Action Required + Uploaded Vault) */}
+              {/* ================================================================= */}
+              {(docFilterTab === "all" || docFilterTab === "claims") && (
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 bg-emerald-100 rounded-xl text-emerald-600">
+                        <HugeiconsIcon icon={File01Icon} className="w-5 h-5" strokeWidth={2.2} />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold text-slate-900 tracking-tight leading-tight">
+                          Claims Documents & Evidence
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          Accident evidence photos, driving license, and requested repair reports for authorized claims
+                        </p>
+                      </div>
+                    </div>
 
+                    <span className="px-3 py-1 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-full text-xs font-bold">
+                      {claims.length} {claims.length === 1 ? "Claim Record" : "Claim Records"}
+                    </span>
+                  </div>
+
+                  {/* 2A: REQUESTED DOCUMENTS (ACTION REQUIRED) */}
+                  {requestedClaims.length > 0 && (
+                    <div className="space-y-4">
+                      {requestedClaims.map((claim) => {
+                        const docList = claim.requestedDocuments && claim.requestedDocuments.length > 0
+                          ? claim.requestedDocuments.join(", ")
+                          : "Supporting claim documents";
+
+                        return (
+                          <div
+                            key={claim.claimNumber}
+                            className="bg-red-50/40 border-2 border-red-200 rounded-[28px] p-6 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-6"
+                          >
+                            <div className="flex items-start gap-4">
+                              <div className="p-3 bg-red-100 text-red-600 rounded-2xl flex-shrink-0 animate-pulse">
+                                <HugeiconsIcon icon={Alert02Icon} className="w-7 h-7" strokeWidth={2.2} />
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h3 className="text-red-700 font-bold text-base leading-snug">
+                                    Documents Requested – Action Required
+                                  </h3>
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white uppercase tracking-wider">
+                                    Urgent
+                                  </span>
+                                </div>
+                                <p className="text-slate-700 text-xs md:text-sm font-normal mt-1 leading-relaxed">
+                                  Branch office has requested <strong className="text-slate-900 font-semibold">{docList}</strong> for vehicle{" "}
+                                  <strong className="text-slate-900 font-semibold">{formatPlate(claim.vehiclePlate)}</strong> (Claim: {claim.claimNumber}).
+                                </p>
+                                <p className="text-slate-400 text-[11px] mt-1.5 italic">
+                                  * Please upload within 3 working days to prevent settlement and inspection delays.
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setUploadTargetClaim(claim.claimNumber);
+                                setDocFilterTab("upload");
+                              }}
+                              className="bg-red-600 hover:bg-red-700 text-white font-semibold text-xs px-6 py-3 rounded-full transition-all duration-150 shadow-md shadow-red-600/20 active:scale-95 whitespace-nowrap border-none cursor-pointer self-start md:self-auto"
+                            >
+                              Upload Requested Document
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* 2B: UPLOADED CLAIM DOCUMENTS VAULT */}
+                  {claims.length === 0 ? (
+                    <div className="bg-white border border-slate-200/80 rounded-3xl p-10 text-center shadow-xs">
+                      <HugeiconsIcon icon={File01Icon} className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-slate-600 font-semibold text-sm">No claim documents found</p>
+                      <p className="text-slate-400 text-xs mt-1">
+                        Any photos or documents attached during claim lodging or through document requests will appear here.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {claims.map((claim) => {
+                        const frontPhotos = claim.accidentPhotos?.front || [];
+                        const rearPhotos = claim.accidentPhotos?.rear || [];
+                        const sidePhotos = claim.accidentPhotos?.side || [];
+                        const allAccidentPhotos = [...frontPhotos, ...rearPhotos, ...sidePhotos].filter(Boolean);
+
+                        const licFront = claim.drivingLicense?.front || [];
+                        const licRear = claim.drivingLicense?.rear || [];
+                        const allLicensePhotos = [...licFront, ...licRear].filter(Boolean);
+
+                        const additionalDocs = claim.additionalDocuments || [];
+
+                        return (
+                          <div
+                            key={claim.claimNumber}
+                            className="bg-white border border-slate-200/90 rounded-[28px] p-6 shadow-2xs space-y-4"
+                          >
+                            {/* Claim Header Bar */}
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-xs">
+                                  <HugeiconsIcon icon={File01Icon} className="w-4 h-4 text-cyan-400" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-mono font-bold text-slate-900 text-sm">
+                                      {claim.claimNumber}
+                                    </h4>
+                                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                                      {formatPlate(claim.vehiclePlate)}
+                                    </span>
+                                    <span className="text-xs px-2.5 py-0.5 rounded-full font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                      {claim.status}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-400 mt-0.5">
+                                    {claim.damageType} • Lodged: {formatDate(claim.createdAt)}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenClaimDetails(claim.claimNumber)}
+                                className="text-xs font-semibold text-sky-600 hover:text-sky-800 bg-sky-50 hover:bg-sky-100 px-3 py-1.5 rounded-xl border border-sky-200 transition-colors cursor-pointer self-start sm:self-auto"
+                              >
+                                Claim Tracker &rarr;
+                              </button>
+                            </div>
+
+                            {/* Documents Grid inside Claim */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 pt-1">
+                              {/* 1. Accident Photos */}
+                              {allAccidentPhotos.length > 0 && (
+                                <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-col justify-between">
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                                      Accident Evidence
+                                    </span>
+                                    <h5 className="font-bold text-slate-900 text-xs mt-0.5">
+                                      Accident Photos ({allAccidentPhotos.length})
+                                    </h5>
+                                    <p className="text-[11px] text-slate-500 mt-1">
+                                      Front, rear, and side impact captures
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleOpenDocViewer(
+                                        `Accident Photos – ${claim.claimNumber}`,
+                                        allAccidentPhotos,
+                                        `Vehicle: ${formatPlate(claim.vehiclePlate)}`,
+                                        "Authorized Driver",
+                                        claim.createdAt
+                                      )
+                                    }
+                                    className="mt-3 py-1.5 px-3 bg-[#0d2a3a] hover:bg-slate-800 text-white font-semibold text-[11px] rounded-lg transition-all cursor-pointer border-none flex items-center justify-center gap-1.5"
+                                  >
+                                    <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-white" />
+                                    <span>View Photos ({allAccidentPhotos.length})</span>
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* 2. Driving License */}
+                              {allLicensePhotos.length > 0 && (
+                                <div className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-col justify-between">
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                                      Driver Identification
+                                    </span>
+                                    <h5 className="font-bold text-slate-900 text-xs mt-0.5">
+                                      Driving License ({allLicensePhotos.length})
+                                    </h5>
+                                    <p className="text-[11px] text-slate-500 mt-1">
+                                      Authorized driver license front & rear
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleOpenDocViewer(
+                                        `Driving License – ${claim.claimNumber}`,
+                                        allLicensePhotos,
+                                        `Driver: ${profile?.driverName}`,
+                                        "Authorized Driver",
+                                        claim.createdAt
+                                      )
+                                    }
+                                    className="mt-3 py-1.5 px-3 bg-[#0d2a3a] hover:bg-slate-800 text-white font-semibold text-[11px] rounded-lg transition-all cursor-pointer border-none flex items-center justify-center gap-1.5"
+                                  >
+                                    <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-white" />
+                                    <span>View License ({allLicensePhotos.length})</span>
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* 3. Additional Documents */}
+                              {additionalDocs.map((doc, dIdx) => (
+                                <div
+                                  key={dIdx}
+                                  className="p-4 bg-slate-50 border border-slate-200/80 rounded-2xl flex flex-col justify-between"
+                                >
+                                  <div>
+                                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider block">
+                                      Supporting Document
+                                    </span>
+                                    <h5 className="font-bold text-slate-900 text-xs mt-0.5 truncate" title={doc.name}>
+                                      {doc.name}
+                                    </h5>
+                                    <p className="text-[11px] text-slate-500 mt-1">
+                                      Uploaded by {doc.uploadedBy || "Driver"}
+                                    </p>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleOpenDocViewer(
+                                        `${doc.name} – ${claim.claimNumber}`,
+                                        [doc.url],
+                                        `Claim: ${claim.claimNumber} • ${formatPlate(claim.vehiclePlate)}`,
+                                        doc.uploadedBy || "Authorized Driver",
+                                        doc.uploadedAt || claim.createdAt
+                                      )
+                                    }
+                                    className="mt-3 py-1.5 px-3 bg-[#0284c7] hover:bg-[#0275a1] text-white font-semibold text-[11px] rounded-lg transition-all cursor-pointer border-none flex items-center justify-center gap-1.5"
+                                  >
+                                    <HugeiconsIcon icon={ViewIcon} className="w-3.5 h-3.5 text-white" />
+                                    <span>View Document</span>
+                                  </button>
+                                </div>
+                              ))}
+
+                              {/* Quick Attach Document card */}
+                              <div
+                                onClick={() => {
+                                  setUploadTargetClaim(claim.claimNumber);
+                                  setDocFilterTab("upload");
+                                }}
+                                className="p-4 border-2 border-dashed border-slate-200 hover:border-sky-400 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all hover:bg-sky-50/50"
+                              >
+                                <HugeiconsIcon icon={Upload01Icon} className="w-6 h-6 text-sky-600 mb-1" />
+                                <span className="font-bold text-xs text-slate-800">Attach Document</span>
+                                <span className="text-[10px] text-slate-400">Add report or estimate to this claim</span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ================================================================= */}
+              {/* SECTION 3: UPLOAD SUPPORTING DOCUMENT FORM */}
+              {/* ================================================================= */}
+              {(docFilterTab === "all" || docFilterTab === "upload") && (
+                <div className="bg-white border border-slate-200/90 rounded-[28px] p-6 sm:p-8 shadow-2xs space-y-5">
+                  <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                    <div className="p-2 bg-amber-100 rounded-xl text-amber-700">
+                      <HugeiconsIcon icon={Upload01Icon} className="w-5 h-5" strokeWidth={2.2} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base leading-tight">
+                        Upload Supporting Document to Claim
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        Attach repair estimates, police reports, or additional vehicle accident evidence
+                      </p>
+                    </div>
+                  </div>
+
+                  {docUploadSuccess && (
+                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 text-xs flex items-center gap-2">
+                      <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-4 h-4 text-emerald-600" />
+                      <span>{docUploadSuccess}</span>
+                    </div>
+                  )}
+                  {docUploadError && (
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs flex items-center gap-2">
+                      <HugeiconsIcon icon={Alert02Icon} className="w-4 h-4 text-rose-600" />
+                      <span>{docUploadError}</span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-1">
+                        Select Authorized Claim <span className="text-red-500">*</span>
+                      </label>
+                      <select
+                        value={uploadTargetClaim}
+                        onChange={(e) => setUploadTargetClaim(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
+                      >
+                        <option value="">-- Choose Claim --</option>
+                        {claims.map((c) => (
+                          <option key={c.claimNumber} value={c.claimNumber}>
+                            {c.claimNumber} ({formatPlate(c.vehiclePlate)} - {c.damageType})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-slate-700 font-bold mb-1">
+                        Document Title / Type <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Police Report, Garage Estimate, Repair Bill"
+                        value={docName}
+                        onChange={(e) => setDocName(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-[#0d2a3a]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-700 font-bold text-xs mb-1">
+                      Select Document File (JPG, PNG or PDF) <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="file"
+                        accept="image/*,application/pdf"
+                        onChange={(e) => handleImageFile(e, setDocFileBase64)}
+                        className="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200 cursor-pointer"
+                      />
+                      {docFileBase64 && (
+                        <span className="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+                          <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3.5 h-3.5 text-emerald-600" />
+                          <span>File Attached</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleUploadDocument}
+                      disabled={uploadingDoc || !uploadTargetClaim || !docName || !docFileBase64}
+                      className="px-6 py-2.5 bg-[#0d2a3a] hover:bg-slate-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-2 border-none active:scale-95"
+                    >
+                      {uploadingDoc ? (
+                        <>
+                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Uploading...</span>
+                        </>
+                      ) : (
+                        <>
+                          <HugeiconsIcon icon={Upload01Icon} className="w-3.5 h-3.5 text-white" />
+                          <span>Attach to Claim</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+          );
+        })()}
 
         {/* ========================================================================= */}
         {/* TAB 6: DIGITAL PASS (Official Sanasa Digital Pass) */}
@@ -3883,6 +4433,112 @@ export default function ThirdPartyDriverPortalPage() {
           </section>
         )}
       </main>
+
+      {/* FULL DOCUMENT VIEWER MODAL (Images & PDF Viewer with Slider Controls) */}
+      {viewDocModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 transition-all duration-300">
+          <div className="bg-white rounded-[32px] md:rounded-[40px] w-full max-w-[760px] p-6 sm:p-10 shadow-[0_20px_50px_rgba(0,0,0,0.12)] flex flex-col relative transition-all duration-300 max-h-[90vh] overflow-y-auto">
+            {/* Top Right Close 'X' Button */}
+            <button
+              type="button"
+              onClick={() => setViewDocModalOpen(false)}
+              className="absolute top-6 right-6 p-2 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer border-none bg-transparent flex items-center justify-center focus:outline-none z-10"
+              aria-label="Close"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} className="w-6 h-6" strokeWidth={2.5} />
+            </button>
+
+            {/* Modal Header */}
+            <div className="select-none text-left flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 pr-10">
+              <div>
+                <h2 className="text-xl sm:text-[24px] font-bold text-slate-950 tracking-tight leading-tight">
+                  {viewDocTitle}
+                </h2>
+                {viewDocSubtitle && (
+                  <p className="text-slate-400 text-xs sm:text-sm font-normal mt-1">
+                    {viewDocSubtitle}
+                  </p>
+                )}
+              </div>
+              {(viewDocUploadedBy || viewDocUploadedAt) && (
+                <div className="text-left sm:text-right select-none">
+                  {viewDocUploadedBy && (
+                    <p className="text-[#0284c7] font-semibold text-xs m-0">
+                      Uploaded By: {viewDocUploadedBy}
+                    </p>
+                  )}
+                  {viewDocUploadedAt && (
+                    <p className="text-slate-400 font-normal text-[11px] mt-0.5 m-0">
+                      {formatDate(viewDocUploadedAt)}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <hr className="border-t border-slate-200 mt-4 mb-4" />
+
+            {/* Viewer Content Frame inside rounded border */}
+            <div className="relative border border-slate-200 rounded-[24px] p-4 flex items-center justify-center bg-slate-50 min-h-[320px] max-h-[50vh] overflow-hidden select-none">
+              {viewDocFiles[viewDocIndex]?.startsWith("data:application/pdf") ||
+              viewDocFiles[viewDocIndex]?.includes(".pdf") ? (
+                <iframe
+                  src={viewDocFiles[viewDocIndex]}
+                  className="w-full h-[400px] border-none rounded-[18px]"
+                  title="PDF Document"
+                />
+              ) : (
+                <img
+                  src={viewDocFiles[viewDocIndex]}
+                  alt="document preview"
+                  className="max-w-full max-h-[340px] object-contain rounded-[18px]"
+                />
+              )}
+
+              {/* Slider Prev Navigation Arrow */}
+              {viewDocFiles.length > 1 && viewDocIndex > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setViewDocIndex((prev) => prev - 1)}
+                  className="absolute left-4 w-9 h-9 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-all cursor-pointer border-none shadow-md"
+                >
+                  <HugeiconsIcon icon={ArrowLeft01Icon} className="w-5 h-5" strokeWidth={3} />
+                </button>
+              )}
+
+              {/* Slider Next Navigation Arrow */}
+              {viewDocFiles.length > 1 && viewDocIndex < viewDocFiles.length - 1 && (
+                <button
+                  type="button"
+                  onClick={() => setViewDocIndex((prev) => prev + 1)}
+                  className="absolute right-4 w-9 h-9 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center transition-all cursor-pointer border-none shadow-md"
+                >
+                  <HugeiconsIcon icon={ArrowRight01Icon} className="w-5 h-5" strokeWidth={3} />
+                </button>
+              )}
+            </div>
+
+            {/* Multi-page file counter */}
+            {viewDocFiles.length > 1 && (
+              <div className="flex justify-center items-center gap-1.5 mt-3">
+                {viewDocFiles.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setViewDocIndex(i)}
+                    className={`w-2.5 h-2.5 rounded-full transition-all border-none cursor-pointer ${
+                      i === viewDocIndex ? "bg-[#0d2a3a] scale-125" : "bg-slate-300 hover:bg-slate-400"
+                    }`}
+                  />
+                ))}
+                <span className="text-xs text-slate-400 ml-2">
+                  {viewDocIndex + 1} of {viewDocFiles.length}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Claim Details Modal */}
       {selectedClaim && (

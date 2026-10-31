@@ -1890,7 +1890,13 @@ router.get("/portal/claims", requireDriverSession, async (req, res) => {
       createdAt: c.createdAt,
       submittedByDriver: c.submittedByDriver || { isThirdParty: true },
       documentsCount: (c.additionalDocuments || []).length,
-      hasInspectionReport: Boolean(c.inspectionReport)
+      hasInspectionReport: Boolean(c.inspectionReport),
+      additionalDocuments: c.additionalDocuments || [],
+      requestedDocuments: c.documentsRequested ? (c.requestedDocuments || []) : [],
+      documentsRequested: Boolean(c.documentsRequested),
+      accidentPhotos: c.accidentPhotos || {},
+      drivingLicense: c.drivingLicense || {},
+      messages: c.messages || []
     }));
 
     return res.json({ success: true, claims: safeClaims });
